@@ -62,6 +62,6 @@ NeoEssentials works with LuckPerms and FTB Ranks for permission control.
 
 ## Credits & Resources
 
-Created by ZeroG_Essentialsx
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+Created by ZeroG Network
+
+Community Documentation: https://docs.neoforged.net/ | NeoForged Discord: https://discord.neoforged.net/
