@@ -65,6 +65,7 @@ public class ConfigManager {
               // Initialize database config
             databaseConfig.initialize();
 <<<<<<< HEAD
+<<<<<<< HEAD
               // Database config is now handled by StorageManager in NeoEssentials.java
             // No need to set anything here as the DatabaseConfig will be passed directly
             // to the StorageManager when it's created
@@ -86,6 +87,11 @@ public class ConfigManager {
                 );
             }
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+              // Database config is now handled by StorageManager in NeoEssentials.java
+            // No need to set anything here as the DatabaseConfig will be passed directly
+            // to the StorageManager when it's created
+>>>>>>> ff27982 (refactor: Remove database config handling from ConfigManager; delegate to StorageManager)
         } catch (IOException e) {
             NeoEssentials.LOGGER.error("Failed to initialize config system", e);
         }
