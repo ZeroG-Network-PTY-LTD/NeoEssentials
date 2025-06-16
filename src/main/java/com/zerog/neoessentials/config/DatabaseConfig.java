@@ -24,8 +24,11 @@ public class DatabaseConfig {
     public final ModConfigSpec.ConfigValue<String> mysqlDatabase;
     public final ModConfigSpec.ConfigValue<String> mysqlUsername;
     public final ModConfigSpec.ConfigValue<String> mysqlPassword;
+<<<<<<< HEAD
     public final ModConfigSpec.BooleanValue mysqlUseSSL;
     public final ModConfigSpec.ConfigValue<String> mysqlTablePrefix;
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     
     // SQLite settings
     public final ModConfigSpec.ConfigValue<String> sqliteFilename;
@@ -61,6 +64,7 @@ public class DatabaseConfig {
         mysqlPassword = builder
                 .comment("MySQL password")
                 .define("password", "");
+<<<<<<< HEAD
                 
         mysqlUseSSL = builder
                 .comment("Whether to use SSL for MySQL connections")
@@ -69,6 +73,8 @@ public class DatabaseConfig {
         mysqlTablePrefix = builder
                 .comment("Prefix for MySQL tables")
                 .define("table_prefix", "ne_");
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         
         builder.pop();
         
@@ -108,6 +114,7 @@ public class DatabaseConfig {
     public ModConfigSpec getSpec() {
         return spec;
     }
+<<<<<<< HEAD
     
     /**
      * Get the MySQL host
@@ -180,4 +187,6 @@ public class DatabaseConfig {
     public String getSqliteFilename() {
         return sqliteFilename.get();
     }
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 }

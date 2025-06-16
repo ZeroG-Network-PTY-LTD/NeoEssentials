@@ -8,6 +8,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.KitManager;
+<<<<<<< HEAD
 import com.zerog.neoessentials.data.EconomyTransaction;
 import com.zerog.neoessentials.utils.MessageUtil;
 import com.zerog.neoessentials.utils.PermissionUtil;
@@ -24,6 +25,15 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+=======
+import com.zerog.neoessentials.utils.MessageUtil;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,12 +50,19 @@ public class KitCommands {
      * @param dispatcher The command dispatcher
      */
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+<<<<<<< HEAD
         NeoEssentials.LOGGER.info("Registering kit commands");
         
         // /kit <n> - Claim a kit
         dispatcher.register(
             Commands.literal("kit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit"))
+=======
+        // /kit <name> - Claim a kit
+        dispatcher.register(
+            Commands.literal("kit")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.kit"))
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executeKit)
                 )
@@ -55,6 +72,7 @@ public class KitCommands {
         // /kits - List all available kits
         dispatcher.register(
             Commands.literal("kits")
+<<<<<<< HEAD
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.list"))
                 .executes(this::executeKitList)
         );
@@ -71,16 +89,35 @@ public class KitCommands {
                                 return executeCreateKitWithPrice(context, cooldown, price);
                             })
                         )
+=======
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.kits"))
+                .executes(this::executeKitList)
+        );
+        
+        // /createkit <name> <cooldown> - Create a kit with your current inventory
+        dispatcher.register(
+            Commands.literal("createkit")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.createkit"))
+                .then(Commands.argument("name", StringArgumentType.word())
+                    .then(Commands.argument("cooldown", LongArgumentType.longArg(0))
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                         .executes(this::executeCreateKit)
                     )
                     .executes(context -> executeCreateKit(context, 0)) // Default cooldown of 0
                 )
         );
         
+<<<<<<< HEAD
         // /deletekit <n> - Delete a kit
         dispatcher.register(
             Commands.literal("deletekit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.delete"))
+=======
+        // /deletekit <name> - Delete a kit
+        dispatcher.register(
+            Commands.literal("deletekit")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.deletekit"))
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executeDeleteKit)
                 )
@@ -89,13 +126,18 @@ public class KitCommands {
         // /givekit <player> <kit> - Give a kit to another player
         dispatcher.register(
             Commands.literal("givekit")
+<<<<<<< HEAD
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.give"))
+=======
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.givekit"))
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                     .then(Commands.argument("kit", StringArgumentType.word())
                         .executes(this::executeGiveKit)
                     )
                 )
         );
+<<<<<<< HEAD
         
         // /previewkit <n> - Preview the items in a kit
         dispatcher.register(
@@ -114,6 +156,8 @@ public class KitCommands {
         );
         
         NeoEssentials.LOGGER.info("Kit commands registered successfully");
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
     
     /**
@@ -126,6 +170,7 @@ public class KitCommands {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String kitName = StringArgumentType.getString(context, "name");
         
+<<<<<<< HEAD
         NeoEssentials.LOGGER.debug("Player {} is attempting to claim kit '{}'", player.getScoreboardName(), kitName);
         
         KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
@@ -144,22 +189,40 @@ public class KitCommands {
         }
           // Check if player can use kit (permissions)
         if (!kitManager.canUseKit(player, kitName, false)) {
+=======
+        KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
+        KitManager.Kit kit = kitManager.getKit(kitName);
+        
+        if (kit == null) {
+            context.getSource().sendFailure(Component.literal("Kit '" + kitName + "' not found"));
+            return 0;
+        }
+        
+        // Check if player can use kit (permissions and cooldown)
+        if (!kitManager.canUseKit(player, kitName)) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             long cooldown = kitManager.getRemainingCooldown(player, kitName);
             
             if (cooldown > 0) {
                 String timeStr = formatTime(cooldown);
+<<<<<<< HEAD
                 NeoEssentials.LOGGER.debug("Player {} must wait {} before using kit '{}'", 
                     player.getScoreboardName(), timeStr, kitName);
                 context.getSource().sendFailure(Component.literal("You must wait " + timeStr + " before using this kit again"));
             } else {
                 NeoEssentials.LOGGER.debug("Player {} doesn't have permission for kit '{}'", 
                     player.getScoreboardName(), kitName);
+=======
+                context.getSource().sendFailure(Component.literal("You must wait " + timeStr + " before using this kit again"));
+            } else {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 context.getSource().sendFailure(Component.literal("You don't have permission to use this kit"));
             }
             
             return 0;
         }
         
+<<<<<<< HEAD
         // Check if player has enough money for the kit
         if (kit.getPrice() > 0) {
             var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
@@ -177,16 +240,24 @@ public class KitCommands {
             }
         }
         
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         // Give the kit to the player
         boolean success = kitManager.giveKit(player, kitName);
         
         if (success) {
+<<<<<<< HEAD
             NeoEssentials.LOGGER.info("Player {} claimed kit '{}'", player.getScoreboardName(), kitName);
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             MutableComponent message = Component.literal("You received kit '" + kitName + "'");
             MessageUtil.sendSuccess(player, message);
             return 1;
         } else {
+<<<<<<< HEAD
             NeoEssentials.LOGGER.error("Failed to give kit '{}' to player {}", kitName, player.getScoreboardName());
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             context.getSource().sendFailure(Component.literal("Failed to give kit '" + kitName + "'"));
             return 0;
         }
@@ -201,6 +272,7 @@ public class KitCommands {
     private int executeKitList(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         
+<<<<<<< HEAD
         NeoEssentials.LOGGER.debug("Player {} is requesting kit list", player.getScoreboardName());
         
         KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
@@ -214,6 +286,12 @@ public class KitCommands {
         
         if (kits.isEmpty()) {
             NeoEssentials.LOGGER.debug("No kits found for player {}", player.getScoreboardName());
+=======
+        KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
+        Map<String, KitManager.Kit> kits = kitManager.getAllKits();
+        
+        if (kits.isEmpty()) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             context.getSource().sendFailure(Component.literal("No kits available"));
             return 0;
         }
@@ -226,6 +304,7 @@ public class KitCommands {
                 message.append(Component.literal(", "));
             }
             
+<<<<<<< HEAD
             // Get the kit
             KitManager.Kit kit = kitManager.getKit(kitName);
             
@@ -267,10 +346,14 @@ public class KitCommands {
             
             // Check if the player can use this kit (permissions)
             MutableComponent kitComponent;
+=======
+            // Check if the player can use this kit (permissions)
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             if (kitManager.canUseKit(player, kitName)) {
                 // Check cooldown
                 long cooldown = kitManager.getRemainingCooldown(player, kitName);
                 
+<<<<<<< HEAD
                 // Check for price
                 boolean canAfford = true;
                 String priceInfo = "";
@@ -315,6 +398,24 @@ public class KitCommands {
         }
         
         NeoEssentials.LOGGER.debug("Sending interactive kit list ({} kits) to player {}", kits.size(), player.getScoreboardName());
+=======
+                if (cooldown > 0) {
+                    // On cooldown - show in red with cooldown time
+                    String timeStr = formatTime(cooldown);
+                    message.append(Component.literal(kitName + " (" + timeStr + ")").withStyle(net.minecraft.ChatFormatting.RED));
+                } else {
+                    // Available - show in green
+                    message.append(Component.literal(kitName).withStyle(net.minecraft.ChatFormatting.GREEN));
+                }
+            } else {
+                // No permission - show in gray
+                message.append(Component.literal(kitName).withStyle(net.minecraft.ChatFormatting.GRAY));
+            }
+            
+            first = false;
+        }
+        
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         MessageUtil.sendInfo(player, message);
         return 1;
     }
@@ -370,6 +471,7 @@ public class KitCommands {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String kitName = StringArgumentType.getString(context, "name");
         
+<<<<<<< HEAD
         NeoEssentials.LOGGER.debug("Player {} is attempting to create kit '{}' with cooldown {}s", 
             player.getScoreboardName(), kitName, cooldown);
         
@@ -388,6 +490,17 @@ public class KitCommands {
             return 0;
         }
           // Get all items from the player's inventory
+=======
+        KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
+        
+        // Check if kit already exists
+        if (kitManager.getKit(kitName) != null) {
+            context.getSource().sendFailure(Component.literal("Kit '" + kitName + "' already exists. Delete it first if you want to replace it."));
+            return 0;
+        }
+        
+        // Get all items from the player's inventory
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         List<ItemStack> items = new ArrayList<>();
         for (ItemStack item : player.getInventory().items) {
             if (!item.isEmpty()) {
@@ -395,6 +508,7 @@ public class KitCommands {
             }
         }
         
+<<<<<<< HEAD
         // Also include armor and offhand items
         for (ItemStack item : player.getInventory().armor) {
             if (!item.isEmpty()) {
@@ -417,6 +531,15 @@ public class KitCommands {
         
         NeoEssentials.LOGGER.info("Player {} created kit '{}' with {} items and {}s cooldown", 
             player.getScoreboardName(), kitName, items.size(), cooldown);
+=======
+        if (items.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("Your inventory is empty. Cannot create an empty kit."));
+            return 0;
+        }
+        
+        // Create the kit
+        KitManager.Kit kit = kitManager.createKit(kitName, cooldown, "neoessentials.kit." + kitName.toLowerCase(), items);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         
         MutableComponent message = Component.literal("Created kit '" + kitName + "' with " + items.size() + " items");
         if (cooldown > 0) {
@@ -437,6 +560,7 @@ public class KitCommands {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String kitName = StringArgumentType.getString(context, "name");
         
+<<<<<<< HEAD
         NeoEssentials.LOGGER.debug("Player {} is attempting to delete kit '{}'", 
             player.getScoreboardName(), kitName);
         
@@ -451,16 +575,30 @@ public class KitCommands {
         
         if (success) {
             NeoEssentials.LOGGER.info("Player {} deleted kit '{}'", player.getScoreboardName(), kitName);
+=======
+        KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
+        boolean success = kitManager.deleteKit(kitName);
+        
+        if (success) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             MutableComponent message = Component.literal("Deleted kit '" + kitName + "'");
             MessageUtil.sendSuccess(player, message);
             return 1;
         } else {
+<<<<<<< HEAD
             NeoEssentials.LOGGER.debug("Kit '{}' not found for deletion by {}", kitName, player.getScoreboardName());
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             context.getSource().sendFailure(Component.literal("Kit '" + kitName + "' not found"));
             return 0;
         }
     }
+<<<<<<< HEAD
       /**
+=======
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Execute the /givekit command
      * 
      * @param context The command context
@@ -471,6 +609,7 @@ public class KitCommands {
         ServerPlayer target = net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player");
         String kitName = StringArgumentType.getString(context, "kit");
         
+<<<<<<< HEAD
         NeoEssentials.LOGGER.debug("Player {} is attempting to give kit '{}' to player {}", 
             player.getScoreboardName(), kitName, target.getScoreboardName());
         
@@ -485,10 +624,17 @@ public class KitCommands {
         
         if (kit == null) {
             NeoEssentials.LOGGER.debug("Kit '{}' not found for /givekit by {}", kitName, player.getScoreboardName());
+=======
+        KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
+        KitManager.Kit kit = kitManager.getKit(kitName);
+        
+        if (kit == null) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             context.getSource().sendFailure(Component.literal("Kit '" + kitName + "' not found"));
             return 0;
         }
         
+<<<<<<< HEAD
         // Force give the kit to the target player by bypassing permission and cooldown checks
         try {
             boolean success = forceGiveKit(target, kitManager, kitName);
@@ -849,6 +995,22 @@ public class KitCommands {
             this.command = command;
             this.description = description;
             this.permission = permission;
+=======
+        // Give the kit to the target player, bypassing cooldown
+        boolean success = kitManager.giveKit(target, kitName);
+        
+        if (success) {
+            MutableComponent messageToAdmin = Component.literal("Gave kit '" + kitName + "' to " + target.getScoreboardName());
+            MessageUtil.sendSuccess(player, messageToAdmin);
+            
+            MutableComponent messageToTarget = Component.literal("You received kit '" + kitName + "' from " + player.getScoreboardName());
+            MessageUtil.sendInfo(target, messageToTarget);
+            
+            return 1;
+        } else {
+            context.getSource().sendFailure(Component.literal("Failed to give kit '" + kitName + "' to " + target.getScoreboardName()));
+            return 0;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         }
     }
 }

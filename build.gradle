@@ -5,6 +5,97 @@ plugins {
     id 'idea'
 }
 
+<<<<<<< HEAD
+=======
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.TaskAction
+
+// Use a simpler approach that's compatible with configuration cache
+def getBuildNumber() {
+    def propsFile = file("buildnumber.properties")
+    if (!propsFile.exists()) {
+        propsFile.text = "buildNumber=1"
+        return 1
+    }
+    
+    def props = new Properties()
+    propsFile.withInputStream { props.load(it) }
+    return props.getProperty("buildNumber").toInteger()
+}
+
+def buildNumber = getBuildNumber()
+
+// Set the version with the build number
+version = "${mod_version}.${buildNumber}"
+
+// Create a task extension to hold version properties
+abstract class VersionPropertiesExtension {
+    abstract Property<String> getModVersion()
+    abstract Property<String> getLoaderVersionRange()
+    abstract Property<String> getNeoVersionRange()
+    abstract Property<String> getMinecraftVersionRange()
+}
+
+// Add the extension to the project
+def versionProps = extensions.create('versionProps', VersionPropertiesExtension)
+versionProps.modVersion.set(version.toString())
+versionProps.loaderVersionRange.set(loader_version_range)
+versionProps.neoVersionRange.set(neo_version_range)
+versionProps.minecraftVersionRange.set(minecraft_version_range)
+
+// Configure processResources to replace version in mods.toml
+tasks.processResources.configure {
+    inputs.property("version", versionProps.modVersion)
+    inputs.property("loader_version_range", versionProps.loaderVersionRange)
+    inputs.property("neo_version_range", versionProps.neoVersionRange)
+    inputs.property("minecraft_version_range", versionProps.minecraftVersionRange)
+    
+    filesMatching("META-INF/mods.toml") {
+        expand(
+            "version": versionProps.modVersion.get(),
+            "loader_version_range": versionProps.loaderVersionRange.get(),
+            "neo_version_range": versionProps.neoVersionRange.get(),
+            "minecraft_version_range": versionProps.minecraftVersionRange.get()
+        )
+    }
+}
+
+// Define a task to increment the build number
+abstract class IncrementBuildNumberTask extends DefaultTask {
+    @org.gradle.api.tasks.InputFile
+    @org.gradle.api.tasks.PathSensitive(org.gradle.api.tasks.PathSensitivity.ABSOLUTE)
+    abstract org.gradle.api.file.RegularFileProperty getBuildNumberFile()
+    
+    @TaskAction
+    void incrementBuildNumber() {
+        def propsFile = getBuildNumberFile().get().asFile
+        def props = new Properties()
+        
+        if (propsFile.exists()) {
+            propsFile.withInputStream { props.load(it) }
+        }
+        
+        def currentBuildNumber = props.getProperty("buildNumber", "0").toInteger() + 1
+        props.setProperty("buildNumber", currentBuildNumber.toString())
+        
+        propsFile.withOutputStream { 
+            props.store(it, "Build number updated") 
+        }
+        
+        println "Build number incremented to: ${currentBuildNumber}"
+    }
+}
+
+tasks.register("incrementBuildNumber", IncrementBuildNumberTask) {
+    description = "Increments the build number"
+    buildNumberFile = layout.projectDirectory.file("buildnumber.properties")
+}
+
+// Add the increment task as a finalizer to jar task
+tasks.jar.finalizedBy(tasks.incrementBuildNumber)
+group = mod_group_id
+
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 tasks.named('wrapper', Wrapper).configure {
     // Define wrapper values here so as to not have to always do so when updating gradlew.properties.
     // Switching this to Wrapper.DistributionType.ALL will download the full gradle sources that comes with
@@ -14,12 +105,19 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
+<<<<<<< HEAD
 version = mod_version
 group = mod_group_id
 
 repositories {
     // Add LuckPerms repository
     maven { url = 'https://repo.lucko.me/' }
+=======
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url = 'https://repo.lucko.me/' } // For LuckPerms API
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 }
 
 base {
@@ -115,6 +213,7 @@ configurations {
 dependencies {
     // Database dependencies
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
+<<<<<<< HEAD
     implementation 'com.mysql:mysql-connector-j:8.3.0'
     implementation 'com.zaxxer:HikariCP:5.1.0'
     
@@ -139,6 +238,13 @@ dependencies {
     // Example project dependency using a sister or child project:
     // implementation project(":myproject")
 
+=======
+    implementation 'com.mysql:mysql-connector-j:8.2.0'
+    
+    // LuckPerms API dependencies (soft dependency, only for permission checking)
+    compileOnly 'net.luckperms:api:5.4'
+    
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
@@ -171,11 +277,16 @@ sourceSets.main.resources.srcDir generateModMetadata
 // To avoid having to run "generateModMetadata" manually, make it run on every project reload
 neoForge.ideSyncTask generateModMetadata
 
+<<<<<<< HEAD
 // Configuration to allow publishing using the maven-publish plugin
+=======
+// Example configuration to allow publishing using the maven-publish plugin
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
             from components.java
+<<<<<<< HEAD
             
             pom {
                 name = 'NeoEssentials'
@@ -194,12 +305,18 @@ publishing {
                     }
                 }
             }
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         }
     }
     repositories {
         maven {
+<<<<<<< HEAD
             name = "localRepo"
             url = "file://${project.buildDir}/repo"
+=======
+            url "file://${project.projectDir}/repo"
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         }
     }
 }
@@ -215,6 +332,7 @@ idea {
         downloadJavadoc = true
     }
 }
+<<<<<<< HEAD
 
 // Jar configuration
 jar {
@@ -305,3 +423,5 @@ tasks.register('incrementBuildNumber', IncrementBuildNumberTask) {
 tasks.named('build').configure {
     finalizedBy tasks.named('incrementBuildNumber')
 }
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)

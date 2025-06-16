@@ -2,7 +2,10 @@ package com.zerog.neoessentials.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+<<<<<<< HEAD
 import com.google.gson.reflect.TypeToken;
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -10,18 +13,25 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+<<<<<<< HEAD
 import java.lang.reflect.Type;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
+=======
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 
 /**
  * Manages the economy system for the NeoEssentials mod.
  */
 public class EconomyManager {
     private static final String ECONOMY_DATA_FILE = "neoessentials/economy.json";
+<<<<<<< HEAD
     private static final String TRANSACTION_DATA_FILE = "neoessentials/economy_transactions.json";
     
     // Currency configuration
@@ -42,12 +52,19 @@ public class EconomyManager {
     private long nextTransactionId = 1;
     
     // JSON serialization
+=======
+    
+    // Map of player UUID to balance
+    private final Map<UUID, Double> balances = new ConcurrentHashMap<>();
+    
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     private final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
             .disableHtmlEscaping()
             .create();
       /**
      * Initialize the economy manager
+<<<<<<< HEAD
      */    public void initialize() {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Economy Manager");
         
@@ -64,6 +81,17 @@ public class EconomyManager {
         loadTransactionHistory();
     }
       /**
+=======
+     */
+    public void initialize() {
+        NeoEssentials.LOGGER.info("Initializing NeoEssentials Economy Manager");
+        
+        // Load existing economy data
+        loadEconomyData();
+    }
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Save all economy data to disk
      */
     public void saveAll() {
@@ -89,10 +117,13 @@ public class EconomyManager {
             }
             
             NeoEssentials.LOGGER.info("Economy data saved successfully");
+<<<<<<< HEAD
             
             // Also save transaction history
             saveTransactionHistory();
             
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         } catch (IOException e) {
             NeoEssentials.LOGGER.error("Error saving economy data", e);
         }
@@ -132,6 +163,7 @@ public class EconomyManager {
     }
     
     /**
+<<<<<<< HEAD
      * Load transaction history from disk
      */
     private void loadTransactionHistory() {
@@ -336,13 +368,19 @@ public class EconomyManager {
         }
     }
       /**
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Get the balance of a player
      * 
      * @param playerId The UUID of the player
      * @return The player's balance
      */
     public double getBalance(UUID playerId) {
+<<<<<<< HEAD
         return balances.getOrDefault(playerId, startingBalance);
+=======
+        return balances.getOrDefault(playerId, 0.0);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
     
     /**
@@ -370,10 +408,20 @@ public class EconomyManager {
             return getBalance(playerId);
         }
         
+<<<<<<< HEAD
         recordTransaction(playerId, EconomyTransaction.TYPE_DEPOSIT, amount, "Balance deposit");
         return getBalance(playerId);
     }
       /**
+=======
+        double currentBalance = getBalance(playerId);
+        double newBalance = currentBalance + amount;
+        balances.put(playerId, newBalance);
+        return newBalance;
+    }
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Remove from a player's balance
      * 
      * @param playerId The UUID of the player
@@ -390,16 +438,26 @@ public class EconomyManager {
             return false;
         }
         
+<<<<<<< HEAD
         recordTransaction(playerId, EconomyTransaction.TYPE_WITHDRAW, amount, "Balance withdrawal");
         return true;
     }
       /**
+=======
+        double newBalance = currentBalance - amount;
+        balances.put(playerId, newBalance);
+        return true;
+    }
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Transfer money from one player to another
      * 
      * @param fromId The UUID of the player sending money
      * @param toId The UUID of the player receiving money
      * @param amount The amount to transfer
      * @return True if the transfer was successful, false otherwise
+<<<<<<< HEAD
      */    
     public boolean transfer(UUID fromId, UUID toId, double amount) {
         if (amount <= 0 || fromId.equals(toId)) {
@@ -423,6 +481,20 @@ public class EconomyManager {
         recordTransaction(toId, fromId, EconomyTransaction.TYPE_TRANSFER_RECEIVE, amount, 
                 "Transfer from " + fromName);
                 
+=======
+     */    public boolean transfer(UUID fromId, UUID toId, double amount) {
+        if (amount <= 0) {
+            return false;
+        }
+        
+        // Check if from player has enough money
+        if (!removeBalance(fromId, amount)) {
+            return false;
+        }
+        
+        // Add money to the target player
+        addBalance(toId, amount);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         return true;
     }
       /**
@@ -451,6 +523,7 @@ public class EconomyManager {
     public Map<UUID, Double> getAllBalances() {
         return new ConcurrentHashMap<>(balances);
     }
+<<<<<<< HEAD
       /**
      * Get a player's name from their UUID
      * 
@@ -652,3 +725,26 @@ public class EconomyManager {
         return balances.size();
     }
   }
+=======
+    
+    /**
+     * Get a player's name from their UUID
+     * 
+     * @param playerId The UUID of the player
+     * @return The player's name, or null if not found
+     */
+    public String getPlayerName(UUID playerId) {
+        // Try to find online player first
+        ServerPlayer player = NeoEssentials.getInstance().getServer().getPlayerList().getPlayer(playerId);
+        if (player != null) {
+            return player.getScoreboardName();
+        }
+        
+        // Try to get from offline player data
+        return NeoEssentials.getInstance().getServer().getProfileCache()
+            .get(playerId)
+            .map(profile -> profile.getName())
+            .orElse("Unknown Player");
+    }
+}
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)

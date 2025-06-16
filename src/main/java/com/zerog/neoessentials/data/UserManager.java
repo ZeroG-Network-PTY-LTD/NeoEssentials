@@ -335,6 +335,7 @@ public class UserManager {
             userData.addProperty("lastSeen", System.currentTimeMillis());
         }
     }
+<<<<<<< HEAD
     
     /**
      * Gets a player's UUID from their name by scanning all user data files
@@ -378,4 +379,6 @@ public class UserManager {
         
         return null;
     }
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 }

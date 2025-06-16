@@ -2,6 +2,7 @@ package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.NeoEssentials;
+<<<<<<< HEAD
 import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -21,6 +22,17 @@ import net.neoforged.bus.api.SubscribeEvent;
  * 
  * @author ZeroG
  * @since 1.0.0
+=======
+import com.zerog.neoessentials.utils.PermissionUtil;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.MinecraftServer;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+
+/**
+ * Manages registration and execution of all NeoEssentials commands.
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
  */
 
 public class CommandManager {    // Command classes
@@ -31,6 +43,7 @@ public class CommandManager {    // Command classes
     private final WarpCommands warpCommands;
     private final KitCommands kitCommands;
     private final TimeAndWeatherCommands timeAndWeatherCommands;
+<<<<<<< HEAD
     private final InventoryCommands inventoryCommands;
     private final PlayerCommands playerCommands;
     private final MessageCommands messageCommands;
@@ -42,6 +55,10 @@ public class CommandManager {    // Command classes
     private final PowerToolCommands powerToolCommands;
     private final MailCommands mailCommands;
     private final AdminPanelCommand adminPanelCommand;    public CommandManager() {
+=======
+    
+    public CommandManager() {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -49,6 +66,7 @@ public class CommandManager {    // Command classes
         warpCommands = new WarpCommands();
         kitCommands = new KitCommands();
         timeAndWeatherCommands = new TimeAndWeatherCommands();
+<<<<<<< HEAD
         inventoryCommands = new InventoryCommands();
         playerCommands = new PlayerCommands();
         messageCommands = new MessageCommands();
@@ -61,6 +79,8 @@ public class CommandManager {    // Command classes
         mailCommands = new MailCommands();
         adminPanelCommand = new AdminPanelCommand();
         // ItemCommands needs CommandBuildContext which is only available during register event
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
     
     /**
@@ -82,16 +102,20 @@ public class CommandManager {    // Command classes
         
         // Register all command categories directly since we're an instance
         registerAllCommands(dispatcher);
+<<<<<<< HEAD
         
         // Register ItemCommands with the CommandBuildContext from the event
         ItemCommands itemCommands = new ItemCommands(event.getBuildContext());
         itemCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered item commands");
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
       /**
      * Registers all command categories with the dispatcher.
      * 
      * @param dispatcher The command dispatcher
+<<<<<<< HEAD
      */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {// Register teleport commands
         teleportCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered teleport commands");
@@ -165,6 +189,29 @@ public class CommandManager {    // Command classes
         // For now, we'll skip registering ItemCommands until we can find a proper way
         // to get the CommandBuildContext
         NeoEssentials.LOGGER.info("Skipping ItemCommands registration due to CommandBuildContext requirements");
+=======
+     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Register teleport commands
+        teleportCommands.register(dispatcher);
+        
+        // Register home commands
+        homeCommands.register(dispatcher);
+        
+        // Register economy commands
+        economyCommands.register(dispatcher);
+        
+        // Register user commands
+        userCommands.register(dispatcher);
+        
+        // Register warp commands
+        warpCommands.register(dispatcher);
+        
+        // Register kit commands
+        kitCommands.register(dispatcher);
+        
+        // Register time and weather commands
+        timeAndWeatherCommands.register(dispatcher);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
     
     /**
@@ -213,6 +260,7 @@ public class CommandManager {    // Command classes
      * 
      * @return The kit commands
      */
+<<<<<<< HEAD
     /**
      * Static method to check if a source has a permission.
      * This is a convenience method for commands to use.
@@ -230,6 +278,8 @@ public class CommandManager {    // Command classes
      * 
      * @return The kit commands
      */
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     public KitCommands getKitCommands() {
         return kitCommands;
     }
@@ -240,6 +290,7 @@ public class CommandManager {    // Command classes
      * @return The time and weather commands
      */
     public TimeAndWeatherCommands getTimeAndWeatherCommands() {
+<<<<<<< HEAD
         return timeAndWeatherCommands;    }
     
     /**
@@ -320,5 +371,19 @@ public class CommandManager {    // Command classes
      */
     public MailCommands getMailCommands() {
         return mailCommands;
+=======
+        return timeAndWeatherCommands;
+    }    /**
+     * Checks if a player has permission for a specific command.
+     * Integrates with LuckPerms or FTB Ranks if available.
+     *
+     * @param source The command source
+     * @param permission The permission to check
+     * @return True if the player has permission, false otherwise
+     */
+    public static boolean hasPermission(CommandSourceStack source, String permission) {
+        // Delegate to PermissionUtil
+        return com.zerog.neoessentials.utils.PermissionUtil.hasPermission(source, permission);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
 }

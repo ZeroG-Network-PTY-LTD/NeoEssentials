@@ -23,7 +23,10 @@ public class ConfigManager {
     
     private NeoEssentialsConfig config;
     private DatabaseConfig databaseConfig;
+<<<<<<< HEAD
     private TablistConfig tablistConfig;
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     private final Gson gson;
       public ConfigManager() {
         this.gson = new GsonBuilder()
@@ -61,9 +64,28 @@ public class ConfigManager {
             }
               // Initialize database config
             databaseConfig.initialize();
+<<<<<<< HEAD
               // Database config is now handled by StorageManager in NeoEssentials.java
             // No need to set anything here as the DatabaseConfig will be passed directly
             // to the StorageManager when it's created
+=======
+            
+            // Apply database config to DataManager if it's available
+            if (NeoEssentials.getInstance() != null && 
+                NeoEssentials.getInstance().getDataManager() != null) {
+                
+                DataManager dataManager = NeoEssentials.getInstance().getDataManager();
+                
+                dataManager.setDatabaseConfig(
+                    databaseConfig.storageType.get(),
+                    databaseConfig.mysqlHost.get(),
+                    databaseConfig.mysqlPort.get(),
+                    databaseConfig.mysqlDatabase.get(),
+                    databaseConfig.mysqlUsername.get(),
+                    databaseConfig.mysqlPassword.get()
+                );
+            }
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         } catch (IOException e) {
             NeoEssentials.LOGGER.error("Failed to initialize config system", e);
         }
@@ -100,6 +122,7 @@ public class ConfigManager {
     public DatabaseConfig getDatabaseConfig() {
         return databaseConfig;
     }
+<<<<<<< HEAD
     
     /**
      * Get the tablist configuration.
@@ -113,4 +136,6 @@ public class ConfigManager {
         }
         return tablistConfig;
     }
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 }

@@ -1,10 +1,19 @@
 package com.zerog.neoessentials.utils;
 
+<<<<<<< HEAD
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
+=======
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.ChatFormatting;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -105,6 +114,7 @@ public class MessageUtil {
     }
     
     /**
+<<<<<<< HEAD
      * Adds hover text to a component
      * 
      * @param component The component to add hover text to
@@ -152,12 +162,18 @@ public class MessageUtil {
     }
     
     /**
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Translates standard '&' color codes to Minecraft's internal format
      * 
      * @param message The message with '&' color codes
      * @return The message with Minecraft internal color codes
      */
+<<<<<<< HEAD
     public static String translateColorCodes(String message) {
+=======
+    private static String translateColorCodes(String message) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         char colorChar = '&';
         char[] array = message.toCharArray();
         

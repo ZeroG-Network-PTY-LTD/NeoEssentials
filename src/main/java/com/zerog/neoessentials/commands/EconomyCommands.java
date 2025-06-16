@@ -4,16 +4,22 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.NeoEssentials;
+<<<<<<< HEAD
 import com.zerog.neoessentials.data.EconomyTransaction;
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 
+<<<<<<< HEAD
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -28,7 +34,12 @@ public class EconomyCommands {
      *
      * @param dispatcher The command dispatcher to register commands with
      */
+<<<<<<< HEAD
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {        // Register /balance command
+=======
+    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Register /balance command
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         dispatcher.register(
             Commands.literal("balance")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance"))
@@ -36,11 +47,16 @@ public class EconomyCommands {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Check own balance
+<<<<<<< HEAD
                     var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                     double balance = economyManager.getBalance(player.getUUID());
                     String formattedBalance = economyManager.formatCurrency(balance);
                     
                     MessageUtil.sendMessage(player, "Your balance: " + formattedBalance);
+=======
+                    double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(player.getUUID());
+                    MessageUtil.sendMessage(player, "Your balance: $" + String.format("%.2f", balance));
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                     
                     return 1;
                 })
@@ -52,16 +68,27 @@ public class EconomyCommands {
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Check another player's balance
+<<<<<<< HEAD
                             var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                             double balance = economyManager.getBalance(target.getUUID());
                             String formattedBalance = economyManager.formatCurrency(balance);
                             
                             MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: " + formattedBalance);
+=======
+                            double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID());
+                            MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: $" + String.format("%.2f", balance));
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                             
                             return 1;
                         })
                 )
+<<<<<<< HEAD
         );        // Register /bal alias for /balance
+=======
+        );
+
+        // Register /bal alias for /balance
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         dispatcher.register(
             Commands.literal("bal")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance"))
@@ -69,11 +96,16 @@ public class EconomyCommands {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Check own balance
+<<<<<<< HEAD
                     var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                     double balance = economyManager.getBalance(player.getUUID());
                     String formattedBalance = economyManager.formatCurrency(balance);
                     
                     MessageUtil.sendMessage(player, "Your balance: " + formattedBalance);
+=======
+                    double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(player.getUUID());
+                    MessageUtil.sendMessage(player, "Your balance: $" + String.format("%.2f", balance));
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                     
                     return 1;
                 })
@@ -85,11 +117,16 @@ public class EconomyCommands {
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Check another player's balance
+<<<<<<< HEAD
                             var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                             double balance = economyManager.getBalance(target.getUUID());
                             String formattedBalance = economyManager.formatCurrency(balance);
                             
                             MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: " + formattedBalance);
+=======
+                            double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID());
+                            MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: $" + String.format("%.2f", balance));
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                             
                             return 1;
                         })
@@ -104,6 +141,7 @@ public class EconomyCommands {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Check own balance
+<<<<<<< HEAD
                     var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                     double balance = economyManager.getBalance(player.getUUID());
                     String formattedBalance = economyManager.formatCurrency(balance);
@@ -111,6 +149,13 @@ public class EconomyCommands {
                     MessageUtil.sendMessage(player, "Your balance: " + formattedBalance);
                     
                     return 1;                })
+=======
+                    double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(player.getUUID());
+                    MessageUtil.sendMessage(player, "Your balance: $" + String.format("%.2f", balance));
+                    
+                    return 1;
+                })
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 .then(
                     Commands.argument("player", EntityArgument.player())
                         .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance.others"))
@@ -119,16 +164,27 @@ public class EconomyCommands {
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Check another player's balance
+<<<<<<< HEAD
                             var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                             double balance = economyManager.getBalance(target.getUUID());
                             String formattedBalance = economyManager.formatCurrency(balance);
                             
                             MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: " + formattedBalance);
+=======
+                            double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID());
+                            MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: $" + String.format("%.2f", balance));
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                             
                             return 1;
                         })
                 )
+<<<<<<< HEAD
         );        // Register /pay command
+=======
+        );
+
+        // Register /pay command
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         dispatcher.register(
             Commands.literal("pay")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.pay"))
@@ -140,7 +196,10 @@ public class EconomyCommands {
                                     ServerPlayer source = context.getSource().getPlayerOrException();
                                     ServerPlayer target = EntityArgument.getPlayer(context, "player");
                                     double amount = DoubleArgumentType.getDouble(context, "amount");
+<<<<<<< HEAD
                                     var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                                     
                                     // Prevent paying yourself
                                     if (source.getUUID().equals(target.getUUID())) {
@@ -149,12 +208,21 @@ public class EconomyCommands {
                                     }
                                     
                                     // Pay another player
+<<<<<<< HEAD
                                     boolean success = economyManager.transfer(source.getUUID(), target.getUUID(), amount);
                                     
                                     if (success) {
                                         String formattedAmount = economyManager.formatCurrency(amount);
                                         MessageUtil.sendMessage(source, "You paid " + formattedAmount + " to " + target.getScoreboardName());
                                         MessageUtil.sendMessage(target, source.getScoreboardName() + " paid you " + formattedAmount);
+=======
+                                    boolean success = NeoEssentials.getInstance().getDataManager().getEconomyManager()
+                                            .transfer(source.getUUID(), target.getUUID(), amount);
+                                    
+                                    if (success) {
+                                        MessageUtil.sendMessage(source, "You paid $" + String.format("%.2f", amount) + " to " + target.getScoreboardName());
+                                        MessageUtil.sendMessage(target, source.getScoreboardName() + " paid you $" + String.format("%.2f", amount));
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                                         return 1;
                                     } else {
                                         MessageUtil.sendErrorMessage(source, "You don't have enough funds to make this payment.");
@@ -216,6 +284,7 @@ public class EconomyCommands {
                                             ServerPlayer source = context.getSource().getPlayerOrException();
                                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                                             double amount = DoubleArgumentType.getDouble(context, "amount");
+<<<<<<< HEAD
                                             String reason = "Admin action by " + source.getScoreboardName();
                                             
                                             return handleAdminGive(source, target, amount, reason);
@@ -231,6 +300,20 @@ public class EconomyCommands {
                                                     return handleAdminGive(source, target, amount, reason);
                                                 })
                                         )
+=======
+                                            
+                                            // Give money to player
+                                            double newBalance = NeoEssentials.getInstance().getDataManager().getEconomyManager()
+                                                    .addBalance(target.getUUID(), amount);
+                                            
+                                            MessageUtil.sendSuccessMessage(source, "Added $" + String.format("%.2f", amount) + " to " + 
+                                                    target.getScoreboardName() + "'s balance. New balance: $" + String.format("%.2f", newBalance));
+                                            MessageUtil.sendMessage(target, "You received $" + String.format("%.2f", amount) + " from an admin. " +
+                                                    "New balance: $" + String.format("%.2f", newBalance));
+                                            
+                                            return 1;
+                                        })
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                                 )
                         )
                 )
@@ -245,6 +328,7 @@ public class EconomyCommands {
                                             ServerPlayer source = context.getSource().getPlayerOrException();
                                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                                             double amount = DoubleArgumentType.getDouble(context, "amount");
+<<<<<<< HEAD
                                             String reason = "Admin action by " + source.getScoreboardName();
                                             
                                             return handleAdminTake(source, target, amount, reason);
@@ -260,6 +344,29 @@ public class EconomyCommands {
                                                     return handleAdminTake(source, target, amount, reason);
                                                 })
                                         )
+=======
+                                            
+                                            // Take money from player
+                                            boolean success = NeoEssentials.getInstance().getDataManager().getEconomyManager()
+                                                    .removeBalance(target.getUUID(), amount);
+                                            
+                                            if (success) {
+                                                double newBalance = NeoEssentials.getInstance().getDataManager().getEconomyManager()
+                                                        .getBalance(target.getUUID());
+                                                
+                                                MessageUtil.sendSuccessMessage(source, "Removed $" + String.format("%.2f", amount) + " from " + 
+                                                        target.getScoreboardName() + "'s balance. New balance: $" + String.format("%.2f", newBalance));
+                                                MessageUtil.sendMessage(target, "An admin removed $" + String.format("%.2f", amount) + " from your account. " +
+                                                        "New balance: $" + String.format("%.2f", newBalance));
+                                                
+                                                return 1;
+                                            } else {
+                                                MessageUtil.sendErrorMessage(source, target.getScoreboardName() + " does not have enough funds. " +
+                                                        "Current balance: $" + String.format("%.2f", NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID())));
+                                                return 0;
+                                            }
+                                        })
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                                 )
                         )
                 )
@@ -274,6 +381,7 @@ public class EconomyCommands {
                                             ServerPlayer source = context.getSource().getPlayerOrException();
                                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                                             double amount = DoubleArgumentType.getDouble(context, "amount");
+<<<<<<< HEAD
                                             String reason = "Admin action by " + source.getScoreboardName();
                                             
                                             return handleAdminSet(source, target, amount, reason);
@@ -354,12 +462,21 @@ public class EconomyCommands {
                                                 MessageUtil.sendErrorMessage(source, "Invalid page number: " + pageStr);
                                                 return 0;
                                             }
+=======
+                                              // Set player's balance
+                                            NeoEssentials.getInstance().getDataManager().getEconomyManager()
+                                                    .setBalance(target.getUUID(), amount);
+                                            
+                                            MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + "'s balance to $" + String.format("%.2f", amount));                                            MessageUtil.sendMessage(target, "Your balance was set to $" + String.format("%.2f", amount) + " by an admin");
+                                            return 1;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                                         })
                                 )
                         )
                 )
         );
         
+<<<<<<< HEAD
         // Register /ecohelp command for help with economy commands
         dispatcher.register(
             Commands.literal("ecohelp")
@@ -388,6 +505,12 @@ public class EconomyCommands {
         NeoEssentials.LOGGER.info("Registered economy commands");
     }
       /**
+=======
+        NeoEssentials.LOGGER.info("Registered economy commands");
+    }
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Displays the baltop (top player balances) to a player
      * 
      * @param player The player
@@ -395,10 +518,16 @@ public class EconomyCommands {
      */
     private void displayBaltop(ServerPlayer player, int page) {
         int playersPerPage = 10;
+<<<<<<< HEAD
         var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
         
         // Get all balances
         Map<UUID, Double> allBalances = economyManager.getAllBalances();
+=======
+        
+        // Get all balances
+        Map<UUID, Double> allBalances = NeoEssentials.getInstance().getDataManager().getEconomyManager().getAllBalances();
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         
         // Convert to list and sort
         var sortedBalances = allBalances.entrySet().stream()
@@ -423,18 +552,27 @@ public class EconomyCommands {
         int endIndex = Math.min(startIndex + playersPerPage, totalPlayers);
         
         // Display header
+<<<<<<< HEAD
         MessageUtil.sendMessage(player, "§6§l--- Top Balances (Page " + page + "/" + totalPages + ") ---");
+=======
+        MessageUtil.sendMessage(player, "Top Balances (Page " + page + "/" + totalPages + "):");
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         
         // Display players
         for (int i = startIndex; i < endIndex; i++) {
             var entry = sortedBalances.get(i);
+<<<<<<< HEAD
             String playerName = economyManager.getPlayerName(entry.getKey());
             String formattedBalance = economyManager.formatCurrency(entry.getValue());
+=======
+            String playerName = NeoEssentials.getInstance().getDataManager().getEconomyManager().getPlayerName(entry.getKey());
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             
             if (playerName == null) {
                 playerName = "Unknown Player";
             }
             
+<<<<<<< HEAD
             MessageUtil.sendMessage(player, "§e" + (i + 1) + ". §r" + playerName + ": §a" + formattedBalance);
         }
         
@@ -677,5 +815,9 @@ public class EconomyCommands {
         MessageUtil.sendMessage(target, "Your balance was set to " + formattedAmount + " by an admin");
         
         return 1;
+=======
+            MessageUtil.sendMessage(player, (i + 1) + ". " + playerName + ": $" + String.format("%.2f", entry.getValue()));
+        }
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
 }
