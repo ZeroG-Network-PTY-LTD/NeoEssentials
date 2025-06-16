@@ -1,7 +1,13 @@
 {
+<<<<<<< HEAD
   "itemGroup.neoessentials": "Example Mod Tab",
   "block.neoessentials.example_block": "Example Block",
   "item.neoessentials.example_item": "Example Item",
+=======
+  "itemGroup.neoessentials": "ZeroG NeoEssentials",
+  "block.neoessentials.example_block": "Home Block",
+  "item.neoessentials.example_item": "Home Compass",
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 
   "neoessentials.configuration.title": "NeoEssentials Configs",
   "neoessentials.configuration.section.neoessentials.common.toml": "NeoEssentials Configs",

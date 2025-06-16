@@ -1,7 +1,11 @@
 package com.zerog.neoessentials.utils;
 
 import com.zerog.neoessentials.NeoEssentials;
+<<<<<<< HEAD
 import com.zerog.neoessentials.config.CompatNeoEssentialsConfig;
+=======
+import com.zerog.neoessentials.config.NeoEssentialsConfig;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -46,6 +50,7 @@ public class PermissionUtil {
      * @param source The command source to check
      * @param permission The permission string to check
      * @return True if the source has the permission, false otherwise
+<<<<<<< HEAD
      */    public static boolean hasPermission(CommandSourceStack source, String permission) {
         boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
         
@@ -55,20 +60,32 @@ public class PermissionUtil {
                 NeoEssentials.LOGGER.debug("Permission '{}' granted to operator {}", 
                     permission, source.getTextName());
             }
+=======
+     */
+    public static boolean hasPermission(CommandSourceStack source, String permission) {
+        // Operators always have permission
+        if (source.hasPermission(2)) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             return true;
         }
         
         // If not a player, deny permission
         if (!(source.getEntity() instanceof ServerPlayer player)) {
+<<<<<<< HEAD
             if (debug) {
                 NeoEssentials.LOGGER.debug("Permission '{}' denied for non-player source {}", 
                     permission, source.getTextName());
             }
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             return false;
         }
         
         UUID uuid = player.getUUID();
+<<<<<<< HEAD
         String playerName = player.getScoreboardName();
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         
         // Update last access time
         lastAccessTime.put(uuid, System.currentTimeMillis());
@@ -78,16 +95,20 @@ public class PermissionUtil {
         PermissionResult cachedResult = playerCache.get(permission);
         
         if (cachedResult != null && !cachedResult.isExpired()) {
+<<<<<<< HEAD
             if (debug) {
                 NeoEssentials.LOGGER.debug("Using cached permission result for '{}': {} (player: {})", 
                     permission, cachedResult.result, playerName);
             }
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             return cachedResult.result;
         }
         
         // Cache miss or expired, check actual permission
         boolean hasPermission = checkPermission(player, permission);
         
+<<<<<<< HEAD
         // Log the permission check result
         if (debug) {
             NeoEssentials.LOGGER.debug("Permission check for '{}': {} (player: {})", 
@@ -151,6 +172,8 @@ public class PermissionUtil {
                 permission, hasPermission, playerName);
         }
         
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         // Cache the result
         playerCache.put(permission, new PermissionResult(hasPermission));
         
@@ -163,6 +186,7 @@ public class PermissionUtil {
     }
     
     /**
+<<<<<<< HEAD
      * Check if a GameProfile has a specific permission.
      * This is a simplified check - since there's no active player, we can only check
      * for cached values or use LuckPerms (if available) with UUID lookup.
@@ -238,12 +262,15 @@ public class PermissionUtil {
         return result;
     }
       /**
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Direct permission check for a player without caching
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if the player has the permission, false otherwise
      */
+<<<<<<< HEAD
     static boolean checkPermission(ServerPlayer player, String permission) {
         boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
         String playerName = player.getScoreboardName();
@@ -266,28 +293,49 @@ public class PermissionUtil {
                     permission, playerName);
                 return true;
             }
+=======
+    private static boolean checkPermission(ServerPlayer player, String permission) {
+        // Check LuckPerms
+        boolean result = checkLuckPermsPermission(player, permission);
+        
+        // If not found in LuckPerms, try FTB Ranks
+        if (!result) {
+            result = checkFTBRanksPermission(player, permission);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         }
         
         // If no permission system gave a result, check default config
         if (!result) {
             result = checkDefaultPermission(permission);
+<<<<<<< HEAD
             
             if (debug) {
                 NeoEssentials.LOGGER.debug("Using default permission for '{}': {} (player: {})", 
                     permission, result, playerName);
             }
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         }
         
         return result;
     }
+<<<<<<< HEAD
       /**
+=======
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Check permission using LuckPerms API if available
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if permission is granted, false otherwise
      */
+<<<<<<< HEAD
     static boolean checkLuckPermsPermission(ServerPlayer player, String permission) {
+=======
+    private static boolean checkLuckPermsPermission(ServerPlayer player, String permission) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         try {
             // Check if LuckPerms is loaded using reflection
             Class<?> luckPermsClass = Class.forName("net.luckperms.api.LuckPermsProvider");
@@ -320,14 +368,23 @@ public class PermissionUtil {
         
         return false;
     }
+<<<<<<< HEAD
       /**
+=======
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Check permission using FTB Ranks API if available
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if permission is granted, false otherwise
      */
+<<<<<<< HEAD
     static boolean checkFTBRanksPermission(ServerPlayer player, String permission) {
+=======
+    private static boolean checkFTBRanksPermission(ServerPlayer player, String permission) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         try {
             // Check if FTB Ranks is loaded using reflection
             Class<?> ftbRanksClass = Class.forName("dev.ftb.mods.ftbranks.api.FTBRanksAPI");
@@ -366,11 +423,19 @@ public class PermissionUtil {
         }
         
         return false;
+<<<<<<< HEAD
     }    /**     * Check if a permission should be granted by default when no permission system is found
+=======
+    }
+    
+    /**
+     * Check if a permission should be granted by default when no permission system is found
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * 
      * @param permission The permission string to check
      * @return True if the permission should be granted by default, false otherwise
      */
+<<<<<<< HEAD
     static boolean checkDefaultPermission(String permission) {
         // Get the config instance from NeoEssentials
         com.zerog.neoessentials.config.CompatNeoEssentialsConfig config = NeoEssentials.getInstance().getConfigManager().getConfig();
@@ -392,6 +457,14 @@ public class PermissionUtil {
             }
             return true;
         }
+=======
+    private static boolean checkDefaultPermission(String permission) {
+        // Get the config instance from NeoEssentials
+        NeoEssentialsConfig config = NeoEssentials.getInstance().getConfigManager().getConfig();
+        
+        // Default behavior - will be configurable in the future
+        return config.defaultPermissions().getOrDefault(permission, true);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
     
     /**
@@ -429,5 +502,8 @@ public class PermissionUtil {
         permissionCache.clear();
         lastAccessTime.clear();
     }
+<<<<<<< HEAD
   
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 }

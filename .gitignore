@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # IDE files
 .idea/
 .vscode/
@@ -77,3 +78,31 @@ MIGRATION_*.md
 MULTIVERSION_*.md
 IMPLEMENTATION_*.md
 REVERSION_*.md
+=======
+# eclipse
+bin
+*.launch
+.settings
+.metadata
+.classpath
+.project
+
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea
+
+# gradle
+build
+.gradle
+
+# other
+eclipse
+run
+runs
+run-data
+
+repo
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)

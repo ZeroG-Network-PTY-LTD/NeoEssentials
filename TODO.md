@@ -1,0 +1,304 @@
+[✓] Finalize Economy implementations and enhancements V1.0.2 - COMPLETED
+
+## Economy System Implementation Status - ✅ COMPLETE
+
+### Core Economy Components - All Implemented:
+✅ **Currency System** - Multi-currency support with exchange rates  
+✅ **Wallet Management** - Player cash management  
+✅ **Bank System** - Full banking with accounts, transfers, loans  
+✅ **Shop System** - Player/server shops, auctions, categories  
+✅ **Transaction Management** - Complete transaction tracking and history  
+✅ **Loan System** - Personal, business, and mortgage loans  
+✅ **Economic Analytics** - Server economy monitoring and statistics  
+
+### Commands Implemented:
+✅ `/balance` - Check wallet and bank balance  
+✅ `/pay` - Send money to other players  
+✅ `/baltop` - Top balance leaderboard  
+✅ `/loan` - Complete loan management (apply, pay, list, info)  
+✅ `/shop` - Full shop system (create, buy, sell, manage)  
+✅ `/economyadmin` - Admin tools for economy management  
+
+### Advanced Features:
+✅ **Notification System** - Offline player notifications for loans  
+✅ **Configuration Reload** - Hot reload of economy settings  
+✅ **Monthly Withdrawal Limits** - Bank account restrictions  
+✅ **Shop Deletion Handling** - Automatic compensation and refunds  
+✅ **Comprehensive Error Handling** - Robust error management  
+✅ **Data Persistence** - Complete save/load functionality  
+
+### Build Status:
+✅ **Compilation**: Successful (v1.0.2.75)  
+✅ **Tests**: All passing  
+✅ **No TODOs**: All placeholders implemented  
+✅ **Production Ready**: Full functionality deployed
+
+[✓] Documentation Update - COMPLETED
+
+### Economy Documentation - All Updated:
+✅ **Complete System Documentation** - `/docs/wiki/Economy-System-v1.0.2.75-Complete.md`
+✅ **Comprehensive Testing Checklist** - `/docs/TESTING_CHECKLIST_v1.0.2.75.md`  
+✅ **Updated Main Wiki** - `/docs/wiki/Economy-System.md` updated with v1.0.2.75 status
+✅ **Production Readiness Guide** - Complete deployment and testing instructions
+✅ **Feature Documentation** - All new features documented with examples
+✅ **Admin Guides** - Administrative tools and procedures documented
+✅ **Troubleshooting** - Common issues and solutions documented
+✅ **API Reference** - Developer documentation for integration
+
+### Testing Documentation:
+✅ **Pre-Production Checklist** - Complete testing procedures (27 sections)
+✅ **Performance Testing** - Load and stress testing procedures  
+✅ **Security Testing** - Comprehensive security validation steps
+✅ **Integration Testing** - Cross-system compatibility verification
+✅ **User Experience Testing** - Player and admin experience validation
+✅ **Production Readiness** - Go-live verification and rollback procedures
+
+### Build v1.0.2.75 Documentation Status:
+✅ **Features**: All economy features documented with examples
+✅ **Commands**: Complete command reference with syntax and permissions  
+✅ **Configuration**: Full configuration guide with hot reload documentation
+✅ **API**: Developer API documentation for third-party integration
+✅ **Deployment**: Production deployment and monitoring guides
+✅ **Support**: Troubleshooting guides and support procedures
+
+[] Player Teleportation System V1.0.3
+# - Home commands
+Module	Command	Aliases	Description	Syntax
+Essentials	delhome	edelhome, remhome, eremhome, rmhome, ermhome	Removes a home.	/<command> [player:]<name>
+Essentials	essentials	eessentials, ess, eess, essversion	Reloads essentials and has some debug featues.	/<command> [debug|verbose|ver|version|cmd|commands|dump|reload|reset|cleanup|homes|uuidconvert|uuidtest|nya|nyan|moo]
+Essentials	sethome	esethome, createhome, ecreatehome	Set home to your current location.	/<command> [player:]<name>
+Essentials	renamehome	erenamehome	Renames a home.	/<command> <[player:]name> <new name>
+Essentials	home	ehome, homes, ehomes	Teleport to your home.	/<command> [player:]<name>
+
+# - Warp commands
+Module	Command	Aliases	Description	Syntax
+Essentials	setwarp	createwarp, ecreatewarp, esetwarp	Creates a new warp.	/<command> <warp>
+Essentials	delwarp	edelwarp, remwarp, eremwarp, rmwarp, ermwarp	Deletes the specified warp.	/<command> <warp>
+Essentials	warpinfo	ewarpinfo	Finds location information for a specified warp.	/<command> <warp>
+Essentials	warp	ewarp, warps, ewarps	List all warps or warp to the specified location.	/<command> <pagenumber|warp> [player]
+Essentials	back	eback, return, ereturn	Teleports you to your location prior to tp/spawn/warp.	/<command>
+
+# - Teleport commands
+Module	Command	Aliases	Description	Syntax
+Essentials	settpr	esettpr, settprandom, esettprandom	Set the random teleport location and parameters.	/<command> [center|minrange|maxrange] [value]
+Essentials	tpall	etpall	Teleport all online players to another player.	/<command> [player]
+Essentials	tptoggle	etptoggle	Blocks all forms of teleportation.	/<command> [player] [on|off]
+Essentials	top	etop	Teleport to the highest block at your current position.	/<command>
+Essentials	tp	tele, etele, teleport, eteleport, etp, tp2p, etp2p	Teleport to a player.	/<command> <player> [otherplayer]
+Essentials	tpoffline	otp, offlinetp, tpoff, tpoffline	Teleport to a player's last known logout location	/<command> <player>
+Essentials	tpaall	etpaall	Requests all players online to teleport to you.	/<command> <player>
+Essentials	tpahere	etpahere	Request that the specified player teleport to you.	/<command> <player>
+Essentials	bottom	ebottom	Teleport to the lowest block at your current position.	/<command>
+Essentials	tpacancel	etpacancel	Cancel all outstanding teleport requests. Specify [player] to cancel requests with them.	/<command> [player]
+Essentials	tpdeny	etpdeny, tpno, etpno	Rejects teleport requests.	/<command> [player|*]
+Essentials	tpohere	etpohere	Teleport here override for tptoggle.	/<command> <player>
+Essentials	tpa	call,ecall,etpa,tpask,etpask	Request to teleport to the specified player.	/<command> <player>
+Essentials	tpaccept	etpaccept,tpyes,etpyes	Accepts teleport requests.	/<command> [player|*]
+Essentials	tphere	s,etphere	Teleport a player to you.	/<command> <player>
+Essentials	tpohere	etpohere	Teleport here override for tptoggle.	/<command> <player>
+Essentials	tppos	etppos	Teleport to coordinates.	/<command> <x> <y> <z> [yaw] [pitch] [world]
+Essentials	tpr	etpr, tprandom, etprandom	Teleport randomly.	/<command>
+Essentials	tpauto	etpauto	Automatically accept teleportation requests.	/<command> [player]
+EssentialsSpawn	spawn	espawn	Teleport to the spawnpoint.	/<command> [player]
+
+[] Chat System V1.0.4
+
+# - Chat commands
+Essentials	socialspy	esocialspy	Toggles if you can see msg/mail commands in chat.	/<command> [player] [on|off]
+colorful chats
+Essentials	chattoggle	echattoggle	Toggles the chat system on or off.	/<command> [player] [on|off]
+Essentials	chattoggleall	echattoggleall	Toggles the chat system on or off for all players.	/<command> [on|off]
+
+# - Message & Mail commands
+Essentials	helpop	eamsg	Message online admins.	/<command> <message>
+Essentials	msgtoggle	emsgtoggle	Blocks receiving all private messages.	/<command> [player] [on|off]
+Essentials	msg	w, m, t, pm, emsg, epm, tell, etell, whisper, ewhisper	Sends a private message to the specified player.	/<command> <to> <message>
+Essentials	broadcastworld	bcw, ebcw, bcastw, ebcastw, ebroadcastworld, shoutworld, eshoutworld	Broadcasts a message to a world.	/<command> <world> <msg>
+
+# - Discod linking and chat
+Module	Command	Aliases	Description	Syntax
+EssentialsDiscord	discordbroadcast	dbroadcast, dbc, dbcast, ediscordbroadcast, edbroadcast, edbc, edbcast	Broadcasts a message to the specified Discord channel.	/<command> <channel> <msg>
+EssentialsDiscord	discord	ediscord	Sends the discord invite link to the player.	/<command>
+EssentialsDiscordLink	link	elink, discordlink, ediscordlink	Generates a code to link your Minecraft account to Discord.	/<command>
+EssentialsDiscordLink	unlink	eunlink, discordunlink, ediscordunlink	Unlinks your Minecraft account from any associated Discord account.	/<command>
+
+[] Player Kit System
+
+# - Kit commands
+Module	Command	Aliases	Description	Syntax
+Essentials	createkit	ck	Create a kit in game!	/<command> <kitname> <delay>
+Essentials	kitreset	ekitreset, kitr, ekitr, resetkit, eresetkit	Resets the cooldown on the specified kit.	/<command> <kit> [player]
+Essentials	customtext		Allows you to create custom text commands.	/<alias> - Define in bukkit.yml
+Essentials	kit	ekit,kits,ekits	Obtains the specified kit or views all available kits.	/<command> [kit] [player]
+Essentials	kittycannon	ekittycannon	Throw an exploding kitten at your opponent.	/<command>
+Essentials	showkit	kitpreview,preview,kitshow	Show contents of a kit.	/<command> <kitname>
+Essentials	delkit		Delete a given kit	/<command> <kitname>
+
+[] confirm all commands
+Module	Command	Aliases	Description	Syntax
+Essentials	editsign	sign, esign, eeditsign	Edits a sign in the world.	/<command> <set/clear/copy/paste> [line number] [text]
+Essentials	repair	fix, efix, erepair	Repairs the durability of one or all items.	/<command> [hand|all]
+Essentials	msgtoggle	emsgtoggle	Blocks receiving all private messages.	/<command> [player] [on|off]
+Essentials	setjail	esetjail, createjail, ecreatejail	Creates a jail where you specified named [jailname].	/<command> <jailname>
+Essentials	settpr	esettpr, settprandom, esettprandom	Set the random teleport location and parameters.	/<command> [center|minrange|maxrange] [value]
+Essentials	help	ehelp	Views a list of available commands.	/<command> [search term] [page]
+Essentials	clearinventoryconfirmtoggle	eclearinventoryconfirmtoggle, clearinventoryconfirmoff, eclearinventoryconfirmoff, clearconfirmoff, eclearconfirmoff, clearconfirmon, eclearconfirmon, clearconfirm, eclearconfirm	Toggles whether you are prompted to confirm inventory clears.	/<command>
+Essentials	mute	emute, silence, esilence	Mute, unmute, or temporarily mute a player.	/<command> <player> [datediff] [reason]
+Essentials	spawner	changems, echangems, espawner, mobspawner, emobspawner	Change the mob type of a spawner.	/<command> <mob> [delay]
+Essentials	deljail	edeljail, remjail, eremjail, rmjail, ermjail	Removes a jail.	/<command> <jailname>
+Essentials	powertool	epowertool, pt, ept	Assigns a command to the item in hand. Use 'c:' as the command to make a chat macro. Use 'a:' to append multiple commands. Use 'r:' to remove a single command. Use 'l:' to list all power tools Use 'd:' to remove all power tools	/<command> [l:|a:|r:|c:|d:][command] [arguments] ({player} can be replaced by name of a clicked player.)
+Essentials	weather	rain, erain, sky, esky, storm, estorm, sun, esun, eweather	Sets the weather.	/<command> <storm/sun> [duration]
+Essentials	gc	lag, elag, egc, mem, emem, memory, ememory, uptime, euptime, tps, etps, entities, eentities	Reports memory, uptime and tick info.	/<command>
+Essentials	delhome	edelhome, remhome, eremhome, rmhome, ermhome	Removes a home.	/<command> [player:]<name>
+Essentials	enderchest	echest, eechest, eenderchest, endersee, eendersee, ec, eec	Lets you see inside an enderchest.	/<command> [player]
+Essentials	powertooltoggle	epowertooltoggle, ptt, eptt, pttoggle, epttoggle	Enables or disables all current powertools.	/<command>
+Essentials	kickall	ekickall	Kicks all players off the server except the issuer.	/<command> [reason]
+Essentials	speed	flyspeed, eflyspeed, fspeed, efspeed, espeed, walkspeed, ewalkspeed, wspeed, ewspeed	Change your walk or fly speed.	/<command> [type] <speed> [player]
+Essentials	tpall	etpall	Teleport all online players to another player.	/<command> [player]
+Essentials	suicide	esuicide	Causes you to perish.	/<command>
+Essentials	whois	ewhois	Displays player information	/<command> <nickname|playername>
+Essentials	essentials	eessentials, ess, eess, essversion	Reloads essentials and has some debug featues.	/<command> [debug|verbose|ver|version|cmd|commands|dump|reload|reset|cleanup|homes|uuidconvert|uuidtest|nya|nyan|moo]
+Essentials	tptoggle	etptoggle	Blocks all forms of teleportation.	/<command> [player] [on|off]
+Essentials	disposal	edisposal, trash, etrash	Opens a portable disposal menu.	/<command>
+Essentials	top	etop	Teleport to the highest block at your current position.	/<command>
+Essentials	gamemode	adventure, eadventure, adventuremode, eadventuremode, creative, eecreative, creativemode, ecreativemode, egamemode, gm, egm, gma, egma, gmc, egmc, gms, egms, gmt, egmt, survival, esurvival, survivalmode, esurvivalmode, gmsp, sp, egmsp, spec, spectator	Change player gamemode.	/<command> <survival|creative|adventure|spectator> [player]
+Essentials	condense	econdense, compact, ecompact, blocks, eblocks, toblocks, etoblocks	Condenses items into a more compact blocks.	/<command> [itemname]
+Essentials	tp	tele, etele, teleport, eteleport, etp, tp2p, etp2p	Teleport to a player.	/<command> <player> [otherplayer]
+Essentials	tpoffline	otp, offlinetp, tpoff, tpoffline	Teleport to a player's last known logout location	/<command> <player>
+Essentials	setworth	esetworth	Set the sell value of an item.	/<command> [itemname|id] <price>
+Essentials	spawnmob	mob, emob, spawnentity, espawnentity, espawnmob	Spawns a mob.	/<command> <mob>[:data][,<mount>[:data]] [amount] [player]
+Essentials	book	ebook	Allows reopening and editing of sealed books.	/<command> [title|author [name]]
+Essentials	time	day, eday, night, enight, etime	Display/Change the world time. Defaults to current world.	/<command> [day|night|dawn|17:30|4pm|4000ticks] [worldname|all]
+Essentials	tpaall	etpaall	Requests all players online to teleport to you.	/<command> <player>
+Essentials	mail	email, eemail, memo, ememo	Manages inter-player, intra-server mail.	/<command> [read|clear|clear [number]|clear <player> [number]|send [to] [message]|sendtemp [to] [expire time] [message]|sendall [message]]
+Essentials	hat	ehat, head, ehead	Get some cool new headgear.	/<command> [remove]
+Essentials	worth	eprice, price, eworth	Calculates the worth of items in hand or as specified.	/<command> <<itemname>|<id>|hand|inventory|blocks> [-][amount]
+Essentials	kick	ekick	Kicks a specified player with a reason.	/<command> <player> [reason]
+Essentials	more	emore	Fills the item stack in hand to specified amount, or to maximum size if none is specified.	/<command> [amount]
+Essentials	info	about, eabout, ifo, eifo, einfo, inform, einform, news, enews	Shows information set by the server owner.	/<command> [chapter] [page]
+Essentials	tpahere	etpahere	Request that the specified player teleport to you.	/<command> <player>
+Essentials	realname	erealname	Displays the username of a user based on nick.	/<command> <nickname>
+Essentials	bigtree	ebigtree, largetree, elargetree	Spawn a big tree where you are looking.	/<command> <tree|redwood|jungle>
+Essentials	rest	erest	Rests you or the given player.	/<command> [player]
+Essentials	rules	erules	Views the server rules.	/<command> [chapter] [page]
+Essentials	recipe	formula, eformula, method, emethod, erecipe, recipes, erecipes	Displays how to craft items.	/<command> <item> [number]
+Essentials	sethome	esethome, createhome, ecreatehome	Set home to your current location.	/<command> [player:]<name>
+Essentials	renamehome	erenamehome	Renames a home.	/<command> <[player:]name> <new name>
+Essentials	pweather	playerweather, eplayerweather, epweather	Adjust a player's weather	/<command> [list|reset|storm|sun|clear] [player|*]
+Essentials	setwarp	createwarp, ecreatewarp, esetwarp	Creates a new warp.	/<command> <warp>
+Essentials	delwarp	edelwarp, remwarp, eremwarp, rmwarp, ermwarp	Deletes the specified warp.	/<command> <warp>
+Essentials	warpinfo	ewarpinfo	Finds location information for a specified warp.	/<command> <warp>
+Essentials	warp	ewarp, warps, ewarps	List all warps or warp to the specified location.	/<command> <pagenumber|warp> [player]
+Essentials	bottom	ebottom	Teleport to the lowest block at your current position.	/<command>
+Essentials	break	ebreak	Breaks the block you are looking at.	/<command>
+Essentials	msg	w, m, t, pm, emsg, epm, tell, etell, whisper, ewhisper	Sends a private message to the specified player.	/<command> <to> <message>
+Essentials	compass	ecompass, direction, edirection	Describes your current bearing.	/<command>
+Essentials	world	eworld	Switch between worlds.	/<command> [world]
+Essentials	me	action, eaction, describe, edescribe, eme	Describes an action in the context of the player.	/<command> <description>
+Essentials	payconfirmtoggle	epayconfirmtoggle, payconfirmoff, epayconfirmoff, payconfirmon, epayconfirmon, payconfirm, epayconfirm	Toggles whether you are prompted to confirm payments.	/<command>
+Essentials	ext	eext, extinguish, eextinguish	Extinguish players.	/<command> [player]
+Essentials	broadcastworld	bcw, ebcw, bcastw, ebcastw, ebroadcastworld, shoutworld, eshoutworld	Broadcasts a message to a world.	/<command> <world> <msg>
+Essentials	toggleshout	etoggleshout	Toggles whether you are talking in shout mode	/<command> [player] [on|off]
+Essentials	togglejail	jail, ejail, tjail, etjail, etogglejail, unjail, eunjail	Jails/Unjails a player, TPs them to the jail specified.	/<command> <player> <jailname> [datediff]
+Essentials	jails	ejails	List all jails.	/<command>
+Essentials	list	elist, online, eonline, playerlist, eplayerlist, plist, eplist, who, ewho	List all online players.	/<command> [group]
+Essentials	remove	eremove, butcher, ebutcher, killall, ekillall, mobkill, emobkill	Removes entities in your world.	/<command> <all|tamed|named|drops|arrows|boats| minecarts|xp|paintings|itemframes|endercrystals| monsters|animals|ambient|mobs|[mobType]> [radius|world]
+Essentials	lightning	elightning, shock, eshock, smite, esmite, strike, estrike, thor, ethor	The power of Thor. Strikes at the cursor or a player.	/<command> [player] [power]
+Essentials	ice	eice, efreeze	Cools a player off.	/<command> [player]
+Essentials	ignore	eignore, unignore, eunignore, delignore, edelignore, remignore, eremignore, rmignore, ermignore	Ignore or unignore other players.	/<command> <player>
+Essentials	item	i, eitem, ei	Spawn an item.	/<command> <item|numeric> [amount [itemmeta...]]
+Essentials	near	enear, nearby, enearby	Lists the players near by or around a player.	/<command> [playername] [radius]
+Essentials	firework	efirework	Allows you to modify a stack of fireworks.	/<command> <<meta param>|power [amount]|clear|fire [amount]>
+Essentials	invsee	einvsee	See and/or edit the inventory of other players.	/<command> <player> [armor]
+Essentials	balancetop	ebalancetop, baltop, ebaltop	Lists players by top balances.	/<command> [page]
+Essentials	ban	eban	Bans a player.	/<command> <player> [reason]
+Essentials	kill	ekill	Kills specified player.	/<command> <player>
+Essentials	balance	bal, ebal, ebalance, money, emoney	States the current balance of a player.	/<command> [player]
+Essentials	enchant	eenchant, enchantment, eenchantment	Enchants the item the user is holding.	/<command> <enchantmentname> [level]
+Essentials	banip	ebanip	Bans an IP address.	/<command> <address> [reason]
+Essentials	socialspy	esocialspy	Toggles if you can see msg/mail commands in chat.	/<command> [player] [on|off]
+Essentials	workbench	craft, ecraft, wb, ewb, wbench, ewbench, eworkbench	Opens up a workbench.	/<command>
+Essentials	anvil	eanvil	Opens up an Anvil.	/<command>
+Essentials	cartographytable	ecartographytable, carttable, ecarttable	Opens up a cartography table.	/<command>
+Essentials	grindstone	egrindstone	Opens up a grindstone.	/<command>
+Essentials	loom	eloom	Opens up a loom.	/<command>
+Essentials	smithingtable	esmithingtable, smithtable, esmithtable	Opens up a smithing table.	/<command>
+Essentials	stonecutter	estonecutter	Opens up a stonecutter.	/<command>
+Essentials	motd	emotd	Views the Message Of The Day.	/<command> [chapter] [page]
+Essentials	ptime	playertime, eplayertime, eptime	Adjust player's client time. Add @ prefix to fix.	/<command> [list|reset|day|night|dawn|17:30|4pm|4000ticks] [player|*]
+Essentials	give	egive	Give a player an item.	/<command> <player> <item|numeric> [amount [itemmeta...]]
+Essentials	tree	etree	Spawn a tree where you are looking.	/<command> <tree|birch|redwood|redmushroom| brownmushroom|jungle|junglebush|swamp>
+Essentials	tpacancel	etpacancel	Cancel all outstanding teleport requests. Specify [player] to cancel requests with them.	/<command> [player]
+Essentials	sudo	esudo	Make another user perform a command.	/<command> <player> <command [args]>
+Essentials	back	eback, return, ereturn	Teleports you to your location prior to tp/spawn/warp.	/<command>
+Essentials	jump	j, ej, ejump, jumpto, ejumpto	Jumps to the nearest block in the line of sight.	/<command>
+Essentials	fly	efly	Take off, and soar!	/<command> [player] [on|off]
+Essentials	potion	epotion, elixer, eelixer	Adds custom potion effects to a potion.	/<command> <clear|apply|effect:<effect> power:<power> duration:<duration>>
+Essentials	seen	eseen	Shows the last logout time of a player.	/<command> <playername>
+Essentials	home	ehome, homes, ehomes	Teleport to your home.	/<command> [player:]<name>
+Essentials	vanish	v, ev, evanish	Hide yourself from other players.	/<command> [player] [on|off]
+Essentials	tpdeny	etpdeny, tpno, etpno	Rejects teleport requests.	/<command> [player|*]
+Essentials	tpohere	etpohere	Teleport here override for tptoggle.	/<command> <player>
+Essentials	getpos	eposition	Get your current coordinates or those of a player.	/<command> [player]
+Essentials	god	tgm	Enables your godly powers.	/<command> [player] [on|off]
+Essentials	ping	echo, eecho, eping, pong, epong	Pong!	/<command>
+Essentials	helpop	eamsg	Message online admins.	/<command> <message>
+Essentials	skull	head, playerskull, eskull, ehead, eplayerskull	Get the player head item with your skin or a skin of a specified player, or change skin of the head you're holding.	/<command> [owner] [player]
+Essentials	broadcast	ebcast, bc, bcast, ebc	Broadcasts a message to the entire server.	/<command> <msg>
+Essentials	clearinventory	ci, eci, clean, eclean, clear, eclear, clearinvent, eclearinvent, eclearinventory	Clear all items in your inventory.	/<command> [player|*] [item[:<data>]|*|**] [amount]
+Essentials	unlimited	eul	Allows the unlimited placing of items.	/<command> <list|item|clear> [player]
+Essentials	antioch	eantioch,grenade,egrenade,tnt,etnt	A little surprise for operators.	/<command> [message]
+Essentials	fireball	fireskull	Throw a fireball or other assorted projectiles.	/<command> [fireball|small|large|arrow|skull|egg|snowball|expbottle|dragon|splashpotion|lingeringpotion|trident] [speed]
+Essentials	tpa	call,ecall,etpa,tpask,etpask	Request to teleport to the specified player.	/<command> <player>
+Essentials	createkit	ck	Create a kit in game!	/<command> <kitname> <delay>
+Essentials	kitreset	ekitreset, kitr, ekitr, resetkit, eresetkit	Resets the cooldown on the specified kit.	/<command> <kit> [player]
+Essentials	depth	eheight	States current depth	/depth
+Essentials	paytoggle	payon	Toggles whether you are accepting payments.	/<command> [player]
+Essentials	itemdb	eitemdb	Searches for an item.	/<command> <item>
+Essentials	itemlore	lore, elore, ilore, eilore, eitemlore	Edit the lore of an item.	/<command> <add/set/clear> [text/line] [text]
+Essentials	itemname	iname, einame, eitemname, itemrename, irename, eitemrename, eirename	Renames the item your currently holding. Leave name empty to reset. You can add in color codes when you have permission to.	/<command> [name]
+Essentials	afk	eafk, away, eaway	Marks you as away-from-keyboard.	/<command> [player/message...]
+Essentials	backup	ebackup	Runs the backup if configured.	/<command>
+Essentials	burn	eburn	Set a player on fire.	/<command> <player> <seconds>
+Essentials	customtext		Allows you to create custom text commands.	/<alias> - Define in bukkit.yml
+Essentials	eco	eeco,economy,eeconomy	Manages the server economy.	/<command> <give|take|set|reset> <player> <amount>
+Essentials	exp	eexp, xp	Give, set or look at a players exp.	/<command> [show|set|give] [playername [amount]]
+Essentials	feed	eat,eeat,efeed	Satisfy the hunger.	/<command> [player]
+Essentials	heal	eheal	Heals you or the given player.	/<command> [player]
+Essentials	kit	ekit,kits,ekits	Obtains the specified kit or views all available kits.	/<command> [kit] [player]
+Essentials	kittycannon	ekittycannon	Throw an exploding kitten at your opponent.	/<command>
+Essentials	beezooka	ebeezooka, beecannon, ebeecannon	Throw an exploding bee at your opponent.	/<command>
+Essentials	nick	enick,nickname,enickname	Change your nickname or that of another player.	/<command> [player] <nickname|off>
+Essentials	nuke	enuke	May death rain upon them.	/<command> [player]
+Essentials	pay	epay	Pays another player from your balance.	/<command> <player> <amount>
+Essentials	r	er,reply,ereply	Quickly reply to the last player to message you.	/<command> <message>
+Essentials	rtoggle	ertoggle, replytoggle, ereplytoggle	Change whether the recipient of the reply is last recipient or last sender.	/<command> [player] [on|off]
+Essentials	sell	esell	Sells the item currently in your hand.	/<command> <<itemname>|<id>|hand|inventory|blocks> [amount]
+Essentials	showkit	kitpreview,preview,kitshow	Show contents of a kit.	/<command> <kitname>
+Essentials	tempban	etempban	Temporary ban a user.	/<command> <playername> <datediff> [reason]
+Essentials	tempbanip	etempbanip	Temporarily ban an IP Address.	/<command> <playername> <datediff> [reason]
+Essentials	thunder	ethunder	Enable/disable thunder.	/<command> <true/false> [duration]
+Essentials	tpaccept	etpaccept,tpyes,etpyes	Accepts teleport requests.	/<command> [player|*]
+Essentials	tphere	s,etphere	Teleport a player to you.	/<command> <player>
+Essentials	tpohere	etpohere	Teleport here override for tptoggle.	/<command> <player>
+Essentials	tppos	etppos	Teleport to coordinates.	/<command> <x> <y> <z> [yaw] [pitch] [world]
+Essentials	tpr	etpr, tprandom, etprandom	Teleport randomly.	/<command>
+Essentials	unban	pardon,eunban,epardon	Unbans the specified player.	/<command> <player>
+Essentials	unbanip	eunbanip,pardonip,epardonip	Unbans the specified IP address.	/<command> <address>
+Essentials	tpauto	etpauto	Automatically accept teleportation requests.	/<command> [player]
+Essentials	delkit		Delete a given kit	/<command> <kitname>
+Essentials	playtime		Shows a player's time played in game	/<command> [player]
+
+# if there is missing commands make sure to implement them
+
+[] Tablist Improvement V1.0.5
+
+[] Permissions System 1.0.6
+
+# - Permissions commands 
+Module	Command	Aliases	Description	Syntax
+Permissions to all the commands above and more `/neoperm` or `neoessentials permissions`
+
+add in where if you cant remember a command you can run `/neoessentials <command>` to get the syntax and description of the command
+
+[] Documentation Update 

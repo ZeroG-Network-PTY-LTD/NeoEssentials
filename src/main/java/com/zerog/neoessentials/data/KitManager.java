@@ -5,6 +5,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+<<<<<<< HEAD
+=======
+import com.google.gson.reflect.TypeToken;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 import com.zerog.neoessentials.NeoEssentials;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -18,6 +22,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+<<<<<<< HEAD
+=======
+import java.lang.reflect.Type;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,9 +41,12 @@ public class KitManager {
     private static final String KIT_DATA_FILE = "neoessentials/kits.json";
     
     private final Map<String, Kit> kits = new HashMap<>();
+<<<<<<< HEAD
     
     // Kit usage statistics
     private final Map<String, Integer> kitUsage = new HashMap<>();
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
     
     private final Gson gson = new GsonBuilder()
@@ -81,7 +92,12 @@ public class KitManager {
                             
                             // Create the kit
                             Kit kit = new Kit(kitName);
+<<<<<<< HEAD
                               // Set cooldown
+=======
+                            
+                            // Set cooldown
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                             if (kitObj.has("cooldown")) {
                                 kit.setCooldown(kitObj.get("cooldown").getAsLong());
                             }
@@ -90,10 +106,14 @@ public class KitManager {
                             if (kitObj.has("permission")) {
                                 kit.setPermission(kitObj.get("permission").getAsString());
                             }
+<<<<<<< HEAD
                               // Set price
                             if (kitObj.has("price")) {
                                 kit.setPrice(kitObj.get("price").getAsDouble());
                             }
+=======
+                            
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                             // Load items (store item IDs and counts)
                             if (kitObj.has("items")) {
                                 JsonArray itemsArray = kitObj.getAsJsonArray("items");
@@ -166,15 +186,23 @@ public class KitManager {
             for (Map.Entry<String, Kit> entry : kits.entrySet()) {
                 Kit kit = entry.getValue();
                 JsonObject kitObj = new JsonObject();
+<<<<<<< HEAD
                   // Save cooldown
+=======
+                
+                // Save cooldown
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 kitObj.addProperty("cooldown", kit.getCooldown());
                 
                 // Save permission
                 if (kit.getPermission() != null) {
                     kitObj.addProperty("permission", kit.getPermission());
                 }
+<<<<<<< HEAD
                   // Save price
                 kitObj.addProperty("price", kit.getPrice());
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 
                 // Save items
                 JsonArray itemsArray = new JsonArray();
@@ -233,7 +261,12 @@ public class KitManager {
     public Map<String, Kit> getAllKits() {
         return new HashMap<>(kits);
     }
+<<<<<<< HEAD
       /**
+=======
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Creates a new kit
      * 
      * @param name The name of the kit
@@ -243,6 +276,7 @@ public class KitManager {
      * @return The created kit
      */
     public Kit createKit(String name, long cooldown, String permission, List<ItemStack> items) {
+<<<<<<< HEAD
         return createKit(name, cooldown, permission, 0, items);
     }
     
@@ -261,6 +295,11 @@ public class KitManager {
         kit.setCooldown(cooldown);
         kit.setPermission(permission);
         kit.setPrice(price);
+=======
+        Kit kit = new Kit(name);
+        kit.setCooldown(cooldown);
+        kit.setPermission(permission);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         
         for (ItemStack item : items) {
             if (!item.isEmpty()) {
@@ -282,6 +321,7 @@ public class KitManager {
      * 
      * @param name The name of the kit
      * @return True if the kit was deleted, false if not found
+<<<<<<< HEAD
      */    public boolean deleteKit(String name) {
         if (name == null) {
             return false;
@@ -289,11 +329,20 @@ public class KitManager {
         
         String kitName = name.toLowerCase();
         Kit kit = kits.remove(kitName);
+=======
+     */
+    public boolean deleteKit(String name) {
+        Kit kit = kits.remove(name != null ? name.toLowerCase() : null);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         
         if (kit != null) {
             // Remove cooldowns for this kit
             for (Map<String, Long> playerCooldowns : cooldowns.values()) {
+<<<<<<< HEAD
                 playerCooldowns.remove(kitName);
+=======
+                playerCooldowns.remove(name.toLowerCase());
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             }
             
             // Save the kits
@@ -304,6 +353,7 @@ public class KitManager {
         
         return false;
     }
+<<<<<<< HEAD
       /**
      * Checks if a player can use a kit (without considering price)
      * 
@@ -314,16 +364,24 @@ public class KitManager {
     public boolean canUseKit(ServerPlayer player, String kitName) {
         return canUseKit(player, kitName, false);
     }
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     
     /**
      * Checks if a player can use a kit
      * 
      * @param player The player
      * @param kitName The name of the kit
+<<<<<<< HEAD
      * @param checkPrice Whether to check if the player has enough money for the kit
      * @return True if the player can use the kit, false otherwise
      */
     public boolean canUseKit(ServerPlayer player, String kitName, boolean checkPrice) {
+=======
+     * @return True if the player can use the kit, false otherwise
+     */
+    public boolean canUseKit(ServerPlayer player, String kitName) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         Kit kit = getKit(kitName);
         
         if (kit == null || player == null) {
@@ -333,6 +391,7 @@ public class KitManager {
         // Check permission
         String permission = kit.getPermission();
         if (permission != null && !permission.isEmpty()) {
+<<<<<<< HEAD
             // If specific kit permission defined, check if player has it
             if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, permission)) {
                 // Check if player has bypass permission (e.g., admin level permission)
@@ -343,6 +402,11 @@ public class KitManager {
         } else {
             // Default permission check if no specific permission is set for the kit
             if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.kit")) {
+=======
+            // TODO: Check permission when we implement LuckPerms and FTB Ranks integration
+            // For now, check if player is op
+            if (!player.hasPermissions(2)) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 return false;
             }
         }
@@ -361,6 +425,7 @@ public class KitManager {
             }
         }
         
+<<<<<<< HEAD
         // Check if player has enough money if kit has a price and checking price
         if (checkPrice && kit.getPrice() > 0) {
             var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
@@ -369,6 +434,8 @@ public class KitManager {
             }
         }
         
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         return true;
     }
     
@@ -401,7 +468,12 @@ public class KitManager {
         
         return 0;
     }
+<<<<<<< HEAD
       /**
+=======
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Gives a kit to a player
      * 
      * @param player The player
@@ -415,6 +487,7 @@ public class KitManager {
             return false;
         }
         
+<<<<<<< HEAD
         // Check if the player can use the kit (including price check)
         if (!canUseKit(player, kitName, true)) {
             return false;
@@ -445,6 +518,13 @@ public class KitManager {
             }
         }
         
+=======
+        // Check if the player can use the kit
+        if (!canUseKit(player, kitName)) {
+            return false;
+        }
+        
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         // Create and give items to the player
         for (ItemDefinition itemDef : kit.getItemDefinitions()) {
             try {
@@ -499,6 +579,7 @@ public class KitManager {
     }
     
     /**
+<<<<<<< HEAD
      * Kit class representing a set of items that players can claim
      */
     public static class Kit {
@@ -506,6 +587,14 @@ public class KitManager {
         private long cooldown;
         private String permission;
         private double price = 0.0; // Add price field with default value of 0
+=======
+     * Represents a kit
+     */
+    public static class Kit {
+        private final String name;
+        private long cooldown = 0; // Cooldown in seconds
+        private String permission = null;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         private final List<ItemDefinition> itemDefinitions = new ArrayList<>();
         
         public Kit(String name) {
@@ -532,17 +621,23 @@ public class KitManager {
             this.permission = permission;
         }
         
+<<<<<<< HEAD
         public double getPrice() {
             return price;
         }
         
         public void setPrice(double price) {
             this.price = Math.max(0, price);
+=======
+        public List<ItemDefinition> getItemDefinitions() {
+            return new ArrayList<>(itemDefinitions); // Return a copy to prevent modification
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         }
         
         public void addItemDefinition(String itemId, int count) {
             itemDefinitions.add(new ItemDefinition(itemId, count));
         }
+<<<<<<< HEAD
           public List<ItemDefinition> getItemDefinitions() {
             return new ArrayList<>(itemDefinitions);
         }
@@ -592,5 +687,11 @@ public class KitManager {
      */
     public void incrementKitUsage(String kitName) {
         kitUsage.put(kitName, kitUsage.getOrDefault(kitName, 0) + 1);
+=======
+        
+        public void clearItems() {
+            itemDefinitions.clear();
+        }
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
 }

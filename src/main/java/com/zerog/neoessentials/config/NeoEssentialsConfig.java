@@ -63,7 +63,12 @@ public class NeoEssentialsConfig {
         warpCosts.put("spawn", 0);
         warpCosts.put("shop", 5);
         warpCosts.put("mine", 10);
+<<<<<<< HEAD
           // Initialize default permissions
+=======
+        
+        // Initialize default permissions
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         defaultPermissions.put("neoessentials.command.tpa", true);
         defaultPermissions.put("neoessentials.command.tpahere", true);
         defaultPermissions.put("neoessentials.command.tpaccept", true);
@@ -74,10 +79,13 @@ public class NeoEssentialsConfig {
         defaultPermissions.put("neoessentials.command.sethome", true);
         defaultPermissions.put("neoessentials.command.delhome", true);
         defaultPermissions.put("neoessentials.command.warp", true);
+<<<<<<< HEAD
         defaultPermissions.put("neoessentials.command.warp.list", true);
         defaultPermissions.put("neoessentials.command.warp.set", false);
         defaultPermissions.put("neoessentials.command.warp.delete", false);
         defaultPermissions.put("neoessentials.command.warp.player", false);
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         defaultPermissions.put("neoessentials.command.heal", false);
         defaultPermissions.put("neoessentials.command.heal.others", false);
         defaultPermissions.put("neoessentials.command.feed", true);
@@ -91,17 +99,31 @@ public class NeoEssentialsConfig {
         defaultPermissions.put("neoessentials.command.gamemode.spectator", false);
         defaultPermissions.put("neoessentials.command.gamemode.spectator.others", false);
         defaultPermissions.put("neoessentials.command.gamemode.adventure", false);
+<<<<<<< HEAD
         defaultPermissions.put("neoessentials.command.gamemode.adventure.others", false);        defaultPermissions.put("neoessentials.command.time", true);
         defaultPermissions.put("neoessentials.command.weather", true);
+=======
+        defaultPermissions.put("neoessentials.command.gamemode.adventure.others", false);
+        defaultPermissions.put("neoessentials.command.time", false);
+        defaultPermissions.put("neoessentials.command.weather", false);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         defaultPermissions.put("neoessentials.command.money", true);
         defaultPermissions.put("neoessentials.command.pay", true);
         defaultPermissions.put("neoessentials.command.balance", true);
         defaultPermissions.put("neoessentials.command.baltop", true);
+<<<<<<< HEAD
         defaultPermissions.put("neoessentials.command.eco", false);        defaultPermissions.put("neoessentials.command.kit", true);
         defaultPermissions.put("neoessentials.command.kit.list", true);
         defaultPermissions.put("neoessentials.command.kit.create", false);
         defaultPermissions.put("neoessentials.command.kit.delete", false);
         defaultPermissions.put("neoessentials.command.kit.give", false);
+=======
+        defaultPermissions.put("neoessentials.command.eco", false);
+        defaultPermissions.put("neoessentials.command.kit", true);
+        defaultPermissions.put("neoessentials.command.createkit", false);
+        defaultPermissions.put("neoessentials.command.deletekit", false);
+        defaultPermissions.put("neoessentials.command.givekit", false);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
 
     // Getters and setters for all properties

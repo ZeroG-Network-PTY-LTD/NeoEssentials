@@ -5,7 +5,10 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.utils.MessageUtil;
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.PermissionUtil;
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -24,16 +27,25 @@ public class TimeAndWeatherCommands {
      * 
      * @param dispatcher The command dispatcher
      */
+<<<<<<< HEAD
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {        // /day - Set time to day
         dispatcher.register(
             Commands.literal("day")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
+=======
+    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // /day - Set time to day
+        dispatcher.register(
+            Commands.literal("day")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.time"))
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 .executes(this::executeDay)
         );
         
         // /night - Set time to night
         dispatcher.register(
             Commands.literal("night")
+<<<<<<< HEAD
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
                 .executes(this::executeNight)
         );
@@ -41,6 +53,16 @@ public class TimeAndWeatherCommands {
         dispatcher.register(
             Commands.literal("time")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
+=======
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.time"))
+                .executes(this::executeNight)
+        );
+        
+        // /time <set|add> <time> - Set or add time
+        dispatcher.register(
+            Commands.literal("time")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.time"))
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 .then(Commands.literal("set")
                     .then(Commands.argument("time", IntegerArgumentType.integer(0, 24000))
                         .executes(context -> executeTimeSet(context, IntegerArgumentType.getInteger(context, "time")))
@@ -57,6 +79,7 @@ public class TimeAndWeatherCommands {
                     .then(Commands.literal("midnight")
                         .executes(context -> executeTimeSet(context, 18000))
                     )
+<<<<<<< HEAD
                     .then(Commands.literal("morning")
                         .executes(context -> executeTimeSet(context, 0))
                     )
@@ -66,6 +89,8 @@ public class TimeAndWeatherCommands {
                     .then(Commands.literal("sunrise")
                         .executes(context -> executeTimeSet(context, 23000))
                     )
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 )
                 .then(Commands.literal("add")
                     .then(Commands.argument("time", IntegerArgumentType.integer(0, 24000))
@@ -73,10 +98,18 @@ public class TimeAndWeatherCommands {
                     )
                 )
         );
+<<<<<<< HEAD
           // /weather <clear|rain|thunder> [duration] - Set weather
         dispatcher.register(
             Commands.literal("weather")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.weather"))
+=======
+        
+        // /weather <clear|rain|thunder> [duration] - Set weather
+        dispatcher.register(
+            Commands.literal("weather")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.weather"))
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
                 .then(Commands.literal("clear")
                     .executes(context -> executeWeather(context, "clear", 6000))
                     .then(Commands.argument("duration", IntegerArgumentType.integer(1, 1000000))
@@ -117,7 +150,12 @@ public class TimeAndWeatherCommands {
     private int executeNight(CommandContext<CommandSourceStack> context) {
         return executeTimeSet(context, 13000);
     }
+<<<<<<< HEAD
       /**
+=======
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Execute the /time set command
      * 
      * @param context The command context
@@ -125,6 +163,7 @@ public class TimeAndWeatherCommands {
      * @return Command result
      */
     private int executeTimeSet(CommandContext<CommandSourceStack> context, int time) {
+<<<<<<< HEAD
         try {
             // Set the time in all dimensions/levels, not just the current one
             for (ServerLevel serverLevel : context.getSource().getServer().getAllLevels()) {
@@ -174,6 +213,34 @@ public class TimeAndWeatherCommands {
             context.getSource().sendFailure(errorMessage);
             return 0;
         }
+=======
+        ServerLevel level = context.getSource().getLevel();
+        
+        // Set the time in the level
+        ((ServerLevelData) level.getLevelData()).setDayTime(time);
+        
+        // Send message
+        MutableComponent message;
+        if (time == 1000) {
+            message = Component.literal("Time set to day");
+        } else if (time == 6000) {
+            message = Component.literal("Time set to noon");
+        } else if (time == 13000) {
+            message = Component.literal("Time set to night");
+        } else if (time == 18000) {
+            message = Component.literal("Time set to midnight");
+        } else {
+            message = Component.literal("Time set to " + time);
+        }
+        
+        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+            MessageUtil.sendSuccess(player, message);
+        } else {
+            context.getSource().sendSuccess(() -> message, true);
+        }
+        
+        return 1;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
     
     /**
@@ -182,6 +249,7 @@ public class TimeAndWeatherCommands {
      * @param context The command context
      * @param time The time to add
      * @return Command result
+<<<<<<< HEAD
      */    private int executeTimeAdd(CommandContext<CommandSourceStack> context, int time) {
         // Get the time from the current level
         long currentTime = context.getSource().getLevel().getDayTime();
@@ -191,6 +259,14 @@ public class TimeAndWeatherCommands {
         for (ServerLevel serverLevel : context.getSource().getServer().getAllLevels()) {
             ((ServerLevelData) serverLevel.getLevelData()).setDayTime(newTime);
         }
+=======
+     */
+    private int executeTimeAdd(CommandContext<CommandSourceStack> context, int time) {
+        ServerLevel level = context.getSource().getLevel();
+        
+        // Add the time in the level
+        ((ServerLevelData) level.getLevelData()).setDayTime(level.getDayTime() + time);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         
         // Send message
         MutableComponent message = Component.literal("Added " + time + " to the time");
@@ -203,7 +279,12 @@ public class TimeAndWeatherCommands {
         
         return 1;
     }
+<<<<<<< HEAD
       /**
+=======
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Execute the /weather command
      * 
      * @param context The command context
@@ -212,6 +293,7 @@ public class TimeAndWeatherCommands {
      * @return Command result
      */
     private int executeWeather(CommandContext<CommandSourceStack> context, String weatherType, int duration) {
+<<<<<<< HEAD
         try {
             // Apply weather to all dimensions, with special handling for each weather type
             for (ServerLevel level : context.getSource().getServer().getAllLevels()) {
@@ -264,5 +346,33 @@ public class TimeAndWeatherCommands {
             context.getSource().sendFailure(errorMessage);
             return 0;
         }
+=======
+        ServerLevel level = context.getSource().getLevel();
+        
+        // Set the weather based on the type
+        switch (weatherType) {
+            case "clear":
+                level.setWeatherParameters(0, 0, false, false);
+                level.setWeatherParameters(duration, 0, false, false);
+                break;
+            case "rain":
+                level.setWeatherParameters(0, duration, true, false);
+                break;
+            case "thunder":
+                level.setWeatherParameters(0, duration, true, true);
+                break;
+        }
+        
+        // Send message
+        MutableComponent message = Component.literal("Weather set to " + weatherType + " for " + (duration / 20) + " seconds");
+        
+        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+            MessageUtil.sendSuccess(player, message);
+        } else {
+            context.getSource().sendSuccess(() -> message, true);
+        }
+        
+        return 1;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
 }

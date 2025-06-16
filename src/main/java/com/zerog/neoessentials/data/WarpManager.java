@@ -1,11 +1,30 @@
 package com.zerog.neoessentials.data;
 
+<<<<<<< HEAD
 import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
+=======
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import com.zerog.neoessentials.NeoEssentials;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Type;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,15 +32,30 @@ import java.util.Map;
  * Manages warp data for the NeoEssentials mod.
  */
 public class WarpManager {
+<<<<<<< HEAD
     
     // Map of warp names to locations
     private final Map<String, WarpLocation> warps = new HashMap<>();
       /**
+=======
+    private static final String WARP_DATA_FILE = "neoessentials/warps.json";
+    
+    // Map of warp names to locations
+    private final Map<String, WarpLocation> warps = new HashMap<>();
+    
+    private final Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .disableHtmlEscaping()
+            .create();
+    
+    /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Initialize the warp manager
      */
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Warp Manager");
         
+<<<<<<< HEAD
         // Check if storage manager is initialized before loading warps
         if (NeoEssentials.getInstance().getStorageManager() != null) {
             loadWarps();
@@ -36,6 +70,8 @@ public class WarpManager {
      */
     public void reloadWarps() {
         NeoEssentials.LOGGER.info("Reloading warps from storage");
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         loadWarps();
     }
     
@@ -47,6 +83,7 @@ public class WarpManager {
         
         saveWarps();
     }
+<<<<<<< HEAD
       /**
      * Load warps from storage
      */
@@ -141,6 +178,53 @@ public class WarpManager {
     }
     
     /**
+=======
+    
+    /**
+     * Load warps from disk
+     */
+    private void loadWarps() {
+        try {
+            File warpFile = new File(WARP_DATA_FILE);
+            
+            if (warpFile.exists()) {
+                try (FileReader reader = new FileReader(warpFile)) {
+                    Type type = new TypeToken<Map<String, WarpLocation>>() {}.getType();
+                    Map<String, WarpLocation> loadedWarps = gson.fromJson(reader, type);
+                    
+                    if (loadedWarps != null) {
+                        warps.putAll(loadedWarps);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            NeoEssentials.LOGGER.error("Error loading warp data", e);
+        }
+    }
+    
+    /**
+     * Save warps to disk
+     */
+    private void saveWarps() {
+        try {
+            File warpFile = new File(WARP_DATA_FILE);
+            
+            // Create parent directories if they don't exist
+            File parentDir = warpFile.getParentFile();
+            if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()) {
+                NeoEssentials.LOGGER.error("Failed to create directory for warp data: {}", parentDir);
+                return;
+            }
+            
+            try (FileWriter writer = new FileWriter(warpFile)) {
+                gson.toJson(warps, writer);
+            }
+        } catch (IOException e) {
+            NeoEssentials.LOGGER.error("Error saving warp data", e);
+        }
+    }
+      /**
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Sets a warp at the player's current location
      * 
      * @param player The player setting the warp

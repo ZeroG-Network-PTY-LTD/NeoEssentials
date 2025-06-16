@@ -8,10 +8,16 @@ import com.zerog.neoessentials.utils.MessageUtil;
 import com.zerog.neoessentials.utils.TeleportUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+<<<<<<< HEAD
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+=======
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 
 import java.util.Map;
 
@@ -94,6 +100,7 @@ public class HomeCommands {
                 })
         );
         
+<<<<<<< HEAD
         // Register /homehelp command
         dispatcher.register(
             Commands.literal("homehelp")
@@ -106,6 +113,8 @@ public class HomeCommands {
                 })
         );
         
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         NeoEssentials.LOGGER.info("Registered home commands");
     }
     
@@ -209,13 +218,19 @@ public class HomeCommands {
      * 
      * @param player The player
      * @return Command result code
+<<<<<<< HEAD
      */    private int listHomes(ServerPlayer player) {
+=======
+     */
+    private int listHomes(ServerPlayer player) {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         // Get the home manager
         HomeManager homeManager = NeoEssentials.getInstance().getDataManager().getHomeManager();
           // Get all homes
         Map<String, HomeManager.HomeLocation> homes = homeManager.getHomes(player.getUUID());
         
         if (homes.isEmpty()) {
+<<<<<<< HEAD
             MessageUtil.sendMessage(player, "§cYou have no homes set");
             return 0;
         } else {
@@ -265,10 +280,16 @@ public class HomeCommands {
             helpMessage.append(Component.literal(" §7for more information."));
             
             MessageUtil.sendInfo(player, helpMessage);
+=======
+            MessageUtil.sendMessage(player, "You have no homes set");
+        } else {
+            MessageUtil.sendMessage(player, "Your homes: " + String.join(", ", homes.keySet()));
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         }
         
         return 1;
     }
+<<<<<<< HEAD
     
     /**
      * Shows help for home commands
@@ -300,4 +321,6 @@ public class HomeCommands {
         
         return 1;
     }
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 }

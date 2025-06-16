@@ -3,10 +3,15 @@ package com.zerog.neoessentials;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
+<<<<<<< HEAD
 import com.zerog.neoessentials.commands.CommandManager;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
+=======
+
+import net.minecraft.core.registries.BuiltInRegistries;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -14,6 +19,7 @@ import net.neoforged.fml.ModContainer;
 
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+<<<<<<< HEAD
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -70,11 +76,32 @@ public class NeoEssentials {
      * @param modEventBus The mod-specific event bus for initialization events
      * @param modContainer The container for this mod instance
      */
+=======
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+
+// The value here should match an entry in the META-INF/neoforge.mods.toml file
+@Mod(NeoEssentials.MODID)
+public class NeoEssentials {
+    // Define mod id in a common place for everything to reference
+    public static final String MODID = "neoessentials";
+    public static final String MOD_NAME = "NeoEssentials";
+    // Directly reference a slf4j logger
+    public static final Logger LOGGER = LogUtils.getLogger();
+    
+    private static NeoEssentials instance;
+    private ModContainer modContainer;
+
+    // The constructor for the mod class is the first code that is run when your mod is loaded.
+    // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     public NeoEssentials(IEventBus modEventBus, ModContainer modContainer) {
         instance = this;
         this.modContainer = modContainer;
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+<<<<<<< HEAD
         // Register config loading event handlers
         modEventBus.addListener(this::onConfigLoad);
         modEventBus.addListener(this::onConfigReady);
@@ -92,6 +119,14 @@ public class NeoEssentials {
             LOGGER.info("NeoEssentials initializing in CLIENT environment - providing registry support for server compatibility");
             // On client, we primarily need to register things for synchronization
             // This ensures clients can connect to servers running NeoEssentials
+=======
+
+        // Check if we're on the physical server - this mod only works on servers
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.DEDICATED_SERVER) {
+            LOGGER.info("NeoEssentials initializing in DEDICATED SERVER environment");
+        } else {
+            LOGGER.info("NeoEssentials is a server-side mod. Client-side features are limited.");
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         }
         
         // Register ourselves for server and other game events we are interested in.
@@ -99,6 +134,7 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(this);
         
         // Register the event handlers
+<<<<<<< HEAD
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.events.EventHandler.class);
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.PowerToolEventHandler());
 
@@ -159,6 +195,12 @@ public class NeoEssentials {
                 configsInitialized = true;
             }
         }
+=======
+        NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.EventHandler());
+
+        // Register our mod's ModConfigSpec so that FML can create and load the config file for us
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "neoessentials-general.toml");
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
@@ -166,6 +208,7 @@ public class NeoEssentials {
         LOGGER.info("HELLO FROM COMMON SETUP");
         LOGGER.info("Initializing NeoEssentials managers");
         
+<<<<<<< HEAD
         // Additional registrations that need to happen during common setup
         event.enqueueWork(() -> {
             LOGGER.info("Registering command argument types in common setup");
@@ -180,6 +223,18 @@ public class NeoEssentials {
         
         // Initialize managers that rely on storage
         initializeManagers();
+=======
+        // Initialize the managers
+        initializeManagers();
+
+        if (Config.LOG_DIRT_BLOCK.getAsBoolean()) {
+            LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
+        }
+
+        LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
+
+        Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
 
     /**
@@ -192,18 +247,28 @@ public class NeoEssentials {
     }
     
     // Fields for the essentials managers
+<<<<<<< HEAD
     private com.zerog.neoessentials.config.ModConfigManager configManager;
     private com.zerog.neoessentials.data.DataManager dataManager;
     private com.zerog.neoessentials.commands.CommandManager commandManager;
     private com.zerog.neoessentials.storage.StorageManager storageManager;
     private boolean storageManagerInitialized = false;
+=======
+    private com.zerog.neoessentials.config.ConfigManager configManager;
+    private com.zerog.neoessentials.data.DataManager dataManager;
+    private com.zerog.neoessentials.commands.CommandManager commandManager;
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     
     /**
      * Gets the config manager
      * 
      * @return The config manager
      */
+<<<<<<< HEAD
     public com.zerog.neoessentials.config.ModConfigManager getConfigManager() {
+=======
+    public com.zerog.neoessentials.config.ConfigManager getConfigManager() {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         return configManager;
     }
     
@@ -226,6 +291,7 @@ public class NeoEssentials {
     }
     
     /**
+<<<<<<< HEAD
      * Gets the storage manager
      * 
      * @return The storage manager
@@ -235,6 +301,8 @@ public class NeoEssentials {
     }
     
     /**
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * Gets the mod container
      * 
      * @return The mod container
@@ -247,6 +315,7 @@ public class NeoEssentials {
      * Initialize the managers
      */
     public void initializeManagers() {
+<<<<<<< HEAD
         // Initialize managers that rely on data manager
         if (dataManager != null) {
             dataManager.initializeManagers();
@@ -261,6 +330,17 @@ public class NeoEssentials {
         
         // Initialize data manager
         dataManager = new com.zerog.neoessentials.data.DataManager(this);
+=======
+        // Initialize config manager first
+        configManager = new com.zerog.neoessentials.config.ConfigManager();
+        configManager.initialize();
+        
+        // Register database config with FML (separate file from main config)
+        registerDatabaseConfig();
+        
+        // Initialize data manager
+        dataManager = new com.zerog.neoessentials.data.DataManager();
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         dataManager.initialize();
         
         // Initialize command manager and register it with the event bus
@@ -268,6 +348,7 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(commandManager);
     }
     
+<<<<<<< HEAD
     /**
      * Initialize the storage manager (called after database config is loaded)
      * 
@@ -319,11 +400,15 @@ public class NeoEssentials {
      *
      * @param event The server starting event
      */
+=======
+    // You can use SubscribeEvent and let the Event Bus discover methods to call
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         // Store the server instance
         server = event.getServer();
         
+<<<<<<< HEAD
         // Log mod activation
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
@@ -339,6 +424,11 @@ public class NeoEssentials {
                 LOGGER.error("Error in AFK checker task", e);
             }
         }, 60, 60, TimeUnit.SECONDS); // Check every minute
+=======
+        // Do something when the server starts
+        LOGGER.info("NeoEssentials server-side mod activated!");
+        LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
     
     /**
@@ -351,6 +441,7 @@ public class NeoEssentials {
     public void onServerStopping(net.neoforged.neoforge.event.server.ServerStoppingEvent event) {
         LOGGER.info("Server stopping, saving all NeoEssentials data");
         
+<<<<<<< HEAD
         // Shut down scheduler
         if (scheduler != null) {
             scheduler.shutdown();
@@ -391,10 +482,27 @@ public class NeoEssentials {
      */
     private net.minecraft.server.MinecraftServer server;
     
+=======
+        // Save all data and close database connections
+        if (dataManager != null) {
+            dataManager.shutdown();
+        }
+    }
+    
+    // Server instance obtained from the ServerStartingEvent
+    private net.minecraft.server.MinecraftServer server;
+    
+    /**
+     * Gets the server instance
+     * 
+     * @return The server instance
+     */
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     public net.minecraft.server.MinecraftServer getServer() {
         return server;
     }
     
+<<<<<<< HEAD
     private void registerDatabaseConfig() {
         // Database config is now registered in ModConfigManager
         LOGGER.info("Database configuration already registered through ModConfigManager");
@@ -410,5 +518,28 @@ public class NeoEssentials {
             scheduler = Executors.newScheduledThreadPool(2);
         }
         return scheduler;
+=======
+    /**
+     * Gets the mod version from the ModContainer
+     * 
+     * @return The mod version string
+     */
+    public String getVersion() {
+        return modContainer != null ? modContainer.getModInfo().getVersion().toString() : "unknown";
+    }
+    
+    /**
+     * Register the database config with FML
+     */
+    private void registerDatabaseConfig() {
+        if (configManager != null && configManager.getDatabaseConfig() != null) {
+            // Register the database config with a different filename to avoid conflict
+            modContainer.registerConfig(
+                net.neoforged.fml.config.ModConfig.Type.COMMON,
+                configManager.getDatabaseConfig().getSpec(),
+                "neoessentials-database.toml"
+            );
+        }
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
 }

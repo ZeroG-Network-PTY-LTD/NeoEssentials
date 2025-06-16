@@ -180,6 +180,7 @@ public class TeleportCommands {
                     return success ? 1 : 0;
                 })
         );
+<<<<<<< HEAD
 
         // Register /top command
         dispatcher.register(
@@ -314,4 +315,9 @@ public class TeleportCommands {
         }
         return level.getMinBuildHeight();
     }
+=======
+        
+        NeoEssentials.LOGGER.info("Registered teleport commands");
+    }
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 }

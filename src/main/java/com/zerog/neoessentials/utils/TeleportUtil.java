@@ -37,6 +37,7 @@ public class TeleportUtil {
      * @param yaw The yaw rotation
      * @param pitch The pitch rotation
      * @return True if teleportation was successful, false otherwise
+<<<<<<< HEAD
      */    public static boolean teleport(ServerPlayer player, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
         try {
             // Validate input parameters
@@ -53,6 +54,11 @@ public class TeleportUtil {
             NeoEssentials.LOGGER.debug("Teleporting player {} to [{}, {}, {}] in dimension {}", 
                 player.getScoreboardName(), x, y, z, level.dimension().location());
             
+=======
+     */
+    public static boolean teleport(ServerPlayer player, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
+        try {
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             // Save the player's current location
             saveLastLocation(player);
             
@@ -65,12 +71,18 @@ public class TeleportUtil {
             // Apply cooldown
             applyCooldown(player.getUUID());
             
+<<<<<<< HEAD
             NeoEssentials.LOGGER.debug("Successfully teleported player {} to [{}, {}, {}] in dimension {}", 
                 player.getScoreboardName(), x, y, z, level.dimension().location());
             
             return true;
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error teleporting player: {}", e.getMessage(), e);
+=======
+            return true;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error teleporting player " + player.getScoreboardName(), e);
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
             return false;
         }
     }
