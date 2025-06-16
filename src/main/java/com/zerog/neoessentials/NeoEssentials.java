@@ -53,12 +53,17 @@ public class NeoEssentials {
     
     /** The mod container for this instance */
     private ModContainer modContainer;
+<<<<<<< HEAD
     
     /** Flag to track if the database configuration has been loaded */
     private boolean databaseConfigLoaded = false;
     
     /** Scheduled executor service for periodic tasks like AFK checking */
     private ScheduledExecutorService scheduler;
+=======
+    // Flag to track if config is loaded
+    private boolean databaseConfigLoaded = false;
+>>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
 
     /**
      * Main constructor for NeoEssentials
@@ -75,9 +80,14 @@ public class NeoEssentials {
         this.modContainer = modContainer;
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+<<<<<<< HEAD
         // Register config loading event handlers
         modEventBus.addListener(this::onConfigLoad);
         modEventBus.addListener(this::onConfigReady);
+=======
+        // Register config loading event handler
+        modEventBus.addListener(this::onConfigLoad);
+>>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
 
         // Register custom command argument types - now server-side only
         com.zerog.neoessentials.init.ModArgumentTypes.register(modEventBus);
@@ -160,6 +170,21 @@ public class NeoEssentials {
             }
         }
     }
+    
+    /**
+     * Config loading event handler. Called when configs are loaded or reloaded.
+     */
+    private void onConfigLoad(final ModConfigEvent.Loading event) {
+        ModConfig config = event.getConfig();
+        if (config.getFileName().contains("neoessentials-database.toml")) {
+            LOGGER.info("Database configuration loaded");
+            databaseConfigLoaded = true;
+            // If already at or past common setup, initialize storage now
+            if (storageManager != null && !storageManagerInitialized) {
+                initializeStorageManager();
+            }
+        }
+    }
 
     private void commonSetup(FMLCommonSetupEvent event) {
         // Some common setup code
@@ -198,6 +223,7 @@ public class NeoEssentials {
     private com.zerog.neoessentials.commands.CommandManager commandManager;
     private com.zerog.neoessentials.storage.StorageManager storageManager;
     private boolean storageManagerInitialized = false;
+<<<<<<< HEAD
 =======
     private com.zerog.neoessentials.config.ConfigManager configManager;
     private com.zerog.neoessentials.data.DataManager dataManager;
@@ -207,6 +233,8 @@ public class NeoEssentials {
 =======
     private com.zerog.neoessentials.storage.StorageManager storageManager;
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+>>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
     
     /**
      * Gets the config manager
@@ -293,9 +321,15 @@ public class NeoEssentials {
         // Register database config with FML (separate file from main config)
         registerDatabaseConfig();
         
-        // Initialize storage manager
+        // Create storage manager instance but defer initialization until config is loaded
         storageManager = new com.zerog.neoessentials.storage.StorageManager(configManager.getDatabaseConfig());
-        storageManager.initialize();
+        
+        // Only initialize storage manager if config is loaded, otherwise it will be initialized in onConfigLoad
+        if (databaseConfigLoaded) {
+            initializeStorageManager();
+        } else {
+            LOGGER.info("Deferring storage initialization until database config is loaded");
+        }
         
         // Initialize data manager
         dataManager = new com.zerog.neoessentials.data.DataManager();
@@ -307,6 +341,7 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(commandManager);
     }
     
+<<<<<<< HEAD
 <<<<<<< HEAD
     /**
      * Initialize the storage manager (called after database config is loaded)
@@ -360,6 +395,19 @@ public class NeoEssentials {
      * @param event The server starting event
      */
 =======
+=======
+    /**
+     * Initialize the storage manager (called after database config is loaded)
+     */
+    private void initializeStorageManager() {
+        if (storageManager != null && !storageManagerInitialized) {
+            LOGGER.info("Initializing storage manager now that database config is loaded");
+            storageManager.initialize();
+            storageManagerInitialized = true;
+        }
+    }
+    
+>>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
     // You can use SubscribeEvent and let the Event Bus discover methods to call
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     @SubscribeEvent
@@ -444,28 +492,39 @@ public class NeoEssentials {
 =======
         // Save all data and close database connections
         if (dataManager != null) {
-            dataManager.shutdown();
+            dataManager.saveAll();
         }
         
-        // Shutdown storage manager
-        if (storageManager != null) {
+        if (storageManager != null && storageManagerInitialized) {
             storageManager.shutdown();
         }
     }
     
-    // Server instance obtained from the ServerStartingEvent
-    private net.minecraft.server.MinecraftServer server;
+    /**
+     * Gets the version of the mod from the mods.toml file
+     * 
+     * @return The version of the mod
+     */
+    public String getVersion() {
+        return modContainer.getModInfo().getVersion().toString();
+    }
     
     /**
-     * Gets the server instance
+     * Gets the Minecraft server instance
      * 
      * @return The server instance
      */
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    private net.minecraft.server.MinecraftServer server;
+    
+>>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
     public net.minecraft.server.MinecraftServer getServer() {
         return server;
     }
     
+<<<<<<< HEAD
 <<<<<<< HEAD
     private void registerDatabaseConfig() {
         // Database config is now registered in ModConfigManager
@@ -495,6 +554,8 @@ public class NeoEssentials {
     /**
      * Register the database config with FML
      */
+=======
+>>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
     private void registerDatabaseConfig() {
         if (configManager != null && configManager.getDatabaseConfig() != null) {
             // Register the database config with a different filename to avoid conflict
