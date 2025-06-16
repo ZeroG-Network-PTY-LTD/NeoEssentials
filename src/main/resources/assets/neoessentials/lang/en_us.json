@@ -1,0 +1,13 @@
+{
+  "itemGroup.neoessentials": "ZeroG NeoEssentials",
+  "block.neoessentials.example_block": "Home Block",
+  "item.neoessentials.example_item": "Home Compass",
+
+  "neoessentials.configuration.title": "NeoEssentials Configs",
+  "neoessentials.configuration.section.neoessentials.common.toml": "NeoEssentials Configs",
+  "neoessentials.configuration.section.neoessentials.common.toml.title": "NeoEssentials Configs",
+  "neoessentials.configuration.items": "Item List",
+  "neoessentials.configuration.logDirtBlock": "Log Dirt Block",
+  "neoessentials.configuration.magicNumberIntroduction": "Magic Number Text",
+  "neoessentials.configuration.magicNumber": "Magic Number"
+}
