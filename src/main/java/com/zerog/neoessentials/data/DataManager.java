@@ -1,42 +1,23 @@
 package com.zerog.neoessentials.data;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.StorageType;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.TagParser;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringReader;
 
 /**
  * Main data manager class that initializes and manages all data storage components.
  */
-public class DataManager {    private UserManager userManager;
+public class DataManager {
+    private UserManager userManager;
     private EconomyManager economyManager;
     private HomeManager homeManager;
     private WarpManager warpManager;
     private SpawnManager spawnManager;
     private KitManager kitManager;
-    private DatabaseManager databaseManager;
     
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private final String dataFolder = "config/neoessentials/";
-    
-    // Default database configuration - will be replaced with config values
-    private StorageType storageType = StorageType.JSON;
-    private String dbHost = "localhost";
-    private int dbPort = 3306;
-    private String dbName = "neoessentials";
-    private String dbUser = "root";
-    private String dbPassword = "";
+    private final String dataFolder = "neoessentials/";
     
     public DataManager() {
         // Create the data folder if it doesn't exist
@@ -45,9 +26,6 @@ public class DataManager {    private UserManager userManager;
             dataFolderFile.mkdirs();
         }
         
-        // Create the database manager with the configured settings
-        databaseManager = new DatabaseManager(storageType, dbHost, dbPort, dbName, dbUser, dbPassword);
-        
         // Initialize all managers
         userManager = new UserManager();
         economyManager = new EconomyManager();
@@ -55,16 +33,13 @@ public class DataManager {    private UserManager userManager;
         warpManager = new WarpManager();
         spawnManager = new SpawnManager();
         kitManager = new KitManager();
-    }    /**
+    }
+    
+    /**
      * Initialize the data manager and all its components
      */
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");
-        
-        // Initialize database manager first if we're not using JSON
-        if (storageType != StorageType.JSON) {
-            databaseManager.initialize();
-        }
           
         // Initialize all data managers
         userManager.initialize();
@@ -75,7 +50,9 @@ public class DataManager {    private UserManager userManager;
         kitManager.initialize();
         
         NeoEssentials.LOGGER.info("NeoEssentials Data Manager initialized");
-    }    /**
+    }
+    
+    /**
      * Save all data to disk
      */
     public void saveAll() {
@@ -97,11 +74,6 @@ public class DataManager {    private UserManager userManager;
         
         // Save all data first
         saveAll();
-        
-        // Close database connection if using database
-        if (storageType != StorageType.JSON && databaseManager != null) {
-            databaseManager.close();
-        }
     }
     
     /**
@@ -131,7 +103,8 @@ public class DataManager {    private UserManager userManager;
         return homeManager;
     }
     
-    /**     * Gets the warp manager instance
+    /**
+     * Gets the warp manager instance
      * 
      * @return The warp manager
      */
@@ -143,10 +116,12 @@ public class DataManager {    private UserManager userManager;
      * Gets the spawn manager instance
      * 
      * @return The spawn manager
-     */    public SpawnManager getSpawnManager() {
+     */
+    public SpawnManager getSpawnManager() {
         return spawnManager;
     }
-      /**
+    
+    /**
      * Gets the kit manager instance
      * 
      * @return The kit manager
@@ -156,93 +131,12 @@ public class DataManager {    private UserManager userManager;
     }
     
     /**
-     * Gets the database manager instance
-     * 
-     * @return The database manager
-     */
-    public DatabaseManager getDatabaseManager() {
-        return databaseManager;
-    }
-    
-    /**
-     * Gets the current storage type
-     * 
-     * @return The storage type
-     */
-    public StorageType getStorageType() {
-        return storageType;
-    }
-    
-    /**
-     * Set the storage type and database configuration
-     * 
-     * @param storageType The storage type (JSON, SQLITE, MYSQL)
-     * @param dbHost Database host (for MySQL)
-     * @param dbPort Database port (for MySQL)
-     * @param dbName Database name
-     * @param dbUser Database username (for MySQL)
-     * @param dbPassword Database password (for MySQL)
-     */
-    public void setDatabaseConfig(StorageType storageType, String dbHost, int dbPort, String dbName, String dbUser, String dbPassword) {
-        this.storageType = storageType;
-        this.dbHost = dbHost;
-        this.dbPort = dbPort;
-        this.dbName = dbName;
-        this.dbUser = dbUser;
-        this.dbPassword = dbPassword;
-        
-        // Recreate database manager with new config
-        if (databaseManager != null) {
-            databaseManager.close();
-        }
-        
-        databaseManager = new DatabaseManager(storageType, dbHost, dbPort, dbName, dbUser, dbPassword);
-    }
-    
-    /**
      * Get the data directory
      * 
      * @return The data directory path
      */
     public String getDataDirectory() {
         return dataFolder;
-    }
-    
-    /**
-     * Loads a JSON object from a file
-     * 
-     * @param fileName The name of the file to load
-     * @return The loaded JSON object, or null if not found or error
-     */
-    public JsonObject loadJsonObject(String fileName) {
-        File file = new File(dataFolder + fileName);
-        
-        if (!file.exists()) {
-            return null;
-        }
-        
-        try (FileReader reader = new FileReader(file)) {
-            return JsonParser.parseReader(reader).getAsJsonObject();
-        } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Error loading JSON data from file: {}", fileName, e);
-            return null;
-        }
-    }
-    
-    /**
-     * Saves a JSON object to a file
-     * 
-     * @param fileName The name of the file to save to
-     * @param jsonObject The JSON object to save
-     */
-    public void saveJsonObject(String fileName, JsonObject jsonObject) {
-        File file = new File(dataFolder + fileName);
-        
-        try (FileWriter writer = new FileWriter(file)) {
-            gson.toJson(jsonObject, writer);
-        } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Error saving JSON data to file: {}", fileName, e);
-        }
     }
     
     /**

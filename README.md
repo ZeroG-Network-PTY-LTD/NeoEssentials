@@ -12,6 +12,7 @@ A comprehensive server-side essentials mod for Minecraft NeoForge servers, inspi
 - Kits system for distributing items
 - Chat formatting and management
 - Integration with permission mods (LuckPerms, FTB Ranks)
+- Flexible storage system (JSON, SQLite, MySQL)
 
 ## Important: Server-Side Only
 
@@ -34,15 +35,36 @@ https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
 
 ## Configuration
 
-NeoEssentials is highly configurable. The main configuration file is created at:
+NeoEssentials is highly configurable. The main configuration files are created at:
 ```
-config/neoessentials/config.json
+config/neoessentials-general.toml   # General mod settings
+config/neoessentials-database.toml  # Storage backend configuration
 ```
 
-Player data is stored in:
-```
-config/neoessentials/data/
-```
+Player data is stored based on your selected storage backend:
+- JSON: `neoessentials/` directory
+- SQLite: `neoessentials/database.db` file
+- MySQL: In your configured MySQL server
+
+## Storage System
+
+NeoEssentials supports three storage backends:
+
+1. **JSON** - Default storage method. Data is stored in JSON files.
+2. **SQLite** - Data is stored in a SQLite database file.
+3. **MySQL** - Data is stored in a MySQL database server.
+
+For detailed configuration instructions, see [STORAGE.md](docs/STORAGE.md).
+
+## Permissions System
+
+NeoEssentials provides a flexible permissions system with support for:
+
+1. **LuckPerms** - Primary permission provider if installed
+2. **FTB Ranks** - Alternative permission provider if LuckPerms is not installed
+3. **Default Permissions** - Fallback permissions defined in configuration
+
+For detailed permissions documentation, see [PERMISSIONS.md](docs/PERMISSIONS.md).
 
 ## Version Numbering
 
@@ -64,10 +86,6 @@ Here are some of the key commands included:
 - `/tpaccept` - Accept a teleport request
 - `/back` - Return to your previous location
 - `/balance` - Check your economy balance
-
-## Permission Integration
-
-NeoEssentials works with LuckPerms and FTB Ranks for permission control.
 
 ## Credits & Resources
 

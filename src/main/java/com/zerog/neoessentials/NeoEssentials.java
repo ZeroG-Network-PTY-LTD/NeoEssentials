@@ -84,6 +84,7 @@ public class NeoEssentials {
     private com.zerog.neoessentials.config.ConfigManager configManager;
     private com.zerog.neoessentials.data.DataManager dataManager;
     private com.zerog.neoessentials.commands.CommandManager commandManager;
+    private com.zerog.neoessentials.storage.StorageManager storageManager;
     
     /**
      * Gets the config manager
@@ -113,6 +114,15 @@ public class NeoEssentials {
     }
     
     /**
+     * Gets the storage manager
+     * 
+     * @return The storage manager
+     */
+    public com.zerog.neoessentials.storage.StorageManager getStorageManager() {
+        return storageManager;
+    }
+    
+    /**
      * Gets the mod container
      * 
      * @return The mod container
@@ -131,6 +141,10 @@ public class NeoEssentials {
         
         // Register database config with FML (separate file from main config)
         registerDatabaseConfig();
+        
+        // Initialize storage manager
+        storageManager = new com.zerog.neoessentials.storage.StorageManager(configManager.getDatabaseConfig());
+        storageManager.initialize();
         
         // Initialize data manager
         dataManager = new com.zerog.neoessentials.data.DataManager();
@@ -165,6 +179,11 @@ public class NeoEssentials {
         // Save all data and close database connections
         if (dataManager != null) {
             dataManager.shutdown();
+        }
+        
+        // Shutdown storage manager
+        if (storageManager != null) {
+            storageManager.shutdown();
         }
     }
     

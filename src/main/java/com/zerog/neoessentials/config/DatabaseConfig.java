@@ -24,6 +24,8 @@ public class DatabaseConfig {
     public final ModConfigSpec.ConfigValue<String> mysqlDatabase;
     public final ModConfigSpec.ConfigValue<String> mysqlUsername;
     public final ModConfigSpec.ConfigValue<String> mysqlPassword;
+    public final ModConfigSpec.BooleanValue mysqlUseSSL;
+    public final ModConfigSpec.ConfigValue<String> mysqlTablePrefix;
     
     // SQLite settings
     public final ModConfigSpec.ConfigValue<String> sqliteFilename;
@@ -59,6 +61,14 @@ public class DatabaseConfig {
         mysqlPassword = builder
                 .comment("MySQL password")
                 .define("password", "");
+                
+        mysqlUseSSL = builder
+                .comment("Whether to use SSL for MySQL connections")
+                .define("use_ssl", false);
+                
+        mysqlTablePrefix = builder
+                .comment("Prefix for MySQL tables")
+                .define("table_prefix", "ne_");
         
         builder.pop();
         
@@ -97,5 +107,77 @@ public class DatabaseConfig {
      */
     public ModConfigSpec getSpec() {
         return spec;
+    }
+    
+    /**
+     * Get the MySQL host
+     * 
+     * @return MySQL host
+     */
+    public String getHost() {
+        return mysqlHost.get();
+    }
+    
+    /**
+     * Get the MySQL port
+     * 
+     * @return MySQL port
+     */
+    public int getPort() {
+        return mysqlPort.get();
+    }
+    
+    /**
+     * Get the MySQL database name
+     * 
+     * @return MySQL database name
+     */
+    public String getDatabase() {
+        return mysqlDatabase.get();
+    }
+    
+    /**
+     * Get the MySQL username
+     * 
+     * @return MySQL username
+     */
+    public String getUsername() {
+        return mysqlUsername.get();
+    }
+    
+    /**
+     * Get the MySQL password
+     * 
+     * @return MySQL password
+     */
+    public String getPassword() {
+        return mysqlPassword.get();
+    }
+    
+    /**
+     * Check if MySQL should use SSL
+     * 
+     * @return True if MySQL should use SSL
+     */
+    public boolean isUseSsl() {
+        return mysqlUseSSL.get();
+    }
+    
+    /**
+     * Get the MySQL table prefix
+     * 
+     * @return MySQL table prefix
+     */
+    public String getTablePrefix() {
+        return mysqlTablePrefix.get();
+    }
+    
+    /**
+     * Get the SQLite filename
+     * 
+     * @return SQLite filename
+     */
+    public String getSqliteFilename() {
+        return sqliteFilename.get();
     }
 }
