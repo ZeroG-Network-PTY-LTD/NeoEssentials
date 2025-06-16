@@ -44,6 +44,15 @@ Player data is stored in:
 config/neoessentials/data/
 ```
 
+## Version Numbering
+
+NeoEssentials uses an automatic build numbering system. The version format is:
+```
+[major].[minor].[patch].[build]
+```
+
+The build number automatically increments with each successful build. This helps track exactly which version is installed on your server.
+
 ## Commands
 
 Here are some of the key commands included:
