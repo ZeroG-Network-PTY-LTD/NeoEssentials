@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.data;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.ui.TablistManager;
 import net.minecraft.nbt.CompoundTag;
@@ -15,28 +16,33 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.StorageType;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.TagParser;
 
 import java.io.File;
+<<<<<<< HEAD
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
 
 /**
  * Main data manager class that initializes and manages all data storage components.
  */
-public class DataManager {    private UserManager userManager;
+public class DataManager {
+    private UserManager userManager;
     private EconomyManager economyManager;
     private HomeManager homeManager;
     private WarpManager warpManager;
     private SpawnManager spawnManager;
     private KitManager kitManager;
+<<<<<<< HEAD
 <<<<<<< HEAD
     private JailManager jailManager;
     private PowerToolManager powerToolManager;
@@ -48,17 +54,10 @@ public class DataManager {    private UserManager userManager;
     public DataManager(NeoEssentials neoEssentials) {
 =======
     private DatabaseManager databaseManager;
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
     
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private final String dataFolder = "config/neoessentials/";
-    
-    // Default database configuration - will be replaced with config values
-    private StorageType storageType = StorageType.JSON;
-    private String dbHost = "localhost";
-    private int dbPort = 3306;
-    private String dbName = "neoessentials";
-    private String dbUser = "root";
-    private String dbPassword = "";
+    private final String dataFolder = "neoessentials/";
     
     public DataManager() {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
@@ -69,11 +68,14 @@ public class DataManager {    private UserManager userManager;
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         // Create the database manager with the configured settings
         databaseManager = new DatabaseManager(storageType, dbHost, dbPort, dbName, dbUser, dbPassword);
         
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
         // Initialize all managers
         userManager = new UserManager();
         economyManager = new EconomyManager();
@@ -96,16 +98,13 @@ public class DataManager {    private UserManager userManager;
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");            // Initialize all data managers
 =======
         kitManager = new KitManager();
-    }    /**
+    }
+    
+    /**
      * Initialize the data manager and all its components
      */
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");
-        
-        // Initialize database manager first if we're not using JSON
-        if (storageType != StorageType.JSON) {
-            databaseManager.initialize();
-        }
           
         // Initialize all data managers
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
@@ -216,7 +215,9 @@ public class DataManager {    private UserManager userManager;
 =======
         
         NeoEssentials.LOGGER.info("NeoEssentials Data Manager initialized");
-    }    /**
+    }
+    
+    /**
      * Save all data to disk
      */
     public void saveAll() {
@@ -247,6 +248,7 @@ public class DataManager {    private UserManager userManager;
         // Save all data first
         saveAll();
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         
         // Close database connection if using database
@@ -254,6 +256,8 @@ public class DataManager {    private UserManager userManager;
             databaseManager.close();
         }
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
     }
     
     /**
@@ -284,11 +288,16 @@ public class DataManager {    private UserManager userManager;
     }
     
 <<<<<<< HEAD
+<<<<<<< HEAD
     /**
      * Gets the warp manager instance
 =======
     /**     * Gets the warp manager instance
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    /**
+     * Gets the warp manager instance
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
      * 
      * @return The warp manager
      */
@@ -300,6 +309,7 @@ public class DataManager {    private UserManager userManager;
      * Gets the spawn manager instance
      * 
      * @return The spawn manager
+<<<<<<< HEAD
 <<<<<<< HEAD
      */
     public SpawnManager getSpawnManager() {
@@ -313,6 +323,14 @@ public class DataManager {    private UserManager userManager;
     }
       /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+     */
+    public SpawnManager getSpawnManager() {
+        return spawnManager;
+    }
+    
+    /**
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
      * Gets the kit manager instance
      * 
      * @return The kit manager
@@ -322,6 +340,7 @@ public class DataManager {    private UserManager userManager;
     }
     
     /**
+<<<<<<< HEAD
 <<<<<<< HEAD
      * Gets the jail manager instance
      * 
@@ -402,6 +421,8 @@ public class DataManager {    private UserManager userManager;
     }
     
     /**
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
      * Get the data directory
      * 
      * @return The data directory path
@@ -411,6 +432,7 @@ public class DataManager {    private UserManager userManager;
     }
     
     /**
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
      * Loads a JSON object from a file
@@ -451,6 +473,8 @@ public class DataManager {    private UserManager userManager;
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
      * Converts a CompoundTag to a string
      * 
      * @param nbt The NBT tag to convert

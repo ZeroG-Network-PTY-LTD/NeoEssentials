@@ -25,10 +25,15 @@ public class DatabaseConfig {
     public final ModConfigSpec.ConfigValue<String> mysqlUsername;
     public final ModConfigSpec.ConfigValue<String> mysqlPassword;
 <<<<<<< HEAD
+<<<<<<< HEAD
     public final ModConfigSpec.BooleanValue mysqlUseSSL;
     public final ModConfigSpec.ConfigValue<String> mysqlTablePrefix;
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    public final ModConfigSpec.BooleanValue mysqlUseSSL;
+    public final ModConfigSpec.ConfigValue<String> mysqlTablePrefix;
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
     
     // SQLite settings
     public final ModConfigSpec.ConfigValue<String> sqliteFilename;
@@ -65,6 +70,9 @@ public class DatabaseConfig {
                 .comment("MySQL password")
                 .define("password", "");
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
                 
         mysqlUseSSL = builder
                 .comment("Whether to use SSL for MySQL connections")
@@ -73,8 +81,11 @@ public class DatabaseConfig {
         mysqlTablePrefix = builder
                 .comment("Prefix for MySQL tables")
                 .define("table_prefix", "ne_");
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
         
         builder.pop();
         
@@ -115,6 +126,9 @@ public class DatabaseConfig {
         return spec;
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
     
     /**
      * Get the MySQL host
@@ -187,6 +201,9 @@ public class DatabaseConfig {
     public String getSqliteFilename() {
         return sqliteFilename.get();
     }
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
 }
