@@ -12,6 +12,7 @@ import net.neoforged.fml.ModContainer;
 
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -27,6 +28,8 @@ public class NeoEssentials {
     
     private static NeoEssentials instance;
     private ModContainer modContainer;
+    // Flag to track if config is loaded
+    private boolean databaseConfigLoaded = false;
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
@@ -35,6 +38,8 @@ public class NeoEssentials {
         this.modContainer = modContainer;
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+        // Register config loading event handler
+        modEventBus.addListener(this::onConfigLoad);
 
         // Check if we're on the physical server - this mod only works on servers
         if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.DEDICATED_SERVER) {
@@ -52,6 +57,21 @@ public class NeoEssentials {
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "neoessentials-general.toml");
+    }
+    
+    /**
+     * Config loading event handler. Called when configs are loaded or reloaded.
+     */
+    private void onConfigLoad(final ModConfigEvent.Loading event) {
+        ModConfig config = event.getConfig();
+        if (config.getFileName().contains("neoessentials-database.toml")) {
+            LOGGER.info("Database configuration loaded");
+            databaseConfigLoaded = true;
+            // If already at or past common setup, initialize storage now
+            if (storageManager != null && !storageManagerInitialized) {
+                initializeStorageManager();
+            }
+        }
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
@@ -85,6 +105,7 @@ public class NeoEssentials {
     private com.zerog.neoessentials.data.DataManager dataManager;
     private com.zerog.neoessentials.commands.CommandManager commandManager;
     private com.zerog.neoessentials.storage.StorageManager storageManager;
+    private boolean storageManagerInitialized = false;
     
     /**
      * Gets the config manager
@@ -142,9 +163,15 @@ public class NeoEssentials {
         // Register database config with FML (separate file from main config)
         registerDatabaseConfig();
         
-        // Initialize storage manager
+        // Create storage manager instance but defer initialization until config is loaded
         storageManager = new com.zerog.neoessentials.storage.StorageManager(configManager.getDatabaseConfig());
-        storageManager.initialize();
+        
+        // Only initialize storage manager if config is loaded, otherwise it will be initialized in onConfigLoad
+        if (databaseConfigLoaded) {
+            initializeStorageManager();
+        } else {
+            LOGGER.info("Deferring storage initialization until database config is loaded");
+        }
         
         // Initialize data manager
         dataManager = new com.zerog.neoessentials.data.DataManager();
@@ -153,6 +180,17 @@ public class NeoEssentials {
         // Initialize command manager and register it with the event bus
         commandManager = new com.zerog.neoessentials.commands.CommandManager();
         NeoForge.EVENT_BUS.register(commandManager);
+    }
+    
+    /**
+     * Initialize the storage manager (called after database config is loaded)
+     */
+    private void initializeStorageManager() {
+        if (storageManager != null && !storageManagerInitialized) {
+            LOGGER.info("Initializing storage manager now that database config is loaded");
+            storageManager.initialize();
+            storageManagerInitialized = true;
+        }
     }
     
     // You can use SubscribeEvent and let the Event Bus discover methods to call
@@ -178,39 +216,34 @@ public class NeoEssentials {
         
         // Save all data and close database connections
         if (dataManager != null) {
-            dataManager.shutdown();
+            dataManager.saveAll();
         }
         
-        // Shutdown storage manager
-        if (storageManager != null) {
+        if (storageManager != null && storageManagerInitialized) {
             storageManager.shutdown();
         }
     }
     
-    // Server instance obtained from the ServerStartingEvent
-    private net.minecraft.server.MinecraftServer server;
+    /**
+     * Gets the version of the mod from the mods.toml file
+     * 
+     * @return The version of the mod
+     */
+    public String getVersion() {
+        return modContainer.getModInfo().getVersion().toString();
+    }
     
     /**
-     * Gets the server instance
+     * Gets the Minecraft server instance
      * 
      * @return The server instance
      */
+    private net.minecraft.server.MinecraftServer server;
+    
     public net.minecraft.server.MinecraftServer getServer() {
         return server;
     }
     
-    /**
-     * Gets the mod version from the ModContainer
-     * 
-     * @return The mod version string
-     */
-    public String getVersion() {
-        return modContainer != null ? modContainer.getModInfo().getVersion().toString() : "unknown";
-    }
-    
-    /**
-     * Register the database config with FML
-     */
     private void registerDatabaseConfig() {
         if (configManager != null && configManager.getDatabaseConfig() != null) {
             // Register the database config with a different filename to avoid conflict
