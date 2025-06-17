@@ -227,14 +227,19 @@ public class WarpCommands {
      * @param player The player to teleport
      * @param warpLocation The warp location
      * @return True if teleportation was successful, false otherwise
-     */
-    private boolean teleportPlayerToWarp(ServerPlayer player, WarpManager.WarpLocation warpLocation) {
+     */    private boolean teleportPlayerToWarp(ServerPlayer player, WarpManager.WarpLocation warpLocation) {
         String dimensionKey = warpLocation.getDimension();
         double x = warpLocation.getX();
         double y = warpLocation.getY();
         double z = warpLocation.getZ();
         float yaw = warpLocation.getYaw();
         float pitch = warpLocation.getPitch();
+        
+        // Check if player's server is available
+        if (player.getServer() == null) {
+            NeoEssentials.LOGGER.error("Cannot teleport player, server instance is null");
+            return false;
+        }
         
         // Get the server from the player
         ServerLevel targetLevel = null;
@@ -247,8 +252,25 @@ public class WarpCommands {
         
         if (targetLevel == null) {
             NeoEssentials.LOGGER.error("Could not find dimension for warp: {}", dimensionKey);
-            return false;
+            
+            // Try again with a simpler matching approach
+            for (ServerLevel level : player.getServer().getAllLevels()) {
+                String simpleName = level.dimension().location().getPath();
+                if (dimensionKey.contains(simpleName)) {
+                    NeoEssentials.LOGGER.info("Found dimension {} for warp using simplified matching", level.dimension().location());
+                    targetLevel = level;
+                    break;
+                }
+            }
+            
+            if (targetLevel == null) {
+                return false;
+            }
         }
+        
+        // Log successful dimension resolution
+        NeoEssentials.LOGGER.info("Teleporting player {} to warp at [{}, {}, {}] in dimension {}", 
+            player.getScoreboardName(), x, y, z, targetLevel.dimension().location());
         
         // Teleport the player
         return TeleportUtil.teleport(player, targetLevel, x, y, z, yaw, pitch);

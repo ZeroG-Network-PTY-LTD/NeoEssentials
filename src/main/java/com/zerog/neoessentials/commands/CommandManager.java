@@ -56,27 +56,33 @@ public class CommandManager {    // Command classes
      * Registers all command categories with the dispatcher.
      * 
      * @param dispatcher The command dispatcher
-     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // Register teleport commands
+     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {        // Register teleport commands
         teleportCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered teleport commands");
         
         // Register home commands
         homeCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered home commands");
         
         // Register economy commands
         economyCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered economy commands");
         
         // Register user commands
         userCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered user commands");
         
         // Register warp commands
         warpCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered warp commands");
         
         // Register kit commands
         kitCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered kit commands");
         
         // Register time and weather commands
         timeAndWeatherCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered time and weather commands");
     }
     
     /**
