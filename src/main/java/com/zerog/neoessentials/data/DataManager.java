@@ -218,6 +218,30 @@ public class DataManager {
     }
     
     /**
+     * Reload data from storage.
+     * Call this method after the storage manager has been initialized if it wasn't available during initial loading.
+     */
+    public void reloadFromStorage() {
+        NeoEssentials.LOGGER.info("Reloading data from storage");
+        
+        // Check if storage manager is initialized
+        if (NeoEssentials.getInstance().getStorageManager() != null) {
+            // Reload warps data
+            warpManager.reloadWarps();
+            
+            // Reload other data as needed
+            // homeManager.reloadHomes();
+            // economyManager.reloadEconomyData();
+            // kitManager.reloadKits();
+            // spawnManager.reloadSpawnData();
+            
+            NeoEssentials.LOGGER.info("Data successfully reloaded from storage");
+        } else {
+            NeoEssentials.LOGGER.warn("Cannot reload data: Storage manager is not initialized");
+        }
+    }
+    
+    /**
      * Save all data to disk
      */
     public void saveAll() {

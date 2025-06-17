@@ -243,22 +243,60 @@ public class SQLiteStorageHandler implements StorageHandler {
         
         return homes;
     }
-    
-    @Override
+      @Override
     public boolean saveWarps(Map<String, WarpData> warps) {
+<<<<<<< HEAD
         try (Connection connection = connectionManager.getConnection()) {
+=======
+        if (connection == null) {
+            NeoEssentials.LOGGER.error("SQLite connection is null, cannot save warps");
+            return false;
+        }
+        
+        NeoEssentials.LOGGER.info("Saving {} warps to SQLite database", warps.size());
+        
+        try {
+            // Check if the table exists
+            boolean tableExists = false;
+            try (Statement checkStmt = connection.createStatement()) {
+                ResultSet tables = checkStmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='warps'");
+                tableExists = tables.next();
+            }
+            
+            if (!tableExists) {
+                NeoEssentials.LOGGER.warn("The 'warps' table does not exist in SQLite database. Creating it now.");
+                try (Statement createStmt = connection.createStatement()) {
+                    createStmt.execute(
+                        "CREATE TABLE IF NOT EXISTS warps (" +
+                        "name TEXT PRIMARY KEY, " +
+                        "dimension TEXT NOT NULL, " +
+                        "x INTEGER NOT NULL, " +
+                        "y INTEGER NOT NULL, " +
+                        "z INTEGER NOT NULL, " +
+                        "pitch REAL NOT NULL, " +
+                        "yaw REAL NOT NULL, " +
+                        "permission TEXT" +
+                        ")"
+                    );
+                }
+            }
+            
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
             // Start transaction
             connection.setAutoCommit(false);
             
             // Delete all existing warps
             try (Statement stmt = connection.createStatement()) {
-                stmt.executeUpdate("DELETE FROM warps");
+                int deletedCount = stmt.executeUpdate("DELETE FROM warps");
+                NeoEssentials.LOGGER.debug("Deleted {} existing warps from SQLite database", deletedCount);
             }
             
             // Insert new warps
+            int successCount = 0;
             try (PreparedStatement stmt = connection.prepareStatement(
                     "INSERT INTO warps (name, dimension, x, y, z, pitch, yaw, permission) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
                 
+<<<<<<< HEAD
                 for (Map.Entry<String, WarpData> entry : warps.entrySet()) {
                     String warpName = entry.getKey();
                     WarpData warp = entry.getValue();
@@ -281,6 +319,30 @@ public class SQLiteStorageHandler implements StorageHandler {
                     }
                     
                     stmt.executeUpdate();
+=======
+                for (WarpData warp : warps.values()) {
+                    try {
+                        BlockPos pos = warp.getPosition();
+                        
+                        stmt.setString(1, warp.getName());
+                        stmt.setString(2, warp.getDimension());
+                        stmt.setInt(3, pos.getX());
+                        stmt.setInt(4, pos.getY());
+                        stmt.setInt(5, pos.getZ());
+                        stmt.setFloat(6, warp.getPitch());
+                        stmt.setFloat(7, warp.getYaw());
+                        stmt.setString(8, warp.getPermission());
+                        
+                        stmt.executeUpdate();
+                        
+                        NeoEssentials.LOGGER.debug("Saved warp '{}' to SQLite at [{}, {}, {}] in dimension '{}'",
+                            warp.getName(), pos.getX(), pos.getY(), pos.getZ(), warp.getDimension());
+                        
+                        successCount++;
+                    } catch (Exception e) {
+                        NeoEssentials.LOGGER.error("Error saving warp '{}' to SQLite: {}", warp.getName(), e.getMessage());
+                    }
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
                 }
             }
             
@@ -288,9 +350,14 @@ public class SQLiteStorageHandler implements StorageHandler {
             connection.commit();
             connection.setAutoCommit(true);
             
+            NeoEssentials.LOGGER.info("Successfully saved {}/{} warps to SQLite database", successCount, warps.size());
             return true;
         } catch (SQLException e) {
+<<<<<<< HEAD
             try (Connection connection = connectionManager.getConnection()) {
+=======
+            try {
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
                 if (connection != null) {
                     connection.rollback();
                     connection.setAutoCommit(true);
@@ -299,15 +366,19 @@ public class SQLiteStorageHandler implements StorageHandler {
                 NeoEssentials.LOGGER.error("Failed to rollback transaction: {}", ex.getMessage());
             }
             
+<<<<<<< HEAD
             NeoEssentials.LOGGER.error("Failed to save warp data: {}", e.getMessage());
+=======
+            NeoEssentials.LOGGER.error("Failed to save warps to SQLite: {}", e.getMessage(), e);
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
             return false;
         }
     }
-    
-    @Override
+      @Override
     public Map<String, WarpData> loadWarps() {
         Map<String, WarpData> warps = new HashMap<>();
         
+<<<<<<< HEAD
         try (Connection connection = connectionManager.getConnection();
              Statement stmt = connection.createStatement()) {
             
@@ -339,6 +410,58 @@ public class SQLiteStorageHandler implements StorageHandler {
             }
         } catch (SQLException e) {
             NeoEssentials.LOGGER.error("Failed to load warp data: {}", e.getMessage());
+=======
+        if (connection == null) {
+            NeoEssentials.LOGGER.error("SQLite connection is null, cannot load warps");
+            return warps;
+        }
+        
+        NeoEssentials.LOGGER.info("Loading warps from SQLite database");
+        
+        try (Statement stmt = connection.createStatement()) {
+            ResultSet rs = stmt.executeQuery("SELECT name, dimension, x, y, z, pitch, yaw, permission FROM warps");
+            
+            int count = 0;
+            while (rs.next()) {
+                try {
+                    String name = rs.getString("name");
+                    String dimension = rs.getString("dimension");
+                    int x = rs.getInt("x");
+                    int y = rs.getInt("y");
+                    int z = rs.getInt("z");
+                    float pitch = rs.getFloat("pitch");
+                    float yaw = rs.getFloat("yaw");
+                    String permission = rs.getString("permission");
+                    
+                    BlockPos pos = new BlockPos(x, y, z);
+                    warps.put(name.toLowerCase(), new WarpData(name, dimension, pos, pitch, yaw, permission));
+                    
+                    NeoEssentials.LOGGER.debug("Loaded warp '{}' from SQLite at [{}, {}, {}] in dimension '{}'",
+                        name, x, y, z, dimension);
+                    count++;
+                } catch (Exception e) {
+                    NeoEssentials.LOGGER.error("Error loading individual warp from SQLite: {}", e.getMessage(), e);
+                }
+            }
+            
+            NeoEssentials.LOGGER.info("Successfully loaded {} warps from SQLite database", count);
+            return warps;
+        } catch (SQLException e) {
+            NeoEssentials.LOGGER.error("Failed to load warps from SQLite: {}", e.getMessage(), e);
+            
+            // Try to check if the table exists
+            try (Statement checkStmt = connection.createStatement()) {
+                ResultSet tables = checkStmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='warps'");
+                if (!tables.next()) {
+                    NeoEssentials.LOGGER.error("The 'warps' table does not exist in SQLite database. Creating it now.");
+                    createTables(); // Recreate tables if they don't exist
+                }
+            } catch (SQLException ex) {
+                NeoEssentials.LOGGER.error("Error checking SQLite tables: {}", ex.getMessage(), ex);
+            }
+            
+            return warps;
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
         }
         
         return warps;

@@ -51,6 +51,7 @@ public class PermissionUtil {
      * @param permission The permission string to check
      * @return True if the source has the permission, false otherwise
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    public static boolean hasPermission(CommandSourceStack source, String permission) {
         boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
         
@@ -66,26 +67,47 @@ public class PermissionUtil {
         // Operators always have permission
         if (source.hasPermission(2)) {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+     */    public static boolean hasPermission(CommandSourceStack source, String permission) {
+        boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
+        
+        // Operators always have permission
+        if (source.hasPermission(2)) {
+            if (debug) {
+                NeoEssentials.LOGGER.debug("Permission '{}' granted to operator {}", 
+                    permission, source.getTextName());
+            }
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
             return true;
         }
         
         // If not a player, deny permission
         if (!(source.getEntity() instanceof ServerPlayer player)) {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
             if (debug) {
                 NeoEssentials.LOGGER.debug("Permission '{}' denied for non-player source {}", 
                     permission, source.getTextName());
             }
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
             return false;
         }
         
         UUID uuid = player.getUUID();
 <<<<<<< HEAD
+<<<<<<< HEAD
         String playerName = player.getScoreboardName();
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        String playerName = player.getScoreboardName();
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
         
         // Update last access time
         lastAccessTime.put(uuid, System.currentTimeMillis());
@@ -96,12 +118,18 @@ public class PermissionUtil {
         
         if (cachedResult != null && !cachedResult.isExpired()) {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
             if (debug) {
                 NeoEssentials.LOGGER.debug("Using cached permission result for '{}': {} (player: {})", 
                     permission, cachedResult.result, playerName);
             }
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
             return cachedResult.result;
         }
         
@@ -109,12 +137,16 @@ public class PermissionUtil {
         boolean hasPermission = checkPermission(player, permission);
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
         // Log the permission check result
         if (debug) {
             NeoEssentials.LOGGER.debug("Permission check for '{}': {} (player: {})", 
                 permission, hasPermission, playerName);
         }
         
+<<<<<<< HEAD
         // Cache the result
         playerCache.put(permission, new PermissionResult(hasPermission));
         
@@ -174,6 +206,8 @@ public class PermissionUtil {
         
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
         // Cache the result
         playerCache.put(permission, new PermissionResult(hasPermission));
         
@@ -184,6 +218,7 @@ public class PermissionUtil {
         
         return hasPermission;
     }
+<<<<<<< HEAD
     
     /**
 <<<<<<< HEAD
@@ -264,6 +299,9 @@ public class PermissionUtil {
       /**
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+      /**
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
      * Direct permission check for a player without caching
      * 
      * @param player The player to check
@@ -295,26 +333,50 @@ public class PermissionUtil {
             }
 =======
     private static boolean checkPermission(ServerPlayer player, String permission) {
+        boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
+        String playerName = player.getScoreboardName();
+        
         // Check LuckPerms
         boolean result = checkLuckPermsPermission(player, permission);
+        
+        if (result && debug) {
+            NeoEssentials.LOGGER.debug("LuckPerms granted permission '{}' to player {}", 
+                permission, playerName);
+            return true;
+        }
         
         // If not found in LuckPerms, try FTB Ranks
         if (!result) {
             result = checkFTBRanksPermission(player, permission);
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+            
+            if (result && debug) {
+                NeoEssentials.LOGGER.debug("FTB Ranks granted permission '{}' to player {}", 
+                    permission, playerName);
+                return true;
+            }
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
         }
         
         // If no permission system gave a result, check default config
         if (!result) {
             result = checkDefaultPermission(permission);
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
             
             if (debug) {
                 NeoEssentials.LOGGER.debug("Using default permission for '{}': {} (player: {})", 
                     permission, result, playerName);
             }
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
         }
         
         return result;
@@ -427,8 +489,7 @@ public class PermissionUtil {
     }    /**     * Check if a permission should be granted by default when no permission system is found
 =======
     }
-    
-    /**
+      /**
      * Check if a permission should be granted by default when no permission system is found
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
      * 
@@ -461,10 +522,30 @@ public class PermissionUtil {
     private static boolean checkDefaultPermission(String permission) {
         // Get the config instance from NeoEssentials
         NeoEssentialsConfig config = NeoEssentials.getInstance().getConfigManager().getConfig();
+        boolean debug = config.isDebug();
         
+<<<<<<< HEAD
         // Default behavior - will be configurable in the future
         return config.defaultPermissions().getOrDefault(permission, true);
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        // Check if the permission is explicitly defined in the config
+        if (config.defaultPermissions().containsKey(permission)) {
+            boolean result = config.defaultPermissions().get(permission);
+            if (debug) {
+                NeoEssentials.LOGGER.debug("Default permission '{}' explicitly configured as: {}", 
+                    permission, result);
+            }
+            return result;
+        } else {
+            // Fall back to true if not explicitly defined
+            if (debug) {
+                NeoEssentials.LOGGER.debug("No explicit default permission for '{}', defaulting to TRUE", 
+                    permission);
+            }
+            return true;
+        }
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
     }
     
     /**

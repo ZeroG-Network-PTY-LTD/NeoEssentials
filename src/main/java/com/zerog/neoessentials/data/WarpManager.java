@@ -50,15 +50,22 @@ public class WarpManager {
     
     // Map of warp names to locations
     private final Map<String, WarpLocation> warps = new HashMap<>();
+<<<<<<< HEAD
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+      /**
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
      * Initialize the warp manager
      */
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Warp Manager");
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
         // Check if storage manager is initialized before loading warps
         if (NeoEssentials.getInstance().getStorageManager() != null) {
             loadWarps();
@@ -73,8 +80,11 @@ public class WarpManager {
      */
     public void reloadWarps() {
         NeoEssentials.LOGGER.info("Reloading warps from storage");
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
         loadWarps();
     }
     
