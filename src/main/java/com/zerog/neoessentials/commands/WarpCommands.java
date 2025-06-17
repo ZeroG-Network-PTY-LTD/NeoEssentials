@@ -482,6 +482,7 @@ public class WarpCommands {
      * @param player The player to teleport
      * @param warpLocation The warp location
      * @return True if teleportation was successful, false otherwise
+<<<<<<< HEAD
      */
     private boolean teleportPlayerToWarp(ServerPlayer player, WarpManager.WarpLocation warpLocation) {
 <<<<<<< HEAD
@@ -492,6 +493,9 @@ public class WarpCommands {
         
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+     */    private boolean teleportPlayerToWarp(ServerPlayer player, WarpManager.WarpLocation warpLocation) {
+>>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
         String dimensionKey = warpLocation.getDimension();
         double x = warpLocation.getX();
         double y = warpLocation.getY();
@@ -500,12 +504,16 @@ public class WarpCommands {
         float pitch = warpLocation.getPitch();
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
         // Check if player's server is available
         if (player.getServer() == null) {
             NeoEssentials.LOGGER.error("Cannot teleport player, server instance is null");
             return false;
         }
         
+<<<<<<< HEAD
         // Get the server from the player
         ServerLevel targetLevel = null;
         
@@ -515,6 +523,8 @@ public class WarpCommands {
                 targetLevel = level;
                 NeoEssentials.LOGGER.debug("Found exact dimension match: {}", dimensionKey);
 =======
+=======
+>>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
         // Get the server from the player
         ServerLevel targetLevel = null;
         for (ServerLevel level : player.getServer().getAllLevels()) {
@@ -644,8 +654,25 @@ public class WarpCommands {
 =======
         if (targetLevel == null) {
             NeoEssentials.LOGGER.error("Could not find dimension for warp: {}", dimensionKey);
-            return false;
+            
+            // Try again with a simpler matching approach
+            for (ServerLevel level : player.getServer().getAllLevels()) {
+                String simpleName = level.dimension().location().getPath();
+                if (dimensionKey.contains(simpleName)) {
+                    NeoEssentials.LOGGER.info("Found dimension {} for warp using simplified matching", level.dimension().location());
+                    targetLevel = level;
+                    break;
+                }
+            }
+            
+            if (targetLevel == null) {
+                return false;
+            }
         }
+        
+        // Log successful dimension resolution
+        NeoEssentials.LOGGER.info("Teleporting player {} to warp at [{}, {}, {}] in dimension {}", 
+            player.getScoreboardName(), x, y, z, targetLevel.dimension().location());
         
         // Teleport the player
         return TeleportUtil.teleport(player, targetLevel, x, y, z, yaw, pitch);

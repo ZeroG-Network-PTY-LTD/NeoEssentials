@@ -116,6 +116,7 @@ public class CommandManager {    // Command classes
      * 
      * @param dispatcher The command dispatcher
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {// Register teleport commands
         teleportCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered teleport commands");
@@ -192,26 +193,39 @@ public class CommandManager {    // Command classes
 =======
      */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Register teleport commands
+=======
+     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {        // Register teleport commands
+>>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
         teleportCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered teleport commands");
         
         // Register home commands
         homeCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered home commands");
         
         // Register economy commands
         economyCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered economy commands");
         
         // Register user commands
         userCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered user commands");
         
         // Register warp commands
         warpCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered warp commands");
         
         // Register kit commands
         kitCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered kit commands");
         
         // Register time and weather commands
         timeAndWeatherCommands.register(dispatcher);
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        NeoEssentials.LOGGER.info("Registered time and weather commands");
+>>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
     }
     
     /**
