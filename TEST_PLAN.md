@@ -64,12 +64,17 @@ This document outlines the test plan for the NeoEssentials mod for Minecraft 1.2
 - Test `/day` to set time to day {Not working}
 - Test `/night` to set time to night {Not working}
 <<<<<<< HEAD
+<<<<<<< HEAD
 - Test `/time set <value>` to set specific time {Not working}
 - Test `/time add <value>` to add time {Not working}
 =======
 - Test `/time set <value>` to set specific time
 - Test `/time add <value>` to add time
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+- Test `/time set <value>` to set specific time {Not working}
+- Test `/time add <value>` to add time {Not working}
+>>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
 
 ### Weather Commands {Not working}
 - Test `/weather clear` to clear weather
