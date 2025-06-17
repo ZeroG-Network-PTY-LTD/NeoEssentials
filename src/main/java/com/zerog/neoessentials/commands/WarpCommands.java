@@ -8,9 +8,13 @@ import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.WarpManager;
 import com.zerog.neoessentials.utils.MessageUtil;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.PermissionUtil;
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+import com.zerog.neoessentials.utils.PermissionUtil;
+>>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
 import com.zerog.neoessentials.utils.TeleportUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -48,8 +52,12 @@ public class WarpCommands {
         // /warp <name> - Teleport to a warp
         dispatcher.register(
             Commands.literal("warp")
+<<<<<<< HEAD
                 .requires(source -> source.hasPermission(2)) // Requires permission level 2 (op)
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp"))
+>>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executeWarp)
                 )
@@ -59,6 +67,7 @@ public class WarpCommands {
         // /warps - List all available warps
         dispatcher.register(
             Commands.literal("warps")
+<<<<<<< HEAD
 <<<<<<< HEAD
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.list"))
                 .executes(this::executeWarpList)
@@ -77,14 +86,21 @@ public class WarpCommands {
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.set"))
 =======
                 .requires(source -> source.hasPermission(0)) // Available to all players
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.list"))
+>>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
                 .executes(this::executeWarpList)
         );
         
         // /setwarp <name> - Set a warp at the player's location
         dispatcher.register(
             Commands.literal("setwarp")
+<<<<<<< HEAD
                 .requires(source -> source.hasPermission(2)) // Requires permission level 2 (op)
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.set"))
+>>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executeSetWarp)
                 )
@@ -99,8 +115,12 @@ public class WarpCommands {
         // /delwarp <name> - Delete a warp
         dispatcher.register(
             Commands.literal("delwarp")
+<<<<<<< HEAD
                 .requires(source -> source.hasPermission(2)) // Requires permission level 2 (op)
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.delete"))
+>>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executeDeleteWarp)
                 )
@@ -110,10 +130,14 @@ public class WarpCommands {
         dispatcher.register(
             Commands.literal("warpplayer")
 <<<<<<< HEAD
+<<<<<<< HEAD
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.player"))
 =======
                 .requires(source -> source.hasPermission(2)) // Requires permission level 2 (op)
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.player"))
+>>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("warp", StringArgumentType.word())
                         .executes(this::executeWarpPlayer)

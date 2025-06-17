@@ -64,11 +64,15 @@ public class NeoEssentialsConfig {
         warpCosts.put("shop", 5);
         warpCosts.put("mine", 10);
 <<<<<<< HEAD
+<<<<<<< HEAD
           // Initialize default permissions
 =======
         
         // Initialize default permissions
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+          // Initialize default permissions
+>>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
         defaultPermissions.put("neoessentials.command.tpa", true);
         defaultPermissions.put("neoessentials.command.tpahere", true);
         defaultPermissions.put("neoessentials.command.tpaccept", true);
@@ -80,12 +84,18 @@ public class NeoEssentialsConfig {
         defaultPermissions.put("neoessentials.command.delhome", true);
         defaultPermissions.put("neoessentials.command.warp", true);
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
         defaultPermissions.put("neoessentials.command.warp.list", true);
         defaultPermissions.put("neoessentials.command.warp.set", false);
         defaultPermissions.put("neoessentials.command.warp.delete", false);
         defaultPermissions.put("neoessentials.command.warp.player", false);
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
         defaultPermissions.put("neoessentials.command.heal", false);
         defaultPermissions.put("neoessentials.command.heal.others", false);
         defaultPermissions.put("neoessentials.command.feed", true);
