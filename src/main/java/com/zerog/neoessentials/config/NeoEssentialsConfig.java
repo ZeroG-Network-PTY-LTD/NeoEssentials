@@ -63,8 +63,7 @@ public class NeoEssentialsConfig {
         warpCosts.put("spawn", 0);
         warpCosts.put("shop", 5);
         warpCosts.put("mine", 10);
-        
-        // Initialize default permissions
+          // Initialize default permissions
         defaultPermissions.put("neoessentials.command.tpa", true);
         defaultPermissions.put("neoessentials.command.tpahere", true);
         defaultPermissions.put("neoessentials.command.tpaccept", true);
@@ -75,6 +74,10 @@ public class NeoEssentialsConfig {
         defaultPermissions.put("neoessentials.command.sethome", true);
         defaultPermissions.put("neoessentials.command.delhome", true);
         defaultPermissions.put("neoessentials.command.warp", true);
+        defaultPermissions.put("neoessentials.command.warp.list", true);
+        defaultPermissions.put("neoessentials.command.warp.set", false);
+        defaultPermissions.put("neoessentials.command.warp.delete", false);
+        defaultPermissions.put("neoessentials.command.warp.player", false);
         defaultPermissions.put("neoessentials.command.heal", false);
         defaultPermissions.put("neoessentials.command.heal.others", false);
         defaultPermissions.put("neoessentials.command.feed", true);

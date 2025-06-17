@@ -63,8 +63,8 @@ This document outlines the test plan for the NeoEssentials mod for Minecraft 1.2
 ### Time Commands
 - Test `/day` to set time to day {Not working}
 - Test `/night` to set time to night {Not working}
-- Test `/time set <value>` to set specific time
-- Test `/time add <value>` to add time
+- Test `/time set <value>` to set specific time {Not working}
+- Test `/time add <value>` to add time {Not working}
 
 ### Weather Commands {Not working}
 - Test `/weather clear` to clear weather

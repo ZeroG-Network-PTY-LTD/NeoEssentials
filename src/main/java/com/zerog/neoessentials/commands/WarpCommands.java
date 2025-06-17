@@ -7,6 +7,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.WarpManager;
 import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.utils.PermissionUtil;
 import com.zerog.neoessentials.utils.TeleportUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -32,7 +33,7 @@ public class WarpCommands {
         // /warp <name> - Teleport to a warp
         dispatcher.register(
             Commands.literal("warp")
-                .requires(source -> source.hasPermission(2)) // Requires permission level 2 (op)
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp"))
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executeWarp)
                 )
@@ -42,14 +43,14 @@ public class WarpCommands {
         // /warps - List all available warps
         dispatcher.register(
             Commands.literal("warps")
-                .requires(source -> source.hasPermission(0)) // Available to all players
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.list"))
                 .executes(this::executeWarpList)
         );
         
         // /setwarp <name> - Set a warp at the player's location
         dispatcher.register(
             Commands.literal("setwarp")
-                .requires(source -> source.hasPermission(2)) // Requires permission level 2 (op)
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.set"))
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executeSetWarp)
                 )
@@ -58,7 +59,7 @@ public class WarpCommands {
         // /delwarp <name> - Delete a warp
         dispatcher.register(
             Commands.literal("delwarp")
-                .requires(source -> source.hasPermission(2)) // Requires permission level 2 (op)
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.delete"))
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executeDeleteWarp)
                 )
@@ -67,7 +68,7 @@ public class WarpCommands {
         // /warpplayer <player> <warp> - Teleport another player to a warp
         dispatcher.register(
             Commands.literal("warpplayer")
-                .requires(source -> source.hasPermission(2)) // Requires permission level 2 (op)
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.player"))
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("warp", StringArgumentType.word())
                         .executes(this::executeWarpPlayer)
