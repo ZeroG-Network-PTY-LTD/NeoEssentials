@@ -87,6 +87,7 @@ public class WarpManager {
         saveWarps();
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
       /**
      * Load warps from storage
      */
@@ -184,16 +185,28 @@ public class WarpManager {
 =======
     
     /**
+=======
+      /**
+>>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
      * Load warps from storage
      */
     private void loadWarps() {
         warps.clear();
+        
+        NeoEssentials.LOGGER.info("Loading warps from storage");
+        
+        // Check if storage manager is available
+        if (NeoEssentials.getInstance().getStorageManager() == null) {
+            NeoEssentials.LOGGER.error("Storage manager not available, cannot load warps");
+            return;
+        }
         
         // Load warps from the storage manager
         Map<String, WarpData> loadedWarps = NeoEssentials.getInstance().getStorageManager().loadWarps();
         
         // Convert WarpData to WarpLocation
         if (loadedWarps != null) {
+            NeoEssentials.LOGGER.info("Found {} warps to load", loadedWarps.size());
             loadedWarps.forEach((name, data) -> {
                 BlockPos pos = data.getPosition();
                 WarpLocation location = new WarpLocation(
@@ -205,15 +218,26 @@ public class WarpManager {
                     data.getPitch()
                 );
                 warps.put(name.toLowerCase(), location);
+                NeoEssentials.LOGGER.debug("Loaded warp '{}' at [{}, {}, {}] in dimension '{}'", 
+                    name, pos.getX(), pos.getY(), pos.getZ(), data.getDimension());
             });
             NeoEssentials.LOGGER.info("Loaded {} warps from storage", loadedWarps.size());
+        } else {
+            NeoEssentials.LOGGER.warn("No warps data returned from storage manager");
         }
     }
-    
-    /**
+      /**
      * Save warps to storage
      */
     private void saveWarps() {
+        NeoEssentials.LOGGER.info("Saving warps to storage");
+        
+        // Check if storage manager is available
+        if (NeoEssentials.getInstance().getStorageManager() == null) {
+            NeoEssentials.LOGGER.error("Storage manager not available, cannot save warps");
+            return;
+        }
+        
         // Convert WarpLocation to WarpData for storage
         Map<String, WarpData> warpData = new HashMap<>();
         
@@ -234,12 +258,16 @@ public class WarpManager {
             );
             
             warpData.put(name, data);
+            NeoEssentials.LOGGER.debug("Prepared warp '{}' at [{}, {}, {}] in dimension '{}' for saving", 
+                name, pos.getX(), pos.getY(), pos.getZ(), location.dimension);
         });
+        
+        NeoEssentials.LOGGER.info("Attempting to save {} warps", warpData.size());
         
         // Save to storage manager
         boolean success = NeoEssentials.getInstance().getStorageManager().saveWarps(warpData);
         if (success) {
-            NeoEssentials.LOGGER.info("Saved {} warps to storage", warpData.size());
+            NeoEssentials.LOGGER.info("Successfully saved {} warps to storage", warpData.size());
         } else {
             NeoEssentials.LOGGER.error("Failed to save warps to storage");
         }
