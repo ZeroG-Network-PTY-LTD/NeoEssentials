@@ -181,7 +181,13 @@ public class NeoEssentials {
             databaseConfigLoaded = true;
             // If already at or past common setup, initialize storage now
             if (storageManager != null && !storageManagerInitialized) {
-                initializeStorageManager();
+                boolean success = initializeStorageManager();
+                
+                // Reload data from storage if initialization was successful and data manager is available
+                if (success && dataManager != null) {
+                    LOGGER.info("Storage manager initialized, reloading data");
+                    dataManager.reloadFromStorage();
+                }
             }
         }
     }
@@ -398,13 +404,43 @@ public class NeoEssentials {
 =======
     /**
      * Initialize the storage manager (called after database config is loaded)
+     * 
+     * @return True if initialization was successful, false otherwise
      */
-    private void initializeStorageManager() {
+    private boolean initializeStorageManager() {
         if (storageManager != null && !storageManagerInitialized) {
             LOGGER.info("Initializing storage manager now that database config is loaded");
-            storageManager.initialize();
-            storageManagerInitialized = true;
+            boolean success = storageManager.initialize();
+            
+            if (success) {
+                LOGGER.info("Storage manager successfully initialized");
+                storageManagerInitialized = true;
+                return true;
+            } else {
+                LOGGER.error("Failed to initialize storage manager");
+                // Use a fallback JSON storage handler if the configured one fails
+                LOGGER.info("Attempting to use fallback JSON storage as a backup");
+                
+                // Create a fallback config with JSON storage
+                com.zerog.neoessentials.config.DatabaseConfig fallbackConfig = new com.zerog.neoessentials.config.DatabaseConfig();
+                fallbackConfig.storageType.set(com.zerog.neoessentials.config.StorageType.JSON);
+                
+                // Replace the storage manager
+                storageManager = new com.zerog.neoessentials.storage.StorageManager(fallbackConfig);
+                boolean fallbackSuccess = storageManager.initialize();
+                
+                if (fallbackSuccess) {
+                    LOGGER.info("Fallback JSON storage manager initialized successfully");
+                    storageManagerInitialized = true;
+                    return true;
+                } else {
+                    LOGGER.error("Failed to initialize even the fallback storage manager");
+                    return false;
+                }
+            }
         }
+        
+        return storageManagerInitialized;
     }
     
 >>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
