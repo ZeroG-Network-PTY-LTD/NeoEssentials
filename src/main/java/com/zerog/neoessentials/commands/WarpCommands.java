@@ -30,10 +30,16 @@ public class WarpCommands {
      * @param dispatcher The command dispatcher
      */
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // /warp <name> - Teleport to a warp
+        NeoEssentials.LOGGER.info("Registering warp commands");
+        
+        // /warp <n> - Teleport to a warp
         dispatcher.register(
             Commands.literal("warp")
-                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp"))
+                .requires(source -> {
+                    boolean hasPermission = PermissionUtil.hasPermission(source, "neoessentials.command.warp");
+                    NeoEssentials.LOGGER.debug("Permission check for 'neoessentials.command.warp': {}", hasPermission);
+                    return hasPermission;
+                })
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executeWarp)
                 )
@@ -47,7 +53,7 @@ public class WarpCommands {
                 .executes(this::executeWarpList)
         );
         
-        // /setwarp <name> - Set a warp at the player's location
+        // /setwarp <n> - Set a warp at the player's location
         dispatcher.register(
             Commands.literal("setwarp")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.set"))
@@ -56,7 +62,7 @@ public class WarpCommands {
                 )
         );
         
-        // /delwarp <name> - Delete a warp
+        // /delwarp <n> - Delete a warp
         dispatcher.register(
             Commands.literal("delwarp")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.delete"))
@@ -75,6 +81,8 @@ public class WarpCommands {
                     )
                 )
         );
+        
+        NeoEssentials.LOGGER.info("Warp commands registered successfully");
     }
     
     /**
@@ -87,22 +95,37 @@ public class WarpCommands {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String warpName = StringArgumentType.getString(context, "name");
         
+        NeoEssentials.LOGGER.debug("Player {} is attempting to teleport to warp '{}'", player.getScoreboardName(), warpName);
+        
         WarpManager warpManager = NeoEssentials.getInstance().getDataManager().getWarpManager();
+        if (warpManager == null) {
+            NeoEssentials.LOGGER.error("WarpManager is null when executing /warp command");
+            context.getSource().sendFailure(Component.literal("Warp system is not available"));
+            return 0;
+        }
+        
         WarpManager.WarpLocation warpLocation = warpManager.getWarp(warpName);
         
         if (warpLocation == null) {
+            NeoEssentials.LOGGER.debug("Warp '{}' not found for player {}", warpName, player.getScoreboardName());
             context.getSource().sendFailure(Component.literal("Warp '" + warpName + "' not found"));
             return 0;
         }
         
+        NeoEssentials.LOGGER.debug("Attempting to teleport player {} to warp '{}' at dimension {}, [{}, {}, {}]",
+            player.getScoreboardName(), warpName, warpLocation.getDimension(), 
+            warpLocation.getX(), warpLocation.getY(), warpLocation.getZ());
+            
         // Teleport the player to the warp
         boolean success = teleportPlayerToWarp(player, warpLocation);
         
         if (success) {
+            NeoEssentials.LOGGER.debug("Successfully teleported player {} to warp '{}'", player.getScoreboardName(), warpName);
             MutableComponent message = Component.literal("Teleported to warp '" + warpName + "'");
             MessageUtil.sendSuccess(player, message);
             return 1;
         } else {
+            NeoEssentials.LOGGER.error("Failed to teleport player {} to warp '{}'", player.getScoreboardName(), warpName);
             context.getSource().sendFailure(Component.literal("Failed to teleport to warp '" + warpName + "'"));
             return 0;
         }
@@ -117,10 +140,19 @@ public class WarpCommands {
     private int executeWarpList(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         
+        NeoEssentials.LOGGER.debug("Player {} is requesting the warp list", player.getScoreboardName());
+        
         WarpManager warpManager = NeoEssentials.getInstance().getDataManager().getWarpManager();
+        if (warpManager == null) {
+            NeoEssentials.LOGGER.error("WarpManager is null when executing /warps command");
+            context.getSource().sendFailure(Component.literal("Warp system is not available"));
+            return 0;
+        }
+        
         Map<String, WarpManager.WarpLocation> warps = warpManager.getWarps();
         
         if (warps.isEmpty()) {
+            NeoEssentials.LOGGER.debug("No warps found for player {}", player.getScoreboardName());
             context.getSource().sendFailure(Component.literal("No warps have been set"));
             return 0;
         }
@@ -136,6 +168,7 @@ public class WarpCommands {
             first = false;
         }
         
+        NeoEssentials.LOGGER.debug("Sending warp list ({} warps) to player {}", warps.size(), player.getScoreboardName());
         MessageUtil.sendInfo(player, message);
         return 1;
     }
@@ -150,14 +183,30 @@ public class WarpCommands {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String warpName = StringArgumentType.getString(context, "name");
         
+        NeoEssentials.LOGGER.debug("Player {} is attempting to set warp '{}' at [{}, {}, {}] in dimension {}",
+            player.getScoreboardName(), warpName, 
+            player.getX(), player.getY(), player.getZ(),
+            player.level().dimension().location());
+        
         WarpManager warpManager = NeoEssentials.getInstance().getDataManager().getWarpManager();
+        if (warpManager == null) {
+            NeoEssentials.LOGGER.error("WarpManager is null when executing /setwarp command");
+            context.getSource().sendFailure(Component.literal("Warp system is not available"));
+            return 0;
+        }
+        
         boolean success = warpManager.setWarp(player, warpName);
         
         if (success) {
+            NeoEssentials.LOGGER.info("Player {} set warp '{}' at [{}, {}, {}] in dimension {}",
+                player.getScoreboardName(), warpName, 
+                player.getX(), player.getY(), player.getZ(),
+                player.level().dimension().location());
             MutableComponent message = Component.literal("Set warp '" + warpName + "' at your current location");
             MessageUtil.sendSuccess(player, message);
             return 1;
         } else {
+            NeoEssentials.LOGGER.error("Failed to set warp '{}' for player {}", warpName, player.getScoreboardName());
             context.getSource().sendFailure(Component.literal("Failed to set warp '" + warpName + "'"));
             return 0;
         }
@@ -173,14 +222,24 @@ public class WarpCommands {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String warpName = StringArgumentType.getString(context, "name");
         
+        NeoEssentials.LOGGER.debug("Player {} is attempting to delete warp '{}'", player.getScoreboardName(), warpName);
+        
         WarpManager warpManager = NeoEssentials.getInstance().getDataManager().getWarpManager();
+        if (warpManager == null) {
+            NeoEssentials.LOGGER.error("WarpManager is null when executing /delwarp command");
+            context.getSource().sendFailure(Component.literal("Warp system is not available"));
+            return 0;
+        }
+        
         boolean success = warpManager.deleteWarp(warpName);
         
         if (success) {
+            NeoEssentials.LOGGER.info("Player {} deleted warp '{}'", player.getScoreboardName(), warpName);
             MutableComponent message = Component.literal("Deleted warp '" + warpName + "'");
             MessageUtil.sendSuccess(player, message);
             return 1;
         } else {
+            NeoEssentials.LOGGER.debug("Warp '{}' not found for deletion by player {}", warpName, player.getScoreboardName());
             context.getSource().sendFailure(Component.literal("Warp '" + warpName + "' not found"));
             return 0;
         }
@@ -197,18 +256,34 @@ public class WarpCommands {
         ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
         String warpName = StringArgumentType.getString(context, "warp");
         
+        NeoEssentials.LOGGER.debug("Player {} is attempting to warp player {} to warp '{}'", 
+            source.getScoreboardName(), targetPlayer.getScoreboardName(), warpName);
+        
         WarpManager warpManager = NeoEssentials.getInstance().getDataManager().getWarpManager();
+        if (warpManager == null) {
+            NeoEssentials.LOGGER.error("WarpManager is null when executing /warpplayer command");
+            context.getSource().sendFailure(Component.literal("Warp system is not available"));
+            return 0;
+        }
+        
         WarpManager.WarpLocation warpLocation = warpManager.getWarp(warpName);
         
         if (warpLocation == null) {
+            NeoEssentials.LOGGER.debug("Warp '{}' not found for warpplayer command by {}", warpName, source.getScoreboardName());
             context.getSource().sendFailure(Component.literal("Warp '" + warpName + "' not found"));
             return 0;
         }
+        
+        NeoEssentials.LOGGER.debug("Attempting to teleport player {} to warp '{}' at dimension {}, [{}, {}, {}]",
+            targetPlayer.getScoreboardName(), warpName, warpLocation.getDimension(), 
+            warpLocation.getX(), warpLocation.getY(), warpLocation.getZ());
         
         // Teleport the target player to the warp
         boolean success = teleportPlayerToWarp(targetPlayer, warpLocation);
         
         if (success) {
+            NeoEssentials.LOGGER.info("Player {} teleported {} to warp '{}'", 
+                source.getScoreboardName(), targetPlayer.getScoreboardName(), warpName);
             MutableComponent messageToAdmin = Component.literal("Teleported " + targetPlayer.getScoreboardName() + " to warp '" + warpName + "'");
             MessageUtil.sendSuccess(source, messageToAdmin);
             
@@ -216,6 +291,7 @@ public class WarpCommands {
             MessageUtil.sendInfo(targetPlayer, messageToTarget);
             return 1;
         } else {
+            NeoEssentials.LOGGER.error("Failed to teleport player {} to warp '{}'", targetPlayer.getScoreboardName(), warpName);
             context.getSource().sendFailure(Component.literal("Failed to teleport " + targetPlayer.getScoreboardName() + " to warp '" + warpName + "'"));
             return 0;
         }
@@ -227,7 +303,13 @@ public class WarpCommands {
      * @param player The player to teleport
      * @param warpLocation The warp location
      * @return True if teleportation was successful, false otherwise
-     */    private boolean teleportPlayerToWarp(ServerPlayer player, WarpManager.WarpLocation warpLocation) {
+     */
+    private boolean teleportPlayerToWarp(ServerPlayer player, WarpManager.WarpLocation warpLocation) {
+        if (player == null || warpLocation == null) {
+            NeoEssentials.LOGGER.error("Cannot teleport with null player or warp location");
+            return false;
+        }
+        
         String dimensionKey = warpLocation.getDimension();
         double x = warpLocation.getX();
         double y = warpLocation.getY();
@@ -264,7 +346,25 @@ public class WarpCommands {
             }
             
             if (targetLevel == null) {
-                return false;
+                // Try an even simpler matching approach as a last resort
+                for (ServerLevel level : player.getServer().getAllLevels()) {
+                    String dimPath = level.dimension().location().getPath();
+                    String dimKey = dimensionKey.toLowerCase();
+                    
+                    // Check if dimension key contains basic names like "overworld", "nether", "end"
+                    if ((dimPath.contains("overworld") && dimKey.contains("overworld")) ||
+                        (dimPath.contains("nether") && dimKey.contains("nether")) ||
+                        (dimPath.contains("end") && dimKey.contains("end"))) {
+                        NeoEssentials.LOGGER.info("Found dimension {} for warp using basic name matching", level.dimension().location());
+                        targetLevel = level;
+                        break;
+                    }
+                }
+                
+                if (targetLevel == null) {
+                    NeoEssentials.LOGGER.error("All dimension matching attempts failed for: {}", dimensionKey);
+                    return false;
+                }
             }
         }
         
