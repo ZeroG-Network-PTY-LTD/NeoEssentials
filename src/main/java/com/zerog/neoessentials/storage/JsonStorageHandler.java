@@ -156,11 +156,20 @@ public class JsonStorageHandler implements StorageHandler {
             return homes;
         }
     }
-    
-    @Override
+      @Override
     public boolean saveWarps(Map<String, WarpData> warps) {
+        NeoEssentials.LOGGER.info("JsonStorageHandler: Saving {} warps to {}", warps.size(), WARPS_FILE);
+        
         try {
             File file = new File(WARPS_FILE);
+            
+            // Create parent directory if it doesn't exist
+            File parentDir = file.getParentFile();
+            if (!parentDir.exists() && !parentDir.mkdirs()) {
+                NeoEssentials.LOGGER.error("Failed to create directory: {}", parentDir.getAbsolutePath());
+                return false;
+            }
+            
             JsonObject rootObj = new JsonObject();
             JsonObject warpsObj = new JsonObject();
             
@@ -168,27 +177,34 @@ public class JsonStorageHandler implements StorageHandler {
                 String warpName = entry.getKey();
                 WarpData warp = entry.getValue();
                 
-                JsonObject warpObj = new JsonObject();
-                warpObj.addProperty("name", warp.getName());
-                warpObj.addProperty("dimension", warp.getDimension());
-                
-                // Save position
-                JsonObject posObj = new JsonObject();
-                posObj.addProperty("x", warp.getPosition().getX());
-                posObj.addProperty("y", warp.getPosition().getY());
-                posObj.addProperty("z", warp.getPosition().getZ());
-                warpObj.add("position", posObj);
-                
-                // Save rotation
-                warpObj.addProperty("pitch", warp.getPitch());
-                warpObj.addProperty("yaw", warp.getYaw());
-                
-                // Save permission
-                if (warp.getPermission() != null) {
-                    warpObj.addProperty("permission", warp.getPermission());
+                try {
+                    JsonObject warpObj = new JsonObject();
+                    warpObj.addProperty("name", warp.getName());
+                    warpObj.addProperty("dimension", warp.getDimension());
+                    
+                    BlockPos position = warp.getPosition();
+                    // Save position
+                    JsonObject posObj = new JsonObject();
+                    posObj.addProperty("x", position.getX());
+                    posObj.addProperty("y", position.getY());
+                    posObj.addProperty("z", position.getZ());
+                    warpObj.add("position", posObj);
+                    
+                    // Save rotation
+                    warpObj.addProperty("pitch", warp.getPitch());
+                    warpObj.addProperty("yaw", warp.getYaw());
+                    
+                    // Save permission
+                    if (warp.getPermission() != null) {
+                        warpObj.addProperty("permission", warp.getPermission());
+                    }
+                    
+                    warpsObj.add(warpName, warpObj);
+                    NeoEssentials.LOGGER.debug("Prepared warp '{}' at [{}, {}, {}] in dimension '{}' for saving", 
+                        warpName, position.getX(), position.getY(), position.getZ(), warp.getDimension());
+                } catch (Exception e) {
+                    NeoEssentials.LOGGER.error("Error preparing warp '{}' for saving: {}", warpName, e.getMessage());
                 }
-                
-                warpsObj.add(warpName, warpObj);
             }
             
             rootObj.add("warps", warpsObj);
@@ -197,23 +213,28 @@ public class JsonStorageHandler implements StorageHandler {
                 gson.toJson(rootObj, writer);
             }
             
+            NeoEssentials.LOGGER.info("Successfully saved {} warps to {}", warps.size(), file.getAbsolutePath());
             return true;
         } catch (IOException e) {
-            NeoEssentials.LOGGER.error("Failed to save warps: {}", e.getMessage());
+            NeoEssentials.LOGGER.error("Failed to save warps: {}", e.getMessage(), e);
             return false;
         }
     }
-    
-    @Override
+      @Override
     public Map<String, WarpData> loadWarps() {
         Map<String, WarpData> warps = new HashMap<>();
+        
+        NeoEssentials.LOGGER.info("JsonStorageHandler: Loading warps from {}", WARPS_FILE);
         
         try {
             File file = new File(WARPS_FILE);
             
             if (!file.exists()) {
+                NeoEssentials.LOGGER.info("Warps file doesn't exist yet at {}", file.getAbsolutePath());
                 return warps;
             }
+            
+            NeoEssentials.LOGGER.debug("Reading warps file: {}", file.getAbsolutePath());
             
             JsonObject rootObj;
             try (FileReader reader = new FileReader(file)) {
@@ -222,38 +243,50 @@ public class JsonStorageHandler implements StorageHandler {
             
             if (rootObj.has("warps")) {
                 JsonObject warpsObj = rootObj.getAsJsonObject("warps");
+                NeoEssentials.LOGGER.debug("Found {} warps in JSON file", warpsObj.size());
                 
                 for (Map.Entry<String, JsonElement> entry : warpsObj.entrySet()) {
                     String warpName = entry.getKey();
-                    JsonObject warpObj = entry.getValue().getAsJsonObject();
                     
-                    String name = warpObj.get("name").getAsString();
-                    String dimension = warpObj.get("dimension").getAsString();
-                    
-                    // Load position
-                    JsonObject posObj = warpObj.getAsJsonObject("position");
-                    int x = posObj.get("x").getAsInt();
-                    int y = posObj.get("y").getAsInt();
-                    int z = posObj.get("z").getAsInt();
-                    BlockPos pos = new BlockPos(x, y, z);
-                    
-                    // Load rotation
-                    float pitch = warpObj.get("pitch").getAsFloat();
-                    float yaw = warpObj.get("yaw").getAsFloat();
-                    
-                    // Load permission
-                    String permission = null;
-                    if (warpObj.has("permission")) {
-                        permission = warpObj.get("permission").getAsString();
+                    try {
+                        JsonObject warpObj = entry.getValue().getAsJsonObject();
+                        
+                        String name = warpObj.get("name").getAsString();
+                        String dimension = warpObj.get("dimension").getAsString();
+                        
+                        // Load position
+                        JsonObject posObj = warpObj.getAsJsonObject("position");
+                        int x = posObj.get("x").getAsInt();
+                        int y = posObj.get("y").getAsInt();
+                        int z = posObj.get("z").getAsInt();
+                        BlockPos pos = new BlockPos(x, y, z);
+                        
+                        // Load rotation
+                        float pitch = warpObj.get("pitch").getAsFloat();
+                        float yaw = warpObj.get("yaw").getAsFloat();
+                        
+                        // Load permission
+                        String permission = null;
+                        if (warpObj.has("permission")) {
+                            permission = warpObj.get("permission").getAsString();
+                        }
+                        
+                        warps.put(warpName, new WarpData(name, dimension, pos, pitch, yaw, permission));
+                        NeoEssentials.LOGGER.debug("Successfully loaded warp '{}' at [{}, {}, {}] in dimension '{}'", 
+                            name, x, y, z, dimension);
+                    } catch (Exception e) {
+                        NeoEssentials.LOGGER.error("Error loading warp '{}': {}", warpName, e.getMessage());
                     }
-                    
-                    warps.put(warpName, new WarpData(name, dimension, pos, pitch, yaw, permission));
                 }
+                
+                NeoEssentials.LOGGER.info("Successfully loaded {} warps", warps.size());
+            } else {
+                NeoEssentials.LOGGER.warn("No 'warps' object found in JSON file");
             }
             
             return warps;
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Failed to load warps: {}", e.getMessage());
+            NeoEssentials.LOGGER.error("Failed to load warps: {}", e.getMessage(), e);
             return warps;
         }
     }

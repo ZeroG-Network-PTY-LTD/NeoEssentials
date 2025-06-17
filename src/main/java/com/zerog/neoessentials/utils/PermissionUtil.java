@@ -46,19 +46,29 @@ public class PermissionUtil {
      * @param source The command source to check
      * @param permission The permission string to check
      * @return True if the source has the permission, false otherwise
-     */
-    public static boolean hasPermission(CommandSourceStack source, String permission) {
+     */    public static boolean hasPermission(CommandSourceStack source, String permission) {
+        boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
+        
         // Operators always have permission
         if (source.hasPermission(2)) {
+            if (debug) {
+                NeoEssentials.LOGGER.debug("Permission '{}' granted to operator {}", 
+                    permission, source.getTextName());
+            }
             return true;
         }
         
         // If not a player, deny permission
         if (!(source.getEntity() instanceof ServerPlayer player)) {
+            if (debug) {
+                NeoEssentials.LOGGER.debug("Permission '{}' denied for non-player source {}", 
+                    permission, source.getTextName());
+            }
             return false;
         }
         
         UUID uuid = player.getUUID();
+        String playerName = player.getScoreboardName();
         
         // Update last access time
         lastAccessTime.put(uuid, System.currentTimeMillis());
@@ -68,11 +78,21 @@ public class PermissionUtil {
         PermissionResult cachedResult = playerCache.get(permission);
         
         if (cachedResult != null && !cachedResult.isExpired()) {
+            if (debug) {
+                NeoEssentials.LOGGER.debug("Using cached permission result for '{}': {} (player: {})", 
+                    permission, cachedResult.result, playerName);
+            }
             return cachedResult.result;
         }
         
         // Cache miss or expired, check actual permission
         boolean hasPermission = checkPermission(player, permission);
+        
+        // Log the permission check result
+        if (debug) {
+            NeoEssentials.LOGGER.debug("Permission check for '{}': {} (player: {})", 
+                permission, hasPermission, playerName);
+        }
         
         // Cache the result
         playerCache.put(permission, new PermissionResult(hasPermission));
@@ -84,8 +104,7 @@ public class PermissionUtil {
         
         return hasPermission;
     }
-    
-    /**
+      /**
      * Direct permission check for a player without caching
      * 
      * @param player The player to check
@@ -93,17 +112,37 @@ public class PermissionUtil {
      * @return True if the player has the permission, false otherwise
      */
     private static boolean checkPermission(ServerPlayer player, String permission) {
+        boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
+        String playerName = player.getScoreboardName();
+        
         // Check LuckPerms
         boolean result = checkLuckPermsPermission(player, permission);
+        
+        if (result && debug) {
+            NeoEssentials.LOGGER.debug("LuckPerms granted permission '{}' to player {}", 
+                permission, playerName);
+            return true;
+        }
         
         // If not found in LuckPerms, try FTB Ranks
         if (!result) {
             result = checkFTBRanksPermission(player, permission);
+            
+            if (result && debug) {
+                NeoEssentials.LOGGER.debug("FTB Ranks granted permission '{}' to player {}", 
+                    permission, playerName);
+                return true;
+            }
         }
         
         // If no permission system gave a result, check default config
         if (!result) {
             result = checkDefaultPermission(permission);
+            
+            if (debug) {
+                NeoEssentials.LOGGER.debug("Using default permission for '{}': {} (player: {})", 
+                    permission, result, playerName);
+            }
         }
         
         return result;
@@ -197,8 +236,7 @@ public class PermissionUtil {
         
         return false;
     }
-    
-    /**
+      /**
      * Check if a permission should be granted by default when no permission system is found
      * 
      * @param permission The permission string to check
@@ -207,9 +245,24 @@ public class PermissionUtil {
     private static boolean checkDefaultPermission(String permission) {
         // Get the config instance from NeoEssentials
         NeoEssentialsConfig config = NeoEssentials.getInstance().getConfigManager().getConfig();
+        boolean debug = config.isDebug();
         
-        // Default behavior - will be configurable in the future
-        return config.defaultPermissions().getOrDefault(permission, true);
+        // Check if the permission is explicitly defined in the config
+        if (config.defaultPermissions().containsKey(permission)) {
+            boolean result = config.defaultPermissions().get(permission);
+            if (debug) {
+                NeoEssentials.LOGGER.debug("Default permission '{}' explicitly configured as: {}", 
+                    permission, result);
+            }
+            return result;
+        } else {
+            // Fall back to true if not explicitly defined
+            if (debug) {
+                NeoEssentials.LOGGER.debug("No explicit default permission for '{}', defaulting to TRUE", 
+                    permission);
+            }
+            return true;
+        }
     }
     
     /**

@@ -22,18 +22,32 @@ public class StorageManager {
     public StorageManager(DatabaseConfig config) {
         this.config = config;
     }
-    
-    /**
+      /**
      * Initialize the storage manager
+     * 
+     * @return True if initialization was successful, false otherwise
      */
-    public void initialize() {
+    public boolean initialize() {
+        NeoEssentials.LOGGER.info("Initializing storage manager with {} storage", config.storageType.get());
+        
         // Create the storage handler based on config
-        storageHandler = StorageFactory.createStorageHandler(config);
-        
-        // Initialize the storage handler
-        storageHandler.initialize();
-        
-        NeoEssentials.LOGGER.info("Storage manager initialized with {} storage", config.storageType.get());
+        try {
+            storageHandler = StorageFactory.createStorageHandler(config);
+            
+            if (storageHandler == null) {
+                NeoEssentials.LOGGER.error("Failed to create storage handler for type {}", config.storageType.get());
+                return false;
+            }
+            
+            // Initialize the storage handler
+            storageHandler.initialize();
+            
+            NeoEssentials.LOGGER.info("Storage manager successfully initialized with {} storage", config.storageType.get());
+            return true;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error initializing storage manager: {}", e.getMessage(), e);
+            return false;
+        }
     }
     
     /**
@@ -63,8 +77,7 @@ public class StorageManager {
     public StorageHandler getStorageHandler() {
         return storageHandler;
     }
-    
-    /**
+      /**
      * Save home data for a player
      * 
      * @param uuid The player UUID
@@ -73,7 +86,13 @@ public class StorageManager {
      */
     public boolean saveHomeData(UUID uuid, Map<String, HomeData> homes) {
         if (storageHandler != null) {
-            return storageHandler.saveHomeData(uuid, homes);
+            try {
+                return storageHandler.saveHomeData(uuid, homes);
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error saving home data for player {}: {}", uuid, e.getMessage(), e);
+            }
+        } else {
+            NeoEssentials.LOGGER.error("Cannot save home data: Storage handler is not initialized");
         }
         return false;
     }
@@ -86,7 +105,13 @@ public class StorageManager {
      */
     public Map<String, HomeData> loadHomeData(UUID uuid) {
         if (storageHandler != null) {
-            return storageHandler.loadHomeData(uuid);
+            try {
+                return storageHandler.loadHomeData(uuid);
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error loading home data for player {}: {}", uuid, e.getMessage(), e);
+            }
+        } else {
+            NeoEssentials.LOGGER.error("Cannot load home data: Storage handler is not initialized");
         }
         return Map.of();
     }
@@ -99,7 +124,14 @@ public class StorageManager {
      */
     public boolean saveWarps(Map<String, WarpData> warps) {
         if (storageHandler != null) {
-            return storageHandler.saveWarps(warps);
+            try {
+                NeoEssentials.LOGGER.debug("Saving {} warps via storage manager", warps.size());
+                return storageHandler.saveWarps(warps);
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error saving warps: {}", e.getMessage(), e);
+            }
+        } else {
+            NeoEssentials.LOGGER.error("Cannot save warps: Storage handler is not initialized");
         }
         return false;
     }
@@ -111,7 +143,16 @@ public class StorageManager {
      */
     public Map<String, WarpData> loadWarps() {
         if (storageHandler != null) {
-            return storageHandler.loadWarps();
+            try {
+                NeoEssentials.LOGGER.debug("Loading warps via storage manager");
+                Map<String, WarpData> warps = storageHandler.loadWarps();
+                NeoEssentials.LOGGER.debug("Storage manager loaded {} warps", warps.size());
+                return warps;
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error loading warps: {}", e.getMessage(), e);
+            }
+        } else {
+            NeoEssentials.LOGGER.error("Cannot load warps: Storage handler is not initialized");
         }
         return Map.of();
     }

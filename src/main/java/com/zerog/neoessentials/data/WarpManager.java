@@ -16,13 +16,26 @@ public class WarpManager {
     
     // Map of warp names to locations
     private final Map<String, WarpLocation> warps = new HashMap<>();
-    
-    /**
+      /**
      * Initialize the warp manager
      */
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Warp Manager");
         
+        // Check if storage manager is initialized before loading warps
+        if (NeoEssentials.getInstance().getStorageManager() != null) {
+            loadWarps();
+        } else {
+            NeoEssentials.LOGGER.warn("Storage manager not available yet, warps will be loaded when available");
+        }
+    }
+    
+    /**
+     * Forces a reload of warps from storage.
+     * This can be called after storage manager initialization if it wasn't available during initial loading.
+     */
+    public void reloadWarps() {
+        NeoEssentials.LOGGER.info("Reloading warps from storage");
         loadWarps();
     }
     
