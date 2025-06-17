@@ -38,6 +38,7 @@ public class TeleportUtil {
      * @param pitch The pitch rotation
      * @return True if teleportation was successful, false otherwise
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    public static boolean teleport(ServerPlayer player, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
         try {
             // Validate input parameters
@@ -59,6 +60,24 @@ public class TeleportUtil {
     public static boolean teleport(ServerPlayer player, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
         try {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+     */    public static boolean teleport(ServerPlayer player, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
+        try {
+            // Validate input parameters
+            if (player == null) {
+                NeoEssentials.LOGGER.error("Cannot teleport null player");
+                return false;
+            }
+            
+            if (level == null) {
+                NeoEssentials.LOGGER.error("Cannot teleport player {} to null level", player.getScoreboardName());
+                return false;
+            }
+            
+            NeoEssentials.LOGGER.debug("Teleporting player {} to [{}, {}, {}] in dimension {}", 
+                player.getScoreboardName(), x, y, z, level.dimension().location());
+            
+>>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
             // Save the player's current location
             saveLastLocation(player);
             
@@ -72,6 +91,7 @@ public class TeleportUtil {
             applyCooldown(player.getUUID());
             
 <<<<<<< HEAD
+<<<<<<< HEAD
             NeoEssentials.LOGGER.debug("Successfully teleported player {} to [{}, {}, {}] in dimension {}", 
                 player.getScoreboardName(), x, y, z, level.dimension().location());
             
@@ -83,6 +103,14 @@ public class TeleportUtil {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error teleporting player " + player.getScoreboardName(), e);
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+            NeoEssentials.LOGGER.debug("Successfully teleported player {} to [{}, {}, {}] in dimension {}", 
+                player.getScoreboardName(), x, y, z, level.dimension().location());
+            
+            return true;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error teleporting player: {}", e.getMessage(), e);
+>>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
             return false;
         }
     }
