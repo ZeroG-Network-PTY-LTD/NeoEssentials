@@ -138,6 +138,7 @@ public class MailCommands {
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         final int messageCount = messages.size();
         source.sendSuccess(() -> Component.literal(TextUtil.formatText("&a=== &6Your Mail &a=== &7(" + messageCount + " messages)")), false);
         
@@ -153,6 +154,17 @@ public class MailCommands {
         int index = 1;
         for (MailManager.MailMessage message : messages) {
 >>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
+=======
+        final int messageCount = messages.size();
+        source.sendSuccess(() -> Component.literal(TextUtil.formatText("&a=== &6Your Mail &a=== &7(" + messageCount + " messages)")), false);
+        
+        // We need to use a slightly different approach for the index
+        // since it changes in the loop but needs to be effectively final for the lambda
+        for (int i = 0; i < messages.size(); i++) {
+            final int index = i + 1; // Make a final copy for the lambda
+            final MailManager.MailMessage message = messages.get(i);
+            
+>>>>>>> 1acdc2a (feat: Update build number and add SonarQube analysis workflow)
             source.sendSuccess(() -> Component.literal(TextUtil.formatText(
                     "&a" + index + ". &6From: &e" + message.getSender() + " &6Date: &e" + message.getFormattedDate())), false);
             source.sendSuccess(() -> Component.literal(TextUtil.formatText("&f" + message.getMessage())), false);
@@ -163,10 +175,13 @@ public class MailCommands {
                 message.markAsRead();
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             
             index++;
 >>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
+=======
+>>>>>>> 1acdc2a (feat: Update build number and add SonarQube analysis workflow)
         }
         
         mailManager.saveMail();
