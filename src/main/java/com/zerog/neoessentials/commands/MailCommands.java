@@ -122,10 +122,15 @@ public class MailCommands {
             return 1;
         }
         
-        source.sendSuccess(() -> Component.literal(TextUtil.formatText("&a=== &6Your Mail &a=== &7(" + messages.size() + " messages)")), false);
+        final int messageCount = messages.size();
+        source.sendSuccess(() -> Component.literal(TextUtil.formatText("&a=== &6Your Mail &a=== &7(" + messageCount + " messages)")), false);
         
-        int index = 1;
-        for (MailManager.MailMessage message : messages) {
+        // We need to use a slightly different approach for the index
+        // since it changes in the loop but needs to be effectively final for the lambda
+        for (int i = 0; i < messages.size(); i++) {
+            final int index = i + 1; // Make a final copy for the lambda
+            final MailManager.MailMessage message = messages.get(i);
+            
             source.sendSuccess(() -> Component.literal(TextUtil.formatText(
                     "&a" + index + ". &6From: &e" + message.getSender() + " &6Date: &e" + message.getFormattedDate())), false);
             source.sendSuccess(() -> Component.literal(TextUtil.formatText("&f" + message.getMessage())), false);
@@ -135,8 +140,6 @@ public class MailCommands {
             if (!message.isRead()) {
                 message.markAsRead();
             }
-            
-            index++;
         }
         
         mailManager.saveMail();
