@@ -88,10 +88,15 @@ public class EventHandler {
      * Event handler for when a player leaves the server.
      *
      * @param event The player logout event
+<<<<<<< HEAD
      */    
     @SubscribeEvent
     public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+     */      @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+>>>>>>> 3f70d9c (fix: Update build number to 27 and correct event handler method visibility)
         Player player = event.getEntity();
         if (player instanceof ServerPlayer serverPlayer) {
             NeoEssentials.LOGGER.info("Player logged out: {}", player.getScoreboardName());
