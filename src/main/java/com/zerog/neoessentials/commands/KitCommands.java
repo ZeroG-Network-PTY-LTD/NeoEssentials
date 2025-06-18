@@ -920,7 +920,45 @@ public class KitCommands {
         
         KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
         if (kitManager == null) {
+<<<<<<< HEAD
             NeoEssentials.LOGGER.error("KitManager is null when executing /previewkit command");
+=======
+            NeoEssentials.LOGGER.error("KitManager is null when executing /deletekit command");
+            context.getSource().sendFailure(Component.literal("Kit system is not available"));
+            return 0;
+        }
+        
+        boolean success = kitManager.deleteKit(kitName);
+        
+        if (success) {
+            NeoEssentials.LOGGER.info("Player {} deleted kit '{}'", player.getScoreboardName(), kitName);
+            MutableComponent message = Component.literal("Deleted kit '" + kitName + "'");
+            MessageUtil.sendSuccess(player, message);
+            return 1;
+        } else {
+            NeoEssentials.LOGGER.debug("Kit '{}' not found for deletion by {}", kitName, player.getScoreboardName());
+            context.getSource().sendFailure(Component.literal("Kit '" + kitName + "' not found"));
+            return 0;
+        }
+    }
+      /**
+     * Execute the /givekit command
+     * 
+     * @param context The command context
+     * @return Command result
+     */
+    private int executeGiveKit(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        ServerPlayer target = net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player");
+        String kitName = StringArgumentType.getString(context, "kit");
+        
+        NeoEssentials.LOGGER.debug("Player {} is attempting to give kit '{}' to player {}", 
+            player.getScoreboardName(), kitName, target.getScoreboardName());
+        
+        KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
+        if (kitManager == null) {
+            NeoEssentials.LOGGER.error("KitManager is null when executing /givekit command");
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
             context.getSource().sendFailure(Component.literal("Kit system is not available"));
             return 0;
         }
@@ -932,6 +970,7 @@ public class KitCommands {
             return 0;
         }
         
+<<<<<<< HEAD
         // Send kit header
         MutableComponent header = Component.literal("§6§l=== Kit: §r§e" + kit.getName() + "§6§l ===");
         player.sendSystemMessage(header);
@@ -1147,10 +1186,76 @@ public class KitCommands {
 =======
             NeoEssentials.LOGGER.error("Failed to give kit '{}' to player {} by {}", 
                 kitName, target.getScoreboardName(), player.getScoreboardName());
+=======
+        // Force give the kit to the target player by bypassing permission and cooldown checks
+        try {
+            boolean success = forceGiveKit(target, kitManager, kitName);
+            
+            if (success) {
+                NeoEssentials.LOGGER.info("Player {} gave kit '{}' to player {}", 
+                    player.getScoreboardName(), kitName, target.getScoreboardName());
+                    
+                MutableComponent messageToAdmin = Component.literal("Gave kit '" + kitName + "' to " + target.getScoreboardName());
+                MessageUtil.sendSuccess(player, messageToAdmin);
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
                 
-            context.getSource().sendFailure(Component.literal("Failed to give kit '" + kitName + "' to " + target.getScoreboardName()));
+                MutableComponent messageToTarget = Component.literal("You received kit '" + kitName + "' from " + player.getScoreboardName());
+                MessageUtil.sendInfo(target, messageToTarget);
+                
+                return 1;
+            } else {
+                NeoEssentials.LOGGER.error("Failed to give kit '{}' to player {} by {}", 
+                    kitName, target.getScoreboardName(), player.getScoreboardName());
+                    
+                context.getSource().sendFailure(Component.literal("Failed to give kit '" + kitName + "' to " + target.getScoreboardName()));
+                return 0;
+            }
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error giving kit '{}' to player {}: {}", 
+                kitName, target.getScoreboardName(), e.getMessage());
+            context.getSource().sendFailure(Component.literal("Error giving kit: " + e.getMessage()));
             return 0;
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
         }
+    }
+    
+    /**
+     * Force give a kit to a player, bypassing permission and cooldown checks
+     * 
+     * @param player The target player
+     * @param kitManager The kit manager
+     * @param kitName The name of the kit
+     * @return True if successful, false otherwise
+     */
+    private boolean forceGiveKit(ServerPlayer player, KitManager kitManager, String kitName) {
+        KitManager.Kit kit = kitManager.getKit(kitName);
+        
+        if (kit == null || player == null) {
+            return false;
+        }
+        
+        // Create and give items to the player directly, bypassing permission and cooldown checks
+        for (KitManager.ItemDefinition itemDef : kit.getItemDefinitions()) {
+            try {
+                // Try to get the item from its ID
+                net.minecraft.resources.ResourceLocation resourceLocation = 
+                    net.minecraft.resources.ResourceLocation.tryParse(itemDef.getItemId());
+                net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(resourceLocation);
+                
+                if (item != null && item != net.minecraft.world.item.Items.AIR) {
+                    net.minecraft.world.item.ItemStack itemStack = new net.minecraft.world.item.ItemStack(item, itemDef.getCount());
+                    
+                    // Give item to player
+                    if (!player.getInventory().add(itemStack)) {
+                        // If inventory is full, drop the item
+                        player.drop(itemStack, false);
+                    }
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error giving item from kit: {}", e.getMessage());
+            }
+        }
+        
+        return true;
     }
 }

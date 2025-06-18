@@ -612,11 +612,15 @@ public class WarpCommands {
         }
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
       /**
 =======
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+      /**
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
      * Teleports a player to a warp location
      * 
      * @param player The player to teleport
@@ -675,14 +679,21 @@ public class WarpCommands {
 >>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
         // Get the server from the player
         ServerLevel targetLevel = null;
+        
+        // Try direct match first
         for (ServerLevel level : player.getServer().getAllLevels()) {
             if (level.dimension().location().toString().equals(dimensionKey)) {
                 targetLevel = level;
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                NeoEssentials.LOGGER.debug("Found exact dimension match: {}", dimensionKey);
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
                 break;
             }
         }
         
+<<<<<<< HEAD
 <<<<<<< HEAD
         // If direct match failed, try checking just the path part
         if (targetLevel == null) {
@@ -800,39 +811,67 @@ public class WarpCommands {
         return 1;
     }
 =======
+=======
+        // If direct match failed, try checking just the path part
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
         if (targetLevel == null) {
-            NeoEssentials.LOGGER.error("Could not find dimension for warp: {}", dimensionKey);
-            
-            // Try again with a simpler matching approach
             for (ServerLevel level : player.getServer().getAllLevels()) {
-                String simpleName = level.dimension().location().getPath();
-                if (dimensionKey.contains(simpleName)) {
-                    NeoEssentials.LOGGER.info("Found dimension {} for warp using simplified matching", level.dimension().location());
+                String levelPath = level.dimension().location().getPath();
+                if (dimensionKey.contains(levelPath) || dimensionKey.endsWith(":" + levelPath)) {
+                    NeoEssentials.LOGGER.debug("Found path-based dimension match: {} matches {}", 
+                        levelPath, dimensionKey);
+                    targetLevel = level;
+                    break;
+                }
+                
+                // Also try the reverse - maybe the stored key is just the path but we need the full key
+                String fullLevelKey = level.dimension().location().toString();
+                if (fullLevelKey.endsWith(":" + dimensionKey)) {
+                    NeoEssentials.LOGGER.debug("Found path-based dimension match: {} matches {}", 
+                        fullLevelKey, dimensionKey);
                     targetLevel = level;
                     break;
                 }
             }
+        }
+        
+        // Last resort - try matching common dimension names
+        if (targetLevel == null) {
+            String lowerDimKey = dimensionKey.toLowerCase();
             
-            if (targetLevel == null) {
-                // Try an even simpler matching approach as a last resort
-                for (ServerLevel level : player.getServer().getAllLevels()) {
-                    String dimPath = level.dimension().location().getPath();
-                    String dimKey = dimensionKey.toLowerCase();
-                    
-                    // Check if dimension key contains basic names like "overworld", "nether", "end"
-                    if ((dimPath.contains("overworld") && dimKey.contains("overworld")) ||
-                        (dimPath.contains("nether") && dimKey.contains("nether")) ||
-                        (dimPath.contains("end") && dimKey.contains("end"))) {
-                        NeoEssentials.LOGGER.info("Found dimension {} for warp using basic name matching", level.dimension().location());
-                        targetLevel = level;
-                        break;
-                    }
-                }
+            for (ServerLevel level : player.getServer().getAllLevels()) {
+                String levelPath = level.dimension().location().getPath().toLowerCase();
+                String fullLevelKey = level.dimension().location().toString().toLowerCase();
                 
-                if (targetLevel == null) {
-                    NeoEssentials.LOGGER.error("All dimension matching attempts failed for: {}", dimensionKey);
-                    return false;
+                // Match common dimension patterns
+                if ((levelPath.contains("overworld") || fullLevelKey.contains("overworld")) && 
+                    lowerDimKey.contains("overworld")) {
+                    targetLevel = level;
+                    NeoEssentials.LOGGER.debug("Found overworld dimension using common name matching");
+                    break;
+                } else if ((levelPath.contains("nether") || fullLevelKey.contains("nether")) && 
+                           lowerDimKey.contains("nether")) {
+                    targetLevel = level;
+                    NeoEssentials.LOGGER.debug("Found nether dimension using common name matching");
+                    break;
+                } else if ((levelPath.contains("end") || fullLevelKey.contains("end")) && 
+                           lowerDimKey.contains("end")) {
+                    targetLevel = level;
+                    NeoEssentials.LOGGER.debug("Found end dimension using common name matching");
+                    break;
                 }
+            }
+        }
+        
+        // If all attempts failed, fall back to the overworld
+        if (targetLevel == null) {
+            NeoEssentials.LOGGER.warn("Could not find dimension '{}', defaulting to overworld", dimensionKey);
+            targetLevel = player.getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD);
+            
+            // If even this failed, we can't teleport
+            if (targetLevel == null) {
+                NeoEssentials.LOGGER.error("Failed to find any valid dimension, teleport canceled");
+                return false;
             }
         }
         
