@@ -311,10 +311,15 @@ public class MessageCommands {
         recipient.sendSystemMessage(recipientMsg);        // Send to social spies
 =======
         recipient.sendSystemMessage(recipientMsg);
+<<<<<<< HEAD
         
         // Send to social spies
 >>>>>>> bac244b (Implement messaging and player state commands)
         sendToSocialSpies(sender, recipient, formattedMessage, null);
+=======
+          // Send to social spies
+        sendToSocialSpies(sender, recipient, formattedMessage);
+>>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
         
         // Update last message tracking
         lastMessageSender.put(recipient.getUUID(), sender.getUUID());

@@ -64,8 +64,12 @@ public class CommandManager {    // Command classes
     private final InventoryCommands inventoryCommands;
     private final PlayerCommands playerCommands;
     private final MessageCommands messageCommands;
+<<<<<<< HEAD
       public CommandManager() {
 >>>>>>> bac244b (Implement messaging and player state commands)
+=======
+    private final ModeratorCommands moderatorCommands;      public CommandManager() {
+>>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -93,9 +97,13 @@ public class CommandManager {    // Command classes
         inventoryCommands = new InventoryCommands();
         playerCommands = new PlayerCommands();
         messageCommands = new MessageCommands();
+<<<<<<< HEAD
         playerCommands = new PlayerCommands();
         messageCommands = new MessageCommands();
 >>>>>>> bac244b (Implement messaging and player state commands)
+=======
+        moderatorCommands = new ModeratorCommands();
+>>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
     }
     
     /**
@@ -170,6 +178,7 @@ public class CommandManager {    // Command classes
         // Register message commands
         messageCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered message commands");
+<<<<<<< HEAD
           // Register moderator commands
         moderatorCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered moderator commands");
@@ -255,6 +264,12 @@ public class CommandManager {    // Command classes
         messageCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered message commands");
 >>>>>>> bac244b (Implement messaging and player state commands)
+=======
+        
+        // Register moderator commands
+        moderatorCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered moderator commands");
+>>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
     }
     
     /**
@@ -446,5 +461,14 @@ public class CommandManager {    // Command classes
      */
     public MessageCommands getMessageCommands() {
         return messageCommands;
+    }
+    
+    /**
+     * Gets the moderator commands instance
+     * 
+     * @return The moderator commands
+     */
+    public ModeratorCommands getModeratorCommands() {
+        return moderatorCommands;
     }
 }

@@ -603,5 +603,26 @@ public class PermissionUtil {
         CommandSourceStack source = player.createCommandSourceStack();
         return hasPermission(source, permission);
     }
+<<<<<<< HEAD
 >>>>>>> bac244b (Implement messaging and player state commands)
+=======
+    
+    /**
+     * Check if a GameProfile has a specific permission.
+     * For offline checking, will check config defaults only.
+     *
+     * @param profile The GameProfile to check
+     * @param permission The permission string to check
+     * @return True if the profile has the permission, false otherwise
+     */
+    public static boolean hasPermission(com.mojang.authlib.GameProfile profile, String permission) {
+        // Check if player is an operator
+        if (NeoEssentials.getInstance().getServer().getPlayerList().isOp(profile)) {
+            return true;
+        }
+        
+        // For offline profiles, we can only check default permissions
+        return checkDefaultPermission(permission);
+    }
+>>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 }
