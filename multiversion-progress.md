@@ -53,8 +53,11 @@ We have made significant progress in refactoring the NeoEssentials mod for multi
    - ✅ Added mods.toml and pack.mcmeta files for all versions
    - ✅ Created mod initialization classes for NeoForge 1.21.1, 1.20.5, 1.20.1
    - ✅ Created mod initialization classes for Forge 1.20.1, 1.19.4
+   - ⏳ Move CommandManager to each module or create version-specific implementations
 
-3. **Testing**
+3. **Next Development Tasks**
+   - Create version-specific CommandManager implementations
+   - Move command classes to version-specific packages or refactor to use version-independent code
    - Test each version module to ensure it loads and functions correctly
    - Verify that all commands and features work across versions
 
