@@ -121,6 +121,7 @@ public class TextUtil {
     }
     
     /**
+<<<<<<< HEAD
      * Formats text, translating color codes if the user has permission
      * 
      * @param text The text to format
@@ -176,6 +177,8 @@ public class TextUtil {
     }
     
     /**
+=======
+>>>>>>> bac244b (Implement messaging and player state commands)
      * Get the ChatFormatting for a character code
      */
     private static ChatFormatting getFormattingByChar(char code) {

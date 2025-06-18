@@ -44,6 +44,7 @@ public class CommandManager {    // Command classes
     private final KitCommands kitCommands;
     private final TimeAndWeatherCommands timeAndWeatherCommands;
 <<<<<<< HEAD
+<<<<<<< HEAD
     private final InventoryCommands inventoryCommands;
     private final PlayerCommands playerCommands;
     private final MessageCommands messageCommands;
@@ -59,6 +60,12 @@ public class CommandManager {    // Command classes
     
     public CommandManager() {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    private final InventoryCommands inventoryCommands;
+    private final PlayerCommands playerCommands;
+    private final MessageCommands messageCommands;
+      public CommandManager() {
+>>>>>>> bac244b (Implement messaging and player state commands)
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -66,6 +73,7 @@ public class CommandManager {    // Command classes
         warpCommands = new WarpCommands();
         kitCommands = new KitCommands();
         timeAndWeatherCommands = new TimeAndWeatherCommands();
+<<<<<<< HEAD
 <<<<<<< HEAD
         inventoryCommands = new InventoryCommands();
         playerCommands = new PlayerCommands();
@@ -81,6 +89,13 @@ public class CommandManager {    // Command classes
         // ItemCommands needs CommandBuildContext which is only available during register event
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        inventoryCommands = new InventoryCommands();
+        playerCommands = new PlayerCommands();
+        messageCommands = new MessageCommands();
+        playerCommands = new PlayerCommands();
+        messageCommands = new MessageCommands();
+>>>>>>> bac244b (Implement messaging and player state commands)
     }
     
     /**
@@ -218,14 +233,28 @@ public class CommandManager {    // Command classes
         // Register kit commands
         kitCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered kit commands");
-        
-        // Register time and weather commands
+          // Register time and weather commands
         timeAndWeatherCommands.register(dispatcher);
 <<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
         NeoEssentials.LOGGER.info("Registered time and weather commands");
+<<<<<<< HEAD
 >>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
+=======
+        
+        // Register inventory commands
+        inventoryCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered inventory commands");
+        
+        // Register player commands
+        playerCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered player commands");
+        
+        // Register message commands
+        messageCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered message commands");
+>>>>>>> bac244b (Implement messaging and player state commands)
     }
     
     /**
@@ -399,5 +428,23 @@ public class CommandManager {    // Command classes
         // Delegate to PermissionUtil
         return com.zerog.neoessentials.utils.PermissionUtil.hasPermission(source, permission);
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+    }
+    
+    /**
+     * Gets the player commands instance
+     * 
+     * @return The player commands
+     */
+    public PlayerCommands getPlayerCommands() {
+        return playerCommands;
+    }
+    
+    /**
+     * Gets the message commands instance
+     * 
+     * @return The message commands
+     */
+    public MessageCommands getMessageCommands() {
+        return messageCommands;
     }
 }
