@@ -18,6 +18,7 @@ public class DataManager {
     private KitManager kitManager;
     private JailManager jailManager;
     private PowerToolManager powerToolManager;
+    private MailManager mailManager;
     
     private final String dataFolder = "neoessentials/";
     
@@ -37,6 +38,7 @@ public class DataManager {
         kitManager = new KitManager();
         jailManager = new JailManager(dataFolderFile);
         powerToolManager = new PowerToolManager(dataFolderFile);
+        mailManager = new MailManager(dataFolderFile);
     }
     
     /**
@@ -93,6 +95,7 @@ public class DataManager {
         jailManager.saveJails();
         jailManager.saveJailedPlayers();
         powerToolManager.savePowerTools();
+        mailManager.saveMail();
     }
     
     /**
@@ -175,6 +178,15 @@ public class DataManager {
      */
     public PowerToolManager getPowerToolManager() {
         return powerToolManager;
+    }
+    
+    /**
+     * Gets the mail manager instance
+     * 
+     * @return The mail manager
+     */
+    public MailManager getMailManager() {
+        return mailManager;
     }
     
     /**
