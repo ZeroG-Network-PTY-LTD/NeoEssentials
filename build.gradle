@@ -536,6 +536,7 @@ jar {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // NeoForge specific configurations
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -688,12 +689,50 @@ abstract class IncrementBuildNumberTask extends DefaultTask {
         
         getOutputFile().getAsFile().get().withOutputStream { stream ->
             props.store(stream, "Build number updated") 
+=======
+// Get the build number from buildnumber.properties
+def getBuildNumber() {
+    def propsFile = file("buildnumber.properties")
+    if (!propsFile.exists()) {
+        propsFile.text = "buildNumber=1"
+        return 1
+    }
+    
+    def props = new Properties()
+    propsFile.withInputStream { props.load(it) }
+    return props.getProperty("buildNumber").toInteger()
+}
+
+// Update the version to include the build number
+def buildNumber = getBuildNumber()
+version = "${mod_version}.${buildNumber}"
+println "Building NeoEssentials version: ${version}"
+
+// Task to increment build number
+tasks.register('incrementBuildNumber') {
+    description = 'Increments the build number'
+    
+    doLast {
+        def propsFile = file("buildnumber.properties")
+        def props = new Properties()
+        
+        if (propsFile.exists()) {
+            propsFile.withInputStream { props.load(it) }
+        }
+        
+        def currentBuildNumber = props.getProperty("buildNumber", "0").toInteger() + 1
+        props.setProperty("buildNumber", currentBuildNumber.toString())
+        
+        propsFile.withOutputStream { 
+            props.store(it, "Build number updated") 
+>>>>>>> 4338242 (feat: Add build number management and update mod metadata in gradle.properties)
         }
         
         println "Build number incremented to: ${currentBuildNumber}"
     }
 }
 
+<<<<<<< HEAD
 // Register the task
 tasks.register('incrementBuildNumber', IncrementBuildNumberTask) {
     description = 'Increments the build number'
@@ -737,3 +776,7 @@ jar {
     }
 }
 >>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
+=======
+// Make sure the build number is incremented when we build
+build.finalizedBy tasks.incrementBuildNumber
+>>>>>>> 4338242 (feat: Add build number management and update mod metadata in gradle.properties)
