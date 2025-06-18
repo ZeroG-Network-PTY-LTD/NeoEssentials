@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-public class NeoForge1205AdapterFactory {
-    
-=======
-=======
->>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
 package com.zerog.neoessentials.adapter;
 
 import com.zerog.neoessentials.common.adapter.AdapterFactory;
@@ -14,10 +7,10 @@ import com.zerog.neoessentials.common.adapter.IPermissionAdapter;
 import com.zerog.neoessentials.common.adapter.IPlayerAdapter;
 
 /**
- * Factory for creating adapter implementations for NeoForge 1.20.5
+ * Factory for creating adapter implementations for NeoForge 1.20.1
  */
-public class NeoForge1205AdapterFactory implements AdapterFactory {
-    private static final NeoForge1205AdapterFactory INSTANCE = new NeoForge1205AdapterFactory();
+public class NeoForge1201AdapterFactory implements AdapterFactory {
+    private static final NeoForge1201AdapterFactory INSTANCE = new NeoForge1201AdapterFactory();
     
     private final LocationAdapter locationAdapter = new LocationAdapter();
     private final PermissionAdapter permissionAdapter = new PermissionAdapter();
@@ -25,10 +18,10 @@ public class NeoForge1205AdapterFactory implements AdapterFactory {
     private final CommandAdapter commandAdapter = new CommandAdapter();
     
     // Private constructor to enforce singleton pattern
-    private NeoForge1205AdapterFactory() {
+    private NeoForge1201AdapterFactory() {
     }
     
-    public static NeoForge1205AdapterFactory getInstance() {
+    public static NeoForge1201AdapterFactory getInstance() {
         return INSTANCE;
     }
     
@@ -51,8 +44,4 @@ public class NeoForge1205AdapterFactory implements AdapterFactory {
     public ICommandAdapter getCommandAdapter() {
         return commandAdapter;
     }
-<<<<<<< HEAD
->>>>>>> 7ac3350 (feat: Implement NeoEssentials for NeoForge 1.20.1 and 1.20.5)
-=======
->>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
 }
