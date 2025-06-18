@@ -41,14 +41,18 @@ We have made significant progress in refactoring the NeoEssentials mod for multi
    - ✅ Created PermissionAdapter for NeoForge 1.21.1
    - ✅ Created PlayerAdapter for NeoForge 1.21.1
    - ✅ Created CommandAdapter for NeoForge 1.21.1
-   - ⏳ Port adapters to other version modules
+   - ✅ Created adapters for NeoForge 1.20.5
+   - ✅ Created adapters for NeoForge 1.20.1
+   - ✅ Created adapters for Forge 1.20.1
+   - ✅ Created adapters for Forge 1.19.4
    
 2. **Module Dependencies and Build Setup**
    - ✅ Updated each version module's build.gradle to reference the common module
    - ✅ Added version-specific libraries to each version module
    - ✅ Created template source structures for each module
-   - ✅ Added mods.toml and pack.mcmeta files
-   - ⏳ Complete mod initialization classes for each version
+   - ✅ Added mods.toml and pack.mcmeta files for all versions
+   - ✅ Created mod initialization classes for NeoForge 1.21.1, 1.20.5, 1.20.1
+   - ✅ Created mod initialization classes for Forge 1.20.1, 1.19.4
 
 3. **Testing**
    - Test each version module to ensure it loads and functions correctly
@@ -66,12 +70,15 @@ The project now follows a modern multi-module architecture:
 NeoEssentials
 ├── common/ - Version-independent code
 │   └── src/main/java/com/zerog/neoessentials/common/
+│       ├── adapter/ - Common adapter interfaces
 │       ├── config/ - Common configuration classes
 │       ├── data/ - Common data models
 │       └── utils/ - Common utility classes
-├── neoforge-1.21.1/ - Main NeoForge version
+├── neoforge-1.21.1/ - NeoForge for 1.21.1
+├── neoforge-1.20.5/ - NeoForge for 1.20.5
+├── neoforge-1.20.1/ - NeoForge for 1.20.1
 ├── forge-1.20.1/ - Forge for 1.20.1
-└── forge-1.21.1/ - Forge for 1.21.1
+└── forge-1.19.4/ - Forge for 1.19.4
 ```
 
 This structure allows us to maximize code sharing while accommodating version-specific differences.
