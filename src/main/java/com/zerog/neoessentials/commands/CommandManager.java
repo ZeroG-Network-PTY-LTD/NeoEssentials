@@ -49,6 +49,7 @@ public class CommandManager {    // Command classes
     private final PlayerCommands playerCommands;
     private final MessageCommands messageCommands;
     private final ModeratorCommands moderatorCommands;
+<<<<<<< HEAD
     private final AfkCommands afkCommands;
     private final UtilityCommands utilityCommands;    
     private final UICommands uiCommands;
@@ -70,6 +71,9 @@ public class CommandManager {    // Command classes
 =======
     private final ModeratorCommands moderatorCommands;      public CommandManager() {
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+    private final AfkCommands afkCommands;    public CommandManager() {
+>>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -84,6 +88,7 @@ public class CommandManager {    // Command classes
         messageCommands = new MessageCommands();
         moderatorCommands = new ModeratorCommands();
         afkCommands = new AfkCommands();
+<<<<<<< HEAD
         utilityCommands = new UtilityCommands();
         uiCommands = new UICommands();
         jailCommands = new JailCommands();
@@ -104,6 +109,8 @@ public class CommandManager {    // Command classes
 =======
         moderatorCommands = new ModeratorCommands();
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+>>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
     }
     
     /**
@@ -178,6 +185,7 @@ public class CommandManager {    // Command classes
         // Register message commands
         messageCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered message commands");
+<<<<<<< HEAD
 <<<<<<< HEAD
           // Register moderator commands
         moderatorCommands.register(dispatcher);
@@ -270,6 +278,15 @@ public class CommandManager {    // Command classes
         moderatorCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered moderator commands");
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+          // Register moderator commands
+        moderatorCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered moderator commands");
+        
+        // Register AFK commands
+        afkCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered AFK commands");
+>>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
     }
     
     /**
@@ -470,5 +487,14 @@ public class CommandManager {    // Command classes
      */
     public ModeratorCommands getModeratorCommands() {
         return moderatorCommands;
+    }
+    
+    /**
+     * Gets the AFK commands instance
+     * 
+     * @return The AFK commands
+     */
+    public AfkCommands getAfkCommands() {
+        return afkCommands;
     }
 }

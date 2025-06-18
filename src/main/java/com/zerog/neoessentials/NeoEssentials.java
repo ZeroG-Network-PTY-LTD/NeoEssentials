@@ -19,6 +19,13 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+<<<<<<< HEAD
+=======
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+>>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
@@ -63,7 +70,13 @@ public class NeoEssentials {
 =======
     // Flag to track if config is loaded
     private boolean databaseConfigLoaded = false;
+<<<<<<< HEAD
 >>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
+=======
+    
+    // Scheduled executor for AFK checking
+    private ScheduledExecutorService scheduler;
+>>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
 
     /**
      * Main constructor for NeoEssentials
@@ -471,7 +484,22 @@ public class NeoEssentials {
         // Do something when the server starts
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        
+        // Initialize the AFK checker task
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                if (commandManager != null && commandManager.getAfkCommands() != null) {
+                    commandManager.getAfkCommands().checkForInactivePlayers();
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error in AFK checker task", e);
+            }
+        }, 60, 60, TimeUnit.SECONDS); // Check every minute
+>>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
     }
     
     /**
@@ -485,6 +513,9 @@ public class NeoEssentials {
         LOGGER.info("Server stopping, saving all NeoEssentials data");
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
         // Shut down scheduler
         if (scheduler != null) {
             scheduler.shutdown();
