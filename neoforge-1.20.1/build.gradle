@@ -1,0 +1,205 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.gradle.userdev' version '7.0.64'
+}
+
+archivesBaseName = 'neoessentials-neoforge-1.20.1'
+
+// Get the build number from the root project
+def getBuildNumber() {
+    def propsFile = rootProject.file("buildnumber.properties")
+    if (!propsFile.exists()) {
+        propsFile.text = "buildNumber=1"
+        return 1
+    }
+    
+    def props = new Properties()
+    propsFile.withInputStream { props.load(it) }
+    return props.getProperty("buildNumber").toInteger()
+}
+
+def buildNumber = getBuildNumber()
+version = "${version}.${buildNumber}"
+
+java {
+    archivesBaseName = 'neoessentials-neoforge-1.20.1'
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+minecraft {
+    // NeoForge requires that people explicitly opt-in to using MojangMapping
+    mappings channel: 'official', version: '1.20.1'
+
+    // accessTransformers file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            
+            mods {
+                neoessentials {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            
+            mods {
+                neoessentials {
+                    source sourceSets.main
+                }
+            }
+        }
+        
+        gameTestServer {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            
+            mods {
+                neoessentials {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            args '--mod', 'neoessentials', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            
+            mods {
+                neoessentials {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+dependencies {
+    // Add dependency on common module
+    implementation project(':common')
+    
+    // Use NeoForge for 1.20.1
+    minecraft 'net.neoforged:neoforge:1.20.1-47.2.0'
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title': 'neoessentials',
+            'Specification-Vendor': 'zerognetwork',
+            'Specification-Version': '1',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.jar.archiveVersion,
+            'Implementation-Vendor': 'zerognetwork',
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+// Create source tree template for NeoForge 1.20.1 module
+tasks.register('createSourceTemplate') {
+    description = 'Create source directories and template files for this module'
+    
+    doLast {
+        def javaDir = file("src/main/java/com/zerog/neoessentials")
+        def resourcesDir = file("src/main/resources/META-INF")
+        
+        javaDir.mkdirs()
+        resourcesDir.mkdirs()
+        
+        // Create template main class
+        def mainClass = new File(javaDir, "NeoEssentials.java")
+        mainClass.text = """package com.zerog.neoessentials;
+
+import org.slf4j.Logger;
+import com.mojang.logging.LogUtils;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
+
+@Mod(NeoEssentials.MODID)
+public class NeoEssentials {
+    public static final String MODID = "neoessentials";
+    public static final String MOD_NAME = "NeoEssentials";
+    public static final Logger LOGGER = LogUtils.getLogger();
+    
+    private static NeoEssentials instance;
+    
+    public NeoEssentials(IEventBus modEventBus) {
+        instance = this;
+        
+        LOGGER.info("NeoEssentials initializing for Minecraft 1.20.1 (NeoForge)");
+        
+        // Register with event bus
+        NeoForge.EVENT_BUS.register(this);
+        
+        // Initialize mod
+        // TODO: Copy and adapt core initialization from NeoForge 1.21.1 version
+    }
+    
+    public static NeoEssentials getInstance() {
+        return instance;
+    }
+}
+"""
+        
+        // Create template mods.toml
+        def modsToml = new File(resourcesDir, "mods.toml")
+        modsToml.text = """modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+issueTrackerURL="https://github.com/zerog/neoessentials/issues"
+
+[[mods]]
+modId="neoessentials"
+version="${version}"
+displayName="NeoEssentials (Server-Side)"
+credits="Inspired by EssentialsX for Bukkit/Spigot servers"
+authors="ZeroG"
+description='''
+NeoEssentials adds essential server commands and features to NeoForge Minecraft servers.
+Inspired by EssentialsX for Bukkit/Spigot servers.
+'''
+
+[[dependencies.neoessentials]]
+    modId="neoforge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="SERVER"
+
+[[dependencies.neoessentials]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1]"
+    ordering="NONE"
+    side="BOTH"
+"""
+        
+        // Create pack.mcmeta
+        def packMcmeta = new File(file("src/main/resources"), "pack.mcmeta")
+        packMcmeta.getParentFile().mkdirs()
+        packMcmeta.text = """{
+    "pack": {
+        "description": "NeoEssentials resources",
+        "pack_format": 15
+    }
+}
+"""
+        
+        println "Created template source structure for NeoForge 1.20.1 module"
+    }
+}
