@@ -217,15 +217,15 @@ idea {
 // Jar configuration
 jar {
     manifest {
-        attributes([
-            'Specification-Title'     : 'NeoEssentials',
-            'Specification-Vendor'    : 'ZeroG',
-            'Specification-Version'   : '1',
-            'Implementation-Title'    : project.name,
-            'Implementation-Version'  : project.version,
-            'Implementation-Vendor'   : 'ZeroG',
+        attributes(
+            'Specification-Title': 'NeoEssentials',
+            'Specification-Vendor': 'ZeroG',
+            'Specification-Version': '1',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'ZeroG',
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
+        )
     }
 }
 
