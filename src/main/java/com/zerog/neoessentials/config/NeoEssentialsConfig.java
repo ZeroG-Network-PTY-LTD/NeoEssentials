@@ -110,6 +110,7 @@ public class NeoEssentialsConfig {
         defaultPermissions.put("neoessentials.command.gamemode.spectator.others", false);
         defaultPermissions.put("neoessentials.command.gamemode.adventure", false);
 <<<<<<< HEAD
+<<<<<<< HEAD
         defaultPermissions.put("neoessentials.command.gamemode.adventure.others", false);        defaultPermissions.put("neoessentials.command.time", true);
         defaultPermissions.put("neoessentials.command.weather", true);
 =======
@@ -117,16 +118,24 @@ public class NeoEssentialsConfig {
         defaultPermissions.put("neoessentials.command.time", false);
         defaultPermissions.put("neoessentials.command.weather", false);
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        defaultPermissions.put("neoessentials.command.gamemode.adventure.others", false);        defaultPermissions.put("neoessentials.command.time", true);
+        defaultPermissions.put("neoessentials.command.weather", true);
+>>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
         defaultPermissions.put("neoessentials.command.money", true);
         defaultPermissions.put("neoessentials.command.pay", true);
         defaultPermissions.put("neoessentials.command.balance", true);
         defaultPermissions.put("neoessentials.command.baltop", true);
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
         defaultPermissions.put("neoessentials.command.eco", false);        defaultPermissions.put("neoessentials.command.kit", true);
         defaultPermissions.put("neoessentials.command.kit.list", true);
         defaultPermissions.put("neoessentials.command.kit.create", false);
         defaultPermissions.put("neoessentials.command.kit.delete", false);
         defaultPermissions.put("neoessentials.command.kit.give", false);
+<<<<<<< HEAD
 =======
         defaultPermissions.put("neoessentials.command.eco", false);
         defaultPermissions.put("neoessentials.command.kit", true);
@@ -134,6 +143,8 @@ public class NeoEssentialsConfig {
         defaultPermissions.put("neoessentials.command.deletekit", false);
         defaultPermissions.put("neoessentials.command.givekit", false);
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
     }
 
     // Getters and setters for all properties
