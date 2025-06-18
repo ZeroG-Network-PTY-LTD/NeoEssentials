@@ -66,9 +66,10 @@ public class ModArgumentTypes {
             DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, NeoEssentials.MODID);
 
     // Register our StringToBooleanArgumentType with the StringToBooleanArgumentInfo
-    public static final Supplier<ArgumentTypeInfo<?, ?>> STRING_TO_BOOLEAN = COMMAND_ARGUMENT_TYPES.register(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static final Supplier<ArgumentTypeInfo<StringToBooleanArgumentType, ?>> STRING_TO_BOOLEAN = COMMAND_ARGUMENT_TYPES.register(
             "string_to_boolean", 
-            () -> new StringToBooleanArgumentInfo()
+            () -> (ArgumentTypeInfo) new StringToBooleanArgumentInfo()
     );
 
     /**
@@ -91,10 +92,11 @@ public class ModArgumentTypes {
      * Handle registration during common setup event
      * This provides a more direct way to register the argument type as a fallback
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static void onCommonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             NeoEssentials.LOGGER.info("Registering StringToBooleanArgumentType during common setup");
-            ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, STRING_TO_BOOLEAN.get());
+            ArgumentTypeInfos.registerByClass((Class) StringToBooleanArgumentType.class, new StringToBooleanArgumentInfo());
         });
 >>>>>>> faaaf85 (refactor: Update registration of StringToBooleanArgumentType for improved compatibility)
     }
