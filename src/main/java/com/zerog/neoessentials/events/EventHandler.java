@@ -84,13 +84,12 @@ public class EventHandler {
             // Notify player about unread mail if they have any
             NeoEssentials.getInstance().getDataManager().getMailManager().notifyPlayer(serverPlayer);
         }
-    }
-
-    /**
+    }    /**
      * Event handler for when a player leaves the server.
      *
      * @param event The player logout event
-     */    @SubscribeEvent
+     */    
+    @SubscribeEvent
     public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         Player player = event.getEntity();
@@ -118,19 +117,28 @@ public class EventHandler {
             userManager.savePlayerData(serverPlayer);
         }
     }
+<<<<<<< HEAD
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+      /**
+>>>>>>> e2153e5 (fix: Improve event registration and storage manager initialization in NeoEssentials)
      * Event handler for when the server is stopping.
      * Used to save all data before the server shuts down.
      *
      * @param event The server stopping event
+<<<<<<< HEAD
 <<<<<<< HEAD
      */
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
 =======
      */    @SubscribeEvent
+=======
+     */    
+    @SubscribeEvent
+>>>>>>> e2153e5 (fix: Improve event registration and storage manager initialization in NeoEssentials)
     public void onServerStopping(ServerStoppingEvent event) {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
         NeoEssentials.LOGGER.info("Server stopping, saving all NeoEssentials data");
