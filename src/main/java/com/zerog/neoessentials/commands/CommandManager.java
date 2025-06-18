@@ -2,13 +2,9 @@ package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.utils.PermissionUtil;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
 
 /**
  * Manages registration and execution of all NeoEssentials commands.
@@ -27,9 +23,7 @@ public class CommandManager {    // Command classes
     private final MessageCommands messageCommands;
     private final ModeratorCommands moderatorCommands;
     private final AfkCommands afkCommands;
-    private final UtilityCommands utilityCommands;
-    private final UICommands uiCommands;
-    private ItemCommands itemCommands;
+    private final UtilityCommands utilityCommands;    private final UICommands uiCommands;
 
     public CommandManager() {
         teleportCommands = new TeleportCommands();
@@ -73,16 +67,7 @@ public class CommandManager {    // Command classes
      * Registers all command categories with the dispatcher.
      * 
      * @param dispatcher The command dispatcher
-     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // Get the server for CommandBuildContext
-        MinecraftServer server = null;
-        try {
-            // Try to get the server from the event
-            server = NeoEssentials.getServer();
-        } catch (Exception e) {
-            // Server might not be available yet
-            NeoEssentials.LOGGER.error("Failed to get server for command registration", e);
-        }        // Register teleport commands
+     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {// Register teleport commands
         teleportCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered teleport commands");
         
@@ -123,8 +108,7 @@ public class CommandManager {    // Command classes
           // Register moderator commands
         moderatorCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered moderator commands");
-        
-        // Register AFK commands
+          // Register AFK commands
         afkCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered AFK commands");
         
@@ -135,13 +119,12 @@ public class CommandManager {    // Command classes
         // Register UI commands
         uiCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered UI commands");
+          // Note: ItemCommands require CommandBuildContext which is not available here
+        // In a full implementation, you would need to get the CommandBuildContext properly
         
-        // Create and register item commands (needs CommandBuildContext)
-        CommandBuildContext buildContext = CommandBuildContext.simple(((CommandSourceStack)(Object)dispatcher).getServer().registryAccess(), 
-                ((CommandSourceStack)(Object)dispatcher).getServer().getWorldData().getDataConfiguration());
-        itemCommands = new ItemCommands(buildContext);
-        itemCommands.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered item commands");
+        // For now, we'll skip registering ItemCommands until we can find a proper way
+        // to get the CommandBuildContext
+        NeoEssentials.LOGGER.info("Skipping ItemCommands registration due to CommandBuildContext requirements");
     }
     
     /**
@@ -240,13 +223,30 @@ public class CommandManager {    // Command classes
     public ModeratorCommands getModeratorCommands() {
         return moderatorCommands;
     }
-    
-    /**
+      /**
      * Gets the AFK commands instance
      * 
      * @return The AFK commands
      */
     public AfkCommands getAfkCommands() {
         return afkCommands;
+    }
+    
+    /**
+     * Gets the utility commands instance
+     * 
+     * @return The utility commands
+     */
+    public UtilityCommands getUtilityCommands() {
+        return utilityCommands;
+    }
+    
+    /**
+     * Gets the UI commands instance
+     * 
+     * @return The UI commands
+     */
+    public UICommands getUiCommands() {
+        return uiCommands;
     }
 }
