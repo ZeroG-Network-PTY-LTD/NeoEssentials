@@ -14,6 +14,7 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
  */
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 public class EventHandler {    /**
      * Registers all event listeners.
      */
@@ -36,9 +37,12 @@ public class EventHandler {
 >>>>>>> b6e2875 (fix: Update build number to 31 and modify event handler methods for proper registration)
 
     /**
+=======
+public class EventHandler {    /**
+>>>>>>> 5283f26 (fix: Update build number to 35 and change event handler methods to static for proper registration)
      * Registers all event listeners.
      */
-    public void registerEvents() {
+    public static void registerEvents() {
         NeoEssentials.LOGGER.info("Registering NeoEssentials event handlers");
         
         // Events are registered via @SubscribeEvent annotations
@@ -61,8 +65,12 @@ public class EventHandler {
 =======
      */
     @SubscribeEvent
+<<<<<<< HEAD
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
 >>>>>>> b6e2875 (fix: Update build number to 31 and modify event handler methods for proper registration)
+=======
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+>>>>>>> 5283f26 (fix: Update build number to 35 and change event handler methods to static for proper registration)
         Player player = event.getEntity();
         if (player instanceof ServerPlayer serverPlayer) {
             NeoEssentials.LOGGER.info("Player logged in: {}", player.getScoreboardName());
@@ -100,8 +108,7 @@ public class EventHandler {
             NeoEssentials.getInstance().getDataManager().getMailManager().notifyPlayer(serverPlayer);
         }
     }
-    
-    /**
+      /**
      * Event handler for when a player leaves the server.
      *
      * @param event The player logout event
@@ -118,8 +125,12 @@ public class EventHandler {
 =======
      */
     @SubscribeEvent
+<<<<<<< HEAD
     public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
 >>>>>>> b6e2875 (fix: Update build number to 31 and modify event handler methods for proper registration)
+=======
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+>>>>>>> 5283f26 (fix: Update build number to 35 and change event handler methods to static for proper registration)
         Player player = event.getEntity();
         if (player instanceof ServerPlayer serverPlayer) {
             NeoEssentials.LOGGER.info("Player logged out: {}", player.getScoreboardName());
@@ -147,6 +158,7 @@ public class EventHandler {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
@@ -157,6 +169,9 @@ public class EventHandler {
     
     /**
 >>>>>>> b6e2875 (fix: Update build number to 31 and modify event handler methods for proper registration)
+=======
+      /**
+>>>>>>> 5283f26 (fix: Update build number to 35 and change event handler methods to static for proper registration)
      * Event handler for when the server is stopping.
      * Used to save all data before the server shuts down.
      *
@@ -183,8 +198,12 @@ public class EventHandler {
 =======
      */
     @SubscribeEvent
+<<<<<<< HEAD
     public void onServerStopping(ServerStoppingEvent event) {
 >>>>>>> b6e2875 (fix: Update build number to 31 and modify event handler methods for proper registration)
+=======
+    public static void onServerStopping(ServerStoppingEvent event) {
+>>>>>>> 5283f26 (fix: Update build number to 35 and change event handler methods to static for proper registration)
         NeoEssentials.LOGGER.info("Server stopping, saving all NeoEssentials data");
         
         // Save all data
