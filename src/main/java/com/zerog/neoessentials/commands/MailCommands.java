@@ -93,6 +93,7 @@ public class MailCommands {
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         final int finalUnreadCount = unreadCount;
         final int messageCount = messages.size();
         
@@ -104,6 +105,14 @@ public class MailCommands {
                 "&aYou have &6" + messages.size() + " &amail message" + (messages.size() == 1 ? "" : "s") + 
                 " (&6" + unreadCount + " &aunread).")), false);
 >>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
+=======
+        final int finalUnreadCount = unreadCount;
+        final int messageCount = messages.size();
+        
+        source.sendSuccess(() -> Component.literal(TextUtil.formatText(
+                "&aYou have &6" + messageCount + " &amail message" + (messageCount == 1 ? "" : "s") + 
+                " (&6" + finalUnreadCount + " &aunread).")), false);
+>>>>>>> 00439b7 (refactor: Simplify build workflow by removing SonarQube analysis and caching steps)
         source.sendSuccess(() -> Component.literal(TextUtil.formatText(
                 "&aUse &6/mail read &ato read all messages, or &6/mail read <number> &ato read a specific message.")), false);
         
