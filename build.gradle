@@ -228,3 +228,47 @@ jar {
         ])
     }
 }
+
+// Get the build number from buildnumber.properties
+def getBuildNumber() {
+    def propsFile = file("buildnumber.properties")
+    if (!propsFile.exists()) {
+        propsFile.text = "buildNumber=1"
+        return 1
+    }
+    
+    def props = new Properties()
+    propsFile.withInputStream { props.load(it) }
+    return props.getProperty("buildNumber").toInteger()
+}
+
+// Update the version to include the build number
+def buildNumber = getBuildNumber()
+version = "${mod_version}.${buildNumber}"
+println "Building NeoEssentials version: ${version}"
+
+// Task to increment build number
+tasks.register('incrementBuildNumber') {
+    description = 'Increments the build number'
+    
+    doLast {
+        def propsFile = file("buildnumber.properties")
+        def props = new Properties()
+        
+        if (propsFile.exists()) {
+            propsFile.withInputStream { props.load(it) }
+        }
+        
+        def currentBuildNumber = props.getProperty("buildNumber", "0").toInteger() + 1
+        props.setProperty("buildNumber", currentBuildNumber.toString())
+        
+        propsFile.withOutputStream { 
+            props.store(it, "Build number updated") 
+        }
+        
+        println "Build number incremented to: ${currentBuildNumber}"
+    }
+}
+
+// Make sure the build number is incremented when we build
+build.finalizedBy tasks.incrementBuildNumber
