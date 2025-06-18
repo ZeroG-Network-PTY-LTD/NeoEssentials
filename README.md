@@ -1,6 +1,18 @@
 # NeoEssentials
 
-A comprehensive server-side essentials mod for Minecraft NeoForge servers, inspired by EssentialsX for Bukkit/Spigot.
+A comprehensive server-side essentials mod for Minecraft NeoForge and Forge servers, inspired by EssentialsX for Bukkit/Spigot.
+
+## Multi-Version Support
+
+This mod supports multiple Minecraft versions and mod loaders:
+
+- **NeoForge 1.21.1** (Primary Version)
+- **NeoForge 1.20.5**
+- **NeoForge 1.20.1**
+- **Forge 1.20.1**
+- **Forge 1.19.4**
+
+See the [Multi-Version Guide](MULTIVERSION_GUIDE.md) for more information on the multi-version architecture.
 
 ## Features
 

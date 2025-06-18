@@ -32,16 +32,23 @@ We have made significant progress in refactoring the NeoEssentials mod for multi
    - Added build tasks for all modules
    - Configured proper dependencies between modules
 
-### Next Steps
+### In Progress
 
-1. **Version-Specific Code Migration**
-   - Move remaining version-independent code to the common module
-   - Create version adapters for each version-specific module
-   - Adapt Minecraft-specific code for each version
+1. **Version-Specific Adapters**
+   - ✅ Created common adapter interfaces in common module
+   - ✅ Implemented adapter pattern for version-specific functionality
+   - ✅ Created LocationAdapter for NeoForge 1.21.1
+   - ✅ Created PermissionAdapter for NeoForge 1.21.1
+   - ✅ Created PlayerAdapter for NeoForge 1.21.1
+   - ✅ Created CommandAdapter for NeoForge 1.21.1
+   - ⏳ Port adapters to other version modules
    
-2. **Module Dependencies**
-   - Update each version module's build.gradle to reference the common module
-   - Add version-specific libraries to each version module
+2. **Module Dependencies and Build Setup**
+   - ✅ Updated each version module's build.gradle to reference the common module
+   - ✅ Added version-specific libraries to each version module
+   - ✅ Created template source structures for each module
+   - ✅ Added mods.toml and pack.mcmeta files
+   - ⏳ Complete mod initialization classes for each version
 
 3. **Testing**
    - Test each version module to ensure it loads and functions correctly
