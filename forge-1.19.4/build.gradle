@@ -2,7 +2,6 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '5.1.+'
-    id 'org.parchmentmc.librarian.forgegradle' version '1.+'
 }
 
 archivesBaseName = 'neoessentials-forge-1.19.4'
@@ -34,7 +33,7 @@ minecraft {
     // Official: x.x.x             Official builds at a specific version.
     // Select a mapping from the list of available mappings.
     // Recommendation: Use the latest available mapping.
-    mappings channel: 'parchment', version: '2023.06.26-1.19.4'
+    mappings channel: 'official', version: '1.19.4'
 
     // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg') // Currently, this location cannot be changed from the default.
 
@@ -139,7 +138,7 @@ dependencies {
     // Specify the version of Minecraft to use. If this is any group other than 'net.minecraft', it is assumed
     // that the dep is a ForgeGradle 'patcher' dependency, and its patches will be applied.
     // The userdev artifact is a special name and will get all sorts of transformations applied to it.
-    minecraft 'net.minecraftforge:forge:1.19.4-45.1.0'
+    minecraft 'net.minecraftforge:forge:1.19.4-45.2.0'
 }
 
 // Example for how to get properties into the manifest for reading at runtime.
@@ -194,7 +193,7 @@ public class NeoEssentials {
         MinecraftForge.EVENT_BUS.register(this);
         
         // Initialize mod
-        // TODO: Copy and adapt core initialization from newer versions
+        // TODO: Copy and adapt core initialization from NeoForge version
     }
     
     public static NeoEssentials getInstance() {
@@ -234,6 +233,17 @@ Inspired by EssentialsX for Bukkit/Spigot servers.
     versionRange="[1.19.4]"
     ordering="NONE"
     side="BOTH"
+"""
+        
+        // Create pack.mcmeta
+        def packMcmeta = new File(file("src/main/resources"), "pack.mcmeta")
+        packMcmeta.getParentFile().mkdirs()
+        packMcmeta.text = """{
+    "pack": {
+        "description": "NeoEssentials resources",
+        "pack_format": 12
+    }
+}
 """
         
         println "Created template source structure for Forge 1.19.4 module"
