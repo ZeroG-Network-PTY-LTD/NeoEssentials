@@ -49,9 +49,8 @@ public class EventHandler {
      * Event handler for when a player leaves the server.
      *
      * @param event The player logout event
-     */    
-    @SubscribeEvent
-    public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+     */      @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Player player = event.getEntity();
         if (player instanceof ServerPlayer serverPlayer) {
             NeoEssentials.LOGGER.info("Player logged out: {}", player.getScoreboardName());
