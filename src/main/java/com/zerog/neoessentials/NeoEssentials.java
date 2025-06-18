@@ -51,6 +51,9 @@ public class NeoEssentials {
         // Register config loading event handler
         modEventBus.addListener(this::onConfigLoad);
 
+        // Register custom command argument types
+        com.zerog.neoessentials.init.ModArgumentTypes.register(modEventBus);
+        
         // Check if we're on the physical server - this mod only works on servers
         if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.DEDICATED_SERVER) {
             LOGGER.info("NeoEssentials initializing in DEDICATED SERVER environment");
@@ -95,6 +98,12 @@ public class NeoEssentials {
         // Some common setup code
         LOGGER.info("HELLO FROM COMMON SETUP");
         LOGGER.info("Initializing NeoEssentials managers");
+        
+        // Additional registrations that need to happen during common setup
+        event.enqueueWork(() -> {
+            LOGGER.info("Registering command argument types in common setup");
+            // If needed, additional registrations could happen here
+        });
         
         // Initialize the managers
         initializeManagers();
