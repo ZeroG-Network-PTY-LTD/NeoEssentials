@@ -244,6 +244,7 @@ public class CommandManager {    // Command classes
         NeoEssentials.LOGGER.info("Registered jail commands");
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         // Register powertool commands
         powerToolCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered powertool commands");
@@ -259,6 +260,11 @@ public class CommandManager {    // Command classes
         powerToolCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered power tool commands");
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+        // Register powertool commands
+        powerToolCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered powertool commands");
+>>>>>>> dc2fbaa (fix: Correct spelling of "powertool" in command registration logs)
           // Note: ItemCommands require CommandBuildContext which is not available here
         // In a full implementation, you would need to get the CommandBuildContext properly
         
