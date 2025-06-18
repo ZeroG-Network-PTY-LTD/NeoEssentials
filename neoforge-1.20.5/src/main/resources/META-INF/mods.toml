@@ -1,7 +1,8 @@
 modLoader="javafml"
-loaderVersion="[47,)"
+loaderVersion="[1,)"
 license="MIT"
 issueTrackerURL="https://github.com/zerog/neoessentials/issues"
+
 [[mods]]
 modId="neoessentials"
 version="${version}"
@@ -9,21 +10,20 @@ displayName="NeoEssentials (Server-Side)"
 credits="Inspired by EssentialsX for Bukkit/Spigot servers"
 authors="ZeroG"
 description='''
-NeoEssentials adds essential server commands and features to Forge Minecraft servers.
+NeoEssentials adds essential server commands and features to NeoForge Minecraft servers.
 Inspired by EssentialsX for Bukkit/Spigot servers.
 '''
+
 [[dependencies.neoessentials]]
-    modId="forge"
+    modId="neoforge"
     mandatory=true
-    versionRange="[47,48)"
+    versionRange="[20.5,21)"
     ordering="NONE"
     side="SERVER"
 
 [[dependencies.neoessentials]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.20.1]"
+    versionRange="[1.20.5]"
     ordering="NONE"
     side="BOTH"
-
-
