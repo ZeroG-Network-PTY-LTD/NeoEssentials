@@ -24,6 +24,7 @@ import net.neoforged.bus.api.SubscribeEvent;
  * @since 1.0.0
 =======
 import com.zerog.neoessentials.utils.PermissionUtil;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -50,6 +51,7 @@ public class CommandManager {    // Command classes
     private final MessageCommands messageCommands;
     private final ModeratorCommands moderatorCommands;
 <<<<<<< HEAD
+<<<<<<< HEAD
     private final AfkCommands afkCommands;
     private final UtilityCommands utilityCommands;    
     private final UICommands uiCommands;
@@ -74,6 +76,14 @@ public class CommandManager {    // Command classes
 =======
     private final AfkCommands afkCommands;    public CommandManager() {
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
+=======
+    private final AfkCommands afkCommands;
+    private final UtilityCommands utilityCommands;
+    private final UICommands uiCommands;
+    private ItemCommands itemCommands;
+
+    public CommandManager() {
+>>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -88,6 +98,7 @@ public class CommandManager {    // Command classes
         messageCommands = new MessageCommands();
         moderatorCommands = new ModeratorCommands();
         afkCommands = new AfkCommands();
+<<<<<<< HEAD
 <<<<<<< HEAD
         utilityCommands = new UtilityCommands();
         uiCommands = new UICommands();
@@ -111,6 +122,11 @@ public class CommandManager {    // Command classes
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
+=======
+        utilityCommands = new UtilityCommands();
+        uiCommands = new UICommands();
+        // ItemCommands needs CommandBuildContext which is only available during register event
+>>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
     }
     
     /**
@@ -147,7 +163,20 @@ public class CommandManager {    // Command classes
      * @param dispatcher The command dispatcher
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {// Register teleport commands
+=======
+     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Get the server for CommandBuildContext
+        MinecraftServer server = null;
+        try {
+            // Try to get the server from the event
+            server = NeoEssentials.getServer();
+        } catch (Exception e) {
+            // Server might not be available yet
+            NeoEssentials.LOGGER.error("Failed to get server for command registration", e);
+        }        // Register teleport commands
+>>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
         teleportCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered teleport commands");
         
@@ -286,7 +315,25 @@ public class CommandManager {    // Command classes
         // Register AFK commands
         afkCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered AFK commands");
+<<<<<<< HEAD
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
+=======
+        
+        // Register utility commands
+        utilityCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered utility commands");
+        
+        // Register UI commands
+        uiCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered UI commands");
+        
+        // Create and register item commands (needs CommandBuildContext)
+        CommandBuildContext buildContext = CommandBuildContext.simple(((CommandSourceStack)(Object)dispatcher).getServer().registryAccess(), 
+                ((CommandSourceStack)(Object)dispatcher).getServer().getWorldData().getDataConfiguration());
+        itemCommands = new ItemCommands(buildContext);
+        itemCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered item commands");
+>>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
     }
     
     /**
