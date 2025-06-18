@@ -24,7 +24,8 @@ public class CommandManager {    // Command classes
     private final InventoryCommands inventoryCommands;
     private final PlayerCommands playerCommands;
     private final MessageCommands messageCommands;
-    private final ModeratorCommands moderatorCommands;      public CommandManager() {
+    private final ModeratorCommands moderatorCommands;
+    private final AfkCommands afkCommands;    public CommandManager() {
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -36,6 +37,7 @@ public class CommandManager {    // Command classes
         playerCommands = new PlayerCommands();
         messageCommands = new MessageCommands();
         moderatorCommands = new ModeratorCommands();
+        afkCommands = new AfkCommands();
     }
     
     /**
@@ -100,10 +102,13 @@ public class CommandManager {    // Command classes
         // Register message commands
         messageCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered message commands");
-        
-        // Register moderator commands
+          // Register moderator commands
         moderatorCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered moderator commands");
+        
+        // Register AFK commands
+        afkCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered AFK commands");
     }
     
     /**
@@ -201,5 +206,14 @@ public class CommandManager {    // Command classes
      */
     public ModeratorCommands getModeratorCommands() {
         return moderatorCommands;
+    }
+    
+    /**
+     * Gets the AFK commands instance
+     * 
+     * @return The AFK commands
+     */
+    public AfkCommands getAfkCommands() {
+        return afkCommands;
     }
 }

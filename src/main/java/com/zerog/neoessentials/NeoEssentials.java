@@ -3,8 +3,10 @@ package com.zerog.neoessentials;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
+import com.zerog.neoessentials.commands.CommandManager;
 
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -16,6 +18,11 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(NeoEssentials.MODID)
@@ -30,6 +37,9 @@ public class NeoEssentials {
     private ModContainer modContainer;
     // Flag to track if config is loaded
     private boolean databaseConfigLoaded = false;
+    
+    // Scheduled executor for AFK checking
+    private ScheduledExecutorService scheduler;
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
@@ -238,6 +248,18 @@ public class NeoEssentials {
         // Do something when the server starts
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
+        
+        // Initialize the AFK checker task
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                if (commandManager != null && commandManager.getAfkCommands() != null) {
+                    commandManager.getAfkCommands().checkForInactivePlayers();
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error in AFK checker task", e);
+            }
+        }, 60, 60, TimeUnit.SECONDS); // Check every minute
     }
     
     /**
@@ -249,6 +271,20 @@ public class NeoEssentials {
     @SubscribeEvent
     public void onServerStopping(net.neoforged.neoforge.event.server.ServerStoppingEvent event) {
         LOGGER.info("Server stopping, saving all NeoEssentials data");
+        
+        // Shut down scheduler
+        if (scheduler != null) {
+            scheduler.shutdown();
+            try {
+                if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                    scheduler.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                LOGGER.error("Error shutting down scheduler", e);
+                scheduler.shutdownNow();
+            }
+            scheduler = null;
+        }
         
         // Save all data and close database connections
         if (dataManager != null) {
