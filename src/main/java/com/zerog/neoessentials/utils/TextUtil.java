@@ -121,6 +121,39 @@ public class TextUtil {
     }
     
     /**
+     * Formats text, translating color codes if the user has permission
+     * 
+     * @param text The text to format
+     * @return The formatted text
+     */
+    public static String formatText(String text) {
+        if (text == null) {
+            return "";
+        }
+        
+        return translateColors(text);
+    }
+    
+    /**
+     * Formats text, translating color codes if the user has permission
+     * 
+     * @param text The text to format
+     * @param allowFormatting Whether to allow color formatting
+     * @return The formatted text
+     */
+    public static String formatText(String text, boolean allowFormatting) {
+        if (text == null) {
+            return "";
+        }
+        
+        if (allowFormatting) {
+            return translateColors(text);
+        } else {
+            return text;
+        }
+    }
+    
+    /**
      * Get the ChatFormatting for a character code
      */
     private static ChatFormatting getFormattingByChar(char code) {

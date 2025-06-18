@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
-
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -23,7 +22,7 @@ import java.util.*;
 /**
  * Implements messaging commands like /msg, /r, /broadcast, /mail, etc
  */
-public class MessageCommands {
+public class MessagingCommands {
     
     // Last message tracking for reply command
     private final Map<UUID, UUID> lastMessageSender = new HashMap<>();
@@ -82,7 +81,8 @@ public class MessageCommands {
         // /msgtoggle [on|off] [player]
         dispatcher.register(Commands.literal("msgtoggle")
             .requires(source -> CommandManager.hasPermission(source, "essentials.msgtoggle"))
-            .executes(context -> toggleMsgCommand(context, null, context.getSource().getPlayerOrException()))            .then(Commands.literal("on")
+            .executes(context -> toggleMsgCommand(context, null, context.getSource().getPlayerOrException()))
+            .then(Commands.literal("on")
                 .executes(context -> toggleMsgCommand(
                     context, 
                     true,
@@ -122,10 +122,11 @@ public class MessageCommands {
             )
         );
         
-        // /rtoggle [player] [on|off]
+        // /rtoggle [on|off] [player]
         dispatcher.register(Commands.literal("rtoggle")
             .requires(source -> CommandManager.hasPermission(source, "essentials.rtoggle"))
-            .executes(context -> toggleReplyModeCommand(context, null, context.getSource().getPlayerOrException()))            .then(Commands.literal("on")
+            .executes(context -> toggleReplyModeCommand(context, null, context.getSource().getPlayerOrException()))
+            .then(Commands.literal("on")
                 .executes(context -> toggleReplyModeCommand(
                     context, 
                     true,
@@ -165,10 +166,11 @@ public class MessageCommands {
             )
         );
         
-        // /socialspy [player] [on|off]
+        // /socialspy [on|off] [player]
         dispatcher.register(Commands.literal("socialspy")
             .requires(source -> CommandManager.hasPermission(source, "essentials.socialspy"))
-            .executes(context -> toggleSocialSpyCommand(context, null, context.getSource().getPlayerOrException()))            .then(Commands.literal("on")
+            .executes(context -> toggleSocialSpyCommand(context, null, context.getSource().getPlayerOrException()))
+            .then(Commands.literal("on")
                 .executes(context -> toggleSocialSpyCommand(
                     context, 
                     true,
@@ -304,7 +306,8 @@ public class MessageCommands {
         // Send the messages
         context.getSource().sendSuccess(() -> senderMsg, false);
         recipient.sendSystemMessage(recipientMsg);
-          // Send to social spies
+        
+        // Send to social spies
         sendToSocialSpies(sender, recipient, formattedMessage);
         
         // Update last message tracking
@@ -501,8 +504,9 @@ public class MessageCommands {
     /**
      * Send a private message to all players with social spy enabled
      */
-    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {
-        // Skip if sender or recipient has exemption        if (PermissionUtil.hasPermission(sender, "essentials.chat.spy.exempt") ||
+    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message) {
+        // Skip if sender or recipient has exemption
+        if (PermissionUtil.hasPermission(sender, "essentials.chat.spy.exempt") || 
             PermissionUtil.hasPermission(recipient, "essentials.chat.spy.exempt")) {
             return;
         }
@@ -517,7 +521,8 @@ public class MessageCommands {
         // Send to all players with social spy enabled
         for (ServerPlayer player : playerList.getPlayers()) {
             if (socialSpyEnabled.contains(player.getUUID()) && 
-                (skipPlayer == null || !player.getUUID().equals(skipPlayer.getUUID())) &&
+                !player.getUUID().equals(sender.getUUID()) && 
+                !player.getUUID().equals(recipient.getUUID()) &&
                 PermissionUtil.hasPermission(player, "essentials.socialspy")) {
                 player.sendSystemMessage(spyMessage);
             }
