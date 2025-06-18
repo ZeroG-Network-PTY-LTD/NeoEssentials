@@ -3,6 +3,7 @@ package com.zerog.neoessentials.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.NeoEssentials;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -25,11 +26,11 @@ import net.neoforged.bus.api.SubscribeEvent;
 =======
 import com.zerog.neoessentials.utils.PermissionUtil;
 import net.minecraft.commands.CommandBuildContext;
+=======
+>>>>>>> 2a4d122 (feat: Refactor CommandManager to streamline command registration and add utility/UI command accessors)
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
 
 /**
  * Manages registration and execution of all NeoEssentials commands.
@@ -78,9 +79,7 @@ public class CommandManager {    // Command classes
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
 =======
     private final AfkCommands afkCommands;
-    private final UtilityCommands utilityCommands;
-    private final UICommands uiCommands;
-    private ItemCommands itemCommands;
+    private final UtilityCommands utilityCommands;    private final UICommands uiCommands;
 
     public CommandManager() {
 >>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
@@ -164,6 +163,7 @@ public class CommandManager {    // Command classes
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {// Register teleport commands
 =======
      */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -177,6 +177,9 @@ public class CommandManager {    // Command classes
             NeoEssentials.LOGGER.error("Failed to get server for command registration", e);
         }        // Register teleport commands
 >>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
+=======
+     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {// Register teleport commands
+>>>>>>> 2a4d122 (feat: Refactor CommandManager to streamline command registration and add utility/UI command accessors)
         teleportCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered teleport commands");
         
@@ -311,8 +314,7 @@ public class CommandManager {    // Command classes
           // Register moderator commands
         moderatorCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered moderator commands");
-        
-        // Register AFK commands
+          // Register AFK commands
         afkCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered AFK commands");
 <<<<<<< HEAD
@@ -326,7 +328,10 @@ public class CommandManager {    // Command classes
         // Register UI commands
         uiCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered UI commands");
+          // Note: ItemCommands require CommandBuildContext which is not available here
+        // In a full implementation, you would need to get the CommandBuildContext properly
         
+<<<<<<< HEAD
         // Create and register item commands (needs CommandBuildContext)
         CommandBuildContext buildContext = CommandBuildContext.simple(((CommandSourceStack)(Object)dispatcher).getServer().registryAccess(), 
                 ((CommandSourceStack)(Object)dispatcher).getServer().getWorldData().getDataConfiguration());
@@ -334,6 +339,11 @@ public class CommandManager {    // Command classes
         itemCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered item commands");
 >>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
+=======
+        // For now, we'll skip registering ItemCommands until we can find a proper way
+        // to get the CommandBuildContext
+        NeoEssentials.LOGGER.info("Skipping ItemCommands registration due to CommandBuildContext requirements");
+>>>>>>> 2a4d122 (feat: Refactor CommandManager to streamline command registration and add utility/UI command accessors)
     }
     
     /**
@@ -535,13 +545,30 @@ public class CommandManager {    // Command classes
     public ModeratorCommands getModeratorCommands() {
         return moderatorCommands;
     }
-    
-    /**
+      /**
      * Gets the AFK commands instance
      * 
      * @return The AFK commands
      */
     public AfkCommands getAfkCommands() {
         return afkCommands;
+    }
+    
+    /**
+     * Gets the utility commands instance
+     * 
+     * @return The utility commands
+     */
+    public UtilityCommands getUtilityCommands() {
+        return utilityCommands;
+    }
+    
+    /**
+     * Gets the UI commands instance
+     * 
+     * @return The UI commands
+     */
+    public UICommands getUiCommands() {
+        return uiCommands;
     }
 }
