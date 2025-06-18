@@ -91,7 +91,7 @@ repositories {
 
 dependencies {
     // Use Neo Forge userdev for this version of Minecraft
-    minecraft "net.neoforged:neoforge:${minecraft_version}-${neo_version}"
+    implementation "net.neoforged:neoforge:${minecraft_version}-${neo_version}"
     
     // Database dependencies
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
@@ -140,7 +140,44 @@ jar {
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
-    
+}
+
+// NeoForge specific configurations
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(17)
+}
+
+// Configure the mixin environment
+mixin {
+    add sourceSets.main, "neoessentials.refmap.json"
+    config "neoessentials.mixins.json"
+}
+
+// Process resources specific configuration
+processResources {
+    var replaceProperties = [
+            minecraft_version: minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version: neo_version,
+            neo_version_range: neo_version_range,
+            loader_version_range: loader_version_range,
+            mod_id: mod_id,
+            mod_name: mod_name,
+            mod_license: mod_license,
+            mod_version: project.version,
+            mod_authors: mod_authors,
+            mod_description: mod_description
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+// Create a task to finalize the jar with reobfuscation
+tasks.named('jar').configure {
     finalizedBy 'reobfJar'
 }
 
