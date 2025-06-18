@@ -1,9 +1,7 @@
 pluginManagement {
     repositories {
-        mavenLocal()
-        gradlePluginPortal()
         maven { url = 'https://maven.neoforged.net/releases' }
-        maven { url = 'https://maven.minecraftforge.net/' } // Forge Maven
+        gradlePluginPortal()
     }
 }
 
@@ -12,23 +10,3 @@ plugins {
 }
 
 rootProject.name = 'NeoEssentials'
-
-// Common module
-include 'common'
-
-// NeoForge modules for different Minecraft versions
-include 'neoforge-1.21.1' // Current version
-include 'neoforge-1.20.5' // Backport
-include 'neoforge-1.20.1' // Earlier backport
-
-// Forge modules for Forge compatibility
-include 'forge-1.20.1' // Latest Forge version
-include 'forge-1.19.4' // Earlier Forge version
-
-// Set project directory for each module
-project(':common').projectDir = file('common')
-project(':neoforge-1.21.1').projectDir = file('neoforge-1.21.1')
-project(':neoforge-1.20.5').projectDir = file('neoforge-1.20.5')
-project(':neoforge-1.20.1').projectDir = file('neoforge-1.20.1')
-project(':forge-1.20.1').projectDir = file('forge-1.20.1')
-project(':forge-1.19.4').projectDir = file('forge-1.19.4')
