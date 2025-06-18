@@ -64,6 +64,7 @@ public class NeoEssentials {
         
         // Register the event handlers
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.EventHandler());
+        NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.PowerToolEventHandler());
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "neoessentials-general.toml");
