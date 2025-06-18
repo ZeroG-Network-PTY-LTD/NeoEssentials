@@ -186,9 +186,8 @@ public class TeleportCommands {
             Commands.literal("top")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.top"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
-                    
-                    // Get the player's current level
-                    ServerLevel level = player.getLevel();
+                      // Get the player's current level
+                    ServerLevel level = player.serverLevel();
                     
                     // Find the highest block at the player's current x,z position
                     int highestY = findHighestBlock(level, (int)player.getX(), (int)player.getZ());
@@ -211,9 +210,8 @@ public class TeleportCommands {
             Commands.literal("bottom")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.bottom"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
-                    
-                    // Get the player's current level
-                    ServerLevel level = player.getLevel();
+                      // Get the player's current level
+                    ServerLevel level = player.serverLevel();
                     
                     // Find the lowest block at the player's current x,z position
                     int lowestY = findLowestBlock(level, (int)player.getX(), (int)player.getZ());
