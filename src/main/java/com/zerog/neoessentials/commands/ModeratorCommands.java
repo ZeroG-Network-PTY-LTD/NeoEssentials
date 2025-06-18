@@ -451,6 +451,7 @@ public class ModeratorCommands {
     /**
      * Unban a player
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
         String playerName = StringArgumentType.getString(context, "player");
         UserBanList banList = context.getSource().getServer().getPlayerList().getBans();
@@ -485,20 +486,23 @@ public class ModeratorCommands {
 =======
      */
     private int unbanPlayer(CommandContext<CommandSourceStack> context) {
+=======
+     */    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
+>>>>>>> 009105b (fix: Improve unban logic to directly remove banned players by name and streamline teleport command level retrieval)
         try {
             String targetName = StringArgumentType.getString(context, "player");
             UserBanList banList = context.getSource().getServer().getPlayerList().getBans();
-              // Use removeByName instead of iterating through the entries
+            
+            // We need to find the game profile in the ban list
             boolean found = false;
-            try {
-                // Try to unban by name
-                if (banList.isBanned(targetName)) {
-                    banList.remove(targetName);
+            
+            // Iterate through banned users to find matching name
+            for (UserBanListEntry entry : banList.getEntries()) {
+                if (entry.getUser().getName().equalsIgnoreCase(targetName)) {
+                    banList.remove(entry.getUser());
                     found = true;
+                    break;
                 }
-            } catch (Exception ex) {
-                // Some versions might not support isBanned by name
-                NeoEssentials.LOGGER.error("Error checking ban by name", ex);
             }
             
             if (found) {

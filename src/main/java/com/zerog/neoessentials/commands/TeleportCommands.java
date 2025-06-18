@@ -191,6 +191,7 @@ public class TeleportCommands {
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.top"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
 <<<<<<< HEAD
+<<<<<<< HEAD
                       // Get the player's current level
                     ServerLevel level = player.serverLevel();
 =======
@@ -198,6 +199,10 @@ public class TeleportCommands {
                     // Get the player's current level
                     ServerLevel level = player.getLevel();
 >>>>>>> bac244b (Implement messaging and player state commands)
+=======
+                      // Get the player's current level
+                    ServerLevel level = player.serverLevel();
+>>>>>>> 009105b (fix: Improve unban logic to directly remove banned players by name and streamline teleport command level retrieval)
                     
                     // Find the highest block at the player's current x,z position
                     int highestY = findHighestBlock(level, (int)player.getX(), (int)player.getZ());
@@ -221,6 +226,7 @@ public class TeleportCommands {
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.bottom"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
 <<<<<<< HEAD
+<<<<<<< HEAD
                       // Get the player's current level
                     ServerLevel level = player.serverLevel();
 =======
@@ -228,6 +234,10 @@ public class TeleportCommands {
                     // Get the player's current level
                     ServerLevel level = player.getLevel();
 >>>>>>> bac244b (Implement messaging and player state commands)
+=======
+                      // Get the player's current level
+                    ServerLevel level = player.serverLevel();
+>>>>>>> 009105b (fix: Improve unban logic to directly remove banned players by name and streamline teleport command level retrieval)
                     
                     // Find the lowest block at the player's current x,z position
                     int lowestY = findLowestBlock(level, (int)player.getX(), (int)player.getZ());
