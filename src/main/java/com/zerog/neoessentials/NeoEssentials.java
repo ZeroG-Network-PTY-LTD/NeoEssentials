@@ -122,7 +122,11 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(this);
         
         // Register the event handlers
+<<<<<<< HEAD
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.events.EventHandler.class);
+=======
+        NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.EventHandler());
+>>>>>>> fc83e02 (feat: Implement PowerTool event handling for player interactions)
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.PowerToolEventHandler());
 
         // Initialize our configuration system
