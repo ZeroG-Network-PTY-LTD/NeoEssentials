@@ -273,9 +273,9 @@ public class CommandManager {    // Command classes
     }
     
     /**
-     * Gets the power tool commands instance
+     * Gets the powertool commands instance
      * 
-     * @return The power tool commands
+     * @return The powertool commands
      */
     public PowerToolCommands getPowerToolCommands() {
         return powerToolCommands;
