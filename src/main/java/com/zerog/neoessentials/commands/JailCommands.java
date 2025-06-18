@@ -265,7 +265,7 @@ public class JailCommands {
                 throw JAIL_DOESNT_EXIST.create();
             }
             
-            if (targetPlayer.hasPermissions(4) || CommandManager.hasPermission(targetPlayer, "neoessentials.jail.exempt")) {
+            if (targetPlayer.hasPermissions(4) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission(targetPlayer, "neoessentials.jail.exempt")) {
                 if (!source.hasPermission(4)) { // If the source is not op level 4
                     source.sendFailure(Component.literal(TextUtil.formatText(
                             "&cYou cannot jail an operator or someone with the exempt permission.")));
@@ -309,7 +309,7 @@ public class JailCommands {
                 throw JAIL_DOESNT_EXIST.create();
             }
             
-            if (targetPlayer.hasPermissions(4) || CommandManager.hasPermission(targetPlayer, "neoessentials.jail.exempt")) {
+            if (targetPlayer.hasPermissions(4) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission(targetPlayer, "neoessentials.jail.exempt")) {
                 if (!source.hasPermission(4)) { // If the source is not op level 4
                     source.sendFailure(Component.literal(TextUtil.formatText(
                             "&cYou cannot jail an operator or someone with the exempt permission.")));
