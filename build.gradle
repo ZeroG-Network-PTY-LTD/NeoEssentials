@@ -74,7 +74,11 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'net.neoforged.gradle.userdev' version '7.0.131'
+<<<<<<< HEAD
 >>>>>>> 452fbe2 (refactor: Simplify build.gradle by removing redundant configurations and enhancing build number management)
+=======
+    id 'net.neoforged.gradle.mixin' version '7.0.131'
+>>>>>>> 753cf35 (fix: Adjust repository order in settings.gradle and update logging properties in build.gradle for clarity)
 }
 
 // Get the build number from buildnumber.properties
@@ -101,33 +105,29 @@ java {
     withJavadocJar()
 }
 
-minecraft {
+// Minecraft/NeoForge configuration
+userdev {
     // The mappings can be changed at any time and must be in the following format.
     // Channel:   Version:
     // official   MCVersion             Official field/method names from Mojang mapping files
     // parchment  YYYY.MM.DD-MCVersion  Open community-sourced parameter names and javadocs layered on top of official
     //
-    // You must be aware of the Neo Forge license when using the 'official' or 'parchment' mappings.
-    // See NETWORKING.md for more information.
-    //
-    // Parchment is an unofficial project maintained by ParchmentMC, separate from Minecraft Forge.
-    // Additional setup is needed to use their mappings, see https://parchmentmc.org/docs/getting-started
+    // You must be aware of the Neo Forge license when using the 'official' mappings.
+    // See https://neoforged.net/docs/developer-resources/ for more information.
     mappings channel: 'official', version: '1.21.1'
 
     // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     
-    copyIdeResources = true
-
-    runs {
+    copyIdeResources = true    runs {
         // Apply these settings to all run configs
         configureEach {
             workingDirectory project.file('run')
             
             // Recommended logging data for a userdev environment
-            property 'forge.logging.markers', 'REGISTRIES'
+            property 'neoforge.logging.markers', 'REGISTRIES'
             
             // Recommended logging level for the console
-            property 'forge.logging.console.level', 'debug'
+            property 'neoforge.logging.console.level', 'debug'
             
             mods {
                 neoessentials {
