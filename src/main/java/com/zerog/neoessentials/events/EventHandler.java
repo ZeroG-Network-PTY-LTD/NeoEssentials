@@ -31,23 +31,22 @@ public class EventHandler {    /**
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
 =======
 
-public class EventHandler {
-
-    /**
-     * Registers all event listeners.
-     */
-    public void registerEvents() {
-        NeoEssentials.LOGGER.info("Registering NeoEssentials event handlers");
-        
-        // Events are registered via @SubscribeEvent annotations
-    }    /**
+public class EventHandler {    /**
+     * Event handlers are registered via static @SubscribeEvent annotated methods
+     * Class is registered with NeoForge.EVENT_BUS in NeoEssentials main class
+     *//**
      * Event handler for when a player joins the server.
      *
      * @param event The player login event
+<<<<<<< HEAD
      */    
     @SubscribeEvent
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+     */      @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+>>>>>>> 2ae5184 (fix: Change event handler methods to static for proper registration)
         Player player = event.getEntity();
         if (player instanceof ServerPlayer serverPlayer) {
             NeoEssentials.LOGGER.info("Player logged in: {}", player.getScoreboardName());
@@ -84,7 +83,7 @@ public class EventHandler {
             // Notify player about unread mail if they have any
             NeoEssentials.getInstance().getDataManager().getMailManager().notifyPlayer(serverPlayer);
         }
-    }    /**
+    }/**
      * Event handler for when a player leaves the server.
      *
      * @param event The player logout event
@@ -135,6 +134,7 @@ public class EventHandler {
      * @param event The server stopping event
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
      */
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
@@ -146,6 +146,10 @@ public class EventHandler {
 >>>>>>> e2153e5 (fix: Improve event registration and storage manager initialization in NeoEssentials)
     public void onServerStopping(ServerStoppingEvent event) {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+     */      @SubscribeEvent
+    public static void onServerStopping(ServerStoppingEvent event) {
+>>>>>>> 2ae5184 (fix: Change event handler methods to static for proper registration)
         NeoEssentials.LOGGER.info("Server stopping, saving all NeoEssentials data");
         
         // Save all data
