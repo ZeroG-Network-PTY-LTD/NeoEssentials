@@ -6,9 +6,13 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.utils.MessageUtil;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.PermissionUtil;
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+import com.zerog.neoessentials.utils.PermissionUtil;
+>>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -28,6 +32,7 @@ public class TimeAndWeatherCommands {
      * @param dispatcher The command dispatcher
      */
 <<<<<<< HEAD
+<<<<<<< HEAD
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {        // /day - Set time to day
         dispatcher.register(
             Commands.literal("day")
@@ -39,12 +44,19 @@ public class TimeAndWeatherCommands {
             Commands.literal("day")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.time"))
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {        // /day - Set time to day
+        dispatcher.register(
+            Commands.literal("day")
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
+>>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
                 .executes(this::executeDay)
         );
         
         // /night - Set time to night
         dispatcher.register(
             Commands.literal("night")
+<<<<<<< HEAD
 <<<<<<< HEAD
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
                 .executes(this::executeNight)
@@ -55,14 +67,21 @@ public class TimeAndWeatherCommands {
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
 =======
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.time"))
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
+>>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
                 .executes(this::executeNight)
         );
         
         // /time <set|add> <time> - Set or add time
         dispatcher.register(
             Commands.literal("time")
+<<<<<<< HEAD
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.time"))
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
+>>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
                 .then(Commands.literal("set")
                     .then(Commands.argument("time", IntegerArgumentType.integer(0, 24000))
                         .executes(context -> executeTimeSet(context, IntegerArgumentType.getInteger(context, "time")))
@@ -99,6 +118,7 @@ public class TimeAndWeatherCommands {
                 )
         );
 <<<<<<< HEAD
+<<<<<<< HEAD
           // /weather <clear|rain|thunder> [duration] - Set weather
         dispatcher.register(
             Commands.literal("weather")
@@ -110,6 +130,12 @@ public class TimeAndWeatherCommands {
             Commands.literal("weather")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.weather"))
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+          // /weather <clear|rain|thunder> [duration] - Set weather
+        dispatcher.register(
+            Commands.literal("weather")
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.weather"))
+>>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
                 .then(Commands.literal("clear")
                     .executes(context -> executeWeather(context, "clear", 6000))
                     .then(Commands.argument("duration", IntegerArgumentType.integer(1, 1000000))
