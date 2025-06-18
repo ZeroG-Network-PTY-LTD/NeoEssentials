@@ -16,6 +16,8 @@ public class DataManager {
     private WarpManager warpManager;
     private SpawnManager spawnManager;
     private KitManager kitManager;
+    private JailManager jailManager;
+    private PowerToolManager powerToolManager;
     
     private final String dataFolder = "neoessentials/";
     
@@ -33,6 +35,8 @@ public class DataManager {
         warpManager = new WarpManager();
         spawnManager = new SpawnManager();
         kitManager = new KitManager();
+        jailManager = new JailManager(dataFolderFile);
+        powerToolManager = new PowerToolManager(dataFolderFile);
     }
     
     /**
@@ -40,14 +44,14 @@ public class DataManager {
      */
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");
-          
-        // Initialize all data managers
+            // Initialize all data managers
         userManager.initialize();
         economyManager.initialize();
         homeManager.initialize();
         warpManager.initialize();
         spawnManager.initialize();
         kitManager.initialize();
+        // JailManager doesn't need initialization
         
         NeoEssentials.LOGGER.info("NeoEssentials Data Manager initialized");
     }
@@ -80,14 +84,15 @@ public class DataManager {
      * Save all data to disk
      */
     public void saveAll() {
-        NeoEssentials.LOGGER.info("Saving all NeoEssentials data");
-        
-        userManager.saveAll();
+        NeoEssentials.LOGGER.info("Saving all NeoEssentials data");        userManager.saveAll();
         economyManager.saveAll();
         homeManager.saveAll();
         warpManager.saveAll();
         spawnManager.saveSpawnData();
         kitManager.saveKits();
+        jailManager.saveJails();
+        jailManager.saveJailedPlayers();
+        powerToolManager.savePowerTools();
     }
     
     /**
@@ -152,6 +157,24 @@ public class DataManager {
      */
     public KitManager getKitManager() {
         return kitManager;
+    }
+    
+    /**
+     * Gets the jail manager instance
+     * 
+     * @return The jail manager
+     */
+    public JailManager getJailManager() {
+        return jailManager;
+    }
+    
+    /**
+     * Gets the powertool manager instance
+     * 
+     * @return The powertool manager
+     */
+    public PowerToolManager getPowerToolManager() {
+        return powerToolManager;
     }
     
     /**

@@ -23,7 +23,10 @@ public class CommandManager {    // Command classes
     private final MessageCommands messageCommands;
     private final ModeratorCommands moderatorCommands;
     private final AfkCommands afkCommands;
-    private final UtilityCommands utilityCommands;    private final UICommands uiCommands;
+    private final UtilityCommands utilityCommands;    
+    private final UICommands uiCommands;
+    private final JailCommands jailCommands;
+    private final PowerToolCommands powerToolCommands;
 
     public CommandManager() {
         teleportCommands = new TeleportCommands();
@@ -40,6 +43,8 @@ public class CommandManager {    // Command classes
         afkCommands = new AfkCommands();
         utilityCommands = new UtilityCommands();
         uiCommands = new UICommands();
+        jailCommands = new JailCommands();
+        powerToolCommands = new PowerToolCommands();
         // ItemCommands needs CommandBuildContext which is only available during register event
     }
     
@@ -119,6 +124,14 @@ public class CommandManager {    // Command classes
         // Register UI commands
         uiCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered UI commands");
+        
+        // Register jail commands
+        jailCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered jail commands");
+        
+        // Register power tool commands
+        powerToolCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered power tool commands");
           // Note: ItemCommands require CommandBuildContext which is not available here
         // In a full implementation, you would need to get the CommandBuildContext properly
         
@@ -246,7 +259,25 @@ public class CommandManager {    // Command classes
      * 
      * @return The UI commands
      */
-    public UICommands getUiCommands() {
+    public UICommands getUICommands() {
         return uiCommands;
+    }
+    
+    /**
+     * Gets the jail commands instance
+     * 
+     * @return The jail commands
+     */
+    public JailCommands getJailCommands() {
+        return jailCommands;
+    }
+    
+    /**
+     * Gets the power tool commands instance
+     * 
+     * @return The power tool commands
+     */
+    public PowerToolCommands getPowerToolCommands() {
+        return powerToolCommands;
     }
 }
