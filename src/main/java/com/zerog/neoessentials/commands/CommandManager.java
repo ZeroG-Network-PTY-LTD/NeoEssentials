@@ -83,6 +83,7 @@ public class CommandManager {    // Command classes
     private final UICommands uiCommands;
     private final JailCommands jailCommands;
     private final PowerToolCommands powerToolCommands;
+    private final MailCommands mailCommands;
 
     public CommandManager() {
 >>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
@@ -129,6 +130,7 @@ public class CommandManager {    // Command classes
         uiCommands = new UICommands();
         jailCommands = new JailCommands();
         powerToolCommands = new PowerToolCommands();
+        mailCommands = new MailCommands();
         // ItemCommands needs CommandBuildContext which is only available during register event
 >>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
     }
@@ -248,6 +250,7 @@ public class CommandManager {    // Command classes
         // Register powertool commands
         powerToolCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered powertool commands");
+<<<<<<< HEAD
           // Register mail commands
         mailCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered mail commands");
@@ -265,6 +268,12 @@ public class CommandManager {    // Command classes
         powerToolCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered powertool commands");
 >>>>>>> dc2fbaa (fix: Correct spelling of "powertool" in command registration logs)
+=======
+        
+        // Register mail commands
+        mailCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered mail commands");
+>>>>>>> 59f36fa (feat: Add Mail functionality with commands and player notifications)
           // Note: ItemCommands require CommandBuildContext which is not available here
         // In a full implementation, you would need to get the CommandBuildContext properly
         
@@ -605,5 +614,14 @@ public class CommandManager {    // Command classes
      */
     public PowerToolCommands getPowerToolCommands() {
         return powerToolCommands;
+    }
+    
+    /**
+     * Gets the mail commands instance
+     * 
+     * @return The mail commands
+     */
+    public MailCommands getMailCommands() {
+        return mailCommands;
     }
 }
