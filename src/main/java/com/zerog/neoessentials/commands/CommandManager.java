@@ -69,6 +69,11 @@ public class CommandManager {    // Command classes
         
         // Register all command categories directly since we're an instance
         registerAllCommands(dispatcher);
+        
+        // Register ItemCommands with the CommandBuildContext from the event
+        ItemCommands itemCommands = new ItemCommands(event.getBuildContext());
+        itemCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered item commands");
     }
       /**
      * Registers all command categories with the dispatcher.
