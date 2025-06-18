@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.utils.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -23,25 +24,24 @@ public class TimeAndWeatherCommands {
      * 
      * @param dispatcher The command dispatcher
      */
-    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // /day - Set time to day
+    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {        // /day - Set time to day
         dispatcher.register(
             Commands.literal("day")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.time"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
                 .executes(this::executeDay)
         );
         
         // /night - Set time to night
         dispatcher.register(
             Commands.literal("night")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.time"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
                 .executes(this::executeNight)
         );
         
         // /time <set|add> <time> - Set or add time
         dispatcher.register(
             Commands.literal("time")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.time"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
                 .then(Commands.literal("set")
                     .then(Commands.argument("time", IntegerArgumentType.integer(0, 24000))
                         .executes(context -> executeTimeSet(context, IntegerArgumentType.getInteger(context, "time")))
@@ -65,11 +65,10 @@ public class TimeAndWeatherCommands {
                     )
                 )
         );
-        
-        // /weather <clear|rain|thunder> [duration] - Set weather
+          // /weather <clear|rain|thunder> [duration] - Set weather
         dispatcher.register(
             Commands.literal("weather")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.weather"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.weather"))
                 .then(Commands.literal("clear")
                     .executes(context -> executeWeather(context, "clear", 6000))
                     .then(Commands.argument("duration", IntegerArgumentType.integer(1, 1000000))

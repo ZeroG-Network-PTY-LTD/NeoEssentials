@@ -91,18 +91,17 @@ public class NeoEssentialsConfig {
         defaultPermissions.put("neoessentials.command.gamemode.spectator", false);
         defaultPermissions.put("neoessentials.command.gamemode.spectator.others", false);
         defaultPermissions.put("neoessentials.command.gamemode.adventure", false);
-        defaultPermissions.put("neoessentials.command.gamemode.adventure.others", false);
-        defaultPermissions.put("neoessentials.command.time", false);
-        defaultPermissions.put("neoessentials.command.weather", false);
+        defaultPermissions.put("neoessentials.command.gamemode.adventure.others", false);        defaultPermissions.put("neoessentials.command.time", true);
+        defaultPermissions.put("neoessentials.command.weather", true);
         defaultPermissions.put("neoessentials.command.money", true);
         defaultPermissions.put("neoessentials.command.pay", true);
         defaultPermissions.put("neoessentials.command.balance", true);
         defaultPermissions.put("neoessentials.command.baltop", true);
-        defaultPermissions.put("neoessentials.command.eco", false);
-        defaultPermissions.put("neoessentials.command.kit", true);
-        defaultPermissions.put("neoessentials.command.createkit", false);
-        defaultPermissions.put("neoessentials.command.deletekit", false);
-        defaultPermissions.put("neoessentials.command.givekit", false);
+        defaultPermissions.put("neoessentials.command.eco", false);        defaultPermissions.put("neoessentials.command.kit", true);
+        defaultPermissions.put("neoessentials.command.kit.list", true);
+        defaultPermissions.put("neoessentials.command.kit.create", false);
+        defaultPermissions.put("neoessentials.command.kit.delete", false);
+        defaultPermissions.put("neoessentials.command.kit.give", false);
     }
 
     // Getters and setters for all properties
