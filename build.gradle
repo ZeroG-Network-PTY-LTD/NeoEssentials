@@ -708,30 +708,37 @@ def buildNumber = getBuildNumber()
 version = "${mod_version}.${buildNumber}"
 println "Building NeoEssentials version: ${version}"
 
-// Task to increment build number
-tasks.register('incrementBuildNumber') {
-    description = 'Increments the build number'
-    
-    doLast {
-        def propsFile = file("buildnumber.properties")
-        def props = new Properties()
+// Task to increment build number compatible with configuration cache
+abstract class IncrementBuildNumberTask extends DefaultTask {
+    @TaskAction
+    def increment() {
+        File propsFile = new File(project.projectDir, "buildnumber.properties")
+        Properties props = new Properties()
         
         if (propsFile.exists()) {
-            propsFile.withInputStream { props.load(it) }
+            propsFile.withInputStream { stream ->
+                props.load(stream)
+            }
         }
         
-        def currentBuildNumber = props.getProperty("buildNumber", "0").toInteger() + 1
+        int currentBuildNumber = (props.getProperty("buildNumber", "0") as String).toInteger() + 1
         props.setProperty("buildNumber", currentBuildNumber.toString())
         
+<<<<<<< HEAD
         propsFile.withOutputStream { 
             props.store(it, "Build number updated") 
 >>>>>>> 4338242 (feat: Add build number management and update mod metadata in gradle.properties)
+=======
+        propsFile.withOutputStream { stream ->
+            props.store(stream, "Build number updated") 
+>>>>>>> d6a7fa7 (feat: Enhance build number management with configuration cache compatibility)
         }
         
         println "Build number incremented to: ${currentBuildNumber}"
     }
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 // Register the task
 tasks.register('incrementBuildNumber', IncrementBuildNumberTask) {
@@ -780,3 +787,14 @@ jar {
 // Make sure the build number is incremented when we build
 build.finalizedBy tasks.incrementBuildNumber
 >>>>>>> 4338242 (feat: Add build number management and update mod metadata in gradle.properties)
+=======
+// Register the task
+tasks.register('incrementBuildNumber', IncrementBuildNumberTask) {
+    description = 'Increments the build number'
+}
+
+// Make sure the build number is incremented when we build
+tasks.named('build').configure {
+    finalizedBy tasks.named('incrementBuildNumber')
+}
+>>>>>>> d6a7fa7 (feat: Enhance build number management with configuration cache compatibility)
