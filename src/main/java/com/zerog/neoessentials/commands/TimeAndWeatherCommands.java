@@ -62,6 +62,7 @@ public class TimeAndWeatherCommands {
                 .executes(this::executeNight)
         );
           // /time <set|add> <time> - Set or add time
+<<<<<<< HEAD
         dispatcher.register(
             Commands.literal("time")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
@@ -74,6 +75,8 @@ public class TimeAndWeatherCommands {
         );
         
         // /time <set|add> <time> - Set or add time
+=======
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
         dispatcher.register(
             Commands.literal("time")
 <<<<<<< HEAD
@@ -99,6 +102,9 @@ public class TimeAndWeatherCommands {
                         .executes(context -> executeTimeSet(context, 18000))
                     )
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
                     .then(Commands.literal("morning")
                         .executes(context -> executeTimeSet(context, 0))
                     )
@@ -108,8 +114,11 @@ public class TimeAndWeatherCommands {
                     .then(Commands.literal("sunrise")
                         .executes(context -> executeTimeSet(context, 23000))
                     )
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
                 )
                 .then(Commands.literal("add")
                     .then(Commands.argument("time", IntegerArgumentType.integer(0, 24000))
@@ -177,11 +186,15 @@ public class TimeAndWeatherCommands {
         return executeTimeSet(context, 13000);
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
       /**
 =======
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+      /**
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
      * Execute the /time set command
      * 
      * @param context The command context
@@ -190,6 +203,9 @@ public class TimeAndWeatherCommands {
      */
     private int executeTimeSet(CommandContext<CommandSourceStack> context, int time) {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
         try {
             // Set the time in all dimensions/levels, not just the current one
             for (ServerLevel serverLevel : context.getSource().getServer().getAllLevels()) {
@@ -238,6 +254,7 @@ public class TimeAndWeatherCommands {
             MutableComponent errorMessage = Component.literal("Failed to set time: " + e.getMessage());
             context.getSource().sendFailure(errorMessage);
             return 0;
+<<<<<<< HEAD
         }
 =======
         ServerLevel level = context.getSource().getLevel();
@@ -267,6 +284,9 @@ public class TimeAndWeatherCommands {
         
         return 1;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        }
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
     }
     
     /**
@@ -276,10 +296,14 @@ public class TimeAndWeatherCommands {
      * @param time The time to add
      * @return Command result
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
      */    private int executeTimeAdd(CommandContext<CommandSourceStack> context, int time) {
         // Get the time from the current level
         long currentTime = context.getSource().getLevel().getDayTime();
         long newTime = currentTime + time;
+<<<<<<< HEAD
         
         // Add the time in all dimensions/levels
         for (ServerLevel serverLevel : context.getSource().getServer().getAllLevels()) {
@@ -293,6 +317,13 @@ public class TimeAndWeatherCommands {
         // Add the time in the level
         ((ServerLevelData) level.getLevelData()).setDayTime(level.getDayTime() + time);
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        
+        // Add the time in all dimensions/levels
+        for (ServerLevel serverLevel : context.getSource().getServer().getAllLevels()) {
+            ((ServerLevelData) serverLevel.getLevelData()).setDayTime(newTime);
+        }
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
         
         // Send message
         MutableComponent message = Component.literal("Added " + time + " to the time");
@@ -306,11 +337,15 @@ public class TimeAndWeatherCommands {
         return 1;
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
       /**
 =======
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+      /**
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
      * Execute the /weather command
      * 
      * @param context The command context
@@ -320,6 +355,9 @@ public class TimeAndWeatherCommands {
      */
     private int executeWeather(CommandContext<CommandSourceStack> context, String weatherType, int duration) {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
         try {
             // Apply weather to all dimensions, with special handling for each weather type
             for (ServerLevel level : context.getSource().getServer().getAllLevels()) {
@@ -371,6 +409,7 @@ public class TimeAndWeatherCommands {
             MutableComponent errorMessage = Component.literal("Failed to set weather: " + e.getMessage());
             context.getSource().sendFailure(errorMessage);
             return 0;
+<<<<<<< HEAD
         }
 =======
         ServerLevel level = context.getSource().getLevel();
@@ -400,5 +439,8 @@ public class TimeAndWeatherCommands {
         
         return 1;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        }
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
     }
 }

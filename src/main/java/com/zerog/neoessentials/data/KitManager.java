@@ -387,26 +387,36 @@ public class KitManager {
         if (kit == null || player == null) {
             return false;
         }
-        
-        // Check permission
+          // Check permission
         String permission = kit.getPermission();
         if (permission != null && !permission.isEmpty()) {
+<<<<<<< HEAD
 <<<<<<< HEAD
             // If specific kit permission defined, check if player has it
             if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, permission)) {
                 // Check if player has bypass permission (e.g., admin level permission)
                 if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.kit.admin")) {
+=======
+            // If specific kit permission defined, check if player has it
+            if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, permission)) {
+                // Check if player has bypass permission (e.g., admin level permission)
+                if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, "neoessentials.kit.admin")) {
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
                     return false;
                 }
             }
         } else {
             // Default permission check if no specific permission is set for the kit
+<<<<<<< HEAD
             if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.kit")) {
 =======
             // TODO: Check permission when we implement LuckPerms and FTB Ranks integration
             // For now, check if player is op
             if (!player.hasPermissions(2)) {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+            if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, "neoessentials.command.kit")) {
+>>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
                 return false;
             }
         }
