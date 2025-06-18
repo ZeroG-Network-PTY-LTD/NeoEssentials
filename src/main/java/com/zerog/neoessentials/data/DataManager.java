@@ -48,6 +48,7 @@ public class DataManager {
     private JailManager jailManager;
     private PowerToolManager powerToolManager;
     private MailManager mailManager;
+<<<<<<< HEAD
     private com.zerog.neoessentials.ui.TablistManager tablistManager;
     
     private final String dataFolder = "neoessentials/";
@@ -61,6 +62,8 @@ public class DataManager {
     private JailManager jailManager;
     private PowerToolManager powerToolManager;
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+>>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
     
     private final String dataFolder = "neoessentials/";
     
@@ -105,6 +108,7 @@ public class DataManager {
         kitManager = new KitManager();
         jailManager = new JailManager(dataFolderFile);
         powerToolManager = new PowerToolManager(dataFolderFile);
+        mailManager = new MailManager(dataFolderFile);
     }
     
     /**
@@ -279,6 +283,7 @@ public class DataManager {
         jailManager.saveJailedPlayers();
         powerToolManager.savePowerTools();
         mailManager.saveMail();
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
@@ -286,6 +291,8 @@ public class DataManager {
         jailManager.saveJailedPlayers();
         powerToolManager.savePowerTools();
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+>>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
     }
     
     /**
@@ -413,6 +420,9 @@ public class DataManager {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
      * Gets the mail manager instance
      * 
      * @return The mail manager
@@ -422,6 +432,7 @@ public class DataManager {
     }
     
     /**
+<<<<<<< HEAD
      * Gets the tablist manager.
      * 
      * @return The tablist manager
@@ -478,6 +489,8 @@ public class DataManager {
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
 =======
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+>>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
      * Get the data directory
      * 
      * @return The data directory path
