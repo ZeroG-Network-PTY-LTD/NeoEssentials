@@ -181,14 +181,23 @@ public class TeleportCommands {
                 })
         );
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> bac244b (Implement messaging and player state commands)
 
         // Register /top command
         dispatcher.register(
             Commands.literal("top")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.top"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
+<<<<<<< HEAD
                       // Get the player's current level
                     ServerLevel level = player.serverLevel();
+=======
+                    
+                    // Get the player's current level
+                    ServerLevel level = player.getLevel();
+>>>>>>> bac244b (Implement messaging and player state commands)
                     
                     // Find the highest block at the player's current x,z position
                     int highestY = findHighestBlock(level, (int)player.getX(), (int)player.getZ());
@@ -211,8 +220,14 @@ public class TeleportCommands {
             Commands.literal("bottom")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.bottom"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
+<<<<<<< HEAD
                       // Get the player's current level
                     ServerLevel level = player.serverLevel();
+=======
+                    
+                    // Get the player's current level
+                    ServerLevel level = player.getLevel();
+>>>>>>> bac244b (Implement messaging and player state commands)
                     
                     // Find the lowest block at the player's current x,z position
                     int lowestY = findLowestBlock(level, (int)player.getX(), (int)player.getZ());
@@ -315,9 +330,12 @@ public class TeleportCommands {
         }
         return level.getMinBuildHeight();
     }
+<<<<<<< HEAD
 =======
         
         NeoEssentials.LOGGER.info("Registered teleport commands");
     }
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> bac244b (Implement messaging and player state commands)
 }

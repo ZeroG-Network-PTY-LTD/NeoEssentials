@@ -16,7 +16,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
+<<<<<<< HEAD
 
+=======
+import net.minecraft.server.players.PlayerList;
+>>>>>>> bac244b (Implement messaging and player state commands)
 
 import java.util.*;
 
@@ -303,7 +307,13 @@ public class MessageCommands {
         
         // Send the messages
         context.getSource().sendSuccess(() -> senderMsg, false);
+<<<<<<< HEAD
         recipient.sendSystemMessage(recipientMsg);        // Send to social spies
+=======
+        recipient.sendSystemMessage(recipientMsg);
+        
+        // Send to social spies
+>>>>>>> bac244b (Implement messaging and player state commands)
         sendToSocialSpies(sender, recipient, formattedMessage, null);
         
         // Update last message tracking
@@ -499,6 +509,7 @@ public class MessageCommands {
     
     /**
      * Send a private message to all players with social spy enabled
+<<<<<<< HEAD
      */    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {        // Skip if sender or recipient has exemption
         if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") ||
             PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
@@ -509,6 +520,16 @@ public class MessageCommands {
         }
         
         net.minecraft.server.players.PlayerList playerList = sender.getServer().getPlayerList();
+=======
+     */
+    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {
+        // Skip if sender or recipient has exemption        if (PermissionUtil.hasPermission(sender, "essentials.chat.spy.exempt") ||
+            PermissionUtil.hasPermission(recipient, "essentials.chat.spy.exempt")) {
+            return;
+        }
+        
+        PlayerList playerList = sender.getServer().getPlayerList();
+>>>>>>> bac244b (Implement messaging and player state commands)
         Component spyMessage = Component.translatable("commands.socialspy.format", 
                                                     sender.getDisplayName(), 
                                                     recipient.getDisplayName(), 
@@ -519,7 +540,11 @@ public class MessageCommands {
         for (ServerPlayer player : playerList.getPlayers()) {
             if (socialSpyEnabled.contains(player.getUUID()) && 
                 (skipPlayer == null || !player.getUUID().equals(skipPlayer.getUUID())) &&
+<<<<<<< HEAD
                 PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
+=======
+                PermissionUtil.hasPermission(player, "essentials.socialspy")) {
+>>>>>>> bac244b (Implement messaging and player state commands)
                 player.sendSystemMessage(spyMessage);
             }
         }
