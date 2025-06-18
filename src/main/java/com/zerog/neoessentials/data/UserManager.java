@@ -336,6 +336,9 @@ public class UserManager {
         }
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 59f36fa (feat: Add Mail functionality with commands and player notifications)
     
     /**
      * Gets a player's UUID from their name by scanning all user data files
@@ -379,6 +382,9 @@ public class UserManager {
         
         return null;
     }
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 59f36fa (feat: Add Mail functionality with commands and player notifications)
 }

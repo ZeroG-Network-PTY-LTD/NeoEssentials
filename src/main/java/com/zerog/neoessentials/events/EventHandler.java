@@ -80,6 +80,9 @@ public class EventHandler {
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
 =======
             userManager.trackPlayer(serverPlayer);
+            
+            // Notify player about unread mail if they have any
+            NeoEssentials.getInstance().getDataManager().getMailManager().notifyPlayer(serverPlayer);
         }
     }
 
