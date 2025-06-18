@@ -91,9 +91,9 @@ def getBuildNumber() {
 }
 
 def buildNumber = getBuildNumber()
-version = "1.0.0.${buildNumber}"
-group = 'com.zerog.neoessentials'
-archivesBaseName = 'neoessentials'
+version = "${mod_version}.${buildNumber}"
+group = mod_group_id
+archivesBaseName = mod_id
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(17)
@@ -167,7 +167,7 @@ repositories {
 
 dependencies {
     // Use Neo Forge userdev for this version of Minecraft
-    minecraft 'net.neoforged:neoforge:${mc_version}-${neo_version}'
+    minecraft "net.neoforged:neoforge:${minecraft_version}-${neo_version}"
     
     // Database dependencies
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
