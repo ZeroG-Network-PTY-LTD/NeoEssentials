@@ -49,8 +49,13 @@ import com.zerog.neoessentials.utils.StringToBooleanArgumentInfo;
 
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.function.Supplier;
 
 /**
  * Handles registration of custom argument types
@@ -61,9 +66,10 @@ public class ModArgumentTypes {
             DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, NeoEssentials.MODID);
 
     // Register our StringToBooleanArgumentType with the StringToBooleanArgumentInfo
-    static {
-        ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, new StringToBooleanArgumentInfo());
-    }
+    public static final Supplier<ArgumentTypeInfo<?, ?>> STRING_TO_BOOLEAN = COMMAND_ARGUMENT_TYPES.register(
+            "string_to_boolean", 
+            () -> new StringToBooleanArgumentInfo()
+    );
 
     /**
      * Register this class with the mod event bus to enable the registrations
@@ -73,6 +79,23 @@ public class ModArgumentTypes {
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {
         NeoEssentials.LOGGER.info("Registering custom command argument types");
         COMMAND_ARGUMENT_TYPES.register(eventBus);
+<<<<<<< HEAD
 >>>>>>> 8a36c07 (feat: Add custom command argument types for string to boolean conversion)
+=======
+
+        // Also register using the direct method for compatibility 
+        eventBus.addListener(ModArgumentTypes::onCommonSetup);
+    }
+    
+    /**
+     * Handle registration during common setup event
+     * This provides a more direct way to register the argument type as a fallback
+     */
+    private static void onCommonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            NeoEssentials.LOGGER.info("Registering StringToBooleanArgumentType during common setup");
+            ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, STRING_TO_BOOLEAN.get());
+        });
+>>>>>>> faaaf85 (refactor: Update registration of StringToBooleanArgumentType for improved compatibility)
     }
 }
