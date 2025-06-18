@@ -44,6 +44,7 @@ public class DataManager {
     private KitManager kitManager;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     private JailManager jailManager;
     private PowerToolManager powerToolManager;
     private MailManager mailManager;
@@ -56,6 +57,10 @@ public class DataManager {
     private DatabaseManager databaseManager;
 =======
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+    private JailManager jailManager;
+    private PowerToolManager powerToolManager;
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
     
     private final String dataFolder = "neoessentials/";
     
@@ -98,6 +103,8 @@ public class DataManager {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");            // Initialize all data managers
 =======
         kitManager = new KitManager();
+        jailManager = new JailManager(dataFolderFile);
+        powerToolManager = new PowerToolManager(dataFolderFile);
     }
     
     /**
@@ -105,15 +112,20 @@ public class DataManager {
      */
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");
+<<<<<<< HEAD
           
         // Initialize all data managers
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+            // Initialize all data managers
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
         userManager.initialize();
         economyManager.initialize();
         homeManager.initialize();
         warpManager.initialize();
         spawnManager.initialize();
         kitManager.initialize();
+<<<<<<< HEAD
 <<<<<<< HEAD
         // Initialize tablist after economy is initialized
         tablistManager.initialize();
@@ -213,6 +225,9 @@ public class DataManager {
     public void saveAll() {
         NeoEssentials.LOGGER.info("Saving all NeoEssentials data");        userManager.saveAll();
 =======
+=======
+        // JailManager doesn't need initialization
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
         
         NeoEssentials.LOGGER.info("NeoEssentials Data Manager initialized");
     }
@@ -245,15 +260,20 @@ public class DataManager {
      * Save all data to disk
      */
     public void saveAll() {
+<<<<<<< HEAD
         NeoEssentials.LOGGER.info("Saving all NeoEssentials data");
         
         userManager.saveAll();
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        NeoEssentials.LOGGER.info("Saving all NeoEssentials data");        userManager.saveAll();
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
         economyManager.saveAll();
         homeManager.saveAll();
         warpManager.saveAll();
         spawnManager.saveSpawnData();
         kitManager.saveKits();
+<<<<<<< HEAD
 <<<<<<< HEAD
         jailManager.saveJails();
         jailManager.saveJailedPlayers();
@@ -261,6 +281,11 @@ public class DataManager {
         mailManager.saveMail();
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        jailManager.saveJails();
+        jailManager.saveJailedPlayers();
+        powerToolManager.savePowerTools();
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
     }
     
     /**
@@ -366,6 +391,9 @@ public class DataManager {
     /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
      * Gets the jail manager instance
      * 
      * @return The jail manager
@@ -384,6 +412,7 @@ public class DataManager {
     }
     
     /**
+<<<<<<< HEAD
      * Gets the mail manager instance
      * 
      * @return The mail manager
@@ -447,6 +476,8 @@ public class DataManager {
     /**
 =======
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
      * Get the data directory
      * 
      * @return The data directory path
