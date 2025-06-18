@@ -6,7 +6,11 @@ issueTrackerURL="https://github.com/zerog/neoessentials/issues"
 [[mods]]
 modId="neoessentials"
 version="${version}"
+<<<<<<< HEAD
 displayName="NeoEssentials"
+=======
+displayName="NeoEssentials (Server-Side)"
+>>>>>>> 81f44ad (feat: Enhance README with multi-version support details)
 credits="Inspired by EssentialsX for Bukkit/Spigot servers"
 authors="ZeroG"
 description='''
@@ -19,7 +23,11 @@ Inspired by EssentialsX for Bukkit/Spigot servers.
     mandatory=true
     versionRange="[21.1,22)"
     ordering="NONE"
+<<<<<<< HEAD
     side="BOTH"
+=======
+    side="SERVER"
+>>>>>>> 81f44ad (feat: Enhance README with multi-version support details)
 
 [[dependencies.neoessentials]]
     modId="minecraft"
