@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 plugins {
     id 'java-library'
     id 'maven-publish'
@@ -58,26 +59,74 @@ tasks.processResources.configure {
             "neo_version_range": versionProps.neoVersionRange.get(),
             "minecraft_version_range": versionProps.minecraftVersionRange.get()
         )
+=======
+// Root project build file
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.neoforged.net/releases' }
+        maven { url = 'https://maven.minecraftforge.net/' }
+>>>>>>> 721d16e (Add initial implementation of NeoEssentials mod)
     }
 }
 
-sonar {
-  properties {
-    property "sonar.projectKey", "ZeroG-Network_NeoEssentials"
-    property "sonar.organization", "zerog-network"
-    property "sonar.host.url", "https://sonarcloud.io"
-  }
+// Apply plugins to all subprojects
+allprojects {
+    apply plugin: 'java-library'
+    
+    group = 'com.zerog.neoessentials'
+    version = '1.0.0'
+    
+    java {
+        toolchain.languageVersion = JavaLanguageVersion.of(17) // Base Java version
+    }
+    
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.neoforged.net/releases' }
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://repo.lucko.me/' } // For LuckPerms API
+    }
+}
+
+// Common configuration for all subprojects
+subprojects {
+    apply plugin: 'maven-publish'
+    
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+    
+    // Database dependencies shared across all versions
+    dependencies {
+        implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
+        implementation 'com.mysql:mysql-connector-j:8.2.0'
+        
+        // LuckPerms API dependencies (soft dependency, only for permission checking)
+        compileOnly 'net.luckperms:api:5.4'
+    }
+    
+    // Publishing configuration
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+        repositories {
+            maven {
+                url "file://${rootProject.projectDir}/repo"
+            }
+        }
+    }
 }
 
 // Define a task to increment the build number
-abstract class IncrementBuildNumberTask extends DefaultTask {
-    @org.gradle.api.tasks.InputFile
-    @org.gradle.api.tasks.PathSensitive(org.gradle.api.tasks.PathSensitivity.ABSOLUTE)
-    abstract org.gradle.api.file.RegularFileProperty getBuildNumberFile()
+tasks.register('incrementBuildNumber') {
+    description = 'Increments the build number for all projects'
     
-    @TaskAction
-    void incrementBuildNumber() {
-        def propsFile = getBuildNumberFile().get().asFile
+    doLast {
+        def propsFile = file("buildnumber.properties")
         def props = new Properties()
         
         if (propsFile.exists()) {
@@ -95,6 +144,7 @@ abstract class IncrementBuildNumberTask extends DefaultTask {
     }
 }
 
+<<<<<<< HEAD
 tasks.register("incrementBuildNumber", IncrementBuildNumberTask) {
     description = "Increments the build number"
     buildNumberFile = layout.projectDirectory.file("buildnumber.properties")
@@ -249,10 +299,15 @@ dependencies {
 
 =======
     implementation 'com.mysql:mysql-connector-j:8.2.0'
+=======
+// Task to build all versions
+tasks.register('buildAll') {
+    description = 'Builds all versions of the mod'
+>>>>>>> 721d16e (Add initial implementation of NeoEssentials mod)
     
-    // LuckPerms API dependencies (soft dependency, only for permission checking)
-    compileOnly 'net.luckperms:api:5.4'
+    dependsOn subprojects.collect { it.tasks.withType(Jar) }
     
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
@@ -340,6 +395,18 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+=======
+    finalizedBy tasks.incrementBuildNumber
+}
+
+// Task to publish all versions
+tasks.register('publishAll') {
+    description = 'Publishes all versions of the mod'
+    
+    dependsOn subprojects.collect { it.tasks.withType(PublishToMavenRepository) }
+    
+    finalizedBy tasks.incrementBuildNumber
+>>>>>>> 721d16e (Add initial implementation of NeoEssentials mod)
 }
 <<<<<<< HEAD
 
