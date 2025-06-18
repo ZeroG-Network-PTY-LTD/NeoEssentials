@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 plugins {
     id 'java-library'
     id 'maven-publish'
@@ -68,62 +69,117 @@ buildscript {
         maven { url = 'https://maven.minecraftforge.net/' }
 >>>>>>> 721d16e (Add initial implementation of NeoEssentials mod)
     }
+=======
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.gradle.userdev' version '7.0.131'
+>>>>>>> 452fbe2 (refactor: Simplify build.gradle by removing redundant configurations and enhancing build number management)
 }
 
-// Apply plugins to all subprojects
-allprojects {
-    apply plugin: 'java-library'
-    
-    group = 'com.zerog.neoessentials'
-    version = '1.0.0'
-    
-    java {
-        toolchain.languageVersion = JavaLanguageVersion.of(17) // Base Java version
+// Get the build number from buildnumber.properties
+def getBuildNumber() {
+    def propsFile = file("buildnumber.properties")
+    if (!propsFile.exists()) {
+        propsFile.text = "buildNumber=1"
+        return 1
     }
     
-    repositories {
-        mavenCentral()
-        maven { url = 'https://maven.neoforged.net/releases' }
-        maven { url = 'https://maven.minecraftforge.net/' }
-        maven { url = 'https://repo.lucko.me/' } // For LuckPerms API
-    }
+    def props = new Properties()
+    propsFile.withInputStream { props.load(it) }
+    return props.getProperty("buildNumber").toInteger()
 }
 
-// Common configuration for all subprojects
-subprojects {
-    apply plugin: 'maven-publish'
+def buildNumber = getBuildNumber()
+version = "1.0.0.${buildNumber}"
+group = 'com.zerog.neoessentials'
+archivesBaseName = 'neoessentials'
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+    withSourcesJar()
+    withJavadocJar()
+}
+
+minecraft {
+    // The mappings can be changed at any time and must be in the following format.
+    // Channel:   Version:
+    // official   MCVersion             Official field/method names from Mojang mapping files
+    // parchment  YYYY.MM.DD-MCVersion  Open community-sourced parameter names and javadocs layered on top of official
+    //
+    // You must be aware of the Neo Forge license when using the 'official' or 'parchment' mappings.
+    // See NETWORKING.md for more information.
+    //
+    // Parchment is an unofficial project maintained by ParchmentMC, separate from Minecraft Forge.
+    // Additional setup is needed to use their mappings, see https://parchmentmc.org/docs/getting-started
+    mappings channel: 'official', version: '1.21.1'
+
+    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     
-    tasks.withType(JavaCompile).configureEach {
-        options.encoding = 'UTF-8'
-    }
-    
-    // Database dependencies shared across all versions
-    dependencies {
-        implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
-        implementation 'com.mysql:mysql-connector-j:8.2.0'
+    copyIdeResources = true
+
+    runs {
+        // Apply these settings to all run configs
+        configureEach {
+            workingDirectory project.file('run')
+            
+            // Recommended logging data for a userdev environment
+            property 'forge.logging.markers', 'REGISTRIES'
+            
+            // Recommended logging level for the console
+            property 'forge.logging.console.level', 'debug'
+            
+            mods {
+                neoessentials {
+                    source sourceSets.main
+                }
+            }
+        }
         
-        // LuckPerms API dependencies (soft dependency, only for permission checking)
-        compileOnly 'net.luckperms:api:5.4'
-    }
-    
-    // Publishing configuration
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from components.java
-            }
+        client {
+            // Properties for client run config
         }
-        repositories {
-            maven {
-                url "file://${rootProject.projectDir}/repo"
-            }
+
+        server {
+            // Properties for server run config
+            args '--nogui'
+        }
+
+        gameTestServer {
+            // Properties for game test server
+        }
+
+        data {
+            // Properties for data generation run config
+            workingDirectory project.file('run-data')
+            
+            args '--mod', 'neoessentials', '--all',
+                '--output', file('src/generated/resources/'),
+                '--existing', file('src/main/resources/')
         }
     }
 }
 
-// Define a task to increment the build number
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.lucko.me/' } // For LuckPerms API
+}
+
+dependencies {
+    // Use Neo Forge userdev for this version of Minecraft
+    minecraft 'net.neoforged:neoforge:${mc_version}-${neo_version}'
+    
+    // Database dependencies
+    implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
+    implementation 'com.mysql:mysql-connector-j:8.2.0'
+    
+    // LuckPerms API (soft dependency for permission checking)
+    compileOnly 'net.luckperms:api:5.4'
+}
+
+// Task to increment build number
 tasks.register('incrementBuildNumber') {
-    description = 'Increments the build number for all projects'
+    description = 'Increments the build number'
     
     doLast {
         def propsFile = file("buildnumber.properties")
@@ -144,6 +200,7 @@ tasks.register('incrementBuildNumber') {
     }
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 tasks.register("incrementBuildNumber", IncrementBuildNumberTask) {
     description = "Increments the build number"
@@ -397,16 +454,67 @@ idea {
     }
 =======
     finalizedBy tasks.incrementBuildNumber
+=======
+// Make sure the build number is incremented when we build
+build.finalizedBy tasks.incrementBuildNumber
+
+// Jar configuration
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'     : 'NeoEssentials',
+            'Specification-Vendor'    : 'ZeroG',
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : project.version,
+            'Implementation-Vendor'   : 'ZeroG',
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+    
+    finalizedBy 'reobfJar'
+>>>>>>> 452fbe2 (refactor: Simplify build.gradle by removing redundant configurations and enhancing build number management)
 }
 
-// Task to publish all versions
-tasks.register('publishAll') {
-    description = 'Publishes all versions of the mod'
+// Publishing configuration
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            
+            pom {
+                name = 'NeoEssentials'
+                description = 'Essential server-side commands and utilities for NeoForge servers'
+                url = 'https://github.com/zerog/neoessentials'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'zerog'
+                        name = 'ZeroG'
+                    }
+                }
+            }
+        }
+    }
     
+<<<<<<< HEAD
     dependsOn subprojects.collect { it.tasks.withType(PublishToMavenRepository) }
     
     finalizedBy tasks.incrementBuildNumber
 >>>>>>> 721d16e (Add initial implementation of NeoEssentials mod)
+=======
+    repositories {
+        maven {
+            name = "localRepo"
+            url = "file://${project.buildDir}/repo"
+        }
+    }
+>>>>>>> 452fbe2 (refactor: Simplify build.gradle by removing redundant configurations and enhancing build number management)
 }
 <<<<<<< HEAD
 
