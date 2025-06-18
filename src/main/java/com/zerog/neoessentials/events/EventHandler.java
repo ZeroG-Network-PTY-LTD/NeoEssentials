@@ -12,12 +12,10 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 /**
  * Handles all events for the NeoEssentials mod.
  */
-public class EventHandler {
-
-    /**
+public class EventHandler {    /**
      * Registers all event listeners.
      */
-    public void registerEvents() {
+    public static void registerEvents() {
         NeoEssentials.LOGGER.info("Registering NeoEssentials event handlers");
         
         // Events are registered via @SubscribeEvent annotations
@@ -29,7 +27,7 @@ public class EventHandler {
      * @param event The player login event
      */
     @SubscribeEvent
-    public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         Player player = event.getEntity();
         if (player instanceof ServerPlayer serverPlayer) {
             NeoEssentials.LOGGER.info("Player logged in: {}", player.getScoreboardName());
@@ -47,14 +45,13 @@ public class EventHandler {
             NeoEssentials.getInstance().getDataManager().getMailManager().notifyPlayer(serverPlayer);
         }
     }
-    
-    /**
+      /**
      * Event handler for when a player leaves the server.
      *
      * @param event The player logout event
      */
     @SubscribeEvent
-    public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Player player = event.getEntity();
         if (player instanceof ServerPlayer serverPlayer) {
             NeoEssentials.LOGGER.info("Player logged out: {}", player.getScoreboardName());
@@ -66,15 +63,14 @@ public class EventHandler {
             userManager.savePlayerData(serverPlayer);
         }
     }
-    
-    /**
+      /**
      * Event handler for when the server is stopping.
      * Used to save all data before the server shuts down.
      *
      * @param event The server stopping event
      */
     @SubscribeEvent
-    public void onServerStopping(ServerStoppingEvent event) {
+    public static void onServerStopping(ServerStoppingEvent event) {
         NeoEssentials.LOGGER.info("Server stopping, saving all NeoEssentials data");
         
         // Save all data
