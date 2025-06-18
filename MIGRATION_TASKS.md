@@ -5,19 +5,20 @@ This document outlines the remaining tasks to complete the multi-version migrati
 ## Priority Tasks
 
 1. **Port Adapters to All Versions**
-   - [ ] Create LocationAdapter for NeoForge 1.20.5
-   - [ ] Create PermissionAdapter for NeoForge 1.20.5
-   - [ ] Create PlayerAdapter for NeoForge 1.20.5
-   - [ ] Create CommandAdapter for NeoForge 1.20.5
-   - [ ] Create adapter factory for NeoForge 1.20.5
-   - [ ] Repeat for NeoForge 1.20.1
-   - [ ] Repeat for Forge 1.20.1
-   - [ ] Repeat for Forge 1.19.4
-   - [ ] Create version-specific main mod classes
+   - [x] Create LocationAdapter for NeoForge 1.20.5
+   - [x] Create PermissionAdapter for NeoForge 1.20.5
+   - [x] Create PlayerAdapter for NeoForge 1.20.5
+   - [x] Create CommandAdapter for NeoForge 1.20.5
+   - [x] Create adapter factory for NeoForge 1.20.5
+   - [x] Repeat for NeoForge 1.20.1
+   - [x] Repeat for Forge 1.20.1
+   - [x] Repeat for Forge 1.19.4
+   - [x] Create version-specific main mod classes
 
 2. **Refactor Command System**
-   - [ ] Move command interfaces to common module
-   - [ ] Create adapter classes for command registration
+   - [x] Move command interfaces to common module
+   - [x] Create adapter classes for command registration
+   - [ ] Create CommandManager implementation for each version
    - [ ] Port command handling to use adapters
    - [ ] Update command registration in each version
 
