@@ -286,10 +286,14 @@ public class PowerToolCommands {
         Item item = heldItem.getItem();
         powerToolManager.setPowerTool(player, item, command);
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0264cbd (fix: Make command and heldItem final for lambda in PowerToolCommands)
         
         final String finalCommand = command; // Make command final for the lambda
         final ItemStack finalItem = heldItem; // Make heldItem final for the lambda
         
+<<<<<<< HEAD
         source.sendSuccess(() -> Component.literal(TextUtil.formatText(
                 "&aSet powertool on &6" + finalItem.getDisplayName().getString() + " &ato: &6/" + finalCommand)), true);
 =======
@@ -297,6 +301,10 @@ public class PowerToolCommands {
         source.sendSuccess(() -> Component.literal(TextUtil.formatText(
                 "&aSet powertool on &6" + heldItem.getDisplayName().getString() + " &ato: &6/" + command)), true);
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+        source.sendSuccess(() -> Component.literal(TextUtil.formatText(
+                "&aSet powertool on &6" + finalItem.getDisplayName().getString() + " &ato: &6/" + finalCommand)), true);
+>>>>>>> 0264cbd (fix: Make command and heldItem final for lambda in PowerToolCommands)
 
         boolean enabled = powerToolManager.isPowerToolEnabled(player);
         if (!enabled) {
