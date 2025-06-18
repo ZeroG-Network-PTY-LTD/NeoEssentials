@@ -87,6 +87,7 @@ public class TimeUtil {
     }
     
     /**
+<<<<<<< HEAD
      * Parse a time specification like "1d2h30m" into a Date in the future
      * 
      * @param timeSpec String time specification
@@ -131,6 +132,8 @@ public class TimeUtil {
     }
     
     /**
+=======
+>>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
      * Format a date for display
      * 
      * @param date Date to format
@@ -180,6 +183,7 @@ public class TimeUtil {
         
         return sb.toString().trim();
     }
+<<<<<<< HEAD
     
     /**
      * Format a duration in milliseconds into a human-readable string
@@ -231,4 +235,6 @@ public class TimeUtil {
     public static String formatTimeDuration(long durationMillis) {
         return formatDuration(durationMillis);
     }
+=======
+>>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 }

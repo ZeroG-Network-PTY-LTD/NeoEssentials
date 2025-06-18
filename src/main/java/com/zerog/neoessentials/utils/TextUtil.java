@@ -122,6 +122,9 @@ public class TextUtil {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
      * Formats text, translating color codes if the user has permission
      * 
      * @param text The text to format
@@ -155,6 +158,7 @@ public class TextUtil {
     }
     
     /**
+<<<<<<< HEAD
      * Formats and colorizes a text string with color codes.
      * This is an alias for formatText with formatting allowed.
      * 
@@ -179,6 +183,8 @@ public class TextUtil {
     /**
 =======
 >>>>>>> bac244b (Implement messaging and player state commands)
+=======
+>>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
      * Get the ChatFormatting for a character code
      */
     private static ChatFormatting getFormattingByChar(char code) {
