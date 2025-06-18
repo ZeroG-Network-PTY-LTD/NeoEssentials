@@ -74,11 +74,14 @@
 ### Vanish Commands
 - `/vanish` or `/v` - Hide yourself from other players
 
-## Currently Missing or WIP Commands
+## Currently WIP Commands
 
 ### Item Commands (WIP)
-- `/item` or `/i` - Spawn items
-- `/repair` or `/fix` - Repair items
+- `/item` or `/i` - Spawn items - *Waiting on CommandBuildContext issue resolution*
+- `/repair` or `/fix` - Repair items - *Waiting on CommandBuildContext issue resolution*
+
+## All Planned Commands Implemented!
+All core commands from EssentialsX have been implemented except for those requiring CommandBuildContext.
 
 ## Feature Status
 
