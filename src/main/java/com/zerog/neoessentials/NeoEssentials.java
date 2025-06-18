@@ -102,6 +102,7 @@ public class NeoEssentials {
         modEventBus.addListener(this::onConfigLoad);
 >>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
 
+<<<<<<< HEAD
         // Register custom command argument types - now server-side only
         com.zerog.neoessentials.init.ModArgumentTypes.register(modEventBus);
         
@@ -109,6 +110,12 @@ public class NeoEssentials {
         com.zerog.neoessentials.network.NetworkHandler.init(modEventBus);
         
         // Check if we're on the physical server or client
+=======
+        // Register custom command argument types
+        com.zerog.neoessentials.init.ModArgumentTypes.register(modEventBus);
+        
+        // Check if we're on the physical server - this mod only works on servers
+>>>>>>> fddf77d (feat: Register custom command argument types during mod initialization)
         if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.DEDICATED_SERVER) {
             LOGGER.info("NeoEssentials initializing in DEDICATED SERVER environment - full server-side functionality enabled");
         } else if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
@@ -220,6 +227,7 @@ public class NeoEssentials {
             // If needed, additional registrations could happen here
         });
         
+<<<<<<< HEAD
         // Initialize storage manager
         initializeStorageManager();
         
@@ -227,6 +235,9 @@ public class NeoEssentials {
         dataManager = new com.zerog.neoessentials.data.DataManager(this);
         
         // Initialize managers that rely on storage
+=======
+        // Initialize the managers
+>>>>>>> fddf77d (feat: Register custom command argument types during mod initialization)
         initializeManagers();
     }
 
