@@ -2,6 +2,7 @@
 
 ## Recently Implemented Commands
 
+<<<<<<< HEAD
 ### Jail Commands
 - `/setjail` or `/createjail` - Create a new jail at your current location
 - `/deljail` or `/remjail` or `/rmjail` - Remove a jail
@@ -26,6 +27,8 @@
 - `/mail delete <index>` - Delete a specific mail message
 - `/mail send <player> <message>` - Send mail to a player
 
+=======
+>>>>>>> 2061b5e (feat: Add comprehensive command documentation for NeoEssentials, including utility, UI, player, messaging, moderator, AFK, vanish, and item commands)
 ### Utility Commands
 - `/jump` or `/j` - Jump to the block you're looking at (with collision detection)
 
@@ -74,6 +77,7 @@
 ### Vanish Commands
 - `/vanish` or `/v` - Hide yourself from other players
 
+<<<<<<< HEAD
 ## Currently WIP Commands
 
 ### Item Commands (WIP)
@@ -82,6 +86,18 @@
 
 ## All Planned Commands Implemented!
 All core commands from EssentialsX have been implemented except for those requiring CommandBuildContext.
+=======
+## Currently Missing or WIP Commands
+
+### Item Commands (WIP)
+- `/item` or `/i` - Spawn items
+- `/repair` or `/fix` - Repair items
+
+### Coming Soon
+- `/jail` - Jail a player
+- `/powertool` - Create command shortcuts with items
+- `/mail` - Send and receive messages to offline players
+>>>>>>> 2061b5e (feat: Add comprehensive command documentation for NeoEssentials, including utility, UI, player, messaging, moderator, AFK, vanish, and item commands)
 
 ## Feature Status
 
@@ -94,15 +110,31 @@ All core commands from EssentialsX have been implemented except for those requir
 - ✅ Basic player management
 - ✅ Chat and messaging system
 - ✅ Basic moderation tools
+<<<<<<< HEAD
 - ✅ Jail system
 - ✅ Mail system
 - ✅ PowerTool system
 - ⏳ Economy system (basic implementation)
 - ⏳ Kit system (basic implementation)
+=======
+- ⏳ Economy system (basic implementation)
+- ⏳ Kit system (basic implementation)
+- ❌ Mail system
+- ❌ Jail system
+- ❌ PowerTool system
+>>>>>>> 2061b5e (feat: Add comprehensive command documentation for NeoEssentials, including utility, UI, player, messaging, moderator, AFK, vanish, and item commands)
 
 ## Next Steps
 
 1. Complete ItemCommands implementation when CommandBuildContext issue is resolved
+<<<<<<< HEAD
 2. Expand permission checks and integration with LuckPerms/FTB Ranks
 3. Improve configuration options
 4. Extend documentation
+=======
+2. Add Jail system
+3. Add PowerTool functionality
+4. Expand permission checks and integration with LuckPerms/FTB Ranks
+5. Improve configuration options
+6. Extend documentation
+>>>>>>> 2061b5e (feat: Add comprehensive command documentation for NeoEssentials, including utility, UI, player, messaging, moderator, AFK, vanish, and item commands)
