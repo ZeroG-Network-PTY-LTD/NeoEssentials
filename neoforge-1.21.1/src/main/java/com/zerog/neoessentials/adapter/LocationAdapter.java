@@ -4,6 +4,7 @@ public class LocationAdapter {
 =======
 package com.zerog.neoessentials.adapter;
 
+import com.zerog.neoessentials.common.adapter.ILocationAdapter;
 import com.zerog.neoessentials.common.data.Location;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -12,17 +13,18 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 /**
- * Adapter class for NeoForge 1.21.1 that bridges between common module data and Minecraft specific classes
+ * NeoForge 1.21.1 implementation of the location adapter
  */
-public class LocationAdapter {
-    /**
+public class LocationAdapter implements ILocationAdapter {    /**
      * Converts a common Location object to a Minecraft world and position
      * 
      * @param location The location to convert
-     * @param player A reference player for dimension lookup if world name doesn't match
+     * @param playerRef A reference player for dimension lookup if world name doesn't match
      * @return An array with [0] = ServerLevel, [1] = BlockPos, or null if conversion failed
      */
-    public static Object[] fromCommonLocation(Location location, ServerPlayer player) {
+    @Override
+    public Object[] fromCommonLocation(Location location, Object playerRef) {
+        ServerPlayer player = playerRef instanceof ServerPlayer ? (ServerPlayer)playerRef : null;
         if (location == null) return null;
         
         // Find the world by name
@@ -47,16 +49,21 @@ public class LocationAdapter {
         
         return new Object[] { level, pos };
     }
-    
-    /**
+      /**
      * Converts Minecraft world and position to a common Location object
      * 
-     * @param level The Minecraft world
-     * @param pos The position in the world
-     * @param player Optional player for rotation data
+     * @param worldRef The Minecraft world
+     * @param posRef The position in the world
+     * @param playerRef Optional player for rotation data
      * @return A common Location object
      */
-    public static Location toCommonLocation(Level level, BlockPos pos, ServerPlayer player) {
+    @Override
+    public Location toCommonLocation(Object worldRef, Object posRef, Object playerRef) {
+        if (!(worldRef instanceof Level) || !(posRef instanceof BlockPos)) return null;
+        
+        Level level = (Level)worldRef;
+        BlockPos pos = (BlockPos)posRef;
+        ServerPlayer player = playerRef instanceof ServerPlayer ? (ServerPlayer)playerRef : null;
         if (level == null || pos == null) return null;
         
         String worldName = level.dimension().location().toString();
@@ -68,14 +75,17 @@ public class LocationAdapter {
         
         return new Location(worldName, x, y, z, yaw, pitch);
     }
-    
-    /**
+      /**
      * Creates a common Location from a player's position
      * 
-     * @param player The player
+     * @param playerRef The player
      * @return A common Location object
      */
-    public static Location fromPlayer(ServerPlayer player) {
+    @Override
+    public Location fromPlayer(Object playerRef) {
+        if (!(playerRef instanceof ServerPlayer)) return null;
+        
+        ServerPlayer player = (ServerPlayer)playerRef;
         if (player == null) return null;
         
         String worldName = player.getLevel().dimension().location().toString();
