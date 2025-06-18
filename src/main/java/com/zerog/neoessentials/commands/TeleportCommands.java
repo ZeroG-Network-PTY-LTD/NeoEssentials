@@ -180,7 +180,140 @@ public class TeleportCommands {
                     return success ? 1 : 0;
                 })
         );
+
+        // Register /top command
+        dispatcher.register(
+            Commands.literal("top")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.top"))                .executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    
+                    // Get the player's current level
+                    ServerLevel level = player.getLevel();
+                    
+                    // Find the highest block at the player's current x,z position
+                    int highestY = findHighestBlock(level, (int)player.getX(), (int)player.getZ());
+                    
+                    // Teleport the player to the highest block, with a slight offset to avoid suffocation
+                    boolean success = TeleportUtil.teleportPlayer(player, level, new Vec3(player.getX(), highestY, player.getZ()), true);
+                    
+                    if (success) {
+                        MessageUtil.sendSuccessMessage(player, "Teleported to the highest block above you.");
+                    } else {
+                        MessageUtil.sendErrorMessage(player, "Failed to teleport to the highest block.");
+                    }
+                    
+                    return success ? 1 : 0;
+                })
+        );
+
+        // Register /bottom command
+        dispatcher.register(
+            Commands.literal("bottom")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.bottom"))                .executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    
+                    // Get the player's current level
+                    ServerLevel level = player.getLevel();
+                    
+                    // Find the lowest block at the player's current x,z position
+                    int lowestY = findLowestBlock(level, (int)player.getX(), (int)player.getZ());
+                    
+                    // Teleport the player to the lowest block, with a slight offset to avoid suffocation
+                    boolean success = TeleportUtil.teleportPlayer(player, level, new Vec3(player.getX(), lowestY, player.getZ()), true);
+                    
+                    if (success) {
+                        MessageUtil.sendSuccessMessage(player, "Teleported to the lowest block below you.");
+                    } else {
+                        MessageUtil.sendErrorMessage(player, "Failed to teleport to the lowest block.");
+                    }
+                    
+                    return success ? 1 : 0;
+                })        );
+        
+        // Register /top command
+        dispatcher.register(
+            Commands.literal("top")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.top"))
+                .executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    ServerLevel level = player.serverLevel();
+                    
+                    int x = player.blockPosition().getX();
+                    int z = player.blockPosition().getZ();
+                    int topY = findHighestBlock(level, x, z);
+                    
+                    // Record current position for /back
+                    TeleportHistory.recordPosition(player);
+                    
+                    // Teleport to the top
+                    boolean success = TeleportUtil.teleport(player, level, x + 0.5, topY, z + 0.5, player.getYRot(), player.getXRot());
+                    
+                    if (success) {
+                        MessageUtil.sendSuccessMessage(player, "Teleported to the highest point.");
+                    } else {
+                        MessageUtil.sendErrorMessage(player, "Failed to teleport to the highest point.");
+                    }
+                    
+                    return success ? 1 : 0;
+                })
+        );
+        
+        // Register /bottom command
+        dispatcher.register(
+            Commands.literal("bottom")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.bottom"))
+                .executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    ServerLevel level = player.serverLevel();
+                    
+                    int x = player.blockPosition().getX();
+                    int z = player.blockPosition().getZ();
+                    int bottomY = findLowestBlock(level, x, z);
+                    
+                    // Record current position for /back
+                    TeleportHistory.recordPosition(player);
+                    
+                    // Teleport to the bottom
+                    boolean success = TeleportUtil.teleport(player, level, x + 0.5, bottomY, z + 0.5, player.getYRot(), player.getXRot());
+                    
+                    if (success) {
+                        MessageUtil.sendSuccessMessage(player, "Teleported to the lowest point.");
+                    } else {
+                        MessageUtil.sendErrorMessage(player, "Failed to teleport to the lowest point.");
+                    }
+                    
+                    return success ? 1 : 0;
+                })
+        );
         
         NeoEssentials.LOGGER.info("Registered teleport commands");
+    }
+
+    /**
+     * Finds the highest non-air block at the given x,z coordinates
+     */
+    private int findHighestBlock(ServerLevel level, int x, int z) {
+        int y = level.getMaxBuildHeight();
+        while (y > level.getMinBuildHeight()) {
+            y--;
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(x, y, z)).isAir()) {
+                return y + 1; // Return the y-coordinate of the block above the found block
+            }
+        }
+        return level.getMinBuildHeight();
+    }
+
+    /**
+     * Finds the lowest non-air block at the given x,z coordinates
+     */
+    private int findLowestBlock(ServerLevel level, int x, int z) {
+        int maxY = Math.min(level.getMaxBuildHeight(), 319); // Limit search to a reasonable height
+        for (int y = level.getMinBuildHeight(); y < maxY; y++) {
+            if (!level.getBlockState(new net.minecraft.core.BlockPos(x, y, z)).isAir() && 
+                level.getBlockState(new net.minecraft.core.BlockPos(x, y + 1, z)).isAir()) {
+                return y + 1;
+            }
+        }
+        return level.getMinBuildHeight();
     }
 }

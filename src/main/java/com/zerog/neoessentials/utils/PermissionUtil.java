@@ -300,4 +300,18 @@ public class PermissionUtil {
         permissionCache.clear();
         lastAccessTime.clear();
     }
+    
+    /**
+     * Check if a player has a specific permission.
+     * This is a convenience method that creates a temporary command source stack.
+     *
+     * @param player The player to check
+     * @param permission The permission string to check
+     * @return True if the player has the permission, false otherwise
+     */
+    public static boolean hasPermission(ServerPlayer player, String permission) {
+        // Create a temporary command source stack for the player
+        CommandSourceStack source = player.createCommandSourceStack();
+        return hasPermission(source, permission);
+    }
 }

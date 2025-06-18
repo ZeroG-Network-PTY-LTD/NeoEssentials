@@ -21,8 +21,10 @@ public class CommandManager {    // Command classes
     private final WarpCommands warpCommands;
     private final KitCommands kitCommands;
     private final TimeAndWeatherCommands timeAndWeatherCommands;
-    
-    public CommandManager() {
+    private final InventoryCommands inventoryCommands;
+    private final PlayerCommands playerCommands;
+    private final MessageCommands messageCommands;
+      public CommandManager() {
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -30,6 +32,11 @@ public class CommandManager {    // Command classes
         warpCommands = new WarpCommands();
         kitCommands = new KitCommands();
         timeAndWeatherCommands = new TimeAndWeatherCommands();
+        inventoryCommands = new InventoryCommands();
+        playerCommands = new PlayerCommands();
+        messageCommands = new MessageCommands();
+        playerCommands = new PlayerCommands();
+        messageCommands = new MessageCommands();
     }
     
     /**
@@ -79,10 +86,21 @@ public class CommandManager {    // Command classes
         // Register kit commands
         kitCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered kit commands");
-        
-        // Register time and weather commands
+          // Register time and weather commands
         timeAndWeatherCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered time and weather commands");
+        
+        // Register inventory commands
+        inventoryCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered inventory commands");
+        
+        // Register player commands
+        playerCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered player commands");
+        
+        // Register message commands
+        messageCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered message commands");
     }
     
     /**
@@ -153,5 +171,23 @@ public class CommandManager {    // Command classes
     public static boolean hasPermission(CommandSourceStack source, String permission) {
         // Delegate to PermissionUtil
         return com.zerog.neoessentials.utils.PermissionUtil.hasPermission(source, permission);
+    }
+    
+    /**
+     * Gets the player commands instance
+     * 
+     * @return The player commands
+     */
+    public PlayerCommands getPlayerCommands() {
+        return playerCommands;
+    }
+    
+    /**
+     * Gets the message commands instance
+     * 
+     * @return The message commands
+     */
+    public MessageCommands getMessageCommands() {
+        return messageCommands;
     }
 }
