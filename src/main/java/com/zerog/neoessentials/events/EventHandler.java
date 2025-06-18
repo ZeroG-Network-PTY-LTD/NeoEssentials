@@ -41,6 +41,9 @@ public class EventHandler {
             
             // Track the player's username for baltop and other lookups
             userManager.trackPlayer(serverPlayer);
+            
+            // Notify player about unread mail if they have any
+            NeoEssentials.getInstance().getDataManager().getMailManager().notifyPlayer(serverPlayer);
         }
     }
 

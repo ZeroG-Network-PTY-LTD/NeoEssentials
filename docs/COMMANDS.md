@@ -2,6 +2,30 @@
 
 ## Recently Implemented Commands
 
+### Jail Commands
+- `/setjail` or `/createjail` - Create a new jail at your current location
+- `/deljail` or `/remjail` or `/rmjail` - Remove a jail
+- `/jails` - List all available jails
+- `/jail` or `/togglejail` - Jail a player at a specific jail with optional time limit
+- `/unjail` - Release a player from jail
+
+### PowerTool Commands
+- `/powertool` or `/pt` - View powertool information for held item
+- `/powertool -c` or `/pt -c` - Clear powertool binding from held item
+- `/powertool -a` or `/pt -a` - List all your powertools
+- `/powertool -r` or `/pt -r` - Clear all your powertool bindings
+- `/powertool -e <true/false>` or `/pt -e <true/false>` - Enable or disable powertools
+- `/powertool -t` or `/pt -t` - Toggle powertools on/off
+- `/powertool <command>` or `/pt <command>` - Bind a command to the held item
+
+### Mail Commands
+- `/mail` - Show mail summary
+- `/mail read` - Read all mail messages
+- `/mail read <index>` - Read a specific mail message
+- `/mail clear` - Delete all mail messages
+- `/mail delete <index>` - Delete a specific mail message
+- `/mail send <player> <message>` - Send mail to a player
+
 ### Utility Commands
 - `/jump` or `/j` - Jump to the block you're looking at (with collision detection)
 
@@ -56,11 +80,6 @@
 - `/item` or `/i` - Spawn items
 - `/repair` or `/fix` - Repair items
 
-### Coming Soon
-- `/jail` - Jail a player
-- `/powertool` - Create command shortcuts with items
-- `/mail` - Send and receive messages to offline players
-
 ## Feature Status
 
 - ✅ Home system
@@ -72,17 +91,15 @@
 - ✅ Basic player management
 - ✅ Chat and messaging system
 - ✅ Basic moderation tools
+- ✅ Jail system
+- ✅ Mail system
+- ✅ PowerTool system
 - ⏳ Economy system (basic implementation)
 - ⏳ Kit system (basic implementation)
-- ❌ Mail system
-- ❌ Jail system
-- ❌ PowerTool system
 
 ## Next Steps
 
 1. Complete ItemCommands implementation when CommandBuildContext issue is resolved
-2. Add Jail system
-3. Add PowerTool functionality
-4. Expand permission checks and integration with LuckPerms/FTB Ranks
-5. Improve configuration options
-6. Extend documentation
+2. Expand permission checks and integration with LuckPerms/FTB Ranks
+3. Improve configuration options
+4. Extend documentation

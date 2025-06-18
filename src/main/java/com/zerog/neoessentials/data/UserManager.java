@@ -335,4 +335,47 @@ public class UserManager {
             userData.addProperty("lastSeen", System.currentTimeMillis());
         }
     }
+    
+    /**
+     * Gets a player's UUID from their name by scanning all user data files
+     * 
+     * @param playerName The name of the player to find
+     * @return The UUID of the player, or null if not found
+     */
+    public UUID getPlayerUUID(String playerName) {
+        // First try to find the player in the currently loaded data
+        for (Map.Entry<UUID, JsonObject> entry : userDataMap.entrySet()) {
+            JsonObject userData = entry.getValue();
+            if (userData.has("name") && userData.get("name").getAsString().equalsIgnoreCase(playerName)) {
+                return entry.getKey();
+            }
+        }
+        
+        // If not found in memory, search through the data files
+        File userDataDir = new File(USER_DATA_DIR);
+        if (!userDataDir.exists() || !userDataDir.isDirectory()) {
+            return null;
+        }
+        
+        File[] userFiles = userDataDir.listFiles((dir, name) -> name.endsWith(".json"));
+        if (userFiles == null || userFiles.length == 0) {
+            return null;
+        }
+        
+        for (File userFile : userFiles) {
+            try (FileReader reader = new FileReader(userFile)) {
+                JsonObject userData = gson.fromJson(reader, JsonObject.class);
+                if (userData != null && userData.has("name") && 
+                        userData.get("name").getAsString().equalsIgnoreCase(playerName)) {
+                    String fileName = userFile.getName();
+                    String uuidStr = fileName.substring(0, fileName.length() - 5); // Remove .json extension
+                    return UUID.fromString(uuidStr);
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error reading user data file while looking for player name: {}", playerName, e);
+            }
+        }
+        
+        return null;
+    }
 }

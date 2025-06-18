@@ -27,6 +27,7 @@ public class CommandManager {    // Command classes
     private final UICommands uiCommands;
     private final JailCommands jailCommands;
     private final PowerToolCommands powerToolCommands;
+    private final MailCommands mailCommands;
 
     public CommandManager() {
         teleportCommands = new TeleportCommands();
@@ -45,6 +46,7 @@ public class CommandManager {    // Command classes
         uiCommands = new UICommands();
         jailCommands = new JailCommands();
         powerToolCommands = new PowerToolCommands();
+        mailCommands = new MailCommands();
         // ItemCommands needs CommandBuildContext which is only available during register event
     }
     
@@ -132,6 +134,10 @@ public class CommandManager {    // Command classes
         // Register powertool commands
         powerToolCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered powertool commands");
+        
+        // Register mail commands
+        mailCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered mail commands");
           // Note: ItemCommands require CommandBuildContext which is not available here
         // In a full implementation, you would need to get the CommandBuildContext properly
         
@@ -279,5 +285,14 @@ public class CommandManager {    // Command classes
      */
     public PowerToolCommands getPowerToolCommands() {
         return powerToolCommands;
+    }
+    
+    /**
+     * Gets the mail commands instance
+     * 
+     * @return The mail commands
+     */
+    public MailCommands getMailCommands() {
+        return mailCommands;
     }
 }
