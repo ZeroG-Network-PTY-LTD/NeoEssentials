@@ -66,7 +66,7 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(this);
         
         // Register the event handlers
-        NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.EventHandler());
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.events.EventHandler.class);
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.PowerToolEventHandler());
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
@@ -189,8 +189,11 @@ public class NeoEssentials {
         // Register database config with FML (separate file from main config)
         registerDatabaseConfig();
         
-        // Create storage manager instance but defer initialization until config is loaded
-        storageManager = new com.zerog.neoessentials.storage.StorageManager(configManager.getDatabaseConfig());
+        // Just create the storage manager instance without trying to access config values yet
+        // Create a default fallback config for the storage manager
+        com.zerog.neoessentials.config.DatabaseConfig fallbackConfig = new com.zerog.neoessentials.config.DatabaseConfig();
+        fallbackConfig.initialize(); // Initialize to ensure defaults are set
+        storageManager = new com.zerog.neoessentials.storage.StorageManager(fallbackConfig);
         
         // Only initialize storage manager if config is loaded, otherwise it will be initialized in onConfigLoad
         if (databaseConfigLoaded) {

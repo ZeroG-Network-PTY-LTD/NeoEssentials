@@ -14,11 +14,17 @@ public class StorageFactory {
      * 
      * @param config The database configuration
      * @return A storage handler instance
-     */
-    public static StorageHandler createStorageHandler(DatabaseConfig config) {
-        StorageType storageType = config.storageType.get();
-        
-        NeoEssentials.LOGGER.info("Creating {} storage handler", storageType);
+     */    public static StorageHandler createStorageHandler(DatabaseConfig config) {
+        // Safely handle config access 
+        StorageType storageType;
+        try {
+            storageType = config.storageType.get();
+            NeoEssentials.LOGGER.info("Creating {} storage handler", storageType);
+        } catch (IllegalStateException e) {
+            // Config not loaded yet, default to JSON
+            NeoEssentials.LOGGER.warn("Config not fully loaded yet, falling back to JSON storage");
+            return new JsonStorageHandler();
+        }
         
         switch (storageType) {
             case JSON:
