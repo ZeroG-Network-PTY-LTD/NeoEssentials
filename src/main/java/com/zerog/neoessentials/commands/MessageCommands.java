@@ -17,10 +17,14 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 import net.minecraft.server.players.PlayerList;
 >>>>>>> bac244b (Implement messaging and player state commands)
+=======
+
+>>>>>>> a0123aa (refactor: Enhance message command handling and introduce StringToBooleanArgumentType for improved command argument parsing)
 
 import java.util.*;
 
@@ -308,6 +312,7 @@ public class MessageCommands {
         // Send the messages
         context.getSource().sendSuccess(() -> senderMsg, false);
 <<<<<<< HEAD
+<<<<<<< HEAD
         recipient.sendSystemMessage(recipientMsg);        // Send to social spies
 =======
         recipient.sendSystemMessage(recipientMsg);
@@ -320,6 +325,10 @@ public class MessageCommands {
           // Send to social spies
         sendToSocialSpies(sender, recipient, formattedMessage);
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+        recipient.sendSystemMessage(recipientMsg);        // Send to social spies
+        sendToSocialSpies(sender, recipient, formattedMessage, null);
+>>>>>>> a0123aa (refactor: Enhance message command handling and introduce StringToBooleanArgumentType for improved command argument parsing)
         
         // Update last message tracking
         lastMessageSender.put(recipient.getUUID(), sender.getUUID());
@@ -515,6 +524,7 @@ public class MessageCommands {
     /**
      * Send a private message to all players with social spy enabled
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {        // Skip if sender or recipient has exemption
         if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") ||
             PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
@@ -529,12 +539,25 @@ public class MessageCommands {
      */
     private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {
         // Skip if sender or recipient has exemption        if (PermissionUtil.hasPermission(sender, "essentials.chat.spy.exempt") ||
+=======
+     */    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {
+        // Skip if sender or recipient has exemption
+        if (PermissionUtil.hasPermission(sender, "essentials.chat.spy.exempt") ||
+>>>>>>> a0123aa (refactor: Enhance message command handling and introduce StringToBooleanArgumentType for improved command argument parsing)
             PermissionUtil.hasPermission(recipient, "essentials.chat.spy.exempt")) {
             return;
         }
         
+<<<<<<< HEAD
         PlayerList playerList = sender.getServer().getPlayerList();
 >>>>>>> bac244b (Implement messaging and player state commands)
+=======
+        if (sender.getServer() == null) {
+            return;
+        }
+        
+        net.minecraft.server.players.PlayerList playerList = sender.getServer().getPlayerList();
+>>>>>>> a0123aa (refactor: Enhance message command handling and introduce StringToBooleanArgumentType for improved command argument parsing)
         Component spyMessage = Component.translatable("commands.socialspy.format", 
                                                     sender.getDisplayName(), 
                                                     recipient.getDisplayName(), 
