@@ -73,110 +73,150 @@ buildscript {
 plugins {
     id 'java-library'
     id 'maven-publish'
+<<<<<<< HEAD
     id 'net.neoforged.gradle.userdev' version '7.0.131'
 <<<<<<< HEAD
 >>>>>>> 452fbe2 (refactor: Simplify build.gradle by removing redundant configurations and enhancing build number management)
 =======
     id 'net.neoforged.gradle.mixin' version '7.0.131'
 >>>>>>> 753cf35 (fix: Adjust repository order in settings.gradle and update logging properties in build.gradle for clarity)
+=======
+    id 'net.neoforged.moddev' version '2.0.93'
+    id 'idea'
+>>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
 }
 
-// Get the build number from buildnumber.properties
-def getBuildNumber() {
-    def propsFile = file("buildnumber.properties")
-    if (!propsFile.exists()) {
-        propsFile.text = "buildNumber=1"
-        return 1
-    }
-    
-    def props = new Properties()
-    propsFile.withInputStream { props.load(it) }
-    return props.getProperty("buildNumber").toInteger()
+tasks.named('wrapper', Wrapper).configure {
+    // Define wrapper values here so as to not have to always do so when updating gradlew.properties.
+    // Switching this to Wrapper.DistributionType.ALL will download the full gradle sources that comes with
+    // documentation attached on cursor hover of gradle classes and methods. However, this comes with increased
+    // file size for Gradle. If you do switch this to ALL, run the Gradle wrapper task twice afterwards.
+    // (Verify by checking gradle/wrapper/gradle-wrapper.properties to see if distributionUrl now points to `-all`)
+    distributionType = Wrapper.DistributionType.BIN
 }
 
-def buildNumber = getBuildNumber()
-version = "${mod_version}.${buildNumber}"
+version = mod_version
 group = mod_group_id
-archivesBaseName = mod_id
 
-java {
-    toolchain.languageVersion = JavaLanguageVersion.of(17)
-    withSourcesJar()
-    withJavadocJar()
+repositories {
+    mavenLocal()
 }
 
-// Minecraft/NeoForge configuration
-userdev {
-    // The mappings can be changed at any time and must be in the following format.
-    // Channel:   Version:
-    // official   MCVersion             Official field/method names from Mojang mapping files
-    // parchment  YYYY.MM.DD-MCVersion  Open community-sourced parameter names and javadocs layered on top of official
-    //
-    // You must be aware of the Neo Forge license when using the 'official' mappings.
-    // See https://neoforged.net/docs/developer-resources/ for more information.
-    mappings channel: 'official', version: '1.21.1'
+base {
+    archivesName = mod_id
+}
 
-    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-    
-    copyIdeResources = true    runs {
-        // Apply these settings to all run configs
-        configureEach {
-            workingDirectory project.file('run')
-            
-            // Recommended logging data for a userdev environment
-            property 'neoforge.logging.markers', 'REGISTRIES'
-            
-            // Recommended logging level for the console
-            property 'neoforge.logging.console.level', 'debug'
-            
-            mods {
-                neoessentials {
-                    source sourceSets.main
-                }
-            }
-        }
-        
+// Mojang ships Java 21 to end users starting in 1.20.5, so mods should target Java 21.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    // Specify the version of NeoForge to use.
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    // This line is optional. Access Transformers are automatically detected
+    // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+
+    // Default run configurations.
+    // These can be tweaked, removed, or duplicated as needed.
+    runs {
         client {
-            // Properties for client run config
+            client()
+
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
         server {
-            // Properties for server run config
-            args '--nogui'
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        // This run config launches GameTestServer and runs all registered gametests, then exits.
+        // By default, the server will crash when no gametests are provided.
+        // The gametest system is also enabled by default for other run configs under the /test command.
         gameTestServer {
-            // Properties for game test server
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
         data {
-            // Properties for data generation run config
-            workingDirectory project.file('run-data')
-            
-            args '--mod', 'neoessentials', '--all',
-                '--output', file('src/generated/resources/'),
-                '--existing', file('src/main/resources/')
+            data()
+
+            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
+            // gameDirectory = project.file('run-data')
+
+            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        // applies to all the run configs above
+        configureEach {
+            // Recommended logging data for a userdev environment
+            // The markers can be added/remove as needed separated by commas.
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+
+            // Recommended logging level for the console
+            // You can set various levels here.
+            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        // define mod <-> source bindings
+        // these are used to tell the game which sources are for which mod
+        // multi mod projects should define one per mod
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
         }
     }
 }
 
-repositories {
-    mavenCentral()
-    maven { url = 'https://repo.lucko.me/' } // For LuckPerms API
+// Include resources generated by data generators.
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// Sets up a dependency configuration called 'localRuntime'.
+// This configuration should be used instead of 'runtimeOnly' to declare
+// a dependency that will be present for runtime testing but that is
+// "optional", meaning it will not be pulled by dependents of this mod.
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
 }
 
 dependencies {
-    // Use Neo Forge userdev for this version of Minecraft
-    implementation "net.neoforged:neoforge:${minecraft_version}-${neo_version}"
-    
-    // Database dependencies
-    implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
-    implementation 'com.mysql:mysql-connector-j:8.2.0'
-    
-    // LuckPerms API (soft dependency for permission checking)
-    compileOnly 'net.luckperms:api:5.4'
+    // Example optional mod dependency with JEI
+    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
+    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
+    // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
+    // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
+    // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
+
+    // Example mod dependency using a mod jar from ./libs with a flat dir repository
+    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
+    // The group id is ignored when searching -- in this case, it is "blank"
+    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
+
+    // Example mod dependency using a file as dependency
+    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
+
+    // Example project dependency using a sister or child project:
+    // implementation project(":myproject")
+
+    // For more info:
+    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
+    // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
+<<<<<<< HEAD
 // Task to increment build number
 tasks.register('incrementBuildNumber') {
     description = 'Increments the build number'
@@ -487,26 +527,36 @@ mixin {
 
 // Process resources specific configuration
 processResources {
+=======
+// This block of code expands all declared replace properties in the specified resource targets.
+// A missing property will result in an error. Properties are expanded using ${} Groovy notation.
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+>>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
     var replaceProperties = [
-            minecraft_version: minecraft_version,
+            minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            neo_version: neo_version,
-            neo_version_range: neo_version_range,
-            loader_version_range: loader_version_range,
-            mod_id: mod_id,
-            mod_name: mod_name,
-            mod_license: mod_license,
-            mod_version: project.version,
-            mod_authors: mod_authors,
-            mod_description: mod_description
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
     ]
     inputs.properties replaceProperties
-
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
-        expand replaceProperties + [project: project]
-    }
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
 }
+// Include the output of "generateModMetadata" as an input directory for the build
+// this works with both building through Gradle and the IDE.
+sourceSets.main.resources.srcDir generateModMetadata
+// To avoid having to run "generateModMetadata" manually, make it run on every project reload
+neoForge.ideSyncTask generateModMetadata
 
+<<<<<<< HEAD
 // Create a task to finalize the jar with reobfuscation
 tasks.named('jar').configure {
     finalizedBy 'reobfJar'
@@ -514,30 +564,16 @@ tasks.named('jar').configure {
 }
 
 // Publishing configuration
+=======
+// Example configuration to allow publishing using the maven-publish plugin
+>>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
 publishing {
     publications {
-        mavenJava(MavenPublication) {
+        register('mavenJava', MavenPublication) {
             from components.java
-            
-            pom {
-                name = 'NeoEssentials'
-                description = 'Essential server-side commands and utilities for NeoForge servers'
-                url = 'https://github.com/zerog/neoessentials'
-                licenses {
-                    license {
-                        name = 'MIT License'
-                        url = 'https://opensource.org/licenses/MIT'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'zerog'
-                        name = 'ZeroG'
-                    }
-                }
-            }
         }
     }
+<<<<<<< HEAD
     
 <<<<<<< HEAD
     dependsOn subprojects.collect { it.tasks.withType(PublishToMavenRepository) }
@@ -545,14 +581,16 @@ publishing {
     finalizedBy tasks.incrementBuildNumber
 >>>>>>> 721d16e (Add initial implementation of NeoEssentials mod)
 =======
+=======
+>>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
     repositories {
         maven {
-            name = "localRepo"
-            url = "file://${project.buildDir}/repo"
+            url "file://${project.projectDir}/repo"
         }
     }
 >>>>>>> 452fbe2 (refactor: Simplify build.gradle by removing redundant configurations and enhancing build number management)
 }
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 // Jar configuration
@@ -646,3 +684,17 @@ tasks.named('build').configure {
 }
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
+>>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
