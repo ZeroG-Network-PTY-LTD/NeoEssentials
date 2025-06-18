@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.93'
     id 'idea'
+    id "org.sonarqube" version "6.2.0.5505"
 }
 
 <<<<<<< HEAD
@@ -58,6 +59,14 @@ tasks.processResources.configure {
             "minecraft_version_range": versionProps.minecraftVersionRange.get()
         )
     }
+}
+
+sonar {
+  properties {
+    property "sonar.projectKey", "ZeroG-Network_NeoEssentials"
+    property "sonar.organization", "zerog-network"
+    property "sonar.host.url", "https://sonarcloud.io"
+  }
 }
 
 // Define a task to increment the build number
