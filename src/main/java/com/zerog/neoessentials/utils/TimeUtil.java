@@ -184,6 +184,7 @@ public class TimeUtil {
         return sb.toString().trim();
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
     
     /**
      * Format a duration in milliseconds into a human-readable string
@@ -237,4 +238,46 @@ public class TimeUtil {
     }
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+    
+    /**
+     * Format a time duration in seconds to a human-readable string
+     * 
+     * @param seconds Duration in seconds
+     * @return Human-readable duration string
+     */
+    public static String formatTimeDuration(long seconds) {
+        if (seconds < 0) {
+            return "forever";
+        }
+        
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+        
+        seconds = seconds % 60;
+        minutes = minutes % 60;
+        hours = hours % 24;
+        
+        StringBuilder sb = new StringBuilder();
+        if (days > 0) {
+            sb.append(days).append(" day").append(days > 1 ? "s" : "").append(" ");
+        }
+        
+        if (hours > 0) {
+            sb.append(hours).append(" hour").append(hours > 1 ? "s" : "").append(" ");
+        }
+        
+        if (minutes > 0) {
+            sb.append(minutes).append(" minute").append(minutes > 1 ? "s" : "").append(" ");
+        }
+        
+        if (seconds > 0 && days == 0 && hours == 0) {
+            sb.append(seconds).append(" second").append(seconds > 1 ? "s" : "").append(" ");
+        }
+        
+        String result = sb.toString().trim();
+        return result.isEmpty() ? "0 seconds" : result;
+    }
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
 }

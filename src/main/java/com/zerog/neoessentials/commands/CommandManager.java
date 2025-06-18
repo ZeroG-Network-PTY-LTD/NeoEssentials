@@ -79,7 +79,10 @@ public class CommandManager {    // Command classes
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
 =======
     private final AfkCommands afkCommands;
-    private final UtilityCommands utilityCommands;    private final UICommands uiCommands;
+    private final UtilityCommands utilityCommands;    
+    private final UICommands uiCommands;
+    private final JailCommands jailCommands;
+    private final PowerToolCommands powerToolCommands;
 
     public CommandManager() {
 >>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
@@ -124,6 +127,8 @@ public class CommandManager {    // Command classes
 =======
         utilityCommands = new UtilityCommands();
         uiCommands = new UICommands();
+        jailCommands = new JailCommands();
+        powerToolCommands = new PowerToolCommands();
         // ItemCommands needs CommandBuildContext which is only available during register event
 >>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
     }
@@ -238,6 +243,7 @@ public class CommandManager {    // Command classes
         jailCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered jail commands");
         
+<<<<<<< HEAD
         // Register powertool commands
         powerToolCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered powertool commands");
@@ -248,6 +254,11 @@ public class CommandManager {    // Command classes
         // Register admin panel commands
         adminPanelCommand.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered admin panel commands");
+=======
+        // Register power tool commands
+        powerToolCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered power tool commands");
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
           // Note: ItemCommands require CommandBuildContext which is not available here
         // In a full implementation, you would need to get the CommandBuildContext properly
         
@@ -568,7 +579,25 @@ public class CommandManager {    // Command classes
      * 
      * @return The UI commands
      */
-    public UICommands getUiCommands() {
+    public UICommands getUICommands() {
         return uiCommands;
+    }
+    
+    /**
+     * Gets the jail commands instance
+     * 
+     * @return The jail commands
+     */
+    public JailCommands getJailCommands() {
+        return jailCommands;
+    }
+    
+    /**
+     * Gets the power tool commands instance
+     * 
+     * @return The power tool commands
+     */
+    public PowerToolCommands getPowerToolCommands() {
+        return powerToolCommands;
     }
 }

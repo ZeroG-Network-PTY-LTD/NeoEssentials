@@ -7,7 +7,11 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.PowerToolManager;
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.VanillaBooleanParser;
+=======
+import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
 import com.zerog.neoessentials.utils.TextUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -56,8 +60,12 @@ public class PowerToolCommands {
                 .then(Commands.literal("-r")
                         .executes(this::executePowerToolRemoveAll))
                 .then(Commands.literal("-e")
+<<<<<<< HEAD
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                 .suggests(VanillaBooleanParser.booleanSuggestions())
+=======
+                        .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
                                 .executes(this::executePowerToolEnable)))
                 .then(Commands.literal("-t")
                         .executes(this::executePowerToolToggle))
@@ -76,8 +84,12 @@ public class PowerToolCommands {
                 .then(Commands.literal("-r")
                         .executes(this::executePowerToolRemoveAll))
                 .then(Commands.literal("-e")
+<<<<<<< HEAD
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                 .suggests(VanillaBooleanParser.booleanSuggestions())
+=======
+                        .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
                                 .executes(this::executePowerToolEnable)))
                 .then(Commands.literal("-t")
                         .executes(this::executePowerToolToggle))
@@ -214,7 +226,11 @@ public class PowerToolCommands {
     private int executePowerToolEnable(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = source.getPlayerOrException();
+<<<<<<< HEAD
         boolean enabled = VanillaBooleanParser.getBoolean(context, "enabled");
+=======
+        boolean enabled = StringToBooleanArgumentType.getBoolean(context, "enabled");
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
 
         PowerToolManager powerToolManager = NeoEssentials.getInstance().getDataManager().getPowerToolManager();
         powerToolManager.setPowerToolEnabled(player, enabled);
@@ -269,12 +285,18 @@ public class PowerToolCommands {
         PowerToolManager powerToolManager = NeoEssentials.getInstance().getDataManager().getPowerToolManager();
         Item item = heldItem.getItem();
         powerToolManager.setPowerTool(player, item, command);
+<<<<<<< HEAD
         
         final String finalCommand = command; // Make command final for the lambda
         final ItemStack finalItem = heldItem; // Make heldItem final for the lambda
         
         source.sendSuccess(() -> Component.literal(TextUtil.formatText(
                 "&aSet powertool on &6" + finalItem.getDisplayName().getString() + " &ato: &6/" + finalCommand)), true);
+=======
+
+        source.sendSuccess(() -> Component.literal(TextUtil.formatText(
+                "&aSet powertool on &6" + heldItem.getDisplayName().getString() + " &ato: &6/" + command)), true);
+>>>>>>> 2b0efb3 (Implement powertool and jail management systems)
 
         boolean enabled = powerToolManager.isPowerToolEnabled(player);
         if (!enabled) {
