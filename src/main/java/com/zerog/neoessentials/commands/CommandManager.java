@@ -3,6 +3,7 @@ package com.zerog.neoessentials.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.utils.PermissionUtil;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -25,7 +26,12 @@ public class CommandManager {    // Command classes
     private final PlayerCommands playerCommands;
     private final MessageCommands messageCommands;
     private final ModeratorCommands moderatorCommands;
-    private final AfkCommands afkCommands;    public CommandManager() {
+    private final AfkCommands afkCommands;
+    private final UtilityCommands utilityCommands;
+    private final UICommands uiCommands;
+    private ItemCommands itemCommands;
+
+    public CommandManager() {
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -38,6 +44,9 @@ public class CommandManager {    // Command classes
         messageCommands = new MessageCommands();
         moderatorCommands = new ModeratorCommands();
         afkCommands = new AfkCommands();
+        utilityCommands = new UtilityCommands();
+        uiCommands = new UICommands();
+        // ItemCommands needs CommandBuildContext which is only available during register event
     }
     
     /**
@@ -64,7 +73,16 @@ public class CommandManager {    // Command classes
      * Registers all command categories with the dispatcher.
      * 
      * @param dispatcher The command dispatcher
-     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {        // Register teleport commands
+     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Get the server for CommandBuildContext
+        MinecraftServer server = null;
+        try {
+            // Try to get the server from the event
+            server = NeoEssentials.getServer();
+        } catch (Exception e) {
+            // Server might not be available yet
+            NeoEssentials.LOGGER.error("Failed to get server for command registration", e);
+        }        // Register teleport commands
         teleportCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered teleport commands");
         
@@ -109,6 +127,21 @@ public class CommandManager {    // Command classes
         // Register AFK commands
         afkCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered AFK commands");
+        
+        // Register utility commands
+        utilityCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered utility commands");
+        
+        // Register UI commands
+        uiCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered UI commands");
+        
+        // Create and register item commands (needs CommandBuildContext)
+        CommandBuildContext buildContext = CommandBuildContext.simple(((CommandSourceStack)(Object)dispatcher).getServer().registryAccess(), 
+                ((CommandSourceStack)(Object)dispatcher).getServer().getWorldData().getDataConfiguration());
+        itemCommands = new ItemCommands(buildContext);
+        itemCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered item commands");
     }
     
     /**
