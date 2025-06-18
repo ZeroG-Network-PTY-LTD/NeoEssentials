@@ -103,8 +103,10 @@ This document outlines the remaining tasks for NeoEssentials development.
    - [ ] Admin panel
    - [ ] User interfaces for common features
    - [ ] Menu system
+2. **Extra Feature**
+   - [ ] Playerlist {Tablist}
 
-2. **Documentation**
+3. **Documentation**
    - [ ] Complete user documentation
    - [ ] Server admin guides
    - [ ] Command reference
