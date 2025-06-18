@@ -390,15 +390,16 @@ public class ModeratorCommands {
     
     /**
      * Unban an IP address
-     */
-    private int unbanIp(CommandContext<CommandSourceStack> context) {
+     */    private int unbanIp(CommandContext<CommandSourceStack> context) {
         try {
             String ipAddress = StringArgumentType.getString(context, "address");
             IpBanList ipBanList = context.getSource().getServer().getPlayerList().getIpBans();
-              // Directly call remove on the ban list
-            ipBanList.remove(ipAddress);
-            context.getSource().sendSuccess(() -> Component.literal("Unbanned IP address: " + ipAddress), true);
-            return 1;
+            
+            // Check if the IP is banned before removal
+            if (ipBanList.isBanned(ipAddress)) {
+                ipBanList.remove(ipAddress);
+                context.getSource().sendSuccess(() -> Component.literal("Unbanned IP address: " + ipAddress), true);
+                return 1;
             } else {
                 context.getSource().sendFailure(Component.literal("IP address not found in ban list: " + ipAddress));
                 return 0;
