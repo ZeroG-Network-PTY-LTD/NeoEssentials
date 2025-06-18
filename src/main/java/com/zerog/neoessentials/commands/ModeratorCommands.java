@@ -236,16 +236,17 @@ public class ModeratorCommands {
         try {
             String targetName = StringArgumentType.getString(context, "player");
             UserBanList banList = context.getSource().getServer().getPlayerList().getBans();
-            
-            // We need to iterate through the ban list
+              // Use removeByName instead of iterating through the entries
             boolean found = false;
-            for (UserBanListEntry entry : banList.getEntries()) {
-                GameProfile profile = entry.getUser();
-                if (profile.getName().equalsIgnoreCase(targetName)) {
-                    banList.remove(profile);
+            try {
+                // Try to unban by name
+                if (banList.isBanned(targetName)) {
+                    banList.remove(targetName);
                     found = true;
-                    break;
                 }
+            } catch (Exception ex) {
+                // Some versions might not support isBanned by name
+                NeoEssentials.LOGGER.error("Error checking ban by name", ex);
             }
             
             if (found) {
@@ -394,20 +395,10 @@ public class ModeratorCommands {
         try {
             String ipAddress = StringArgumentType.getString(context, "address");
             IpBanList ipBanList = context.getSource().getServer().getPlayerList().getIpBans();
-            
-            // Need to check manually since contains() method is not publicly accessible
-            boolean found = false;
-            for (IpBanListEntry entry : ipBanList.getEntries()) {
-                if (entry.getUser().equals(ipAddress)) {
-                    found = true;
-                    break;
-                }
-            }
-            
-            if (found) {
-                ipBanList.remove(ipAddress);
-                context.getSource().sendSuccess(() -> Component.literal("Unbanned IP address: " + ipAddress), true);
-                return 1;
+              // Directly call remove on the ban list
+            ipBanList.remove(ipAddress);
+            context.getSource().sendSuccess(() -> Component.literal("Unbanned IP address: " + ipAddress), true);
+            return 1;
             } else {
                 context.getSource().sendFailure(Component.literal("IP address not found in ban list: " + ipAddress));
                 return 0;

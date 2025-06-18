@@ -16,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.players.PlayerList;
+
 
 import java.util.*;
 
@@ -303,9 +303,8 @@ public class MessageCommands {
         
         // Send the messages
         context.getSource().sendSuccess(() -> senderMsg, false);
-        recipient.sendSystemMessage(recipientMsg);
-          // Send to social spies
-        sendToSocialSpies(sender, recipient, formattedMessage);
+        recipient.sendSystemMessage(recipientMsg);        // Send to social spies
+        sendToSocialSpies(sender, recipient, formattedMessage, null);
         
         // Update last message tracking
         lastMessageSender.put(recipient.getUUID(), sender.getUUID());
@@ -500,14 +499,18 @@ public class MessageCommands {
     
     /**
      * Send a private message to all players with social spy enabled
-     */
-    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {
-        // Skip if sender or recipient has exemption        if (PermissionUtil.hasPermission(sender, "essentials.chat.spy.exempt") ||
+     */    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {
+        // Skip if sender or recipient has exemption
+        if (PermissionUtil.hasPermission(sender, "essentials.chat.spy.exempt") ||
             PermissionUtil.hasPermission(recipient, "essentials.chat.spy.exempt")) {
             return;
         }
         
-        PlayerList playerList = sender.getServer().getPlayerList();
+        if (sender.getServer() == null) {
+            return;
+        }
+        
+        net.minecraft.server.players.PlayerList playerList = sender.getServer().getPlayerList();
         Component spyMessage = Component.translatable("commands.socialspy.format", 
                                                     sender.getDisplayName(), 
                                                     recipient.getDisplayName(), 
