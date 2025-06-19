@@ -185,15 +185,26 @@ public class ModConfigManager {
 =======
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
     }
-    
-    /**
+      /**
      * Gets the compatibility config that adapts TOML values to the old config structure
      * @return The compatibility config
      */
     public CompatNeoEssentialsConfig getConfig() {
         if (compatConfig == null) {
             compatConfig = new CompatNeoEssentialsConfig();
+            // Note: config values will not be initialized here - that happens in initializeConfigs()
         }
         return compatConfig;
+    }
+    
+    /**
+     * Initialize config values after all configs are loaded
+     * This should be called after the mod loading phase when config values are available
+     */
+    public void initializeConfigs() {
+        NeoEssentials.LOGGER.info("Initializing config values");
+        if (compatConfig != null) {
+            compatConfig.initialize();
+        }
     }
 }
