@@ -331,12 +331,8 @@ public class SQLiteStorageHandler implements StorageHandler {
                     int z = rs.getInt("z");
                     float pitch = rs.getFloat("pitch");
                     float yaw = rs.getFloat("yaw");
-                    String permission = rs.getString("permission");
-                      BlockPos pos = new BlockPos(x, y, z);
-                    WarpData warp = new WarpData(pos, pitch, yaw, dimension);
-                    if (permission != null && !permission.isEmpty()) {
-                        warp.setPermission(permission);
-                    }
+                    String permission = rs.getString("permission");                    BlockPos pos = new BlockPos(x, y, z);
+                    WarpData warp = new WarpData(warpName, dimension, pos, pitch, yaw, permission);
                     
                     warps.put(warpName, warp);
                 }

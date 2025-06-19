@@ -87,6 +87,9 @@ public class WarpCommands {
         );
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
         // /warphelp - Show help for warp commands
         dispatcher.register(
             Commands.literal("warphelp")
@@ -295,6 +298,7 @@ public class WarpCommands {
             return 0;
         }
           MutableComponent message = Component.literal("§2Available warps: ");
+<<<<<<< HEAD
 =======
 =======
         NeoEssentials.LOGGER.debug("Player {} is requesting the warp list", player.getScoreboardName());
@@ -317,10 +321,13 @@ public class WarpCommands {
         
         MutableComponent message = Component.literal("Available warps: ");
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
         
         boolean first = true;
         for (String warpName : warps.keySet()) {
             if (!first) {
+<<<<<<< HEAD
 <<<<<<< HEAD
                 message.append(Component.literal("§7, "));
             }
@@ -368,14 +375,56 @@ public class WarpCommands {
         MessageUtil.sendInfo(player, helpMessage);
 =======
                 message.append(Component.literal(", "));
+=======
+                message.append(Component.literal("§7, "));
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
             }
-            message.append(Component.literal(warpName));
+            
+            // Create clickable warp name with hover info
+            MutableComponent warpComponent = Component.literal("§b" + warpName);
+            
+            // Add hover text
+            MutableComponent hoverText = Component.literal("§eClick to teleport to §b" + warpName);
+            WarpManager.WarpLocation warpLocation = warps.get(warpName);
+            
+            if (warpLocation != null) {
+                hoverText.append(Component.literal("\n§7Dimension: §f" + warpLocation.getDimension()));
+                hoverText.append(Component.literal("\n§7Location: §f" + 
+                    (int)warpLocation.getX() + ", " + 
+                    (int)warpLocation.getY() + ", " + 
+                    (int)warpLocation.getZ()));
+            }
+            
+            warpComponent = MessageUtil.addHoverText(warpComponent, hoverText);
+            
+            // Add click event to teleport to the warp
+            warpComponent = MessageUtil.makeClickableCommand(warpComponent, "/warp " + warpName);
+            
+            message.append(warpComponent);
             first = false;
         }
         
-        NeoEssentials.LOGGER.debug("Sending warp list ({} warps) to player {}", warps.size(), player.getScoreboardName());
+        NeoEssentials.LOGGER.debug("Sending interactive warp list ({} warps) to player {}", warps.size(), player.getScoreboardName());
+        
+        // Add a heading
+        MessageUtil.sendInfo(player, Component.literal("§2§l====== §r§6Warp List §2§l======"));
+        
+        // Send the warp list
         MessageUtil.sendInfo(player, message);
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        
+        // Add clickable help button
+        MutableComponent helpMessage = Component.literal("§7Type ");
+        MutableComponent helpButton = Component.literal("§e/warphelp");
+        helpButton = MessageUtil.makeClickableCommand(helpButton, "/warphelp");
+        helpButton = MessageUtil.addHoverText(helpButton, Component.literal("§7Click to view warp command help"));
+        helpMessage.append(helpButton);
+        helpMessage.append(Component.literal(" §7for more information."));
+        
+        MessageUtil.sendInfo(player, helpMessage);
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
         return 1;
     }
     
@@ -790,19 +839,31 @@ public class WarpCommands {
         MessageUtil.sendInfo(player, warpsCmd.append(Component.literal(" §7- List all available warps")));
         
         // Only show admin commands to players with appropriate permissions
+<<<<<<< HEAD
         if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.set")) {
+=======
+        if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.set")) {
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
             MutableComponent setWarpCmd = Component.literal("§b/setwarp <name>");
             setWarpCmd = MessageUtil.addHoverText(setWarpCmd, Component.literal("§7Create a new warp at your location"));
             MessageUtil.sendInfo(player, setWarpCmd.append(Component.literal(" §7- Create a new warp at your location")));
         }
         
+<<<<<<< HEAD
         if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.delete")) {
+=======
+        if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.delete")) {
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
             MutableComponent delWarpCmd = Component.literal("§b/delwarp <name>");
             delWarpCmd = MessageUtil.addHoverText(delWarpCmd, Component.literal("§7Delete an existing warp"));
             MessageUtil.sendInfo(player, delWarpCmd.append(Component.literal(" §7- Delete an existing warp")));
         }
         
+<<<<<<< HEAD
         if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.player")) {
+=======
+        if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.player")) {
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
             MutableComponent warpPlayerCmd = Component.literal("§b/warpplayer <player> <warp>");
             warpPlayerCmd = MessageUtil.addHoverText(warpPlayerCmd, Component.literal("§7Teleport another player to a warp"));
             MessageUtil.sendInfo(player, warpPlayerCmd.append(Component.literal(" §7- Teleport another player to a warp")));
@@ -810,6 +871,7 @@ public class WarpCommands {
         
         return 1;
     }
+<<<<<<< HEAD
 =======
 =======
         // If direct match failed, try checking just the path part
@@ -883,4 +945,6 @@ public class WarpCommands {
         return TeleportUtil.teleport(player, targetLevel, x, y, z, yaw, pitch);
     }
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
 }
