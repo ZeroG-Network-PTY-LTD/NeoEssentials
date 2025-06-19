@@ -207,6 +207,7 @@ public class TablistManager {
             
             // Update header and footer for all players
 <<<<<<< HEAD
+<<<<<<< HEAD
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 <<<<<<< HEAD
                 try {
@@ -214,6 +215,10 @@ public class TablistManager {
                     Component playerHeader = legacyConfig.isEnablePlayerSpecificHeaders() ? 
 =======
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {                try {
+=======
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                try {
+>>>>>>> 5db751d (feat: Add player-specific header and footer configuration options in TablistConfig; update TablistManager to utilize these settings)
                     // Generate player-specific header and footer if needed
                     Component playerHeader = config.isEnablePlayerSpecificHeaders() ? 
 >>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
@@ -272,11 +277,16 @@ public class TablistManager {
      *
      * @return The formatted header component
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    
     private Component getFormattedHeader() {
 =======
      */    private Component getFormattedHeader() {
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+     */    
+    private Component getFormattedHeader() {
+>>>>>>> 5db751d (feat: Add player-specific header and footer configuration options in TablistConfig; update TablistManager to utilize these settings)
         String template = !headers.isEmpty() ? 
                 headers.get(currentHeaderIndex) : 
                 "&6Welcome to the server!";
@@ -297,11 +307,16 @@ public class TablistManager {
      *
      * @return The formatted footer component
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    
     private Component getFormattedFooter() {
 =======
      */    private Component getFormattedFooter() {
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+     */    
+    private Component getFormattedFooter() {
+>>>>>>> 5db751d (feat: Add player-specific header and footer configuration options in TablistConfig; update TablistManager to utilize these settings)
         String template = !footers.isEmpty() ? 
                 footers.get(currentFooterIndex) : 
                 "&7Thank you for playing!";
@@ -316,7 +331,8 @@ public class TablistManager {
         return Component.literal(TextUtil.translateColors(parsePlaceholders(template, null)));
 >>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
     }
-      /**
+    
+    /**
      * Parses placeholders in a string
      *
      * @param template The template string with placeholders
@@ -332,6 +348,7 @@ public class TablistManager {
         // Get economy manager for placeholders
         EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
         
+<<<<<<< HEAD
         // Server placeholders
         template = template.replace("%server_name%", legacyConfig.getServerName());
         template = template.replace("%online_players%", String.valueOf(server.getPlayerCount()));
@@ -412,6 +429,8 @@ public class TablistManager {
         MinecraftServer server = NeoEssentials.getInstance().getServer();
         if (server == null) return template;
         
+=======
+>>>>>>> 5db751d (feat: Add player-specific header and footer configuration options in TablistConfig; update TablistManager to utilize these settings)
         // Server placeholders
         template = template.replace("%server_name%", config.getServerName());
         template = template.replace("%online_players%", String.valueOf(server.getPlayerCount()));
@@ -429,7 +448,9 @@ public class TablistManager {
         if (player != null) {
             template = template.replace("%player_name%", player.getScoreboardName());
             template = template.replace("%player_displayname%", player.getName().getString());
-            template = template.replace("%player_uuid%", player.getUUID().toString());            // Player ping
+            template = template.replace("%player_uuid%", player.getUUID().toString());
+            
+            // Player ping
             int ping = 0;
             try {
                 // In 1.21.1, latency is a field in the packet listener impl
@@ -455,17 +476,18 @@ public class TablistManager {
             template = template.replace("%dimension%", player.level().dimension().location().toString());
             
             // Economy placeholder for specific player
-            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
             if (economyManager != null) {
                 double balance = economyManager.getBalance(player.getUUID());
                 template = template.replace("%balance%", String.format("%.2f", balance));
             }
-        }// TPS placeholders - Calculate approximated TPS        // Default to 20.0 TPS
+        }
+        
+        // Default to 20.0 TPS
         double tps = 20.0;
         
         // Get MSPT and calculate TPS safely
         try {
-            // NeoForge 1.21.1 offers server ticktime stats in mean, min, max
+            // NeoForge 1.21.1 offers server ticktime stats
             double mspt = server.getAverageTickTimeNanos() / 1000000.0;
             if (mspt > 0) {
                 // Calculate TPS (1000 ms / mspt, cap at 20)
@@ -478,9 +500,13 @@ public class TablistManager {
         
         template = template.replace("%server_tps%", String.format("%.1f", tps));
         
+<<<<<<< HEAD
         // Economy placeholder
         EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+        // Economy global placeholders
+>>>>>>> 5db751d (feat: Add player-specific header and footer configuration options in TablistConfig; update TablistManager to utilize these settings)
         if (economyManager != null) {
             template = template.replace("%economy_total%", String.format("%.2f", economyManager.getTotalCurrency()));
             template = template.replace("%economy_accounts%", String.valueOf(economyManager.getTotalAccounts()));
@@ -651,6 +677,7 @@ public class TablistManager {
         // Add economy info if enabled
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (legacyConfig.isShowEconomyInTablist()) {
             EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
             if (economyManager != null) {
@@ -663,6 +690,10 @@ public class TablistManager {
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
 =======
         if (config.isShowEconomyInTablist()) {            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+=======
+        if (config.isShowEconomyInTablist()) {
+            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+>>>>>>> 5db751d (feat: Add player-specific header and footer configuration options in TablistConfig; update TablistManager to utilize these settings)
             if (economyManager != null) {
                 double balance = economyManager.getBalance(player.getUUID());
 >>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
@@ -747,7 +778,8 @@ public class TablistManager {
         teams.clear();
         playerDataCache.clear();
     }
-      /**
+    
+    /**
      * Class to store cached player data
      */
     private static class PlayerData {

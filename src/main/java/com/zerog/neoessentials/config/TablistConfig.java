@@ -329,6 +329,9 @@ public class TablistConfig {
         this.showEconomyInTablist = showEconomyInTablist;
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5db751d (feat: Add player-specific header and footer configuration options in TablistConfig; update TablistManager to utilize these settings)
     
     /**
      * Checks if player-specific headers are enabled
@@ -365,6 +368,9 @@ public class TablistConfig {
     public void setEnablePlayerSpecificFooters(boolean enablePlayerSpecificFooters) {
         this.enablePlayerSpecificFooters = enablePlayerSpecificFooters;
     }
+<<<<<<< HEAD
 =======
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+>>>>>>> 5db751d (feat: Add player-specific header and footer configuration options in TablistConfig; update TablistManager to utilize these settings)
 }
