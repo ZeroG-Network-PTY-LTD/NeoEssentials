@@ -1091,24 +1091,23 @@ public class AdminPanelCommand {
         
         // Create the header
         Component header = Component.literal(MessageUtil.translateColorCodes("&6====== &lNeoEssentials Admin Panel&r &6======"));
-        player.sendSystemMessage(header);
-          // Create clickable sections based on permissions
-        if (player.hasPermissions(2) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, "neoessentials.adminpanel.economy")) {
+        player.sendSystemMessage(header);        // Create clickable sections based on permissions
+        if (player.hasPermissions(2) || checkPlayerPermission(player, "neoessentials.adminpanel.economy")) {
             displaySectionButton(player, "&2Economy Management", "/adminpanel economy", 
                     "&7Click to manage economy settings, view transactions,\n&7set balances, and view leaderboards.");
         }
         
-        if (player.hasPermissions(2) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, "neoessentials.adminpanel.kits")) {
+        if (player.hasPermissions(2) || checkPlayerPermission(player, "neoessentials.adminpanel.kits")) {
             displaySectionButton(player, "&3Kit Management", "/adminpanel kits", 
                     "&7Click to manage kits, create new kits,\n&7edit existing kits, and view usage statistics.");
         }
         
-        if (player.hasPermissions(2) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, "neoessentials.adminpanel.warps")) {
+        if (player.hasPermissions(2) || checkPlayerPermission(player, "neoessentials.adminpanel.warps")) {
             displaySectionButton(player, "&5Warp Management", "/adminpanel warps", 
                     "&7Click to manage warps, create new warps,\n&7edit existing warps, and set permissions.");
         }
         
-        if (player.hasPermissions(2) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, "neoessentials.adminpanel.players")) {
+        if (player.hasPermissions(2) || checkPlayerPermission(player, "neoessentials.adminpanel.players")) {
             displaySectionButton(player, "&6Player Management", "/adminpanel players", 
                     "&7Click to manage players, view online players,\n&7check player stats, and perform admin actions.");
         }
@@ -1290,5 +1289,21 @@ public class AdminPanelCommand {
         
         return 1;
     }
+<<<<<<< HEAD
 >>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
+=======
+    
+    /**
+     * Check if a player has a permission using CommandSourceStack approach
+     * 
+     * @param player The player to check
+     * @param permission The permission to check
+     * @return True if the player has the permission
+     */
+    private boolean checkPlayerPermission(ServerPlayer player, String permission) {
+        // Convert player to CommandSourceStack and use the existing method
+        net.minecraft.commands.CommandSourceStack source = player.createCommandSourceStack();
+        return CommandManager.hasPermission(source, permission);
+    }
+>>>>>>> 02542de (refactor: Simplify permission checks in AdminPanelCommand; add checkPlayerPermission method in PermissionUtil)
 }
