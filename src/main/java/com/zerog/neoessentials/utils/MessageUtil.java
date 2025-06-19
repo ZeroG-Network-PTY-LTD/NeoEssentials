@@ -157,7 +157,7 @@ public class MessageUtil {
      * @param message The message with '&' color codes
      * @return The message with Minecraft internal color codes
      */
-    private static String translateColorCodes(String message) {
+    public static String translateColorCodes(String message) {
         char colorChar = '&';
         char[] array = message.toCharArray();
         

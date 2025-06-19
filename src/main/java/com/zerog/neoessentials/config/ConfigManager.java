@@ -23,6 +23,7 @@ public class ConfigManager {
     
     private NeoEssentialsConfig config;
     private DatabaseConfig databaseConfig;
+    private TablistConfig tablistConfig;
     private final Gson gson;
       public ConfigManager() {
         this.gson = new GsonBuilder()
@@ -98,5 +99,18 @@ public class ConfigManager {
      */
     public DatabaseConfig getDatabaseConfig() {
         return databaseConfig;
+    }
+    
+    /**
+     * Get the tablist configuration.
+     * 
+     * @return The tablist configuration object
+     */
+    public TablistConfig getTablistConfig() {
+        if (tablistConfig == null) {
+            tablistConfig = new TablistConfig();
+            tablistConfig.load();
+        }
+        return tablistConfig;
     }
 }

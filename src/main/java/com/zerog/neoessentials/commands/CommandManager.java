@@ -227,19 +227,7 @@ public class CommandManager {    // Command classes
      * @return The time and weather commands
      */
     public TimeAndWeatherCommands getTimeAndWeatherCommands() {
-        return timeAndWeatherCommands;
-    }    /**
-     * Checks if a player has permission for a specific command.
-     * Integrates with LuckPerms or FTB Ranks if available.
-     *
-     * @param source The command source
-     * @param permission The permission to check
-     * @return True if the player has permission, false otherwise
-     */
-    public static boolean hasPermission(CommandSourceStack source, String permission) {
-        // Delegate to PermissionUtil
-        return com.zerog.neoessentials.utils.PermissionUtil.hasPermission(source, permission);
-    }
+        return timeAndWeatherCommands;    }
     
     /**
      * Gets the player commands instance

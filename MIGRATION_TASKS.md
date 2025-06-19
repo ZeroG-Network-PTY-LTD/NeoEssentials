@@ -23,18 +23,19 @@ This document outlines the remaining tasks for NeoEssentials development.
    - [x] Menu system for other common commands
    
 2. **Extra Feature**
-   - [ ] Playerlist {Tablist}
+   - [x] Playerlist/Tablist (with animated headers/footers, player sorting, integration with LuckPerms and Economy)
    - [ ] Economy leaderboard
-   - [ ] Kit usage statistics
+   - [x] Kit usage statistics
 
 3. **Documentation**
    - [ ] Complete user documentation
-   - [ ] Server admin guides
+   - [x] Server admin guides
    - [x] Kit command reference (via `/kithelp` command)
    - [x] Economy command reference (via `/ecohelp` command)
    - [x] Home and Warp system documentation
    - [x] Home command reference (via `/homehelp` command)
    - [x] Warp command reference (via `/warphelp` command)
+   - [x] Tablist system documentation
 
 ## Final Steps
 
