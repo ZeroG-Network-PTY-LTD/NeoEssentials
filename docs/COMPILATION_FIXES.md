@@ -16,6 +16,12 @@
    - Added `checkPlayerPermission` helper method in AdminPanelCommand.java
    - Method converts ServerPlayer to CommandSourceStack for permission checking
    - Updated all references to use the new method
+   
+5. **Permission Util Type Mismatches (June 19, 2025)**
+   - Fixed type mismatches in calls to `PermissionUtil.hasPermission()`
+   - Added explicit casts for ServerPlayer and GameProfile parameters
+   - Multiple files affected: WarpCommands, KitCommands, MessageCommands, MessagingCommands, ModeratorCommands, JailCommands, KitManager
+   - Ensured proper usage of overloaded permission methods for different entity types
 
 ## Future Recommendations
 
