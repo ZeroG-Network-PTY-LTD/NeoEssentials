@@ -67,6 +67,34 @@ public class DataManager {    private UserManager userManager;
     }
     
     /**
+     * Initialize managers that need special initialization after the data manager is created
+     * This is called by NeoEssentials after the data manager is created
+     */
+    public void initializeManagers() {
+        // Initialize any managers that need special initialization
+        NeoEssentials.LOGGER.info("Initializing data managers");
+        
+        // Load data for all managers that need it
+        loadFromStorage();
+    }
+    
+    /**
+     * Load all data from storage
+     */
+    public void loadFromStorage() {
+        NeoEssentials.LOGGER.info("Loading data from storage");
+        
+        // Load data for each manager
+        economyManager.loadData();
+        homeManager.loadData();
+        warpManager.loadData();
+        spawnManager.loadData();
+        kitManager.loadData();
+        jailManager.loadData();
+        mailManager.loadData();
+    }
+    
+    /**
      * Reload data from storage.
      * Call this method after the storage manager has been initialized if it wasn't available during initial loading.
      */

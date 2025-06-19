@@ -320,13 +320,7 @@ public class NeoEssentials {
     }
     
     private void registerDatabaseConfig() {
-        if (configManager != null && configManager.getDatabaseConfig() != null) {
-            // Register the database config with a different filename to avoid conflict
-            modContainer.registerConfig(
-                net.neoforged.fml.config.ModConfig.Type.COMMON,
-                configManager.getDatabaseConfig().getSpec(),
-                "neoessentials-database.toml"
-            );
-        }
+        // Database config is now registered in ModConfigManager
+        LOGGER.info("Database configuration already registered through ModConfigManager");
     }
 }
