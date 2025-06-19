@@ -9,12 +9,18 @@ ResourceKey[minecraft:command_argument_type / neoessentials:String_to_boolean]
 ```
 
 ## Root Cause
-The issue was related to a capitalization mismatch in the command argument type registration:
-1. The server was looking for a registry key with capitalization `"String_to_boolean"`
-2. The mod was registering it as `"string_to_boolean"` (all lowercase)
+Two issues were identified:
+
+1. First issue (connection loss):
+   - The server was looking for a registry key with capitalization `"String_to_boolean"`
+   - The mod was registering it as `"string_to_boolean"` (all lowercase)
+
+2. Second issue (startup crash):
+   - Using uppercase characters in ResourceLocation paths is not allowed 
+   - ResourceLocations (registry names) can only contain lowercase letters, numbers, and specific symbols [a-z0-9/._-]
 
 ## Fix Applied
-1. Changed the command argument type registration key in `ModArgumentTypes.java` from `"string_to_boolean"` to `"StringToBoolean"`
+1. Ensured the command argument type registration key in `ModArgumentTypes.java` is properly lowercase as `"string_to_boolean"` (Minecraft resource locations only allow lowercase a-z, numbers 0-9, and a few special characters like /._-)
 2. Removed the redundant direct registration via `ArgumentTypeInfos.registerByClass()` in the common setup method, which could have been causing conflicting registrations
 3. Fixed a formatting issue in `PlayerCommands.java` related to the command registration
 
