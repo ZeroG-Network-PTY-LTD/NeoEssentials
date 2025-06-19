@@ -41,8 +41,7 @@ public class SQLiteStorageHandler implements StorageHandler {
                 .create();
         connectionManager = DatabaseConnectionManager.getInstance();
     }
-    
-    @Override
+      @Override
     public void initialize() {
         try {
             // Initialize the connection manager
@@ -53,6 +52,9 @@ public class SQLiteStorageHandler implements StorageHandler {
             
             // Test connection
             try (Connection connection = connectionManager.getConnection()) {
+                // Connection test successful if we get here
+                NeoEssentials.LOGGER.info("Database connection test successful");
+            }
             
             // Create tables
             createTables();
@@ -60,29 +62,15 @@ public class SQLiteStorageHandler implements StorageHandler {
             NeoEssentials.LOGGER.info("Initialized SQLite storage handler");
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to initialize SQLite storage handler: {}", e.getMessage());
-            connection = null;
         }
-    }
-    
-    @Override
+    }    @Override
     public void shutdown() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-                connection = null;
-            }
-            NeoEssentials.LOGGER.info("SQLite storage handler shut down");
-        } catch (SQLException e) {
-            NeoEssentials.LOGGER.error("Failed to close SQLite connection: {}", e.getMessage());
-        }
+        connectionManager.close();
+        NeoEssentials.LOGGER.info("SQLite storage handler shut down");
     }
-    
-    private void createTables() {
-        if (connection == null) {
-            return;
-        }
-        
-        try (Statement stmt = connection.createStatement()) {
+      private void createTables() {
+        try (Connection connection = connectionManager.getConnection();
+             Statement stmt = connection.createStatement()) {
             // Create homes table
             stmt.execute(
                 "CREATE TABLE IF NOT EXISTS homes (" +
