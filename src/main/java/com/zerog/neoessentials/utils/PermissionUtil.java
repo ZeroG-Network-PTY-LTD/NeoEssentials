@@ -2,10 +2,14 @@ package com.zerog.neoessentials.utils;
 
 import com.zerog.neoessentials.NeoEssentials;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.config.CompatNeoEssentialsConfig;
 =======
 import com.zerog.neoessentials.config.NeoEssentialsConfig;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+import com.zerog.neoessentials.config.CompatNeoEssentialsConfig;
+>>>>>>> ca620d1 (feat: Update PermissionUtil to use CompatNeoEssentialsConfig for improved compatibility)
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 
