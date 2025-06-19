@@ -77,11 +77,11 @@ public class PlayerCommands {
                 })
             )
         );
-        
-        // /god [player] [on|off]
+          // /god [player] [on|off]
         dispatcher.register(Commands.literal("god")
             .requires(source -> CommandManager.hasPermission(source, "essentials.god"))
-            .executes(context -> godCommand(context, context.getSource().getPlayerOrException(), null))            .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
+            .executes(context -> godCommand(context, context.getSource().getPlayerOrException(), null))
+            .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
                 .executes(context -> godCommand(context, context.getSource().getPlayerOrException(), 
                                               StringToBooleanArgumentType.getBoolean(context, "enabled")))
                 .then(Commands.argument("player", EntityArgument.player())
