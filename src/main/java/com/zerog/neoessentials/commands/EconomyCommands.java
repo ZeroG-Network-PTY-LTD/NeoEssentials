@@ -45,11 +45,15 @@ public class EconomyCommands {
      * @param dispatcher The command dispatcher to register commands with
      */
 <<<<<<< HEAD
+<<<<<<< HEAD
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {        // Register /balance command
 =======
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Register /balance command
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {        // Register /balance command
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
         dispatcher.register(
             Commands.literal("balance")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance"))
@@ -58,15 +62,21 @@ public class EconomyCommands {
                     
                     // Check own balance
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                     var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                     double balance = economyManager.getBalance(player.getUUID());
                     String formattedBalance = economyManager.formatCurrency(balance);
                     
                     MessageUtil.sendMessage(player, "Your balance: " + formattedBalance);
+<<<<<<< HEAD
 =======
                     double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(player.getUUID());
                     MessageUtil.sendMessage(player, "Your balance: $" + String.format("%.2f", balance));
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                     
                     return 1;
                 })
@@ -79,19 +89,26 @@ public class EconomyCommands {
                             
                             // Check another player's balance
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                             var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                             double balance = economyManager.getBalance(target.getUUID());
                             String formattedBalance = economyManager.formatCurrency(balance);
                             
                             MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: " + formattedBalance);
+<<<<<<< HEAD
 =======
                             double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID());
                             MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: $" + String.format("%.2f", balance));
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                             
                             return 1;
                         })
                 )
+<<<<<<< HEAD
 <<<<<<< HEAD
         );        // Register /bal alias for /balance
 =======
@@ -99,6 +116,9 @@ public class EconomyCommands {
 
         // Register /bal alias for /balance
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        );        // Register /bal alias for /balance
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
         dispatcher.register(
             Commands.literal("bal")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance"))
@@ -107,15 +127,21 @@ public class EconomyCommands {
                     
                     // Check own balance
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                     var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                     double balance = economyManager.getBalance(player.getUUID());
                     String formattedBalance = economyManager.formatCurrency(balance);
                     
                     MessageUtil.sendMessage(player, "Your balance: " + formattedBalance);
+<<<<<<< HEAD
 =======
                     double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(player.getUUID());
                     MessageUtil.sendMessage(player, "Your balance: $" + String.format("%.2f", balance));
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                     
                     return 1;
                 })
@@ -128,15 +154,21 @@ public class EconomyCommands {
                             
                             // Check another player's balance
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                             var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                             double balance = economyManager.getBalance(target.getUUID());
                             String formattedBalance = economyManager.formatCurrency(balance);
                             
                             MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: " + formattedBalance);
+<<<<<<< HEAD
 =======
                             double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID());
                             MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: $" + String.format("%.2f", balance));
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                             
                             return 1;
                         })
@@ -152,6 +184,7 @@ public class EconomyCommands {
                     
                     // Check own balance
 <<<<<<< HEAD
+<<<<<<< HEAD
                     var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                     double balance = economyManager.getBalance(player.getUUID());
                     String formattedBalance = economyManager.formatCurrency(balance);
@@ -166,6 +199,15 @@ public class EconomyCommands {
                     return 1;
                 })
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                    var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                    double balance = economyManager.getBalance(player.getUUID());
+                    String formattedBalance = economyManager.formatCurrency(balance);
+                    
+                    MessageUtil.sendMessage(player, "Your balance: " + formattedBalance);
+                    
+                    return 1;                })
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                 .then(
                     Commands.argument("player", EntityArgument.player())
                         .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance.others"))
@@ -175,19 +217,26 @@ public class EconomyCommands {
                             
                             // Check another player's balance
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                             var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                             double balance = economyManager.getBalance(target.getUUID());
                             String formattedBalance = economyManager.formatCurrency(balance);
                             
                             MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: " + formattedBalance);
+<<<<<<< HEAD
 =======
                             double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID());
                             MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: $" + String.format("%.2f", balance));
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                             
                             return 1;
                         })
                 )
+<<<<<<< HEAD
 <<<<<<< HEAD
         );        // Register /pay command
 =======
@@ -195,6 +244,9 @@ public class EconomyCommands {
 
         // Register /pay command
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        );        // Register /pay command
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
         dispatcher.register(
             Commands.literal("pay")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.pay"))
@@ -207,9 +259,13 @@ public class EconomyCommands {
                                     ServerPlayer target = EntityArgument.getPlayer(context, "player");
                                     double amount = DoubleArgumentType.getDouble(context, "amount");
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                                    var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                                     
                                     // Prevent paying yourself
                                     if (source.getUUID().equals(target.getUUID())) {
@@ -218,6 +274,7 @@ public class EconomyCommands {
                                     }
                                     
                                     // Pay another player
+<<<<<<< HEAD
 <<<<<<< HEAD
                                     boolean success = economyManager.transfer(source.getUUID(), target.getUUID(), amount);
                                     
@@ -233,6 +290,14 @@ public class EconomyCommands {
                                         MessageUtil.sendMessage(source, "You paid $" + String.format("%.2f", amount) + " to " + target.getScoreboardName());
                                         MessageUtil.sendMessage(target, source.getScoreboardName() + " paid you $" + String.format("%.2f", amount));
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                                    boolean success = economyManager.transfer(source.getUUID(), target.getUUID(), amount);
+                                    
+                                    if (success) {
+                                        String formattedAmount = economyManager.formatCurrency(amount);
+                                        MessageUtil.sendMessage(source, "You paid " + formattedAmount + " to " + target.getScoreboardName());
+                                        MessageUtil.sendMessage(target, source.getScoreboardName() + " paid you " + formattedAmount);
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
                                         return 1;
                                     } else {
                                         MessageUtil.sendErrorMessage(source, "You don't have enough funds to make this payment.");
@@ -616,9 +681,13 @@ public class EconomyCommands {
 >>>>>>> f3a56e8 (Refactor economy commands and transaction management)
         NeoEssentials.LOGGER.info("Registered economy commands");
     }
+<<<<<<< HEAD
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+      /**
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
      * Displays the baltop (top player balances) to a player
      * 
      * @param player The player
@@ -626,6 +695,7 @@ public class EconomyCommands {
      */
     private void displayBaltop(ServerPlayer player, int page) {
         int playersPerPage = 10;
+<<<<<<< HEAD
 <<<<<<< HEAD
         var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
         
@@ -636,6 +706,12 @@ public class EconomyCommands {
         // Get all balances
         Map<UUID, Double> allBalances = NeoEssentials.getInstance().getDataManager().getEconomyManager().getAllBalances();
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+        
+        // Get all balances
+        Map<UUID, Double> allBalances = economyManager.getAllBalances();
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
         
         // Convert to list and sort
         var sortedBalances = allBalances.entrySet().stream()
@@ -661,26 +737,38 @@ public class EconomyCommands {
         
         // Display header
 <<<<<<< HEAD
+<<<<<<< HEAD
         MessageUtil.sendMessage(player, "§6§l--- Top Balances (Page " + page + "/" + totalPages + ") ---");
 =======
         MessageUtil.sendMessage(player, "Top Balances (Page " + page + "/" + totalPages + "):");
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        MessageUtil.sendMessage(player, "§6§l--- Top Balances (Page " + page + "/" + totalPages + ") ---");
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
         
         // Display players
         for (int i = startIndex; i < endIndex; i++) {
             var entry = sortedBalances.get(i);
+<<<<<<< HEAD
 <<<<<<< HEAD
             String playerName = economyManager.getPlayerName(entry.getKey());
             String formattedBalance = economyManager.formatCurrency(entry.getValue());
 =======
             String playerName = NeoEssentials.getInstance().getDataManager().getEconomyManager().getPlayerName(entry.getKey());
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+            String playerName = economyManager.getPlayerName(entry.getKey());
+            String formattedBalance = economyManager.formatCurrency(entry.getValue());
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
             
             if (playerName == null) {
                 playerName = "Unknown Player";
             }
             
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 211d2ee (feat: Enhance economy command responses with formatted currency display)
             MessageUtil.sendMessage(player, "§e" + (i + 1) + ". §r" + playerName + ": §a" + formattedBalance);
         }
         
