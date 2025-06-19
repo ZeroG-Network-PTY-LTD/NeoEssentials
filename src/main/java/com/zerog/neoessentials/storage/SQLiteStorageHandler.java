@@ -55,9 +55,12 @@ public class SQLiteStorageHandler implements StorageHandler {
             
             // Test connection
             try (Connection connection = connectionManager.getConnection()) {
+<<<<<<< HEAD
                 // Connection test successful if we get here
                 NeoEssentials.LOGGER.info("Database connection test successful");
             }
+=======
+>>>>>>> 5791cf5 (feat: Implement connection pooling with HikariCP for improved database performance and reliability)
             
             // Create tables
             createTables();
