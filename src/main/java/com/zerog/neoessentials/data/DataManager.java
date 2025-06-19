@@ -172,6 +172,7 @@ public class DataManager {    private UserManager userManager;
      */
     public void initializeManagers() {
 <<<<<<< HEAD
+<<<<<<< HEAD
         NeoEssentials.LOGGER.info("Initializing managers");
         
         // Create manager instances if they don't exist
@@ -220,6 +221,46 @@ public class DataManager {    private UserManager userManager;
         // Load data for all managers that need it
         loadFromStorage();
 >>>>>>> 2ac7252 (feat: Enhance DataManager with initialization and data loading methods for improved manager setup)
+=======
+        NeoEssentials.LOGGER.info("Initializing managers");
+        
+        // Create manager instances if they don't exist
+        if (userManager == null) {
+            userManager = new UserManager();
+        }
+        
+        if (economyManager == null) {
+            economyManager = new EconomyManager();
+        }
+        
+        if (homeManager == null) {
+            homeManager = new HomeManager();
+        }
+        
+        if (warpManager == null) {
+            warpManager = new WarpManager();
+        }
+        
+        if (spawnManager == null) {
+            spawnManager = new SpawnManager();
+        }
+        
+        if (kitManager == null) {
+            kitManager = new KitManager();
+        }
+        
+        if (jailManager == null) {
+            jailManager = new JailManager();
+        }
+        
+        if (mailManager == null) {
+            mailManager = new MailManager();
+        }
+        
+        if (tablistManager == null && NeoEssentials.getInstance().getConfigManager().isTablistEnabled()) {
+            tablistManager = new TablistManager();
+        }
+>>>>>>> ecf8e9a (feat: Refactor DataManager initialization and loading process for improved data handling)
     }
     
     /**
@@ -229,6 +270,9 @@ public class DataManager {    private UserManager userManager;
         NeoEssentials.LOGGER.info("Loading data from storage");
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ecf8e9a (feat: Refactor DataManager initialization and loading process for improved data handling)
         // Most managers automatically load their data in their constructor
         // or have specific load methods that are already called
         
