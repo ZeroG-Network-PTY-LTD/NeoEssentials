@@ -476,6 +476,7 @@ public class CommandManager {    // Command classes
      */
     public TimeAndWeatherCommands getTimeAndWeatherCommands() {
 <<<<<<< HEAD
+<<<<<<< HEAD
         return timeAndWeatherCommands;    }
     
     /**
@@ -571,6 +572,9 @@ public class CommandManager {    // Command classes
         return com.zerog.neoessentials.utils.PermissionUtil.hasPermission(source, permission);
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
     }
+=======
+        return timeAndWeatherCommands;    }
+>>>>>>> 7058369 (feat: Update migration tasks and enhance tablist documentation; refactor permission checks in AdminPanelCommand and CommandManager)
     
     /**
      * Gets the player commands instance

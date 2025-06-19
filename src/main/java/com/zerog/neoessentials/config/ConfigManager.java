@@ -24,9 +24,13 @@ public class ConfigManager {
     private NeoEssentialsConfig config;
     private DatabaseConfig databaseConfig;
 <<<<<<< HEAD
+<<<<<<< HEAD
     private TablistConfig tablistConfig;
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    private TablistConfig tablistConfig;
+>>>>>>> 7058369 (feat: Update migration tasks and enhance tablist documentation; refactor permission checks in AdminPanelCommand and CommandManager)
     private final Gson gson;
       public ConfigManager() {
         this.gson = new GsonBuilder()
@@ -129,6 +133,9 @@ public class ConfigManager {
         return databaseConfig;
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7058369 (feat: Update migration tasks and enhance tablist documentation; refactor permission checks in AdminPanelCommand and CommandManager)
     
     /**
      * Get the tablist configuration.
@@ -142,6 +149,9 @@ public class ConfigManager {
         }
         return tablistConfig;
     }
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 7058369 (feat: Update migration tasks and enhance tablist documentation; refactor permission checks in AdminPanelCommand and CommandManager)
 }
