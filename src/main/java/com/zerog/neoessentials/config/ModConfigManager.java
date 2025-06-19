@@ -120,4 +120,12 @@ public class ModConfigManager {
     public ModConfigSpec getSpec() {
         return DatabaseTomlConfig.SPEC;
     }
+      /**
+     * Legacy compatibility method to provide access to old config structure
+     * 
+     * @return A compatibility NeoEssentialsConfig object
+     */
+    public NeoEssentialsConfig getConfig() {
+        return new CompatNeoEssentialsConfig();
+    }
 }

@@ -323,4 +323,16 @@ public class NeoEssentials {
         // Database config is now registered in ModConfigManager
         LOGGER.info("Database configuration already registered through ModConfigManager");
     }
+    
+    /**
+     * Gets the scheduler
+     * @return The scheduler
+     */
+    public ScheduledExecutorService getScheduler() {
+        // If the scheduler is null, create it
+        if (scheduler == null) {
+            scheduler = Executors.newScheduledThreadPool(1);
+        }
+        return scheduler;
+    }
 }
