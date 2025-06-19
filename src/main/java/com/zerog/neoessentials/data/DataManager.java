@@ -60,6 +60,7 @@ public class DataManager {    private UserManager userManager;
     private final String dataFolder = "neoessentials/";
     
     public DataManager(NeoEssentials neoEssentials) {
+<<<<<<< HEAD
 =======
     private DatabaseManager databaseManager;
 =======
@@ -78,6 +79,8 @@ public class DataManager {    private UserManager userManager;
     
     public DataManager() {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
         // Create the data folder if it doesn't exist
         File dataFolderFile = new File(dataFolder);
         if (!dataFolderFile.exists()) {

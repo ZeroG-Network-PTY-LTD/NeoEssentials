@@ -142,6 +142,7 @@ public class NeoEssentials {
 
         // Initialize our configuration system
         configManager = new com.zerog.neoessentials.config.ModConfigManager(this, modContainer);
+<<<<<<< HEAD
     }
     
     /**
@@ -197,6 +198,8 @@ public class NeoEssentials {
                 configsInitialized = true;
             }
         }
+=======
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
     }
     
     /**
@@ -232,6 +235,9 @@ public class NeoEssentials {
         });
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
         // Initialize storage manager
         initializeStorageManager();
         
@@ -239,9 +245,12 @@ public class NeoEssentials {
         dataManager = new com.zerog.neoessentials.data.DataManager(this);
         
         // Initialize managers that rely on storage
+<<<<<<< HEAD
 =======
         // Initialize the managers
 >>>>>>> fddf77d (feat: Register custom command argument types during mod initialization)
+=======
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
         initializeManagers();
     }
 
@@ -256,6 +265,9 @@ public class NeoEssentials {
     
     // Fields for the essentials managers
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
     private com.zerog.neoessentials.config.ModConfigManager configManager;
     private com.zerog.neoessentials.data.DataManager dataManager;
     private com.zerog.neoessentials.commands.CommandManager commandManager;
@@ -280,10 +292,14 @@ public class NeoEssentials {
      * @return The config manager
      */
 <<<<<<< HEAD
+<<<<<<< HEAD
     public com.zerog.neoessentials.config.ModConfigManager getConfigManager() {
 =======
     public com.zerog.neoessentials.config.ConfigManager getConfigManager() {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    public com.zerog.neoessentials.config.ModConfigManager getConfigManager() {
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
         return configManager;
     }
     
@@ -337,10 +353,14 @@ public class NeoEssentials {
      */
     public void initializeManagers() {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
         // Initialize managers that rely on data manager
         if (dataManager != null) {
             dataManager.initializeManagers();
         }
+<<<<<<< HEAD
         
         // Only initialize storage manager if config is loaded, otherwise it will be initialized in onConfigLoad
         if (databaseConfigLoaded) {
@@ -364,6 +384,8 @@ public class NeoEssentials {
         com.zerog.neoessentials.config.DatabaseConfig fallbackConfig = new com.zerog.neoessentials.config.DatabaseConfig();
         fallbackConfig.initialize(); // Initialize to ensure defaults are set
         storageManager = new com.zerog.neoessentials.storage.StorageManager(fallbackConfig);
+=======
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
         
         // Only initialize storage manager if config is loaded, otherwise it will be initialized in onConfigLoad
         if (databaseConfigLoaded) {
