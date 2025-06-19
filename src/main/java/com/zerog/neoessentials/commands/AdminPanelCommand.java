@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+<<<<<<< HEAD
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -81,10 +82,32 @@ public class AdminPanelCommand {
             (context, builder) -> SharedSuggestionProvider.suggest(PERFORMANCE_TARGETS, builder);    /**
      * Registers all admin panel commands with the dispatcher.
      * Organizes commands into a logical hierarchy for better usability.
+=======
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.zerog.neoessentials.NeoEssentials;
+import com.zerog.neoessentials.ui.AdminPanel;
+import com.zerog.neoessentials.utils.MessageUtil;
+
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+
+/**
+ * Implements commands for accessing the admin panel interface.
+ */
+public class AdminPanelCommand {
+
+    /**
+     * Registers all admin panel commands with the dispatcher.
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
      *
      * @param dispatcher The command dispatcher
      */
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+<<<<<<< HEAD
         // Main admin panel command with comprehensive subcommands
         LiteralArgumentBuilder<CommandSourceStack> adminPanelCommand = Commands.literal("adminpanel")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel"))
@@ -209,6 +232,21 @@ public class AdminPanelCommand {
         
         // Register advanced operation commands
         registerAdvancedCommands(dispatcher);
+=======
+        // Main admin panel command
+        LiteralArgumentBuilder<CommandSourceStack> adminPanelCommand = Commands.literal("adminpanel")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel"))
+                .executes(this::executeAdminPanel);
+
+        // Register aliases
+        dispatcher.register(adminPanelCommand);
+        dispatcher.register(Commands.literal("ap")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel"))
+                .executes(this::executeAdminPanel));
+        
+        // Admin panel sections
+        registerSectionCommands(dispatcher);
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
     }
     
     /**
@@ -243,6 +281,7 @@ public class AdminPanelCommand {
     }
 
     /**
+<<<<<<< HEAD
      * Register additional advanced admin commands
      * 
      * @param dispatcher Command dispatcher
@@ -275,6 +314,8 @@ public class AdminPanelCommand {
     }
 
     /**
+=======
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
      * Executes the main admin panel command.
      *
      * @param context The command context
@@ -296,6 +337,7 @@ public class AdminPanelCommand {
     }
     
     /**
+<<<<<<< HEAD
      * Handle opening a specific admin panel section
      */
     private int executeAdminPanelSection(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -1039,30 +1081,147 @@ public class AdminPanelCommand {
     private int executeEconomyPanel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         displayEconomySection(player);
+=======
+     * Displays the main admin panel interface with clickable options.
+     * 
+     * @param player The player to show the panel to
+     */
+    private void displayMainAdminPanel(ServerPlayer player) {
+        NeoEssentials.LOGGER.info("Displaying admin panel for player: {}", player.getScoreboardName());
+        
+        // Create the header
+        Component header = Component.literal(MessageUtil.translateColorCodes("&6====== &lNeoEssentials Admin Panel&r &6======"));
+        player.sendSystemMessage(header);
+        
+        // Create clickable sections based on permissions
+        if (CommandManager.hasPermission(player, "neoessentials.adminpanel.economy")) {
+            displaySectionButton(player, "&2Economy Management", "/adminpanel economy", 
+                    "&7Click to manage economy settings, view transactions,\n&7set balances, and view leaderboards.");
+        }
+        
+        if (CommandManager.hasPermission(player, "neoessentials.adminpanel.kits")) {
+            displaySectionButton(player, "&3Kit Management", "/adminpanel kits", 
+                    "&7Click to manage kits, create new kits,\n&7edit existing kits, and view usage statistics.");
+        }
+        
+        if (CommandManager.hasPermission(player, "neoessentials.adminpanel.warps")) {
+            displaySectionButton(player, "&5Warp Management", "/adminpanel warps", 
+                    "&7Click to manage warps, create new warps,\n&7edit existing warps, and set permissions.");
+        }
+        
+        if (CommandManager.hasPermission(player, "neoessentials.adminpanel.players")) {
+            displaySectionButton(player, "&6Player Management", "/adminpanel players", 
+                    "&7Click to manage players, view online players,\n&7check player stats, and perform admin actions.");
+        }
+        
+        // Create footer
+        Component footer = Component.literal(MessageUtil.translateColorCodes("&6==================================="));
+        player.sendSystemMessage(footer);
+    }
+    
+    /**
+     * Displays a clickable button for an admin panel section.
+     * 
+     * @param player The player to show the button to
+     * @param title The title of the section
+     * @param command The command to run when clicked
+     * @param hoverText The hover text to display
+     */
+    private void displaySectionButton(ServerPlayer player, String title, String command, String hoverText) {
+        Component buttonText = Component.literal(MessageUtil.translateColorCodes("&8[&r " + title + " &8]"));
+        Component hoverComponent = Component.literal(MessageUtil.translateColorCodes(hoverText));
+        
+        // Make the button clickable and add hover text
+        Component clickableButton = MessageUtil.makeClickableCommand(
+                (Component.literal("➤ ").append(buttonText)).copy(), command)
+                .withStyle(style -> style.withHoverEvent(new net.minecraft.network.chat.HoverEvent(
+                        net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT, 
+                        hoverComponent)));
+        
+        player.sendSystemMessage(clickableButton);
+    }
+    
+    /**
+     * Executes the economy panel command.
+     * 
+     * @param context The command context
+     * @return 1 if successful
+     */
+    private int executeEconomyPanel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        
+        if (!CommandManager.hasPermission(context.getSource(), "neoessentials.adminpanel.economy")) {
+            MessageUtil.sendErrorMessage(player, "You don't have permission to use the economy admin panel.");
+            return 0;
+        }
+        
+        // Display economy management options
+        AdminPanel.displayEconomyPanel(player);
+        
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
         return 1;
     }
     
     /**
+<<<<<<< HEAD
      * Display kits panel
      */
     private int executeKitsPanel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         player.sendSystemMessage(Component.literal(TextUtil.colorize("&6❖ &eKit Management")));
         // Display kit management options
+=======
+     * Executes the kits panel command.
+     * 
+     * @param context The command context
+     * @return 1 if successful
+     */
+    private int executeKitsPanel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        
+        if (!CommandManager.hasPermission(context.getSource(), "neoessentials.adminpanel.kits")) {
+            MessageUtil.sendErrorMessage(player, "You don't have permission to use the kit admin panel.");
+            return 0;
+        }
+        
+        // Display kit management options
+        AdminPanel.displayKitsPanel(player);
+        
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
         return 1;
     }
     
     /**
+<<<<<<< HEAD
      * Display warps panel
      */
     private int executeWarpsPanel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         player.sendSystemMessage(Component.literal(TextUtil.colorize("&3❖ &bWarp Management")));
         // Display warp management options
+=======
+     * Executes the warps panel command.
+     * 
+     * @param context The command context
+     * @return 1 if successful
+     */
+    private int executeWarpsPanel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        
+        if (!CommandManager.hasPermission(context.getSource(), "neoessentials.adminpanel.warps")) {
+            MessageUtil.sendErrorMessage(player, "You don't have permission to use the warps admin panel.");
+            return 0;
+        }
+        
+        // Display warp management options
+        AdminPanel.displayWarpsPanel(player);
+        
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
         return 1;
     }
     
     /**
+<<<<<<< HEAD
      * Display players panel
      */
     private int executePlayersPanel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -1113,4 +1272,24 @@ public class AdminPanelCommand {
         for (Object ignored : entities) count++;
         return count;
     }
+=======
+     * Executes the players panel command.
+     * 
+     * @param context The command context
+     * @return 1 if successful
+     */
+    private int executePlayersPanel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        
+        if (!CommandManager.hasPermission(context.getSource(), "neoessentials.adminpanel.players")) {
+            MessageUtil.sendErrorMessage(player, "You don't have permission to use the players admin panel.");
+            return 0;
+        }
+        
+        // Display player management options
+        AdminPanel.displayPlayersPanel(player);
+        
+        return 1;
+    }
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
 }

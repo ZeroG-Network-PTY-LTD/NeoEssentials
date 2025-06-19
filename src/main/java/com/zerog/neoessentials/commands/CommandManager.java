@@ -84,9 +84,13 @@ public class CommandManager {    // Command classes
     private final JailCommands jailCommands;
     private final PowerToolCommands powerToolCommands;
     private final MailCommands mailCommands;
+<<<<<<< HEAD
 
     public CommandManager() {
 >>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
+=======
+    private final AdminPanelCommand adminPanelCommand;    public CommandManager() {
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -131,6 +135,7 @@ public class CommandManager {    // Command classes
         jailCommands = new JailCommands();
         powerToolCommands = new PowerToolCommands();
         mailCommands = new MailCommands();
+        adminPanelCommand = new AdminPanelCommand();
         // ItemCommands needs CommandBuildContext which is only available during register event
 >>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
     }
@@ -257,6 +262,7 @@ public class CommandManager {    // Command classes
         powerToolCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered powertool commands");
 <<<<<<< HEAD
+<<<<<<< HEAD
           // Register mail commands
         mailCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered mail commands");
@@ -280,6 +286,15 @@ public class CommandManager {    // Command classes
         mailCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered mail commands");
 >>>>>>> 59f36fa (feat: Add Mail functionality with commands and player notifications)
+=======
+          // Register mail commands
+        mailCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered mail commands");
+        
+        // Register admin panel commands
+        adminPanelCommand.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered admin panel commands");
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
           // Note: ItemCommands require CommandBuildContext which is not available here
         // In a full implementation, you would need to get the CommandBuildContext properly
         
@@ -425,6 +440,9 @@ public class CommandManager {    // Command classes
      * @return The kit commands
      */
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
     /**
      * Static method to check if a source has a permission.
      * This is a convenience method for commands to use.
@@ -442,8 +460,11 @@ public class CommandManager {    // Command classes
      * 
      * @return The kit commands
      */
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
     public KitCommands getKitCommands() {
         return kitCommands;
     }

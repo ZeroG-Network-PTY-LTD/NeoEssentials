@@ -48,11 +48,17 @@ public class KitManager {
     
     private final Map<String, Kit> kits = new HashMap<>();
 <<<<<<< HEAD
+<<<<<<< HEAD
     
     // Kit usage statistics
     private final Map<String, Integer> kitUsage = new HashMap<>();
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    
+    // Kit usage statistics
+    private final Map<String, Integer> kitUsage = new HashMap<>();
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
     
     private final Gson gson = new GsonBuilder()
@@ -786,6 +792,7 @@ public class KitManager {
             itemDefinitions.add(new ItemDefinition(itemId, count));
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
           public List<ItemDefinition> getItemDefinitions() {
             return new ArrayList<>(itemDefinitions);
         }
@@ -841,5 +848,56 @@ public class KitManager {
             return new ArrayList<>(itemDefinitions);
         }
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+          public List<ItemDefinition> getItemDefinitions() {
+            return new ArrayList<>(itemDefinitions);
+        }
+        
+        // Method to match the approach in AdminPanel
+        public long cooldown() {
+            return cooldown;
+        }
+        
+        // Method to match the approach in AdminPanel
+        public double price() {
+            return price;        }
+    }
+    
+    /**
+     * Gets all kits
+     * 
+     * @return The map of kits
+     */
+    public Map<String, Kit> getKits() {
+        return new HashMap<>(kits);
+    }
+    
+    /**
+     * Gets the usage count for a kit
+     * 
+     * @param kitName The name of the kit
+     * @return The number of times the kit has been used
+     */
+    public int getKitUsageCount(String kitName) {
+        return kitUsage.getOrDefault(kitName, 0);
+    }
+    
+    /**
+     * Gets all kit usage statistics
+     * 
+     * @return The map of kit usage
+     */
+    public Map<String, Integer> getKitUsageStats() {
+        return new HashMap<>(kitUsage);
+    }
+    
+    /**
+     * Increments the usage count for a kit
+     * 
+     * @param kitName The name of the kit
+     */
+    public void incrementKitUsage(String kitName) {
+        kitUsage.put(kitName, kitUsage.getOrDefault(kitName, 0) + 1);
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
     }
 }

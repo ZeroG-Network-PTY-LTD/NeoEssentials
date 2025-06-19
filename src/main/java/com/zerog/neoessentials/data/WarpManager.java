@@ -189,6 +189,7 @@ public class WarpManager {
      */
     public Map<String, WarpLocation> getAllWarps() {
         return new HashMap<>(warps);
+<<<<<<< HEAD
     }
     
     /**
@@ -284,6 +285,11 @@ public class WarpManager {
     }
       /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    }
+    
+    /**
+>>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
      * Sets a warp at the player's current location
      * 
      * @param player The player setting the warp
