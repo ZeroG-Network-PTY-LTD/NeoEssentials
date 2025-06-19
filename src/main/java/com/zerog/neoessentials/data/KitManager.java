@@ -334,15 +334,15 @@ public class KitManager {
         String permission = kit.getPermission();
         if (permission != null && !permission.isEmpty()) {
             // If specific kit permission defined, check if player has it
-            if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, permission)) {
+            if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, permission)) {
                 // Check if player has bypass permission (e.g., admin level permission)
-                if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, "neoessentials.kit.admin")) {
+                if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.kit.admin")) {
                     return false;
                 }
             }
         } else {
             // Default permission check if no specific permission is set for the kit
-            if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, "neoessentials.command.kit")) {
+            if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.kit")) {
                 return false;
             }
         }
