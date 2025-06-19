@@ -10,6 +10,7 @@ This document outlines the remaining tasks for NeoEssentials development.
    - [ ] Complete command implementations
    - [ ] Finalize permissions system
    - [x] Complete storage system (SQLite implementation)
+<<<<<<< HEAD
 
 2. **Features**
    - [x] Economy system (completed with transaction history)
@@ -90,6 +91,8 @@ This document outlines the remaining tasks for NeoEssentials development.
    - [ ] Complete command implementations
    - [ ] Finalize permissions system
    - [ ] Complete storage system
+=======
+>>>>>>> f71191c (feat: Implement SQLite storage handler with complete database schema and transaction management)
 
 2. **Features**
    - [x] Economy system (completed with transaction history)
@@ -143,6 +146,7 @@ This document outlines the remaining tasks for NeoEssentials development.
    - [x] Kit system with pricing, preview, and interactive UI
    - [x] Build system with automatic build number incrementing
    - [x] Permission integration with LuckPerms
+   - [x] SQLite storage system implementation
 
 2. **Commands**
    - [x] Kit commands
