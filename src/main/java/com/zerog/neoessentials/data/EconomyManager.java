@@ -1007,5 +1007,6 @@ public class EconomyManager {
         
         return amount;
     }
+  
 }
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
