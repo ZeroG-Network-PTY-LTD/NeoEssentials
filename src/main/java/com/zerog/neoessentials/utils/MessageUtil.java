@@ -115,14 +115,24 @@ public class MessageUtil {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
      * Adds hover text to a component
      * 
      * @param component The component to add hover text to
      * @param hoverText The hover text to add
      * @return The component with hover text
+<<<<<<< HEAD
      */    public static MutableComponent addHoverText(MutableComponent component, MutableComponent hoverText) {
         return component.withStyle(style -> style.withHoverEvent(new HoverEvent(
                 HoverEvent.Action.SHOW_TEXT, 
+=======
+     */
+    public static MutableComponent addHoverText(MutableComponent component, MutableComponent hoverText) {
+        return component.withStyle(style -> style.withHoverEvent(new net.minecraft.network.chat.HoverEvent(
+                net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT, 
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
                 hoverText)));
     }
     
@@ -134,8 +144,13 @@ public class MessageUtil {
      * @return The clickable component
      */
     public static MutableComponent makeClickableCommand(MutableComponent component, String command) {
+<<<<<<< HEAD
         return component.withStyle(style -> style.withClickEvent(new ClickEvent(
                 ClickEvent.Action.RUN_COMMAND, 
+=======
+        return component.withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent(
+                net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, 
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
                 command)));
     }
     
@@ -147,6 +162,7 @@ public class MessageUtil {
      * @return The clickable component
      */
     public static MutableComponent makeSuggestCommand(MutableComponent component, String command) {
+<<<<<<< HEAD
         return component.withStyle(style -> style.withClickEvent(new ClickEvent(
                 ClickEvent.Action.SUGGEST_COMMAND, 
                 command)));
@@ -164,6 +180,14 @@ public class MessageUtil {
     /**
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        return component.withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent(
+                net.minecraft.network.chat.ClickEvent.Action.SUGGEST_COMMAND, 
+                command)));
+    }
+    
+    /**
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
      * Translates standard '&' color codes to Minecraft's internal format
      * 
      * @param message The message with '&' color codes

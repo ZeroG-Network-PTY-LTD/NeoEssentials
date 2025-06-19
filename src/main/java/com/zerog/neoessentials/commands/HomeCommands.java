@@ -9,11 +9,16 @@ import com.zerog.neoessentials.utils.TeleportUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 =======
+=======
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -101,6 +106,9 @@ public class HomeCommands {
         );
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
         // Register /homehelp command
         dispatcher.register(
             Commands.literal("homehelp")
@@ -113,8 +121,11 @@ public class HomeCommands {
                 })
         );
         
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
         NeoEssentials.LOGGER.info("Registered home commands");
     }
     
@@ -219,17 +230,22 @@ public class HomeCommands {
      * @param player The player
      * @return Command result code
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    private int listHomes(ServerPlayer player) {
 =======
      */
     private int listHomes(ServerPlayer player) {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+     */    private int listHomes(ServerPlayer player) {
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
         // Get the home manager
         HomeManager homeManager = NeoEssentials.getInstance().getDataManager().getHomeManager();
           // Get all homes
         Map<String, HomeManager.HomeLocation> homes = homeManager.getHomes(player.getUUID());
         
         if (homes.isEmpty()) {
+<<<<<<< HEAD
 <<<<<<< HEAD
             MessageUtil.sendMessage(player, "§cYou have no homes set");
             return 0;
@@ -285,11 +301,65 @@ public class HomeCommands {
         } else {
             MessageUtil.sendMessage(player, "Your homes: " + String.join(", ", homes.keySet()));
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+            MessageUtil.sendMessage(player, "§cYou have no homes set");
+            return 0;
+        } else {
+            // Add a header
+            MessageUtil.sendInfo(player, Component.literal("§2§l====== §r§6Your Homes §2§l======"));
+            
+            // Create a clickable list of homes
+            MutableComponent message = Component.literal("§2Your homes: ");
+            
+            boolean first = true;
+            for (Map.Entry<String, HomeManager.HomeLocation> entry : homes.entrySet()) {
+                String homeName = entry.getKey();
+                HomeManager.HomeLocation location = entry.getValue();
+                
+                if (!first) {
+                    message.append(Component.literal("§7, "));
+                }
+                
+                // Create clickable home name with hover info
+                MutableComponent homeComponent = Component.literal("§b" + homeName);
+                
+                // Add hover text
+                MutableComponent hoverText = Component.literal("§eClick to teleport to §b" + homeName);
+                hoverText.append(Component.literal("\n§7Dimension: §f" + location.getDimension()));
+                hoverText.append(Component.literal("\n§7Location: §f" + 
+                    (int)location.getX() + ", " + 
+                    (int)location.getY() + ", " + 
+                    (int)location.getZ()));
+                
+                homeComponent = MessageUtil.addHoverText(homeComponent, hoverText);
+                
+                // Add click event to teleport to the home
+                homeComponent = MessageUtil.makeClickableCommand(homeComponent, "/home " + homeName);
+                
+                message.append(homeComponent);
+                first = false;
+            }
+            
+            MessageUtil.sendInfo(player, message);
+            
+            // Add clickable help button
+            MutableComponent helpMessage = Component.literal("§7Type ");
+            MutableComponent helpButton = Component.literal("§e/homehelp");
+            helpButton = MessageUtil.makeClickableCommand(helpButton, "/homehelp");
+            helpButton = MessageUtil.addHoverText(helpButton, Component.literal("§7Click to view home command help"));
+            helpMessage.append(helpButton);
+            helpMessage.append(Component.literal(" §7for more information."));
+            
+            MessageUtil.sendInfo(player, helpMessage);
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
         }
         
         return 1;
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
     
     /**
      * Shows help for home commands
@@ -321,6 +391,9 @@ public class HomeCommands {
         
         return 1;
     }
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
 }
