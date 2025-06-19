@@ -267,6 +267,7 @@ public class JailCommands {
             
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             if (targetPlayer.hasPermissions(4) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)targetPlayer, "neoessentials.jail.exempt")) {
 =======
             if (targetPlayer.hasPermissions(4) || CommandManager.hasPermission(targetPlayer, "neoessentials.jail.exempt")) {
@@ -274,6 +275,9 @@ public class JailCommands {
 =======
             if (targetPlayer.hasPermissions(4) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission(targetPlayer, "neoessentials.jail.exempt")) {
 >>>>>>> e7f85f6 (fix: Update permission check in JailCommands to use PermissionUtil)
+=======
+            if (targetPlayer.hasPermissions(4) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)targetPlayer, "neoessentials.jail.exempt")) {
+>>>>>>> 18240f3 (fix: Update permission checks in JailCommands, MessagingCommands, and KitManager to ensure proper player type handling)
                 if (!source.hasPermission(4)) { // If the source is not op level 4
                     source.sendFailure(Component.literal(TextUtil.formatText(
                             "&cYou cannot jail an operator or someone with the exempt permission.")));
@@ -319,6 +323,7 @@ public class JailCommands {
             
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
             if (targetPlayer.hasPermissions(4) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)targetPlayer, "neoessentials.jail.exempt")) {
 =======
             if (targetPlayer.hasPermissions(4) || CommandManager.hasPermission(targetPlayer, "neoessentials.jail.exempt")) {
@@ -326,6 +331,9 @@ public class JailCommands {
 =======
             if (targetPlayer.hasPermissions(4) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission(targetPlayer, "neoessentials.jail.exempt")) {
 >>>>>>> e7f85f6 (fix: Update permission check in JailCommands to use PermissionUtil)
+=======
+            if (targetPlayer.hasPermissions(4) || com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)targetPlayer, "neoessentials.jail.exempt")) {
+>>>>>>> 18240f3 (fix: Update permission checks in JailCommands, MessagingCommands, and KitManager to ensure proper player type handling)
                 if (!source.hasPermission(4)) { // If the source is not op level 4
                     source.sendFailure(Component.literal(TextUtil.formatText(
                             "&cYou cannot jail an operator or someone with the exempt permission.")));

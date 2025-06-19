@@ -483,15 +483,20 @@ public class KitManager {
                 if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.kit.admin")) {
 =======
             // If specific kit permission defined, check if player has it
-            if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, permission)) {
+            if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, permission)) {
                 // Check if player has bypass permission (e.g., admin level permission)
+<<<<<<< HEAD
                 if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, "neoessentials.kit.admin")) {
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+                if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.kit.admin")) {
+>>>>>>> 18240f3 (fix: Update permission checks in JailCommands, MessagingCommands, and KitManager to ensure proper player type handling)
                     return false;
                 }
             }
         } else {
             // Default permission check if no specific permission is set for the kit
+<<<<<<< HEAD
 <<<<<<< HEAD
             if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.kit")) {
 =======
@@ -502,6 +507,9 @@ public class KitManager {
 =======
             if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player, "neoessentials.command.kit")) {
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+            if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.kit")) {
+>>>>>>> 18240f3 (fix: Update permission checks in JailCommands, MessagingCommands, and KitManager to ensure proper player type handling)
                 return false;
             }
         }
