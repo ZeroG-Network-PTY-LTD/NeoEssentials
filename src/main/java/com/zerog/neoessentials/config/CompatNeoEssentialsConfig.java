@@ -82,7 +82,7 @@ public class CompatNeoEssentialsConfig {
       /**
 =======
  */
-public class NeoEssentialsConfig {
+public class CompatNeoEssentialsConfig {
     // General settings
     private boolean debug = false;
     private String defaultLanguage = "en_us";
@@ -113,11 +113,10 @@ public class NeoEssentialsConfig {
     
     // Permission settings
     private Map<String, Boolean> defaultPermissions = new HashMap<>();
-    
-    /**
+      /**
      * Constructor that loads values from the TOML configs
      */
-    public NeoEssentialsConfig() {
+    public CompatNeoEssentialsConfig() {
         // Initialize with values from TOML configs
         this.debug = GeneralConfig.DEBUG_MODE.get();
         this.economyEnabled = GeneralConfig.ENABLE_ECONOMY.get();

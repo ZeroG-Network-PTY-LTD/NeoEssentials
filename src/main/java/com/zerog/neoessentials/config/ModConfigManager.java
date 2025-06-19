@@ -15,10 +15,16 @@ public class ModConfigManager {
     private TablistConfig tablistConfig; // Legacy JSON-based config, to be migrated later
     
 <<<<<<< HEAD
+<<<<<<< HEAD
     // Compatibility config instance (legacy format)
     private CompatNeoEssentialsConfig compatConfig;
       /**
 =======
+=======
+    // Compatibility config instance (legacy format)
+    private CompatNeoEssentialsConfig compatConfig;
+    
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
     /**
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
      * Creates a new config manager
@@ -169,12 +175,15 @@ public class ModConfigManager {
 =======
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
     }
-      /**
-     * Legacy compatibility method to provide access to old config structure
-     * 
-     * @return A compatibility NeoEssentialsConfig object
+    
+    /**
+     * Gets the compatibility config that adapts TOML values to the old config structure
+     * @return The compatibility config
      */
-    public NeoEssentialsConfig getConfig() {
-        return new CompatNeoEssentialsConfig();
+    public CompatNeoEssentialsConfig getConfig() {
+        if (compatConfig == null) {
+            compatConfig = new CompatNeoEssentialsConfig();
+        }
+        return compatConfig;
     }
 }
