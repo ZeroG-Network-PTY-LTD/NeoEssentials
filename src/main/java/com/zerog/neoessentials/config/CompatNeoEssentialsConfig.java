@@ -186,4 +186,12 @@ public class CompatNeoEssentialsConfig {
     public boolean isCommandEnabled(String commandName) {
         return commandsEnabled.getOrDefault(commandName, true);
     }
+    
+    /**
+     * Gets the map of default permissions
+     * @return Map of permission names to boolean values
+     */
+    public Map<String, Boolean> defaultPermissions() {
+        return defaultPermissions;
+    }
 }

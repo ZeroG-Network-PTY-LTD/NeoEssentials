@@ -366,15 +366,14 @@ public class PermissionUtil {
         }
         
         return false;
-    }    /**
-     * Check if a permission should be granted by default when no permission system is found
+    }    /**     * Check if a permission should be granted by default when no permission system is found
      * 
      * @param permission The permission string to check
      * @return True if the permission should be granted by default, false otherwise
      */
     static boolean checkDefaultPermission(String permission) {
         // Get the config instance from NeoEssentials
-        NeoEssentialsConfig config = NeoEssentials.getInstance().getConfigManager().getConfig();
+        com.zerog.neoessentials.config.CompatNeoEssentialsConfig config = NeoEssentials.getInstance().getConfigManager().getConfig();
         boolean debug = config.isDebug();
         
         // Check if the permission is explicitly defined in the config
