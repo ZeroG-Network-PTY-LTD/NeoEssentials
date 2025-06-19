@@ -10,10 +10,14 @@ import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.KitManager;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
 import com.zerog.neoessentials.data.EconomyTransaction;
 import com.zerog.neoessentials.utils.MessageUtil;
 import com.zerog.neoessentials.utils.PermissionUtil;
 import net.minecraft.ChatFormatting;
+<<<<<<< HEAD
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -32,16 +36,27 @@ import com.zerog.neoessentials.utils.MessageUtil;
 import com.zerog.neoessentials.utils.MessageUtil;
 import com.zerog.neoessentials.utils.PermissionUtil;
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
+=======
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+<<<<<<< HEAD
 <<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
+=======
+import net.minecraft.world.item.Items;
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,6 +107,7 @@ public class KitCommands {
                 .executes(this::executeKitList)
         );
           // /createkit <n> [cooldown] [price] - Create a kit with your current inventory
+<<<<<<< HEAD
 =======
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.list"))
                 .executes(this::executeKitList)
@@ -103,6 +119,8 @@ public class KitCommands {
 =======
           // /createkit <name> [cooldown] [price] - Create a kit with your current inventory
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
         dispatcher.register(
             Commands.literal("createkit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.create"))
@@ -201,13 +219,20 @@ public class KitCommands {
                 .executes(this::executeKitHelp)
         );
         
-        // /previewkit <name> - Preview the items in a kit
+        // /previewkit <n> - Preview the items in a kit
         dispatcher.register(
             Commands.literal("previewkit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.preview"))
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executePreviewKit)
                 )
+        );
+        
+        // /kithelp - Show help for kit-related commands
+        dispatcher.register(
+            Commands.literal("kithelp")
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit"))
+                .executes(this::executeKitHelp)
         );
         
         NeoEssentials.LOGGER.info("Kit commands registered successfully");
@@ -405,6 +430,7 @@ public class KitCommands {
             if (!first) {
                 message.append(Component.literal(", "));
 <<<<<<< HEAD
+<<<<<<< HEAD
             }
             
 <<<<<<< HEAD
@@ -549,15 +575,107 @@ public class KitCommands {
                     // No permission - show in gray
                     message.append(Component.literal(kitName).withStyle(net.minecraft.ChatFormatting.GRAY));
                 }
+=======
+            }
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
             
+            // Get the kit
+            KitManager.Kit kit = kitManager.getKit(kitName);
+            
+            // Create hover text with kit details
+            MutableComponent hoverText = Component.literal("§6Kit: §e" + kit.getName() + "\n");
+            
+            // Add permission info
+            if (kit.getPermission() != null && !kit.getPermission().isEmpty()) {
+                hoverText.append(Component.literal("§7Permission: §f" + kit.getPermission() + "\n"));
+            }
+            
+            // Add cooldown info
+            if (kit.getCooldown() > 0) {
+                hoverText.append(Component.literal("§7Cooldown: §f" + formatTime(kit.getCooldown()) + "\n"));
+                
+                // Add remaining cooldown if applicable
+                long remainingCooldown = kitManager.getRemainingCooldown(player, kitName);
+                if (remainingCooldown > 0) {
+                    hoverText.append(Component.literal("§cTime remaining: §f" + formatTime(remainingCooldown) + "\n"));
+                }
+            }
+            
+            // Add price info
+            if (kit.getPrice() > 0) {
+                var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                String formattedPrice = economyManager.formatCurrency(kit.getPrice());
+                double balance = economyManager.getBalance(player.getUUID());
+                boolean canAfford = balance >= kit.getPrice();
+                
+                hoverText.append(Component.literal("§7Price: " + (canAfford ? "§a" : "§c") + formattedPrice + "\n"));
+                
+                if (!canAfford) {
+                    hoverText.append(Component.literal("§cYou need " + economyManager.formatCurrency(kit.getPrice() - balance) + " more\n"));
+                }
+            }
+            
+            // Add instruction text
+            hoverText.append(Component.literal("§7Click to claim this kit"));
+            
+            // Check if the player can use this kit (permissions)
+            MutableComponent kitComponent;
+            if (kitManager.canUseKit(player, kitName)) {
+                // Check cooldown
+                long cooldown = kitManager.getRemainingCooldown(player, kitName);
+                
+                // Check for price
+                boolean canAfford = true;
+                String priceInfo = "";
+                
+                if (kit.getPrice() > 0) {
+                    var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                    double balance = economyManager.getBalance(player.getUUID());
+                    canAfford = balance >= kit.getPrice();
+                    priceInfo = " (" + economyManager.formatCurrency(kit.getPrice()) + ")";
+                }
+                
+                if (cooldown > 0) {
+                    // On cooldown - show in red with cooldown time
+                    String timeStr = formatTime(cooldown);
+                    kitComponent = Component.literal(kitName + " (" + timeStr + ")" + priceInfo).withStyle(net.minecraft.ChatFormatting.RED);
+                } else if (!canAfford) {
+                    // Can't afford - show in yellow
+                    kitComponent = Component.literal(kitName + priceInfo).withStyle(net.minecraft.ChatFormatting.YELLOW);
+                } else {
+                    // Available - show in green
+                    kitComponent = Component.literal(kitName + priceInfo).withStyle(net.minecraft.ChatFormatting.GREEN);
+                }
+            } else {
+                // No permission - show in gray
+                kitComponent = Component.literal(kitName).withStyle(net.minecraft.ChatFormatting.GRAY);
+            }
+            
+            // Add hover event and click event
+            kitComponent = kitComponent.withStyle(style -> style
+                .withHoverEvent(new HoverEvent(
+                    HoverEvent.Action.SHOW_TEXT, 
+                    hoverText
+                ))
+                .withClickEvent(new ClickEvent(
+                    ClickEvent.Action.RUN_COMMAND,
+                    "/kit " + kitName
+                ))
+            );
+            
+            message.append(kitComponent);
             first = false;
         }
         
+<<<<<<< HEAD
 <<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
         NeoEssentials.LOGGER.debug("Sending kit list ({} kits) to player {}", kits.size(), player.getScoreboardName());
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
+=======
+        NeoEssentials.LOGGER.debug("Sending interactive kit list ({} kits) to player {}", kits.size(), player.getScoreboardName());
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
         MessageUtil.sendInfo(player, message);
         return 1;
     }
@@ -1116,6 +1234,9 @@ public class KitCommands {
                     if (item != null && item != Items.AIR) {
                         String itemName = item.getDescription().getString();
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
                         MutableComponent itemComponent = Component.literal("§8- §f" + itemDef.getCount() + "x §e" + itemName);
                         
                         // Add hover event to show item info
@@ -1124,9 +1245,12 @@ public class KitCommands {
                         ));
                         
                         player.sendSystemMessage(itemComponent);
+<<<<<<< HEAD
 =======
                         player.sendSystemMessage(Component.literal("§8- §f" + itemDef.getCount() + "x §e" + itemName));
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
                         displayed++;
                     }
                 } catch (Exception e) {
@@ -1135,6 +1259,7 @@ public class KitCommands {
             }
         }
         
+<<<<<<< HEAD
 <<<<<<< HEAD
         // Display footer with interactive claim button
         if (kitManager.canUseKit(player, kitName, true)) {
@@ -1156,6 +1281,23 @@ public class KitCommands {
         if (kitManager.canUseKit(player, kitName, true)) {
             player.sendSystemMessage(Component.literal("§aYou can use this kit. Type §e/kit " + kitName + "§a to claim it."));
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+        // Display footer with interactive claim button
+        if (kitManager.canUseKit(player, kitName, true)) {
+            MutableComponent claimButton = Component.literal("§a[CLAIM THIS KIT]")
+                .withStyle(style -> style
+                    .withHoverEvent(new HoverEvent(
+                        HoverEvent.Action.SHOW_TEXT,
+                        Component.literal("§aClick here to claim kit: §e" + kitName)
+                    ))
+                    .withClickEvent(new ClickEvent(
+                        ClickEvent.Action.RUN_COMMAND,
+                        "/kit " + kitName
+                    ))
+                );
+            
+            player.sendSystemMessage(Component.literal("§aYou can use this kit. ").append(claimButton));
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
         } else {
             long cooldown = kitManager.getRemainingCooldown(player, kitName);
             if (cooldown > 0) {
@@ -1163,6 +1305,7 @@ public class KitCommands {
                 player.sendSystemMessage(Component.literal("§cYou must wait §e" + timeStr + "§c before using this kit again."));
             } else if (kit.getPrice() > 0) {
                 var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+<<<<<<< HEAD
 <<<<<<< HEAD
                 double balance = economyManager.getBalance(player.getUUID());
                 if (balance < kit.getPrice()) {
@@ -1177,6 +1320,16 @@ public class KitCommands {
                     String formattedPrice = economyManager.formatCurrency(kit.getPrice());
                     player.sendSystemMessage(Component.literal("§cYou don't have enough money to buy this kit. Price: §e" + formattedPrice));
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+                double balance = economyManager.getBalance(player.getUUID());
+                if (balance < kit.getPrice()) {
+                    String formattedPrice = economyManager.formatCurrency(kit.getPrice());
+                    String formattedBalance = economyManager.formatCurrency(balance);
+                    String formattedNeeded = economyManager.formatCurrency(kit.getPrice() - balance);
+                    player.sendSystemMessage(Component.literal("§cYou need §e" + formattedPrice + 
+                        " §cto buy this kit (you have §e" + formattedBalance + "§c, need §e" + 
+                        formattedNeeded + " §cmore)"));
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
                 } else {
                     player.sendSystemMessage(Component.literal("§cYou don't have permission to use this kit."));
                 }
@@ -1188,6 +1341,9 @@ public class KitCommands {
         return 1;
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
     
     /**
      * Execute the /kithelp command to display help for kit commands
@@ -1215,7 +1371,11 @@ public class KitCommands {
         
         // Display each command with interactive elements
         for (CommandHelp cmd : commands) {
+<<<<<<< HEAD
             boolean hasPermission = PermissionUtil.hasPermission((ServerPlayer)player, cmd.permission);
+=======
+            boolean hasPermission = PermissionUtil.hasPermission(player, cmd.permission);
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
             
             MutableComponent commandText = Component.literal(
                     (hasPermission ? "§a" : "§c") + cmd.command
@@ -1255,6 +1415,7 @@ public class KitCommands {
             this.command = command;
             this.description = description;
             this.permission = permission;
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
@@ -1357,4 +1518,8 @@ public class KitCommands {
     }
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+        }
+    }
+>>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
 }
