@@ -37,11 +37,19 @@ public class CompatNeoEssentialsConfig {
     private Map<String, Boolean> commandsEnabled = new HashMap<>();
     
     // Permission settings
-    private Map<String, Boolean> defaultPermissions = new HashMap<>();
-      /**
-     * Constructor that loads values from the TOML configs
+    private Map<String, Boolean> defaultPermissions = new HashMap<>();    /**
+     * Constructor - initializes default values but doesn't load from config
      */
     public CompatNeoEssentialsConfig() {
+        // Initialize with default values
+        // Actual values will be loaded from configs when requested
+    }
+    
+    /**
+     * Initialize config values from the TOML configs
+     * This should be called after configs are loaded
+     */
+    public void initialize() {
         // Initialize with values from TOML configs
         this.debug = GeneralConfig.DEBUG_MODE.get();
         this.economyEnabled = GeneralConfig.ENABLE_ECONOMY.get();
