@@ -510,10 +510,15 @@ public class MessagingCommands {
             PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
 =======
     private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message) {
+<<<<<<< HEAD
         // Skip if sender or recipient has exemption
         if (PermissionUtil.hasPermission(sender, "essentials.chat.spy.exempt") || 
             PermissionUtil.hasPermission(recipient, "essentials.chat.spy.exempt")) {
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+        // Skip if sender or recipient has exemption        if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") || 
+            PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
+>>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
             return;
         }
         
@@ -530,10 +535,14 @@ public class MessagingCommands {
                 !player.getUUID().equals(sender.getUUID()) && 
                 !player.getUUID().equals(recipient.getUUID()) &&
 <<<<<<< HEAD
+<<<<<<< HEAD
                 PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
 =======
                 PermissionUtil.hasPermission(player, "essentials.socialspy")) {
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
+>>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
                 player.sendSystemMessage(spyMessage);
             }
         }

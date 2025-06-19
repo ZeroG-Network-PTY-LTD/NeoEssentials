@@ -287,7 +287,7 @@ public class ModeratorCommands {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cYou cannot kick this player.")));
 =======
         
-        if (PermissionUtil.hasPermission(player, "essentials.kick.exempt")) {
+        if (PermissionUtil.hasPermission((ServerPlayer)player, "essentials.kick.exempt")) {
             context.getSource().sendFailure(Component.literal("You cannot kick this player."));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
             return 0;
@@ -369,6 +369,7 @@ public class ModeratorCommands {
             
             for (GameProfile profile : targets) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if (profile == null) continue;
                 
                 // Check for ban exemption
@@ -412,6 +413,9 @@ public class ModeratorCommands {
                         "&aSuccessfully banned &e" + finalCount + " &aplayer" + plural + ".")), true);
 =======
                 if (PermissionUtil.hasPermission(profile, "essentials.ban.exempt")) {
+=======
+                if (PermissionUtil.hasPermission((com.mojang.authlib.GameProfile)profile, "essentials.ban.exempt")) {
+>>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
                     context.getSource().sendFailure(Component.literal("You cannot ban " + profile.getName() + "."));
                     continue;
                 }
@@ -589,6 +593,7 @@ public class ModeratorCommands {
             
             for (GameProfile profile : targets) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if (profile == null) continue;
                 
                 // Check for ban exemption
@@ -639,6 +644,9 @@ public class ModeratorCommands {
                         "&aSuccessfully temporarily banned &e" + finalCount + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
 =======
                 if (PermissionUtil.hasPermission(profile, "essentials.tempban.exempt")) {
+=======
+                if (PermissionUtil.hasPermission((com.mojang.authlib.GameProfile)profile, "essentials.tempban.exempt")) {
+>>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
                     context.getSource().sendFailure(Component.literal("You cannot temp ban " + profile.getName() + "."));
                     continue;
                 }
@@ -741,7 +749,7 @@ public class ModeratorCommands {
                     return 0;
                 }
                 
-                if (PermissionUtil.hasPermission(targetPlayer, "essentials.banip.exempt")) {
+                if (PermissionUtil.hasPermission((ServerPlayer)targetPlayer, "essentials.banip.exempt")) {
                     context.getSource().sendFailure(Component.literal("You cannot ban this player's IP."));
                     return 0;
                 }
@@ -947,7 +955,7 @@ public class ModeratorCommands {
      */
     private int mutePlayer(CommandContext<CommandSourceStack> context, ServerPlayer player, String timeStr, String reason) {
         try {
-            if (PermissionUtil.hasPermission(player, "essentials.mute.exempt")) {
+            if (PermissionUtil.hasPermission((ServerPlayer)player, "essentials.mute.exempt")) {
                 context.getSource().sendFailure(Component.literal("You cannot mute this player."));
                 return 0;
             }

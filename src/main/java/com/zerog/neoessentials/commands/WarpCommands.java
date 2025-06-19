@@ -840,30 +840,42 @@ public class WarpCommands {
         
         // Only show admin commands to players with appropriate permissions
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.set")) {
 =======
         if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.set")) {
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+        if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.set")) {
+>>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
             MutableComponent setWarpCmd = Component.literal("§b/setwarp <name>");
             setWarpCmd = MessageUtil.addHoverText(setWarpCmd, Component.literal("§7Create a new warp at your location"));
             MessageUtil.sendInfo(player, setWarpCmd.append(Component.literal(" §7- Create a new warp at your location")));
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.delete")) {
 =======
         if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.delete")) {
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+        if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.delete")) {
+>>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
             MutableComponent delWarpCmd = Component.literal("§b/delwarp <name>");
             delWarpCmd = MessageUtil.addHoverText(delWarpCmd, Component.literal("§7Delete an existing warp"));
             MessageUtil.sendInfo(player, delWarpCmd.append(Component.literal(" §7- Delete an existing warp")));
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.player")) {
 =======
         if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.player")) {
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+        if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.player")) {
+>>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
             MutableComponent warpPlayerCmd = Component.literal("§b/warpplayer <player> <warp>");
             warpPlayerCmd = MessageUtil.addHoverText(warpPlayerCmd, Component.literal("§7Teleport another player to a warp"));
             MessageUtil.sendInfo(player, warpPlayerCmd.append(Component.literal(" §7- Teleport another player to a warp")));

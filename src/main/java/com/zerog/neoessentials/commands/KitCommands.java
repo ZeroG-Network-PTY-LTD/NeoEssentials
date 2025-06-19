@@ -1372,10 +1372,14 @@ public class KitCommands {
         // Display each command with interactive elements
         for (CommandHelp cmd : commands) {
 <<<<<<< HEAD
+<<<<<<< HEAD
             boolean hasPermission = PermissionUtil.hasPermission((ServerPlayer)player, cmd.permission);
 =======
             boolean hasPermission = PermissionUtil.hasPermission(player, cmd.permission);
 >>>>>>> 65afc0b (feat: Add interactive kit help command and enhance kit command responses)
+=======
+            boolean hasPermission = PermissionUtil.hasPermission((ServerPlayer)player, cmd.permission);
+>>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
             
             MutableComponent commandText = Component.literal(
                     (hasPermission ? "§a" : "§c") + cmd.command
