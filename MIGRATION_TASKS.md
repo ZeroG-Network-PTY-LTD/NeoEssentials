@@ -7,7 +7,7 @@ This document outlines the remaining tasks for NeoEssentials development.
 1. **Core Functionality**
    - [ ] Complete command implementations
    - [ ] Finalize permissions system
-   - [ ] Complete storage system
+   - [x] Complete storage system (SQLite implementation)
 
 2. **Features**
    - [x] Economy system (completed with transaction history)
@@ -54,6 +54,7 @@ This document outlines the remaining tasks for NeoEssentials development.
    - [x] Kit system with pricing, preview, and interactive UI
    - [x] Build system with automatic build number incrementing
    - [x] Permission integration with LuckPerms
+   - [x] SQLite storage system implementation
 
 2. **Commands**
    - [x] Kit commands

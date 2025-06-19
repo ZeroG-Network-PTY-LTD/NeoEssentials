@@ -68,8 +68,9 @@ The storage system is built around the following components:
 2. **JsonStorageHandler** - Implements the StorageHandler interface for JSON file storage.
 3. **SQLiteStorageHandler** - Implements the StorageHandler interface for SQLite database storage.
 4. **MySQLStorageHandler** - Implements the StorageHandler interface for MySQL database storage.
-5. **StorageFactory** - Creates the appropriate storage handler based on configuration.
-6. **StorageManager** - Manages the active storage handler and provides a simplified API for other components.
+5. **DatabaseConnectionManager** - Manages database connections using connection pooling (HikariCP).
+6. **StorageFactory** - Creates the appropriate storage handler based on configuration.
+7. **DataManager** - Manages the active storage handler and provides access to different data managers.
 
 ## Data Organization
 
@@ -91,12 +92,50 @@ When using JSON storage, data is organized in the following structure:
 When using database storage, data is organized in tables:
 
 - `homes` - Player home data
+  - `uuid` - Player UUID
+  - `home_name` - Name of the home
+  - `dimension` - Dimension ID (e.g., "minecraft:overworld")
+  - `x`, `y`, `z` - Position coordinates
+  - `pitch`, `yaw` - Player rotation
+  - Primary Key: (`uuid`, `home_name`)
+
 - `warps` - Server warps
+  - `name` - Warp name (Primary Key)
+  - `dimension` - Dimension ID
+  - `x`, `y`, `z` - Position coordinates
+  - `pitch`, `yaw` - Player rotation
+  - `permission` - Permission node required (nullable)
+
 - `economy` - Player economy data
-- `transactions` - Economy transaction history
+  - `uuid` - Player UUID (Primary Key)
+  - `balance` - Player balance as string (BigDecimal)
+
+- `economy_transactions` - Economy transaction history
+  - `id` - Auto-incrementing transaction ID
+  - `uuid` - Player UUID
+  - `other_uuid` - UUID of other player involved (for transfers)
+  - `transaction_type` - Type of transaction (deposit, withdraw, transfer, etc.)
+  - `amount` - Transaction amount
+  - `balance_after` - Balance after the transaction
+  - `description` - Description of the transaction
+  - `timestamp` - Unix timestamp of the transaction
+
 - `kits` - Server kits
+  - `name` - Kit name (Primary Key)
+  - `cooldown` - Cooldown time in milliseconds
+  - `permission` - Permission node required (nullable)
+  - `price` - Price of the kit (0 for free kits)
+  - `items_json` - JSON representation of the kit items
+
 - `kit_cooldowns` - Kit usage cooldowns
-- `spawn` - Server spawn location
+  - `uuid` - Player UUID
+  - `kit_name` - Kit name
+  - `timestamp` - Timestamp when the kit was last used
+  - Primary Key: (`uuid`, `kit_name`)
+
+- `spawn_data` - Server spawn location
+  - `id` - Always 1 (ensures only one spawn entry)
+  - `spawn_json` - JSON representation of spawn data
 
 For MySQL, all table names are prefixed with the configured table prefix (default: `ne_`).
 
@@ -113,7 +152,7 @@ NeoEssentials currently does not provide automatic migration between storage sys
 ## Best Practices
 
 - **JSON**: Best for small servers with few players.
-- **SQLite**: Good for medium-sized servers where you want better performance than JSON but don't want to set up a MySQL server.
+- **SQLite**: Good for medium-sized servers where you want better performance than JSON but don't want to set up a MySQL server. The current implementation uses connection pooling via HikariCP for optimal performance.
 - **MySQL**: Best for large servers or server networks where you need to share data between multiple servers.
 
 ## Performance Considerations
