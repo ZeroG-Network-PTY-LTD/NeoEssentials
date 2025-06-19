@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Command Argument Registration Fix - Final Solution
 
 ## Previous Attempts
@@ -38,6 +39,25 @@ In commands:
 
 ## True Server-Side Solution
 The solution now works for true server-side only deployment in a modded environment:
+=======
+# Command Argument Registration Fix Follow-up
+
+## Issue Resolution
+The command argument registration issue has been successfully fixed. The following changes were made:
+
+1. Simplified the registration of custom command argument types by using only the DeferredRegister approach.
+2. Removed the redundant registration via `ArgumentTypeInfos.registerByClass()` in the common setup method.
+3. Ensured consistent lowercase naming of registry keys as required by the Minecraft ResourceLocation format.
+
+## Implementation Details
+In `ModArgumentTypes.java`:
+- The DeferredRegister is now the only method used for registration of command argument types.
+- Registration key is consistently set to `"string_to_boolean"` (all lowercase).
+- Removed the direct registration that was causing conflicts.
+
+## Testing
+The fix has been tested and confirmed working. The server now starts without the connection loss error previously seen:
+>>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
 
 ```
 Connection lost

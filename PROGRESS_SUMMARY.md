@@ -4,11 +4,18 @@
 NeoEssentials has been successfully refactored to work as a single-version, single-loader mod for NeoForge 1.21.1. The mod now has:
 
 - A clean, maintainable codebase focused on NeoForge 1.21.1
+<<<<<<< HEAD
 - True server-side implementation that doesn't require client installation
 - An improved configuration system using TOML files with robust error handling
 - Fixed event handler registrations
 - Vanilla-compatible command argument handling
 - Powerful compatibility layer for existing code with safe config access
+=======
+- An improved configuration system using TOML files
+- Fixed event handler registrations
+- Fixed command argument type registrations
+- Compatibility layer for existing code
+>>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
 
 ## Completed Tasks
 
@@ -17,7 +24,10 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ✅ Consolidated source code to a single source directory
 - ✅ Removed duplicate/conflicting code paths
 - ✅ Fixed event handler registrations (static vs instance methods)
+<<<<<<< HEAD
 - ✅ Deprecated unused classes for potential future removal
+=======
+>>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
 
 ### Configuration System
 - ✅ Created TOML-based configuration files
@@ -25,6 +35,7 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ✅ Implemented centralized ModConfigManager for all configs
 - ✅ Added feature toggle support in GeneralConfig
 - ✅ Created compatibility layer for legacy code
+<<<<<<< HEAD
 - ✅ Improved config loading and initialization to prevent premature access
 - ✅ Added ConfigUtil helper class for safe config value access
 - ✅ Implemented comprehensive error handling for config operations
@@ -38,6 +49,12 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ✅ Implemented robust error handling for config access with proper defaults
 - ✅ Enhanced config loading process to wait for all expected config files
 - ✅ Added improved diagnostics and logging for config-related issues
+=======
+
+### Bug Fixes
+- ✅ Fixed event handler registration issues
+- ✅ Fixed command argument type registration (string_to_boolean)
+>>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
 - ✅ Ensured proper initialization order for managers
 - ✅ Fixed build errors and warnings
 
@@ -45,6 +62,7 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ✅ Improved TablistManager to support TOML configuration
 - ✅ Extended home/warp system with better configuration options
 - ✅ Added scheduled task support for tablist and other features
+<<<<<<< HEAD
 - ✅ Implemented true server-side mod functionality
 - ✅ Created VanillaBooleanParser for command argument compatibility
 
@@ -54,10 +72,16 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ✅ Changed dependency sides to SERVER-only
 - ✅ Eliminated all client-side registry entries
 - ✅ Verified server can run with no client-side component required
+=======
+>>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
 
 ## In Progress
 - 🔄 Testing and debugging in-game functionality
 - 🔄 Finalizing database connection system
+<<<<<<< HEAD
+=======
+- 🔄 Improving error handling and logging
+>>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
 
 ## Next Steps
 - ⏳ Add unit tests for critical components
@@ -65,12 +89,16 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ⏳ Enhance tablist with more placeholders and sorting options
 - ⏳ Implement additional economy features
 - ⏳ Add admin panel improvements
+<<<<<<< HEAD
 - ⏳ Remove deprecated classes in future versions
+=======
+>>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
 
 ## Known Issues
 - None at this time
 
 ## Documentation
+<<<<<<< HEAD
 - `IMPLEMENTATION_SUMMARY.md` - Complete overview of the server-side implementation
 - `CONFIGURATION_SYSTEM.md` - Details on the new configuration system
 - `CONFIG_INITIALIZATION_FIX.md` - Fix for the config initialization crash
@@ -85,3 +113,11 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - Other documentation in the `docs/` folder
 
 Last Updated: July 9, 2025
+=======
+- `CONFIGURATION_SYSTEM.md` - Details on the new configuration system
+- `COMMAND_ARG_FIX.md` & `COMMAND_ARG_FIX_FOLLOWUP.md` - Command argument registration fixes
+- `COMPILATION_FIXES.md` - Information about fixing compilation errors
+- Other documentation in the `docs/` folder
+
+Last Updated: June 19, 2025
+>>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
