@@ -525,6 +525,7 @@ public class MessageCommands {
      * Send a private message to all players with social spy enabled
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {        // Skip if sender or recipient has exemption
         if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") ||
             PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
@@ -553,6 +554,14 @@ public class MessageCommands {
 >>>>>>> bac244b (Implement messaging and player state commands)
 =======
         if (sender.getServer() == null) {
+=======
+     */    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {        // Skip if sender or recipient has exemption
+        if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") ||
+            PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
+            return;
+        }
+          if (sender.getServer() == null) {
+>>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
             return;
         }
         
@@ -569,10 +578,14 @@ public class MessageCommands {
             if (socialSpyEnabled.contains(player.getUUID()) && 
                 (skipPlayer == null || !player.getUUID().equals(skipPlayer.getUUID())) &&
 <<<<<<< HEAD
+<<<<<<< HEAD
                 PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
 =======
                 PermissionUtil.hasPermission(player, "essentials.socialspy")) {
 >>>>>>> bac244b (Implement messaging and player state commands)
+=======
+                PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
+>>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
                 player.sendSystemMessage(spyMessage);
             }
         }
