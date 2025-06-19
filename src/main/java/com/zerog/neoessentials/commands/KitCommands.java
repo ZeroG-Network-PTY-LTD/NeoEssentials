@@ -96,15 +96,22 @@ public class KitCommands {
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.list"))
                 .executes(this::executeKitList)
         );
+<<<<<<< HEAD
         
         // /createkit <n> <cooldown> - Create a kit with your current inventory
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
+=======
+          // /createkit <name> [cooldown] [price] - Create a kit with your current inventory
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
         dispatcher.register(
             Commands.literal("createkit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.create"))
                 .then(Commands.argument("name", StringArgumentType.word())
                     .then(Commands.argument("cooldown", LongArgumentType.longArg(0))
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
                         .then(Commands.argument("price", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0))
                             .executes(context -> {
                                 long cooldown = LongArgumentType.getLong(context, "cooldown");
@@ -112,6 +119,7 @@ public class KitCommands {
                                 return executeCreateKitWithPrice(context, cooldown, price);
                             })
                         )
+<<<<<<< HEAD
 =======
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.kits"))
                 .executes(this::executeKitList)
@@ -126,6 +134,8 @@ public class KitCommands {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
+=======
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
                         .executes(this::executeCreateKit)
                     )
                     .executes(context -> executeCreateKit(context, 0)) // Default cooldown of 0
@@ -191,6 +201,15 @@ public class KitCommands {
                 .executes(this::executeKitHelp)
         );
         
+        // /previewkit <name> - Preview the items in a kit
+        dispatcher.register(
+            Commands.literal("previewkit")
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.preview"))
+                .then(Commands.argument("name", StringArgumentType.word())
+                    .executes(this::executePreviewKit)
+                )
+        );
+        
         NeoEssentials.LOGGER.info("Kit commands registered successfully");
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
@@ -231,6 +250,7 @@ public class KitCommands {
             return 0;
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
           // Check if player can use kit (permissions)
         if (!kitManager.canUseKit(player, kitName, false)) {
 =======
@@ -250,6 +270,10 @@ public class KitCommands {
         // Check if player can use kit (permissions and cooldown)
         if (!kitManager.canUseKit(player, kitName)) {
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
+=======
+          // Check if player can use kit (permissions)
+        if (!kitManager.canUseKit(player, kitName, false)) {
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
             long cooldown = kitManager.getRemainingCooldown(player, kitName);
             
             if (cooldown > 0) {
@@ -279,6 +303,9 @@ public class KitCommands {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
         // Check if player has enough money for the kit
         if (kit.getPrice() > 0) {
             var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
@@ -296,10 +323,13 @@ public class KitCommands {
             }
         }
         
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
+=======
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
         // Give the kit to the player
         boolean success = kitManager.giveKit(player, kitName);
         
@@ -374,6 +404,7 @@ public class KitCommands {
         for (String kitName : kits.keySet()) {
             if (!first) {
                 message.append(Component.literal(", "));
+<<<<<<< HEAD
             }
             
 <<<<<<< HEAD
@@ -482,14 +513,42 @@ public class KitCommands {
                     // On cooldown - show in red with cooldown time
                     String timeStr = formatTime(cooldown);
                     message.append(Component.literal(kitName + " (" + timeStr + ")").withStyle(net.minecraft.ChatFormatting.RED));
+=======
+            }                // Get the kit
+                KitManager.Kit kit = kitManager.getKit(kitName);
+                
+                // Check if the player can use this kit (permissions)
+                if (kitManager.canUseKit(player, kitName)) {
+                    // Check cooldown
+                    long cooldown = kitManager.getRemainingCooldown(player, kitName);
+                    
+                    // Check for price
+                    boolean canAfford = true;
+                    String priceInfo = "";
+                    
+                    if (kit.getPrice() > 0) {
+                        var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                        double balance = economyManager.getBalance(player.getUUID());
+                        canAfford = balance >= kit.getPrice();
+                        priceInfo = " (" + economyManager.formatCurrency(kit.getPrice()) + ")";
+                    }
+                    
+                    if (cooldown > 0) {
+                        // On cooldown - show in red with cooldown time
+                        String timeStr = formatTime(cooldown);
+                        message.append(Component.literal(kitName + " (" + timeStr + ")" + priceInfo).withStyle(net.minecraft.ChatFormatting.RED));
+                    } else if (!canAfford) {
+                        // Can't afford - show in yellow
+                        message.append(Component.literal(kitName + priceInfo).withStyle(net.minecraft.ChatFormatting.YELLOW));
+                    } else {
+                        // Available - show in green
+                        message.append(Component.literal(kitName + priceInfo).withStyle(net.minecraft.ChatFormatting.GREEN));
+                    }
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
                 } else {
-                    // Available - show in green
-                    message.append(Component.literal(kitName).withStyle(net.minecraft.ChatFormatting.GREEN));
+                    // No permission - show in gray
+                    message.append(Component.literal(kitName).withStyle(net.minecraft.ChatFormatting.GRAY));
                 }
-            } else {
-                // No permission - show in gray
-                message.append(Component.literal(kitName).withStyle(net.minecraft.ChatFormatting.GRAY));
-            }
             
             first = false;
         }
@@ -576,6 +635,7 @@ public class KitCommands {
             return 0;
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
           // Get all items from the player's inventory
 =======
         KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
@@ -592,6 +652,9 @@ public class KitCommands {
         
         // Get all items from the player's inventory
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
+=======
+          // Get all items from the player's inventory
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
         List<ItemStack> items = new ArrayList<>();
         for (ItemStack item : player.getInventory().items) {
             if (!item.isEmpty()) {
@@ -601,6 +664,9 @@ public class KitCommands {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
         // Also include armor and offhand items
         for (ItemStack item : player.getInventory().armor) {
             if (!item.isEmpty()) {
@@ -612,19 +678,26 @@ public class KitCommands {
             items.add(player.getInventory().offhand.get(0).copy());
         }
         
+<<<<<<< HEAD
 =======
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
+=======
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
         if (items.isEmpty()) {
             NeoEssentials.LOGGER.debug("Player {} has empty inventory, cannot create kit", player.getScoreboardName());
             context.getSource().sendFailure(Component.literal("Your inventory is empty. Cannot create an empty kit."));
             return 0;
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
           // Create the kit with appropriate permission node
 =======
         
         // Create the kit with appropriate permission node
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
+=======
+          // Create the kit with appropriate permission node
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
         String permission = "neoessentials.command.kit." + kitName.toLowerCase();
         KitManager.Kit kit = kitManager.createKit(kitName, cooldown, permission, items);
         
@@ -921,6 +994,7 @@ public class KitCommands {
         KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
         if (kitManager == null) {
 <<<<<<< HEAD
+<<<<<<< HEAD
             NeoEssentials.LOGGER.error("KitManager is null when executing /previewkit command");
 =======
             NeoEssentials.LOGGER.error("KitManager is null when executing /deletekit command");
@@ -959,6 +1033,9 @@ public class KitCommands {
         if (kitManager == null) {
             NeoEssentials.LOGGER.error("KitManager is null when executing /givekit command");
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+            NeoEssentials.LOGGER.error("KitManager is null when executing /previewkit command");
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
             context.getSource().sendFailure(Component.literal("Kit system is not available"));
             return 0;
         }
@@ -971,6 +1048,9 @@ public class KitCommands {
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
         // Send kit header
         MutableComponent header = Component.literal("§6§l=== Kit: §r§e" + kit.getName() + "§6§l ===");
         player.sendSystemMessage(header);
@@ -1035,6 +1115,7 @@ public class KitCommands {
                     
                     if (item != null && item != Items.AIR) {
                         String itemName = item.getDescription().getString();
+<<<<<<< HEAD
                         MutableComponent itemComponent = Component.literal("§8- §f" + itemDef.getCount() + "x §e" + itemName);
                         
                         // Add hover event to show item info
@@ -1043,6 +1124,9 @@ public class KitCommands {
                         ));
                         
                         player.sendSystemMessage(itemComponent);
+=======
+                        player.sendSystemMessage(Component.literal("§8- §f" + itemDef.getCount() + "x §e" + itemName));
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
                         displayed++;
                     }
                 } catch (Exception e) {
@@ -1051,6 +1135,7 @@ public class KitCommands {
             }
         }
         
+<<<<<<< HEAD
         // Display footer with interactive claim button
         if (kitManager.canUseKit(player, kitName, true)) {
             MutableComponent claimButton = Component.literal("§a[CLAIM THIS KIT]")
@@ -1066,6 +1151,11 @@ public class KitCommands {
                 );
             
             player.sendSystemMessage(Component.literal("§aYou can use this kit. ").append(claimButton));
+=======
+        // Display footer
+        if (kitManager.canUseKit(player, kitName, true)) {
+            player.sendSystemMessage(Component.literal("§aYou can use this kit. Type §e/kit " + kitName + "§a to claim it."));
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
         } else {
             long cooldown = kitManager.getRemainingCooldown(player, kitName);
             if (cooldown > 0) {
@@ -1073,6 +1163,7 @@ public class KitCommands {
                 player.sendSystemMessage(Component.literal("§cYou must wait §e" + timeStr + "§c before using this kit again."));
             } else if (kit.getPrice() > 0) {
                 var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+<<<<<<< HEAD
                 double balance = economyManager.getBalance(player.getUUID());
                 if (balance < kit.getPrice()) {
                     String formattedPrice = economyManager.formatCurrency(kit.getPrice());
@@ -1081,6 +1172,11 @@ public class KitCommands {
                     player.sendSystemMessage(Component.literal("§cYou need §e" + formattedPrice + 
                         " §cto buy this kit (you have §e" + formattedBalance + "§c, need §e" + 
                         formattedNeeded + " §cmore)"));
+=======
+                if (economyManager.getBalance(player.getUUID()) < kit.getPrice()) {
+                    String formattedPrice = economyManager.formatCurrency(kit.getPrice());
+                    player.sendSystemMessage(Component.literal("§cYou don't have enough money to buy this kit. Price: §e" + formattedPrice));
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
                 } else {
                     player.sendSystemMessage(Component.literal("§cYou don't have permission to use this kit."));
                 }
@@ -1091,6 +1187,7 @@ public class KitCommands {
         
         return 1;
     }
+<<<<<<< HEAD
     
     /**
      * Execute the /kithelp command to display help for kit commands
@@ -1258,4 +1355,6 @@ public class KitCommands {
         
         return true;
     }
+=======
+>>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
 }
