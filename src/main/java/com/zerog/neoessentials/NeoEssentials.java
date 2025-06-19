@@ -648,6 +648,7 @@ public class NeoEssentials {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * Gets the scheduler for async tasks
      * 
      * @return The scheduler
@@ -689,12 +690,15 @@ public class NeoEssentials {
 >>>>>>> 2ac7252 (feat: Enhance DataManager with initialization and data loading methods for improved manager setup)
 =======
      * Gets the scheduler
+=======
+     * Gets the scheduler for async tasks
+     * 
+>>>>>>> 6528176 (feat: Enhance scheduler handling and improve configuration management in NeoEssentials)
      * @return The scheduler
      */
     public ScheduledExecutorService getScheduler() {
-        // If the scheduler is null, create it
         if (scheduler == null) {
-            scheduler = Executors.newScheduledThreadPool(1);
+            scheduler = Executors.newScheduledThreadPool(2);
         }
         return scheduler;
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
