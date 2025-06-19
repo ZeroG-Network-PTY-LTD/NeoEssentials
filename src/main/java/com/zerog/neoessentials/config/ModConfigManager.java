@@ -14,6 +14,9 @@ public class ModConfigManager {
     private final NeoEssentials mod;
     private TablistConfig tablistConfig; // Legacy JSON-based config, to be migrated later
     
+    // Compatibility config instance (legacy format)
+    private CompatNeoEssentialsConfig compatConfig;
+    
     /**
      * Creates a new config manager
      * 
@@ -120,12 +123,15 @@ public class ModConfigManager {
     public ModConfigSpec getSpec() {
         return DatabaseTomlConfig.SPEC;
     }
-      /**
-     * Legacy compatibility method to provide access to old config structure
-     * 
-     * @return A compatibility NeoEssentialsConfig object
+    
+    /**
+     * Gets the compatibility config that adapts TOML values to the old config structure
+     * @return The compatibility config
      */
-    public NeoEssentialsConfig getConfig() {
-        return new CompatNeoEssentialsConfig();
+    public CompatNeoEssentialsConfig getConfig() {
+        if (compatConfig == null) {
+            compatConfig = new CompatNeoEssentialsConfig();
+        }
+        return compatConfig;
     }
 }

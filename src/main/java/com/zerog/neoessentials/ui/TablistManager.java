@@ -2,6 +2,7 @@ package com.zerog.neoessentials.ui;
 
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.config.TablistConfig;
+import com.zerog.neoessentials.config.TablistTomlConfig;
 import com.zerog.neoessentials.data.EconomyManager;
 import com.zerog.neoessentials.utils.MessageUtil;
 import com.zerog.neoessentials.utils.TextUtil;
@@ -34,7 +35,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class TablistManager {
     // Configuration
-    private TablistConfig config;
+    private TablistConfig legacyConfig;
+    private TablistTomlConfig tomlConfig;
     
     // Scheduler for updating the tablist
     private final ScheduledExecutorService scheduler;
@@ -67,18 +69,21 @@ public class TablistManager {
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing TablistManager");
         
-        // Set default config
-        this.config = NeoEssentials.getInstance().getConfigManager().getTablistConfig();
-        if (this.config == null) {
-            NeoEssentials.LOGGER.warn("Tablist config not found, using defaults");
-            this.config = new TablistConfig();
+        // Get both configs
+        this.legacyConfig = NeoEssentials.getInstance().getConfigManager().getTablistConfig();
+        // The TOML config is accessed via its static fields directly
+        
+        if (this.legacyConfig == null) {
+            NeoEssentials.LOGGER.warn("Legacy tablist config not found, using defaults");
+            this.legacyConfig = new TablistConfig();
         }
         
         // Load headers and footers
         loadHeadersAndFooters();
         
-        // Start the update task
-        startUpdateTask();
+        // Start the update task with interval from TOML config
+        long updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
+        startUpdateTask(updateInterval);
     }
     
     /**
@@ -90,8 +95,8 @@ public class TablistManager {
         footers.clear();
         
         // Load from config or use defaults
-        if (config.getHeaders() != null && !config.getHeaders().isEmpty()) {
-            headers.addAll(config.getHeaders());
+        if (legacyConfig.getHeaders() != null && !legacyConfig.getHeaders().isEmpty()) {
+            headers.addAll(legacyConfig.getHeaders());
         } else {
             // Default headers
             headers.add("&6Welcome to &l%server_name%");
@@ -99,8 +104,8 @@ public class TablistManager {
             headers.add("&bServer TPS: &a%server_tps%");
         }
         
-        if (config.getFooters() != null && !config.getFooters().isEmpty()) {
-            footers.addAll(config.getFooters());
+        if (legacyConfig.getFooters() != null && !legacyConfig.getFooters().isEmpty()) {
+            footers.addAll(legacyConfig.getFooters());
         } else {
             // Default footers
             footers.add("&7Website: &fwww.example.com");
@@ -110,23 +115,20 @@ public class TablistManager {
     }
     
     /**
-     * Starts the scheduled task to update the tablist
+     * Start the scheduled update task for the tablist
+     * 
+     * @param updateInterval Interval in milliseconds
      */
-    private void startUpdateTask() {
-        // Cancel any existing task
+    private void startUpdateTask(long updateInterval) {
+        // Cancel existing task if running
         if (updateTask != null && !updateTask.isDone()) {
             updateTask.cancel(false);
         }
+          // Schedule new task
+        updateTask = scheduler.scheduleAtFixedRate(this::updateTablist, 
+            0, updateInterval, TimeUnit.MILLISECONDS);
         
-        // Start a new update task
-        long updateInterval = config.getUpdateInterval();
-        updateTask = scheduler.scheduleAtFixedRate(
-                this::updateTablist,
-                0,
-                updateInterval,
-                TimeUnit.MILLISECONDS);
-        
-        NeoEssentials.LOGGER.info("Started tablist update task with interval: {}ms", updateInterval);
+        NeoEssentials.LOGGER.info("TablistManager update task scheduled every {} ms", updateInterval);
     }
     
     /**
@@ -145,7 +147,7 @@ public class TablistManager {
             Component footer = getFormattedFooter();
             
             // Update player teams and sorting if enabled
-            if (config.isEnableSorting()) {
+            if (legacyConfig.isEnableSorting()) {
                 updatePlayerTeams();
             }
             
@@ -153,12 +155,12 @@ public class TablistManager {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 try {
                     // Generate player-specific header and footer if needed
-                    Component playerHeader = config.isEnablePlayerSpecificHeaders() ? 
+                    Component playerHeader = legacyConfig.isEnablePlayerSpecificHeaders() ? 
                         Component.literal(TextUtil.translateColors(parsePlaceholders(
                             headers.get(currentHeaderIndex), player))) : 
                         header;
                             
-                    Component playerFooter = config.isEnablePlayerSpecificFooters() ? 
+                    Component playerFooter = legacyConfig.isEnablePlayerSpecificFooters() ? 
                         Component.literal(TextUtil.translateColors(parsePlaceholders(
                             footers.get(currentFooterIndex), player))) : 
                         footer;
@@ -234,7 +236,7 @@ public class TablistManager {
         EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
         
         // Server placeholders
-        template = template.replace("%server_name%", config.getServerName());
+        template = template.replace("%server_name%", legacyConfig.getServerName());
         template = template.replace("%online_players%", String.valueOf(server.getPlayerCount()));
         template = template.replace("%max_players%", String.valueOf(server.getMaxPlayers()));
         
@@ -243,7 +245,7 @@ public class TablistManager {
         template = template.replace("%mod_version%", NeoEssentials.getInstance().getVersion());
         
         // Time placeholders
-        SimpleDateFormat timeFormat = new SimpleDateFormat(config.getTimeFormat());
+        SimpleDateFormat timeFormat = new SimpleDateFormat(legacyConfig.getTimeFormat());
         template = template.replace("%time%", timeFormat.format(new Date()));
         
         // Player-specific placeholders
@@ -323,7 +325,7 @@ public class TablistManager {
         // Get player sort order based on config
         List<ServerPlayer> sortedPlayers = new ArrayList<>(server.getPlayerList().getPlayers());
         
-        switch (config.getSortType()) {
+        switch (legacyConfig.getSortType()) {
             case "name":
                 sortedPlayers.sort(Comparator.comparing(ServerPlayer::getScoreboardName));
                 break;
@@ -467,7 +469,7 @@ public class TablistManager {
         }
         
         // Add economy info if enabled
-        if (config.isShowEconomyInTablist()) {
+        if (legacyConfig.isShowEconomyInTablist()) {
             EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
             if (economyManager != null) {
                 double balance = economyManager.getBalance(player.getUUID());
@@ -496,7 +498,7 @@ public class TablistManager {
         player.connection.send(new ClientboundTabListPacket(header, footer));
         
         // Update teams for sorting
-        if (config.isEnableSorting()) {
+        if (legacyConfig.isEnableSorting()) {
             updatePlayerTeams();
         }
     }
@@ -515,7 +517,7 @@ public class TablistManager {
         }
         
         // Update teams for sorting
-        if (config.isEnableSorting()) {
+        if (legacyConfig.isEnableSorting()) {
             updatePlayerTeams();
         }
     }
