@@ -537,6 +537,7 @@ jar {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 // NeoForge specific configurations
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -632,6 +633,8 @@ jar {
     }
 }
 
+=======
+>>>>>>> 14c315a (feat: Improve build number handling and remove legacy multi-project configuration)
 // Improved BuildNumber handling with Configuration Cache compatibility
 
 abstract class BuildNumberProvider implements ValueSource<Integer, BuildNumberParameters> {
@@ -652,6 +655,7 @@ abstract class BuildNumberProvider implements ValueSource<Integer, BuildNumberPa
             props.load(stream)
         }
         return (props.getProperty("buildNumber", "1") as String).toInteger()
+<<<<<<< HEAD
     }
 }
 
@@ -696,23 +700,32 @@ def getBuildNumber() {
     if (!propsFile.exists()) {
         propsFile.text = "buildNumber=1"
         return 1
+=======
+>>>>>>> 14c315a (feat: Improve build number handling and remove legacy multi-project configuration)
     }
-    
-    def props = new Properties()
-    propsFile.withInputStream { props.load(it) }
-    return props.getProperty("buildNumber").toInteger()
 }
 
+// Get the build number using a configuration-cache compatible provider
+def buildNumber = providers.of(BuildNumberProvider) { 
+    parameters.propertiesFile.set(file("buildnumber.properties"))
+}.get()
+
 // Update the version to include the build number
-def buildNumber = getBuildNumber()
 version = "${mod_version}.${buildNumber}"
 println "Building NeoEssentials version: ${version}"
 
 // Task to increment build number compatible with configuration cache
 abstract class IncrementBuildNumberTask extends DefaultTask {
+    @InputFile
+    @Optional
+    abstract RegularFileProperty getPropertiesFile()
+    
+    @OutputFile
+    abstract RegularFileProperty getOutputFile()
+    
     @TaskAction
     def increment() {
-        File propsFile = new File(project.projectDir, "buildnumber.properties")
+        File propsFile = getPropertiesFile().getAsFile().getOrNull() ?: getOutputFile().getAsFile().get()
         Properties props = new Properties()
         
         if (propsFile.exists()) {
@@ -725,11 +738,15 @@ abstract class IncrementBuildNumberTask extends DefaultTask {
         props.setProperty("buildNumber", currentBuildNumber.toString())
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         propsFile.withOutputStream { 
             props.store(it, "Build number updated") 
 >>>>>>> 4338242 (feat: Add build number management and update mod metadata in gradle.properties)
 =======
         propsFile.withOutputStream { stream ->
+=======
+        getOutputFile().getAsFile().get().withOutputStream { stream ->
+>>>>>>> 14c315a (feat: Improve build number handling and remove legacy multi-project configuration)
             props.store(stream, "Build number updated") 
 >>>>>>> d6a7fa7 (feat: Enhance build number management with configuration cache compatibility)
         }
@@ -791,6 +808,8 @@ build.finalizedBy tasks.incrementBuildNumber
 // Register the task
 tasks.register('incrementBuildNumber', IncrementBuildNumberTask) {
     description = 'Increments the build number'
+    propertiesFile.set(file("buildnumber.properties"))
+    outputFile.set(file("buildnumber.properties"))
 }
 
 // Make sure the build number is incremented when we build
