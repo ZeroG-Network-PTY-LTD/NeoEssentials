@@ -585,6 +585,7 @@ public class PermissionUtil {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
@@ -656,4 +657,7 @@ public class PermissionUtil {
         return false;
     }
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+  
+>>>>>>> 02542de (refactor: Simplify permission checks in AdminPanelCommand; add checkPlayerPermission method in PermissionUtil)
 }
