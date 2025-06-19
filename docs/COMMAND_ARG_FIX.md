@@ -9,6 +9,7 @@ ResourceKey[minecraft:command_argument_type / neoessentials:String_to_boolean]
 ```
 
 ## Root Cause
+<<<<<<< HEAD
 Two issues were identified:
 
 1. First issue (connection loss):
@@ -21,6 +22,14 @@ Two issues were identified:
 
 ## Fix Applied
 1. Ensured the command argument type registration key in `ModArgumentTypes.java` is properly lowercase as `"string_to_boolean"` (Minecraft resource locations only allow lowercase a-z, numbers 0-9, and a few special characters like /._-)
+=======
+The issue was related to a capitalization mismatch in the command argument type registration:
+1. The server was looking for a registry key with capitalization `"String_to_boolean"`
+2. The mod was registering it as `"string_to_boolean"` (all lowercase)
+
+## Fix Applied
+1. Changed the command argument type registration key in `ModArgumentTypes.java` from `"string_to_boolean"` to `"StringToBoolean"`
+>>>>>>> f49502a (fix: Update build process and fix command argument registration issues to prevent connection loss)
 2. Removed the redundant direct registration via `ArgumentTypeInfos.registerByClass()` in the common setup method, which could have been causing conflicting registrations
 3. Fixed a formatting issue in `PlayerCommands.java` related to the command registration
 
