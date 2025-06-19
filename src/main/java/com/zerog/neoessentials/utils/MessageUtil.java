@@ -1,11 +1,10 @@
 package com.zerog.neoessentials.utils;
 
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.ChatFormatting;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -111,10 +110,9 @@ public class MessageUtil {
      * @param component The component to add hover text to
      * @param hoverText The hover text to add
      * @return The component with hover text
-     */
-    public static MutableComponent addHoverText(MutableComponent component, MutableComponent hoverText) {
-        return component.withStyle(style -> style.withHoverEvent(new net.minecraft.network.chat.HoverEvent(
-                net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT, 
+     */    public static MutableComponent addHoverText(MutableComponent component, MutableComponent hoverText) {
+        return component.withStyle(style -> style.withHoverEvent(new HoverEvent(
+                HoverEvent.Action.SHOW_TEXT, 
                 hoverText)));
     }
     
@@ -126,8 +124,8 @@ public class MessageUtil {
      * @return The clickable component
      */
     public static MutableComponent makeClickableCommand(MutableComponent component, String command) {
-        return component.withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent(
-                net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, 
+        return component.withStyle(style -> style.withClickEvent(new ClickEvent(
+                ClickEvent.Action.RUN_COMMAND, 
                 command)));
     }
     
@@ -139,8 +137,8 @@ public class MessageUtil {
      * @return The clickable component
      */
     public static MutableComponent makeSuggestCommand(MutableComponent component, String command) {
-        return component.withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent(
-                net.minecraft.network.chat.ClickEvent.Action.SUGGEST_COMMAND, 
+        return component.withStyle(style -> style.withClickEvent(new ClickEvent(
+                ClickEvent.Action.SUGGEST_COMMAND, 
                 command)));
     }
     
