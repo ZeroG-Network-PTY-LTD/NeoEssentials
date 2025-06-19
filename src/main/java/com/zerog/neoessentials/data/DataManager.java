@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.data;
 
 import com.zerog.neoessentials.NeoEssentials;
+import com.zerog.neoessentials.ui.TablistManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 
@@ -71,11 +72,44 @@ public class DataManager {    private UserManager userManager;
      * This is called by NeoEssentials after the data manager is created
      */
     public void initializeManagers() {
-        // Initialize any managers that need special initialization
-        NeoEssentials.LOGGER.info("Initializing data managers");
+        NeoEssentials.LOGGER.info("Initializing managers");
         
-        // Load data for all managers that need it
-        loadFromStorage();
+        // Create manager instances if they don't exist
+        if (userManager == null) {
+            userManager = new UserManager();
+        }
+        
+        if (economyManager == null) {
+            economyManager = new EconomyManager();
+        }
+        
+        if (homeManager == null) {
+            homeManager = new HomeManager();
+        }
+        
+        if (warpManager == null) {
+            warpManager = new WarpManager();
+        }
+        
+        if (spawnManager == null) {
+            spawnManager = new SpawnManager();
+        }
+        
+        if (kitManager == null) {
+            kitManager = new KitManager();
+        }
+        
+        if (jailManager == null) {
+            jailManager = new JailManager();
+        }
+        
+        if (mailManager == null) {
+            mailManager = new MailManager();
+        }
+        
+        if (tablistManager == null && NeoEssentials.getInstance().getConfigManager().isTablistEnabled()) {
+            tablistManager = new TablistManager();
+        }
     }
     
     /**
@@ -84,14 +118,11 @@ public class DataManager {    private UserManager userManager;
     public void loadFromStorage() {
         NeoEssentials.LOGGER.info("Loading data from storage");
         
-        // Load data for each manager
-        economyManager.loadData();
-        homeManager.loadData();
-        warpManager.loadData();
-        spawnManager.loadData();
-        kitManager.loadData();
-        jailManager.loadData();
-        mailManager.loadData();
+        // Most managers automatically load their data in their constructor
+        // or have specific load methods that are already called
+        
+        // Simply reinitialize managers to refresh data
+        initializeManagers();
     }
     
     /**
