@@ -5,9 +5,13 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.NeoEssentials;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.data.EconomyTransaction;
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+import com.zerog.neoessentials.data.EconomyTransaction;
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -15,11 +19,17 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -285,6 +295,7 @@ public class EconomyCommands {
                                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                                             double amount = DoubleArgumentType.getDouble(context, "amount");
 <<<<<<< HEAD
+<<<<<<< HEAD
                                             String reason = "Admin action by " + source.getScoreboardName();
                                             
                                             return handleAdminGive(source, target, amount, reason);
@@ -301,19 +312,27 @@ public class EconomyCommands {
                                                 })
                                         )
 =======
+=======
+                                            String reason = "Admin action by " + source.getScoreboardName();
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
                                             
-                                            // Give money to player
-                                            double newBalance = NeoEssentials.getInstance().getDataManager().getEconomyManager()
-                                                    .addBalance(target.getUUID(), amount);
-                                            
-                                            MessageUtil.sendSuccessMessage(source, "Added $" + String.format("%.2f", amount) + " to " + 
-                                                    target.getScoreboardName() + "'s balance. New balance: $" + String.format("%.2f", newBalance));
-                                            MessageUtil.sendMessage(target, "You received $" + String.format("%.2f", amount) + " from an admin. " +
-                                                    "New balance: $" + String.format("%.2f", newBalance));
-                                            
-                                            return 1;
+                                            return handleAdminGive(source, target, amount, reason);
                                         })
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                                        .then(
+                                            Commands.argument("reason", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    ServerPlayer source = context.getSource().getPlayerOrException();
+                                                    ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                                                    double amount = DoubleArgumentType.getDouble(context, "amount");
+                                                    String reason = StringArgumentType.getString(context, "reason");
+                                                    
+                                                    return handleAdminGive(source, target, amount, reason);
+                                                })
+                                        )
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
                                 )
                         )
                 )
@@ -328,6 +347,7 @@ public class EconomyCommands {
                                             ServerPlayer source = context.getSource().getPlayerOrException();
                                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                                             double amount = DoubleArgumentType.getDouble(context, "amount");
+<<<<<<< HEAD
 <<<<<<< HEAD
                                             String reason = "Admin action by " + source.getScoreboardName();
                                             
@@ -345,28 +365,27 @@ public class EconomyCommands {
                                                 })
                                         )
 =======
+=======
+                                            String reason = "Admin action by " + source.getScoreboardName();
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
                                             
-                                            // Take money from player
-                                            boolean success = NeoEssentials.getInstance().getDataManager().getEconomyManager()
-                                                    .removeBalance(target.getUUID(), amount);
-                                            
-                                            if (success) {
-                                                double newBalance = NeoEssentials.getInstance().getDataManager().getEconomyManager()
-                                                        .getBalance(target.getUUID());
-                                                
-                                                MessageUtil.sendSuccessMessage(source, "Removed $" + String.format("%.2f", amount) + " from " + 
-                                                        target.getScoreboardName() + "'s balance. New balance: $" + String.format("%.2f", newBalance));
-                                                MessageUtil.sendMessage(target, "An admin removed $" + String.format("%.2f", amount) + " from your account. " +
-                                                        "New balance: $" + String.format("%.2f", newBalance));
-                                                
-                                                return 1;
-                                            } else {
-                                                MessageUtil.sendErrorMessage(source, target.getScoreboardName() + " does not have enough funds. " +
-                                                        "Current balance: $" + String.format("%.2f", NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID())));
-                                                return 0;
-                                            }
+                                            return handleAdminTake(source, target, amount, reason);
                                         })
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                                        .then(
+                                            Commands.argument("reason", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    ServerPlayer source = context.getSource().getPlayerOrException();
+                                                    ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                                                    double amount = DoubleArgumentType.getDouble(context, "amount");
+                                                    String reason = StringArgumentType.getString(context, "reason");
+                                                    
+                                                    return handleAdminTake(source, target, amount, reason);
+                                                })
+                                        )
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
                                 )
                         )
                 )
@@ -381,6 +400,7 @@ public class EconomyCommands {
                                             ServerPlayer source = context.getSource().getPlayerOrException();
                                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                                             double amount = DoubleArgumentType.getDouble(context, "amount");
+<<<<<<< HEAD
 <<<<<<< HEAD
                                             String reason = "Admin action by " + source.getScoreboardName();
                                             
@@ -470,6 +490,88 @@ public class EconomyCommands {
                                             MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + "'s balance to $" + String.format("%.2f", amount));                                            MessageUtil.sendMessage(target, "Your balance was set to $" + String.format("%.2f", amount) + " by an admin");
                                             return 1;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+                                            String reason = "Admin action by " + source.getScoreboardName();
+                                            
+                                            return handleAdminSet(source, target, amount, reason);
+                                        })
+                                        .then(
+                                            Commands.argument("reason", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    ServerPlayer source = context.getSource().getPlayerOrException();
+                                                    ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                                                    double amount = DoubleArgumentType.getDouble(context, "amount");
+                                                    String reason = StringArgumentType.getString(context, "reason");
+                                                    
+                                                    return handleAdminSet(source, target, amount, reason);
+                                                })
+                                        )
+                                )
+                        )
+                )
+        );
+
+        // Register transaction history command
+        dispatcher.register(
+            Commands.literal("ecotrans")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.ecotrans"))
+                .executes(context -> {
+                    // Show own transaction history
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    displayTransactionHistory(player, player.getUUID(), 1, 10);
+                    return 1;
+                })
+                .then(
+                    Commands.argument("page", StringArgumentType.word())
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            String pageStr = StringArgumentType.getString(context, "page");
+                            
+                            try {
+                                int page = Integer.parseInt(pageStr);
+                                if (page < 1) page = 1;
+                                
+                                // Show own transaction history with specified page
+                                displayTransactionHistory(player, player.getUUID(), page, 10);
+                                return 1;
+                            } catch (NumberFormatException e) {
+                                MessageUtil.sendErrorMessage(player, "Invalid page number: " + pageStr);
+                                return 0;
+                            }
+                        })
+                )
+                .then(
+                    Commands.literal("view")
+                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.ecotrans.admin"))
+                        .then(
+                            Commands.argument("player", EntityArgument.player())
+                                .executes(context -> {
+                                    ServerPlayer source = context.getSource().getPlayerOrException();
+                                    ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                                    
+                                    // Show transaction history for specified player
+                                    displayTransactionHistory(source, target.getUUID(), 1, 10);
+                                    return 1;
+                                })
+                                .then(
+                                    Commands.argument("page", StringArgumentType.word())
+                                        .executes(context -> {
+                                            ServerPlayer source = context.getSource().getPlayerOrException();
+                                            ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                                            String pageStr = StringArgumentType.getString(context, "page");
+                                            
+                                            try {
+                                                int page = Integer.parseInt(pageStr);
+                                                if (page < 1) page = 1;
+                                                
+                                                // Show transaction history for specified player with page
+                                                displayTransactionHistory(source, target.getUUID(), page, 10);
+                                                return 1;
+                                            } catch (NumberFormatException e) {
+                                                MessageUtil.sendErrorMessage(source, "Invalid page number: " + pageStr);
+                                                return 0;
+                                            }
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
                                         })
                                 )
                         )
@@ -477,6 +579,9 @@ public class EconomyCommands {
         );
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
         // Register /ecohelp command for help with economy commands
         dispatcher.register(
             Commands.literal("ecohelp")
@@ -502,10 +607,13 @@ public class EconomyCommands {
                 )
         );
         
+<<<<<<< HEAD
         NeoEssentials.LOGGER.info("Registered economy commands");
     }
       /**
 =======
+=======
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
         NeoEssentials.LOGGER.info("Registered economy commands");
     }
     
@@ -815,9 +923,12 @@ public class EconomyCommands {
         MessageUtil.sendMessage(target, "Your balance was set to " + formattedAmount + " by an admin");
         
         return 1;
+<<<<<<< HEAD
 =======
             MessageUtil.sendMessage(player, (i + 1) + ". " + playerName + ": $" + String.format("%.2f", entry.getValue()));
         }
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
     }
 }
