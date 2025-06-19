@@ -300,48 +300,5 @@ public class PermissionUtil {
         permissionCache.clear();
         lastAccessTime.clear();
     }
-    
-    /**
-     * Check if a player has a specific permission.
-     * Will check LuckPerms, FTB Ranks, and then fall back to config defaults.
-     *
-     * @param player The player to check
-     * @param permission The permission string to check
-     * @return True if the player has the permission, false otherwise
-     */
-    public static boolean hasPermission(ServerPlayer player, String permission) {
-        boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
-        
-        // Operators always have permission
-        if (player.hasPermissions(2)) {
-            if (debug) {
-                NeoEssentials.LOGGER.debug("Permission '{}' granted to operator {}", 
-                    permission, player.getScoreboardName());
-            }
-            return true;
-        }
-        
-        UUID playerUUID = player.getUUID();
-        
-        // Check cache first
-        PermissionResult cachedResult = getCachedPermission(playerUUID, permission);
-        if (cachedResult != null) {
-            return cachedResult.result;
-        }
-        
-        // Try LuckPerms first (most common)
-        if (checkLuckPermsPermission(playerUUID, permission)) {
-            cachePermission(playerUUID, permission, true);
-            return true;
-        }
-        
-        // No permission systems gave access - deny
-        if (debug) {
-            NeoEssentials.LOGGER.debug("Permission '{}' denied for player {}", 
-                permission, player.getScoreboardName());
-        }
-        
-        cachePermission(playerUUID, permission, false);
-        return false;
-    }
+  
 }
