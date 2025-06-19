@@ -48,8 +48,9 @@ public class NeoEssentials {
         this.modContainer = modContainer;
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
-        // Register config loading event handler
+        // Register config loading event handlers
         modEventBus.addListener(this::onConfigLoad);
+        modEventBus.addListener(this::onConfigReady);
 
         // Register custom command argument types
         com.zerog.neoessentials.init.ModArgumentTypes.register(modEventBus);
@@ -91,6 +92,16 @@ public class NeoEssentials {
                     dataManager.reloadFromStorage();
                 }
             }
+        }
+    }
+
+    /**
+     * Config loading complete event handler
+     */
+    private void onConfigReady(final ModConfigEvent.Loading event) {
+        LOGGER.info("Config loaded: " + event.getConfig().getFileName());
+        if (configManager != null) {
+            configManager.initializeConfigs();
         }
     }
 
