@@ -14,9 +14,13 @@ public class ModConfigManager {
     private final NeoEssentials mod;
     private TablistConfig tablistConfig; // Legacy JSON-based config, to be migrated later
     
+<<<<<<< HEAD
     // Compatibility config instance (legacy format)
     private CompatNeoEssentialsConfig compatConfig;
       /**
+=======
+    /**
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
      * Creates a new config manager
      * 
      * @param mod The mod instance
@@ -28,11 +32,15 @@ public class ModConfigManager {
         // Load legacy tablist config
         tablistConfig = new TablistConfig();
         tablistConfig.load();
+<<<<<<< HEAD
         
         // Create compatibility config
         compatConfig = new CompatNeoEssentialsConfig();
         
         // Register all configuration files
+=======
+          // Register all configuration files
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
         container.registerConfig(ModConfig.Type.COMMON, GeneralConfig.SPEC, "neoessentials/general.toml");
         container.registerConfig(ModConfig.Type.COMMON, EconomyConfig.SPEC, "neoessentials/economy.toml");
         container.registerConfig(ModConfig.Type.COMMON, HomeConfig.SPEC, "neoessentials/homes.toml");
@@ -125,6 +133,7 @@ public class ModConfigManager {
      */
     public ModConfigSpec getSpec() {
         return DatabaseTomlConfig.SPEC;
+<<<<<<< HEAD
     }    /**
      * Gets the compatibility config that adapts TOML values to the old config structure
      * @return The compatibility config
@@ -157,5 +166,7 @@ public class ModConfigManager {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to initialize configs", e);
         }
+=======
+>>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
     }
 }
