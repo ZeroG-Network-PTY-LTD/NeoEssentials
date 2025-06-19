@@ -43,8 +43,7 @@ public class SQLiteStorageHandler implements StorageHandler {
                 .create();
         connectionManager = DatabaseConnectionManager.getInstance();
     }
-    
-    @Override
+      @Override
     public void initialize() {
         try {
             // Initialize the connection manager
@@ -56,11 +55,17 @@ public class SQLiteStorageHandler implements StorageHandler {
             // Test connection
             try (Connection connection = connectionManager.getConnection()) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                 // Connection test successful if we get here
                 NeoEssentials.LOGGER.info("Database connection test successful");
             }
 =======
 >>>>>>> 5791cf5 (feat: Implement connection pooling with HikariCP for improved database performance and reliability)
+=======
+                // Connection test successful if we get here
+                NeoEssentials.LOGGER.info("Database connection test successful");
+            }
+>>>>>>> 53102f2 (feat: Refactor SQLiteStorageHandler for improved connection management and logging; add comprehensive kit system documentation)
             
             // Create tables
             createTables();
@@ -69,15 +74,17 @@ public class SQLiteStorageHandler implements StorageHandler {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to initialize SQLite storage handler: {}", e.getMessage());
         }
-    }
-    
-    @Override
+    }    @Override
     public void shutdown() {
         connectionManager.close();
         NeoEssentials.LOGGER.info("SQLite storage handler shut down");
     }
+<<<<<<< HEAD
     
     private void createTables() {
+=======
+      private void createTables() {
+>>>>>>> 53102f2 (feat: Refactor SQLiteStorageHandler for improved connection management and logging; add comprehensive kit system documentation)
         try (Connection connection = connectionManager.getConnection();
              Statement stmt = connection.createStatement()) {
             // Create homes table
