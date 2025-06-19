@@ -53,6 +53,13 @@ public class WarpCommands {
                 .executes(this::executeWarpList)
         );
         
+        // /warphelp - Show help for warp commands
+        dispatcher.register(
+            Commands.literal("warphelp")
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.help"))
+                .executes(this::executeWarpHelp)
+        );
+        
         // /setwarp <n> - Set a warp at the player's location
         dispatcher.register(
             Commands.literal("setwarp")
@@ -156,20 +163,55 @@ public class WarpCommands {
             context.getSource().sendFailure(Component.literal("No warps have been set"));
             return 0;
         }
-        
-        MutableComponent message = Component.literal("Available warps: ");
+          MutableComponent message = Component.literal("§2Available warps: ");
         
         boolean first = true;
         for (String warpName : warps.keySet()) {
             if (!first) {
-                message.append(Component.literal(", "));
+                message.append(Component.literal("§7, "));
             }
-            message.append(Component.literal(warpName));
+            
+            // Create clickable warp name with hover info
+            MutableComponent warpComponent = Component.literal("§b" + warpName);
+            
+            // Add hover text
+            MutableComponent hoverText = Component.literal("§eClick to teleport to §b" + warpName);
+            WarpManager.WarpLocation warpLocation = warps.get(warpName);
+            
+            if (warpLocation != null) {
+                hoverText.append(Component.literal("\n§7Dimension: §f" + warpLocation.getDimension()));
+                hoverText.append(Component.literal("\n§7Location: §f" + 
+                    (int)warpLocation.getX() + ", " + 
+                    (int)warpLocation.getY() + ", " + 
+                    (int)warpLocation.getZ()));
+            }
+            
+            warpComponent = MessageUtil.addHoverText(warpComponent, hoverText);
+            
+            // Add click event to teleport to the warp
+            warpComponent = MessageUtil.makeClickableCommand(warpComponent, "/warp " + warpName);
+            
+            message.append(warpComponent);
             first = false;
         }
         
-        NeoEssentials.LOGGER.debug("Sending warp list ({} warps) to player {}", warps.size(), player.getScoreboardName());
+        NeoEssentials.LOGGER.debug("Sending interactive warp list ({} warps) to player {}", warps.size(), player.getScoreboardName());
+        
+        // Add a heading
+        MessageUtil.sendInfo(player, Component.literal("§2§l====== §r§6Warp List §2§l======"));
+        
+        // Send the warp list
         MessageUtil.sendInfo(player, message);
+        
+        // Add clickable help button
+        MutableComponent helpMessage = Component.literal("§7Type ");
+        MutableComponent helpButton = Component.literal("§e/warphelp");
+        helpButton = MessageUtil.makeClickableCommand(helpButton, "/warphelp");
+        helpButton = MessageUtil.addHoverText(helpButton, Component.literal("§7Click to view warp command help"));
+        helpMessage.append(helpButton);
+        helpMessage.append(Component.literal(" §7for more information."));
+        
+        MessageUtil.sendInfo(player, helpMessage);
         return 1;
     }
     
@@ -402,5 +444,51 @@ public class WarpCommands {
         
         // Teleport the player
         return TeleportUtil.teleport(player, targetLevel, x, y, z, yaw, pitch);
+    }
+
+    /**
+     * Execute the /warphelp command
+     * 
+     * @param context The command context
+     * @return Command result
+     */
+    private int executeWarpHelp(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        
+        NeoEssentials.LOGGER.debug("Player {} is requesting warp help", player.getScoreboardName());
+        
+        // Header
+        MessageUtil.sendInfo(player, Component.literal("§2§l====== §r§6Warp Commands §2§l======"));
+        
+        // Commands list with clickable examples
+        MutableComponent warpCmd = Component.literal("§b/warp <name>");
+        warpCmd = MessageUtil.addHoverText(warpCmd, Component.literal("§7Teleport to a warp"));
+        MessageUtil.sendInfo(player, warpCmd.append(Component.literal(" §7- Teleport to a warp location")));
+        
+        MutableComponent warpsCmd = Component.literal("§b/warps");
+        warpsCmd = MessageUtil.makeClickableCommand(warpsCmd, "/warps");
+        warpsCmd = MessageUtil.addHoverText(warpsCmd, Component.literal("§7List all available warps\n§eClick to execute"));
+        MessageUtil.sendInfo(player, warpsCmd.append(Component.literal(" §7- List all available warps")));
+        
+        // Only show admin commands to players with appropriate permissions
+        if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.set")) {
+            MutableComponent setWarpCmd = Component.literal("§b/setwarp <name>");
+            setWarpCmd = MessageUtil.addHoverText(setWarpCmd, Component.literal("§7Create a new warp at your location"));
+            MessageUtil.sendInfo(player, setWarpCmd.append(Component.literal(" §7- Create a new warp at your location")));
+        }
+        
+        if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.delete")) {
+            MutableComponent delWarpCmd = Component.literal("§b/delwarp <name>");
+            delWarpCmd = MessageUtil.addHoverText(delWarpCmd, Component.literal("§7Delete an existing warp"));
+            MessageUtil.sendInfo(player, delWarpCmd.append(Component.literal(" §7- Delete an existing warp")));
+        }
+        
+        if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.player")) {
+            MutableComponent warpPlayerCmd = Component.literal("§b/warpplayer <player> <warp>");
+            warpPlayerCmd = MessageUtil.addHoverText(warpPlayerCmd, Component.literal("§7Teleport another player to a warp"));
+            MessageUtil.sendInfo(player, warpPlayerCmd.append(Component.literal(" §7- Teleport another player to a warp")));
+        }
+        
+        return 1;
     }
 }
