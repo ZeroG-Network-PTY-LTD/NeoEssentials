@@ -43,7 +43,8 @@ public class SQLiteStorageHandler implements StorageHandler {
                 .create();
         connectionManager = DatabaseConnectionManager.getInstance();
     }
-      @Override
+    
+    @Override
     public void initialize() {
         try {
             // Initialize the connection manager
@@ -74,17 +75,24 @@ public class SQLiteStorageHandler implements StorageHandler {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to initialize SQLite storage handler: {}", e.getMessage());
         }
-    }    @Override
+    }
+    
+    @Override
     public void shutdown() {
         connectionManager.close();
         NeoEssentials.LOGGER.info("SQLite storage handler shut down");
     }
+<<<<<<< HEAD
 <<<<<<< HEAD
     
     private void createTables() {
 =======
       private void createTables() {
 >>>>>>> 53102f2 (feat: Refactor SQLiteStorageHandler for improved connection management and logging; add comprehensive kit system documentation)
+=======
+    
+    private void createTables() {
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
         try (Connection connection = connectionManager.getConnection();
              Statement stmt = connection.createStatement()) {
             // Create homes table
@@ -129,6 +137,7 @@ public class SQLiteStorageHandler implements StorageHandler {
                 "CREATE TABLE IF NOT EXISTS economy_transactions (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "uuid TEXT NOT NULL, " +
+<<<<<<< HEAD
                 "other_uuid TEXT, " +
                 "transaction_type TEXT NOT NULL, " +
                 "amount REAL NOT NULL, " +
@@ -167,6 +176,16 @@ public class SQLiteStorageHandler implements StorageHandler {
                 ")"
             );
             
+=======
+                "transaction_type TEXT NOT NULL, " +
+                "amount TEXT NOT NULL, " +
+                "description TEXT, " +
+                "timestamp INTEGER NOT NULL, " +
+                "FOREIGN KEY (uuid) REFERENCES economy(uuid)" +
+                ")"
+            );
+            
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
             NeoEssentials.LOGGER.info("Database tables created");
         } catch (SQLException e) {
             NeoEssentials.LOGGER.error("Failed to create database tables: {}", e.getMessage());
@@ -214,10 +233,15 @@ public class SQLiteStorageHandler implements StorageHandler {
             return true;
         } catch (SQLException e) {
             try (Connection connection = connectionManager.getConnection()) {
+<<<<<<< HEAD
                 if (connection != null) {
                     connection.rollback();
                     connection.setAutoCommit(true);
                 }
+=======
+                connection.rollback();
+                connection.setAutoCommit(true);
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
             } catch (SQLException ex) {
                 NeoEssentials.LOGGER.error("Failed to rollback transaction: {}", ex.getMessage());
             }
@@ -243,8 +267,15 @@ public class SQLiteStorageHandler implements StorageHandler {
                     int y = rs.getInt("y");
                     int z = rs.getInt("z");
                     float pitch = rs.getFloat("pitch");
+<<<<<<< HEAD
                     float yaw = rs.getFloat("yaw");                    BlockPos pos = new BlockPos(x, y, z);
                     homes.put(homeName, new HomeData(dimension, pos, pitch, yaw));
+=======
+                    float yaw = rs.getFloat("yaw");
+                    
+                    BlockPos pos = new BlockPos(x, y, z);
+                    homes.put(homeName, new HomeData(pos, pitch, yaw, dimension));
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
                 }
             }
         } catch (SQLException e) {
@@ -253,6 +284,7 @@ public class SQLiteStorageHandler implements StorageHandler {
         
         return homes;
     }
+<<<<<<< HEAD
       @Override
     public boolean saveWarps(Map<String, WarpData> warps) {
 <<<<<<< HEAD
@@ -267,17 +299,26 @@ public class SQLiteStorageHandler implements StorageHandler {
         
         try {
             // Check if the table exists
+=======
+    
+    @Override
+    public boolean saveWarpData(Map<String, WarpData> warps) {
+        try (Connection connection = connectionManager.getConnection()) {
+            // First check if the table exists
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
             boolean tableExists = false;
             try (Statement checkStmt = connection.createStatement()) {
-                ResultSet tables = checkStmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='warps'");
-                tableExists = tables.next();
+                try (ResultSet rs = checkStmt.executeQuery(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name='warps'")) {
+                    tableExists = rs.next();
+                }
             }
             
+            // Create the table if it doesn't exist
             if (!tableExists) {
-                NeoEssentials.LOGGER.warn("The 'warps' table does not exist in SQLite database. Creating it now.");
                 try (Statement createStmt = connection.createStatement()) {
                     createStmt.execute(
-                        "CREATE TABLE IF NOT EXISTS warps (" +
+                        "CREATE TABLE warps (" +
                         "name TEXT PRIMARY KEY, " +
                         "dimension TEXT NOT NULL, " +
                         "x INTEGER NOT NULL, " +
@@ -297,16 +338,17 @@ public class SQLiteStorageHandler implements StorageHandler {
             
             // Delete all existing warps
             try (Statement stmt = connection.createStatement()) {
-                int deletedCount = stmt.executeUpdate("DELETE FROM warps");
-                NeoEssentials.LOGGER.debug("Deleted {} existing warps from SQLite database", deletedCount);
+                stmt.executeUpdate("DELETE FROM warps");
             }
             
             // Insert new warps
-            int successCount = 0;
             try (PreparedStatement stmt = connection.prepareStatement(
                     "INSERT INTO warps (name, dimension, x, y, z, pitch, yaw, permission) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
                 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
                 for (Map.Entry<String, WarpData> entry : warps.entrySet()) {
                     String warpName = entry.getKey();
                     WarpData warp = entry.getValue();
@@ -325,6 +367,7 @@ public class SQLiteStorageHandler implements StorageHandler {
                     if (permission != null && !permission.isEmpty()) {
                         stmt.setString(8, permission);
                     } else {
+<<<<<<< HEAD
                         stmt.setNull(8, Types.VARCHAR);
                     }
                     
@@ -353,6 +396,12 @@ public class SQLiteStorageHandler implements StorageHandler {
                         NeoEssentials.LOGGER.error("Error saving warp '{}' to SQLite: {}", warp.getName(), e.getMessage());
                     }
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+                        stmt.setNull(8, java.sql.Types.VARCHAR);
+                    }
+                    
+                    stmt.executeUpdate();
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
                 }
             }
             
@@ -360,14 +409,17 @@ public class SQLiteStorageHandler implements StorageHandler {
             connection.commit();
             connection.setAutoCommit(true);
             
-            NeoEssentials.LOGGER.info("Successfully saved {}/{} warps to SQLite database", successCount, warps.size());
             return true;
         } catch (SQLException e) {
+<<<<<<< HEAD
 <<<<<<< HEAD
             try (Connection connection = connectionManager.getConnection()) {
 =======
             try {
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+            try (Connection connection = connectionManager.getConnection()) {
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
                 if (connection != null) {
                     connection.rollback();
                     connection.setAutoCommit(true);
@@ -377,17 +429,23 @@ public class SQLiteStorageHandler implements StorageHandler {
             }
             
 <<<<<<< HEAD
+<<<<<<< HEAD
             NeoEssentials.LOGGER.error("Failed to save warp data: {}", e.getMessage());
 =======
             NeoEssentials.LOGGER.error("Failed to save warps to SQLite: {}", e.getMessage(), e);
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+            NeoEssentials.LOGGER.error("Failed to save warp data: {}", e.getMessage());
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
             return false;
         }
     }
-      @Override
-    public Map<String, WarpData> loadWarps() {
+    
+    @Override
+    public Map<String, WarpData> loadWarpData() {
         Map<String, WarpData> warps = new HashMap<>();
         
+<<<<<<< HEAD
 <<<<<<< HEAD
         try (Connection connection = connectionManager.getConnection();
              Statement stmt = connection.createStatement()) {
@@ -430,11 +488,25 @@ public class SQLiteStorageHandler implements StorageHandler {
         
         try (Statement stmt = connection.createStatement()) {
             ResultSet rs = stmt.executeQuery("SELECT name, dimension, x, y, z, pitch, yaw, permission FROM warps");
+=======
+        try (Connection connection = connectionManager.getConnection();
+             Statement stmt = connection.createStatement()) {
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
             
-            int count = 0;
-            while (rs.next()) {
-                try {
-                    String name = rs.getString("name");
+            // First check if the table exists
+            boolean tableExists = false;
+            try (ResultSet rs = stmt.executeQuery(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='warps'")) {
+                tableExists = rs.next();
+            }
+            
+            if (!tableExists) {
+                return warps;
+            }
+            
+            try (ResultSet rs = stmt.executeQuery("SELECT name, dimension, x, y, z, pitch, yaw, permission FROM warps")) {
+                while (rs.next()) {
+                    String warpName = rs.getString("name");
                     String dimension = rs.getString("dimension");
                     int x = rs.getInt("x");
                     int y = rs.getInt("y");
@@ -444,8 +516,9 @@ public class SQLiteStorageHandler implements StorageHandler {
                     String permission = rs.getString("permission");
                     
                     BlockPos pos = new BlockPos(x, y, z);
-                    warps.put(name.toLowerCase(), new WarpData(name, dimension, pos, pitch, yaw, permission));
+                    WarpData warp = new WarpData(pos, pitch, yaw, dimension);
                     
+<<<<<<< HEAD
                     NeoEssentials.LOGGER.debug("Loaded warp '{}' from SQLite at [{}, {}, {}] in dimension '{}'",
                         name, x, y, z, dimension);
                     count++;
@@ -491,10 +564,25 @@ public class SQLiteStorageHandler implements StorageHandler {
         } catch (SQLException e) {
             NeoEssentials.LOGGER.error("Failed to save economy data for {}: {}", uuid, e.getMessage());
             return false;
+=======
+                    // Set permission if it's not null
+                    if (permission != null && !permission.isEmpty()) {
+                        warp.setPermission(permission);
+                    }
+                    
+                    warps.put(warpName, warp);
+                }
+            }
+        } catch (SQLException e) {
+            NeoEssentials.LOGGER.error("Failed to load warp data: {}", e.getMessage());
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
         }
+        
+        return warps;
     }
     
     @Override
+<<<<<<< HEAD
     public EconomyData loadEconomyData(UUID uuid) {
         try (Connection connection = connectionManager.getConnection();
              PreparedStatement stmt = connection.prepareStatement("SELECT balance FROM economy WHERE uuid = ?")) {
@@ -522,18 +610,28 @@ public class SQLiteStorageHandler implements StorageHandler {
     
     @Override
     public boolean saveKits(Map<String, KitManager.Kit> kits, Map<UUID, Map<String, Long>> cooldowns) {
+=======
+    public boolean saveEconomyData(Map<UUID, EconomyData> economyData) {
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
         try (Connection connection = connectionManager.getConnection()) {
             // Start transaction
             connection.setAutoCommit(false);
             
+<<<<<<< HEAD
             // Delete all existing kits and cooldowns
             try (Statement stmt = connection.createStatement()) {
                 stmt.executeUpdate("DELETE FROM kits");
                 stmt.executeUpdate("DELETE FROM kit_cooldowns");
+=======
+            // Delete all existing economy data
+            try (Statement stmt = connection.createStatement()) {
+                stmt.executeUpdate("DELETE FROM economy");
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
             }
             
-            // Insert kits
+            // Insert new economy data
             try (PreparedStatement stmt = connection.prepareStatement(
+<<<<<<< HEAD
                     "INSERT INTO kits (name, cooldown, permission, price, items_json) VALUES (?, ?, ?, ?, ?)")) {
                 
                 for (Map.Entry<String, KitManager.Kit> entry : kits.entrySet()) {
@@ -562,11 +660,22 @@ public class SQLiteStorageHandler implements StorageHandler {
                     
                     stmt.setDouble(4, kit.getPrice());
                     stmt.setString(5, itemsArray.toString());
+=======
+                    "INSERT INTO economy (uuid, balance) VALUES (?, ?)")) {
+                
+                for (Map.Entry<UUID, EconomyData> entry : economyData.entrySet()) {
+                    UUID uuid = entry.getKey();
+                    EconomyData data = entry.getValue();
+                    
+                    stmt.setString(1, uuid.toString());
+                    stmt.setString(2, data.getBalance().toPlainString());
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
                     
                     stmt.executeUpdate();
                 }
             }
             
+<<<<<<< HEAD
             // Insert cooldowns
             if (!cooldowns.isEmpty()) {
                 try (PreparedStatement stmt = connection.prepareStatement(
@@ -590,6 +699,8 @@ public class SQLiteStorageHandler implements StorageHandler {
                 }
             }
             
+=======
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
             // Commit transaction
             connection.commit();
             connection.setAutoCommit(true);
@@ -597,25 +708,34 @@ public class SQLiteStorageHandler implements StorageHandler {
             return true;
         } catch (SQLException e) {
             try (Connection connection = connectionManager.getConnection()) {
+<<<<<<< HEAD
                 if (connection != null) {
                     connection.rollback();
                     connection.setAutoCommit(true);
                 }
+=======
+                connection.rollback();
+                connection.setAutoCommit(true);
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
             } catch (SQLException ex) {
                 NeoEssentials.LOGGER.error("Failed to rollback transaction: {}", ex.getMessage());
             }
             
+<<<<<<< HEAD
             NeoEssentials.LOGGER.error("Failed to save kit data: {}", e.getMessage());
+=======
+            NeoEssentials.LOGGER.error("Failed to save economy data: {}", e.getMessage());
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
             return false;
         }
     }
     
     @SuppressWarnings("unchecked")
     @Override
-    public List<Object> loadKits() {
-        Map<String, KitManager.Kit> kits = new HashMap<>();
-        Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
+    public Map<UUID, EconomyData> loadEconomyData() {
+        Map<UUID, EconomyData> economyData = new HashMap<>();
         
+<<<<<<< HEAD
         try (Connection connection = connectionManager.getConnection()) {
             // First check if the kits table exists
             boolean kitsTableExists = false;
@@ -696,15 +816,47 @@ public class SQLiteStorageHandler implements StorageHandler {
             }
         } catch (SQLException e) {
             NeoEssentials.LOGGER.error("Failed to load kit data: {}", e.getMessage());
+=======
+        try (Connection connection = connectionManager.getConnection();
+             Statement stmt = connection.createStatement()) {
+            
+            // First check if the table exists
+            boolean tableExists = false;
+            try (ResultSet rs = stmt.executeQuery(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='economy'")) {
+                tableExists = rs.next();
+            }
+            
+            if (!tableExists) {
+                return economyData;
+            }
+            
+            try (ResultSet rs = stmt.executeQuery("SELECT uuid, balance FROM economy")) {
+                while (rs.next()) {
+                    String uuidStr = rs.getString("uuid");
+                    String balanceStr = rs.getString("balance");
+                    
+                    try {
+                        UUID uuid = UUID.fromString(uuidStr);
+                        BigDecimal balance = new BigDecimal(balanceStr);
+                        
+                        EconomyData data = new EconomyData(balance);
+                        economyData.put(uuid, data);
+                    } catch (IllegalArgumentException e) {
+                        NeoEssentials.LOGGER.error("Invalid UUID or balance in economy data: {}, {}", uuidStr, balanceStr);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            NeoEssentials.LOGGER.error("Failed to load economy data: {}", e.getMessage());
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
         }
         
-        List<Object> result = new ArrayList<>();
-        result.add(kits);
-        result.add(cooldowns);
-        return result;
+        return economyData;
     }
     
     @Override
+<<<<<<< HEAD
     public boolean saveSpawnData(Map<String, Object> spawn) {
         try (Connection connection = connectionManager.getConnection();
              PreparedStatement stmt = connection.prepareStatement(
@@ -735,28 +887,51 @@ public class SQLiteStorageHandler implements StorageHandler {
             
             stmt.setString(1, spawnJson.toString());
             stmt.executeUpdate();
+=======
+    public boolean saveTransaction(UUID uuid, EconomyTransaction transaction) {
+        try (Connection connection = connectionManager.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(
+                 "INSERT INTO economy_transactions (uuid, transaction_type, amount, description, timestamp) VALUES (?, ?, ?, ?, ?)")) {
             
+            stmt.setString(1, uuid.toString());
+            stmt.setString(2, transaction.getType());
+            stmt.setString(3, transaction.getAmount().toPlainString());
+            stmt.setString(4, transaction.getDescription());
+            stmt.setLong(5, transaction.getTimestamp());
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
+            
+            stmt.executeUpdate();
             return true;
         } catch (SQLException e) {
-            NeoEssentials.LOGGER.error("Failed to save spawn data: {}", e.getMessage());
+            NeoEssentials.LOGGER.error("Failed to save transaction for {}: {}", uuid, e.getMessage());
             return false;
         }
     }
     
     @Override
+<<<<<<< HEAD
     public Map<String, Object> loadSpawnData() {
         Map<String, Object> spawnData = new HashMap<>();
+=======
+    public List<EconomyTransaction> loadTransactions(UUID uuid, int limit) {
+        List<EconomyTransaction> transactions = new ArrayList<>();
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
         
         try (Connection connection = connectionManager.getConnection()) {
             // First check if the table exists
             boolean tableExists = false;
             try (Statement checkStmt = connection.createStatement()) {
                 try (ResultSet rs = checkStmt.executeQuery(
+<<<<<<< HEAD
                         "SELECT name FROM sqlite_master WHERE type='table' AND name='spawn_data'")) {
+=======
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name='economy_transactions'")) {
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
                     tableExists = rs.next();
                 }
             }
             
+<<<<<<< HEAD
             if (tableExists) {
                 try (PreparedStatement stmt = connection.prepareStatement("SELECT spawn_json FROM spawn_data WHERE id = 1");
                      ResultSet rs = stmt.executeQuery()) {
@@ -778,11 +953,39 @@ public class SQLiteStorageHandler implements StorageHandler {
                                     spawnData.put(key, element.getAsBoolean());
                                 }
                             }
+=======
+            if (!tableExists) {
+                return transactions;
+            }
+            
+            String sql = "SELECT transaction_type, amount, description, timestamp FROM economy_transactions WHERE uuid = ? ORDER BY timestamp DESC";
+            if (limit > 0) {
+                sql += " LIMIT " + limit;
+            }
+            
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setString(1, uuid.toString());
+                
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String type = rs.getString("transaction_type");
+                        String amountStr = rs.getString("amount");
+                        String description = rs.getString("description");
+                        long timestamp = rs.getLong("timestamp");
+                        
+                        try {
+                            BigDecimal amount = new BigDecimal(amountStr);
+                            EconomyTransaction transaction = new EconomyTransaction(type, amount, description, timestamp);
+                            transactions.add(transaction);
+                        } catch (IllegalArgumentException e) {
+                            NeoEssentials.LOGGER.error("Invalid amount in transaction data: {}", amountStr);
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
                         }
                     }
                 }
             }
         } catch (SQLException e) {
+<<<<<<< HEAD
             NeoEssentials.LOGGER.error("Failed to load spawn data: {}", e.getMessage());
         }
         
@@ -825,7 +1028,12 @@ public class SQLiteStorageHandler implements StorageHandler {
         } catch (SQLException e) {
             NeoEssentials.LOGGER.error("Failed to save transaction for {}: {}", uuid, e.getMessage());
             return false;
+=======
+            NeoEssentials.LOGGER.error("Failed to load transactions for {}: {}", uuid, e.getMessage());
+>>>>>>> 30b5122 (feat: Enhance SQLiteStorageHandler with improved transaction handling and economy data management; refactor table creation and loading logic)
         }
+        
+        return transactions;
     }
     
     /**
