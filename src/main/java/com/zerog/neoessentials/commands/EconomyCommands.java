@@ -28,8 +28,7 @@ public class EconomyCommands {
      *
      * @param dispatcher The command dispatcher to register commands with
      */
-    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // Register /balance command
+    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {        // Register /balance command
         dispatcher.register(
             Commands.literal("balance")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance"))
@@ -37,8 +36,11 @@ public class EconomyCommands {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Check own balance
-                    double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(player.getUUID());
-                    MessageUtil.sendMessage(player, "Your balance: $" + String.format("%.2f", balance));
+                    var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                    double balance = economyManager.getBalance(player.getUUID());
+                    String formattedBalance = economyManager.formatCurrency(balance);
+                    
+                    MessageUtil.sendMessage(player, "Your balance: " + formattedBalance);
                     
                     return 1;
                 })
@@ -50,15 +52,16 @@ public class EconomyCommands {
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Check another player's balance
-                            double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID());
-                            MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: $" + String.format("%.2f", balance));
+                            var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                            double balance = economyManager.getBalance(target.getUUID());
+                            String formattedBalance = economyManager.formatCurrency(balance);
+                            
+                            MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: " + formattedBalance);
                             
                             return 1;
                         })
                 )
-        );
-
-        // Register /bal alias for /balance
+        );        // Register /bal alias for /balance
         dispatcher.register(
             Commands.literal("bal")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance"))
@@ -66,8 +69,11 @@ public class EconomyCommands {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Check own balance
-                    double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(player.getUUID());
-                    MessageUtil.sendMessage(player, "Your balance: $" + String.format("%.2f", balance));
+                    var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                    double balance = economyManager.getBalance(player.getUUID());
+                    String formattedBalance = economyManager.formatCurrency(balance);
+                    
+                    MessageUtil.sendMessage(player, "Your balance: " + formattedBalance);
                     
                     return 1;
                 })
@@ -79,8 +85,11 @@ public class EconomyCommands {
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Check another player's balance
-                            double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID());
-                            MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: $" + String.format("%.2f", balance));
+                            var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                            double balance = economyManager.getBalance(target.getUUID());
+                            String formattedBalance = economyManager.formatCurrency(balance);
+                            
+                            MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: " + formattedBalance);
                             
                             return 1;
                         })
@@ -95,11 +104,13 @@ public class EconomyCommands {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Check own balance
-                    double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(player.getUUID());
-                    MessageUtil.sendMessage(player, "Your balance: $" + String.format("%.2f", balance));
+                    var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                    double balance = economyManager.getBalance(player.getUUID());
+                    String formattedBalance = economyManager.formatCurrency(balance);
                     
-                    return 1;
-                })
+                    MessageUtil.sendMessage(player, "Your balance: " + formattedBalance);
+                    
+                    return 1;                })
                 .then(
                     Commands.argument("player", EntityArgument.player())
                         .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance.others"))
@@ -108,15 +119,16 @@ public class EconomyCommands {
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Check another player's balance
-                            double balance = NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(target.getUUID());
-                            MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: $" + String.format("%.2f", balance));
+                            var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                            double balance = economyManager.getBalance(target.getUUID());
+                            String formattedBalance = economyManager.formatCurrency(balance);
+                            
+                            MessageUtil.sendMessage(source, target.getScoreboardName() + "'s balance: " + formattedBalance);
                             
                             return 1;
                         })
                 )
-        );
-
-        // Register /pay command
+        );        // Register /pay command
         dispatcher.register(
             Commands.literal("pay")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.pay"))
@@ -128,6 +140,7 @@ public class EconomyCommands {
                                     ServerPlayer source = context.getSource().getPlayerOrException();
                                     ServerPlayer target = EntityArgument.getPlayer(context, "player");
                                     double amount = DoubleArgumentType.getDouble(context, "amount");
+                                    var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
                                     
                                     // Prevent paying yourself
                                     if (source.getUUID().equals(target.getUUID())) {
@@ -136,12 +149,12 @@ public class EconomyCommands {
                                     }
                                     
                                     // Pay another player
-                                    boolean success = NeoEssentials.getInstance().getDataManager().getEconomyManager()
-                                            .transfer(source.getUUID(), target.getUUID(), amount);
+                                    boolean success = economyManager.transfer(source.getUUID(), target.getUUID(), amount);
                                     
                                     if (success) {
-                                        MessageUtil.sendMessage(source, "You paid $" + String.format("%.2f", amount) + " to " + target.getScoreboardName());
-                                        MessageUtil.sendMessage(target, source.getScoreboardName() + " paid you $" + String.format("%.2f", amount));
+                                        String formattedAmount = economyManager.formatCurrency(amount);
+                                        MessageUtil.sendMessage(source, "You paid " + formattedAmount + " to " + target.getScoreboardName());
+                                        MessageUtil.sendMessage(target, source.getScoreboardName() + " paid you " + formattedAmount);
                                         return 1;
                                     } else {
                                         MessageUtil.sendErrorMessage(source, "You don't have enough funds to make this payment.");
@@ -374,8 +387,7 @@ public class EconomyCommands {
         
         NeoEssentials.LOGGER.info("Registered economy commands");
     }
-    
-    /**
+      /**
      * Displays the baltop (top player balances) to a player
      * 
      * @param player The player
@@ -383,9 +395,10 @@ public class EconomyCommands {
      */
     private void displayBaltop(ServerPlayer player, int page) {
         int playersPerPage = 10;
+        var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
         
         // Get all balances
-        Map<UUID, Double> allBalances = NeoEssentials.getInstance().getDataManager().getEconomyManager().getAllBalances();
+        Map<UUID, Double> allBalances = economyManager.getAllBalances();
         
         // Convert to list and sort
         var sortedBalances = allBalances.entrySet().stream()
@@ -410,18 +423,24 @@ public class EconomyCommands {
         int endIndex = Math.min(startIndex + playersPerPage, totalPlayers);
         
         // Display header
-        MessageUtil.sendMessage(player, "Top Balances (Page " + page + "/" + totalPages + "):");
+        MessageUtil.sendMessage(player, "§6§l--- Top Balances (Page " + page + "/" + totalPages + ") ---");
         
         // Display players
         for (int i = startIndex; i < endIndex; i++) {
             var entry = sortedBalances.get(i);
-            String playerName = NeoEssentials.getInstance().getDataManager().getEconomyManager().getPlayerName(entry.getKey());
+            String playerName = economyManager.getPlayerName(entry.getKey());
+            String formattedBalance = economyManager.formatCurrency(entry.getValue());
             
             if (playerName == null) {
                 playerName = "Unknown Player";
             }
             
-            MessageUtil.sendMessage(player, (i + 1) + ". " + playerName + ": $" + String.format("%.2f", entry.getValue()));
+            MessageUtil.sendMessage(player, "§e" + (i + 1) + ". §r" + playerName + ": §a" + formattedBalance);
+        }
+        
+        // Show navigation hint if there are more pages
+        if (page < totalPages) {
+            MessageUtil.sendMessage(player, "§6§l--- Use /baltop " + (page + 1) + " for next page ---");
         }
     }
     
