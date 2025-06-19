@@ -32,6 +32,9 @@ This document outlines the remaining tasks for NeoEssentials development.
    - [ ] Server admin guides
    - [x] Kit command reference (via `/kithelp` command)
    - [x] Economy command reference (via `/ecohelp` command)
+   - [x] Home and Warp system documentation
+   - [x] Home command reference (via `/homehelp` command)
+   - [x] Warp command reference (via `/warphelp` command)
 
 ## Final Steps
 
