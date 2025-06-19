@@ -1,13 +1,19 @@
 package com.zerog.neoessentials.config;
 
+<<<<<<< HEAD
 import com.zerog.neoessentials.NeoEssentials;
 import java.util.HashMap;
 import java.util.Map;
 import com.zerog.neoessentials.NeoEssentials;
+=======
+import java.util.HashMap;
+import java.util.Map;
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
 
 /**
  * Compatibility layer that adapts our TOML configs to the old config structure.
  * This allows existing code to continue working with the new config system.
+<<<<<<< HEAD
  * 
  * This class uses lazy loading for config values - they are fetched directly
  * from the TOML configs when needed rather than being initialized at startup.
@@ -74,11 +80,86 @@ public class CompatNeoEssentialsConfig {
         }
     }
       /**
+=======
+ */
+public class NeoEssentialsConfig {
+    // General settings
+    private boolean debug = false;
+    private String defaultLanguage = "en_us";
+    
+    // Economy settings
+    private boolean economyEnabled = true;
+    private String currencyNameSingular = "Dollar";
+    private String currencyNamePlural = "Dollars";
+    private String currencySymbol = "$";
+    private double startingBalance = 100.0;
+    
+    // Teleportation settings
+    private boolean teleportEnabled = true;
+    private int teleportCooldown = 30;  // seconds
+    private int teleportWarmup = 3;     // seconds
+    private int maxHomes = 3;
+    
+    // Warp settings
+    private boolean warpsEnabled = true;
+    private Map<String, Integer> warpCosts = new HashMap<>();
+    
+    // Chat settings
+    private boolean chatFormattingEnabled = true;
+    private String chatFormat = "{DISPLAYNAME} &7: &f{MESSAGE}";
+    
+    // Command settings
+    private Map<String, Boolean> commandsEnabled = new HashMap<>();
+    
+    // Permission settings
+    private Map<String, Boolean> defaultPermissions = new HashMap<>();
+    
+    /**
+     * Constructor that loads values from the TOML configs
+     */
+    public NeoEssentialsConfig() {
+        // Initialize with values from TOML configs
+        this.debug = GeneralConfig.DEBUG_MODE.get();
+        this.economyEnabled = GeneralConfig.ENABLE_ECONOMY.get();
+        
+        // Economy settings
+        if (this.economyEnabled) {
+            this.currencyNameSingular = EconomyConfig.CURRENCY_NAME_SINGULAR.get();
+            this.currencyNamePlural = EconomyConfig.CURRENCY_NAME_PLURAL.get();
+            this.currencySymbol = EconomyConfig.CURRENCY_SYMBOL.get();
+            this.startingBalance = EconomyConfig.STARTING_BALANCE.get();
+        }
+        
+        // Teleportation settings
+        this.teleportEnabled = GeneralConfig.ENABLE_TELEPORTATION.get();
+        if (this.teleportEnabled) {
+            this.teleportCooldown = HomeConfig.COOLDOWN_SECONDS.get();
+            this.teleportWarmup = HomeConfig.WARMUP_SECONDS.get();
+            this.maxHomes = HomeConfig.DEFAULT_MAX_HOMES.get();
+        }
+        
+        // Warp settings
+        this.warpsEnabled = GeneralConfig.ENABLE_WARPS.get();
+        
+        // Command settings
+        commandsEnabled.put("home", GeneralConfig.ENABLE_HOMES.get());
+        commandsEnabled.put("warp", GeneralConfig.ENABLE_WARPS.get());
+        commandsEnabled.put("tpa", GeneralConfig.ENABLE_TELEPORTATION.get());
+        commandsEnabled.put("back", GeneralConfig.ENABLE_TELEPORTATION.get());
+        commandsEnabled.put("kit", GeneralConfig.ENABLE_KITS.get());
+    }
+    
+    /**
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
      * Gets whether debug mode is enabled
      * @return True if debug mode is enabled
      */
     public boolean isDebug() {
+<<<<<<< HEAD
         return ConfigUtil.getConfigSafe(GeneralConfig.DEBUG_MODE, false);
+=======
+        return debug;
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
     
     /**
@@ -86,13 +167,21 @@ public class CompatNeoEssentialsConfig {
      * @return The language code (e.g. "en_us")
      */
     public String getDefaultLanguage() {
+<<<<<<< HEAD
         return "en_us";
     }
       /**
+=======
+        return defaultLanguage;
+    }
+    
+    /**
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
      * Gets whether economy is enabled
      * @return True if economy is enabled
      */
     public boolean isEconomyEnabled() {
+<<<<<<< HEAD
         return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_ECONOMY, true);
     }
       /**
@@ -102,19 +191,38 @@ public class CompatNeoEssentialsConfig {
     public String getCurrencyNameSingular() {
         if (!isEconomyEnabled()) return "Dollar";
         return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_SINGULAR, "Dollar");
+=======
+        return economyEnabled;
+    }
+    
+    /**
+     * Gets the singular name of the currency
+     * @return The currency name
+     */
+    public String getCurrencyNameSingular() {
+        return currencyNameSingular;
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
     
     /**
      * Gets the plural name of the currency
+<<<<<<< HEAD
      * @return The currency name (e.g. "Dollars")
      */
     public String getCurrencyNamePlural() {
         if (!isEconomyEnabled()) return "Dollars";
         return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_PLURAL, "Dollars");
+=======
+     * @return The plural currency name
+     */
+    public String getCurrencyNamePlural() {
+        return currencyNamePlural;
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
     
     /**
      * Gets the currency symbol
+<<<<<<< HEAD
      * @return The currency symbol (e.g. "$")
      */
     public String getCurrencySymbol() {
@@ -122,12 +230,25 @@ public class CompatNeoEssentialsConfig {
         return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_SYMBOL, "$");
     }
       /**
+=======
+     * @return The currency symbol
+     */
+    public String getCurrencySymbol() {
+        return currencySymbol;
+    }
+    
+    /**
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
      * Gets the starting balance for new players
      * @return The starting balance
      */
     public double getStartingBalance() {
+<<<<<<< HEAD
         if (!isEconomyEnabled()) return 100.0;
         return ConfigUtil.getConfigSafe(EconomyConfig.STARTING_BALANCE, 100.0);
+=======
+        return startingBalance;
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
     
     /**
@@ -135,7 +256,11 @@ public class CompatNeoEssentialsConfig {
      * @return True if teleportation is enabled
      */
     public boolean isTeleportEnabled() {
+<<<<<<< HEAD
         return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_TELEPORTATION, true);
+=======
+        return teleportEnabled;
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
     
     /**
@@ -143,8 +268,12 @@ public class CompatNeoEssentialsConfig {
      * @return The cooldown in seconds
      */
     public int getTeleportCooldown() {
+<<<<<<< HEAD
         if (!isTeleportEnabled()) return 30;
         return ConfigUtil.getConfigSafe(HomeConfig.COOLDOWN_SECONDS, 30);
+=======
+        return teleportCooldown;
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
     
     /**
@@ -152,8 +281,12 @@ public class CompatNeoEssentialsConfig {
      * @return The warmup in seconds
      */
     public int getTeleportWarmup() {
+<<<<<<< HEAD
         if (!isTeleportEnabled()) return 3;
         return ConfigUtil.getConfigSafe(HomeConfig.WARMUP_SECONDS, 3);
+=======
+        return teleportWarmup;
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
     
     /**
@@ -161,8 +294,12 @@ public class CompatNeoEssentialsConfig {
      * @return The max homes
      */
     public int getMaxHomes() {
+<<<<<<< HEAD
         if (!isTeleportEnabled()) return 3;
         return ConfigUtil.getConfigSafe(HomeConfig.DEFAULT_MAX_HOMES, 3);
+=======
+        return maxHomes;
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
     
     /**
@@ -170,6 +307,7 @@ public class CompatNeoEssentialsConfig {
      * @return True if warps are enabled
      */
     public boolean isWarpsEnabled() {
+<<<<<<< HEAD
         return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_WARPS, true);
     }
       /**
@@ -214,5 +352,26 @@ public class CompatNeoEssentialsConfig {
      */
     public Map<String, Boolean> defaultPermissions() {
         return defaultPermissions;
+=======
+        return warpsEnabled;
+    }
+    
+    /**
+     * Gets the cost of a particular warp
+     * @param warpName The name of the warp
+     * @return The cost, or 0 if not specified
+     */
+    public int getWarpCost(String warpName) {
+        return warpCosts.getOrDefault(warpName, 0);
+    }
+    
+    /**
+     * Gets whether a particular command is enabled
+     * @param commandName The command name
+     * @return True if enabled
+     */
+    public boolean isCommandEnabled(String commandName) {
+        return commandsEnabled.getOrDefault(commandName, true);
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
 }

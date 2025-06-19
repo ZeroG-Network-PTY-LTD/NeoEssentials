@@ -248,17 +248,20 @@ public class DataManager {    private UserManager userManager;
         if (kitManager == null) {
             kitManager = new KitManager();
         }
+          // Get data folder for managers that need it
+        File dataFolderFile = new File(dataFolder);
         
         if (jailManager == null) {
-            jailManager = new JailManager();
+            jailManager = new JailManager(dataFolderFile);
         }
         
         if (mailManager == null) {
-            mailManager = new MailManager();
+            mailManager = new MailManager(dataFolderFile);
         }
-        
-        if (tablistManager == null && NeoEssentials.getInstance().getConfigManager().isTablistEnabled()) {
-            tablistManager = new TablistManager();
+          if (tablistManager == null && NeoEssentials.getInstance().getConfigManager().isTablistEnabled()) {
+            // Create scheduler in NeoEssentials class
+            tablistManager = new TablistManager(NeoEssentials.getInstance().getScheduler());
+            tablistManager.initialize();
         }
 >>>>>>> ecf8e9a (feat: Refactor DataManager initialization and loading process for improved data handling)
     }

@@ -647,6 +647,7 @@ public class NeoEssentials {
     }
     
     /**
+<<<<<<< HEAD
      * Gets the scheduler for async tasks
      * 
      * @return The scheduler
@@ -686,5 +687,16 @@ public class NeoEssentials {
         // Database config is now registered in ModConfigManager
         LOGGER.info("Database configuration already registered through ModConfigManager");
 >>>>>>> 2ac7252 (feat: Enhance DataManager with initialization and data loading methods for improved manager setup)
+=======
+     * Gets the scheduler
+     * @return The scheduler
+     */
+    public ScheduledExecutorService getScheduler() {
+        // If the scheduler is null, create it
+        if (scheduler == null) {
+            scheduler = Executors.newScheduledThreadPool(1);
+        }
+        return scheduler;
+>>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
 }
