@@ -80,8 +80,7 @@ public class KitManager {
                             
                             // Create the kit
                             Kit kit = new Kit(kitName);
-                            
-                            // Set cooldown
+                              // Set cooldown
                             if (kitObj.has("cooldown")) {
                                 kit.setCooldown(kitObj.get("cooldown").getAsLong());
                             }
@@ -89,6 +88,16 @@ public class KitManager {
                             // Set permission
                             if (kitObj.has("permission")) {
                                 kit.setPermission(kitObj.get("permission").getAsString());
+                            }
+                            
+                            // Set price
+                            if (kitObj.has("price")) {
+                                kit.setPrice(kitObj.get("price").getAsDouble());
+                            }
+                            
+                            // Set price
+                            if (kitObj.has("price")) {
+                                kit.setPrice(kitObj.get("price").getAsDouble());
                             }
                             
                             // Load items (store item IDs and counts)
@@ -163,14 +172,21 @@ public class KitManager {
             for (Map.Entry<String, Kit> entry : kits.entrySet()) {
                 Kit kit = entry.getValue();
                 JsonObject kitObj = new JsonObject();
-                
-                // Save cooldown
+                  // Save cooldown
                 kitObj.addProperty("cooldown", kit.getCooldown());
                 
                 // Save permission
                 if (kit.getPermission() != null) {
                     kitObj.addProperty("permission", kit.getPermission());
                 }
+                
+                // Save price
+                if (kit.getPrice() > 0) {
+                    kitObj.addProperty("price", kit.getPrice());
+                }
+                
+                // Save price
+                kitObj.addProperty("price", kit.getPrice());
                 
                 // Save items
                 JsonArray itemsArray = new JsonArray();
@@ -229,8 +245,7 @@ public class KitManager {
     public Map<String, Kit> getAllKits() {
         return new HashMap<>(kits);
     }
-    
-    /**
+      /**
      * Creates a new kit
      * 
      * @param name The name of the kit
@@ -240,9 +255,24 @@ public class KitManager {
      * @return The created kit
      */
     public Kit createKit(String name, long cooldown, String permission, List<ItemStack> items) {
+        return createKit(name, cooldown, permission, 0, items);
+    }
+    
+    /**
+     * Creates a new kit with a price
+     * 
+     * @param name The name of the kit
+     * @param cooldown The cooldown in seconds
+     * @param permission The permission needed to use the kit
+     * @param price The price to purchase the kit
+     * @param items The items in the kit
+     * @return The created kit
+     */
+    public Kit createKit(String name, long cooldown, String permission, double price, List<ItemStack> items) {
         Kit kit = new Kit(name);
         kit.setCooldown(cooldown);
         kit.setPermission(permission);
+        kit.setPrice(price);
         
         for (ItemStack item : items) {
             if (!item.isEmpty()) {
@@ -264,14 +294,18 @@ public class KitManager {
      * 
      * @param name The name of the kit
      * @return True if the kit was deleted, false if not found
-     */
-    public boolean deleteKit(String name) {
-        Kit kit = kits.remove(name != null ? name.toLowerCase() : null);
+     */    public boolean deleteKit(String name) {
+        if (name == null) {
+            return false;
+        }
+        
+        String kitName = name.toLowerCase();
+        Kit kit = kits.remove(kitName);
         
         if (kit != null) {
             // Remove cooldowns for this kit
             for (Map<String, Long> playerCooldowns : cooldowns.values()) {
-                playerCooldowns.remove(name.toLowerCase());
+                playerCooldowns.remove(kitName);
             }
             
             // Save the kits
@@ -282,21 +316,33 @@ public class KitManager {
         
         return false;
     }
-    
-    /**
-     * Checks if a player can use a kit
+      /**
+     * Checks if a player can use a kit (without considering price)
      * 
      * @param player The player
      * @param kitName The name of the kit
      * @return True if the player can use the kit, false otherwise
      */
     public boolean canUseKit(ServerPlayer player, String kitName) {
+        return canUseKit(player, kitName, false);
+    }
+    
+    /**
+     * Checks if a player can use a kit
+     * 
+     * @param player The player
+     * @param kitName The name of the kit
+     * @param checkPrice Whether to check if the player has enough money for the kit
+     * @return True if the player can use the kit, false otherwise
+     */
+    public boolean canUseKit(ServerPlayer player, String kitName, boolean checkPrice) {
         Kit kit = getKit(kitName);
         
         if (kit == null || player == null) {
             return false;
         }
-          // Check permission
+        
+        // Check permission
         String permission = kit.getPermission();
         if (permission != null && !permission.isEmpty()) {
             // If specific kit permission defined, check if player has it
@@ -323,6 +369,14 @@ public class KitManager {
             
             // Check if cooldown has expired
             if (System.currentTimeMillis() - lastUse < cooldownMs) {
+                return false;
+            }
+        }
+        
+        // Check if player has enough money if kit has a price and checking price
+        if (checkPrice && kit.getPrice() > 0) {
+            var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+            if (economyManager != null && economyManager.getBalance(player.getUUID()) < kit.getPrice()) {
                 return false;
             }
         }
@@ -359,8 +413,7 @@ public class KitManager {
         
         return 0;
     }
-    
-    /**
+      /**
      * Gives a kit to a player
      * 
      * @param player The player
@@ -374,9 +427,34 @@ public class KitManager {
             return false;
         }
         
-        // Check if the player can use the kit
-        if (!canUseKit(player, kitName)) {
+        // Check if the player can use the kit (including price check)
+        if (!canUseKit(player, kitName, true)) {
             return false;
+        }
+        
+        // Handle payment if kit has a price
+        if (kit.getPrice() > 0) {
+            var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+            if (economyManager != null) {
+                // Check one more time if player has enough money
+                if (economyManager.getBalance(player.getUUID()) < kit.getPrice()) {
+                    return false;
+                }
+                
+                // Charge the player for the kit
+                boolean success = economyManager.removeBalance(player.getUUID(), kit.getPrice());
+                if (!success) {
+                    return false;
+                }
+                
+                // Record the transaction with a specific description
+                economyManager.recordTransaction(
+                    player.getUUID(), 
+                    EconomyTransaction.TYPE_WITHDRAW, 
+                    kit.getPrice(), 
+                    "Purchased kit: " + kit.getName()
+                );
+            }
         }
         
         // Create and give items to the player
@@ -433,12 +511,13 @@ public class KitManager {
     }
     
     /**
-     * Represents a kit
+     * Kit class representing a set of items that players can claim
      */
     public static class Kit {
         private final String name;
-        private long cooldown = 0; // Cooldown in seconds
-        private String permission = null;
+        private long cooldown;
+        private String permission;
+        private double price = 0.0; // Add price field with default value of 0
         private final List<ItemDefinition> itemDefinitions = new ArrayList<>();
         
         public Kit(String name) {
@@ -465,16 +544,20 @@ public class KitManager {
             this.permission = permission;
         }
         
-        public List<ItemDefinition> getItemDefinitions() {
-            return new ArrayList<>(itemDefinitions); // Return a copy to prevent modification
+        public double getPrice() {
+            return price;
+        }
+        
+        public void setPrice(double price) {
+            this.price = Math.max(0, price);
         }
         
         public void addItemDefinition(String itemId, int count) {
             itemDefinitions.add(new ItemDefinition(itemId, count));
         }
         
-        public void clearItems() {
-            itemDefinitions.clear();
+        public List<ItemDefinition> getItemDefinitions() {
+            return new ArrayList<>(itemDefinitions);
         }
     }
 }
