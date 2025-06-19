@@ -395,8 +395,12 @@ public class NeoEssentials {
         }
         
         // Initialize data manager
+<<<<<<< HEAD
         dataManager = new com.zerog.neoessentials.data.DataManager();
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        dataManager = new com.zerog.neoessentials.data.DataManager(this);
+>>>>>>> ecf8e9a (feat: Refactor DataManager initialization and loading process for improved data handling)
         dataManager.initialize();
         
         // Initialize command manager and register it with the event bus
