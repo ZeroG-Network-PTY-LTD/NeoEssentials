@@ -95,13 +95,23 @@ public class NeoEssentials {
         }
     }
 
+    // Track if configs have been initialized
+    private boolean configsInitialized = false;
+    
     /**
      * Config loading complete event handler
      */
     private void onConfigReady(final ModConfigEvent.Loading event) {
         LOGGER.info("Config loaded: " + event.getConfig().getFileName());
-        if (configManager != null) {
-            configManager.initializeConfigs();
+        
+        // Only initialize configs once all configs are loaded
+        // We can use a specific config file as a trigger, like general.toml
+        if (!configsInitialized && event.getConfig().getFileName().contains("neoessentials/general.toml")) {
+            if (configManager != null) {
+                LOGGER.info("General config loaded, initializing all configs");
+                configManager.initializeConfigs();
+                configsInitialized = true;
+            }
         }
     }
 

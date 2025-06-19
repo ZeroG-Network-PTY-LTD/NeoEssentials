@@ -27,6 +27,7 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 ### Bug Fixes
 - ✅ Fixed event handler registration issues
 - ✅ Fixed command argument type registration (string_to_boolean)
+- ✅ Fixed config initialization sequence (preventing "Cannot get config value before config is loaded" crash)
 - ✅ Ensured proper initialization order for managers
 - ✅ Fixed build errors and warnings
 
@@ -52,6 +53,7 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 
 ## Documentation
 - `CONFIGURATION_SYSTEM.md` - Details on the new configuration system
+- `CONFIG_INITIALIZATION_FIX.md` - Fix for the config initialization crash
 - `COMMAND_ARG_FIX.md` & `COMMAND_ARG_FIX_FOLLOWUP.md` - Command argument registration fixes
 - `COMPILATION_FIXES.md` - Information about fixing compilation errors
 - Other documentation in the `docs/` folder
