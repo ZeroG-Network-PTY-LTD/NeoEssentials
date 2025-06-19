@@ -281,4 +281,40 @@ public class TablistConfig {
     public void setShowEconomyInTablist(boolean showEconomyInTablist) {
         this.showEconomyInTablist = showEconomyInTablist;
     }
+    
+    /**
+     * Checks if player-specific headers are enabled
+     * 
+     * @return True if player-specific headers are enabled, false otherwise
+     */
+    public boolean isEnablePlayerSpecificHeaders() {
+        return enablePlayerSpecificHeaders;
+    }
+    
+    /**
+     * Sets whether player-specific headers are enabled
+     * 
+     * @param enablePlayerSpecificHeaders Whether player-specific headers should be enabled
+     */
+    public void setEnablePlayerSpecificHeaders(boolean enablePlayerSpecificHeaders) {
+        this.enablePlayerSpecificHeaders = enablePlayerSpecificHeaders;
+    }
+    
+    /**
+     * Checks if player-specific footers are enabled
+     * 
+     * @return True if player-specific footers are enabled, false otherwise
+     */
+    public boolean isEnablePlayerSpecificFooters() {
+        return enablePlayerSpecificFooters;
+    }
+    
+    /**
+     * Sets whether player-specific footers are enabled
+     * 
+     * @param enablePlayerSpecificFooters Whether player-specific footers should be enabled
+     */
+    public void setEnablePlayerSpecificFooters(boolean enablePlayerSpecificFooters) {
+        this.enablePlayerSpecificFooters = enablePlayerSpecificFooters;
+    }
 }

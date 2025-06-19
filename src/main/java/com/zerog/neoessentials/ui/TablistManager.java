@@ -150,7 +150,8 @@ public class TablistManager {
             }
             
             // Update header and footer for all players
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {                try {
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                try {
                     // Generate player-specific header and footer if needed
                     Component playerHeader = config.isEnablePlayerSpecificHeaders() ? 
                         Component.literal(TextUtil.translateColors(parsePlaceholders(
@@ -196,7 +197,8 @@ public class TablistManager {
      * Gets the current formatted header
      *
      * @return The formatted header component
-     */    private Component getFormattedHeader() {
+     */    
+    private Component getFormattedHeader() {
         String template = !headers.isEmpty() ? 
                 headers.get(currentHeaderIndex) : 
                 "&6Welcome to the server!";
@@ -208,14 +210,16 @@ public class TablistManager {
      * Gets the current formatted footer
      *
      * @return The formatted footer component
-     */    private Component getFormattedFooter() {
+     */    
+    private Component getFormattedFooter() {
         String template = !footers.isEmpty() ? 
                 footers.get(currentFooterIndex) : 
                 "&7Thank you for playing!";
         
         return Component.literal(TextUtil.translateColors(parsePlaceholders(template, null)));
     }
-      /**
+    
+    /**
      * Parses placeholders in a string
      *
      * @param template The template string with placeholders
@@ -225,6 +229,9 @@ public class TablistManager {
     private String parsePlaceholders(String template, ServerPlayer player) {
         MinecraftServer server = NeoEssentials.getInstance().getServer();
         if (server == null) return template;
+        
+        // Get economy manager for placeholders
+        EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
         
         // Server placeholders
         template = template.replace("%server_name%", config.getServerName());
@@ -243,7 +250,9 @@ public class TablistManager {
         if (player != null) {
             template = template.replace("%player_name%", player.getScoreboardName());
             template = template.replace("%player_displayname%", player.getName().getString());
-            template = template.replace("%player_uuid%", player.getUUID().toString());            // Player ping
+            template = template.replace("%player_uuid%", player.getUUID().toString());
+            
+            // Player ping
             int ping = 0;
             try {
                 // In 1.21.1, latency is a field in the packet listener impl
@@ -269,17 +278,18 @@ public class TablistManager {
             template = template.replace("%dimension%", player.level().dimension().location().toString());
             
             // Economy placeholder for specific player
-            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
             if (economyManager != null) {
                 double balance = economyManager.getBalance(player.getUUID());
                 template = template.replace("%balance%", String.format("%.2f", balance));
             }
-        }// TPS placeholders - Calculate approximated TPS        // Default to 20.0 TPS
+        }
+        
+        // Default to 20.0 TPS
         double tps = 20.0;
         
         // Get MSPT and calculate TPS safely
         try {
-            // NeoForge 1.21.1 offers server ticktime stats in mean, min, max
+            // NeoForge 1.21.1 offers server ticktime stats
             double mspt = server.getAverageTickTimeNanos() / 1000000.0;
             if (mspt > 0) {
                 // Calculate TPS (1000 ms / mspt, cap at 20)
@@ -292,8 +302,7 @@ public class TablistManager {
         
         template = template.replace("%server_tps%", String.format("%.1f", tps));
         
-        // Economy placeholder
-        EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+        // Economy global placeholders
         if (economyManager != null) {
             template = template.replace("%economy_total%", String.format("%.2f", economyManager.getTotalCurrency()));
             template = template.replace("%economy_accounts%", String.valueOf(economyManager.getTotalAccounts()));
@@ -458,7 +467,8 @@ public class TablistManager {
         }
         
         // Add economy info if enabled
-        if (config.isShowEconomyInTablist()) {            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+        if (config.isShowEconomyInTablist()) {
+            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
             if (economyManager != null) {
                 double balance = economyManager.getBalance(player.getUUID());
                 return " &6" + String.format("%.2f", balance);
@@ -534,7 +544,8 @@ public class TablistManager {
         teams.clear();
         playerDataCache.clear();
     }
-      /**
+    
+    /**
      * Class to store cached player data
      */
     private static class PlayerData {
