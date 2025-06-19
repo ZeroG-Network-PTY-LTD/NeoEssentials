@@ -39,10 +39,15 @@ public class EventHandler {    /**
             userManager.loadPlayerData(serverPlayer);
             
             // Track the player's username for baltop and other lookups
-            userManager.trackPlayer(serverPlayer);
-            
+            userManager.trackPlayer(serverPlayer);            
             // Notify player about unread mail if they have any
             NeoEssentials.getInstance().getDataManager().getMailManager().notifyPlayer(serverPlayer);
+            
+            // Update tablist for joining player
+            var tablistManager = NeoEssentials.getInstance().getDataManager().getTablistManager();
+            if (tablistManager != null) {
+                tablistManager.onPlayerJoin(serverPlayer);
+            }
         }
     }
       /**
@@ -57,10 +62,15 @@ public class EventHandler {    /**
             NeoEssentials.LOGGER.info("Player logged out: {}", player.getScoreboardName());
             
             // Get the user manager
-            UserManager userManager = NeoEssentials.getInstance().getDataManager().getUserManager();
-            
+            UserManager userManager = NeoEssentials.getInstance().getDataManager().getUserManager();            
             // Save player data
             userManager.savePlayerData(serverPlayer);
+            
+            // Update tablist for leaving player
+            var tablistManager = NeoEssentials.getInstance().getDataManager().getTablistManager();
+            if (tablistManager != null) {
+                tablistManager.onPlayerLeave(serverPlayer);
+            }
         }
     }
       /**

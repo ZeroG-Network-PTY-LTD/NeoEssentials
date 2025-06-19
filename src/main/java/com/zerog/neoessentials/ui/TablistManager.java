@@ -150,9 +150,23 @@ public class TablistManager {
             }
             
             // Update header and footer for all players
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                // Send the header and footer packet
-                player.connection.send(new ClientboundTabListPacket(header, footer));
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {                try {
+                    // Generate player-specific header and footer if needed
+                    Component playerHeader = config.isEnablePlayerSpecificHeaders() ? 
+                        Component.literal(TextUtil.translateColors(parsePlaceholders(
+                            headers.get(currentHeaderIndex), player))) : 
+                        header;
+                            
+                    Component playerFooter = config.isEnablePlayerSpecificFooters() ? 
+                        Component.literal(TextUtil.translateColors(parsePlaceholders(
+                            footers.get(currentFooterIndex), player))) : 
+                        footer;
+                            
+                    // Send the header and footer packet
+                    player.connection.send(new ClientboundTabListPacket(playerHeader, playerFooter));
+                } catch (Exception e) {
+                    NeoEssentials.LOGGER.error("Error sending tablist packet to player " + player.getScoreboardName(), e);
+                }
                 
                 // Add player to cache if not already present
                 if (!playerDataCache.containsKey(player.getUUID())) {
@@ -187,7 +201,7 @@ public class TablistManager {
                 headers.get(currentHeaderIndex) : 
                 "&6Welcome to the server!";
         
-        return Component.literal(TextUtil.translateColors(parsePlaceholders(template)));
+        return Component.literal(TextUtil.translateColors(parsePlaceholders(template, null)));
     }
     
     /**
@@ -199,16 +213,16 @@ public class TablistManager {
                 footers.get(currentFooterIndex) : 
                 "&7Thank you for playing!";
         
-        return Component.literal(TextUtil.translateColors(parsePlaceholders(template)));
+        return Component.literal(TextUtil.translateColors(parsePlaceholders(template, null)));
     }
-    
-    /**
+      /**
      * Parses placeholders in a string
      *
      * @param template The template string with placeholders
+     * @param player Optional player for player-specific placeholders
      * @return The parsed string with placeholders replaced
      */
-    private String parsePlaceholders(String template) {
+    private String parsePlaceholders(String template, ServerPlayer player) {
         MinecraftServer server = NeoEssentials.getInstance().getServer();
         if (server == null) return template;
         
@@ -217,26 +231,65 @@ public class TablistManager {
         template = template.replace("%online_players%", String.valueOf(server.getPlayerCount()));
         template = template.replace("%max_players%", String.valueOf(server.getMaxPlayers()));
         
+        // Server version info
+        template = template.replace("%mc_version%", net.minecraft.SharedConstants.getCurrentVersion().getName());
+        template = template.replace("%mod_version%", NeoEssentials.getInstance().getVersion());
+        
         // Time placeholders
         SimpleDateFormat timeFormat = new SimpleDateFormat(config.getTimeFormat());
-        template = template.replace("%time%", timeFormat.format(new Date()));        // TPS placeholders - Calculate approximated TPS
-        double tps = 20.0; // Default to 20 TPS
+        template = template.replace("%time%", timeFormat.format(new Date()));
+        
+        // Player-specific placeholders
+        if (player != null) {
+            template = template.replace("%player_name%", player.getScoreboardName());
+            template = template.replace("%player_displayname%", player.getName().getString());
+            template = template.replace("%player_uuid%", player.getUUID().toString());            // Player ping
+            int ping = 0;
+            try {
+                // In 1.21.1, latency is a field in the packet listener impl
+                java.lang.reflect.Field field = player.connection.getClass().getDeclaredField("latency");
+                field.setAccessible(true);
+                ping = field.getInt(player.connection);
+            } catch (Exception e) {
+                // If we can't access the field, just use 0
+                ping = 0;
+            }
+            template = template.replace("%ping%", String.valueOf(ping));
+            
+            // Player health
+            template = template.replace("%health%", String.format("%.1f", player.getHealth()));
+            template = template.replace("%max_health%", String.format("%.1f", player.getMaxHealth()));
+            
+            // Player coordinates
+            template = template.replace("%x%", String.format("%.1f", player.getX()));
+            template = template.replace("%y%", String.format("%.1f", player.getY()));
+            template = template.replace("%z%", String.format("%.1f", player.getZ()));
+            
+            // World information
+            template = template.replace("%dimension%", player.level().dimension().location().toString());
+            
+            // Economy placeholder for specific player
+            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+            if (economyManager != null) {
+                double balance = economyManager.getBalance(player.getUUID());
+                template = template.replace("%balance%", String.format("%.2f", balance));
+            }
+        }// TPS placeholders - Calculate approximated TPS        // Default to 20.0 TPS
+        double tps = 20.0;
+        
+        // Get MSPT and calculate TPS safely
         try {
-            // We'll use a simple calculation since getAverageTickTime is not directly available in 1.21.1
-            long[] tickTimes = (long[]) server.getClass().getMethod("getTickTime").invoke(server);
-            if (tickTimes != null && tickTimes.length > 0) {
-                double meanTickTime = 0;
-                for (long time : tickTimes) {
-                    meanTickTime += time;
-                }
-                meanTickTime /= tickTimes.length;
-                meanTickTime /= 1000000; // Convert to ms
-                tps = Math.min(20.0, 1000.0 / Math.max(50.0, meanTickTime));
+            // NeoForge 1.21.1 offers server ticktime stats in mean, min, max
+            double mspt = server.getAverageTickTimeNanos() / 1000000.0;
+            if (mspt > 0) {
+                // Calculate TPS (1000 ms / mspt, cap at 20)
+                tps = Math.min(20.0, 1000.0 / mspt);
             }
         } catch (Exception e) {
-            // Fallback to default TPS if reflection fails
+            // If any error occurs, just use the default
             tps = 20.0;
         }
+        
         template = template.replace("%server_tps%", String.format("%.1f", tps));
         
         // Economy placeholder
@@ -405,10 +458,9 @@ public class TablistManager {
         }
         
         // Add economy info if enabled
-        if (config.isShowEconomyInTablist()) {
-            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+        if (config.isShowEconomyInTablist()) {            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
             if (economyManager != null) {
-                double balance = economyManager.getPlayerBalance(player.getUUID());
+                double balance = economyManager.getBalance(player.getUUID());
                 return " &6" + String.format("%.2f", balance);
             }
         }
@@ -482,14 +534,16 @@ public class TablistManager {
         teams.clear();
         playerDataCache.clear();
     }
-    
-    /**
+      /**
      * Class to store cached player data
      */
     private static class PlayerData {
-        private String name;
-        private UUID uuid;
-        private long joinTime;
+        // These fields must be kept even if not directly accessed - they're needed for identity
+        @SuppressWarnings("unused")
+        private final String name;
+        @SuppressWarnings("unused")
+        private final UUID uuid;
+        private final long joinTime;
         private long playtime;
         
         public PlayerData(String name, UUID uuid) {

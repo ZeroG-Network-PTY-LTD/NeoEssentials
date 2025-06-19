@@ -30,13 +30,14 @@ public class TablistConfig {
     
     // Footer templates with placeholders
     private List<String> footers = new ArrayList<>();
-    
-    // Sorting options
+      // Sorting options
     private boolean enableSorting = true;
     private String sortType = "name";  // Can be name, rank, or playtime
     
     // Display options
     private boolean showEconomyInTablist = true;
+    private boolean enablePlayerSpecificHeaders = true;
+    private boolean enablePlayerSpecificFooters = true;
     
     // Path to config file
     private static final String CONFIG_FILE = "neoessentials/tablist.json";
@@ -52,18 +53,23 @@ public class TablistConfig {
      * Sets default values for the config
      */
     private void setDefaults() {
-        // Default headers
+    // Default headers with more variety like BungeeTablistPlus
         headers.addAll(Arrays.asList(
-            "&6Welcome to &l%server_name%",
-            "&ePlayers Online: &a%online_players%&e/&a%max_players%",
-            "&bServer TPS: &a%server_tps%"
+            "&6&lWelcome to &e&l%server_name%",
+            "&e&lPlayers Online: &a%online_players%&e/&a%max_players%",
+            "&b&lServer TPS: &a%server_tps%",
+            "&d&l%server_name% &f- &6The Best Minecraft Server",
+            "&6&l━━━━━━━━━━━━━━━━━━━━━━━",
+            "&e&l%server_name% &7- &fTime: &a%time%"
         ));
-        
-        // Default footers
+          // Default footers with enhanced styling like BungeeTablistPlus
         footers.addAll(Arrays.asList(
-            "&7Website: &fwww.example.com",
-            "&7Discord: &fdiscord.gg/example",
-            "&7Current Time: &f%time%"
+            "&6&l━━━━━━━━━━━━━━━━━━━━━━━",
+            "&7&lWebsite: &b&nwww.example.com",
+            "&7&lDiscord: &b&ndiscord.gg/example",
+            "&7&lCurrent Time: &a%time% &7| &7&lOnline: &a%online_players% &7players",
+            "&e&lStore: &b&nstore.example.com &7- &6Support the server!",
+            "&d&lTPS: &a%server_tps% &7| &c&lPing: &a%ping%ms"
         ));
     }
     

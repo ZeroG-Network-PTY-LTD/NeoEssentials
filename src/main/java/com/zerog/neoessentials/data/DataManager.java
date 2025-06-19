@@ -12,8 +12,7 @@ import java.util.Map;
 /**
  * Main data manager class that initializes and manages all data storage components.
  */
-public class DataManager {
-    private UserManager userManager;
+public class DataManager {    private UserManager userManager;
     private EconomyManager economyManager;
     private HomeManager homeManager;
     private WarpManager warpManager;
@@ -22,6 +21,7 @@ public class DataManager {
     private JailManager jailManager;
     private PowerToolManager powerToolManager;
     private MailManager mailManager;
+    private com.zerog.neoessentials.ui.TablistManager tablistManager;
     
     private final String dataFolder = "neoessentials/";
     
@@ -38,24 +38,29 @@ public class DataManager {
         homeManager = new HomeManager();
         warpManager = new WarpManager();
         spawnManager = new SpawnManager();
-        kitManager = new KitManager();
-        jailManager = new JailManager(dataFolderFile);
+        kitManager = new KitManager();        jailManager = new JailManager(dataFolderFile);
         powerToolManager = new PowerToolManager(dataFolderFile);
         mailManager = new MailManager(dataFolderFile);
+        
+        // Create executor service for scheduled tasks like tablist updates
+        java.util.concurrent.ScheduledExecutorService scheduler = 
+            java.util.concurrent.Executors.newScheduledThreadPool(1);
+        tablistManager = new com.zerog.neoessentials.ui.TablistManager(scheduler);
     }
     
     /**
      * Initialize the data manager and all its components
      */
     public void initialize() {
-        NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");
-            // Initialize all data managers
+        NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");            // Initialize all data managers
         userManager.initialize();
         economyManager.initialize();
         homeManager.initialize();
         warpManager.initialize();
         spawnManager.initialize();
         kitManager.initialize();
+        // Initialize tablist after economy is initialized
+        tablistManager.initialize();
         // JailManager doesn't need initialization
         
         NeoEssentials.LOGGER.info("NeoEssentials Data Manager initialized");
@@ -190,6 +195,15 @@ public class DataManager {
      */
     public MailManager getMailManager() {
         return mailManager;
+    }
+    
+    /**
+     * Gets the tablist manager.
+     * 
+     * @return The tablist manager
+     */
+    public com.zerog.neoessentials.ui.TablistManager getTablistManager() {
+        return tablistManager;
     }
     
     /**
