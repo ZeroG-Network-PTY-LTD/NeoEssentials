@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.utils;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.NeoEssentialsConfig;
+import com.zerog.neoessentials.config.CompatNeoEssentialsConfig;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 
