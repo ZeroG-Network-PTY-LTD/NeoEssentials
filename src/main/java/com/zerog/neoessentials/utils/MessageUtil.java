@@ -216,10 +216,14 @@ public class MessageUtil {
      * @return The message with Minecraft internal color codes
      */
 <<<<<<< HEAD
+<<<<<<< HEAD
     public static String translateColorCodes(String message) {
 =======
     private static String translateColorCodes(String message) {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    public static String translateColorCodes(String message) {
+>>>>>>> 7058369 (feat: Update migration tasks and enhance tablist documentation; refactor permission checks in AdminPanelCommand and CommandManager)
         char colorChar = '&';
         char[] array = message.toCharArray();
         

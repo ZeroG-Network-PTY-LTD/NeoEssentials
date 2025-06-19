@@ -592,13 +592,14 @@ public class PermissionUtil {
     
     /**
      * Check if a player has a specific permission.
-     * This is a convenience method that creates a temporary command source stack.
+     * Will check LuckPerms, FTB Ranks, and then fall back to config defaults.
      *
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if the player has the permission, false otherwise
      */
     public static boolean hasPermission(ServerPlayer player, String permission) {
+<<<<<<< HEAD
         // Create a temporary command source stack for the player
         CommandSourceStack source = player.createCommandSourceStack();
         return hasPermission(source, permission);
@@ -618,11 +619,41 @@ public class PermissionUtil {
     public static boolean hasPermission(com.mojang.authlib.GameProfile profile, String permission) {
         // Check if player is an operator
         if (NeoEssentials.getInstance().getServer().getPlayerList().isOp(profile)) {
+=======
+        boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
+        
+        // Operators always have permission
+        if (player.hasPermissions(2)) {
+            if (debug) {
+                NeoEssentials.LOGGER.debug("Permission '{}' granted to operator {}", 
+                    permission, player.getScoreboardName());
+            }
+>>>>>>> 7058369 (feat: Update migration tasks and enhance tablist documentation; refactor permission checks in AdminPanelCommand and CommandManager)
             return true;
         }
         
-        // For offline profiles, we can only check default permissions
-        return checkDefaultPermission(permission);
+        UUID playerUUID = player.getUUID();
+        
+        // Check cache first
+        PermissionResult cachedResult = getCachedPermission(playerUUID, permission);
+        if (cachedResult != null) {
+            return cachedResult.result;
+        }
+        
+        // Try LuckPerms first (most common)
+        if (checkLuckPermsPermission(playerUUID, permission)) {
+            cachePermission(playerUUID, permission, true);
+            return true;
+        }
+        
+        // No permission systems gave access - deny
+        if (debug) {
+            NeoEssentials.LOGGER.debug("Permission '{}' denied for player {}", 
+                permission, player.getScoreboardName());
+        }
+        
+        cachePermission(playerUUID, permission, false);
+        return false;
     }
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 }

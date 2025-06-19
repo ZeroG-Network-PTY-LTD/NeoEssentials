@@ -39,9 +39,13 @@ This document outlines the remaining tasks for NeoEssentials development.
    - [x] Home command reference (via `/homehelp` command)
    - [x] Warp command reference (via `/warphelp` command)
 <<<<<<< HEAD
+<<<<<<< HEAD
    - [x] Tablist system documentation
 =======
 >>>>>>> 4100264 (feat: Add documentation for Home and Warp systems, including command references)
+=======
+   - [x] Tablist system documentation
+>>>>>>> 7058369 (feat: Update migration tasks and enhance tablist documentation; refactor permission checks in AdminPanelCommand and CommandManager)
 
 ## Final Steps
 
