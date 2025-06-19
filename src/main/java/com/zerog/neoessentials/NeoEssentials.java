@@ -668,6 +668,7 @@ public class NeoEssentials {
 =======
 >>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
     private void registerDatabaseConfig() {
+<<<<<<< HEAD
         if (configManager != null && configManager.getDatabaseConfig() != null) {
             // Register the database config with a different filename to avoid conflict
             modContainer.registerConfig(
@@ -677,5 +678,9 @@ public class NeoEssentials {
             );
         }
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        // Database config is now registered in ModConfigManager
+        LOGGER.info("Database configuration already registered through ModConfigManager");
+>>>>>>> 2ac7252 (feat: Enhance DataManager with initialization and data loading methods for improved manager setup)
     }
 }
