@@ -30,14 +30,22 @@ public class TablistConfig {
     
     // Footer templates with placeholders
     private List<String> footers = new ArrayList<>();
+<<<<<<< HEAD
       // Sorting options
+=======
+    
+    // Sorting options
+>>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
     private boolean enableSorting = true;
     private String sortType = "name";  // Can be name, rank, or playtime
     
     // Display options
     private boolean showEconomyInTablist = true;
+<<<<<<< HEAD
     private boolean enablePlayerSpecificHeaders = true;
     private boolean enablePlayerSpecificFooters = true;
+=======
+>>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
     
     // Path to config file
     private static final String CONFIG_FILE = "neoessentials/tablist.json";
@@ -53,6 +61,7 @@ public class TablistConfig {
      * Sets default values for the config
      */
     private void setDefaults() {
+<<<<<<< HEAD
     // Default headers with more variety like BungeeTablistPlus
         headers.addAll(Arrays.asList(
             "&6&lWelcome to &e&l%server_name%",
@@ -70,6 +79,20 @@ public class TablistConfig {
             "&7&lCurrent Time: &a%time% &7| &7&lOnline: &a%online_players% &7players",
             "&e&lStore: &b&nstore.example.com &7- &6Support the server!",
             "&d&lTPS: &a%server_tps% &7| &c&lPing: &a%ping%ms"
+=======
+        // Default headers
+        headers.addAll(Arrays.asList(
+            "&6Welcome to &l%server_name%",
+            "&ePlayers Online: &a%online_players%&e/&a%max_players%",
+            "&bServer TPS: &a%server_tps%"
+        ));
+        
+        // Default footers
+        footers.addAll(Arrays.asList(
+            "&7Website: &fwww.example.com",
+            "&7Discord: &fdiscord.gg/example",
+            "&7Current Time: &f%time%"
+>>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
         ));
     }
     
@@ -281,6 +304,7 @@ public class TablistConfig {
     public void setShowEconomyInTablist(boolean showEconomyInTablist) {
         this.showEconomyInTablist = showEconomyInTablist;
     }
+<<<<<<< HEAD
     
     /**
      * Checks if player-specific headers are enabled
@@ -317,4 +341,6 @@ public class TablistConfig {
     public void setEnablePlayerSpecificFooters(boolean enablePlayerSpecificFooters) {
         this.enablePlayerSpecificFooters = enablePlayerSpecificFooters;
     }
+=======
+>>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
 }
