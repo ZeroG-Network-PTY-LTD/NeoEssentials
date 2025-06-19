@@ -169,4 +169,12 @@ public class ModConfigManager {
 =======
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
     }
+      /**
+     * Legacy compatibility method to provide access to old config structure
+     * 
+     * @return A compatibility NeoEssentialsConfig object
+     */
+    public NeoEssentialsConfig getConfig() {
+        return new CompatNeoEssentialsConfig();
+    }
 }
