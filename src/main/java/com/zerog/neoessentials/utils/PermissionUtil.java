@@ -642,6 +642,7 @@ public class PermissionUtil {
         return false;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     }    /**     * Check if a permission should be granted by default when no permission system is found
 =======
     }
@@ -651,6 +652,9 @@ public class PermissionUtil {
 >>>>>>> 16744a4 (feat: Add comprehensive compilation fixes documentation; detail issues resolved and future recommendations)
      * Check if a permission should be granted by default when no permission system is found
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    }    /**     * Check if a permission should be granted by default when no permission system is found
+>>>>>>> e757913 (feat: Add default permissions retrieval method in CompatNeoEssentialsConfig and update PermissionUtil for compatibility)
      * 
      * @param permission The permission string to check
      * @return True if the permission should be granted by default, false otherwise

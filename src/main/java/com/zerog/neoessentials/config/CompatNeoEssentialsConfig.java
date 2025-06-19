@@ -373,4 +373,12 @@ public class CompatNeoEssentialsConfig {
         return commandsEnabled.getOrDefault(commandName, true);
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
     }
+    
+    /**
+     * Gets the map of default permissions
+     * @return Map of permission names to boolean values
+     */
+    public Map<String, Boolean> defaultPermissions() {
+        return defaultPermissions;
+    }
 }
