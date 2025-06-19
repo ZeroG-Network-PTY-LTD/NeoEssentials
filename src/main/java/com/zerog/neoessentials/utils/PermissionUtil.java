@@ -105,13 +105,146 @@ public class PermissionUtil {
         return hasPermission;
     }
       /**
+     * Check if a player has a specific permission.
+     * Will check LuckPerms, FTB Ranks, and then fall back to config defaults.
+     *
+     * @param player The player to check
+     * @param permission The permission string to check
+     * @return True if the player has the permission, false otherwise
+     */
+    public static boolean hasPermission(ServerPlayer player, String permission) {
+        boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
+        
+        // Operators always have permission
+        if (player.hasPermissions(2)) {
+            if (debug) {
+                NeoEssentials.LOGGER.debug("Permission '{}' granted to operator {}", 
+                    permission, player.getScoreboardName());
+            }
+            return true;
+        }
+        
+        UUID uuid = player.getUUID();
+        String playerName = player.getScoreboardName();
+        
+        // Update last access time
+        lastAccessTime.put(uuid, System.currentTimeMillis());
+        
+        // Check cache first
+        Map<String, PermissionResult> playerCache = permissionCache.computeIfAbsent(uuid, k -> new HashMap<>());
+        PermissionResult cachedResult = playerCache.get(permission);
+        
+        if (cachedResult != null && !cachedResult.isExpired()) {
+            if (debug) {
+                NeoEssentials.LOGGER.debug("Using cached permission result for '{}': {} (player: {})", 
+                    permission, cachedResult.result, playerName);
+            }
+            return cachedResult.result;
+        }
+        
+        // Cache miss or expired, check actual permission
+        boolean hasPermission = checkPermission(player, permission);
+        
+        // Log the permission check result
+        if (debug) {
+            NeoEssentials.LOGGER.debug("Permission check for '{}': {} (player: {})", 
+                permission, hasPermission, playerName);
+        }
+        
+        // Cache the result
+        playerCache.put(permission, new PermissionResult(hasPermission));
+        
+        // Cleanup cache if necessary (every ~100 checks)
+        if (Math.random() < 0.01) {
+            cleanupCache();
+        }
+        
+        return hasPermission;
+    }
+    
+    /**
+     * Check if a GameProfile has a specific permission.
+     * This is a simplified check - since there's no active player, we can only check
+     * for cached values or use LuckPerms (if available) with UUID lookup.
+     *
+     * @param profile The GameProfile to check
+     * @param permission The permission string to check
+     * @return True if the profile has the permission, false otherwise
+     */
+    public static boolean hasPermission(com.mojang.authlib.GameProfile profile, String permission) {
+        boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
+        UUID uuid = profile.getId();
+        String playerName = profile.getName();
+        
+        // Check cached permissions first
+        Map<String, PermissionResult> playerCache = permissionCache.get(uuid);
+        if (playerCache != null) {
+            PermissionResult cachedResult = playerCache.get(permission);
+            if (cachedResult != null && !cachedResult.isExpired()) {
+                if (debug) {
+                    NeoEssentials.LOGGER.debug("Using cached permission result for '{}': {} (profile: {})", 
+                        permission, cachedResult.result, playerName);
+                }
+                return cachedResult.result;
+            }
+        }
+        
+        // Try LuckPerms
+        boolean result = false;
+        try {
+            // Check if LuckPerms is loaded using reflection
+            Class<?> luckPermsClass = Class.forName("net.luckperms.api.LuckPermsProvider");
+            
+            // Get the LuckPerms API instance
+            Object api = luckPermsClass.getMethod("get").invoke(null);
+            
+            // Get the user
+            Class<?> apiClass = api.getClass();
+            Object userManager = apiClass.getMethod("getUserManager").invoke(api);
+            Object userObj = userManager.getClass().getMethod("getUser", UUID.class)
+                .invoke(userManager, uuid);
+            
+            if (userObj != null) {
+                // Check permission
+                Object permResult = userObj.getClass().getMethod("getCachedData").invoke(userObj);
+                permResult = permResult.getClass().getMethod("getPermissionData").invoke(permResult);
+                permResult = permResult.getClass().getMethod("checkPermission", String.class)
+                    .invoke(permResult, permission);
+                
+                // Get the result value
+                result = (boolean) permResult.getClass().getMethod("asBoolean").invoke(permResult);
+            }
+        } catch (ClassNotFoundException e) {
+            // LuckPerms not found, fall back to default
+            result = checkDefaultPermission(permission);
+        } catch (Exception e) {            // Something went wrong, log it
+            NeoEssentials.LOGGER.error("Error checking LuckPerms permission for GameProfile", e);
+            result = checkDefaultPermission(permission);
+        }
+        
+        // Cache the result
+        if (playerCache == null) {
+            playerCache = new HashMap<>();
+            permissionCache.put(uuid, playerCache);
+        }
+        playerCache.put(permission, new PermissionResult(result));
+        
+        // Debug logging if enabled
+        if (NeoEssentials.getInstance().getConfigManager().getConfig().isDebug()) {
+            NeoEssentials.LOGGER.debug("Permission check for '{}': {} (profile: {})", 
+                permission, result, playerName);
+        }
+        
+        return result;
+    }
+      /**
      * Direct permission check for a player without caching
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if the player has the permission, false otherwise
      */
-    private static boolean checkPermission(ServerPlayer player, String permission) {
+    static boolean checkPermission(ServerPlayer player, String permission) {
         boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
         String playerName = player.getScoreboardName();
         
@@ -147,15 +280,14 @@ public class PermissionUtil {
         
         return result;
     }
-    
-    /**
+      /**
      * Check permission using LuckPerms API if available
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if permission is granted, false otherwise
      */
-    private static boolean checkLuckPermsPermission(ServerPlayer player, String permission) {
+    static boolean checkLuckPermsPermission(ServerPlayer player, String permission) {
         try {
             // Check if LuckPerms is loaded using reflection
             Class<?> luckPermsClass = Class.forName("net.luckperms.api.LuckPermsProvider");
@@ -188,15 +320,14 @@ public class PermissionUtil {
         
         return false;
     }
-    
-    /**
+      /**
      * Check permission using FTB Ranks API if available
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if permission is granted, false otherwise
      */
-    private static boolean checkFTBRanksPermission(ServerPlayer player, String permission) {
+    static boolean checkFTBRanksPermission(ServerPlayer player, String permission) {
         try {
             // Check if FTB Ranks is loaded using reflection
             Class<?> ftbRanksClass = Class.forName("dev.ftb.mods.ftbranks.api.FTBRanksAPI");
@@ -235,14 +366,13 @@ public class PermissionUtil {
         }
         
         return false;
-    }
-      /**
+    }    /**
      * Check if a permission should be granted by default when no permission system is found
      * 
      * @param permission The permission string to check
      * @return True if the permission should be granted by default, false otherwise
      */
-    private static boolean checkDefaultPermission(String permission) {
+    static boolean checkDefaultPermission(String permission) {
         // Get the config instance from NeoEssentials
         NeoEssentialsConfig config = NeoEssentials.getInstance().getConfigManager().getConfig();
         boolean debug = config.isDebug();
