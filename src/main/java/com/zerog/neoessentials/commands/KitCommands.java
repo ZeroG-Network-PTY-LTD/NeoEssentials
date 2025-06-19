@@ -809,7 +809,7 @@ public class KitCommands {
         
         // Display each command with interactive elements
         for (CommandHelp cmd : commands) {
-            boolean hasPermission = PermissionUtil.hasPermission(player, cmd.permission);
+            boolean hasPermission = PermissionUtil.hasPermission((ServerPlayer)player, cmd.permission);
             
             MutableComponent commandText = Component.literal(
                     (hasPermission ? "§a" : "§c") + cmd.command

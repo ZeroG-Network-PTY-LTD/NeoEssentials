@@ -471,19 +471,19 @@ public class WarpCommands {
         MessageUtil.sendInfo(player, warpsCmd.append(Component.literal(" §7- List all available warps")));
         
         // Only show admin commands to players with appropriate permissions
-        if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.set")) {
+        if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.set")) {
             MutableComponent setWarpCmd = Component.literal("§b/setwarp <name>");
             setWarpCmd = MessageUtil.addHoverText(setWarpCmd, Component.literal("§7Create a new warp at your location"));
             MessageUtil.sendInfo(player, setWarpCmd.append(Component.literal(" §7- Create a new warp at your location")));
         }
         
-        if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.delete")) {
+        if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.delete")) {
             MutableComponent delWarpCmd = Component.literal("§b/delwarp <name>");
             delWarpCmd = MessageUtil.addHoverText(delWarpCmd, Component.literal("§7Delete an existing warp"));
             MessageUtil.sendInfo(player, delWarpCmd.append(Component.literal(" §7- Delete an existing warp")));
         }
         
-        if (PermissionUtil.hasPermission(player, "neoessentials.command.warp.player")) {
+        if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.player")) {
             MutableComponent warpPlayerCmd = Component.literal("§b/warpplayer <player> <warp>");
             warpPlayerCmd = MessageUtil.addHoverText(warpPlayerCmd, Component.literal("§7Teleport another player to a warp"));
             MessageUtil.sendInfo(player, warpPlayerCmd.append(Component.literal(" §7- Teleport another player to a warp")));

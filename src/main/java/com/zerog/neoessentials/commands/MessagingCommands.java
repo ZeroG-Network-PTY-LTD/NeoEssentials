@@ -505,9 +505,8 @@ public class MessagingCommands {
      * Send a private message to all players with social spy enabled
      */
     private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message) {
-        // Skip if sender or recipient has exemption
-        if (PermissionUtil.hasPermission(sender, "essentials.chat.spy.exempt") || 
-            PermissionUtil.hasPermission(recipient, "essentials.chat.spy.exempt")) {
+        // Skip if sender or recipient has exemption        if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") || 
+            PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
             return;
         }
         
@@ -523,7 +522,7 @@ public class MessagingCommands {
             if (socialSpyEnabled.contains(player.getUUID()) && 
                 !player.getUUID().equals(sender.getUUID()) && 
                 !player.getUUID().equals(recipient.getUUID()) &&
-                PermissionUtil.hasPermission(player, "essentials.socialspy")) {
+                PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
                 player.sendSystemMessage(spyMessage);
             }
         }
