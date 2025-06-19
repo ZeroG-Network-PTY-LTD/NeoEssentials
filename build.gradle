@@ -115,6 +115,8 @@ configurations {
 dependencies {
     // Database dependencies
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
+    implementation 'com.mysql:mysql-connector-j:8.3.0'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
     
     // LuckPerms API (soft dependency for permission checking)
     compileOnly 'net.luckperms:api:5.4'

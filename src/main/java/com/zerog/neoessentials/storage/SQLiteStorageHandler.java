@@ -31,7 +31,7 @@ import java.util.UUID;
  */
 public class SQLiteStorageHandler implements StorageHandler {
     private static final String DATABASE_FILE = "neoessentials/database.db";
-    private Connection connection;
+    private final DatabaseConnectionManager connectionManager;
     private final Gson gson;
     
     public SQLiteStorageHandler() {
@@ -39,23 +39,20 @@ public class SQLiteStorageHandler implements StorageHandler {
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
                 .create();
+        connectionManager = DatabaseConnectionManager.getInstance();
     }
     
     @Override
     public void initialize() {
         try {
-            // Create directory if it doesn't exist
-            File dir = new File("neoessentials");
-            if (!dir.exists() && !dir.mkdirs()) {
-                NeoEssentials.LOGGER.error("Failed to create directory: neoessentials");
+            // Initialize the connection manager
+            if (!connectionManager.initializeSQLite(DATABASE_FILE)) {
+                NeoEssentials.LOGGER.error("Failed to initialize database connection manager");
                 return;
             }
             
-            // Load the SQLite JDBC driver
-            Class.forName("org.sqlite.JDBC");
-            
-            // Create connection
-            connection = DriverManager.getConnection("jdbc:sqlite:" + DATABASE_FILE);
+            // Test connection
+            try (Connection connection = connectionManager.getConnection()) {
             
             // Create tables
             createTables();
