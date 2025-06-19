@@ -48,7 +48,6 @@ import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
 import com.zerog.neoessentials.utils.StringToBooleanArgumentInfo;
 
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
-import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.registries.Registries;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -87,11 +86,12 @@ public class ModArgumentTypes {
      * Handle registration during common setup event
      * This provides a more direct way to register the argument type as a fallback
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private static void onCommonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             NeoEssentials.LOGGER.info("Registering StringToBooleanArgumentType during common setup");
-            ArgumentTypeInfos.registerByClass((Class) StringToBooleanArgumentType.class, new StringToBooleanArgumentInfo());
+            // No longer needed since we're using the deferred registry
+            // This was causing conflicts with different registration names
+            // ArgumentTypeInfos.registerByClass((Class) StringToBooleanArgumentType.class, new StringToBooleanArgumentInfo());
         });
 >>>>>>> faaaf85 (refactor: Update registration of StringToBooleanArgumentType for improved compatibility)
     }
