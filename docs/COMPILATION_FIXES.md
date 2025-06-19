@@ -17,14 +17,20 @@
    - Method converts ServerPlayer to CommandSourceStack for permission checking
    - Updated all references to use the new method
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3ae4640 (feat: Update build number and document type mismatch fixes in PermissionUtil across multiple commands)
    
 5. **Permission Util Type Mismatches (June 19, 2025)**
    - Fixed type mismatches in calls to `PermissionUtil.hasPermission()`
    - Added explicit casts for ServerPlayer and GameProfile parameters
    - Multiple files affected: WarpCommands, KitCommands, MessageCommands, MessagingCommands, ModeratorCommands, JailCommands, KitManager
    - Ensured proper usage of overloaded permission methods for different entity types
+<<<<<<< HEAD
 =======
 >>>>>>> 16744a4 (feat: Add comprehensive compilation fixes documentation; detail issues resolved and future recommendations)
+=======
+>>>>>>> 3ae4640 (feat: Update build number and document type mismatch fixes in PermissionUtil across multiple commands)
 
 ## Future Recommendations
 

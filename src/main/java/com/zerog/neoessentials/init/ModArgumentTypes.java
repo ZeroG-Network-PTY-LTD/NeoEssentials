@@ -60,12 +60,10 @@ import java.util.function.Supplier;
 public class ModArgumentTypes {
     // Create a deferred register for command argument types
     public static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = 
-            DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, NeoEssentials.MODID);
-
-    // Register our StringToBooleanArgumentType with the StringToBooleanArgumentInfo
+            DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, NeoEssentials.MODID);    // Register our StringToBooleanArgumentType with the StringToBooleanArgumentInfo
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static final Supplier<ArgumentTypeInfo<StringToBooleanArgumentType, ?>> STRING_TO_BOOLEAN = COMMAND_ARGUMENT_TYPES.register(
-            "string_to_boolean", 
+            "StringToBoolean", 
             () -> (ArgumentTypeInfo) new StringToBooleanArgumentInfo()
     );
 
