@@ -109,6 +109,7 @@ public class DataManager {    private UserManager userManager;
         mailManager = new MailManager(dataFolderFile);
           // Get the scheduler from NeoEssentials for scheduled tasks like tablist updates
         java.util.concurrent.ScheduledExecutorService scheduler = neoEssentials.getScheduler();
+<<<<<<< HEAD
         tablistManager = new com.zerog.neoessentials.ui.TablistManager(scheduler);
     }
     
@@ -129,6 +130,8 @@ public class DataManager {    private UserManager userManager;
         // Create executor service for scheduled tasks like tablist updates
         java.util.concurrent.ScheduledExecutorService scheduler = 
             java.util.concurrent.Executors.newScheduledThreadPool(1);
+=======
+>>>>>>> 6528176 (feat: Enhance scheduler handling and improve configuration management in NeoEssentials)
         tablistManager = new com.zerog.neoessentials.ui.TablistManager(scheduler);
     }
     

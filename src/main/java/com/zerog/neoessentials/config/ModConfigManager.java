@@ -23,10 +23,14 @@ public class ModConfigManager {
 =======
     // Compatibility config instance (legacy format)
     private CompatNeoEssentialsConfig compatConfig;
+<<<<<<< HEAD
     
 >>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
     /**
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
+=======
+      /**
+>>>>>>> 6528176 (feat: Enhance scheduler handling and improve configuration management in NeoEssentials)
      * Creates a new config manager
      * 
      * @param mod The mod instance
@@ -39,14 +43,20 @@ public class ModConfigManager {
         tablistConfig = new TablistConfig();
         tablistConfig.load();
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 6528176 (feat: Enhance scheduler handling and improve configuration management in NeoEssentials)
         
         // Create compatibility config
         compatConfig = new CompatNeoEssentialsConfig();
         
         // Register all configuration files
+<<<<<<< HEAD
 =======
           // Register all configuration files
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
+=======
+>>>>>>> 6528176 (feat: Enhance scheduler handling and improve configuration management in NeoEssentials)
         container.registerConfig(ModConfig.Type.COMMON, GeneralConfig.SPEC, "neoessentials/general.toml");
         container.registerConfig(ModConfig.Type.COMMON, EconomyConfig.SPEC, "neoessentials/economy.toml");
         container.registerConfig(ModConfig.Type.COMMON, HomeConfig.SPEC, "neoessentials/homes.toml");
