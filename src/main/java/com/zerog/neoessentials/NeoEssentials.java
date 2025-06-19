@@ -325,13 +325,13 @@ public class NeoEssentials {
     }
     
     /**
-     * Gets the scheduler
+     * Gets the scheduler for async tasks
+     * 
      * @return The scheduler
      */
     public ScheduledExecutorService getScheduler() {
-        // If the scheduler is null, create it
         if (scheduler == null) {
-            scheduler = Executors.newScheduledThreadPool(1);
+            scheduler = Executors.newScheduledThreadPool(2);
         }
         return scheduler;
     }

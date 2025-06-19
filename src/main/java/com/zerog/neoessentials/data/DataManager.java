@@ -42,10 +42,8 @@ public class DataManager {    private UserManager userManager;
         kitManager = new KitManager();        jailManager = new JailManager(dataFolderFile);
         powerToolManager = new PowerToolManager(dataFolderFile);
         mailManager = new MailManager(dataFolderFile);
-        
-        // Create executor service for scheduled tasks like tablist updates
-        java.util.concurrent.ScheduledExecutorService scheduler = 
-            java.util.concurrent.Executors.newScheduledThreadPool(1);
+          // Get the scheduler from NeoEssentials for scheduled tasks like tablist updates
+        java.util.concurrent.ScheduledExecutorService scheduler = neoEssentials.getScheduler();
         tablistManager = new com.zerog.neoessentials.ui.TablistManager(scheduler);
     }
     

@@ -16,8 +16,7 @@ public class ModConfigManager {
     
     // Compatibility config instance (legacy format)
     private CompatNeoEssentialsConfig compatConfig;
-    
-    /**
+      /**
      * Creates a new config manager
      * 
      * @param mod The mod instance
@@ -29,7 +28,11 @@ public class ModConfigManager {
         // Load legacy tablist config
         tablistConfig = new TablistConfig();
         tablistConfig.load();
-          // Register all configuration files
+        
+        // Create compatibility config
+        compatConfig = new CompatNeoEssentialsConfig();
+        
+        // Register all configuration files
         container.registerConfig(ModConfig.Type.COMMON, GeneralConfig.SPEC, "neoessentials/general.toml");
         container.registerConfig(ModConfig.Type.COMMON, EconomyConfig.SPEC, "neoessentials/economy.toml");
         container.registerConfig(ModConfig.Type.COMMON, HomeConfig.SPEC, "neoessentials/homes.toml");
