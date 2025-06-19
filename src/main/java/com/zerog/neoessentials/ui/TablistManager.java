@@ -3,9 +3,13 @@ package com.zerog.neoessentials.ui;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.config.TablistConfig;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.config.TablistTomlConfig;
 =======
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+import com.zerog.neoessentials.config.TablistTomlConfig;
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
 import com.zerog.neoessentials.data.EconomyManager;
 import com.zerog.neoessentials.utils.MessageUtil;
 import com.zerog.neoessentials.utils.TextUtil;
@@ -39,11 +43,16 @@ import java.util.concurrent.TimeUnit;
 public class TablistManager {
     // Configuration
 <<<<<<< HEAD
+<<<<<<< HEAD
     private TablistConfig legacyConfig;
     private TablistTomlConfig tomlConfig;
 =======
     private TablistConfig config;
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+    private TablistConfig legacyConfig;
+    private TablistTomlConfig tomlConfig;
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
     
     // Scheduler for updating the tablist
     private final ScheduledExecutorService scheduler;
@@ -77,6 +86,9 @@ public class TablistManager {
         NeoEssentials.LOGGER.info("Initializing TablistManager");
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
         // Get both configs
         this.legacyConfig = NeoEssentials.getInstance().getConfigManager().getTablistConfig();
         // The TOML config is accessed via its static fields directly
@@ -84,6 +96,7 @@ public class TablistManager {
         if (this.legacyConfig == null) {
             NeoEssentials.LOGGER.warn("Legacy tablist config not found, using defaults");
             this.legacyConfig = new TablistConfig();
+<<<<<<< HEAD
 =======
         // Set default config
         this.config = NeoEssentials.getInstance().getConfigManager().getTablistConfig();
@@ -91,11 +104,14 @@ public class TablistManager {
             NeoEssentials.LOGGER.warn("Tablist config not found, using defaults");
             this.config = new TablistConfig();
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
         }
         
         // Load headers and footers
         loadHeadersAndFooters();
         
+<<<<<<< HEAD
 <<<<<<< HEAD
         // Start the update task with interval from TOML config
         long updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
@@ -104,6 +120,11 @@ public class TablistManager {
         // Start the update task
         startUpdateTask();
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+        // Start the update task with interval from TOML config
+        long updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
+        startUpdateTask(updateInterval);
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
     }
     
     /**
@@ -116,12 +137,17 @@ public class TablistManager {
         
         // Load from config or use defaults
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (legacyConfig.getHeaders() != null && !legacyConfig.getHeaders().isEmpty()) {
             headers.addAll(legacyConfig.getHeaders());
 =======
         if (config.getHeaders() != null && !config.getHeaders().isEmpty()) {
             headers.addAll(config.getHeaders());
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+        if (legacyConfig.getHeaders() != null && !legacyConfig.getHeaders().isEmpty()) {
+            headers.addAll(legacyConfig.getHeaders());
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
         } else {
             // Default headers
             headers.add("&6Welcome to &l%server_name%");
@@ -130,12 +156,17 @@ public class TablistManager {
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (legacyConfig.getFooters() != null && !legacyConfig.getFooters().isEmpty()) {
             footers.addAll(legacyConfig.getFooters());
 =======
         if (config.getFooters() != null && !config.getFooters().isEmpty()) {
             footers.addAll(config.getFooters());
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+        if (legacyConfig.getFooters() != null && !legacyConfig.getFooters().isEmpty()) {
+            footers.addAll(legacyConfig.getFooters());
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
         } else {
             // Default footers
             footers.add("&7Website: &fwww.example.com");
@@ -145,6 +176,7 @@ public class TablistManager {
     }
     
     /**
+<<<<<<< HEAD
 <<<<<<< HEAD
      * Start the scheduled update task for the tablist
      * 
@@ -162,13 +194,22 @@ public class TablistManager {
         NeoEssentials.LOGGER.info("TablistManager update task scheduled every {} ms", updateInterval);
 =======
      * Starts the scheduled task to update the tablist
+=======
+     * Start the scheduled update task for the tablist
+     * 
+     * @param updateInterval Interval in milliseconds
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
      */
-    private void startUpdateTask() {
-        // Cancel any existing task
+    private void startUpdateTask(long updateInterval) {
+        // Cancel existing task if running
         if (updateTask != null && !updateTask.isDone()) {
             updateTask.cancel(false);
         }
+          // Schedule new task
+        updateTask = scheduler.scheduleAtFixedRate(this::updateTablist, 
+            0, updateInterval, TimeUnit.MILLISECONDS);
         
+<<<<<<< HEAD
         // Start a new update task
         long updateInterval = config.getUpdateInterval();
         updateTask = scheduler.scheduleAtFixedRate(
@@ -179,6 +220,9 @@ public class TablistManager {
         
         NeoEssentials.LOGGER.info("Started tablist update task with interval: {}ms", updateInterval);
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+        NeoEssentials.LOGGER.info("TablistManager update task scheduled every {} ms", updateInterval);
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
     }
     
     /**
@@ -198,10 +242,14 @@ public class TablistManager {
             
             // Update player teams and sorting if enabled
 <<<<<<< HEAD
+<<<<<<< HEAD
             if (legacyConfig.isEnableSorting()) {
 =======
             if (config.isEnableSorting()) {
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+            if (legacyConfig.isEnableSorting()) {
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
                 updatePlayerTeams();
             }
             
@@ -213,6 +261,7 @@ public class TablistManager {
                 try {
                     // Generate player-specific header and footer if needed
                     Component playerHeader = legacyConfig.isEnablePlayerSpecificHeaders() ? 
+<<<<<<< HEAD
 =======
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {                try {
 =======
@@ -222,15 +271,21 @@ public class TablistManager {
                     // Generate player-specific header and footer if needed
                     Component playerHeader = config.isEnablePlayerSpecificHeaders() ? 
 >>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
+=======
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
                         Component.literal(TextUtil.translateColors(parsePlaceholders(
                             headers.get(currentHeaderIndex), player))) : 
                         header;
                             
 <<<<<<< HEAD
+<<<<<<< HEAD
                     Component playerFooter = legacyConfig.isEnablePlayerSpecificFooters() ? 
 =======
                     Component playerFooter = config.isEnablePlayerSpecificFooters() ? 
 >>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
+=======
+                    Component playerFooter = legacyConfig.isEnablePlayerSpecificFooters() ? 
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
                         Component.literal(TextUtil.translateColors(parsePlaceholders(
                             footers.get(currentFooterIndex), player))) : 
                         footer;
@@ -432,7 +487,7 @@ public class TablistManager {
 =======
 >>>>>>> 5db751d (feat: Add player-specific header and footer configuration options in TablistConfig; update TablistManager to utilize these settings)
         // Server placeholders
-        template = template.replace("%server_name%", config.getServerName());
+        template = template.replace("%server_name%", legacyConfig.getServerName());
         template = template.replace("%online_players%", String.valueOf(server.getPlayerCount()));
         template = template.replace("%max_players%", String.valueOf(server.getMaxPlayers()));
         
@@ -441,7 +496,7 @@ public class TablistManager {
         template = template.replace("%mod_version%", NeoEssentials.getInstance().getVersion());
         
         // Time placeholders
-        SimpleDateFormat timeFormat = new SimpleDateFormat(config.getTimeFormat());
+        SimpleDateFormat timeFormat = new SimpleDateFormat(legacyConfig.getTimeFormat());
         template = template.replace("%time%", timeFormat.format(new Date()));
         
         // Player-specific placeholders
@@ -528,10 +583,14 @@ public class TablistManager {
         List<ServerPlayer> sortedPlayers = new ArrayList<>(server.getPlayerList().getPlayers());
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         switch (legacyConfig.getSortType()) {
 =======
         switch (config.getSortType()) {
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+        switch (legacyConfig.getSortType()) {
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
             case "name":
                 sortedPlayers.sort(Comparator.comparing(ServerPlayer::getScoreboardName));
                 break;
@@ -678,6 +737,9 @@ public class TablistManager {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
         if (legacyConfig.isShowEconomyInTablist()) {
             EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
             if (economyManager != null) {
@@ -723,10 +785,14 @@ public class TablistManager {
         
         // Update teams for sorting
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (legacyConfig.isEnableSorting()) {
 =======
         if (config.isEnableSorting()) {
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+        if (legacyConfig.isEnableSorting()) {
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
             updatePlayerTeams();
         }
     }
@@ -746,10 +812,14 @@ public class TablistManager {
         
         // Update teams for sorting
 <<<<<<< HEAD
+<<<<<<< HEAD
         if (legacyConfig.isEnableSorting()) {
 =======
         if (config.isEnableSorting()) {
 >>>>>>> 552699e (feat: Add TablistConfig and TablistManager for custom tablist functionality)
+=======
+        if (legacyConfig.isEnableSorting()) {
+>>>>>>> fb0eb45 (feat: Update compatibility layer for legacy config structure and enhance TablistManager with new config handling)
             updatePlayerTeams();
         }
     }
