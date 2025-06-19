@@ -6,9 +6,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import com.google.gson.reflect.TypeToken;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> b1b745b (feat: Update migration tasks and enhance kit management with pricing and UI improvements)
 import com.zerog.neoessentials.NeoEssentials;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -23,9 +26,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import java.lang.reflect.Type;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> b1b745b (feat: Update migration tasks and enhance kit management with pricing and UI improvements)
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -111,6 +117,7 @@ public class KitManager {
                                 kit.setPermission(kitObj.get("permission").getAsString());
                             }
 <<<<<<< HEAD
+<<<<<<< HEAD
                               // Set price
                             if (kitObj.has("price")) {
                                 kit.setPrice(kitObj.get("price").getAsDouble());
@@ -131,6 +138,12 @@ public class KitManager {
                             }
                             
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+                              // Set price
+                            if (kitObj.has("price")) {
+                                kit.setPrice(kitObj.get("price").getAsDouble());
+                            }
+>>>>>>> b1b745b (feat: Update migration tasks and enhance kit management with pricing and UI improvements)
                             // Load items (store item IDs and counts)
                             if (kitObj.has("items")) {
                                 JsonArray itemsArray = kitObj.getAsJsonArray("items");
@@ -220,6 +233,7 @@ public class KitManager {
                     kitObj.addProperty("permission", kit.getPermission());
                 }
 <<<<<<< HEAD
+<<<<<<< HEAD
                   // Save price
                 kitObj.addProperty("price", kit.getPrice());
 =======
@@ -231,6 +245,9 @@ public class KitManager {
                 }
                 
                 // Save price
+=======
+                  // Save price
+>>>>>>> b1b745b (feat: Update migration tasks and enhance kit management with pricing and UI improvements)
                 kitObj.addProperty("price", kit.getPrice());
                 
                 // Save items
