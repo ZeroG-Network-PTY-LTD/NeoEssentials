@@ -233,9 +233,8 @@ public class SQLiteStorageHandler implements StorageHandler {
                     int y = rs.getInt("y");
                     int z = rs.getInt("z");
                     float pitch = rs.getFloat("pitch");
-                    float yaw = rs.getFloat("yaw");
-                      BlockPos pos = new BlockPos(x, y, z);
-                    homes.put(homeName, new HomeData(pos, pitch, yaw, dimension));
+                    float yaw = rs.getFloat("yaw");                    BlockPos pos = new BlockPos(x, y, z);
+                    homes.put(homeName, new HomeData(dimension, pos, pitch, yaw));
                 }
             }
         } catch (SQLException e) {
