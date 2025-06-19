@@ -25,7 +25,7 @@ public class DataManager {    private UserManager userManager;
     
     private final String dataFolder = "neoessentials/";
     
-    public DataManager() {
+    public DataManager(NeoEssentials neoEssentials) {
         // Create the data folder if it doesn't exist
         File dataFolderFile = new File(dataFolder);
         if (!dataFolderFile.exists()) {

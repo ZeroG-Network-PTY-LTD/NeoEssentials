@@ -1,0 +1,123 @@
+package com.zerog.neoessentials.config;
+
+import com.zerog.neoessentials.NeoEssentials;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.common.ModConfigSpec;
+
+/**
+ * Manages all configuration for the NeoEssentials mod.
+ * Handles loading, registration, and providing access to all config classes.
+ */
+public class ModConfigManager {
+    // Reference to the main mod instance
+    private final NeoEssentials mod;
+    private TablistConfig tablistConfig; // Legacy JSON-based config, to be migrated later
+    
+    /**
+     * Creates a new config manager
+     * 
+     * @param mod The mod instance
+     * @param container The mod container
+     */
+    public ModConfigManager(NeoEssentials mod, ModContainer container) {
+        this.mod = mod;
+        
+        // Load legacy tablist config
+        tablistConfig = new TablistConfig();
+        tablistConfig.load();
+          // Register all configuration files
+        container.registerConfig(ModConfig.Type.COMMON, GeneralConfig.SPEC, "neoessentials/general.toml");
+        container.registerConfig(ModConfig.Type.COMMON, EconomyConfig.SPEC, "neoessentials/economy.toml");
+        container.registerConfig(ModConfig.Type.COMMON, HomeConfig.SPEC, "neoessentials/homes.toml");
+        container.registerConfig(ModConfig.Type.COMMON, WarpConfig.SPEC, "neoessentials/warps.toml");
+        container.registerConfig(ModConfig.Type.COMMON, KitConfig.SPEC, "neoessentials/kits.toml");
+        container.registerConfig(ModConfig.Type.COMMON, TablistTomlConfig.SPEC, "neoessentials/tablist.toml");
+        container.registerConfig(ModConfig.Type.COMMON, DatabaseTomlConfig.SPEC, "neoessentials/database.toml");
+        
+        NeoEssentials.LOGGER.info("Registered all NeoEssentials config files");
+    }
+    
+    /**
+     * Gets the tablist config
+     * @return The tablist config
+     */
+    public TablistConfig getTablistConfig() {
+        return tablistConfig;
+    }
+    
+    /**
+     * Helper method to check if a feature is enabled in the general config
+     * 
+     * @param configValue The config value to check
+     * @return True if the feature is enabled, false otherwise
+     */
+    public boolean isFeatureEnabled(ModConfigSpec.BooleanValue configValue) {
+        return configValue.get();
+    }
+    
+    /**
+     * Check if the economy system is enabled
+     * @return True if enabled
+     */
+    public boolean isEconomyEnabled() {
+        return GeneralConfig.ENABLE_ECONOMY.get();
+    }
+    
+    /**
+     * Check if the home system is enabled
+     * @return True if enabled
+     */
+    public boolean isHomesEnabled() {
+        return GeneralConfig.ENABLE_HOMES.get();
+    }
+    
+    /**
+     * Check if the warp system is enabled
+     * @return True if enabled
+     */
+    public boolean isWarpsEnabled() {
+        return GeneralConfig.ENABLE_WARPS.get();
+    }
+    
+    /**
+     * Check if the kit system is enabled
+     * @return True if enabled
+     */
+    public boolean isKitsEnabled() {
+        return GeneralConfig.ENABLE_KITS.get();
+    }
+    
+    /**
+     * Check if the tablist system is enabled
+     * @return True if enabled
+     */
+    public boolean isTablistEnabled() {
+        return GeneralConfig.ENABLE_TABLIST.get();
+    }
+    
+    /**
+     * Check if teleportation is enabled
+     * @return True if enabled
+     */
+    public boolean isTeleportationEnabled() {
+        return GeneralConfig.ENABLE_TELEPORTATION.get();
+    }
+    
+    /**
+     * Get the database config spec
+     * This is used for backward compatibility with the storage manager
+     * @return The database config spec
+     */
+    public ModConfigSpec getDatabaseConfig() {
+        return DatabaseTomlConfig.SPEC;
+    }
+    
+    /**
+     * Get the database config spec (alias for backward compatibility)
+     * @return The database config spec
+     */
+    public ModConfigSpec getSpec() {
+        return DatabaseTomlConfig.SPEC;
+    }
+}

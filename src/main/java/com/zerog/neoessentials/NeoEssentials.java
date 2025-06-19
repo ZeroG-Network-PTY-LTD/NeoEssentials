@@ -69,8 +69,8 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.events.EventHandler.class);
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.PowerToolEventHandler());
 
-        // Register our mod's ModConfigSpec so that FML can create and load the config file for us
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "neoessentials-general.toml");
+        // Initialize our configuration system
+        configManager = new com.zerog.neoessentials.config.ModConfigManager(this, modContainer);
     }
     
     /**
@@ -105,16 +105,14 @@ public class NeoEssentials {
             // If needed, additional registrations could happen here
         });
         
-        // Initialize the managers
+        // Initialize storage manager
+        initializeStorageManager();
+        
+        // Initialize data manager
+        dataManager = new com.zerog.neoessentials.data.DataManager(this);
+        
+        // Initialize managers that rely on storage
         initializeManagers();
-
-        if (Config.LOG_DIRT_BLOCK.getAsBoolean()) {
-            LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
-        }
-
-        LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
-
-        Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
     }
 
     /**
@@ -127,7 +125,7 @@ public class NeoEssentials {
     }
     
     // Fields for the essentials managers
-    private com.zerog.neoessentials.config.ConfigManager configManager;
+    private com.zerog.neoessentials.config.ModConfigManager configManager;
     private com.zerog.neoessentials.data.DataManager dataManager;
     private com.zerog.neoessentials.commands.CommandManager commandManager;
     private com.zerog.neoessentials.storage.StorageManager storageManager;
@@ -138,7 +136,7 @@ public class NeoEssentials {
      * 
      * @return The config manager
      */
-    public com.zerog.neoessentials.config.ConfigManager getConfigManager() {
+    public com.zerog.neoessentials.config.ModConfigManager getConfigManager() {
         return configManager;
     }
     
@@ -182,18 +180,10 @@ public class NeoEssentials {
      * Initialize the managers
      */
     public void initializeManagers() {
-        // Initialize config manager first
-        configManager = new com.zerog.neoessentials.config.ConfigManager();
-        configManager.initialize();
-        
-        // Register database config with FML (separate file from main config)
-        registerDatabaseConfig();
-        
-        // Just create the storage manager instance without trying to access config values yet
-        // Create a default fallback config for the storage manager
-        com.zerog.neoessentials.config.DatabaseConfig fallbackConfig = new com.zerog.neoessentials.config.DatabaseConfig();
-        fallbackConfig.initialize(); // Initialize to ensure defaults are set
-        storageManager = new com.zerog.neoessentials.storage.StorageManager(fallbackConfig);
+        // Initialize managers that rely on data manager
+        if (dataManager != null) {
+            dataManager.initializeManagers();
+        }
         
         // Only initialize storage manager if config is loaded, otherwise it will be initialized in onConfigLoad
         if (databaseConfigLoaded) {
