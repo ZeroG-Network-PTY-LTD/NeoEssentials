@@ -38,7 +38,10 @@ This document outlines the remaining tasks for NeoEssentials development.
    - [x] Home and Warp system documentation
    - [x] Home command reference (via `/homehelp` command)
    - [x] Warp command reference (via `/warphelp` command)
+<<<<<<< HEAD
    - [x] Tablist system documentation
+=======
+>>>>>>> 4100264 (feat: Add documentation for Home and Warp systems, including command references)
 
 ## Final Steps
 
