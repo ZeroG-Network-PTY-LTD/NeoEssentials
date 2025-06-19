@@ -3,9 +3,13 @@ package com.zerog.neoessentials.data;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.google.gson.reflect.TypeToken;
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+import com.google.gson.reflect.TypeToken;
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
 import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -13,6 +17,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+<<<<<<< HEAD
 <<<<<<< HEAD
 import java.lang.reflect.Type;
 import java.text.NumberFormat;
@@ -25,6 +30,14 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+import java.lang.reflect.Type;
+import java.text.NumberFormat;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
 
 /**
  * Manages the economy system for the NeoEssentials mod.
@@ -32,6 +45,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EconomyManager {
     private static final String ECONOMY_DATA_FILE = "neoessentials/economy.json";
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
     private static final String TRANSACTION_DATA_FILE = "neoessentials/economy_transactions.json";
     
     // Currency configuration
@@ -39,6 +55,7 @@ public class EconomyManager {
     private String currencySingular = "Coin";
     private String currencySymbol = "$";
     private double startingBalance = 100.0;
+<<<<<<< HEAD
       // Map of player UUID to balance
     private final Map<UUID, Double> balances = new ConcurrentHashMap<>();
     
@@ -53,17 +70,30 @@ public class EconomyManager {
     
     // JSON serialization
 =======
+=======
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
     
     // Map of player UUID to balance
     private final Map<UUID, Double> balances = new ConcurrentHashMap<>();
     
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+    // List of recent transactions (in-memory cache)
+    private final List<EconomyTransaction> recentTransactions = Collections.synchronizedList(new ArrayList<>());
+    
+    // Transaction ID counter
+    private long nextTransactionId = 1;
+    
+    // JSON serialization
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
     private final Gson gson = new GsonBuilder()
             .setPrettyPrinting()
             .disableHtmlEscaping()
             .create();
       /**
      * Initialize the economy manager
+<<<<<<< HEAD
 <<<<<<< HEAD
      */    public void initialize() {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Economy Manager");
@@ -84,14 +114,30 @@ public class EconomyManager {
 =======
      */
     public void initialize() {
+=======
+     */    public void initialize() {
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Economy Manager");
+        
+        // Create the data directory if it doesn't exist
+        File dataFolder = new File("neoessentials");
+        if (!dataFolder.exists() && !dataFolder.mkdirs()) {
+            NeoEssentials.LOGGER.error("Failed to create neoessentials directory");
+        }
         
         // Load existing economy data
         loadEconomyData();
+        
+        // Load transaction history
+        loadTransactionHistory();
     }
+<<<<<<< HEAD
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+      /**
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
      * Save all economy data to disk
      */
     public void saveAll() {
@@ -118,12 +164,18 @@ public class EconomyManager {
             
             NeoEssentials.LOGGER.info("Economy data saved successfully");
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
             
             // Also save transaction history
             saveTransactionHistory();
             
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
         } catch (IOException e) {
             NeoEssentials.LOGGER.error("Error saving economy data", e);
         }
@@ -164,6 +216,9 @@ public class EconomyManager {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
      * Load transaction history from disk
      */
     private void loadTransactionHistory() {
@@ -368,8 +423,11 @@ public class EconomyManager {
         }
     }
       /**
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
      * Get the balance of a player
      * 
      * @param playerId The UUID of the player
@@ -377,10 +435,14 @@ public class EconomyManager {
      */
     public double getBalance(UUID playerId) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         return balances.getOrDefault(playerId, startingBalance);
 =======
         return balances.getOrDefault(playerId, 0.0);
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        return balances.getOrDefault(playerId, startingBalance);
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
     }
     
     /**
@@ -409,6 +471,7 @@ public class EconomyManager {
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         recordTransaction(playerId, EconomyTransaction.TYPE_DEPOSIT, amount, "Balance deposit");
         return getBalance(playerId);
     }
@@ -422,6 +485,12 @@ public class EconomyManager {
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        recordTransaction(playerId, EconomyTransaction.TYPE_DEPOSIT, amount, "Balance deposit");
+        return getBalance(playerId);
+    }
+      /**
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
      * Remove from a player's balance
      * 
      * @param playerId The UUID of the player
@@ -439,6 +508,7 @@ public class EconomyManager {
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
         recordTransaction(playerId, EconomyTransaction.TYPE_WITHDRAW, amount, "Balance withdrawal");
         return true;
     }
@@ -451,12 +521,19 @@ public class EconomyManager {
     
     /**
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        recordTransaction(playerId, EconomyTransaction.TYPE_WITHDRAW, amount, "Balance withdrawal");
+        return true;
+    }
+      /**
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
      * Transfer money from one player to another
      * 
      * @param fromId The UUID of the player sending money
      * @param toId The UUID of the player receiving money
      * @param amount The amount to transfer
      * @return True if the transfer was successful, false otherwise
+<<<<<<< HEAD
 <<<<<<< HEAD
      */    
     public boolean transfer(UUID fromId, UUID toId, double amount) {
@@ -484,17 +561,37 @@ public class EconomyManager {
 =======
      */    public boolean transfer(UUID fromId, UUID toId, double amount) {
         if (amount <= 0) {
+=======
+     */    
+    public boolean transfer(UUID fromId, UUID toId, double amount) {
+        if (amount <= 0 || fromId.equals(toId)) {
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
             return false;
         }
         
-        // Check if from player has enough money
-        if (!removeBalance(fromId, amount)) {
+        double fromBalance = getBalance(fromId);
+        if (fromBalance < amount) {
             return false;
         }
         
+<<<<<<< HEAD
         // Add money to the target player
         addBalance(toId, amount);
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+        // Get player names for better descriptions
+        String fromName = getPlayerName(fromId);
+        String toName = getPlayerName(toId);
+        
+        // Record the send transaction
+        recordTransaction(fromId, toId, EconomyTransaction.TYPE_TRANSFER_SEND, amount, 
+                "Transfer to " + toName);
+                
+        // Record the receive transaction
+        recordTransaction(toId, fromId, EconomyTransaction.TYPE_TRANSFER_RECEIVE, amount, 
+                "Transfer from " + fromName);
+                
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
         return true;
     }
       /**
@@ -523,6 +620,7 @@ public class EconomyManager {
     public Map<UUID, Double> getAllBalances() {
         return new ConcurrentHashMap<>(balances);
     }
+<<<<<<< HEAD
 <<<<<<< HEAD
       /**
      * Get a player's name from their UUID
@@ -728,23 +826,186 @@ public class EconomyManager {
 =======
     
     /**
+=======
+      /**
+>>>>>>> f3a56e8 (Refactor economy commands and transaction management)
      * Get a player's name from their UUID
      * 
-     * @param playerId The UUID of the player
-     * @return The player's name, or null if not found
+     * @param uuid The player's UUID
+     * @return The player's name, or "Unknown Player" if not found
      */
-    public String getPlayerName(UUID playerId) {
-        // Try to find online player first
-        ServerPlayer player = NeoEssentials.getInstance().getServer().getPlayerList().getPlayer(playerId);
-        if (player != null) {
-            return player.getScoreboardName();
+    public String getPlayerName(UUID uuid) {
+        // Check if the server is available
+        if (NeoEssentials.getInstance() == null || NeoEssentials.getInstance().getServer() == null) {
+            return "Unknown Player";
         }
         
-        // Try to get from offline player data
-        return NeoEssentials.getInstance().getServer().getProfileCache()
-            .get(playerId)
-            .map(profile -> profile.getName())
-            .orElse("Unknown Player");
+        // Try to get from online players first
+        for (net.minecraft.server.level.ServerPlayer player : NeoEssentials.getInstance().getServer().getPlayerList().getPlayers()) {
+            if (player.getUUID().equals(uuid)) {
+                return player.getName().getString();
+            }
+        }
+          // Try to get from profile cache
+        var profileCache = NeoEssentials.getInstance().getServer().getProfileCache();
+        if (profileCache != null) {
+            var profileOpt = profileCache.get(uuid);
+            if (profileOpt.isPresent()) {
+                return profileOpt.get().getName();
+            }
+        }
+        
+        // Return unknown if all else fails
+        return "Unknown Player";
+    }
+    
+    /**
+     * Format a currency amount according to the configured format
+     * 
+     * @param amount The amount to format
+     * @return The formatted amount
+     */
+    public String formatCurrency(double amount) {
+        NumberFormat format = NumberFormat.getCurrencyInstance();
+        format.setCurrency(java.util.Currency.getInstance("USD"));
+        return format.format(amount).replace("$", currencySymbol);
+    }
+    
+    /**
+     * Format a currency amount with the currency name
+     * 
+     * @param amount The amount to format
+     * @return The formatted amount with currency name
+     */
+    public String formatCurrencyWithName(double amount) {
+        String formatted = String.format("%.2f", amount);
+        if (Math.abs(amount - 1.0) < 0.009) {
+            return formatted + " " + currencySingular;
+        } else {
+            return formatted + " " + currencyName;
+        }
+    }
+    
+    /**
+     * Record an admin transaction to add money to a player's account
+     * 
+     * @param playerUUID The UUID of the player
+     * @param adminUUID The UUID of the admin
+     * @param amount The amount to add
+     * @param description The description of the transaction
+     * @return The new balance
+     */
+    public double adminAddBalance(UUID playerUUID, UUID adminUUID, double amount, String description) {
+        if (amount <= 0) {
+            return getBalance(playerUUID);
+        }
+        
+        double oldBalance = getBalance(playerUUID);
+        double newBalance = oldBalance + amount;
+        
+        setBalance(playerUUID, newBalance);
+        
+        // Record the transaction with admin type
+        EconomyTransaction transaction = new EconomyTransaction(
+            playerUUID, adminUUID, EconomyTransaction.TYPE_ADMIN, amount, newBalance, description
+        );
+        
+        synchronized (recentTransactions) {
+            recentTransactions.add(transaction);
+            
+            // Trim the list if it gets too large to prevent memory issues
+            if (recentTransactions.size() > 5000) {
+                recentTransactions.subList(0, 1000).clear();
+            }
+        }
+        
+        // Save the transaction history periodically
+        if (recentTransactions.size() % 10 == 0) {
+            saveTransactionHistory();
+        }
+        
+        return newBalance;
+    }
+    
+    /**
+     * Record an admin transaction to remove money from a player's account
+     * 
+     * @param playerUUID The UUID of the player
+     * @param adminUUID The UUID of the admin
+     * @param amount The amount to remove
+     * @param description The description of the transaction
+     * @return True if successful, false if the player doesn't have enough funds
+     */
+    public boolean adminRemoveBalance(UUID playerUUID, UUID adminUUID, double amount, String description) {
+        if (amount <= 0) {
+            return true;
+        }
+        
+        double oldBalance = getBalance(playerUUID);
+        if (oldBalance < amount) {
+            return false;
+        }
+        
+        double newBalance = oldBalance - amount;
+        setBalance(playerUUID, newBalance);
+        
+        // Record the transaction with admin type
+        EconomyTransaction transaction = new EconomyTransaction(
+            playerUUID, adminUUID, EconomyTransaction.TYPE_ADMIN, -amount, newBalance, description
+        );
+        
+        synchronized (recentTransactions) {
+            recentTransactions.add(transaction);
+            
+            // Trim the list if it gets too large to prevent memory issues
+            if (recentTransactions.size() > 5000) {
+                recentTransactions.subList(0, 1000).clear();
+            }
+        }
+        
+        // Save the transaction history periodically
+        if (recentTransactions.size() % 10 == 0) {
+            saveTransactionHistory();
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Record an admin transaction to set a player's balance
+     * 
+     * @param playerUUID The UUID of the player
+     * @param adminUUID The UUID of the admin
+     * @param amount The amount to set
+     * @param description The description of the transaction
+     * @return The new balance
+     */
+    public double adminSetBalance(UUID playerUUID, UUID adminUUID, double amount, String description) {
+        double oldBalance = getBalance(playerUUID);
+        double difference = amount - oldBalance;
+        
+        setBalance(playerUUID, amount);
+        
+        // Record the transaction with admin type
+        EconomyTransaction transaction = new EconomyTransaction(
+            playerUUID, adminUUID, EconomyTransaction.TYPE_ADMIN, difference, amount, description
+        );
+        
+        synchronized (recentTransactions) {
+            recentTransactions.add(transaction);
+            
+            // Trim the list if it gets too large to prevent memory issues
+            if (recentTransactions.size() > 5000) {
+                recentTransactions.subList(0, 1000).clear();
+            }
+        }
+        
+        // Save the transaction history periodically
+        if (recentTransactions.size() % 10 == 0) {
+            saveTransactionHistory();
+        }
+        
+        return amount;
     }
 }
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
