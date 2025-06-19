@@ -505,6 +505,7 @@ public class MessagingCommands {
      * Send a private message to all players with social spy enabled
      */
 <<<<<<< HEAD
+<<<<<<< HEAD
     private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message) {        // Skip if sender or recipient has exemption
         if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") || 
             PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
@@ -517,6 +518,10 @@ public class MessagingCommands {
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
         // Skip if sender or recipient has exemption        if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") || 
+=======
+    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message) {        // Skip if sender or recipient has exemption
+        if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") || 
+>>>>>>> 18240f3 (fix: Update permission checks in JailCommands, MessagingCommands, and KitManager to ensure proper player type handling)
             PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
 >>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
             return;
