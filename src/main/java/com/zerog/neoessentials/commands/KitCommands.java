@@ -8,14 +8,22 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.KitManager;
+import com.zerog.neoessentials.data.EconomyTransaction;
 import com.zerog.neoessentials.utils.MessageUtil;
 import com.zerog.neoessentials.utils.PermissionUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +58,7 @@ public class KitCommands {
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.list"))
                 .executes(this::executeKitList)
         );
-          // /createkit <name> [cooldown] [price] - Create a kit with your current inventory
+          // /createkit <n> [cooldown] [price] - Create a kit with your current inventory
         dispatcher.register(
             Commands.literal("createkit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.create"))
@@ -89,13 +97,20 @@ public class KitCommands {
                 )
         );
         
-        // /previewkit <name> - Preview the items in a kit
+        // /previewkit <n> - Preview the items in a kit
         dispatcher.register(
             Commands.literal("previewkit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.preview"))
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executePreviewKit)
                 )
+        );
+        
+        // /kithelp - Show help for kit-related commands
+        dispatcher.register(
+            Commands.literal("kithelp")
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit"))
+                .executes(this::executeKitHelp)
         );
         
         NeoEssentials.LOGGER.info("Kit commands registered successfully");
@@ -209,45 +224,97 @@ public class KitCommands {
         for (String kitName : kits.keySet()) {
             if (!first) {
                 message.append(Component.literal(", "));
-            }                // Get the kit
-                KitManager.Kit kit = kitManager.getKit(kitName);
-                
-                // Check if the player can use this kit (permissions)
-                if (kitManager.canUseKit(player, kitName)) {
-                    // Check cooldown
-                    long cooldown = kitManager.getRemainingCooldown(player, kitName);
-                    
-                    // Check for price
-                    boolean canAfford = true;
-                    String priceInfo = "";
-                    
-                    if (kit.getPrice() > 0) {
-                        var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
-                        double balance = economyManager.getBalance(player.getUUID());
-                        canAfford = balance >= kit.getPrice();
-                        priceInfo = " (" + economyManager.formatCurrency(kit.getPrice()) + ")";
-                    }
-                    
-                    if (cooldown > 0) {
-                        // On cooldown - show in red with cooldown time
-                        String timeStr = formatTime(cooldown);
-                        message.append(Component.literal(kitName + " (" + timeStr + ")" + priceInfo).withStyle(net.minecraft.ChatFormatting.RED));
-                    } else if (!canAfford) {
-                        // Can't afford - show in yellow
-                        message.append(Component.literal(kitName + priceInfo).withStyle(net.minecraft.ChatFormatting.YELLOW));
-                    } else {
-                        // Available - show in green
-                        message.append(Component.literal(kitName + priceInfo).withStyle(net.minecraft.ChatFormatting.GREEN));
-                    }
-                } else {
-                    // No permission - show in gray
-                    message.append(Component.literal(kitName).withStyle(net.minecraft.ChatFormatting.GRAY));
-                }
+            }
             
+            // Get the kit
+            KitManager.Kit kit = kitManager.getKit(kitName);
+            
+            // Create hover text with kit details
+            MutableComponent hoverText = Component.literal("§6Kit: §e" + kit.getName() + "\n");
+            
+            // Add permission info
+            if (kit.getPermission() != null && !kit.getPermission().isEmpty()) {
+                hoverText.append(Component.literal("§7Permission: §f" + kit.getPermission() + "\n"));
+            }
+            
+            // Add cooldown info
+            if (kit.getCooldown() > 0) {
+                hoverText.append(Component.literal("§7Cooldown: §f" + formatTime(kit.getCooldown()) + "\n"));
+                
+                // Add remaining cooldown if applicable
+                long remainingCooldown = kitManager.getRemainingCooldown(player, kitName);
+                if (remainingCooldown > 0) {
+                    hoverText.append(Component.literal("§cTime remaining: §f" + formatTime(remainingCooldown) + "\n"));
+                }
+            }
+            
+            // Add price info
+            if (kit.getPrice() > 0) {
+                var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                String formattedPrice = economyManager.formatCurrency(kit.getPrice());
+                double balance = economyManager.getBalance(player.getUUID());
+                boolean canAfford = balance >= kit.getPrice();
+                
+                hoverText.append(Component.literal("§7Price: " + (canAfford ? "§a" : "§c") + formattedPrice + "\n"));
+                
+                if (!canAfford) {
+                    hoverText.append(Component.literal("§cYou need " + economyManager.formatCurrency(kit.getPrice() - balance) + " more\n"));
+                }
+            }
+            
+            // Add instruction text
+            hoverText.append(Component.literal("§7Click to claim this kit"));
+            
+            // Check if the player can use this kit (permissions)
+            MutableComponent kitComponent;
+            if (kitManager.canUseKit(player, kitName)) {
+                // Check cooldown
+                long cooldown = kitManager.getRemainingCooldown(player, kitName);
+                
+                // Check for price
+                boolean canAfford = true;
+                String priceInfo = "";
+                
+                if (kit.getPrice() > 0) {
+                    var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
+                    double balance = economyManager.getBalance(player.getUUID());
+                    canAfford = balance >= kit.getPrice();
+                    priceInfo = " (" + economyManager.formatCurrency(kit.getPrice()) + ")";
+                }
+                
+                if (cooldown > 0) {
+                    // On cooldown - show in red with cooldown time
+                    String timeStr = formatTime(cooldown);
+                    kitComponent = Component.literal(kitName + " (" + timeStr + ")" + priceInfo).withStyle(net.minecraft.ChatFormatting.RED);
+                } else if (!canAfford) {
+                    // Can't afford - show in yellow
+                    kitComponent = Component.literal(kitName + priceInfo).withStyle(net.minecraft.ChatFormatting.YELLOW);
+                } else {
+                    // Available - show in green
+                    kitComponent = Component.literal(kitName + priceInfo).withStyle(net.minecraft.ChatFormatting.GREEN);
+                }
+            } else {
+                // No permission - show in gray
+                kitComponent = Component.literal(kitName).withStyle(net.minecraft.ChatFormatting.GRAY);
+            }
+            
+            // Add hover event and click event
+            kitComponent = kitComponent.withStyle(style -> style
+                .withHoverEvent(new HoverEvent(
+                    HoverEvent.Action.SHOW_TEXT, 
+                    hoverText
+                ))
+                .withClickEvent(new ClickEvent(
+                    ClickEvent.Action.RUN_COMMAND,
+                    "/kit " + kitName
+                ))
+            );
+            
+            message.append(kitComponent);
             first = false;
         }
         
-        NeoEssentials.LOGGER.debug("Sending kit list ({} kits) to player {}", kits.size(), player.getScoreboardName());
+        NeoEssentials.LOGGER.debug("Sending interactive kit list ({} kits) to player {}", kits.size(), player.getScoreboardName());
         MessageUtil.sendInfo(player, message);
         return 1;
     }
@@ -659,7 +726,14 @@ public class KitCommands {
                     
                     if (item != null && item != Items.AIR) {
                         String itemName = item.getDescription().getString();
-                        player.sendSystemMessage(Component.literal("§8- §f" + itemDef.getCount() + "x §e" + itemName));
+                        MutableComponent itemComponent = Component.literal("§8- §f" + itemDef.getCount() + "x §e" + itemName);
+                        
+                        // Add hover event to show item info
+                        itemComponent = itemComponent.withStyle(style -> style.withHoverEvent(
+                            new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("§7Item ID: §f" + itemId))
+                        ));
+                        
+                        player.sendSystemMessage(itemComponent);
                         displayed++;
                     }
                 } catch (Exception e) {
@@ -668,9 +742,21 @@ public class KitCommands {
             }
         }
         
-        // Display footer
+        // Display footer with interactive claim button
         if (kitManager.canUseKit(player, kitName, true)) {
-            player.sendSystemMessage(Component.literal("§aYou can use this kit. Type §e/kit " + kitName + "§a to claim it."));
+            MutableComponent claimButton = Component.literal("§a[CLAIM THIS KIT]")
+                .withStyle(style -> style
+                    .withHoverEvent(new HoverEvent(
+                        HoverEvent.Action.SHOW_TEXT,
+                        Component.literal("§aClick here to claim kit: §e" + kitName)
+                    ))
+                    .withClickEvent(new ClickEvent(
+                        ClickEvent.Action.RUN_COMMAND,
+                        "/kit " + kitName
+                    ))
+                );
+            
+            player.sendSystemMessage(Component.literal("§aYou can use this kit. ").append(claimButton));
         } else {
             long cooldown = kitManager.getRemainingCooldown(player, kitName);
             if (cooldown > 0) {
@@ -678,9 +764,14 @@ public class KitCommands {
                 player.sendSystemMessage(Component.literal("§cYou must wait §e" + timeStr + "§c before using this kit again."));
             } else if (kit.getPrice() > 0) {
                 var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
-                if (economyManager.getBalance(player.getUUID()) < kit.getPrice()) {
+                double balance = economyManager.getBalance(player.getUUID());
+                if (balance < kit.getPrice()) {
                     String formattedPrice = economyManager.formatCurrency(kit.getPrice());
-                    player.sendSystemMessage(Component.literal("§cYou don't have enough money to buy this kit. Price: §e" + formattedPrice));
+                    String formattedBalance = economyManager.formatCurrency(balance);
+                    String formattedNeeded = economyManager.formatCurrency(kit.getPrice() - balance);
+                    player.sendSystemMessage(Component.literal("§cYou need §e" + formattedPrice + 
+                        " §cto buy this kit (you have §e" + formattedBalance + "§c, need §e" + 
+                        formattedNeeded + " §cmore)"));
                 } else {
                     player.sendSystemMessage(Component.literal("§cYou don't have permission to use this kit."));
                 }
@@ -690,5 +781,74 @@ public class KitCommands {
         }
         
         return 1;
+    }
+    
+    /**
+     * Execute the /kithelp command to display help for kit commands
+     * 
+     * @param context The command context
+     * @return Command result
+     */
+    private int executeKitHelp(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        
+        NeoEssentials.LOGGER.debug("Player {} is requesting kit help", player.getScoreboardName());
+        
+        // Send header
+        player.sendSystemMessage(Component.literal("§6§l=== Kit Commands Help ==="));
+        
+        // Define command list with descriptions and permissions
+        List<CommandHelp> commands = new ArrayList<>();
+        commands.add(new CommandHelp("/kit <name>", "Claim a kit with the specified name", "neoessentials.command.kit"));
+        commands.add(new CommandHelp("/kits", "List all available kits", "neoessentials.command.kit.list"));
+        commands.add(new CommandHelp("/previewkit <name>", "Preview the contents of a kit", "neoessentials.command.kit.preview"));
+        commands.add(new CommandHelp("/createkit <name> [cooldown] [price]", "Create a new kit with your current inventory", "neoessentials.command.kit.create"));
+        commands.add(new CommandHelp("/deletekit <name>", "Delete an existing kit", "neoessentials.command.kit.delete"));
+        commands.add(new CommandHelp("/givekit <player> <kit>", "Give a kit to another player", "neoessentials.command.kit.give"));
+        commands.add(new CommandHelp("/kithelp", "Display this help message", "neoessentials.command.kit"));
+        
+        // Display each command with interactive elements
+        for (CommandHelp cmd : commands) {
+            boolean hasPermission = PermissionUtil.hasPermission(player, cmd.permission);
+            
+            MutableComponent commandText = Component.literal(
+                    (hasPermission ? "§a" : "§c") + cmd.command
+                ).withStyle(style -> style
+                    .withHoverEvent(new HoverEvent(
+                        HoverEvent.Action.SHOW_TEXT,
+                        Component.literal("§7Permission: §f" + cmd.permission + 
+                                         "\n" + (hasPermission ? "§aYou have permission to use this command" : 
+                                                              "§cYou don't have permission to use this command") +
+                                         "\n§7Click to suggest this command")
+                    ))
+                    .withClickEvent(new ClickEvent(
+                        ClickEvent.Action.SUGGEST_COMMAND,
+                        cmd.command.split(" ")[0]
+                    ))
+                );
+            
+            // Display the command and its description
+            player.sendSystemMessage(commandText.append(Component.literal(" §8- §7" + cmd.description)));
+        }
+        
+        // Send footer
+        player.sendSystemMessage(Component.literal("§7TIP: §fClick on any command to suggest it in your chat."));
+        
+        return 1;
+    }
+    
+    /**
+     * Helper class to store command help information
+     */
+    private static class CommandHelp {
+        String command;
+        String description;
+        String permission;
+        
+        public CommandHelp(String command, String description, String permission) {
+            this.command = command;
+            this.description = description;
+            this.permission = permission;
+        }
     }
 }
