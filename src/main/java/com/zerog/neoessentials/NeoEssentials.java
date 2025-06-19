@@ -94,6 +94,7 @@ public class NeoEssentials {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 <<<<<<< HEAD
+<<<<<<< HEAD
         // Register config loading event handlers
         modEventBus.addListener(this::onConfigLoad);
         modEventBus.addListener(this::onConfigReady);
@@ -101,6 +102,11 @@ public class NeoEssentials {
         // Register config loading event handler
         modEventBus.addListener(this::onConfigLoad);
 >>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
+=======
+        // Register config loading event handlers
+        modEventBus.addListener(this::onConfigLoad);
+        modEventBus.addListener(this::onConfigReady);
+>>>>>>> 3caece6 (feat: Register additional config loading event handler for improved config management)
 
 <<<<<<< HEAD
         // Register custom command argument types - now server-side only
@@ -220,6 +226,16 @@ public class NeoEssentials {
                     dataManager.reloadFromStorage();
                 }
             }
+        }
+    }
+
+    /**
+     * Config loading complete event handler
+     */
+    private void onConfigReady(final ModConfigEvent.Loading event) {
+        LOGGER.info("Config loaded: " + event.getConfig().getFileName());
+        if (configManager != null) {
+            configManager.initializeConfigs();
         }
     }
 
