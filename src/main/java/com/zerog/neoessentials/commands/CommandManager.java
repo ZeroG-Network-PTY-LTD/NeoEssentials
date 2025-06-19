@@ -28,8 +28,7 @@ public class CommandManager {    // Command classes
     private final JailCommands jailCommands;
     private final PowerToolCommands powerToolCommands;
     private final MailCommands mailCommands;
-
-    public CommandManager() {
+    private final AdminPanelCommand adminPanelCommand;    public CommandManager() {
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -47,6 +46,7 @@ public class CommandManager {    // Command classes
         jailCommands = new JailCommands();
         powerToolCommands = new PowerToolCommands();
         mailCommands = new MailCommands();
+        adminPanelCommand = new AdminPanelCommand();
         // ItemCommands needs CommandBuildContext which is only available during register event
     }
     
@@ -139,10 +139,13 @@ public class CommandManager {    // Command classes
         // Register powertool commands
         powerToolCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered powertool commands");
-        
-        // Register mail commands
+          // Register mail commands
         mailCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered mail commands");
+        
+        // Register admin panel commands
+        adminPanelCommand.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered admin panel commands");
           // Note: ItemCommands require CommandBuildContext which is not available here
         // In a full implementation, you would need to get the CommandBuildContext properly
         
@@ -193,6 +196,23 @@ public class CommandManager {    // Command classes
         return warpCommands;
     }
       /**
+     * Gets the kit commands instance
+     * 
+     * @return The kit commands
+     */
+    /**
+     * Static method to check if a source has a permission.
+     * This is a convenience method for commands to use.
+     *
+     * @param source The command source to check
+     * @param permission The permission node to check for
+     * @return True if the source has permission, false otherwise
+     */
+    public static boolean hasPermission(CommandSourceStack source, String permission) {
+        return com.zerog.neoessentials.utils.PermissionUtil.hasPermission(source, permission);
+    }
+    
+    /**
      * Gets the kit commands instance
      * 
      * @return The kit commands

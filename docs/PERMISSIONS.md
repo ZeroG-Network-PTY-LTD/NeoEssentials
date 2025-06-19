@@ -126,3 +126,8 @@ When FTB Ranks is installed and LuckPerms is not, NeoEssentials integrates with 
 | `neoessentials.command.eco`               | Use the /eco command (admin)           | false   |
 | `neoessentials.command.kit`               | Use the /kit command                   | true    |
 | `neoessentials.command.createkit`         | Use the /createkit command             | false   |
+| `neoessentials.adminpanel`                | Access the admin panel                 | false   |
+| `neoessentials.adminpanel.economy`        | Access economy management panel        | false   |
+| `neoessentials.adminpanel.kits`           | Access kit management panel            | false   |
+| `neoessentials.adminpanel.warps`          | Access warp management panel           | false   |
+| `neoessentials.adminpanel.players`        | Access player management panel         | false   |

@@ -5,6 +5,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Main data manager class that initializes and manages all data storage components.
@@ -225,6 +228,22 @@ public class DataManager {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error converting string to NBT", e);
             return null;
+        }    }
+    
+    /**
+     * Get all warps in the system
+     * 
+     * @return A list of all warp data objects
+     */    public List<WarpData> getAllWarps() {
+        // Load all warps from storage
+        Map<String, WarpData> warpMap = NeoEssentials.getInstance().getStorageManager().loadWarps();
+        
+        // Convert to list
+        List<WarpData> warpList = new ArrayList<>();
+        if (warpMap != null) {
+            warpList.addAll(warpMap.values());
         }
+        
+        return warpList;
     }
 }

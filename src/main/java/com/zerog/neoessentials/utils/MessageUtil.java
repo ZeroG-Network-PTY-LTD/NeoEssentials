@@ -141,6 +141,15 @@ public class MessageUtil {
                 ClickEvent.Action.SUGGEST_COMMAND, 
                 command)));
     }
+      /**
+     * Formats text with color codes without adding the NeoEssentials prefix
+     * 
+     * @param text Text with & color codes
+     * @return Formatted text with color codes translated
+     */
+    public static String formatText(String text) {
+        return translateColorCodes(text);
+    }
     
     /**
      * Translates standard '&' color codes to Minecraft's internal format

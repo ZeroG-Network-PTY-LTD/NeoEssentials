@@ -18,9 +18,9 @@ This document outlines the remaining tasks for NeoEssentials development.
 ## Secondary Tasks
 
 1. **UI Improvements**
-   - [ ] Admin panel
+   - [x] Admin panel (with hover/click functionality)
    - [x] Interactive kit interface (with hover/click functionality)
-   - [ ] Menu system for other common commands
+   - [x] Menu system for other common commands
    
 2. **Extra Feature**
    - [ ] Playerlist {Tablist}

@@ -33,6 +33,9 @@ public class KitManager {
     private static final String KIT_DATA_FILE = "neoessentials/kits.json";
     
     private final Map<String, Kit> kits = new HashMap<>();
+    
+    // Kit usage statistics
+    private final Map<String, Integer> kitUsage = new HashMap<>();
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
     
     private final Gson gson = new GsonBuilder()
@@ -540,9 +543,54 @@ public class KitManager {
         public void addItemDefinition(String itemId, int count) {
             itemDefinitions.add(new ItemDefinition(itemId, count));
         }
-        
-        public List<ItemDefinition> getItemDefinitions() {
+          public List<ItemDefinition> getItemDefinitions() {
             return new ArrayList<>(itemDefinitions);
         }
+        
+        // Method to match the approach in AdminPanel
+        public long cooldown() {
+            return cooldown;
+        }
+        
+        // Method to match the approach in AdminPanel
+        public double price() {
+            return price;        }
+    }
+    
+    /**
+     * Gets all kits
+     * 
+     * @return The map of kits
+     */
+    public Map<String, Kit> getKits() {
+        return new HashMap<>(kits);
+    }
+    
+    /**
+     * Gets the usage count for a kit
+     * 
+     * @param kitName The name of the kit
+     * @return The number of times the kit has been used
+     */
+    public int getKitUsageCount(String kitName) {
+        return kitUsage.getOrDefault(kitName, 0);
+    }
+    
+    /**
+     * Gets all kit usage statistics
+     * 
+     * @return The map of kit usage
+     */
+    public Map<String, Integer> getKitUsageStats() {
+        return new HashMap<>(kitUsage);
+    }
+    
+    /**
+     * Increments the usage count for a kit
+     * 
+     * @param kitName The name of the kit
+     */
+    public void incrementKitUsage(String kitName) {
+        kitUsage.put(kitName, kitUsage.getOrDefault(kitName, 0) + 1);
     }
 }

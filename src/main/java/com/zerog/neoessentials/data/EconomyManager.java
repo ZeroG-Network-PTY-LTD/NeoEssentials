@@ -29,9 +29,11 @@ public class EconomyManager {
     private String currencySingular = "Coin";
     private String currencySymbol = "$";
     private double startingBalance = 100.0;
-    
-    // Map of player UUID to balance
+      // Map of player UUID to balance
     private final Map<UUID, Double> balances = new ConcurrentHashMap<>();
+    
+    // Map of player UUID to player name (for lookup)
+    private final Map<UUID, String> playerNames = new ConcurrentHashMap<>();
     
     // List of recent transactions (in-memory cache)
     private final List<EconomyTransaction> recentTransactions = Collections.synchronizedList(new ArrayList<>());
@@ -625,8 +627,28 @@ public class EconomyManager {
         if (recentTransactions.size() % 10 == 0) {
             saveTransactionHistory();
         }
-        
-        return amount;
+          return amount;
     }
-  
-}
+    
+    /**
+     * Gets the total amount of currency in the economy
+     * 
+     * @return The total amount of currency
+     */
+    public double getTotalCurrency() {
+        double total = 0.0;
+        for (Double balance : balances.values()) {
+            total += balance;
+        }
+        return total;
+    }
+    
+    /**
+     * Gets the number of player accounts in the economy
+     * 
+     * @return The number of accounts
+     */
+    public int getTotalAccounts() {
+        return balances.size();
+    }
+  }

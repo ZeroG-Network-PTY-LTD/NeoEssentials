@@ -131,8 +131,16 @@ public class WarpManager {
         } else {
             NeoEssentials.LOGGER.error("Failed to save warps to storage");
         }
+    }    /**
+     * Gets all warps
+     * 
+     * @return A map of all warps
+     */
+    public Map<String, WarpLocation> getAllWarps() {
+        return new HashMap<>(warps);
     }
-      /**
+    
+    /**
      * Sets a warp at the player's current location
      * 
      * @param player The player setting the warp
