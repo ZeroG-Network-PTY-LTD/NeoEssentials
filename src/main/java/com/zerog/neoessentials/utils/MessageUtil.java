@@ -1,19 +1,25 @@
 package com.zerog.neoessentials.utils;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 =======
+=======
+import net.minecraft.network.chat.ClickEvent;
+>>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
+<<<<<<< HEAD
 import net.minecraft.ChatFormatting;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -124,6 +130,7 @@ public class MessageUtil {
      * @param hoverText The hover text to add
      * @return The component with hover text
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    public static MutableComponent addHoverText(MutableComponent component, MutableComponent hoverText) {
         return component.withStyle(style -> style.withHoverEvent(new HoverEvent(
                 HoverEvent.Action.SHOW_TEXT, 
@@ -133,6 +140,11 @@ public class MessageUtil {
         return component.withStyle(style -> style.withHoverEvent(new net.minecraft.network.chat.HoverEvent(
                 net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT, 
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+     */    public static MutableComponent addHoverText(MutableComponent component, MutableComponent hoverText) {
+        return component.withStyle(style -> style.withHoverEvent(new HoverEvent(
+                HoverEvent.Action.SHOW_TEXT, 
+>>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
                 hoverText)));
     }
     
@@ -145,12 +157,17 @@ public class MessageUtil {
      */
     public static MutableComponent makeClickableCommand(MutableComponent component, String command) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         return component.withStyle(style -> style.withClickEvent(new ClickEvent(
                 ClickEvent.Action.RUN_COMMAND, 
 =======
         return component.withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent(
                 net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, 
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+        return component.withStyle(style -> style.withClickEvent(new ClickEvent(
+                ClickEvent.Action.RUN_COMMAND, 
+>>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
                 command)));
     }
     
@@ -162,6 +179,7 @@ public class MessageUtil {
      * @return The clickable component
      */
     public static MutableComponent makeSuggestCommand(MutableComponent component, String command) {
+<<<<<<< HEAD
 <<<<<<< HEAD
         return component.withStyle(style -> style.withClickEvent(new ClickEvent(
                 ClickEvent.Action.SUGGEST_COMMAND, 
@@ -183,6 +201,10 @@ public class MessageUtil {
 =======
         return component.withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent(
                 net.minecraft.network.chat.ClickEvent.Action.SUGGEST_COMMAND, 
+=======
+        return component.withStyle(style -> style.withClickEvent(new ClickEvent(
+                ClickEvent.Action.SUGGEST_COMMAND, 
+>>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
                 command)));
     }
     

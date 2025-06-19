@@ -14,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+<<<<<<< HEAD
 =======
 =======
 import net.minecraft.network.chat.Component;
@@ -23,6 +24,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
 
 import java.util.Map;
 

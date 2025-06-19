@@ -97,8 +97,8 @@ This document outlines the remaining tasks for NeoEssentials development.
 2. **Features**
    - [x] Economy system (completed with transaction history)
    - [x] Kit system (completed with pricing, preview, and interactive UI)
-   - [ ] Teleportation commands
-   - [ ] Home and warp system
+   - [x] Teleportation commands (with interactive UI)
+   - [x] Home and warp system (with interactive UI)
 
 ## Secondary Tasks
 
@@ -159,4 +159,10 @@ This document outlines the remaining tasks for NeoEssentials development.
    - [x] Interactive kit list with hover/click
    - [x] Kit preview with hover/click
    - [x] Transaction history display
+<<<<<<< HEAD
 >>>>>>> b1b745b (feat: Update migration tasks and enhance kit management with pricing and UI improvements)
+=======
+   - [x] Interactive warp list with hover/click and teleport
+   - [x] Interactive home list with hover/click and teleport
+   - [x] Command help menus with hover/click for each major system
+>>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
