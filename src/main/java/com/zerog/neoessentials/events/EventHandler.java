@@ -83,6 +83,7 @@ public class EventHandler {    /**
             
             // Track the player's username for baltop and other lookups
 <<<<<<< HEAD
+<<<<<<< HEAD
             userManager.trackPlayer(serverPlayer);            
             // Notify player about unread mail if they have any
             NeoEssentials.getInstance().getDataManager().getMailManager().notifyPlayer(serverPlayer);
@@ -104,8 +105,17 @@ public class EventHandler {    /**
 =======
             userManager.trackPlayer(serverPlayer);
             
+=======
+            userManager.trackPlayer(serverPlayer);            
+>>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
             // Notify player about unread mail if they have any
             NeoEssentials.getInstance().getDataManager().getMailManager().notifyPlayer(serverPlayer);
+            
+            // Update tablist for joining player
+            var tablistManager = NeoEssentials.getInstance().getDataManager().getTablistManager();
+            if (tablistManager != null) {
+                tablistManager.onPlayerJoin(serverPlayer);
+            }
         }
     }
       /**
@@ -137,6 +147,7 @@ public class EventHandler {    /**
             
             // Get the user manager
 <<<<<<< HEAD
+<<<<<<< HEAD
             UserManager userManager = NeoEssentials.getInstance().getDataManager().getUserManager();            
             // Save player data
             userManager.savePlayerData(serverPlayer);
@@ -152,8 +163,17 @@ public class EventHandler {    /**
 =======
             UserManager userManager = NeoEssentials.getInstance().getDataManager().getUserManager();
             
+=======
+            UserManager userManager = NeoEssentials.getInstance().getDataManager().getUserManager();            
+>>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
             // Save player data
             userManager.savePlayerData(serverPlayer);
+            
+            // Update tablist for leaving player
+            var tablistManager = NeoEssentials.getInstance().getDataManager().getTablistManager();
+            if (tablistManager != null) {
+                tablistManager.onPlayerLeave(serverPlayer);
+            }
         }
     }
 <<<<<<< HEAD

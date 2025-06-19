@@ -41,8 +41,7 @@ import java.util.Map;
 /**
  * Main data manager class that initializes and manages all data storage components.
  */
-public class DataManager {
-    private UserManager userManager;
+public class DataManager {    private UserManager userManager;
     private EconomyManager economyManager;
     private HomeManager homeManager;
     private WarpManager warpManager;
@@ -54,6 +53,7 @@ public class DataManager {
     private JailManager jailManager;
     private PowerToolManager powerToolManager;
     private MailManager mailManager;
+<<<<<<< HEAD
 <<<<<<< HEAD
     private com.zerog.neoessentials.ui.TablistManager tablistManager;
     
@@ -70,6 +70,9 @@ public class DataManager {
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
 =======
 >>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
+=======
+    private com.zerog.neoessentials.ui.TablistManager tablistManager;
+>>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
     
     private final String dataFolder = "neoessentials/";
     
@@ -97,6 +100,7 @@ public class DataManager {
         warpManager = new WarpManager();
         spawnManager = new SpawnManager();
 <<<<<<< HEAD
+<<<<<<< HEAD
         kitManager = new KitManager();        jailManager = new JailManager(dataFolderFile);
         powerToolManager = new PowerToolManager(dataFolderFile);
         mailManager = new MailManager(dataFolderFile);
@@ -113,14 +117,23 @@ public class DataManager {
 =======
         kitManager = new KitManager();
         jailManager = new JailManager(dataFolderFile);
+=======
+        kitManager = new KitManager();        jailManager = new JailManager(dataFolderFile);
+>>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
         powerToolManager = new PowerToolManager(dataFolderFile);
         mailManager = new MailManager(dataFolderFile);
+        
+        // Create executor service for scheduled tasks like tablist updates
+        java.util.concurrent.ScheduledExecutorService scheduler = 
+            java.util.concurrent.Executors.newScheduledThreadPool(1);
+        tablistManager = new com.zerog.neoessentials.ui.TablistManager(scheduler);
     }
     
     /**
      * Initialize the data manager and all its components
      */
     public void initialize() {
+<<<<<<< HEAD
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");
 <<<<<<< HEAD
           
@@ -129,6 +142,9 @@ public class DataManager {
 =======
             // Initialize all data managers
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+        NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");            // Initialize all data managers
+>>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
         userManager.initialize();
         economyManager.initialize();
         homeManager.initialize();
@@ -137,6 +153,9 @@ public class DataManager {
         kitManager.initialize();
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
         // Initialize tablist after economy is initialized
         tablistManager.initialize();
         // JailManager doesn't need initialization
@@ -439,12 +458,16 @@ public class DataManager {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
      * Gets the tablist manager.
      * 
      * @return The tablist manager
      */
     public com.zerog.neoessentials.ui.TablistManager getTablistManager() {
         return tablistManager;
+<<<<<<< HEAD
 =======
      * Gets the database manager instance
      * 
@@ -497,6 +520,11 @@ public class DataManager {
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
 =======
 >>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
+=======
+    }
+    
+    /**
+>>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
      * Get the data directory
      * 
      * @return The data directory path
