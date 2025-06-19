@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import com.zerog.neoessentials.NeoEssentials;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -19,7 +18,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -89,17 +87,10 @@ public class KitManager {
                             if (kitObj.has("permission")) {
                                 kit.setPermission(kitObj.get("permission").getAsString());
                             }
-                            
-                            // Set price
+                              // Set price
                             if (kitObj.has("price")) {
                                 kit.setPrice(kitObj.get("price").getAsDouble());
                             }
-                            
-                            // Set price
-                            if (kitObj.has("price")) {
-                                kit.setPrice(kitObj.get("price").getAsDouble());
-                            }
-                            
                             // Load items (store item IDs and counts)
                             if (kitObj.has("items")) {
                                 JsonArray itemsArray = kitObj.getAsJsonArray("items");
@@ -179,13 +170,7 @@ public class KitManager {
                 if (kit.getPermission() != null) {
                     kitObj.addProperty("permission", kit.getPermission());
                 }
-                
-                // Save price
-                if (kit.getPrice() > 0) {
-                    kitObj.addProperty("price", kit.getPrice());
-                }
-                
-                // Save price
+                  // Save price
                 kitObj.addProperty("price", kit.getPrice());
                 
                 // Save items
