@@ -6,79 +6,22 @@ import java.util.Map;
 /**
  * Compatibility layer that adapts our TOML configs to the old config structure.
  * This allows existing code to continue working with the new config system.
+ * 
+ * This class uses lazy loading for config values - they are fetched directly
+ * from the TOML configs when needed rather than being initialized at startup.
  */
 public class CompatNeoEssentialsConfig {
-    // General settings
-    private boolean debug = false;
-    private String defaultLanguage = "en_us";
+    // Command settings - cache for performance
+    private final Map<String, Boolean> commandsEnabled = new HashMap<>();
     
-    // Economy settings
-    private boolean economyEnabled = true;
-    private String currencyNameSingular = "Dollar";
-    private String currencyNamePlural = "Dollars";
-    private String currencySymbol = "$";
-    private double startingBalance = 100.0;
-    
-    // Teleportation settings
-    private boolean teleportEnabled = true;
-    private int teleportCooldown = 30;  // seconds
-    private int teleportWarmup = 3;     // seconds
-    private int maxHomes = 3;
-    
-    // Warp settings
-    private boolean warpsEnabled = true;
-    private Map<String, Integer> warpCosts = new HashMap<>();
-    
-    // Chat settings
-    private boolean chatFormattingEnabled = true;
-    private String chatFormat = "{DISPLAYNAME} &7: &f{MESSAGE}";
-    
-    // Command settings
-    private Map<String, Boolean> commandsEnabled = new HashMap<>();
-    
-    // Permission settings
-    private Map<String, Boolean> defaultPermissions = new HashMap<>();    /**
-     * Constructor - initializes default values but doesn't load from config
-     */
-    public CompatNeoEssentialsConfig() {
-        // Initialize with default values
-        // Actual values will be loaded from configs when requested
-    }
+    // Permission settings - cache for performance
+    private final Map<String, Boolean> defaultPermissions = new HashMap<>();
     
     /**
-     * Initialize config values from the TOML configs
-     * This should be called after configs are loaded
+     * Constructor - doesn't load any config values
      */
-    public void initialize() {
-        // Initialize with values from TOML configs
-        this.debug = GeneralConfig.DEBUG_MODE.get();
-        this.economyEnabled = GeneralConfig.ENABLE_ECONOMY.get();
-        
-        // Economy settings
-        if (this.economyEnabled) {
-            this.currencyNameSingular = EconomyConfig.CURRENCY_NAME_SINGULAR.get();
-            this.currencyNamePlural = EconomyConfig.CURRENCY_NAME_PLURAL.get();
-            this.currencySymbol = EconomyConfig.CURRENCY_SYMBOL.get();
-            this.startingBalance = EconomyConfig.STARTING_BALANCE.get();
-        }
-        
-        // Teleportation settings
-        this.teleportEnabled = GeneralConfig.ENABLE_TELEPORTATION.get();
-        if (this.teleportEnabled) {
-            this.teleportCooldown = HomeConfig.COOLDOWN_SECONDS.get();
-            this.teleportWarmup = HomeConfig.WARMUP_SECONDS.get();
-            this.maxHomes = HomeConfig.DEFAULT_MAX_HOMES.get();
-        }
-        
-        // Warp settings
-        this.warpsEnabled = GeneralConfig.ENABLE_WARPS.get();
-        
-        // Command settings
-        commandsEnabled.put("home", GeneralConfig.ENABLE_HOMES.get());
-        commandsEnabled.put("warp", GeneralConfig.ENABLE_WARPS.get());
-        commandsEnabled.put("tpa", GeneralConfig.ENABLE_TELEPORTATION.get());
-        commandsEnabled.put("back", GeneralConfig.ENABLE_TELEPORTATION.get());
-        commandsEnabled.put("kit", GeneralConfig.ENABLE_KITS.get());
+    public CompatNeoEssentialsConfig() {
+        // Empty constructor - no initialization of config values
     }
     
     /**
@@ -86,7 +29,12 @@ public class CompatNeoEssentialsConfig {
      * @return True if debug mode is enabled
      */
     public boolean isDebug() {
-        return debug;
+        try {
+            return GeneralConfig.DEBUG_MODE.get();
+        } catch (IllegalStateException e) {
+            // Config not loaded yet, return default
+            return false;
+        }
     }
     
     /**
@@ -94,7 +42,7 @@ public class CompatNeoEssentialsConfig {
      * @return The language code (e.g. "en_us")
      */
     public String getDefaultLanguage() {
-        return defaultLanguage;
+        return "en_us";
     }
     
     /**
@@ -102,31 +50,54 @@ public class CompatNeoEssentialsConfig {
      * @return True if economy is enabled
      */
     public boolean isEconomyEnabled() {
-        return economyEnabled;
+        try {
+            return GeneralConfig.ENABLE_ECONOMY.get();
+        } catch (IllegalStateException e) {
+            // Config not loaded yet, return default
+            return true;
+        }
     }
     
     /**
      * Gets the singular name of the currency
-     * @return The currency name
+     * @return The currency name (e.g. "Dollar")
      */
     public String getCurrencyNameSingular() {
-        return currencyNameSingular;
+        if (!isEconomyEnabled()) return "Dollar";
+        
+        try {
+            return EconomyConfig.CURRENCY_NAME_SINGULAR.get();
+        } catch (IllegalStateException e) {
+            return "Dollar";
+        }
     }
     
     /**
      * Gets the plural name of the currency
-     * @return The plural currency name
+     * @return The currency name (e.g. "Dollars")
      */
     public String getCurrencyNamePlural() {
-        return currencyNamePlural;
+        if (!isEconomyEnabled()) return "Dollars";
+        
+        try {
+            return EconomyConfig.CURRENCY_NAME_PLURAL.get();
+        } catch (IllegalStateException e) {
+            return "Dollars";
+        }
     }
     
     /**
      * Gets the currency symbol
-     * @return The currency symbol
+     * @return The currency symbol (e.g. "$")
      */
     public String getCurrencySymbol() {
-        return currencySymbol;
+        if (!isEconomyEnabled()) return "$";
+        
+        try {
+            return EconomyConfig.CURRENCY_SYMBOL.get();
+        } catch (IllegalStateException e) {
+            return "$";
+        }
     }
     
     /**
@@ -134,7 +105,13 @@ public class CompatNeoEssentialsConfig {
      * @return The starting balance
      */
     public double getStartingBalance() {
-        return startingBalance;
+        if (!isEconomyEnabled()) return 100.0;
+        
+        try {
+            return EconomyConfig.STARTING_BALANCE.get();
+        } catch (IllegalStateException e) {
+            return 100.0;
+        }
     }
     
     /**
@@ -142,7 +119,11 @@ public class CompatNeoEssentialsConfig {
      * @return True if teleportation is enabled
      */
     public boolean isTeleportEnabled() {
-        return teleportEnabled;
+        try {
+            return GeneralConfig.ENABLE_TELEPORTATION.get();
+        } catch (IllegalStateException e) {
+            return true;
+        }
     }
     
     /**
@@ -150,7 +131,13 @@ public class CompatNeoEssentialsConfig {
      * @return The cooldown in seconds
      */
     public int getTeleportCooldown() {
-        return teleportCooldown;
+        if (!isTeleportEnabled()) return 30;
+        
+        try {
+            return HomeConfig.COOLDOWN_SECONDS.get();
+        } catch (IllegalStateException e) {
+            return 30;
+        }
     }
     
     /**
@@ -158,7 +145,13 @@ public class CompatNeoEssentialsConfig {
      * @return The warmup in seconds
      */
     public int getTeleportWarmup() {
-        return teleportWarmup;
+        if (!isTeleportEnabled()) return 3;
+        
+        try {
+            return HomeConfig.WARMUP_SECONDS.get();
+        } catch (IllegalStateException e) {
+            return 3;
+        }
     }
     
     /**
@@ -166,7 +159,13 @@ public class CompatNeoEssentialsConfig {
      * @return The max homes
      */
     public int getMaxHomes() {
-        return maxHomes;
+        if (!isTeleportEnabled()) return 3;
+        
+        try {
+            return HomeConfig.DEFAULT_MAX_HOMES.get();
+        } catch (IllegalStateException e) {
+            return 3;
+        }
     }
     
     /**
@@ -174,25 +173,50 @@ public class CompatNeoEssentialsConfig {
      * @return True if warps are enabled
      */
     public boolean isWarpsEnabled() {
-        return warpsEnabled;
+        try {
+            return GeneralConfig.ENABLE_WARPS.get();
+        } catch (IllegalStateException e) {
+            return true;
+        }
     }
     
     /**
-     * Gets the cost of a particular warp
-     * @param warpName The name of the warp
-     * @return The cost, or 0 if not specified
+     * Gets whether a command is enabled
+     * @param command The command name
+     * @return True if the command is enabled
      */
-    public int getWarpCost(String warpName) {
-        return warpCosts.getOrDefault(warpName, 0);
-    }
-    
-    /**
-     * Gets whether a particular command is enabled
-     * @param commandName The command name
-     * @return True if enabled
-     */
-    public boolean isCommandEnabled(String commandName) {
-        return commandsEnabled.getOrDefault(commandName, true);
+    public boolean isCommandEnabled(String command) {
+        if (commandsEnabled.containsKey(command)) {
+            return commandsEnabled.get(command);
+        }
+        
+        try {
+            boolean enabled = true;
+            switch (command.toLowerCase()) {
+                case "home":
+                    enabled = GeneralConfig.ENABLE_HOMES.get();
+                    break;
+                case "warp":
+                    enabled = GeneralConfig.ENABLE_WARPS.get();
+                    break;
+                case "tpa":
+                case "back":
+                    enabled = GeneralConfig.ENABLE_TELEPORTATION.get();
+                    break;
+                case "kit":
+                    enabled = GeneralConfig.ENABLE_KITS.get();
+                    break;
+                default:
+                    enabled = true;
+            }
+            
+            // Cache the result
+            commandsEnabled.put(command, enabled);
+            return enabled;
+        } catch (IllegalStateException e) {
+            // Default to enabled if config not loaded
+            return true;
+        }
     }
     
     /**
