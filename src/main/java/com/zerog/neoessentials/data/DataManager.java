@@ -171,6 +171,7 @@ public class DataManager {    private UserManager userManager;
      * This is called by NeoEssentials after the data manager is created
      */
     public void initializeManagers() {
+<<<<<<< HEAD
         NeoEssentials.LOGGER.info("Initializing managers");
         
         // Create manager instances if they don't exist
@@ -212,6 +213,13 @@ public class DataManager {    private UserManager userManager;
             tablistManager = new TablistManager(NeoEssentials.getInstance().getScheduler());
             tablistManager.initialize();
         }
+=======
+        // Initialize any managers that need special initialization
+        NeoEssentials.LOGGER.info("Initializing data managers");
+        
+        // Load data for all managers that need it
+        loadFromStorage();
+>>>>>>> 2ac7252 (feat: Enhance DataManager with initialization and data loading methods for improved manager setup)
     }
     
     /**
@@ -220,6 +228,7 @@ public class DataManager {    private UserManager userManager;
     public void loadFromStorage() {
         NeoEssentials.LOGGER.info("Loading data from storage");
         
+<<<<<<< HEAD
         // Most managers automatically load their data in their constructor
         // or have specific load methods that are already called
         
@@ -262,6 +271,16 @@ public class DataManager {    private UserManager userManager;
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
         
         NeoEssentials.LOGGER.info("NeoEssentials Data Manager initialized");
+=======
+        // Load data for each manager
+        economyManager.loadData();
+        homeManager.loadData();
+        warpManager.loadData();
+        spawnManager.loadData();
+        kitManager.loadData();
+        jailManager.loadData();
+        mailManager.loadData();
+>>>>>>> 2ac7252 (feat: Enhance DataManager with initialization and data loading methods for improved manager setup)
     }
     
     /**
