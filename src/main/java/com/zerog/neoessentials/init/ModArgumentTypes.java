@@ -50,6 +50,7 @@ import com.zerog.neoessentials.utils.StringToBooleanArgumentInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.registries.Registries;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -58,6 +59,7 @@ import java.util.function.Supplier;
 
 /**
  * Handles registration of custom argument types
+ * Important: These types must be registered on BOTH client and server for proper synchronization!
  */
 public class ModArgumentTypes {
     // Create a deferred register for command argument types
@@ -65,6 +67,7 @@ public class ModArgumentTypes {
             DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, NeoEssentials.MODID);
     
     // Register our StringToBooleanArgumentType with the StringToBooleanArgumentInfo
+    // Must use lowercase to ensure consistent registry keys between client/server
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static final Supplier<ArgumentTypeInfo<StringToBooleanArgumentType, ?>> STRING_TO_BOOLEAN = COMMAND_ARGUMENT_TYPES.register(
             "string_to_boolean", 
@@ -75,9 +78,8 @@ public class ModArgumentTypes {
      * Register this class with the mod event bus to enable the registrations
      * 
      * @param eventBus The mod event bus
-     */
-    public static void register(IEventBus eventBus) {
-        NeoEssentials.LOGGER.info("Registering custom command argument types");
+     */    public static void register(IEventBus eventBus) {
+        NeoEssentials.LOGGER.info("Registering custom command argument types for client-server synchronization");
         
         // Register our command argument types with the event bus
         COMMAND_ARGUMENT_TYPES.register(eventBus);
@@ -89,21 +91,37 @@ public class ModArgumentTypes {
         // Also register using the direct method for compatibility 
 =======
         
+<<<<<<< HEAD
         // Register the common setup event for client-server synchronization
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+        // Register with normal priority since we don't have other setup that depends on this
+>>>>>>> 7199bed (feat: Enhance client-server synchronization for command argument types and add compatibility guide)
         eventBus.addListener(ModArgumentTypes::onCommonSetup);
+        
+        // Perform direct registration as soon as possible to ensure both client and server have the info
+        // This ensures maximum compatibility regardless of load order
+        ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, 
+                                         new StringToBooleanArgumentInfo());
     }
     
     /**
      * Common setup event to ensure proper synchronization of command arguments
      * This ensures that clients also receive the argument type information
+     * 
+     * CRITICAL: This is executed on BOTH client and server, and both sides must have identical registration
      */
     private static void onCommonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             NeoEssentials.LOGGER.info("Setting up command argument type synchronization");
-              // Register the argument type class with its info class to ensure proper client-server serialization
-            ArgumentTypeInfo<StringToBooleanArgumentType, ?> info = STRING_TO_BOOLEAN.get();
-            ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, info);
+            try {
+                // Register the argument type class with its info class to ensure proper client-server serialization
+                ArgumentTypeInfo<StringToBooleanArgumentType, ?> info = STRING_TO_BOOLEAN.get();
+                ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, info);
+                NeoEssentials.LOGGER.info("Successfully registered StringToBooleanArgumentType for network synchronization");
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to register command argument type for network synchronization", e);
+            }
         });
 >>>>>>> faaaf85 (refactor: Update registration of StringToBooleanArgumentType for improved compatibility)
     }
