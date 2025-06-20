@@ -52,12 +52,15 @@ public class NeoEssentials {
         modEventBus.addListener(this::onConfigLoad);
         modEventBus.addListener(this::onConfigReady);
 
-        // Register custom command argument types
+        // Register custom command argument types - now server-side only
         com.zerog.neoessentials.init.ModArgumentTypes.register(modEventBus);
+        
+        // Initialize network handler for server-side functionality in a modded environment
+        com.zerog.neoessentials.network.NetworkHandler.init(modEventBus);
         
         // Check if we're on the physical server or client
         if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.DEDICATED_SERVER) {
-            LOGGER.info("NeoEssentials initializing in DEDICATED SERVER environment - full functionality enabled");
+            LOGGER.info("NeoEssentials initializing in DEDICATED SERVER environment - full server-side functionality enabled");
         } else if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
             LOGGER.info("NeoEssentials initializing in CLIENT environment - providing registry support for server compatibility");
             // On client, we primarily need to register things for synchronization

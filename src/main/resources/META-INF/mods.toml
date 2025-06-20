@@ -65,14 +65,12 @@ Features include:
     versionRange="${neo_version_range}" #mandatory
     # An ordering relationship for the dependency - BEFORE or AFTER required if the dependency is not mandatory
     # BEFORE - This mod is loaded BEFORE the dependency
-    # AFTER - This mod is loaded AFTER the dependency
-    ordering="NONE"    # Side this dependency is applied on - BOTH, CLIENT, or SERVER
-    side="BOTH"
+    # AFTER - This mod is loaded AFTER the dependency    ordering="NONE"    # Side this dependency is applied on - BOTH, CLIENT, or SERVER
+    side="SERVER"
 # Here's another dependency
 [[dependencies.neoessentials]]
     modId="minecraft"
     mandatory=true
     # This version range declares a minimum of the current minecraft version up to but not including the next major version
-    versionRange="${minecraft_version_range}"
-    ordering="NONE"
-    side="BOTH"
+    versionRange="${minecraft_version_range}"    ordering="NONE"
+    side="SERVER"
