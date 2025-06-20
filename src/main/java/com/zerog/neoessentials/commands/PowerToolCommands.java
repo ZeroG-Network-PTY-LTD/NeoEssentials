@@ -66,6 +66,7 @@ public class PowerToolCommands {
                 .then(Commands.literal("-e")
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                 .suggests(VanillaBooleanParser.booleanSuggestions())
 =======
@@ -75,6 +76,10 @@ public class PowerToolCommands {
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument()
                 .suggests(VanillaBooleanParser.booleanSuggestions()))
 >>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
+=======
+                        .then(Commands.argument("enabled", VanillaBooleanParser.argument())
+                                .suggests(VanillaBooleanParser.booleanSuggestions())
+>>>>>>> cfe7dd5 (feat: Enhance documentation for true server-side implementation and outline future cleanup tasks)
                                 .executes(this::executePowerToolEnable)))
                 .then(Commands.literal("-t")
                         .executes(this::executePowerToolToggle))
@@ -95,6 +100,7 @@ public class PowerToolCommands {
                 .then(Commands.literal("-e")
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                 .suggests(VanillaBooleanParser.booleanSuggestions())
 =======
@@ -104,6 +110,10 @@ public class PowerToolCommands {
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument()
                 .suggests(VanillaBooleanParser.booleanSuggestions()))
 >>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
+=======
+                        .then(Commands.argument("enabled", VanillaBooleanParser.argument())
+                                .suggests(VanillaBooleanParser.booleanSuggestions())
+>>>>>>> cfe7dd5 (feat: Enhance documentation for true server-side implementation and outline future cleanup tasks)
                                 .executes(this::executePowerToolEnable)))
                 .then(Commands.literal("-t")
                         .executes(this::executePowerToolToggle))

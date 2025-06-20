@@ -24,10 +24,24 @@ Note: A separate version for Forge servers will be maintained as a separate proj
 - Chat formatting and management
 - Integration with permission mods (LuckPerms, FTB Ranks)
 - Flexible storage system (JSON, SQLite, MySQL)
+- Comprehensive TOML-based configuration system
 
-## Important: Server-Side Only
+## True Server-Side Implementation
 
-**This mod is designed to be installed only on the server side.** It does not need to be installed on clients and provides no client-side functionality.
+**This mod is designed as a true server-side mod.** It has been carefully engineered to:
+
+- Work without any client-side installation
+- Not cause client disconnects in modded environments
+- Use only vanilla-compatible command argument types
+- Work with both vanilla and modded clients
+
+This means you can run NeoEssentials on your server and clients can connect with any combination of mods without needing to install NeoEssentials on their side.
+
+## Recent Updates
+
+- **July 2025**: Implemented true server-side compatibility by eliminating custom command argument types
+- **June 2025**: Improved configuration system with TOML-based files and safe access
+- **May 2025**: Consolidated to single-version codebase for improved maintainability
 
 ## Installation
 
