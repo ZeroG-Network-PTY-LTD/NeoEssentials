@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.utils;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 /**
  * @deprecated This class has been replaced by {@link VanillaBooleanParser}.
  * This file is kept for reference only and should be removed in future versions.
@@ -27,9 +28,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+=======
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 /**
- * Argument type for boolean values using strings "on"/"off" or "true"/"false"
+ * @deprecated This class has been replaced by {@link VanillaBooleanParser}.
+ * This file is kept for reference only and should be removed in future versions.
+ * 
+ * VanillaBooleanParser uses vanilla StringArgumentType with post-processing conversion
+ * which does not require client-side registration, making it truly server-side compatible.
  */
+<<<<<<< HEAD
 public class StringToBooleanArgumentType implements ArgumentType<Boolean> {
 
     private static final List<String> EXAMPLES = Arrays.asList("on", "off", "true", "false");
@@ -86,4 +94,10 @@ public class StringToBooleanArgumentType implements ArgumentType<Boolean> {
         return EXAMPLES;
     }
 >>>>>>> a0123aa (refactor: Enhance message command handling and introduce StringToBooleanArgumentType for improved command argument parsing)
+=======
+@Deprecated
+public class StringToBooleanArgumentType {
+    // This class has been intentionally emptied and deprecated.
+    // Use VanillaBooleanParser instead which uses vanilla StringArgumentType.
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 }

@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.utils;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 /**
  * @deprecated This class has been replaced by the server-side only approach in {@link VanillaBooleanParser}.
  * This file is kept for reference only and should be removed in future versions.
@@ -22,12 +23,16 @@ import com.zerog.neoessentials.NeoEssentials;
 
 import javax.annotation.Nonnull;
 
+=======
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 /**
- * Info class for StringToBooleanArgumentType, needed to register it with the command system
+ * @deprecated This class has been replaced by the server-side only approach in {@link VanillaBooleanParser}.
+ * This file is kept for reference only and should be removed in future versions.
  * 
- * This class is critical for client-server network synchronization of command argument types.
- * Both client and server must have identical implementations of this class.
+ * The new implementation uses vanilla StringArgumentType with post-processing conversion
+ * which does not require ArgumentTypeInfo registration, making it truly server-side compatible.
  */
+<<<<<<< HEAD
 public class StringToBooleanArgumentInfo implements ArgumentTypeInfo<StringToBooleanArgumentType, StringToBooleanArgumentInfo.Template> {
 
     @Override
@@ -83,4 +88,10 @@ public class StringToBooleanArgumentInfo implements ArgumentTypeInfo<StringToBoo
         }
     }
 >>>>>>> 8a36c07 (feat: Add custom command argument types for string to boolean conversion)
+=======
+@Deprecated
+public class StringToBooleanArgumentInfo {
+    // This class has been intentionally emptied and deprecated.
+    // The VanillaBooleanParser approach does not require ArgumentTypeInfo registration.
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 }
