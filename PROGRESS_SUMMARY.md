@@ -50,9 +50,14 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 
 ### Bug Fixes
 - ✅ Fixed event handler registration issues
+<<<<<<< HEAD
 - ✅ Eliminated custom command argument type registration completely
 - ✅ Replaced with vanilla-compatible StringArgumentType and post-processing
 - ✅ Fixed client disconnection issues related to command argument registry
+=======
+- ✅ Fixed command argument type registration (string_to_boolean)
+- ✅ Fixed client-server synchronization for custom command arguments
+>>>>>>> 3ee6355 (feat: Update mod to support client-server synchronization and enhance compatibility)
 - ✅ Fixed config initialization sequence (preventing "Cannot get config value before config is loaded" crash)
 - ✅ Implemented robust error handling for config access with proper defaults
 - ✅ Enhanced config loading process to wait for all expected config files
@@ -141,8 +146,13 @@ Last Updated: July 9, 2025
 - `CONFIG_INITIALIZATION_FIX.md` - Fix for the config initialization crash
 - `SAFE_CONFIG_ACCESS.md` - Comprehensive guide to safely accessing config values
 - `COMMAND_ARG_FIX.md` & `COMMAND_ARG_FIX_FOLLOWUP.md` - Command argument registration fixes
+- `CLIENT_SERVER_SYNC_FIX.md` - Fix for client disconnection due to registry synchronization
 - `COMPILATION_FIXES.md` - Information about fixing compilation errors
 - Other documentation in the `docs/` folder
 
+<<<<<<< HEAD
 Last Updated: June 19, 2025
 >>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
+=======
+Last Updated: June 20, 2025
+>>>>>>> 3ee6355 (feat: Update mod to support client-server synchronization and enhance compatibility)

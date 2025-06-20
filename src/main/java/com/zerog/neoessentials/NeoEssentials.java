@@ -120,10 +120,16 @@ public class NeoEssentials {
         // Register custom command argument types
         com.zerog.neoessentials.init.ModArgumentTypes.register(modEventBus);
         
+<<<<<<< HEAD
         // Check if we're on the physical server - this mod only works on servers
 >>>>>>> fddf77d (feat: Register custom command argument types during mod initialization)
         if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.DEDICATED_SERVER) {
             LOGGER.info("NeoEssentials initializing in DEDICATED SERVER environment - full server-side functionality enabled");
+=======
+        // Check if we're on the physical server or client
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.DEDICATED_SERVER) {
+            LOGGER.info("NeoEssentials initializing in DEDICATED SERVER environment - full functionality enabled");
+>>>>>>> 3ee6355 (feat: Update mod to support client-server synchronization and enhance compatibility)
         } else if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
             LOGGER.info("NeoEssentials initializing in CLIENT environment - providing registry support for server compatibility");
             // On client, we primarily need to register things for synchronization
