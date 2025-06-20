@@ -231,18 +231,32 @@ public class NeoEssentials {
 
     // Track if configs have been initialized
     private boolean configsInitialized = false;
+    private int configsLoaded = 0;
+    private static final int EXPECTED_CONFIG_FILES = 7; // general, economy, homes, warps, kits, tablist, database
     
     /**
-     * Config loading complete event handler
+     * Config loading event handler
      */
     private void onConfigReady(final ModConfigEvent.Loading event) {
-        LOGGER.info("Config loaded: " + event.getConfig().getFileName());
+        String fileName = event.getConfig().getFileName();
+        LOGGER.info("Config loaded: " + fileName);
         
-        // Only initialize configs once all configs are loaded
-        // We can use a specific config file as a trigger, like general.toml
-        if (!configsInitialized && event.getConfig().getFileName().contains("neoessentials/general.toml")) {
+        if (fileName.contains("neoessentials/")) {
+            configsLoaded++;
+            LOGGER.info("NeoEssentials config loaded: " + configsLoaded + " of " + EXPECTED_CONFIG_FILES);
+        }
+        
+        // Wait until all expected config files are loaded before initializing
+        if (!configsInitialized && configsLoaded >= EXPECTED_CONFIG_FILES) {
             if (configManager != null) {
-                LOGGER.info("General config loaded, initializing all configs");
+                LOGGER.info("All config files loaded, initializing configs now");
+                // Add a small delay to ensure configs are fully processed
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    // Ignore
+                }
+                
                 configManager.initializeConfigs();
                 configsInitialized = true;
             }
