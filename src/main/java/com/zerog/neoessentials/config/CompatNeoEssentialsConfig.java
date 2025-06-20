@@ -1,7 +1,9 @@
 package com.zerog.neoessentials.config;
 
+import com.zerog.neoessentials.NeoEssentials;
 import java.util.HashMap;
 import java.util.Map;
+import com.zerog.neoessentials.NeoEssentials;
 
 /**
  * Compatibility layer that adapts our TOML configs to the old config structure.
@@ -22,19 +24,61 @@ public class CompatNeoEssentialsConfig {
      */
     public CompatNeoEssentialsConfig() {
         // Empty constructor - no initialization of config values
+    }    /**
+     * Initializes default values from configs after configs are loaded.
+     * This should only be called by ModConfigManager after all configs are loaded.
+     */
+    public void initialize() {
+        NeoEssentials.LOGGER.info("Initializing compatibility config layer");
+        
+        // Initialize default permissions if needed
+        // We don't need to pre-populate other values since we use lazy loading now
+        try {
+            // Pre-cache some frequently used command states using our safe utility
+            if (ConfigUtil.isConfigAvailable(GeneralConfig.ENABLE_HOMES)) {
+                commandsEnabled.put("home", GeneralConfig.ENABLE_HOMES.get());
+                NeoEssentials.LOGGER.debug("Pre-cached home command state: " + commandsEnabled.get("home"));
+            }
+            
+            if (ConfigUtil.isConfigAvailable(GeneralConfig.ENABLE_WARPS)) {
+                commandsEnabled.put("warp", GeneralConfig.ENABLE_WARPS.get());
+                NeoEssentials.LOGGER.debug("Pre-cached warp command state: " + commandsEnabled.get("warp"));
+            }
+            
+            if (ConfigUtil.isConfigAvailable(GeneralConfig.ENABLE_TELEPORTATION)) {
+                boolean teleportEnabled = GeneralConfig.ENABLE_TELEPORTATION.get();
+                commandsEnabled.put("tpa", teleportEnabled);
+                commandsEnabled.put("back", teleportEnabled);
+                NeoEssentials.LOGGER.debug("Pre-cached teleport commands state: " + teleportEnabled);
+            }
+              if (ConfigUtil.isConfigAvailable(GeneralConfig.ENABLE_KITS)) {
+                commandsEnabled.put("kit", GeneralConfig.ENABLE_KITS.get());
+                NeoEssentials.LOGGER.debug("Pre-cached kit command state: " + commandsEnabled.get("kit"));
+            }
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.warn("Error during compatibility config initialization", e);
+            // If we get here, configs are still not loaded or another issue occurred
+            // This is fine - we'll just use lazy loading for everything
+        }
+        
+        // Initialize default permissions map for commonly used permissions
+        try {
+            defaultPermissions.put("neoessentials.command.home", true);
+            defaultPermissions.put("neoessentials.command.warp", true);
+            defaultPermissions.put("neoessentials.command.tpa", true);
+            defaultPermissions.put("neoessentials.command.back", true);
+            defaultPermissions.put("neoessentials.command.spawn", true);
+            defaultPermissions.put("neoessentials.command.kit", true);
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error initializing default permissions", e);
+        }
     }
-    
-    /**
+      /**
      * Gets whether debug mode is enabled
      * @return True if debug mode is enabled
      */
     public boolean isDebug() {
-        try {
-            return GeneralConfig.DEBUG_MODE.get();
-        } catch (IllegalStateException e) {
-            // Config not loaded yet, return default
-            return false;
-        }
+        return ConfigUtil.getConfigSafe(GeneralConfig.DEBUG_MODE, false);
     }
     
     /**
@@ -44,32 +88,20 @@ public class CompatNeoEssentialsConfig {
     public String getDefaultLanguage() {
         return "en_us";
     }
-    
-    /**
+      /**
      * Gets whether economy is enabled
      * @return True if economy is enabled
      */
     public boolean isEconomyEnabled() {
-        try {
-            return GeneralConfig.ENABLE_ECONOMY.get();
-        } catch (IllegalStateException e) {
-            // Config not loaded yet, return default
-            return true;
-        }
+        return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_ECONOMY, true);
     }
-    
-    /**
+      /**
      * Gets the singular name of the currency
      * @return The currency name (e.g. "Dollar")
      */
     public String getCurrencyNameSingular() {
         if (!isEconomyEnabled()) return "Dollar";
-        
-        try {
-            return EconomyConfig.CURRENCY_NAME_SINGULAR.get();
-        } catch (IllegalStateException e) {
-            return "Dollar";
-        }
+        return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_SINGULAR, "Dollar");
     }
     
     /**
@@ -78,12 +110,7 @@ public class CompatNeoEssentialsConfig {
      */
     public String getCurrencyNamePlural() {
         if (!isEconomyEnabled()) return "Dollars";
-        
-        try {
-            return EconomyConfig.CURRENCY_NAME_PLURAL.get();
-        } catch (IllegalStateException e) {
-            return "Dollars";
-        }
+        return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_PLURAL, "Dollars");
     }
     
     /**
@@ -92,26 +119,15 @@ public class CompatNeoEssentialsConfig {
      */
     public String getCurrencySymbol() {
         if (!isEconomyEnabled()) return "$";
-        
-        try {
-            return EconomyConfig.CURRENCY_SYMBOL.get();
-        } catch (IllegalStateException e) {
-            return "$";
-        }
+        return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_SYMBOL, "$");
     }
-    
-    /**
+      /**
      * Gets the starting balance for new players
      * @return The starting balance
      */
     public double getStartingBalance() {
         if (!isEconomyEnabled()) return 100.0;
-        
-        try {
-            return EconomyConfig.STARTING_BALANCE.get();
-        } catch (IllegalStateException e) {
-            return 100.0;
-        }
+        return ConfigUtil.getConfigSafe(EconomyConfig.STARTING_BALANCE, 100.0);
     }
     
     /**
@@ -119,11 +135,7 @@ public class CompatNeoEssentialsConfig {
      * @return True if teleportation is enabled
      */
     public boolean isTeleportEnabled() {
-        try {
-            return GeneralConfig.ENABLE_TELEPORTATION.get();
-        } catch (IllegalStateException e) {
-            return true;
-        }
+        return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_TELEPORTATION, true);
     }
     
     /**
@@ -132,12 +144,7 @@ public class CompatNeoEssentialsConfig {
      */
     public int getTeleportCooldown() {
         if (!isTeleportEnabled()) return 30;
-        
-        try {
-            return HomeConfig.COOLDOWN_SECONDS.get();
-        } catch (IllegalStateException e) {
-            return 30;
-        }
+        return ConfigUtil.getConfigSafe(HomeConfig.COOLDOWN_SECONDS, 30);
     }
     
     /**
@@ -146,12 +153,7 @@ public class CompatNeoEssentialsConfig {
      */
     public int getTeleportWarmup() {
         if (!isTeleportEnabled()) return 3;
-        
-        try {
-            return HomeConfig.WARMUP_SECONDS.get();
-        } catch (IllegalStateException e) {
-            return 3;
-        }
+        return ConfigUtil.getConfigSafe(HomeConfig.WARMUP_SECONDS, 3);
     }
     
     /**
@@ -160,12 +162,7 @@ public class CompatNeoEssentialsConfig {
      */
     public int getMaxHomes() {
         if (!isTeleportEnabled()) return 3;
-        
-        try {
-            return HomeConfig.DEFAULT_MAX_HOMES.get();
-        } catch (IllegalStateException e) {
-            return 3;
-        }
+        return ConfigUtil.getConfigSafe(HomeConfig.DEFAULT_MAX_HOMES, 3);
     }
     
     /**
@@ -173,14 +170,9 @@ public class CompatNeoEssentialsConfig {
      * @return True if warps are enabled
      */
     public boolean isWarpsEnabled() {
-        try {
-            return GeneralConfig.ENABLE_WARPS.get();
-        } catch (IllegalStateException e) {
-            return true;
-        }
+        return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_WARPS, true);
     }
-    
-    /**
+      /**
      * Gets whether a command is enabled
      * @param command The command name
      * @return True if the command is enabled
@@ -190,33 +182,30 @@ public class CompatNeoEssentialsConfig {
             return commandsEnabled.get(command);
         }
         
-        try {
-            boolean enabled = true;
-            switch (command.toLowerCase()) {
-                case "home":
-                    enabled = GeneralConfig.ENABLE_HOMES.get();
-                    break;
-                case "warp":
-                    enabled = GeneralConfig.ENABLE_WARPS.get();
-                    break;
-                case "tpa":
-                case "back":
-                    enabled = GeneralConfig.ENABLE_TELEPORTATION.get();
-                    break;
-                case "kit":
-                    enabled = GeneralConfig.ENABLE_KITS.get();
-                    break;
-                default:
-                    enabled = true;
-            }
-            
-            // Cache the result
-            commandsEnabled.put(command, enabled);
-            return enabled;
-        } catch (IllegalStateException e) {
-            // Default to enabled if config not loaded
-            return true;
+        boolean enabled = true;
+        String commandLower = command.toLowerCase();
+        
+        switch (commandLower) {
+            case "home":
+                enabled = ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_HOMES, true);
+                break;
+            case "warp":
+                enabled = ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_WARPS, true);
+                break;
+            case "tpa":
+            case "back":
+                enabled = ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_TELEPORTATION, true);
+                break;
+            case "kit":
+                enabled = ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_KITS, true);
+                break;
+            default:
+                enabled = true;
         }
+        
+        // Cache the result
+        commandsEnabled.put(commandLower, enabled);
+        return enabled;
     }
     
     /**

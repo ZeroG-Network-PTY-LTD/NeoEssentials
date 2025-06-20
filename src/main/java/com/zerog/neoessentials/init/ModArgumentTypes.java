@@ -5,7 +5,10 @@ import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
 import com.zerog.neoessentials.utils.StringToBooleanArgumentInfo;
 
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
+import net.minecraft.commands.synchronization.ArgumentTypeInfos;
 import net.minecraft.core.registries.Registries;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.function.Supplier;
@@ -16,7 +19,10 @@ import java.util.function.Supplier;
 public class ModArgumentTypes {
     // Create a deferred register for command argument types
     public static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = 
-            DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, NeoEssentials.MODID);    // Register our StringToBooleanArgumentType with the StringToBooleanArgumentInfo    @SuppressWarnings({"unchecked", "rawtypes"})
+            DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, NeoEssentials.MODID);
+    
+    // Register our StringToBooleanArgumentType with the StringToBooleanArgumentInfo
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static final Supplier<ArgumentTypeInfo<StringToBooleanArgumentType, ?>> STRING_TO_BOOLEAN = COMMAND_ARGUMENT_TYPES.register(
             "string_to_boolean", 
             () -> (ArgumentTypeInfo) new StringToBooleanArgumentInfo()
@@ -27,24 +33,28 @@ public class ModArgumentTypes {
      * 
      * @param eventBus The mod event bus
      */
-    public static void register(net.neoforged.bus.api.IEventBus eventBus) {
+    public static void register(IEventBus eventBus) {
         NeoEssentials.LOGGER.info("Registering custom command argument types");
+        
+        // Register our command argument types with the event bus
         COMMAND_ARGUMENT_TYPES.register(eventBus);
-
-        // Also register using the direct method for compatibility 
+        
+        // Register the common setup event for client-server synchronization
         eventBus.addListener(ModArgumentTypes::onCommonSetup);
     }
     
     /**
-     * Handle registration during common setup event
-     * This provides a more direct way to register the argument type as a fallback
+     * Common setup event to ensure proper synchronization of command arguments
+     * This ensures that clients also receive the argument type information
      */
-    private static void onCommonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+    private static void onCommonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            NeoEssentials.LOGGER.info("Registering StringToBooleanArgumentType during common setup");
-            // No longer needed since we're using the deferred registry
-            // This was causing conflicts with different registration names
-            // ArgumentTypeInfos.registerByClass((Class) StringToBooleanArgumentType.class, new StringToBooleanArgumentInfo());
+            NeoEssentials.LOGGER.info("Setting up command argument type synchronization");
+            
+            // Register the argument type class with its info class to ensure proper client-server serialization
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            ArgumentTypeInfo<StringToBooleanArgumentType, ?> info = STRING_TO_BOOLEAN.get();
+            ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, info);
         });
     }
 }
