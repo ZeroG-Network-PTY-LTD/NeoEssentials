@@ -2,6 +2,7 @@ package com.zerog.neoessentials.init;
 
 import com.zerog.neoessentials.NeoEssentials;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.VanillaBooleanParser;
 
 import net.neoforged.bus.api.IEventBus;
@@ -46,37 +47,25 @@ public class ModArgumentTypes {
 =======
 import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
 import com.zerog.neoessentials.utils.StringToBooleanArgumentInfo;
+=======
+import com.zerog.neoessentials.utils.VanillaBooleanParser;
+>>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
 
-import net.minecraft.commands.synchronization.ArgumentTypeInfo;
-import net.minecraft.commands.synchronization.ArgumentTypeInfos;
-import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.registries.DeferredRegister;
-
-import java.util.function.Supplier;
 
 /**
- * Handles registration of custom argument types
- * This class has been optimized for server-side only operation in a modded environment.
+ * Command argument utilities using only vanilla command arguments.
+ * This class replaces custom argument types with vanilla-compatible alternatives.
+ * No custom command argument types are registered, ensuring client compatibility.
  */
 public class ModArgumentTypes {
-    // Create a deferred register for command argument types
-    public static final DeferredRegister<ArgumentTypeInfo<?, ?>> COMMAND_ARGUMENT_TYPES = 
-            DeferredRegister.create(Registries.COMMAND_ARGUMENT_TYPE, NeoEssentials.MODID);
-    
-    // Register our StringToBooleanArgumentType with the StringToBooleanArgumentInfo
-    // Must use lowercase to ensure consistent registry keys between client/server
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public static final Supplier<ArgumentTypeInfo<StringToBooleanArgumentType, ?>> STRING_TO_BOOLEAN = COMMAND_ARGUMENT_TYPES.register(
-            "string_to_boolean", 
-            () -> (ArgumentTypeInfo) new StringToBooleanArgumentInfo()
-    );
 
     /**
-     * Register this class with the mod event bus to enable the registrations
+     * Register this class with the mod event bus
      * 
      * @param eventBus The mod event bus
+<<<<<<< HEAD
      */    public static void register(IEventBus eventBus) {
         NeoEssentials.LOGGER.info("Setting up server-side command argument types in modded environment");
         
@@ -136,53 +125,33 @@ public class ModArgumentTypes {
       /**
      * Server-side registration of command argument types
      * This is only called on dedicated servers
+=======
+>>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
      */
-    private static void registerServerSide() {
-        NeoEssentials.LOGGER.info("Performing server-side command argument type registration");
+    public static void register(IEventBus eventBus) {
+        NeoEssentials.LOGGER.info("Setting up vanilla-compatible command arguments");
         
-        // Direct class mapping for server-side operation
-        ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, 
-                                         new StringToBooleanArgumentInfo());
+        // Just set up common setup event - no custom argument types to register
+        eventBus.addListener(ModArgumentTypes::onCommonSetup);
     }
-      /**
-     * Common setup event for server-side command registration
-     * Only executed on the server - this is the key to server-only functionality
+    
+    /**
+     * Common setup for command handling
      */
     private static void onCommonSetup(FMLCommonSetupEvent event) {
-        // Only execute on dedicated server
-        if (!net.neoforged.fml.loading.FMLEnvironment.dist.isDedicatedServer()) {
-            return;
-        }
-        
         event.enqueueWork(() -> {
-            NeoEssentials.LOGGER.info("Setting up server-side command argument types");
-            try {
-                // Server-side registration
-                ArgumentTypeInfo<StringToBooleanArgumentType, ?> info = STRING_TO_BOOLEAN.get();
-                ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, info);
-                NeoEssentials.LOGGER.info("Successfully registered server-side command arguments");
-                
-                // Apply server-side configuration for modded environment
-                setupServerCommandConfig();
-            } catch (Exception e) {
-                NeoEssentials.LOGGER.error("Failed to register server command arguments", e);
+            // Only execute on dedicated server
+            if (!net.neoforged.fml.loading.FMLEnvironment.dist.isDedicatedServer()) {
+                return;
             }
+            
+            NeoEssentials.LOGGER.info("Initializing vanilla-compatible command arguments");
+            
+            // No custom command argument types to register
+            // All commands will use vanilla argument types with our parsers
+            
+            NeoEssentials.LOGGER.info("Vanilla-compatible command system configured successfully");
         });
 >>>>>>> faaaf85 (refactor: Update registration of StringToBooleanArgumentType for improved compatibility)
-    }
-      /**
-     * Configure server-side command handling for a modded environment
-     * This is the key to making the mod work in server-only installations
-     */
-    private static void setupServerCommandConfig() {
-        try {
-            // Server-side configuration for modded environment
-            NeoEssentials.LOGGER.debug("Setting up server-side command configuration");
-            
-            // Register our custom command argument type for server-side use
-            NeoEssentials.LOGGER.info("Server-side command system configured successfully");
-        } catch (Exception e) {
-            NeoEssentials.LOGGER.warn("Server command configuration encountered an issue", e);
-        }
     }
 }

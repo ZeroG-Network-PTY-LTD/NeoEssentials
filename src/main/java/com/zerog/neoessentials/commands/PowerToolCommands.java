@@ -8,10 +8,14 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.PowerToolManager;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.VanillaBooleanParser;
 =======
 import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+import com.zerog.neoessentials.utils.VanillaBooleanParser;
+>>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
 import com.zerog.neoessentials.utils.TextUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -61,11 +65,16 @@ public class PowerToolCommands {
                         .executes(this::executePowerToolRemoveAll))
                 .then(Commands.literal("-e")
 <<<<<<< HEAD
+<<<<<<< HEAD
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                 .suggests(VanillaBooleanParser.booleanSuggestions())
 =======
                         .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+                        .then(Commands.argument("enabled", VanillaBooleanParser.argument()
+                .suggests(VanillaBooleanParser.booleanSuggestions()))
+>>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
                                 .executes(this::executePowerToolEnable)))
                 .then(Commands.literal("-t")
                         .executes(this::executePowerToolToggle))
@@ -85,11 +94,16 @@ public class PowerToolCommands {
                         .executes(this::executePowerToolRemoveAll))
                 .then(Commands.literal("-e")
 <<<<<<< HEAD
+<<<<<<< HEAD
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                 .suggests(VanillaBooleanParser.booleanSuggestions())
 =======
                         .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+                        .then(Commands.argument("enabled", VanillaBooleanParser.argument()
+                .suggests(VanillaBooleanParser.booleanSuggestions()))
+>>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
                                 .executes(this::executePowerToolEnable)))
                 .then(Commands.literal("-t")
                         .executes(this::executePowerToolToggle))
@@ -227,10 +241,14 @@ public class PowerToolCommands {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = source.getPlayerOrException();
 <<<<<<< HEAD
+<<<<<<< HEAD
         boolean enabled = VanillaBooleanParser.getBoolean(context, "enabled");
 =======
         boolean enabled = StringToBooleanArgumentType.getBoolean(context, "enabled");
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+        boolean enabled = VanillaBooleanParser.getBoolean(context, "enabled");
+>>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
 
         PowerToolManager powerToolManager = NeoEssentials.getInstance().getDataManager().getPowerToolManager();
         powerToolManager.setPowerToolEnabled(player, enabled);

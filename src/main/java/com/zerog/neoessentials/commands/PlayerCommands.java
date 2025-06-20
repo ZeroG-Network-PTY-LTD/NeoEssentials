@@ -22,11 +22,15 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.utils.PermissionUtil;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.PlayerUtil;
 >>>>>>> bac244b (Implement messaging and player state commands)
 =======
 import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
 >>>>>>> a0123aa (refactor: Enhance message command handling and introduce StringToBooleanArgumentType for improved command argument parsing)
+=======
+import com.zerog.neoessentials.utils.VanillaBooleanParser;
+>>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
 import com.zerog.neoessentials.utils.TextUtil;
 
 import net.minecraft.commands.CommandSourceStack;
@@ -137,6 +141,7 @@ public class PlayerCommands {
                     return count;
                 })
             )
+<<<<<<< HEAD
         );
 <<<<<<< HEAD
         
@@ -221,23 +226,31 @@ public class PlayerCommands {
 =======
           // /god [player] [on|off]
 >>>>>>> 72db75e (refactor: Clean up god command registration and remove unnecessary argument type registration)
+=======
+        );        // /god [player] [on|off]
+>>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
         dispatcher.register(Commands.literal("god")
             .requires(source -> CommandManager.hasPermission(source, "essentials.god"))
             .executes(context -> godCommand(context, context.getSource().getPlayerOrException(), null))
-            .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
+            .then(Commands.argument("enabled", VanillaBooleanParser.argument())
+                .suggests(VanillaBooleanParser.booleanSuggestions())
                 .executes(context -> godCommand(context, context.getSource().getPlayerOrException(), 
-                                              StringToBooleanArgumentType.getBoolean(context, "enabled")))
+                                              VanillaBooleanParser.getBoolean(context, "enabled")))
                 .then(Commands.argument("player", EntityArgument.player())
                     .requires(source -> CommandManager.hasPermission(source, "essentials.god.others"))
                     .executes(context -> godCommand(
                         context, 
                         EntityArgument.getPlayer(context, "player"), 
 <<<<<<< HEAD
+<<<<<<< HEAD
                         BooleanArgumentType.getBool(context, "enabled")
 >>>>>>> bac244b (Implement messaging and player state commands)
 =======
                         StringToBooleanArgumentType.getBoolean(context, "enabled")
 >>>>>>> a0123aa (refactor: Enhance message command handling and introduce StringToBooleanArgumentType for improved command argument parsing)
+=======
+                        VanillaBooleanParser.getBoolean(context, "enabled")
+>>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
                     ))
                 )
             )
@@ -303,15 +316,16 @@ public class PlayerCommands {
         // /fly [player] [on|off]
         dispatcher.register(Commands.literal("fly")
             .requires(source -> CommandManager.hasPermission(source, "essentials.fly"))
-            .executes(context -> flyCommand(context, context.getSource().getPlayerOrException(), null))            .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
-                .executes(context -> flyCommand(context, context.getSource().getPlayerOrException(), 
-                                              StringToBooleanArgumentType.getBoolean(context, "enabled")))
+            .executes(context -> flyCommand(context, context.getSource().getPlayerOrException(), null))
+            .then(Commands.argument("enabled", VanillaBooleanParser.argument())
+                .suggests(VanillaBooleanParser.booleanSuggestions())                .executes(context -> flyCommand(context, context.getSource().getPlayerOrException(), 
+                                              VanillaBooleanParser.getBoolean(context, "enabled")))
                 .then(Commands.argument("player", EntityArgument.player())
                     .requires(source -> CommandManager.hasPermission(source, "essentials.fly.others"))
                     .executes(context -> flyCommand(
                         context, 
                         EntityArgument.getPlayer(context, "player"), 
-                        StringToBooleanArgumentType.getBoolean(context, "enabled")
+                        VanillaBooleanParser.getBoolean(context, "enabled")
                     ))
                 )
             )
