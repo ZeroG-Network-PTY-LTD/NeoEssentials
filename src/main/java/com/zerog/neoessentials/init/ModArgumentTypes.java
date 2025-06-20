@@ -50,9 +50,7 @@ public class ModArgumentTypes {
     private static void onCommonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             NeoEssentials.LOGGER.info("Setting up command argument type synchronization");
-            
-            // Register the argument type class with its info class to ensure proper client-server serialization
-            @SuppressWarnings({"unchecked", "rawtypes"})
+              // Register the argument type class with its info class to ensure proper client-server serialization
             ArgumentTypeInfo<StringToBooleanArgumentType, ?> info = STRING_TO_BOOLEAN.get();
             ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, info);
         });
