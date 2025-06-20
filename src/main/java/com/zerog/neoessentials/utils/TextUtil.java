@@ -154,6 +154,28 @@ public class TextUtil {
     }
     
     /**
+     * Formats and colorizes a text string with color codes.
+     * This is an alias for formatText with formatting allowed.
+     * 
+     * @param text The text to format with color codes
+     * @return The formatted text
+     */
+    public static String colorize(String text) {
+        return formatText(text, true);
+    }
+    
+    /**
+     * Convert a colorized string to a Component.
+     * This is useful for sending formatted messages to players.
+     * 
+     * @param text The text to colorize and convert
+     * @return A Component with colors and formatting applied
+     */
+    public static Component colorizedComponent(String text) {
+        return fromColoredString(translateColors(text));
+    }
+    
+    /**
      * Get the ChatFormatting for a character code
      */
     private static ChatFormatting getFormattingByChar(char code) {
