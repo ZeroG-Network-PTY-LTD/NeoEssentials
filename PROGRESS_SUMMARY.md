@@ -6,6 +6,7 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - A clean, maintainable codebase focused on NeoForge 1.21.1
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 - True server-side implementation that doesn't require client installation
 - An improved configuration system using TOML files with robust error handling
 - Fixed event handler registrations
@@ -18,9 +19,12 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - Compatibility layer for existing code
 >>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
 =======
+=======
+- True server-side implementation that doesn't require client installation
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 - An improved configuration system using TOML files with robust error handling
 - Fixed event handler registrations
-- Fixed command argument type registrations
+- Vanilla-compatible command argument handling
 - Powerful compatibility layer for existing code with safe config access
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
 
@@ -32,9 +36,13 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ✅ Removed duplicate/conflicting code paths
 - ✅ Fixed event handler registrations (static vs instance methods)
 <<<<<<< HEAD
+<<<<<<< HEAD
 - ✅ Deprecated unused classes for potential future removal
 =======
 >>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
+=======
+- ✅ Deprecated unused classes for potential future removal
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 
 ### Configuration System
 - ✅ Created TOML-based configuration files
@@ -51,6 +59,7 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 ### Bug Fixes
 - ✅ Fixed event handler registration issues
 <<<<<<< HEAD
+<<<<<<< HEAD
 - ✅ Eliminated custom command argument type registration completely
 - ✅ Replaced with vanilla-compatible StringArgumentType and post-processing
 - ✅ Fixed client disconnection issues related to command argument registry
@@ -58,6 +67,11 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ✅ Fixed command argument type registration (string_to_boolean)
 - ✅ Fixed client-server synchronization for custom command arguments
 >>>>>>> 3ee6355 (feat: Update mod to support client-server synchronization and enhance compatibility)
+=======
+- ✅ Eliminated custom command argument type registration completely
+- ✅ Replaced with vanilla-compatible StringArgumentType and post-processing
+- ✅ Fixed client disconnection issues related to command argument registry
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 - ✅ Fixed config initialization sequence (preventing "Cannot get config value before config is loaded" crash)
 - ✅ Implemented robust error handling for config access with proper defaults
 - ✅ Enhanced config loading process to wait for all expected config files
@@ -91,6 +105,9 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ✅ Extended home/warp system with better configuration options
 - ✅ Added scheduled task support for tablist and other features
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 - ✅ Implemented true server-side mod functionality
 - ✅ Created VanillaBooleanParser for command argument compatibility
 
@@ -100,16 +117,22 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ✅ Changed dependency sides to SERVER-only
 - ✅ Eliminated all client-side registry entries
 - ✅ Verified server can run with no client-side component required
+<<<<<<< HEAD
 =======
 >>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
+=======
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 
 ## In Progress
 - 🔄 Testing and debugging in-game functionality
 - 🔄 Finalizing database connection system
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 - 🔄 Improving error handling and logging
 >>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
+=======
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 
 ## Next Steps
 - ⏳ Add unit tests for critical components
@@ -118,14 +141,19 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 - ⏳ Implement additional economy features
 - ⏳ Add admin panel improvements
 <<<<<<< HEAD
+<<<<<<< HEAD
 - ⏳ Remove deprecated classes in future versions
 =======
 >>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
+=======
+- ⏳ Remove deprecated classes in future versions
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 
 ## Known Issues
 - None at this time
 
 ## Documentation
+<<<<<<< HEAD
 <<<<<<< HEAD
 - `IMPLEMENTATION_SUMMARY.md` - Complete overview of the server-side implementation
 - `CONFIGURATION_SYSTEM.md` - Details on the new configuration system
@@ -142,17 +170,28 @@ NeoEssentials has been successfully refactored to work as a single-version, sing
 
 Last Updated: July 9, 2025
 =======
+=======
+- `IMPLEMENTATION_SUMMARY.md` - Complete overview of the server-side implementation
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
 - `CONFIGURATION_SYSTEM.md` - Details on the new configuration system
 - `CONFIG_INITIALIZATION_FIX.md` - Fix for the config initialization crash
 - `SAFE_CONFIG_ACCESS.md` - Comprehensive guide to safely accessing config values
 - `COMMAND_ARG_FIX.md` & `COMMAND_ARG_FIX_FOLLOWUP.md` - Command argument registration fixes
 - `CLIENT_SERVER_SYNC_FIX.md` - Fix for client disconnection due to registry synchronization
+- `CLIENT_SERVER_REGISTRY_SYNC.md` - Registry synchronization architecture
+- `SERVER_SIDE_IMPLEMENTATION.md` - Details on the server-side only approach
+- `SERVER_DEPLOYMENT_GUIDE.md` - Guide for server administrators
+- `SERVER_OPTIMIZED_DEPLOYMENT.md` - Optimized deployment instructions
 - `COMPILATION_FIXES.md` - Information about fixing compilation errors
 - Other documentation in the `docs/` folder
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 Last Updated: June 19, 2025
 >>>>>>> a33ebf6 (feat: Add initialization methods for config values in CompatNeoEssentialsConfig and ModConfigManager)
 =======
 Last Updated: June 20, 2025
 >>>>>>> 3ee6355 (feat: Update mod to support client-server synchronization and enhance compatibility)
+=======
+Last Updated: July 9, 2025
+>>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
