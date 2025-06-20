@@ -6,7 +6,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.utils.PermissionUtil;
-import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
+import com.zerog.neoessentials.utils.VanillaBooleanParser;
 import com.zerog.neoessentials.utils.TextUtil;
 
 import net.minecraft.commands.CommandSourceStack;
@@ -76,20 +76,20 @@ public class PlayerCommands {
                     return count;
                 })
             )
-        );
-          // /god [player] [on|off]
+        );        // /god [player] [on|off]
         dispatcher.register(Commands.literal("god")
             .requires(source -> CommandManager.hasPermission(source, "essentials.god"))
             .executes(context -> godCommand(context, context.getSource().getPlayerOrException(), null))
-            .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
+            .then(Commands.argument("enabled", VanillaBooleanParser.argument())
+                .suggests(VanillaBooleanParser.booleanSuggestions())
                 .executes(context -> godCommand(context, context.getSource().getPlayerOrException(), 
-                                              StringToBooleanArgumentType.getBoolean(context, "enabled")))
+                                              VanillaBooleanParser.getBoolean(context, "enabled")))
                 .then(Commands.argument("player", EntityArgument.player())
                     .requires(source -> CommandManager.hasPermission(source, "essentials.god.others"))
                     .executes(context -> godCommand(
                         context, 
                         EntityArgument.getPlayer(context, "player"), 
-                        StringToBooleanArgumentType.getBoolean(context, "enabled")
+                        VanillaBooleanParser.getBoolean(context, "enabled")
                     ))
                 )
             )
@@ -106,15 +106,16 @@ public class PlayerCommands {
         // /fly [player] [on|off]
         dispatcher.register(Commands.literal("fly")
             .requires(source -> CommandManager.hasPermission(source, "essentials.fly"))
-            .executes(context -> flyCommand(context, context.getSource().getPlayerOrException(), null))            .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
-                .executes(context -> flyCommand(context, context.getSource().getPlayerOrException(), 
-                                              StringToBooleanArgumentType.getBoolean(context, "enabled")))
+            .executes(context -> flyCommand(context, context.getSource().getPlayerOrException(), null))
+            .then(Commands.argument("enabled", VanillaBooleanParser.argument())
+                .suggests(VanillaBooleanParser.booleanSuggestions())                .executes(context -> flyCommand(context, context.getSource().getPlayerOrException(), 
+                                              VanillaBooleanParser.getBoolean(context, "enabled")))
                 .then(Commands.argument("player", EntityArgument.player())
                     .requires(source -> CommandManager.hasPermission(source, "essentials.fly.others"))
                     .executes(context -> flyCommand(
                         context, 
                         EntityArgument.getPlayer(context, "player"), 
-                        StringToBooleanArgumentType.getBoolean(context, "enabled")
+                        VanillaBooleanParser.getBoolean(context, "enabled")
                     ))
                 )
             )

@@ -7,7 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.PowerToolManager;
-import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
+import com.zerog.neoessentials.utils.VanillaBooleanParser;
 import com.zerog.neoessentials.utils.TextUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -56,7 +56,8 @@ public class PowerToolCommands {
                 .then(Commands.literal("-r")
                         .executes(this::executePowerToolRemoveAll))
                 .then(Commands.literal("-e")
-                        .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
+                        .then(Commands.argument("enabled", VanillaBooleanParser.argument()
+                .suggests(VanillaBooleanParser.booleanSuggestions()))
                                 .executes(this::executePowerToolEnable)))
                 .then(Commands.literal("-t")
                         .executes(this::executePowerToolToggle))
@@ -75,7 +76,8 @@ public class PowerToolCommands {
                 .then(Commands.literal("-r")
                         .executes(this::executePowerToolRemoveAll))
                 .then(Commands.literal("-e")
-                        .then(Commands.argument("enabled", StringToBooleanArgumentType.stringToBoolean())
+                        .then(Commands.argument("enabled", VanillaBooleanParser.argument()
+                .suggests(VanillaBooleanParser.booleanSuggestions()))
                                 .executes(this::executePowerToolEnable)))
                 .then(Commands.literal("-t")
                         .executes(this::executePowerToolToggle))
@@ -212,7 +214,7 @@ public class PowerToolCommands {
     private int executePowerToolEnable(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = source.getPlayerOrException();
-        boolean enabled = StringToBooleanArgumentType.getBoolean(context, "enabled");
+        boolean enabled = VanillaBooleanParser.getBoolean(context, "enabled");
 
         PowerToolManager powerToolManager = NeoEssentials.getInstance().getDataManager().getPowerToolManager();
         powerToolManager.setPowerToolEnabled(player, enabled);
