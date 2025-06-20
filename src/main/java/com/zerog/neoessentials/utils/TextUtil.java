@@ -159,6 +159,9 @@ public class TextUtil {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c33909d (feat: Enhance AdminPanelCommand with comprehensive command structure and add advanced server management features)
      * Formats and colorizes a text string with color codes.
      * This is an alias for formatText with formatting allowed.
      * 
@@ -181,10 +184,13 @@ public class TextUtil {
     }
     
     /**
+<<<<<<< HEAD
 =======
 >>>>>>> bac244b (Implement messaging and player state commands)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+>>>>>>> c33909d (feat: Enhance AdminPanelCommand with comprehensive command structure and add advanced server management features)
      * Get the ChatFormatting for a character code
      */
     private static ChatFormatting getFormattingByChar(char code) {
