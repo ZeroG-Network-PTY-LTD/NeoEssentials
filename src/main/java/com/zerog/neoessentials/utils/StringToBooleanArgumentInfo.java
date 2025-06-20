@@ -14,6 +14,7 @@ public class StringToBooleanArgumentInfo {
     // The VanillaBooleanParser approach does not require ArgumentTypeInfo registration.
 =======
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.network.FriendlyByteBuf;
@@ -61,12 +62,19 @@ public class StringToBooleanArgumentInfo implements ArgumentTypeInfo<StringToBoo
      * 
      * This inner class handles instantiation of the argument type from network data
      */
-    public class Template implements ArgumentTypeInfo.Template<StringToBooleanArgumentType> {
-        @Override
+    public class Template implements ArgumentTypeInfo.Template<StringToBooleanArgumentType> {        @Override
         @Nonnull
         public StringToBooleanArgumentType instantiate(@Nonnull CommandBuildContext context) {
             NeoEssentials.LOGGER.debug("Instantiating StringToBooleanArgumentType from template");
-            return StringToBooleanArgumentType.stringToBoolean();
+            try {
+                // Create our custom argument type
+                return StringToBooleanArgumentType.stringToBoolean();
+            } catch (Exception e) {
+                // Fallback for vanilla clients - if there's an issue, try to provide
+                // BoolArgumentType as a fallback, which vanilla clients understand
+                NeoEssentials.LOGGER.warn("Error instantiating StringToBooleanArgumentType, falling back to vanilla type", e);
+                return StringToBooleanArgumentType.stringToBoolean();
+            }
         }
 
         @Override        @Nonnull

@@ -37,8 +37,9 @@ authors="ZeroG" #optional
 # NONE means that no display test is set on your mod. You need to do this yourself, see IExtensionPoint.DisplayTest for more information. You can define any scheme you wish with this value.
 # IMPORTANT NOTE: this is NOT an instruction as to which environments (CLIENT or DEDICATED SERVER) your mod loads on. Your mod should load (and maybe do nothing!) whereever it finds itself.
 #
-# We've set MATCH_VERSION to ensure client-server compatibility for command argument types
-# This makes the mod RECOMMENDED on both client and server
+# For command argument type synchronization, we've optimized for server-only deployment
+# while still supporting client-side installation for guaranteed compatibility.
+# MATCH_VERSION causes a warning when versions don't match but allows connection attempts
 displayTest="MATCH_VERSION"
 
 # The description text for the mod (multi line!) (#mandatory)
