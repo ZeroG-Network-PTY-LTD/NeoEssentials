@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 
 /**
  * Handles registration of custom argument types
- * Important: These types must be registered on BOTH client and server for proper synchronization!
+ * This class has been optimized for server-side only operation in a modded environment.
  */
 public class ModArgumentTypes {
     // Create a deferred register for command argument types
@@ -35,55 +35,61 @@ public class ModArgumentTypes {
      * 
      * @param eventBus The mod event bus
      */    public static void register(IEventBus eventBus) {
-        NeoEssentials.LOGGER.info("Registering custom command argument types for client-server synchronization");
+        NeoEssentials.LOGGER.info("Setting up server-side command argument types in modded environment");
         
-        // Register our command argument types with the event bus
-        COMMAND_ARGUMENT_TYPES.register(eventBus);
-        
-        // Always register the common setup event
-        eventBus.addListener(ModArgumentTypes::onCommonSetup);
-        
-        try {
-            // Advanced fallback for server-side mode - this attempts to ensure
-            // that even without the client having the mod, connections might still work
-            // with vanilla command types as a fallback
-            registerEarly();
-        } catch (Exception e) {
-            // This is just a best-effort approach, so log and continue if it fails
-            NeoEssentials.LOGGER.debug("Early command argument registration failed (this is not critical)", e);
+        // Only register on the server side
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isDedicatedServer()) {
+            NeoEssentials.LOGGER.info("Registering server-side command argument types");
+            
+            // Register DeferredRegister on server side only
+            COMMAND_ARGUMENT_TYPES.register(eventBus);
+            
+            // Set up common setup for server
+            eventBus.addListener(ModArgumentTypes::onCommonSetup);
+            
+            try {
+                // Direct registration for server-side only
+                registerServerSide();
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.warn("Server-side command registration encountered an issue", e);
+            }
+        } else {
+            NeoEssentials.LOGGER.info("Skipping command argument registration on client side");
         }
     }
-    
-    /**
-     * Attempt early registration with multiple approaches to maximize compatibility
-     * This is especially important for server-only deployments
+      /**
+     * Server-side registration of command argument types
+     * This is only called on dedicated servers
      */
-    private static void registerEarly() {
-        NeoEssentials.LOGGER.info("Performing early command argument type registration");
+    private static void registerServerSide() {
+        NeoEssentials.LOGGER.info("Performing server-side command argument type registration");
         
-        // Approach 1: Direct class mapping
+        // Direct class mapping for server-side operation
         ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, 
                                          new StringToBooleanArgumentInfo());
     }
-    
-    /**
-     * Common setup event to ensure proper synchronization of command arguments
-     * This ensures that clients also receive the argument type information
-     * 
-     * CRITICAL: This is executed on BOTH client and server, and both sides must have identical registration
-     */    private static void onCommonSetup(FMLCommonSetupEvent event) {
+      /**
+     * Common setup event for server-side command registration
+     * Only executed on the server - this is the key to server-only functionality
+     */
+    private static void onCommonSetup(FMLCommonSetupEvent event) {
+        // Only execute on dedicated server
+        if (!net.neoforged.fml.loading.FMLEnvironment.dist.isDedicatedServer()) {
+            return;
+        }
+        
         event.enqueueWork(() -> {
-            NeoEssentials.LOGGER.info("Setting up command argument type synchronization");
+            NeoEssentials.LOGGER.info("Setting up server-side command argument types");
             try {
-                // Standard registration during common setup
+                // Server-side registration
                 ArgumentTypeInfo<StringToBooleanArgumentType, ?> info = STRING_TO_BOOLEAN.get();
                 ArgumentTypeInfos.registerByClass(StringToBooleanArgumentType.class, info);
-                NeoEssentials.LOGGER.info("Successfully registered StringToBooleanArgumentType for network synchronization");
+                NeoEssentials.LOGGER.info("Successfully registered server-side command arguments");
                 
-                // Set up command type synchronization helper
-                setupCommandSyncHelper();
+                // Apply server-side configuration for modded environment
+                setupServerCommandConfig();
             } catch (Exception e) {
-                NeoEssentials.LOGGER.error("Failed to register command argument type for network synchronization", e);
+                NeoEssentials.LOGGER.error("Failed to register server command arguments", e);
             }
         });
     }
