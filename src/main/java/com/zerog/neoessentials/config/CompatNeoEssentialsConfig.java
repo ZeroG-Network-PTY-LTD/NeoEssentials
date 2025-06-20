@@ -1,14 +1,20 @@
 package com.zerog.neoessentials.config;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
 import com.zerog.neoessentials.NeoEssentials;
 import java.util.HashMap;
 import java.util.Map;
 import com.zerog.neoessentials.NeoEssentials;
+<<<<<<< HEAD
 =======
 import java.util.HashMap;
 import java.util.Map;
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
+=======
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
 
 /**
  * Compatibility layer that adapts our TOML configs to the old config structure.
@@ -79,6 +85,7 @@ public class CompatNeoEssentialsConfig {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error initializing default permissions", e);
         }
+<<<<<<< HEAD
     }
       /**
 =======
@@ -104,10 +111,15 @@ public class CompatNeoEssentialsConfig {
     
     /**
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
+=======
+    }
+      /**
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
      * Gets whether debug mode is enabled
      * @return True if debug mode is enabled
      */
     public boolean isDebug() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         return ConfigUtil.getConfigSafe(GeneralConfig.DEBUG_MODE, false);
@@ -122,6 +134,9 @@ public class CompatNeoEssentialsConfig {
             return false;
         }
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        return ConfigUtil.getConfigSafe(GeneralConfig.DEBUG_MODE, false);
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
     
     /**
@@ -134,6 +149,7 @@ public class CompatNeoEssentialsConfig {
         return "en_us";
     }
       /**
+<<<<<<< HEAD
 =======
         return defaultLanguage;
 =======
@@ -143,10 +159,13 @@ public class CompatNeoEssentialsConfig {
     
     /**
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
+=======
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
      * Gets whether economy is enabled
      * @return True if economy is enabled
      */
     public boolean isEconomyEnabled() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_ECONOMY, true);
@@ -168,9 +187,11 @@ public class CompatNeoEssentialsConfig {
             return true;
         }
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_ECONOMY, true);
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
-    
-    /**
+      /**
      * Gets the singular name of the currency
      * @return The currency name (e.g. "Dollar")
      */
@@ -180,6 +201,7 @@ public class CompatNeoEssentialsConfig {
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
 =======
         if (!isEconomyEnabled()) return "Dollar";
+<<<<<<< HEAD
         
         try {
             return EconomyConfig.CURRENCY_NAME_SINGULAR.get();
@@ -187,6 +209,9 @@ public class CompatNeoEssentialsConfig {
             return "Dollar";
         }
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_SINGULAR, "Dollar");
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
     
     /**
@@ -209,6 +234,7 @@ public class CompatNeoEssentialsConfig {
      */
     public String getCurrencyNamePlural() {
         if (!isEconomyEnabled()) return "Dollars";
+<<<<<<< HEAD
         
         try {
             return EconomyConfig.CURRENCY_NAME_PLURAL.get();
@@ -216,6 +242,9 @@ public class CompatNeoEssentialsConfig {
             return "Dollars";
         }
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_PLURAL, "Dollars");
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
     
     /**
@@ -227,6 +256,7 @@ public class CompatNeoEssentialsConfig {
     public String getCurrencySymbol() {
         if (!isEconomyEnabled()) return "$";
         return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_SYMBOL, "$");
+<<<<<<< HEAD
     }
       /**
 =======
@@ -247,6 +277,10 @@ public class CompatNeoEssentialsConfig {
     
     /**
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
+=======
+    }
+      /**
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
      * Gets the starting balance for new players
      * @return The starting balance
      */
@@ -260,6 +294,7 @@ public class CompatNeoEssentialsConfig {
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
 =======
         if (!isEconomyEnabled()) return 100.0;
+<<<<<<< HEAD
         
         try {
             return EconomyConfig.STARTING_BALANCE.get();
@@ -267,6 +302,9 @@ public class CompatNeoEssentialsConfig {
             return 100.0;
         }
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        return ConfigUtil.getConfigSafe(EconomyConfig.STARTING_BALANCE, 100.0);
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
     
     /**
@@ -274,6 +312,7 @@ public class CompatNeoEssentialsConfig {
      * @return True if teleportation is enabled
      */
     public boolean isTeleportEnabled() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_TELEPORTATION, true);
@@ -287,6 +326,9 @@ public class CompatNeoEssentialsConfig {
             return true;
         }
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_TELEPORTATION, true);
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
     
     /**
@@ -303,6 +345,7 @@ public class CompatNeoEssentialsConfig {
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
 =======
         if (!isTeleportEnabled()) return 30;
+<<<<<<< HEAD
         
         try {
             return HomeConfig.COOLDOWN_SECONDS.get();
@@ -310,6 +353,9 @@ public class CompatNeoEssentialsConfig {
             return 30;
         }
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        return ConfigUtil.getConfigSafe(HomeConfig.COOLDOWN_SECONDS, 30);
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
     
     /**
@@ -326,6 +372,7 @@ public class CompatNeoEssentialsConfig {
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
 =======
         if (!isTeleportEnabled()) return 3;
+<<<<<<< HEAD
         
         try {
             return HomeConfig.WARMUP_SECONDS.get();
@@ -333,6 +380,9 @@ public class CompatNeoEssentialsConfig {
             return 3;
         }
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        return ConfigUtil.getConfigSafe(HomeConfig.WARMUP_SECONDS, 3);
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
     
     /**
@@ -349,6 +399,7 @@ public class CompatNeoEssentialsConfig {
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
 =======
         if (!isTeleportEnabled()) return 3;
+<<<<<<< HEAD
         
         try {
             return HomeConfig.DEFAULT_MAX_HOMES.get();
@@ -356,6 +407,9 @@ public class CompatNeoEssentialsConfig {
             return 3;
         }
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        return ConfigUtil.getConfigSafe(HomeConfig.DEFAULT_MAX_HOMES, 3);
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
     
     /**
@@ -363,6 +417,7 @@ public class CompatNeoEssentialsConfig {
      * @return True if warps are enabled
      */
     public boolean isWarpsEnabled() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_WARPS, true);
@@ -418,9 +473,11 @@ public class CompatNeoEssentialsConfig {
             return true;
         }
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_WARPS, true);
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
-    
-    /**
+      /**
      * Gets whether a command is enabled
      * @param command The command name
      * @return True if the command is enabled
@@ -444,34 +501,34 @@ public class CompatNeoEssentialsConfig {
             return commandsEnabled.get(command);
         }
         
-        try {
-            boolean enabled = true;
-            switch (command.toLowerCase()) {
-                case "home":
-                    enabled = GeneralConfig.ENABLE_HOMES.get();
-                    break;
-                case "warp":
-                    enabled = GeneralConfig.ENABLE_WARPS.get();
-                    break;
-                case "tpa":
-                case "back":
-                    enabled = GeneralConfig.ENABLE_TELEPORTATION.get();
-                    break;
-                case "kit":
-                    enabled = GeneralConfig.ENABLE_KITS.get();
-                    break;
-                default:
-                    enabled = true;
-            }
-            
-            // Cache the result
-            commandsEnabled.put(command, enabled);
-            return enabled;
-        } catch (IllegalStateException e) {
-            // Default to enabled if config not loaded
-            return true;
+        boolean enabled = true;
+        String commandLower = command.toLowerCase();
+        
+        switch (commandLower) {
+            case "home":
+                enabled = ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_HOMES, true);
+                break;
+            case "warp":
+                enabled = ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_WARPS, true);
+                break;
+            case "tpa":
+            case "back":
+                enabled = ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_TELEPORTATION, true);
+                break;
+            case "kit":
+                enabled = ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_KITS, true);
+                break;
+            default:
+                enabled = true;
         }
+<<<<<<< HEAD
 >>>>>>> 44178c8 (feat: Refactor CompatNeoEssentialsConfig to use lazy loading and improve command handling)
+=======
+        
+        // Cache the result
+        commandsEnabled.put(commandLower, enabled);
+        return enabled;
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
     }
     
     /**

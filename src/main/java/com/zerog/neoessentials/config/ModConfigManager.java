@@ -150,6 +150,7 @@ public class ModConfigManager {
     public ModConfigSpec getSpec() {
         return DatabaseTomlConfig.SPEC;
 <<<<<<< HEAD
+<<<<<<< HEAD
     }    /**
      * Gets the compatibility config that adapts TOML values to the old config structure
      * @return The compatibility config
@@ -186,6 +187,9 @@ public class ModConfigManager {
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
     }
       /**
+=======
+    }    /**
+>>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
      * Gets the compatibility config that adapts TOML values to the old config structure
      * @return The compatibility config
      */
@@ -193,18 +197,29 @@ public class ModConfigManager {
         if (compatConfig == null) {
             compatConfig = new CompatNeoEssentialsConfig();
             // Note: config values will not be initialized here - that happens in initializeConfigs()
+            NeoEssentials.LOGGER.info("Created new compatibility config instance");
         }
         return compatConfig;
     }
-    
-    /**
+      /**
      * Initialize config values after all configs are loaded
      * This should be called after the mod loading phase when config values are available
      */
     public void initializeConfigs() {
         NeoEssentials.LOGGER.info("Initializing config values");
-        if (compatConfig != null) {
-            compatConfig.initialize();
+        try {
+            // Check if configs are available before initializing
+            if (!ConfigUtil.isConfigAvailable(GeneralConfig.DEBUG_MODE)) {
+                NeoEssentials.LOGGER.warn("Config values are not yet available. Deferring initialization.");
+                return;
+            }
+            
+            if (compatConfig != null) {
+                compatConfig.initialize();
+                NeoEssentials.LOGGER.info("Compatibility config layer initialized successfully");
+            }
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to initialize configs", e);
         }
     }
 }
