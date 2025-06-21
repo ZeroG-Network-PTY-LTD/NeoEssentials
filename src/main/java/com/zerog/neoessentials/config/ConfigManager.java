@@ -23,6 +23,7 @@ public class ConfigManager {
     
     private NeoEssentialsConfig config;
     private DatabaseConfig databaseConfig;
+    private TablistConfig tablistConfig;
     private final Gson gson;
       public ConfigManager() {
         this.gson = new GsonBuilder()
@@ -60,22 +61,9 @@ public class ConfigManager {
             }
               // Initialize database config
             databaseConfig.initialize();
-            
-            // Apply database config to DataManager if it's available
-            if (NeoEssentials.getInstance() != null && 
-                NeoEssentials.getInstance().getDataManager() != null) {
-                
-                DataManager dataManager = NeoEssentials.getInstance().getDataManager();
-                
-                dataManager.setDatabaseConfig(
-                    databaseConfig.storageType.get(),
-                    databaseConfig.mysqlHost.get(),
-                    databaseConfig.mysqlPort.get(),
-                    databaseConfig.mysqlDatabase.get(),
-                    databaseConfig.mysqlUsername.get(),
-                    databaseConfig.mysqlPassword.get()
-                );
-            }
+              // Database config is now handled by StorageManager in NeoEssentials.java
+            // No need to set anything here as the DatabaseConfig will be passed directly
+            // to the StorageManager when it's created
         } catch (IOException e) {
             NeoEssentials.LOGGER.error("Failed to initialize config system", e);
         }
@@ -111,5 +99,18 @@ public class ConfigManager {
      */
     public DatabaseConfig getDatabaseConfig() {
         return databaseConfig;
+    }
+    
+    /**
+     * Get the tablist configuration.
+     * 
+     * @return The tablist configuration object
+     */
+    public TablistConfig getTablistConfig() {
+        if (tablistConfig == null) {
+            tablistConfig = new TablistConfig();
+            tablistConfig.load();
+        }
+        return tablistConfig;
     }
 }
