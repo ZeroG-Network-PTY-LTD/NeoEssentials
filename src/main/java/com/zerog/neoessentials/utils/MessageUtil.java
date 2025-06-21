@@ -1,11 +1,10 @@
 package com.zerog.neoessentials.utils;
 
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.ChatFormatting;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -106,12 +105,59 @@ public class MessageUtil {
     }
     
     /**
+     * Adds hover text to a component
+     * 
+     * @param component The component to add hover text to
+     * @param hoverText The hover text to add
+     * @return The component with hover text
+     */    public static MutableComponent addHoverText(MutableComponent component, MutableComponent hoverText) {
+        return component.withStyle(style -> style.withHoverEvent(new HoverEvent(
+                HoverEvent.Action.SHOW_TEXT, 
+                hoverText)));
+    }
+    
+    /**
+     * Makes a component clickable to run a command
+     * 
+     * @param component The component to make clickable
+     * @param command The command to run when clicked
+     * @return The clickable component
+     */
+    public static MutableComponent makeClickableCommand(MutableComponent component, String command) {
+        return component.withStyle(style -> style.withClickEvent(new ClickEvent(
+                ClickEvent.Action.RUN_COMMAND, 
+                command)));
+    }
+    
+    /**
+     * Makes a component clickable to suggest a command
+     * 
+     * @param component The component to make clickable
+     * @param command The command to suggest when clicked
+     * @return The clickable component
+     */
+    public static MutableComponent makeSuggestCommand(MutableComponent component, String command) {
+        return component.withStyle(style -> style.withClickEvent(new ClickEvent(
+                ClickEvent.Action.SUGGEST_COMMAND, 
+                command)));
+    }
+      /**
+     * Formats text with color codes without adding the NeoEssentials prefix
+     * 
+     * @param text Text with & color codes
+     * @return Formatted text with color codes translated
+     */
+    public static String formatText(String text) {
+        return translateColorCodes(text);
+    }
+    
+    /**
      * Translates standard '&' color codes to Minecraft's internal format
      * 
      * @param message The message with '&' color codes
      * @return The message with Minecraft internal color codes
      */
-    private static String translateColorCodes(String message) {
+    public static String translateColorCodes(String message) {
         char colorChar = '&';
         char[] array = message.toCharArray();
         

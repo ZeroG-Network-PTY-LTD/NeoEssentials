@@ -1,0 +1,33 @@
+#General NeoEssentials Settings
+[general]
+	#The server name used in various messages and placeholders
+	serverName = "NeoEssentials Server"
+	#How often data is automatically saved (in minutes)
+	# Default: 5
+	# Range: 1 ~ 60
+	autoSaveInterval = 5
+	#Enable debug logging
+	debugMode = false
+
+#Feature Toggles - Enable or disable major features
+[features]
+	#Enable the economy system
+	enableEconomy = true
+	#Enable all teleportation commands (home, warp, tpa, etc.)
+	enableTeleportation = true
+	#Enable the home system
+	enableHomes = true
+	#Enable the warp system
+	enableWarps = true
+	#Enable the kit system
+	enableKits = true
+	#Enable the enhanced tablist system
+	enableTablist = true
+	#Enable the mail system
+	enableMail = true
+	#Enable the admin panel
+	enableAdminPanel = true
+	#Enable moderation commands (ban, mute, etc.)
+	enableModeration = true
+	#Enable enhanced chat features
+	enableChatFeatures = true
