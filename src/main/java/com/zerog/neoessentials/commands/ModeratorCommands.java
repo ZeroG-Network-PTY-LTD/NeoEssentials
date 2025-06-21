@@ -746,7 +746,8 @@ public class ModeratorCommands {
                                             Component.literal(TextUtil.colorize("&eClick to unban &f" + ban.getDisplayName()))))));
                 }
                 
-                context.getSource().sendSuccess(() -> banEntry, false);
+                final Component finalBanEntry = banEntry;
+                context.getSource().sendSuccess(() -> finalBanEntry, false);
             }
             
             // If there are more pages, show navigation
