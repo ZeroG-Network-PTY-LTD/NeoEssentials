@@ -439,6 +439,7 @@ public class ModeratorCommands {
      * Ban a player with a reason
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    
 =======
      */
@@ -447,15 +448,23 @@ public class ModeratorCommands {
 =======
      */    private int banPlayer(CommandContext<CommandSourceStack> context, String reason) {
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
+=======
+     */    
+    private int banPlayer(CommandContext<CommandSourceStack> context, String reason) {
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
         try {
             Collection<GameProfile> targets = GameProfileArgument.getGameProfiles(context, "player");
             
             if (targets.isEmpty()) {
 <<<<<<< HEAD
+<<<<<<< HEAD
                 context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cNo players specified.")));
 =======
                 context.getSource().sendFailure(Component.literal("No players specified."));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cNo players specified.")));
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
                 return 0;
             }
             
@@ -465,6 +474,9 @@ public class ModeratorCommands {
             for (GameProfile profile : targets) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
                 if (profile == null) continue;
                 
                 // Check for ban exemption
@@ -472,6 +484,7 @@ public class ModeratorCommands {
                 if (targetPlayer != null && PermissionUtil.hasPermission(targetPlayer, "essentials.ban.exempt")) {
                     context.getSource().sendFailure(Component.literal(TextUtil.colorize(
                             "&cYou cannot ban &e" + profile.getName() + " &cas they are exempt from bans.")));
+<<<<<<< HEAD
                     continue;
                 }
                 
@@ -512,29 +525,40 @@ public class ModeratorCommands {
                 if (PermissionUtil.hasPermission((com.mojang.authlib.GameProfile)profile, "essentials.ban.exempt")) {
 >>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
                     context.getSource().sendFailure(Component.literal("You cannot ban " + profile.getName() + "."));
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
                     continue;
                 }
                 
+                // Create ban entry
                 UserBanListEntry banEntry = new UserBanListEntry(
-                    profile,
-                    new Date(),
-                    context.getSource().getTextName(),
-                    null,
-                    reason
+                        profile, 
+                        new Date(), 
+                        context.getSource().getTextName(), 
+                        null, 
+                        TextUtil.colorize(reason)
                 );
                 
                 banList.add(banEntry);
+                count++;
                 
-                // Kick the player if online
-                ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayer(profile.getId());
-                if (player != null) {
-                    player.connection.disconnect(Component.literal("Banned: " + reason));
+                // Kick player if they're online
+                if (targetPlayer != null) {
+                    // Create a styled ban message
+                    Component banMessage = Component.literal(TextUtil.colorize("&c&lYou have been banned from the server!\n\n"))
+                            .append(Component.literal(TextUtil.colorize("&7Reason: &f" + reason + "\n")))
+                            .append(Component.literal(TextUtil.colorize("&7Banned by: &f" + context.getSource().getTextName())));
+                    
+                    targetPlayer.connection.disconnect(banMessage);
                 }
                 
-                count++;
+                // Log ban action
+                NeoEssentials.LOGGER.info("{} banned {} for: {}", 
+                        context.getSource().getTextName(), profile.getName(), reason);
             }
             
             if (count > 0) {
+<<<<<<< HEAD
 <<<<<<< HEAD
                 context.getSource().sendSuccess(() -> Component.literal("Banned " + count + " players: " + reason), true);
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
@@ -543,22 +567,33 @@ public class ModeratorCommands {
                 final String finalReason = reason;
                 context.getSource().sendSuccess(() -> Component.literal("Banned " + finalCount + " players: " + finalReason), true);
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
+=======
+                String plural = count > 1 ? "s" : "";
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&aSuccessfully banned &e" + count + " &aplayer" + plural + ".")), true);
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             }
             
             return count;
         } catch (Exception e) {
+<<<<<<< HEAD
 <<<<<<< HEAD
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to ban player: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error banning player", e);
 =======
             context.getSource().sendFailure(Component.literal("Failed to ban player: " + e.getMessage()));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to ban player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error banning player", e);
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             return 0;
         }
     }
     
     /**
      * Unban a player
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
      */    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
@@ -572,11 +607,21 @@ public class ModeratorCommands {
         
         // Check if the player is banned
         if (!banList.isBanned(profile)) {
+=======
+     */
+    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
+        String playerName = StringArgumentType.getString(context, "player");
+        UserBanList banList = context.getSource().getServer().getPlayerList().getBans();
+        
+        // Check if the player is banned
+        if (!banList.isBanned(playerName)) {
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             context.getSource().sendFailure(Component.literal(TextUtil.colorize(
                     "&cPlayer &e" + playerName + " &cis not banned.")));
             return 0;
         }
         
+<<<<<<< HEAD
         try {
             banList.remove(profile);
             
@@ -598,60 +643,49 @@ public class ModeratorCommands {
 =======
      */    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
 >>>>>>> 009105b (fix: Improve unban logic to directly remove banned players by name and streamline teleport command level retrieval)
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
         try {
-            String targetName = StringArgumentType.getString(context, "player");
-            MinecraftServer server = context.getSource().getServer();
-            UserBanList banList = server.getPlayerList().getBans();
+            banList.remove(playerName);
             
-            // In Minecraft 1.21.1, we need to get the GameProfile differently
-            boolean found = false;
+            // Announce unban action
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&aPlayer &e" + playerName + " &ahas been unbanned.")), true);
+                    
+            // Log unban action
+            NeoEssentials.LOGGER.info("{} unbanned {}", 
+                    context.getSource().getTextName(), playerName);
             
-            // Try to use server's method to get the profile
-            Optional<GameProfile> profile = server.getProfileCache().get(targetName);
-            if (profile.isPresent()) {
-                GameProfile gameProfile = profile.get();
-                if (banList.isBanned(gameProfile)) {
-                    banList.remove(gameProfile);
-                    found = true;
-                }
-            }
-            
-            // If we couldn't find or unban via profile cache, try a different approach
-            if (!found) {
-                // This is a workaround - pardon the named player directly
-                server.getCommands().performPrefixedCommand(
-                    server.createCommandSourceStack(), 
-                    "pardon " + targetName
-                );
-                found = true; // Assume success
-            }
-            
-            if (found) {
-                context.getSource().sendSuccess(() -> Component.literal("Unbanned player: " + targetName), true);
-                return 1;
-            } else {
-                context.getSource().sendFailure(Component.literal("Player not found in ban list: " + targetName));
-                return 0;
-            }
+            return 1;
         } catch (Exception e) {
+<<<<<<< HEAD
             context.getSource().sendFailure(Component.literal("Failed to unban player: " + e.getMessage()));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to unban player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error unbanning player", e);
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             return 0;
         }
     }
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
      * Temporarily ban a player
 =======
      * Temporarily ban a player for a specific duration
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+     * Temporarily ban a player
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
      */
     private int tempBanPlayer(CommandContext<CommandSourceStack> context, String timeStr, String reason) {
         try {
             Collection<GameProfile> targets = GameProfileArgument.getGameProfiles(context, "player");
             
             if (targets.isEmpty()) {
+<<<<<<< HEAD
 <<<<<<< HEAD
                 context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cNo players specified.")));
                 return 0;
@@ -680,6 +714,23 @@ public class ModeratorCommands {
             } catch (IllegalArgumentException e) {
                 context.getSource().sendFailure(Component.literal("Invalid time format. Use formats like '1d2h30m' for 1 day, 2 hours, 30 minutes."));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cNo players specified.")));
+                return 0;
+            }
+            
+            // Convert time string to expiration date
+            Date expiry = TimeUtil.parseTimeToDate(timeStr);
+            if (expiry == null) {
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                        "&cInvalid time format. Use format like '1d' for one day, '6h' for six hours, etc.")));
+                return 0;
+            }
+            
+            long durationMillis = expiry.getTime() - System.currentTimeMillis();
+            if (durationMillis <= 0) {
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cTime duration must be positive.")));
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
                 return 0;
             }
             
@@ -689,6 +740,9 @@ public class ModeratorCommands {
             for (GameProfile profile : targets) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
                 if (profile == null) continue;
                 
                 // Check for ban exemption
@@ -696,6 +750,7 @@ public class ModeratorCommands {
                 if (targetPlayer != null && PermissionUtil.hasPermission(targetPlayer, "essentials.tempban.exempt")) {
                     context.getSource().sendFailure(Component.literal(TextUtil.colorize(
                             "&cYou cannot ban &e" + profile.getName() + " &cas they are exempt from bans.")));
+<<<<<<< HEAD
                     continue;
                 }
                 
@@ -743,27 +798,44 @@ public class ModeratorCommands {
                 if (PermissionUtil.hasPermission((com.mojang.authlib.GameProfile)profile, "essentials.tempban.exempt")) {
 >>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
                     context.getSource().sendFailure(Component.literal("You cannot temp ban " + profile.getName() + "."));
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
                     continue;
                 }
                 
+                // Create temporary ban entry
                 UserBanListEntry banEntry = new UserBanListEntry(
-                    profile,
-                    new Date(),
-                    context.getSource().getTextName(),
-                    expires,
-                    reason + " (until " + TimeUtil.formatDate(expires) + ")"
+                        profile, 
+                        new Date(), 
+                        context.getSource().getTextName(), 
+                        expiry, 
+                        TextUtil.colorize(reason)
                 );
                 
                 banList.add(banEntry);
+                count++;
                 
-                // Kick the player if online
-                ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayer(profile.getId());
-                if (player != null) {
-                    player.connection.disconnect(Component.literal("Temporarily banned until " + TimeUtil.formatDate(expires) + ": " + reason));
+                // Kick player if they're online
+                if (targetPlayer != null) {
+                    // Format time remaining
+                    String formattedTime = TimeUtil.formatDuration(durationMillis);
+                    
+                    // Create a styled ban message
+                    Component banMessage = Component.literal(TextUtil.colorize("&c&lYou have been temporarily banned!\n\n"))
+                            .append(Component.literal(TextUtil.colorize("&7Reason: &f" + reason + "\n")))
+                            .append(Component.literal(TextUtil.colorize("&7Duration: &f" + formattedTime + "\n")))
+                            .append(Component.literal(TextUtil.colorize("&7Expires: &f" + formatDate(expiry) + "\n")))
+                            .append(Component.literal(TextUtil.colorize("&7Banned by: &f" + context.getSource().getTextName())));
+                    
+                    targetPlayer.connection.disconnect(banMessage);
                 }
                 
-                count++;
+                // Log temp ban action
+                NeoEssentials.LOGGER.info("{} temporarily banned {} for {} (reason: {})", 
+                        context.getSource().getTextName(), profile.getName(), 
+                        TimeUtil.formatDuration(durationMillis), reason);
             }
+<<<<<<< HEAD
               if (count > 0) {
                 final int finalCount = count;
                 final Date finalExpires = expires;
@@ -777,16 +849,29 @@ public class ModeratorCommands {
                     Component.literal("Temporarily banned " + finalCount + " players until " + 
                                  TimeUtil.formatDate(finalExpires) + ": " + finalReason), true);
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
+=======
+            
+            if (count > 0) {
+                String plural = count > 1 ? "s" : "";
+                String formattedTime = TimeUtil.formatDuration(durationMillis);
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&aSuccessfully temporarily banned &e" + count + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             }
             
             return count;
         } catch (Exception e) {
+<<<<<<< HEAD
 <<<<<<< HEAD
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to temp-ban player: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error temp-banning player", e);
 =======
             context.getSource().sendFailure(Component.literal("Failed to temp ban player: " + e.getMessage()));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to temp-ban player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error temp-banning player", e);
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             return 0;
         }
     }
@@ -796,6 +881,9 @@ public class ModeratorCommands {
      */
     private int banIp(CommandContext<CommandSourceStack> context, String reason) {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
         String target = StringArgumentType.getString(context, "target");
         MinecraftServer server = context.getSource().getServer();
         IpBanList ipBanList = server.getPlayerList().getIpBans();
@@ -809,6 +897,7 @@ public class ModeratorCommands {
                 context.getSource().sendFailure(Component.literal(TextUtil.colorize(
                         "&cCould not find player &e" + target + "&c or the input is not a valid IP address.")));
                 return 0;
+<<<<<<< HEAD
             }
             
             ipAddress = targetPlayer.getIpAddress();
@@ -854,23 +943,44 @@ public class ModeratorCommands {
                     context.getSource().sendFailure(Component.literal("Could not determine player's IP address."));
                     return 0;
                 }
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             }
             
-            // Ban the IP
-            IpBanList ipBanList = context.getSource().getServer().getPlayerList().getIpBans();
+            ipAddress = targetPlayer.getIpAddress();
+            if (ipAddress == null || ipAddress.isEmpty()) {
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                        "&cCould not determine IP address for player &e" + target + "&c.")));
+                return 0;
+            }
+        }
+        
+        try {
+            // Create IP ban entry
             IpBanListEntry banEntry = new IpBanListEntry(
+<<<<<<< HEAD
                 ipAddress,
                 new Date(),
                 context.getSource().getTextName(),
                 null,
                 reason
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                    ipAddress,
+                    new Date(),
+                    context.getSource().getTextName(), 
+                    null,
+                    TextUtil.colorize(reason)
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             );
             
             ipBanList.add(banEntry);
             
             // Kick all players with this IP
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             int kickedCount = 0;
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 if (ipAddress.equals(player.getIpAddress())) {
@@ -881,6 +991,7 @@ public class ModeratorCommands {
                     
                     player.connection.disconnect(banMessage);
                     kickedCount++;
+<<<<<<< HEAD
                 }
             }
               // Announce the IP ban
@@ -908,18 +1019,34 @@ public class ModeratorCommands {
             for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
                 if (player.getIpAddress().equals(ipAddress)) {
                     playersToKick.add(player);
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
                 }
             }
             
-            for (ServerPlayer player : playersToKick) {
-                player.connection.disconnect(Component.literal("Your IP address has been banned: " + reason));
+            // Announce the IP ban
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&aSuccessfully banned IP address &e" + ipAddress + "&a.")), true);
+                    
+            if (kickedCount > 0) {
+                String plural = kickedCount > 1 ? "s" : "";
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&e" + kickedCount + " &aplayer" + plural + " with this IP " + (kickedCount == 1 ? "was" : "were") + " disconnected.")), false);
             }
             
-            context.getSource().sendSuccess(() -> Component.literal("Banned IP address: " + ipAddress), true);
+            // Log IP ban action
+            NeoEssentials.LOGGER.info("{} banned IP {} for: {}", 
+                    context.getSource().getTextName(), ipAddress, reason);
+            
             return 1;
         } catch (Exception e) {
+<<<<<<< HEAD
             context.getSource().sendFailure(Component.literal("Failed to ban IP: " + e.getMessage()));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to ban IP: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error banning IP", e);
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             return 0;
         }
     }
@@ -927,9 +1054,14 @@ public class ModeratorCommands {
     /**
      * Unban an IP address
 <<<<<<< HEAD
+<<<<<<< HEAD
      */
     private int unbanIp(CommandContext<CommandSourceStack> context) {
 <<<<<<< HEAD
+=======
+     */
+    private int unbanIp(CommandContext<CommandSourceStack> context) {
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
         String ipAddress = StringArgumentType.getString(context, "address");
         IpBanList ipBanList = context.getSource().getServer().getPlayerList().getIpBans();
         
@@ -940,6 +1072,7 @@ public class ModeratorCommands {
             return 0;
         }
         
+<<<<<<< HEAD
         try {
             ipBanList.remove(ipAddress);
             
@@ -959,27 +1092,34 @@ public class ModeratorCommands {
 =======
      */    private int unbanIp(CommandContext<CommandSourceStack> context) {
 >>>>>>> 4184062 (fix: Add check for banned IP address before unbanning in ModeratorCommands)
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
         try {
-            String ipAddress = StringArgumentType.getString(context, "address");
-            IpBanList ipBanList = context.getSource().getServer().getPlayerList().getIpBans();
+            ipBanList.remove(ipAddress);
             
-            // Check if the IP is banned before removal
-            if (ipBanList.isBanned(ipAddress)) {
-                ipBanList.remove(ipAddress);
-                context.getSource().sendSuccess(() -> Component.literal("Unbanned IP address: " + ipAddress), true);
-                return 1;
-            } else {
-                context.getSource().sendFailure(Component.literal("IP address not found in ban list: " + ipAddress));
-                return 0;
-            }
+            // Announce unban action
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&aIP address &e" + ipAddress + " &ahas been unbanned.")), true);
+                    
+            // Log unban action
+            NeoEssentials.LOGGER.info("{} unbanned IP {}", 
+                    context.getSource().getTextName(), ipAddress);
+            
+            return 1;
         } catch (Exception e) {
+<<<<<<< HEAD
             context.getSource().sendFailure(Component.literal("Failed to unban IP: " + e.getMessage()));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to unban IP: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error unbanning IP", e);
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             return 0;
         }
     }
     
     /**
+<<<<<<< HEAD
 <<<<<<< HEAD
      * Mute a player, either permanently or temporarily
      */
@@ -1047,59 +1187,85 @@ public class ModeratorCommands {
             NeoEssentials.LOGGER.error("Error muting player", e);
 =======
      * Mute a player for a specific duration or permanently
+=======
+     * Mute a player, either permanently or temporarily
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
      */
-    private int mutePlayer(CommandContext<CommandSourceStack> context, ServerPlayer player, String timeStr, String reason) {
+    private int mutePlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, String timeStr, String reason) {
         try {
-            if (PermissionUtil.hasPermission((ServerPlayer)player, "essentials.mute.exempt")) {
-                context.getSource().sendFailure(Component.literal("You cannot mute this player."));
+            // Check for mute exemption
+            if (PermissionUtil.hasPermission(target, "essentials.mute.exempt")) {
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                        "&cYou cannot mute &e" + target.getScoreboardName() + " &cas they are exempt from mutes.")));
                 return 0;
             }
             
-            Date expires = null;
+            Date expiry = null;
+            String durationText = "permanently";
+            
+            // Parse time if provided
             if (timeStr != null && !timeStr.isEmpty()) {
-                try {
-                    expires = TimeUtil.parseTimeSpecification(timeStr);
-                } catch (IllegalArgumentException e) {
-                    context.getSource().sendFailure(
-                        Component.literal("Invalid time format. Use formats like '1d2h30m' for 1 day, 2 hours, 30 minutes.")
-                    );
+                expiry = TimeUtil.parseTimeToDate(timeStr);
+                if (expiry == null) {
+                    context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                            "&cInvalid time format. Use format like '1d' for one day, '6h' for six hours, etc.")));
                     return 0;
                 }
+                
+                long durationMillis = expiry.getTime() - System.currentTimeMillis();
+                if (durationMillis <= 0) {
+                    context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cTime duration must be positive.")));
+                    return 0;
+                }
+                
+                durationText = "for " + TimeUtil.formatDuration(durationMillis);
             }
             
-            // Store in the muted players map
-            mutedPlayers.put(player.getUUID(), expires);
-              if (expires != null) {
-                final Date finalExpires = expires;
-                final String finalReason = reason;
-                final String playerName = player.getScoreboardName();
-                context.getSource().sendSuccess(() -> Component.literal(
-                    "Muted " + playerName + " until " + TimeUtil.formatDate(finalExpires) + ": " + finalReason
-                ), true);
-                
-                player.sendSystemMessage(Component.literal(
-                    "You have been muted until " + TimeUtil.formatDate(finalExpires) + ": " + finalReason
-                ));
+            // Store mute in the map
+            mutedPlayers.put(target.getUUID(), expiry);
+            
+            // Send message to target player
+            if (expiry != null) {
+                target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                        "&cYou have been muted " + durationText + ".")));
+                target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                        "&7Reason: &f" + reason)));
+                target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                        "&7Expires: &f" + formatDate(expiry))));
             } else {
-                context.getSource().sendSuccess(() -> Component.literal(
-                    "Permanently muted " + player.getScoreboardName() + ": " + reason
-                ), true);
-                
-                player.sendSystemMessage(Component.literal(
-                    "You have been permanently muted: " + reason
-                ));
+                target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                        "&cYou have been permanently muted.")));
+                target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                        "&7Reason: &f" + reason)));
             }
+            
+            // Announce mute to source
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&aPlayer &e" + target.getScoreboardName() + " &ahas been muted " + durationText + ".")), true);
+                    
+            // Log mute action
+            NeoEssentials.LOGGER.info("{} muted {} {} for: {}", 
+                    context.getSource().getTextName(), target.getScoreboardName(), 
+                    durationText, reason);
             
             return 1;
         } catch (Exception e) {
+<<<<<<< HEAD
             context.getSource().sendFailure(Component.literal("Failed to mute player: " + e.getMessage()));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to mute player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error muting player", e);
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             return 0;
         }
     }
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
      * Unmute a player
      */
     private int unmutePlayer(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -1129,6 +1295,7 @@ public class ModeratorCommands {
     }
     
     /**
+<<<<<<< HEAD
      * Check if a player is muted
      * 
      * @param player The player to check
@@ -1150,23 +1317,35 @@ public class ModeratorCommands {
             // Mute has expired, remove it
             mutedPlayers.remove(uuid);
 =======
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
      * Check if a player is muted
+     * 
+     * @param player The player to check
+     * @return True if the player is muted, false otherwise
      */
-    public boolean isPlayerMuted(UUID playerId) {
-        if (!mutedPlayers.containsKey(playerId)) {
-            return false;
-        }
+    public boolean isPlayerMuted(ServerPlayer player) {
+        if (player == null) return false;
         
-        Date expiryTime = mutedPlayers.get(playerId);
-        if (expiryTime == null) {
-            // Permanent mute
-            return true;
-        }
+        UUID uuid = player.getUUID();
+        if (!mutedPlayers.containsKey(uuid)) return false;
         
+<<<<<<< HEAD
         if (expiryTime.before(new Date())) {
             // Mute expired, remove it
             mutedPlayers.remove(playerId);
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+        Date expiry = mutedPlayers.get(uuid);
+        
+        // If expiry is null, the mute is permanent
+        if (expiry == null) return true;
+        
+        // Check if the mute has expired
+        if (expiry.before(new Date())) {
+            // Mute has expired, remove it
+            mutedPlayers.remove(uuid);
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
             return false;
         }
         
@@ -1175,10 +1354,14 @@ public class ModeratorCommands {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
      * Get the mute expiry date for a player
      * 
      * @param player The player to check
      * @return The mute expiry date, or null if not muted or muted permanently
+<<<<<<< HEAD
      */
     public Date getMuteExpiry(ServerPlayer player) {
         if (player == null) return null;
@@ -1291,6 +1474,12 @@ public class ModeratorCommands {
     public void unmutePlayer(UUID playerId) {
         mutedPlayers.remove(playerId);
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+     */
+    public Date getMuteExpiry(ServerPlayer player) {
+        if (player == null) return null;
+        return mutedPlayers.get(player.getUUID());
+>>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
     }
     
     /**
