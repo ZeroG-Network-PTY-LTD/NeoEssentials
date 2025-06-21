@@ -1,0 +1,26 @@
+#Database Settings
+[database]
+	#Database type (sqlite, mysql, postgres)
+	databaseType = "sqlite"
+	#Database host (for MySQL/PostgreSQL)
+	databaseHost = "localhost"
+	#Database port (for MySQL/PostgreSQL)
+	# Default: 3306
+	# Range: 1 ~ 65535
+	databasePort = 3306
+	#Database name
+	databaseName = "neoessentials"
+	#Database username (for MySQL/PostgreSQL)
+	databaseUser = "root"
+	#Database password (for MySQL/PostgreSQL)
+	databasePass = ""
+	#Table prefix for all database tables
+	tablePrefix = "ne_"
+	#Whether to use a connection pool (recommended for MySQL/PostgreSQL)
+	useConnectionPool = true
+	#Connection pool size
+	# Default: 10
+	# Range: 1 ~ 100
+	connectionPoolSize = 10
+	#SQLite database file path (relative to server directory)
+	sqliteFile = "neoessentials/database.db"

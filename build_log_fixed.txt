@@ -1,0 +1,28 @@
+Build Log - June 19, 2025
+
+Type mismatch issues fixed in PermissionUtil.hasPermission() method calls across multiple files:
+
+1. Fixed in WarpCommands.java:
+   - Added (ServerPlayer) cast to player parameters in lines 474, 480, 486
+
+2. Fixed in KitCommands.java:
+   - Added (ServerPlayer) cast to player parameter in line 812
+
+3. Fixed in MessageCommands.java:
+   - Added (ServerPlayer) cast to sender, recipient, player parameters in lines 504, 505, 524
+
+4. Fixed in MessagingCommands.java:
+   - Added (ServerPlayer) cast to sender, recipient, player parameters in lines 509, 510, 526
+   - Fixed syntax error with missing newline
+
+5. Fixed in ModeratorCommands.java:
+   - Added (ServerPlayer) cast to player parameter in lines 158, 361, 432
+   - Added (com.mojang.authlib.GameProfile) cast to profile parameter in lines 196, 302
+
+6. Fixed in JailCommands.java:
+   - Added (ServerPlayer) cast to targetPlayer parameter in lines 268, 312
+
+7. Fixed in KitManager.java:
+   - Added (ServerPlayer) cast to player parameter in lines 337, 339, 345
+
+Build successful after these fixes were applied.
