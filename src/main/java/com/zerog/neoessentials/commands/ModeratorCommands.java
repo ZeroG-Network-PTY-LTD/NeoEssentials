@@ -1456,6 +1456,7 @@ public class ModeratorCommands {
                 
                 final Component finalBanEntry = banEntry;
                 context.getSource().sendSuccess(() -> finalBanEntry, false);
+<<<<<<< HEAD
             }
             
             // If there are more pages, show navigation
@@ -1569,6 +1570,8 @@ public class ModeratorCommands {
                 }
                 
                 context.getSource().sendSuccess(() -> banEntry, false);
+=======
+>>>>>>> dc36409 (fix: Update ban entry message handling in ModeratorCommands for improved clarity)
             }
             
             // If there are more pages, show navigation
