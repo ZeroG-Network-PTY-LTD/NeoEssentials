@@ -242,6 +242,7 @@ public class TimeUtil {
     public static String formatTimeDuration(long durationMillis) {
         return formatDuration(durationMillis);
     }
+<<<<<<< HEAD
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
@@ -287,4 +288,6 @@ public class TimeUtil {
         return sb.toString().trim();
     }
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+>>>>>>> 61bf426 (feat: Add backward compatibility alias for formatDuration in TimeUtil)
 }

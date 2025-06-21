@@ -560,6 +560,7 @@ public class ModeratorCommands {
                 NeoEssentials.LOGGER.info("{} banned {} for: {}", 
                         context.getSource().getTextName(), profile.getName(), reason);
             }
+<<<<<<< HEAD
             
             if (count > 0) {
 <<<<<<< HEAD
@@ -576,6 +577,13 @@ public class ModeratorCommands {
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
                         "&aSuccessfully banned &e" + count + " &aplayer" + plural + ".")), true);
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+              if (count > 0) {
+                final int finalCount = count;
+                final String plural = count > 1 ? "s" : "";
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&aSuccessfully banned &e" + finalCount + " &aplayer" + plural + ".")), true);
+>>>>>>> 61bf426 (feat: Add backward compatibility alias for formatDuration in TimeUtil)
             }
             
             return count;
@@ -807,6 +815,7 @@ public class ModeratorCommands {
                 final int finalCount = count;
                 final String plural = count > 1 ? "s" : "";
                 final String formattedTime = TimeUtil.formatDuration(durationMillis);
+<<<<<<< HEAD
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
                         "&aSuccessfully temporarily banned &e" + finalCount + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
 =======
@@ -874,6 +883,10 @@ public class ModeratorCommands {
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
                         "&aSuccessfully temporarily banned &e" + count + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&aSuccessfully temporarily banned &e" + finalCount + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
+>>>>>>> 61bf426 (feat: Add backward compatibility alias for formatDuration in TimeUtil)
             }
             
             return count;
@@ -1040,15 +1053,16 @@ public class ModeratorCommands {
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
                 }
             }
-            
-            // Announce the IP ban
+              // Announce the IP ban
+            final String finalIpAddress = ipAddress;
             context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                    "&aSuccessfully banned IP address &e" + ipAddress + "&a.")), true);
+                    "&aSuccessfully banned IP address &e" + finalIpAddress + "&a.")), true);
                     
             if (kickedCount > 0) {
-                String plural = kickedCount > 1 ? "s" : "";
+                final int finalKickedCount = kickedCount;
+                final String plural = kickedCount > 1 ? "s" : "";
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                        "&e" + kickedCount + " &aplayer" + plural + " with this IP " + (kickedCount == 1 ? "was" : "were") + " disconnected.")), false);
+                        "&e" + finalKickedCount + " &aplayer" + plural + " with this IP " + (finalKickedCount == 1 ? "was" : "were") + " disconnected.")), false);
             }
             
             // Log IP ban action
@@ -1190,6 +1204,7 @@ public class ModeratorCommands {
               // Announce mute to source
             final String playerName = target.getScoreboardName();
             final String finalDurationText = durationText;
+<<<<<<< HEAD
             context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
                     "&aPlayer &e" + playerName + " &ahas been muted " + finalDurationText + ".")), true);
                     
@@ -1257,8 +1272,10 @@ public class ModeratorCommands {
             }
             
             // Announce mute to source
+=======
+>>>>>>> 61bf426 (feat: Add backward compatibility alias for formatDuration in TimeUtil)
             context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                    "&aPlayer &e" + target.getScoreboardName() + " &ahas been muted " + durationText + ".")), true);
+                    "&aPlayer &e" + playerName + " &ahas been muted " + finalDurationText + ".")), true);
                     
             // Log mute action
             NeoEssentials.LOGGER.info("{} muted {} {} for: {}", 
@@ -1571,11 +1588,11 @@ public class ModeratorCommands {
             }
             
             context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                    "&e===== &6Banned IP Addresses &e(Total: " + ipBans.size() + ") =====")), false);
-                      for (int i = 0; i < Math.min(5, ipBans.size()); i++) {
+                    "&e===== &6Banned IP Addresses &e(Total: " + ipBans.size() + ") =====")), false);            for (int i = 0; i < Math.min(5, ipBans.size()); i++) {
                 IpBanListEntry ban = ipBans.get(i);
+                String ipAddress = ban.toString(); // Use toString() which typically returns the IP address
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                        "&7- &c" + ban.getUser() + " &7(Reason: &f" + ban.getReason() + "&7)")), false);
+                        "&7- &c" + ipAddress + " &7(Reason: &f" + ban.getReason() + "&7)")), false);
             }
             
             if (ipBans.size() > 5) {
