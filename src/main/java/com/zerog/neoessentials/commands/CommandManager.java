@@ -8,6 +8,19 @@ import net.neoforged.bus.api.SubscribeEvent;
 
 /**
  * Manages registration and execution of all NeoEssentials commands.
+ * <p>
+ * The CommandManager is the central coordinator for all mod commands. It handles:
+ * <ul>
+ *   <li>Initializing all command classes</li>
+ *   <li>Registering commands with Minecraft's command system</li>
+ *   <li>Managing command permissions and execution</li>
+ *   <li>Providing access to command functionality for other parts of the mod</li>
+ * </ul>
+ * All commands are registered during server startup via the RegisterCommandsEvent.
+ * </p>
+ * 
+ * @author ZeroG
+ * @since 1.0.0
  */
 
 public class CommandManager {    // Command classes

@@ -47,16 +47,28 @@ public class NeoEssentials {
     /** Central logger for the mod */
     public static final Logger LOGGER = LogUtils.getLogger();
     
+    /** Singleton instance of the mod */
     private static NeoEssentials instance;
+    
+    /** The mod container for this instance */
     private ModContainer modContainer;
-    // Flag to track if config is loaded
+    
+    /** Flag to track if the database configuration has been loaded */
     private boolean databaseConfigLoaded = false;
     
-    // Scheduled executor for AFK checking
+    /** Scheduled executor service for periodic tasks like AFK checking */
     private ScheduledExecutorService scheduler;
 
-    // The constructor for the mod class is the first code that is run when your mod is loaded.
-    // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
+    /**
+     * Main constructor for NeoEssentials
+     * <p>
+     * Initializes the mod instance, registers event handlers, and sets up
+     * configuration handling. This is called automatically by the Forge Mod Loader.
+     * </p>
+     *
+     * @param modEventBus The mod-specific event bus for initialization events
+     * @param modContainer The container for this mod instance
+     */
     public NeoEssentials(IEventBus modEventBus, ModContainer modContainer) {
         instance = this;
         this.modContainer = modContainer;
@@ -296,13 +308,22 @@ public class NeoEssentials {
         return storageManagerInitialized;
     }
     
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
+    /**
+     * Server starting event handler
+     * <p>
+     * This method is called when the server starts up. It initializes server-specific
+     * features including the AFK checker and stores the server instance for later use.
+     * This is the main initialization point for server-side functionality.
+     * </p>
+     *
+     * @param event The server starting event
+     */
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         // Store the server instance
         server = event.getServer();
         
-        // Do something when the server starts
+        // Log mod activation
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
         
