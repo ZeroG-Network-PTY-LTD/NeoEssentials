@@ -6,9 +6,13 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.utils.PermissionUtil;
 import com.zerog.neoessentials.utils.TextUtil;
@@ -16,6 +20,7 @@ import com.zerog.neoessentials.utils.TimeUtil;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+<<<<<<< HEAD
 <<<<<<< HEAD
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -26,10 +31,20 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 =======
+=======
+import net.minecraft.commands.SharedSuggestionProvider;
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+<<<<<<< HEAD
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.UserBanList;
@@ -40,6 +55,7 @@ import net.minecraft.server.players.IpBanListEntry;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+<<<<<<< HEAD
 <<<<<<< HEAD
 import java.util.stream.Collectors;
 
@@ -70,6 +86,13 @@ import java.util.stream.Collectors;
 /**
  * Implements moderator commands like ban, tempban, kick, mute, etc.
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+import java.util.stream.Collectors;
+
+/**
+ * Implements moderator commands like ban, tempban, kick, mute, etc.
+ * Provides comprehensive moderation tools for server administrators.
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
  */
 public class ModeratorCommands {
 
@@ -77,6 +100,9 @@ public class ModeratorCommands {
     private final Map<UUID, Date> mutedPlayers = new ConcurrentHashMap<>();
     
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
     // Common reason suggestions for moderation actions
     private static final List<String> COMMON_REASONS = Arrays.asList(
         "Breaking server rules", 
@@ -99,8 +125,11 @@ public class ModeratorCommands {
     private static final SuggestionProvider<CommandSourceStack> TIME_DURATION_SUGGESTIONS = 
             (context, builder) -> SharedSuggestionProvider.suggest(TIME_SUGGESTIONS, builder);
     
+<<<<<<< HEAD
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
     /**
      * Register all moderator commands
      * 
@@ -114,9 +143,13 @@ public class ModeratorCommands {
                 .executes(context -> kickPlayer(context, "Kicked by admin"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
 <<<<<<< HEAD
+<<<<<<< HEAD
                     .suggests(REASON_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                    .suggests(REASON_SUGGESTIONS)
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
                     .executes(context -> kickPlayer(
                         context,
                         StringArgumentType.getString(context, "reason")
@@ -132,9 +165,13 @@ public class ModeratorCommands {
                 .executes(context -> banPlayer(context, "Banned by admin"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
 <<<<<<< HEAD
+<<<<<<< HEAD
                     .suggests(REASON_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                    .suggests(REASON_SUGGESTIONS)
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
                     .executes(context -> banPlayer(
                         context,
                         StringArgumentType.getString(context, "reason")
@@ -157,9 +194,13 @@ public class ModeratorCommands {
             .then(Commands.argument("player", GameProfileArgument.gameProfile())
                 .then(Commands.argument("time", StringArgumentType.word())
 <<<<<<< HEAD
+<<<<<<< HEAD
                     .suggests(TIME_DURATION_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                    .suggests(TIME_DURATION_SUGGESTIONS)
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
                     .executes(context -> tempBanPlayer(
                         context, 
                         StringArgumentType.getString(context, "time"),
@@ -167,9 +208,13 @@ public class ModeratorCommands {
                     ))
                     .then(Commands.argument("reason", StringArgumentType.greedyString())
 <<<<<<< HEAD
+<<<<<<< HEAD
                         .suggests(REASON_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                        .suggests(REASON_SUGGESTIONS)
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
                         .executes(context -> tempBanPlayer(
                             context,
                             StringArgumentType.getString(context, "time"),
@@ -187,9 +232,13 @@ public class ModeratorCommands {
                 .executes(context -> banIp(context, "IP banned by admin"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
 <<<<<<< HEAD
+<<<<<<< HEAD
                     .suggests(REASON_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                    .suggests(REASON_SUGGESTIONS)
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
                     .executes(context -> banIp(
                         context,
                         StringArgumentType.getString(context, "reason")
@@ -218,9 +267,13 @@ public class ModeratorCommands {
                 ))
                 .then(Commands.argument("time", StringArgumentType.word())
 <<<<<<< HEAD
+<<<<<<< HEAD
                     .suggests(TIME_DURATION_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                    .suggests(TIME_DURATION_SUGGESTIONS)
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
                     .executes(context -> mutePlayer(
                         context,
                         EntityArgument.getPlayer(context, "player"),
@@ -229,9 +282,13 @@ public class ModeratorCommands {
                     ))
                     .then(Commands.argument("reason", StringArgumentType.greedyString())
 <<<<<<< HEAD
+<<<<<<< HEAD
                         .suggests(REASON_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+                        .suggests(REASON_SUGGESTIONS)
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
                         .executes(context -> mutePlayer(
                             context,
                             EntityArgument.getPlayer(context, "player"),
@@ -243,6 +300,9 @@ public class ModeratorCommands {
             )
         );
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
         
         // Add /unmute command
         dispatcher.register(Commands.literal("unmute")
@@ -265,8 +325,11 @@ public class ModeratorCommands {
         );
         
         NeoEssentials.LOGGER.info("Registered enhanced moderator commands");
+<<<<<<< HEAD
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
     }
     
     /**
@@ -275,12 +338,16 @@ public class ModeratorCommands {
     private int kickPlayer(CommandContext<CommandSourceStack> context, String reason) throws CommandSyntaxException {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
         ServerPlayer source = null;
         try {
             source = context.getSource().getPlayerOrException();
         } catch (CommandSyntaxException e) {
             // Source is not a player (e.g. console)
         }
+<<<<<<< HEAD
         
         // Check for kick exemption
         if (PermissionUtil.hasPermission(player, "essentials.kick.exempt")) {
@@ -290,10 +357,17 @@ public class ModeratorCommands {
         if (PermissionUtil.hasPermission((ServerPlayer)player, "essentials.kick.exempt")) {
             context.getSource().sendFailure(Component.literal("You cannot kick this player."));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+        
+        // Check for kick exemption
+        if (PermissionUtil.hasPermission(player, "essentials.kick.exempt")) {
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cYou cannot kick this player.")));
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
             return 0;
         }
         
         try {
+<<<<<<< HEAD
 <<<<<<< HEAD
             String formattedReason = TextUtil.colorize(reason);
             
@@ -324,18 +398,39 @@ public class ModeratorCommands {
 =======
             String formattedReason = TextUtil.formatText(reason);
             player.connection.disconnect(Component.literal(formattedReason));
+=======
+            String formattedReason = TextUtil.colorize(reason);
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
             
-            // Broadcast kick message
+            // Create a styled kick message
+            Component kickMessage = Component.literal(TextUtil.colorize("&c&lYou have been kicked from the server!\n\n"))
+                    .append(Component.literal(TextUtil.colorize("&7Reason: &f" + formattedReason + "\n")));
+                    
+            // Add kicked by information if source is a player
+            if (source != null) {
+                kickMessage = kickMessage.append(Component.literal(TextUtil.colorize("&7Kicked by: &f" + source.getScoreboardName())));
+            }
+            
+            player.connection.disconnect(kickMessage);
+            
+            // Broadcast kick message to server
             MinecraftServer server = context.getSource().getServer();
-            server.getPlayerList().broadcastSystemMessage(
-                Component.literal(player.getScoreboardName() + " was kicked: " + formattedReason),
-                false
-            );
+            Component broadcastMessage = Component.literal(TextUtil.colorize("&c" + player.getScoreboardName() + " &7was kicked: &f" + formattedReason));
+            server.getPlayerList().broadcastSystemMessage(broadcastMessage, false);
+            
+            // Log kick action
+            String sourceString = source != null ? source.getScoreboardName() : "Console";
+            NeoEssentials.LOGGER.info("{} kicked {} for: {}", sourceString, player.getScoreboardName(), reason);
             
             return 1;
         } catch (Exception e) {
+<<<<<<< HEAD
             context.getSource().sendFailure(Component.literal("Failed to kick player: " + e.getMessage()));
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+=======
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to kick player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error kicking player", e);
+>>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
             return 0;
         }
     }
@@ -1196,5 +1291,100 @@ public class ModeratorCommands {
     public void unmutePlayer(UUID playerId) {
         mutedPlayers.remove(playerId);
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
+    }
+    
+    /**
+     * List all active bans (players or IPs)
+     */
+    private int listBans(CommandContext<CommandSourceStack> context, String type) throws CommandSyntaxException {
+        MinecraftServer server = context.getSource().getServer();
+        ServerPlayer player = null;
+        try {
+            player = context.getSource().getPlayerOrException();
+        } catch (CommandSyntaxException e) {
+            // Source is not a player (e.g. console)
+        }
+        
+        if ("players".equals(type)) {
+            UserBanList banList = server.getPlayerList().getBans();
+            List<UserBanListEntry> bans = new ArrayList<>(banList.getEntries());
+            
+            if (bans.isEmpty()) {
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&eNo players are currently banned.")), false);
+                return 1;
+            }
+            
+            int pageSize = 8;
+            int totalPages = (int) Math.ceil((double) bans.size() / pageSize);
+            
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&e===== &6Banned Players &e(Page 1/" + totalPages + ") =====")), false);
+                    
+            for (int i = 0; i < Math.min(pageSize, bans.size()); i++) {
+                UserBanListEntry ban = bans.get(i);
+                
+                MutableComponent banEntry = Component.literal(TextUtil.colorize("&7- &c" + ban.getDisplayName()));
+                
+                // Add hover details
+                String hoverText = "&eReason: &f" + ban.getReason() + "\n" +
+                                  "&eExpires: &f" + (ban.getExpires() != null ? formatDate(ban.getExpires()) : "Never") + "\n" +
+                                  "&eCreated: &f" + formatDate(ban.getCreated());
+                
+                banEntry = banEntry.withStyle(Style.EMPTY
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                Component.literal(TextUtil.colorize(hoverText)))));
+                
+                // Add clickable unban option if player viewing
+                if (player != null && PermissionUtil.hasPermission(player, "essentials.unban")) {
+                    banEntry = banEntry.append(Component.literal(TextUtil.colorize(" &7[&cUnban&7]"))
+                            .withStyle(Style.EMPTY
+                                    .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, 
+                                            "/unban " + ban.getDisplayName()))
+                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                            Component.literal(TextUtil.colorize("&eClick to unban &f" + ban.getDisplayName()))))));
+                }
+                
+                context.getSource().sendSuccess(() -> banEntry, false);
+            }
+            
+            // If there are more pages, show navigation
+            if (totalPages > 1) {
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&7Use &e/banlist players <page> &7to view more bans.")), false);
+            }
+            
+        } else if ("ips".equals(type)) {
+            IpBanList ipBanList = server.getPlayerList().getIpBans();
+            List<IpBanListEntry> ipBans = new ArrayList<>(ipBanList.getEntries());
+            
+            if (ipBans.isEmpty()) {
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&eNo IP addresses are currently banned.")), false);
+                return 1;
+            }
+            
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&e===== &6Banned IP Addresses &e(Total: " + ipBans.size() + ") =====")), false);
+                    
+            for (int i = 0; i < Math.min(5, ipBans.size()); i++) {
+                IpBanListEntry ban = ipBans.get(i);
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&7- &c" + ban.getDescription() + " &7(Reason: &f" + ban.getReason() + "&7)")), false);
+            }
+            
+            if (ipBans.size() > 5) {
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&7And " + (ipBans.size() - 5) + " more...")), false);
+            }
+        }
+        
+        return 1;
+    }
+    
+    // Helper method to format dates nicely
+    private String formatDate(Date date) {
+        if (date == null) return "Unknown";
+        return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
     }
 }
