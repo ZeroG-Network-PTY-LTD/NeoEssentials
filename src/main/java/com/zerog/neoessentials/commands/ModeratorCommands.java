@@ -259,12 +259,13 @@ public class ModeratorCommands {
     
     /**
      * Ban a player with a reason
-     */    private int banPlayer(CommandContext<CommandSourceStack> context, String reason) {
+     */    
+    private int banPlayer(CommandContext<CommandSourceStack> context, String reason) {
         try {
             Collection<GameProfile> targets = GameProfileArgument.getGameProfiles(context, "player");
             
             if (targets.isEmpty()) {
-                context.getSource().sendFailure(Component.literal("No players specified."));
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cNo players specified.")));
                 return 0;
             }
             
@@ -272,105 +273,113 @@ public class ModeratorCommands {
             int count = 0;
             
             for (GameProfile profile : targets) {
-                if (PermissionUtil.hasPermission((com.mojang.authlib.GameProfile)profile, "essentials.ban.exempt")) {
-                    context.getSource().sendFailure(Component.literal("You cannot ban " + profile.getName() + "."));
+                if (profile == null) continue;
+                
+                // Check for ban exemption
+                ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayer(profile.getId());
+                if (targetPlayer != null && PermissionUtil.hasPermission(targetPlayer, "essentials.ban.exempt")) {
+                    context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                            "&cYou cannot ban &e" + profile.getName() + " &cas they are exempt from bans.")));
                     continue;
                 }
                 
+                // Create ban entry
                 UserBanListEntry banEntry = new UserBanListEntry(
-                    profile,
-                    new Date(),
-                    context.getSource().getTextName(),
-                    null,
-                    reason
+                        profile, 
+                        new Date(), 
+                        context.getSource().getTextName(), 
+                        null, 
+                        TextUtil.colorize(reason)
                 );
                 
                 banList.add(banEntry);
+                count++;
                 
-                // Kick the player if online
-                ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayer(profile.getId());
-                if (player != null) {
-                    player.connection.disconnect(Component.literal("Banned: " + reason));
+                // Kick player if they're online
+                if (targetPlayer != null) {
+                    // Create a styled ban message
+                    Component banMessage = Component.literal(TextUtil.colorize("&c&lYou have been banned from the server!\n\n"))
+                            .append(Component.literal(TextUtil.colorize("&7Reason: &f" + reason + "\n")))
+                            .append(Component.literal(TextUtil.colorize("&7Banned by: &f" + context.getSource().getTextName())));
+                    
+                    targetPlayer.connection.disconnect(banMessage);
                 }
                 
-                count++;
+                // Log ban action
+                NeoEssentials.LOGGER.info("{} banned {} for: {}", 
+                        context.getSource().getTextName(), profile.getName(), reason);
             }
             
             if (count > 0) {
-                final int finalCount = count;
-                final String finalReason = reason;
-                context.getSource().sendSuccess(() -> Component.literal("Banned " + finalCount + " players: " + finalReason), true);
+                String plural = count > 1 ? "s" : "";
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&aSuccessfully banned &e" + count + " &aplayer" + plural + ".")), true);
             }
             
             return count;
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("Failed to ban player: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to ban player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error banning player", e);
             return 0;
         }
     }
     
     /**
      * Unban a player
-     */    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
+     */
+    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
+        String playerName = StringArgumentType.getString(context, "player");
+        UserBanList banList = context.getSource().getServer().getPlayerList().getBans();
+        
+        // Check if the player is banned
+        if (!banList.isBanned(playerName)) {
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                    "&cPlayer &e" + playerName + " &cis not banned.")));
+            return 0;
+        }
+        
         try {
-            String targetName = StringArgumentType.getString(context, "player");
-            MinecraftServer server = context.getSource().getServer();
-            UserBanList banList = server.getPlayerList().getBans();
+            banList.remove(playerName);
             
-            // In Minecraft 1.21.1, we need to get the GameProfile differently
-            boolean found = false;
+            // Announce unban action
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&aPlayer &e" + playerName + " &ahas been unbanned.")), true);
+                    
+            // Log unban action
+            NeoEssentials.LOGGER.info("{} unbanned {}", 
+                    context.getSource().getTextName(), playerName);
             
-            // Try to use server's method to get the profile
-            Optional<GameProfile> profile = server.getProfileCache().get(targetName);
-            if (profile.isPresent()) {
-                GameProfile gameProfile = profile.get();
-                if (banList.isBanned(gameProfile)) {
-                    banList.remove(gameProfile);
-                    found = true;
-                }
-            }
-            
-            // If we couldn't find or unban via profile cache, try a different approach
-            if (!found) {
-                // This is a workaround - pardon the named player directly
-                server.getCommands().performPrefixedCommand(
-                    server.createCommandSourceStack(), 
-                    "pardon " + targetName
-                );
-                found = true; // Assume success
-            }
-            
-            if (found) {
-                context.getSource().sendSuccess(() -> Component.literal("Unbanned player: " + targetName), true);
-                return 1;
-            } else {
-                context.getSource().sendFailure(Component.literal("Player not found in ban list: " + targetName));
-                return 0;
-            }
+            return 1;
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("Failed to unban player: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to unban player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error unbanning player", e);
             return 0;
         }
     }
     
     /**
-     * Temporarily ban a player for a specific duration
+     * Temporarily ban a player
      */
     private int tempBanPlayer(CommandContext<CommandSourceStack> context, String timeStr, String reason) {
         try {
             Collection<GameProfile> targets = GameProfileArgument.getGameProfiles(context, "player");
             
             if (targets.isEmpty()) {
-                context.getSource().sendFailure(Component.literal("No players specified."));
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cNo players specified.")));
                 return 0;
             }
             
-            // Parse time duration
-            Date expires;
-            try {
-                expires = TimeUtil.parseTimeSpecification(timeStr);
-            } catch (IllegalArgumentException e) {
-                context.getSource().sendFailure(Component.literal("Invalid time format. Use formats like '1d2h30m' for 1 day, 2 hours, 30 minutes."));
+            // Convert time string to expiration date
+            Date expiry = TimeUtil.parseTimeToDate(timeStr);
+            if (expiry == null) {
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                        "&cInvalid time format. Use format like '1d' for one day, '6h' for six hours, etc.")));
+                return 0;
+            }
+            
+            long durationMillis = expiry.getTime() - System.currentTimeMillis();
+            if (durationMillis <= 0) {
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cTime duration must be positive.")));
                 return 0;
             }
             
@@ -378,41 +387,60 @@ public class ModeratorCommands {
             int count = 0;
             
             for (GameProfile profile : targets) {
-                if (PermissionUtil.hasPermission((com.mojang.authlib.GameProfile)profile, "essentials.tempban.exempt")) {
-                    context.getSource().sendFailure(Component.literal("You cannot temp ban " + profile.getName() + "."));
+                if (profile == null) continue;
+                
+                // Check for ban exemption
+                ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayer(profile.getId());
+                if (targetPlayer != null && PermissionUtil.hasPermission(targetPlayer, "essentials.tempban.exempt")) {
+                    context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                            "&cYou cannot ban &e" + profile.getName() + " &cas they are exempt from bans.")));
                     continue;
                 }
                 
+                // Create temporary ban entry
                 UserBanListEntry banEntry = new UserBanListEntry(
-                    profile,
-                    new Date(),
-                    context.getSource().getTextName(),
-                    expires,
-                    reason + " (until " + TimeUtil.formatDate(expires) + ")"
+                        profile, 
+                        new Date(), 
+                        context.getSource().getTextName(), 
+                        expiry, 
+                        TextUtil.colorize(reason)
                 );
                 
                 banList.add(banEntry);
+                count++;
                 
-                // Kick the player if online
-                ServerPlayer player = context.getSource().getServer().getPlayerList().getPlayer(profile.getId());
-                if (player != null) {
-                    player.connection.disconnect(Component.literal("Temporarily banned until " + TimeUtil.formatDate(expires) + ": " + reason));
+                // Kick player if they're online
+                if (targetPlayer != null) {
+                    // Format time remaining
+                    String formattedTime = TimeUtil.formatDuration(durationMillis);
+                    
+                    // Create a styled ban message
+                    Component banMessage = Component.literal(TextUtil.colorize("&c&lYou have been temporarily banned!\n\n"))
+                            .append(Component.literal(TextUtil.colorize("&7Reason: &f" + reason + "\n")))
+                            .append(Component.literal(TextUtil.colorize("&7Duration: &f" + formattedTime + "\n")))
+                            .append(Component.literal(TextUtil.colorize("&7Expires: &f" + formatDate(expiry) + "\n")))
+                            .append(Component.literal(TextUtil.colorize("&7Banned by: &f" + context.getSource().getTextName())));
+                    
+                    targetPlayer.connection.disconnect(banMessage);
                 }
                 
-                count++;
+                // Log temp ban action
+                NeoEssentials.LOGGER.info("{} temporarily banned {} for {} (reason: {})", 
+                        context.getSource().getTextName(), profile.getName(), 
+                        TimeUtil.formatDuration(durationMillis), reason);
             }
-              if (count > 0) {
-                final int finalCount = count;
-                final Date finalExpires = expires;
-                final String finalReason = reason;
-                context.getSource().sendSuccess(() -> 
-                    Component.literal("Temporarily banned " + finalCount + " players until " + 
-                                 TimeUtil.formatDate(finalExpires) + ": " + finalReason), true);
+            
+            if (count > 0) {
+                String plural = count > 1 ? "s" : "";
+                String formattedTime = TimeUtil.formatDuration(durationMillis);
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&aSuccessfully temporarily banned &e" + count + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
             }
             
             return count;
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("Failed to temp ban player: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to temp-ban player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error temp-banning player", e);
             return 0;
         }
     }
@@ -421,157 +449,228 @@ public class ModeratorCommands {
      * Ban an IP address
      */
     private int banIp(CommandContext<CommandSourceStack> context, String reason) {
-        try {
-            String target = StringArgumentType.getString(context, "target");
-            String ipAddress;
-            
-            // Check if target is a player or direct IP
-            if (target.contains(".")) {
-                // It's an IP address
-                ipAddress = target;
-            } else {
-                // Try to get player's IP
-                ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(target);
-                if (targetPlayer == null) {
-                    context.getSource().sendFailure(Component.literal("Player not found and input doesn't look like an IP address."));
-                    return 0;
-                }
-                
-                if (PermissionUtil.hasPermission((ServerPlayer)targetPlayer, "essentials.banip.exempt")) {
-                    context.getSource().sendFailure(Component.literal("You cannot ban this player's IP."));
-                    return 0;
-                }
-                
-                ipAddress = targetPlayer.getIpAddress();
-                if (ipAddress == null || ipAddress.isEmpty()) {
-                    context.getSource().sendFailure(Component.literal("Could not determine player's IP address."));
-                    return 0;
-                }
+        String target = StringArgumentType.getString(context, "target");
+        MinecraftServer server = context.getSource().getServer();
+        IpBanList ipBanList = server.getPlayerList().getIpBans();
+        String ipAddress = target;
+        
+        // Check if target is a player name or an IP
+        if (!target.contains(".")) {
+            // It's probably a player name, try to get their IP
+            ServerPlayer targetPlayer = server.getPlayerList().getPlayerByName(target);
+            if (targetPlayer == null) {
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                        "&cCould not find player &e" + target + "&c or the input is not a valid IP address.")));
+                return 0;
             }
             
-            // Ban the IP
-            IpBanList ipBanList = context.getSource().getServer().getPlayerList().getIpBans();
+            ipAddress = targetPlayer.getIpAddress();
+            if (ipAddress == null || ipAddress.isEmpty()) {
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                        "&cCould not determine IP address for player &e" + target + "&c.")));
+                return 0;
+            }
+        }
+        
+        try {
+            // Create IP ban entry
             IpBanListEntry banEntry = new IpBanListEntry(
-                ipAddress,
-                new Date(),
-                context.getSource().getTextName(),
-                null,
-                reason
+                    ipAddress,
+                    new Date(),
+                    context.getSource().getTextName(), 
+                    null,
+                    TextUtil.colorize(reason)
             );
             
             ipBanList.add(banEntry);
             
             // Kick all players with this IP
-            List<ServerPlayer> playersToKick = new ArrayList<>();
-            for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
-                if (player.getIpAddress().equals(ipAddress)) {
-                    playersToKick.add(player);
+            int kickedCount = 0;
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                if (ipAddress.equals(player.getIpAddress())) {
+                    // Create a styled IP ban message
+                    Component banMessage = Component.literal(TextUtil.colorize("&c&lYour IP address has been banned!\n\n"))
+                            .append(Component.literal(TextUtil.colorize("&7Reason: &f" + reason + "\n")))
+                            .append(Component.literal(TextUtil.colorize("&7Banned by: &f" + context.getSource().getTextName())));
+                    
+                    player.connection.disconnect(banMessage);
+                    kickedCount++;
                 }
             }
             
-            for (ServerPlayer player : playersToKick) {
-                player.connection.disconnect(Component.literal("Your IP address has been banned: " + reason));
+            // Announce the IP ban
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&aSuccessfully banned IP address &e" + ipAddress + "&a.")), true);
+                    
+            if (kickedCount > 0) {
+                String plural = kickedCount > 1 ? "s" : "";
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&e" + kickedCount + " &aplayer" + plural + " with this IP " + (kickedCount == 1 ? "was" : "were") + " disconnected.")), false);
             }
             
-            context.getSource().sendSuccess(() -> Component.literal("Banned IP address: " + ipAddress), true);
+            // Log IP ban action
+            NeoEssentials.LOGGER.info("{} banned IP {} for: {}", 
+                    context.getSource().getTextName(), ipAddress, reason);
+            
             return 1;
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("Failed to ban IP: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to ban IP: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error banning IP", e);
             return 0;
         }
     }
     
     /**
      * Unban an IP address
-     */    private int unbanIp(CommandContext<CommandSourceStack> context) {
+     */
+    private int unbanIp(CommandContext<CommandSourceStack> context) {
+        String ipAddress = StringArgumentType.getString(context, "address");
+        IpBanList ipBanList = context.getSource().getServer().getPlayerList().getIpBans();
+        
+        // Check if the IP is banned
+        if (!ipBanList.isBanned(ipAddress)) {
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                    "&cIP address &e" + ipAddress + " &cis not banned.")));
+            return 0;
+        }
+        
         try {
-            String ipAddress = StringArgumentType.getString(context, "address");
-            IpBanList ipBanList = context.getSource().getServer().getPlayerList().getIpBans();
+            ipBanList.remove(ipAddress);
             
-            // Check if the IP is banned before removal
-            if (ipBanList.isBanned(ipAddress)) {
-                ipBanList.remove(ipAddress);
-                context.getSource().sendSuccess(() -> Component.literal("Unbanned IP address: " + ipAddress), true);
-                return 1;
-            } else {
-                context.getSource().sendFailure(Component.literal("IP address not found in ban list: " + ipAddress));
-                return 0;
-            }
+            // Announce unban action
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&aIP address &e" + ipAddress + " &ahas been unbanned.")), true);
+                    
+            // Log unban action
+            NeoEssentials.LOGGER.info("{} unbanned IP {}", 
+                    context.getSource().getTextName(), ipAddress);
+            
+            return 1;
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("Failed to unban IP: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to unban IP: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error unbanning IP", e);
             return 0;
         }
     }
     
     /**
-     * Mute a player for a specific duration or permanently
+     * Mute a player, either permanently or temporarily
      */
-    private int mutePlayer(CommandContext<CommandSourceStack> context, ServerPlayer player, String timeStr, String reason) {
+    private int mutePlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, String timeStr, String reason) {
         try {
-            if (PermissionUtil.hasPermission((ServerPlayer)player, "essentials.mute.exempt")) {
-                context.getSource().sendFailure(Component.literal("You cannot mute this player."));
+            // Check for mute exemption
+            if (PermissionUtil.hasPermission(target, "essentials.mute.exempt")) {
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                        "&cYou cannot mute &e" + target.getScoreboardName() + " &cas they are exempt from mutes.")));
                 return 0;
             }
             
-            Date expires = null;
+            Date expiry = null;
+            String durationText = "permanently";
+            
+            // Parse time if provided
             if (timeStr != null && !timeStr.isEmpty()) {
-                try {
-                    expires = TimeUtil.parseTimeSpecification(timeStr);
-                } catch (IllegalArgumentException e) {
-                    context.getSource().sendFailure(
-                        Component.literal("Invalid time format. Use formats like '1d2h30m' for 1 day, 2 hours, 30 minutes.")
-                    );
+                expiry = TimeUtil.parseTimeToDate(timeStr);
+                if (expiry == null) {
+                    context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                            "&cInvalid time format. Use format like '1d' for one day, '6h' for six hours, etc.")));
                     return 0;
                 }
+                
+                long durationMillis = expiry.getTime() - System.currentTimeMillis();
+                if (durationMillis <= 0) {
+                    context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cTime duration must be positive.")));
+                    return 0;
+                }
+                
+                durationText = "for " + TimeUtil.formatDuration(durationMillis);
             }
             
-            // Store in the muted players map
-            mutedPlayers.put(player.getUUID(), expires);
-              if (expires != null) {
-                final Date finalExpires = expires;
-                final String finalReason = reason;
-                final String playerName = player.getScoreboardName();
-                context.getSource().sendSuccess(() -> Component.literal(
-                    "Muted " + playerName + " until " + TimeUtil.formatDate(finalExpires) + ": " + finalReason
-                ), true);
-                
-                player.sendSystemMessage(Component.literal(
-                    "You have been muted until " + TimeUtil.formatDate(finalExpires) + ": " + finalReason
-                ));
+            // Store mute in the map
+            mutedPlayers.put(target.getUUID(), expiry);
+            
+            // Send message to target player
+            if (expiry != null) {
+                target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                        "&cYou have been muted " + durationText + ".")));
+                target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                        "&7Reason: &f" + reason)));
+                target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                        "&7Expires: &f" + formatDate(expiry))));
             } else {
-                context.getSource().sendSuccess(() -> Component.literal(
-                    "Permanently muted " + player.getScoreboardName() + ": " + reason
-                ), true);
-                
-                player.sendSystemMessage(Component.literal(
-                    "You have been permanently muted: " + reason
-                ));
+                target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                        "&cYou have been permanently muted.")));
+                target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                        "&7Reason: &f" + reason)));
             }
+            
+            // Announce mute to source
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&aPlayer &e" + target.getScoreboardName() + " &ahas been muted " + durationText + ".")), true);
+                    
+            // Log mute action
+            NeoEssentials.LOGGER.info("{} muted {} {} for: {}", 
+                    context.getSource().getTextName(), target.getScoreboardName(), 
+                    durationText, reason);
             
             return 1;
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("Failed to mute player: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to mute player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error muting player", e);
             return 0;
         }
+    }
+    
+    /**
+     * Unmute a player
+     */
+    private int unmutePlayer(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer target = EntityArgument.getPlayer(context, "player");
+        
+        if (!mutedPlayers.containsKey(target.getUUID())) {
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize(
+                    "&cPlayer &e" + target.getScoreboardName() + " &cis not muted.")));
+            return 0;
+        }
+        
+        mutedPlayers.remove(target.getUUID());
+        
+        // Send message to target player
+        target.sendSystemMessage(Component.literal(TextUtil.colorize(
+                "&aYou have been unmuted.")));
+        
+        // Announce unmute to source
+        context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                "&aPlayer &e" + target.getScoreboardName() + " &ahas been unmuted.")), true);
+                
+        // Log unmute action
+        NeoEssentials.LOGGER.info("{} unmuted {}", 
+                context.getSource().getTextName(), target.getScoreboardName());
+        
+        return 1;
     }
     
     /**
      * Check if a player is muted
+     * 
+     * @param player The player to check
+     * @return True if the player is muted, false otherwise
      */
-    public boolean isPlayerMuted(UUID playerId) {
-        if (!mutedPlayers.containsKey(playerId)) {
-            return false;
-        }
+    public boolean isPlayerMuted(ServerPlayer player) {
+        if (player == null) return false;
         
-        Date expiryTime = mutedPlayers.get(playerId);
-        if (expiryTime == null) {
-            // Permanent mute
-            return true;
-        }
+        UUID uuid = player.getUUID();
+        if (!mutedPlayers.containsKey(uuid)) return false;
         
-        if (expiryTime.before(new Date())) {
-            // Mute expired, remove it
-            mutedPlayers.remove(playerId);
+        Date expiry = mutedPlayers.get(uuid);
+        
+        // If expiry is null, the mute is permanent
+        if (expiry == null) return true;
+        
+        // Check if the mute has expired
+        if (expiry.before(new Date())) {
+            // Mute has expired, remove it
+            mutedPlayers.remove(uuid);
             return false;
         }
         
@@ -579,17 +678,14 @@ public class ModeratorCommands {
     }
     
     /**
-     * Get the mute expiry time for a player
+     * Get the mute expiry date for a player
+     * 
+     * @param player The player to check
+     * @return The mute expiry date, or null if not muted or muted permanently
      */
-    public Date getMuteExpiryTime(UUID playerId) {
-        return mutedPlayers.get(playerId);
-    }
-    
-    /**
-     * Unmute a player
-     */
-    public void unmutePlayer(UUID playerId) {
-        mutedPlayers.remove(playerId);
+    public Date getMuteExpiry(ServerPlayer player) {
+        if (player == null) return null;
+        return mutedPlayers.get(player.getUUID());
     }
     
     /**
