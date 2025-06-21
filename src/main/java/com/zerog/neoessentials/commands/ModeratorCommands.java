@@ -309,11 +309,11 @@ public class ModeratorCommands {
                 NeoEssentials.LOGGER.info("{} banned {} for: {}", 
                         context.getSource().getTextName(), profile.getName(), reason);
             }
-            
-            if (count > 0) {
-                String plural = count > 1 ? "s" : "";
+              if (count > 0) {
+                final int finalCount = count;
+                final String plural = count > 1 ? "s" : "";
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                        "&aSuccessfully banned &e" + count + " &aplayer" + plural + ".")), true);
+                        "&aSuccessfully banned &e" + finalCount + " &aplayer" + plural + ".")), true);
             }
             
             return count;
@@ -433,12 +433,12 @@ public class ModeratorCommands {
                         context.getSource().getTextName(), profile.getName(), 
                         TimeUtil.formatDuration(durationMillis), reason);
             }
-            
-            if (count > 0) {
-                String plural = count > 1 ? "s" : "";
-                String formattedTime = TimeUtil.formatDuration(durationMillis);
+              if (count > 0) {
+                final int finalCount = count;
+                final String plural = count > 1 ? "s" : "";
+                final String formattedTime = TimeUtil.formatDuration(durationMillis);
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                        "&aSuccessfully temporarily banned &e" + count + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
+                        "&aSuccessfully temporarily banned &e" + finalCount + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
             }
             
             return count;
@@ -501,15 +501,16 @@ public class ModeratorCommands {
                     kickedCount++;
                 }
             }
-            
-            // Announce the IP ban
+              // Announce the IP ban
+            final String finalIpAddress = ipAddress;
             context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                    "&aSuccessfully banned IP address &e" + ipAddress + "&a.")), true);
+                    "&aSuccessfully banned IP address &e" + finalIpAddress + "&a.")), true);
                     
             if (kickedCount > 0) {
-                String plural = kickedCount > 1 ? "s" : "";
+                final int finalKickedCount = kickedCount;
+                final String plural = kickedCount > 1 ? "s" : "";
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                        "&e" + kickedCount + " &aplayer" + plural + " with this IP " + (kickedCount == 1 ? "was" : "were") + " disconnected.")), false);
+                        "&e" + finalKickedCount + " &aplayer" + plural + " with this IP " + (finalKickedCount == 1 ? "was" : "were") + " disconnected.")), false);
             }
             
             // Log IP ban action
@@ -607,10 +608,11 @@ public class ModeratorCommands {
                 target.sendSystemMessage(Component.literal(TextUtil.colorize(
                         "&7Reason: &f" + reason)));
             }
-            
-            // Announce mute to source
+              // Announce mute to source
+            final String playerName = target.getScoreboardName();
+            final String finalDurationText = durationText;
             context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                    "&aPlayer &e" + target.getScoreboardName() + " &ahas been muted " + durationText + ".")), true);
+                    "&aPlayer &e" + playerName + " &ahas been muted " + finalDurationText + ".")), true);
                     
             // Log mute action
             NeoEssentials.LOGGER.info("{} muted {} {} for: {}", 
@@ -764,11 +766,11 @@ public class ModeratorCommands {
             }
             
             context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                    "&e===== &6Banned IP Addresses &e(Total: " + ipBans.size() + ") =====")), false);
-                      for (int i = 0; i < Math.min(5, ipBans.size()); i++) {
+                    "&e===== &6Banned IP Addresses &e(Total: " + ipBans.size() + ") =====")), false);            for (int i = 0; i < Math.min(5, ipBans.size()); i++) {
                 IpBanListEntry ban = ipBans.get(i);
+                String ipAddress = ban.toString(); // Use toString() which typically returns the IP address
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                        "&7- &c" + ban.getUser() + " &7(Reason: &f" + ban.getReason() + "&7)")), false);
+                        "&7- &c" + ipAddress + " &7(Reason: &f" + ban.getReason() + "&7)")), false);
             }
             
             if (ipBans.size() > 5) {

@@ -221,4 +221,14 @@ public class TimeUtil {
         
         return sb.toString().trim();
     }
+    
+    /**
+     * Alias for formatDuration for backward compatibility
+     * 
+     * @param durationMillis Duration in milliseconds
+     * @return Human readable duration string
+     */
+    public static String formatTimeDuration(long durationMillis) {
+        return formatDuration(durationMillis);
+    }
 }
