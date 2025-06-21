@@ -1438,8 +1438,12 @@ public class AdminPanelCommand {
         for (var level : context.getSource().getServer().getAllLevels()) {
             totalEntities += countEntities(level.getAllEntities());
         }
+        
+        // Make a final copy for the lambda
+        final int entityCount = totalEntities;
+        
         context.getSource().sendSuccess(() -> Component.literal(
-                TextUtil.colorize("&6Total entities across all dimensions: &e" + totalEntities)), false);
+                TextUtil.colorize("&6Total entities across all dimensions: &e" + entityCount)), false);
         return 1;
     }
     
