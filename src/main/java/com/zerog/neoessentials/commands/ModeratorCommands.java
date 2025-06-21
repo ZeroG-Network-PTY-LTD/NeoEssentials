@@ -1572,11 +1572,10 @@ public class ModeratorCommands {
             
             context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
                     "&e===== &6Banned IP Addresses &e(Total: " + ipBans.size() + ") =====")), false);
-                    
-            for (int i = 0; i < Math.min(5, ipBans.size()); i++) {
+                      for (int i = 0; i < Math.min(5, ipBans.size()); i++) {
                 IpBanListEntry ban = ipBans.get(i);
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
-                        "&7- &c" + ban.getDescription() + " &7(Reason: &f" + ban.getReason() + "&7)")), false);
+                        "&7- &c" + ban.getUser() + " &7(Reason: &f" + ban.getReason() + "&7)")), false);
             }
             
             if (ipBans.size() > 5) {
