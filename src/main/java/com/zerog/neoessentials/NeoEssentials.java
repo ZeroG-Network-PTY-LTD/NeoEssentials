@@ -24,13 +24,27 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-// The value here should match an entry in the META-INF/neoforge.mods.toml file
+/**
+ * NeoEssentials - A comprehensive server-side essentials mod for Minecraft NeoForge servers
+ * <p>
+ * This is the main class for the NeoEssentials mod. It handles initialization, event registration,
+ * and serves as the central access point for mod functionality. NeoEssentials provides essential
+ * server administration and player utility features including teleportation, economy, moderation tools,
+ * and more, all while maintaining true server-side compatibility with vanilla clients.
+ * </p>
+ * 
+ * @author ZeroG
+ * @version 1.0.0
+ */
 @Mod(NeoEssentials.MODID)
 public class NeoEssentials {
-    // Define mod id in a common place for everything to reference
+    /** The mod ID used for registration and resource locations */
     public static final String MODID = "neoessentials";
+    
+    /** The human-readable name of the mod */
     public static final String MOD_NAME = "NeoEssentials";
-    // Directly reference a slf4j logger
+    
+    /** Central logger for the mod */
     public static final Logger LOGGER = LogUtils.getLogger();
     
     private static NeoEssentials instance;
