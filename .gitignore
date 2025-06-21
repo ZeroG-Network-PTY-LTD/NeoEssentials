@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 9085b7b (Documentation improvements for release - Enhanced README, command documentation, and JavaDoc comments)
 # IDE files
 .idea/
 .vscode/
 *.iml
+<<<<<<< HEAD
 *.ipr
 *.iws
 .settings/
@@ -89,20 +93,85 @@ bin
 
 # idea
 out
+=======
+>>>>>>> 9085b7b (Documentation improvements for release - Enhanced README, command documentation, and JavaDoc comments)
 *.ipr
 *.iws
-*.iml
-.idea
+.settings/
+.classpath
+.project
+.metadata/
+bin/
+*.launch
 
-# gradle
-build
-.gradle
+# Gradle files
+.gradle/
+build/
+!gradle-wrapper.jar
+!gradle-wrapper.properties
 
-# other
-eclipse
-run
-runs
-run-data
+# Minecraft/NeoForge generated files
+run/
+runs/
+run-data/
+logs/
+eclipse/
+out/
 
+<<<<<<< HEAD
 repo
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+# Compiled files
+*.class
+*.jar
+!libs/*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# Development-only files
+*.log
+*~
+*.bak
+*.swp
+*.tmp
+/repo/
+*.launch
+.DS_Store
+Thumbs.bin
+desktop.ini
+
+# Development documentation (not needed in release branch)
+README_DEV.md
+docs/*
+!docs/COMMANDS.md
+!docs/PERMISSIONS.md
+!docs/STORAGE.md
+
+# Development build files
+buildnumber.properties
+build_log*.txt
+build.gradle.multi
+build.gradle.new
+build.gradle.original
+*.sh
+temp_*
+*_backup/
+temp-extract/
+mdk-downloads/
+
+# Test files
+TEST_*.md
+*_SUMMARY.md
+*_TASKS.md
+CLEANUP_*.md
+MIGRATION_*.md
+MULTIVERSION_*.md
+IMPLEMENTATION_*.md
+REVERSION_*.md
+>>>>>>> 9085b7b (Documentation improvements for release - Enhanced README, command documentation, and JavaDoc comments)
