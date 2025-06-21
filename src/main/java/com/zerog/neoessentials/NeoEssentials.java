@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
  * 
  * @author ZeroG
  * @version 1.0.0
+ * @since 2025-06-21
  */
 @Mod(NeoEssentials.MODID)
 public class NeoEssentials {
