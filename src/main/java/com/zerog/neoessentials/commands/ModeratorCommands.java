@@ -375,6 +375,7 @@ public class ModeratorCommands {
             Component kickMessage = Component.literal(TextUtil.colorize("&c&lYou have been kicked from the server!\n\n"))
                     .append(Component.literal(TextUtil.colorize("&7Reason: &f" + formattedReason + "\n")));
                       // Add kicked by information if source is a player
+<<<<<<< HEAD
             if (source != null) {
                 Component kickedByInfo = Component.literal(TextUtil.colorize("&7Kicked by: &f" + source.getScoreboardName()));
                 kickMessage = Component.empty().append(kickMessage).append(kickedByInfo);
@@ -407,8 +408,11 @@ public class ModeratorCommands {
                     .append(Component.literal(TextUtil.colorize("&7Reason: &f" + formattedReason + "\n")));
                     
             // Add kicked by information if source is a player
+=======
+>>>>>>> 175e397 (feat: Enhance kick message formatting and improve unban player functionality with GameProfile support)
             if (source != null) {
-                kickMessage = kickMessage.append(Component.literal(TextUtil.colorize("&7Kicked by: &f" + source.getScoreboardName())));
+                Component kickedByInfo = Component.literal(TextUtil.colorize("&7Kicked by: &f" + source.getScoreboardName()));
+                kickMessage = Component.empty().append(kickMessage).append(kickedByInfo);
             }
             
             player.connection.disconnect(kickMessage);
@@ -596,6 +600,7 @@ public class ModeratorCommands {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
      */    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
         String playerName = StringArgumentType.getString(context, "player");
         UserBanList banList = context.getSource().getServer().getPlayerList().getBans();
@@ -610,12 +615,24 @@ public class ModeratorCommands {
 =======
      */
     private int unbanPlayer(CommandContext<CommandSourceStack> context) {
+=======
+     */    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
+>>>>>>> 175e397 (feat: Enhance kick message formatting and improve unban player functionality with GameProfile support)
         String playerName = StringArgumentType.getString(context, "player");
         UserBanList banList = context.getSource().getServer().getPlayerList().getBans();
         
+        // Convert player name to GameProfile
+        GameProfile profile = context.getSource().getServer().getProfileCache()
+            .get(playerName)
+            .orElse(new GameProfile(null, playerName));
+        
         // Check if the player is banned
+<<<<<<< HEAD
         if (!banList.isBanned(playerName)) {
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+        if (!banList.isBanned(profile)) {
+>>>>>>> 175e397 (feat: Enhance kick message formatting and improve unban player functionality with GameProfile support)
             context.getSource().sendFailure(Component.literal(TextUtil.colorize(
                     "&cPlayer &e" + playerName + " &cis not banned.")));
             return 0;
