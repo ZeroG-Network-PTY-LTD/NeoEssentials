@@ -1,0 +1,38 @@
+{
+  "updateInterval": 2000,
+  "serverName": "NeoEssentials Server",
+  "timeFormat": "HH:mm:ss",
+  "headers": [
+    "\u00266\u0026lWelcome to \u0026e\u0026l%server_name%",
+    "\u0026e\u0026lPlayers Online: \u0026a%online_players%\u0026e/\u0026a%max_players%",
+    "\u0026b\u0026lServer TPS: \u0026a%server_tps%",
+    "\u0026d\u0026l%server_name% \u0026f- \u00266The Best Minecraft Server",
+    "\u00266\u0026l━━━━━━━━━━━━━━━━━━━━━━━",
+    "\u0026e\u0026l%server_name% \u00267- \u0026fTime: \u0026a%time%",
+    "\u00266\u0026lWelcome to \u0026e\u0026l%server_name%",
+    "\u0026e\u0026lPlayers Online: \u0026a%online_players%\u0026e/\u0026a%max_players%",
+    "\u0026b\u0026lServer TPS: \u0026a%server_tps%",
+    "\u0026d\u0026l%server_name% \u0026f- \u00266The Best Minecraft Server",
+    "\u00266\u0026l━━━━━━━━━━━━━━━━━━━━━━━",
+    "\u0026e\u0026l%server_name% \u00267- \u0026fTime: \u0026a%time%"
+  ],
+  "footers": [
+    "\u00266\u0026l━━━━━━━━━━━━━━━━━━━━━━━",
+    "\u00267\u0026lWebsite: \u0026b\u0026nwww.example.com",
+    "\u00267\u0026lDiscord: \u0026b\u0026ndiscord.gg/example",
+    "\u00267\u0026lCurrent Time: \u0026a%time% \u00267| \u00267\u0026lOnline: \u0026a%online_players% \u00267players",
+    "\u0026e\u0026lStore: \u0026b\u0026nstore.example.com \u00267- \u00266Support the server!",
+    "\u0026d\u0026lTPS: \u0026a%server_tps% \u00267| \u0026c\u0026lPing: \u0026a%ping%ms",
+    "\u00266\u0026l━━━━━━━━━━━━━━━━━━━━━━━",
+    "\u00267\u0026lWebsite: \u0026b\u0026nwww.example.com",
+    "\u00267\u0026lDiscord: \u0026b\u0026ndiscord.gg/example",
+    "\u00267\u0026lCurrent Time: \u0026a%time% \u00267| \u00267\u0026lOnline: \u0026a%online_players% \u00267players",
+    "\u0026e\u0026lStore: \u0026b\u0026nstore.example.com \u00267- \u00266Support the server!",
+    "\u0026d\u0026lTPS: \u0026a%server_tps% \u00267| \u0026c\u0026lPing: \u0026a%ping%ms"
+  ],
+  "enableSorting": true,
+  "sortType": "name",
+  "showEconomyInTablist": true,
+  "enablePlayerSpecificHeaders": true,
+  "enablePlayerSpecificFooters": true
+}

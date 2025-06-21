@@ -1,0 +1,27 @@
+#Home System Settings
+[homes]
+	#Default maximum number of homes per player
+	# Default: 3
+	# Range: 1 ~ 1000
+	defaultMaxHomes = 3
+	#Cooldown between home teleportations (in seconds)
+	# Default: 30
+	# Range: > 0
+	cooldownSeconds = 30
+	#Warmup delay before teleportation (in seconds)
+	# Default: 3
+	# Range: > 0
+	warmupSeconds = 3
+	#Cancel teleportation if player moves during warmup
+	cancelOnMove = true
+	#Cancel teleportation if player takes damage during warmup
+	cancelOnDamage = true
+	#Allow teleporting across dimensions
+	allowCrossDimension = true
+
+#Permission Settings
+[permissions]
+	#Permission prefix for home commands
+	permissionPrefix = "neoessentials.home"
+	#Use permission-based home limits (neoessentials.home.max.#)
+	useMaxHomesPermission = true
