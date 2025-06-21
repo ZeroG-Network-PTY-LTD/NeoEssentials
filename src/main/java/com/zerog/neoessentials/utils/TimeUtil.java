@@ -87,6 +87,50 @@ public class TimeUtil {
     }
     
     /**
+     * Parse a time specification like "1d2h30m" into a Date in the future
+     * 
+     * @param timeSpec String time specification
+     * @return Date object representing the time in the future
+     */
+    public static Date parseTimeToDate(String timeSpec) {
+        Calendar cal = Calendar.getInstance();
+        Matcher matcher = TIME_PATTERN.matcher(timeSpec);
+        
+        long totalMillis = 0;
+        boolean found = false;
+        
+        while (matcher.find()) {
+            if (matcher.group() == null || matcher.group().isEmpty()) {
+                continue;
+            }
+            found = true;
+            
+            for (int i = 0; i < matcher.groupCount(); i++) {
+                String val = matcher.group(i + 1);
+                if (val == null || val.isEmpty()) continue;
+                
+                int amount = Integer.parseInt(val);
+                switch (i) {
+                    case 0: totalMillis += amount * 31536000000L; break; // years
+                    case 1: totalMillis += amount * 2592000000L; break;  // months
+                    case 2: totalMillis += amount * 604800000L; break;   // weeks
+                    case 3: totalMillis += amount * 86400000L; break;    // days
+                    case 4: totalMillis += amount * 3600000L; break;     // hours
+                    case 5: totalMillis += amount * 60000L; break;       // minutes
+                    case 6: totalMillis += amount * 1000L; break;        // seconds
+                }
+            }
+        }
+        
+        if (!found) {
+            return null;
+        }
+        
+        cal.setTimeInMillis(cal.getTimeInMillis() + totalMillis);
+        return cal.getTime();
+    }
+    
+    /**
      * Format a date for display
      * 
      * @param date Date to format
@@ -138,42 +182,43 @@ public class TimeUtil {
     }
     
     /**
-     * Format a time duration in seconds to a human-readable string
+     * Format a duration in milliseconds into a human-readable string
      * 
-     * @param seconds Duration in seconds
-     * @return Human-readable duration string
+     * @param durationMillis Duration in milliseconds
+     * @return Human readable duration string
      */
-    public static String formatTimeDuration(long seconds) {
-        if (seconds < 0) {
-            return "forever";
+    public static String formatDuration(long durationMillis) {
+        if (durationMillis < 0) {
+            return "permanently";
+        }
+        
+        long seconds = durationMillis / 1000;
+        if (seconds <= 0) {
+            return "0 seconds";
         }
         
         long minutes = seconds / 60;
-        long hours = minutes / 60;
-        long days = hours / 24;
-        
         seconds = seconds % 60;
+        long hours = minutes / 60;
         minutes = minutes % 60;
+        long days = hours / 24;
         hours = hours % 24;
+        long weeks = days / 7;
+        days = days % 7;
+        long months = weeks / 4;
+        weeks = weeks % 4;
+        long years = months / 12;
+        months = months % 12;
         
         StringBuilder sb = new StringBuilder();
-        if (days > 0) {
-            sb.append(days).append(" day").append(days > 1 ? "s" : "").append(" ");
-        }
+        if (years > 0) sb.append(years).append(" year").append(years > 1 ? "s" : "").append(" ");
+        if (months > 0) sb.append(months).append(" month").append(months > 1 ? "s" : "").append(" ");
+        if (weeks > 0) sb.append(weeks).append(" week").append(weeks > 1 ? "s" : "").append(" ");
+        if (days > 0) sb.append(days).append(" day").append(days > 1 ? "s" : "").append(" ");
+        if (hours > 0) sb.append(hours).append(" hour").append(hours > 1 ? "s" : "").append(" ");
+        if (minutes > 0) sb.append(minutes).append(" minute").append(minutes > 1 ? "s" : "").append(" ");
+        if (seconds > 0) sb.append(seconds).append(" second").append(seconds > 1 ? "s" : "");
         
-        if (hours > 0) {
-            sb.append(hours).append(" hour").append(hours > 1 ? "s" : "").append(" ");
-        }
-        
-        if (minutes > 0) {
-            sb.append(minutes).append(" minute").append(minutes > 1 ? "s" : "").append(" ");
-        }
-        
-        if (seconds > 0 && days == 0 && hours == 0) {
-            sb.append(seconds).append(" second").append(seconds > 1 ? "s" : "").append(" ");
-        }
-        
-        String result = sb.toString().trim();
-        return result.isEmpty() ? "0 seconds" : result;
+        return sb.toString().trim();
     }
 }
