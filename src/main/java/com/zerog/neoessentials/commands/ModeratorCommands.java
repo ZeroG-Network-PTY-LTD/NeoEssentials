@@ -34,8 +34,27 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Implements moderator commands like ban, tempban, kick, mute, etc.
- * Provides comprehensive moderation tools for server administrators.
+ * Implements comprehensive moderation commands for server administrators.
+ * <p>
+ * The ModeratorCommands class provides essential tools for maintaining server order
+ * and managing player conduct. The commands are designed to provide clear feedback
+ * to both moderators and affected players, with appropriate logging of all actions.
+ * </p>
+ * 
+ * <h3>Key Features:</h3>
+ * <ul>
+ *   <li><b>Ban System</b>: Permanent and temporary bans with customizable reasons and durations</li>
+ *   <li><b>IP-based Restrictions</b>: Ban IP addresses to prevent ban evasion</li>
+ *   <li><b>Kick Function</b>: Remove players with customized messages</li>
+ *   <li><b>Mute System</b>: Temporary or permanent chat restrictions</li>
+ *   <li><b>List Commands</b>: View currently banned players and IPs</li>
+ *   <li><b>Professional Formatting</b>: Clear, color-coded messages for both staff and players</li>
+ * </ul>
+ * 
+ * <p>All commands include proper permission checks and comprehensive logging.</p>
+ * 
+ * @author ZeroG
+ * @since 1.0.0
  */
 public class ModeratorCommands {
 
