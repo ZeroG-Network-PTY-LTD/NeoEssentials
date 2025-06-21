@@ -64,6 +64,7 @@ public class NeoEssentials {
     /** The mod container for this instance */
     private ModContainer modContainer;
 <<<<<<< HEAD
+<<<<<<< HEAD
     
     /** Flag to track if the database configuration has been loaded */
     private boolean databaseConfigLoaded = false;
@@ -72,12 +73,16 @@ public class NeoEssentials {
     private ScheduledExecutorService scheduler;
 =======
     // Flag to track if config is loaded
+=======
+    
+    /** Flag to track if the database configuration has been loaded */
+>>>>>>> 05e6600 (feat: Enhance documentation for NeoEssentials and command management classes)
     private boolean databaseConfigLoaded = false;
 <<<<<<< HEAD
 >>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
 =======
     
-    // Scheduled executor for AFK checking
+    /** Scheduled executor service for periodic tasks like AFK checking */
     private ScheduledExecutorService scheduler;
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
 
@@ -522,6 +527,7 @@ public class NeoEssentials {
      *
      * @param event The server starting event
      */
+<<<<<<< HEAD
 =======
 =======
     /**
@@ -568,12 +574,17 @@ public class NeoEssentials {
 >>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
     // You can use SubscribeEvent and let the Event Bus discover methods to call
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 05e6600 (feat: Enhance documentation for NeoEssentials and command management classes)
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
         // Store the server instance
         server = event.getServer();
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 05e6600 (feat: Enhance documentation for NeoEssentials and command management classes)
         // Log mod activation
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());

@@ -23,6 +23,7 @@ import net.neoforged.bus.api.SubscribeEvent;
  * 
  * @author ZeroG
  * @since 1.0.0
+<<<<<<< HEAD
 =======
 import com.zerog.neoessentials.utils.PermissionUtil;
 import net.minecraft.commands.CommandBuildContext;
@@ -35,6 +36,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 /**
  * Manages registration and execution of all NeoEssentials commands.
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 05e6600 (feat: Enhance documentation for NeoEssentials and command management classes)
  */
 
 public class CommandManager {    // Command classes

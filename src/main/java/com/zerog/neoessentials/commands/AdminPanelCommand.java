@@ -120,12 +120,24 @@ import java.util.stream.StreamSupport;
 
 /**
  * Implements commands for accessing the comprehensive admin panel interface.
- * Provides access to all administrative functions through a single command with
- * a structured, organized command hierarchy and professional feedback.
+ * <p>
+ * The AdminPanelCommand class provides a centralized administrative interface through
+ * which server administrators can manage all aspects of the server. Features include:
+ * </p>
  * 
- * The admin panel is divided into logical sections that can be accessed directly
- * or through the main interface. Each section provides specialized functionality
- * for server administration.
+ * <ul>
+ *   <li><b>Section-Based Organization</b>: Logically divided areas for different administrative tasks</li>
+ *   <li><b>Performance Monitoring</b>: Real-time server metrics including TPS, memory usage, and entity counts</li>
+ *   <li><b>Player Management</b>: Tools for managing online players</li>
+ *   <li><b>Server Controls</b>: Configuration reload, maintenance mode, and optimization options</li>
+ *   <li><b>Interactive Interface</b>: Click-based navigation through administrative options</li>
+ * </ul>
+ * 
+ * <p>All commands require the "neoessentials.admin.panel" permission node by default,
+ * with additional specialized permissions for certain actions.</p>
+ * 
+ * @author ZeroG
+ * @since 1.0.0
  */
 public class AdminPanelCommand {
     
