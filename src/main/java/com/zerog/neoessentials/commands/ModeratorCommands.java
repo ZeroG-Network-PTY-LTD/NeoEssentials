@@ -5,6 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.utils.PermissionUtil;
 import com.zerog.neoessentials.utils.TextUtil;
@@ -12,9 +13,14 @@ import com.zerog.neoessentials.utils.TimeUtil;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.UserBanList;
@@ -25,14 +31,38 @@ import net.minecraft.server.players.IpBanListEntry;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Implements moderator commands like ban, tempban, kick, mute, etc.
+ * Provides comprehensive moderation tools for server administrators.
  */
 public class ModeratorCommands {
 
     // Store muted players with expiry time
     private final Map<UUID, Date> mutedPlayers = new ConcurrentHashMap<>();
+    
+    // Common reason suggestions for moderation actions
+    private static final List<String> COMMON_REASONS = Arrays.asList(
+        "Breaking server rules", 
+        "Inappropriate behavior", 
+        "Spamming", 
+        "Griefing", 
+        "Using forbidden mods/hacks",
+        "Offensive language"
+    );
+    
+    // Time duration suggestions for temp bans and mutes
+    private static final List<String> TIME_SUGGESTIONS = Arrays.asList(
+        "1h", "6h", "12h", "1d", "3d", "7d", "14d", "30d"
+    );
+    
+    // Suggestion providers for common inputs
+    private static final SuggestionProvider<CommandSourceStack> REASON_SUGGESTIONS = 
+            (context, builder) -> SharedSuggestionProvider.suggest(COMMON_REASONS, builder);
+            
+    private static final SuggestionProvider<CommandSourceStack> TIME_DURATION_SUGGESTIONS = 
+            (context, builder) -> SharedSuggestionProvider.suggest(TIME_SUGGESTIONS, builder);
     
     /**
      * Register all moderator commands
@@ -46,6 +76,7 @@ public class ModeratorCommands {
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(context -> kickPlayer(context, "Kicked by admin"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
+                    .suggests(REASON_SUGGESTIONS)
                     .executes(context -> kickPlayer(
                         context,
                         StringArgumentType.getString(context, "reason")
@@ -60,6 +91,7 @@ public class ModeratorCommands {
             .then(Commands.argument("player", GameProfileArgument.gameProfile())
                 .executes(context -> banPlayer(context, "Banned by admin"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
+                    .suggests(REASON_SUGGESTIONS)
                     .executes(context -> banPlayer(
                         context,
                         StringArgumentType.getString(context, "reason")
@@ -81,12 +113,14 @@ public class ModeratorCommands {
             .requires(source -> PermissionUtil.hasPermission(source, "essentials.tempban"))
             .then(Commands.argument("player", GameProfileArgument.gameProfile())
                 .then(Commands.argument("time", StringArgumentType.word())
+                    .suggests(TIME_DURATION_SUGGESTIONS)
                     .executes(context -> tempBanPlayer(
                         context, 
                         StringArgumentType.getString(context, "time"),
                         "Temporarily banned by admin"
                     ))
                     .then(Commands.argument("reason", StringArgumentType.greedyString())
+                        .suggests(REASON_SUGGESTIONS)
                         .executes(context -> tempBanPlayer(
                             context,
                             StringArgumentType.getString(context, "time"),
@@ -103,6 +137,7 @@ public class ModeratorCommands {
             .then(Commands.argument("target", StringArgumentType.word())
                 .executes(context -> banIp(context, "IP banned by admin"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
+                    .suggests(REASON_SUGGESTIONS)
                     .executes(context -> banIp(
                         context,
                         StringArgumentType.getString(context, "reason")
@@ -130,6 +165,7 @@ public class ModeratorCommands {
                     "Muted by admin"
                 ))
                 .then(Commands.argument("time", StringArgumentType.word())
+                    .suggests(TIME_DURATION_SUGGESTIONS)
                     .executes(context -> mutePlayer(
                         context,
                         EntityArgument.getPlayer(context, "player"),
@@ -137,6 +173,7 @@ public class ModeratorCommands {
                         "Muted by admin"
                     ))
                     .then(Commands.argument("reason", StringArgumentType.greedyString())
+                        .suggests(REASON_SUGGESTIONS)
                         .executes(context -> mutePlayer(
                             context,
                             EntityArgument.getPlayer(context, "player"),
@@ -147,6 +184,28 @@ public class ModeratorCommands {
                 )
             )
         );
+        
+        // Add /unmute command
+        dispatcher.register(Commands.literal("unmute")
+            .requires(source -> PermissionUtil.hasPermission(source, "essentials.unmute"))
+            .then(Commands.argument("player", EntityArgument.player())
+                .executes(context -> unmutePlayer(context))
+            )
+        );
+        
+        // Add /banlist command
+        dispatcher.register(Commands.literal("banlist")
+            .requires(source -> PermissionUtil.hasPermission(source, "essentials.banlist"))
+            .executes(context -> listBans(context, "players"))
+            .then(Commands.literal("players")
+                .executes(context -> listBans(context, "players"))
+            )
+            .then(Commands.literal("ips")
+                .executes(context -> listBans(context, "ips"))
+            )
+        );
+        
+        NeoEssentials.LOGGER.info("Registered enhanced moderator commands");
     }
     
     /**
@@ -154,26 +213,46 @@ public class ModeratorCommands {
      */
     private int kickPlayer(CommandContext<CommandSourceStack> context, String reason) throws CommandSyntaxException {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
+        ServerPlayer source = null;
+        try {
+            source = context.getSource().getPlayerOrException();
+        } catch (CommandSyntaxException e) {
+            // Source is not a player (e.g. console)
+        }
         
-        if (PermissionUtil.hasPermission((ServerPlayer)player, "essentials.kick.exempt")) {
-            context.getSource().sendFailure(Component.literal("You cannot kick this player."));
+        // Check for kick exemption
+        if (PermissionUtil.hasPermission(player, "essentials.kick.exempt")) {
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cYou cannot kick this player.")));
             return 0;
         }
         
         try {
-            String formattedReason = TextUtil.formatText(reason);
-            player.connection.disconnect(Component.literal(formattedReason));
+            String formattedReason = TextUtil.colorize(reason);
             
-            // Broadcast kick message
+            // Create a styled kick message
+            Component kickMessage = Component.literal(TextUtil.colorize("&c&lYou have been kicked from the server!\n\n"))
+                    .append(Component.literal(TextUtil.colorize("&7Reason: &f" + formattedReason + "\n")));
+                    
+            // Add kicked by information if source is a player
+            if (source != null) {
+                kickMessage = kickMessage.append(Component.literal(TextUtil.colorize("&7Kicked by: &f" + source.getScoreboardName())));
+            }
+            
+            player.connection.disconnect(kickMessage);
+            
+            // Broadcast kick message to server
             MinecraftServer server = context.getSource().getServer();
-            server.getPlayerList().broadcastSystemMessage(
-                Component.literal(player.getScoreboardName() + " was kicked: " + formattedReason),
-                false
-            );
+            Component broadcastMessage = Component.literal(TextUtil.colorize("&c" + player.getScoreboardName() + " &7was kicked: &f" + formattedReason));
+            server.getPlayerList().broadcastSystemMessage(broadcastMessage, false);
+            
+            // Log kick action
+            String sourceString = source != null ? source.getScoreboardName() : "Console";
+            NeoEssentials.LOGGER.info("{} kicked {} for: {}", sourceString, player.getScoreboardName(), reason);
             
             return 1;
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("Failed to kick player: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to kick player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error kicking player", e);
             return 0;
         }
     }
@@ -511,5 +590,100 @@ public class ModeratorCommands {
      */
     public void unmutePlayer(UUID playerId) {
         mutedPlayers.remove(playerId);
+    }
+    
+    /**
+     * List all active bans (players or IPs)
+     */
+    private int listBans(CommandContext<CommandSourceStack> context, String type) throws CommandSyntaxException {
+        MinecraftServer server = context.getSource().getServer();
+        ServerPlayer player = null;
+        try {
+            player = context.getSource().getPlayerOrException();
+        } catch (CommandSyntaxException e) {
+            // Source is not a player (e.g. console)
+        }
+        
+        if ("players".equals(type)) {
+            UserBanList banList = server.getPlayerList().getBans();
+            List<UserBanListEntry> bans = new ArrayList<>(banList.getEntries());
+            
+            if (bans.isEmpty()) {
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&eNo players are currently banned.")), false);
+                return 1;
+            }
+            
+            int pageSize = 8;
+            int totalPages = (int) Math.ceil((double) bans.size() / pageSize);
+            
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&e===== &6Banned Players &e(Page 1/" + totalPages + ") =====")), false);
+                    
+            for (int i = 0; i < Math.min(pageSize, bans.size()); i++) {
+                UserBanListEntry ban = bans.get(i);
+                
+                MutableComponent banEntry = Component.literal(TextUtil.colorize("&7- &c" + ban.getDisplayName()));
+                
+                // Add hover details
+                String hoverText = "&eReason: &f" + ban.getReason() + "\n" +
+                                  "&eExpires: &f" + (ban.getExpires() != null ? formatDate(ban.getExpires()) : "Never") + "\n" +
+                                  "&eCreated: &f" + formatDate(ban.getCreated());
+                
+                banEntry = banEntry.withStyle(Style.EMPTY
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                Component.literal(TextUtil.colorize(hoverText)))));
+                
+                // Add clickable unban option if player viewing
+                if (player != null && PermissionUtil.hasPermission(player, "essentials.unban")) {
+                    banEntry = banEntry.append(Component.literal(TextUtil.colorize(" &7[&cUnban&7]"))
+                            .withStyle(Style.EMPTY
+                                    .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, 
+                                            "/unban " + ban.getDisplayName()))
+                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                            Component.literal(TextUtil.colorize("&eClick to unban &f" + ban.getDisplayName()))))));
+                }
+                
+                context.getSource().sendSuccess(() -> banEntry, false);
+            }
+            
+            // If there are more pages, show navigation
+            if (totalPages > 1) {
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&7Use &e/banlist players <page> &7to view more bans.")), false);
+            }
+            
+        } else if ("ips".equals(type)) {
+            IpBanList ipBanList = server.getPlayerList().getIpBans();
+            List<IpBanListEntry> ipBans = new ArrayList<>(ipBanList.getEntries());
+            
+            if (ipBans.isEmpty()) {
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&eNo IP addresses are currently banned.")), false);
+                return 1;
+            }
+            
+            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                    "&e===== &6Banned IP Addresses &e(Total: " + ipBans.size() + ") =====")), false);
+                    
+            for (int i = 0; i < Math.min(5, ipBans.size()); i++) {
+                IpBanListEntry ban = ipBans.get(i);
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&7- &c" + ban.getDescription() + " &7(Reason: &f" + ban.getReason() + "&7)")), false);
+            }
+            
+            if (ipBans.size() > 5) {
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&7And " + (ipBans.size() - 5) + " more...")), false);
+            }
+        }
+        
+        return 1;
+    }
+    
+    // Helper method to format dates nicely
+    private String formatDate(Date date) {
+        if (date == null) return "Unknown";
+        return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
     }
 }
