@@ -232,10 +232,10 @@ public class ModeratorCommands {
             // Create a styled kick message
             Component kickMessage = Component.literal(TextUtil.colorize("&c&lYou have been kicked from the server!\n\n"))
                     .append(Component.literal(TextUtil.colorize("&7Reason: &f" + formattedReason + "\n")));
-                    
-            // Add kicked by information if source is a player
+                      // Add kicked by information if source is a player
             if (source != null) {
-                kickMessage = kickMessage.append(Component.literal(TextUtil.colorize("&7Kicked by: &f" + source.getScoreboardName())));
+                Component kickedByInfo = Component.literal(TextUtil.colorize("&7Kicked by: &f" + source.getScoreboardName()));
+                kickMessage = Component.empty().append(kickMessage).append(kickedByInfo);
             }
             
             player.connection.disconnect(kickMessage);
@@ -326,20 +326,24 @@ public class ModeratorCommands {
     
     /**
      * Unban a player
-     */
-    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
+     */    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
         String playerName = StringArgumentType.getString(context, "player");
         UserBanList banList = context.getSource().getServer().getPlayerList().getBans();
         
+        // Convert player name to GameProfile
+        GameProfile profile = context.getSource().getServer().getProfileCache()
+            .get(playerName)
+            .orElse(new GameProfile(null, playerName));
+        
         // Check if the player is banned
-        if (!banList.isBanned(playerName)) {
+        if (!banList.isBanned(profile)) {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize(
                     "&cPlayer &e" + playerName + " &cis not banned.")));
             return 0;
         }
         
         try {
-            banList.remove(playerName);
+            banList.remove(profile);
             
             // Announce unban action
             context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
