@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.data;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.ui.TablistManager;
+import com.zerog.neoessentials.ui.EnhancedTablistManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 
@@ -21,8 +21,7 @@ public class DataManager {    private UserManager userManager;
     private KitManager kitManager;
     private JailManager jailManager;
     private PowerToolManager powerToolManager;
-    private MailManager mailManager;
-    private com.zerog.neoessentials.ui.TablistManager tablistManager;
+    private MailManager mailManager;    private EnhancedTablistManager tablistManager;
     
     private final String dataFolder = "neoessentials/";
     
@@ -42,9 +41,9 @@ public class DataManager {    private UserManager userManager;
         kitManager = new KitManager();        jailManager = new JailManager(dataFolderFile);
         powerToolManager = new PowerToolManager(dataFolderFile);
         mailManager = new MailManager(dataFolderFile);
-          // Get the scheduler from NeoEssentials for scheduled tasks like tablist updates
+      // Get the scheduler from NeoEssentials for scheduled tasks like tablist updates
         java.util.concurrent.ScheduledExecutorService scheduler = neoEssentials.getScheduler();
-        tablistManager = new com.zerog.neoessentials.ui.TablistManager(scheduler);
+        tablistManager = new EnhancedTablistManager(neoEssentials.getServer(), scheduler);
     }
     
     /**
@@ -105,10 +104,10 @@ public class DataManager {    private UserManager userManager;
         
         if (mailManager == null) {
             mailManager = new MailManager(dataFolderFile);
-        }
-          if (tablistManager == null && NeoEssentials.getInstance().getConfigManager().isTablistEnabled()) {
+        }        if (tablistManager == null && NeoEssentials.getInstance().getConfigManager().isTablistEnabled()) {
             // Create scheduler in NeoEssentials class
-            tablistManager = new TablistManager(NeoEssentials.getInstance().getScheduler());
+            tablistManager = new EnhancedTablistManager(NeoEssentials.getInstance().getServer(), 
+                                                       NeoEssentials.getInstance().getScheduler());
             tablistManager.initialize();
         }
     }
@@ -261,8 +260,7 @@ public class DataManager {    private UserManager userManager;
      * Gets the tablist manager.
      * 
      * @return The tablist manager
-     */
-    public com.zerog.neoessentials.ui.TablistManager getTablistManager() {
+     */    public EnhancedTablistManager getTablistManager() {
         return tablistManager;
     }
     
