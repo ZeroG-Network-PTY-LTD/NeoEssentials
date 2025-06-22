@@ -33,9 +33,8 @@ import java.util.concurrent.TimeUnit;
  * and more, all while maintaining true server-side compatibility with vanilla clients.
  * </p>
  * 
- * @author ZeroG
- * @version 1.0.0
- * @since 2025-06-21
+ * @author ZeroG * @version 1.0.1
+ * @since 2025-06-22
  */
 @Mod(NeoEssentials.MODID)
 public class NeoEssentials {
