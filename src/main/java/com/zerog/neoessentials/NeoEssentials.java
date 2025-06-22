@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
  * and more, all while maintaining true server-side compatibility with vanilla clients.
  * </p>
  * 
+<<<<<<< HEAD
  * @author ZeroG
  * @version 1.0.0
 <<<<<<< HEAD
@@ -50,6 +51,10 @@ import java.util.concurrent.TimeUnit;
 =======
  * @since 2025-06-21
 >>>>>>> 87dd29a (Enhanced JavaDoc documentation for release)
+=======
+ * @author ZeroG * @version 1.0.1
+ * @since 2025-06-22
+>>>>>>> e614394 (fix: Update version and release date in class documentation for NeoEssentials)
  */
 @Mod(NeoEssentials.MODID)
 public class NeoEssentials {
