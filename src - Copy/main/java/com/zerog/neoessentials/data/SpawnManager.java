@@ -1,3 +1,0 @@
-public Re SpawnManager {
-    
-}
