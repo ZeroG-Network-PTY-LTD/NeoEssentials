@@ -45,6 +45,27 @@ public class TablistTomlConfig {
         .comment("Allow per-player custom footers based on permissions")
         .define("enablePlayerSpecificFooters", true);
     
+    // Animation settings
+    public static final ModConfigSpec.BooleanValue ENABLE_ANIMATIONS = BUILDER
+        .comment("Enable tablist animations")
+        .define("enableAnimations", true);
+        
+    public static final ModConfigSpec.IntValue ANIMATION_SPEED = BUILDER
+        .comment("Animation speed multiplier (higher = faster)")
+        .defineInRange("animationSpeed", 1, 1, 10);
+        
+    public static final ModConfigSpec.ConfigValue<String> HEADER_ANIMATION_TYPE = BUILDER
+        .comment("Animation type for headers (none, rotation, scroll, fade, rainbow, typewriter, blink)")
+        .define("headerAnimationType", "rotation");
+        
+    public static final ModConfigSpec.ConfigValue<String> FOOTER_ANIMATION_TYPE = BUILDER
+        .comment("Animation type for footers (none, rotation, scroll, fade, rainbow, typewriter, blink)")
+        .define("footerAnimationType", "rotation");
+        
+    public static final ModConfigSpec.IntValue SCROLL_WIDTH = BUILDER
+        .comment("Number of characters visible in scrolling text")
+        .defineInRange("scrollWidth", 20, 10, 100);
+    
     static {
         BUILDER.pop(); // End tablist section
         

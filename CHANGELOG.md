@@ -1,5 +1,38 @@
 # NeoEssentials - Changelog
 
+## Version 1.0.1 (Planned - In Development)
+
+### Tablist System Overhaul
+- **Enhanced Animation System**
+  - New animation types: scrolling text, fade effects, rainbow colors, typewriter, and blinking text
+  - Customizable animation speeds and transitions
+  - Per-group animation settings
+
+- **Advanced Configuration**
+  - Complete migration from legacy JSON to TOML configuration
+  - Expanded configuration options with detailed comments
+  - Group-specific header and footer settings
+
+- **Improved Placeholders**
+  - Expanded placeholder library for server and player information
+  - Dynamic placeholder processing with conditional support
+  - Custom placeholder API for addon development
+
+- **Visual Improvements**
+  - Advanced text formatting with rank-based styling
+  - Custom icons and symbols in the tablist
+  - Colored ping indicators and status icons
+
+- **Player Grouping and Sorting**
+  - Group players by rank/permissions
+  - Multiple sorting methods (name, rank, playtime)
+  - Group headers within the tablist
+
+- **Performance Optimizations**
+  - Batch update system to reduce network traffic
+  - Smart update scheduling based on content changes
+  - Optimized placeholder processing and caching
+
 ## Version 1.0.0.1 (June 22, 2025)
 
 ### Initial Release for Minecraft NeoForge 1.21.1
