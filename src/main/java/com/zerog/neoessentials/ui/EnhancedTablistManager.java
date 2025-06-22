@@ -5,6 +5,7 @@ import com.zerog.neoessentials.config.TablistTomlConfig;
 import com.zerog.neoessentials.ui.tablist.TablistAnimationManager;
 import com.zerog.neoessentials.ui.tablist.TablistGroupManager;
 import com.zerog.neoessentials.ui.tablist.TablistPlaceholderManager;
+import com.zerog.neoessentials.utils.PermissionUtil;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
@@ -147,8 +148,7 @@ public class EnhancedTablistManager {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error updating tablist", e);
         }
-    }
-      /**
+    }    /**
      * Updates the tablist for a specific player
      * 
      * @param player The player to update
@@ -158,12 +158,13 @@ public class EnhancedTablistManager {
             // Get player group information
             String playerGroup = groupManager.getPlayerGroup(player);
             
-            // Get animated header and footer for this player
-            Component playerHeader = animationManager.getAnimatedHeader(player, headers, placeholderManager);
-            Component playerFooter = animationManager.getAnimatedFooter(player, footers, placeholderManager);
+            // Get the appropriate header and footer templates for this player
+            List<String> playerHeaders = getPlayerSpecificHeaders(player, playerGroup);
+            List<String> playerFooters = getPlayerSpecificFooters(player, playerGroup);
             
-            // Apply group-specific formatting if needed
-            // This is where you could customize headers/footers based on player group
+            // Get animated header and footer for this player
+            Component playerHeader = animationManager.getAnimatedHeader(player, playerHeaders, placeholderManager);
+            Component playerFooter = animationManager.getAnimatedFooter(player, playerFooters, placeholderManager);
             
             // Log detailed info at debug level
             NeoEssentials.LOGGER.debug("Updating tablist for player {} in group {}", 
@@ -174,6 +175,106 @@ public class EnhancedTablistManager {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error sending tablist packet to player " + player.getScoreboardName(), e);
         }
+    }
+    
+    /**
+     * Gets the header templates specific to a player based on their group, if enabled
+     * 
+     * @param player The player
+     * @param group The player's group
+     * @return The list of header templates to use
+     */
+    private List<String> getPlayerSpecificHeaders(ServerPlayer player, String group) {
+        // Use default headers if player-specific headers are disabled
+        if (!TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_HEADERS.get()) {
+            return headers;
+        }
+        
+        // Check for permission-based headers
+        if (group.equalsIgnoreCase("Admin") && 
+            PermissionUtil.hasPermission(player, "neoessentials.tablist.header.admin")) {
+            // Get admin-specific headers
+            List<?> adminHeaders = TablistTomlConfig.ADMIN_HEADERS.get();
+            if (adminHeaders != null && !adminHeaders.isEmpty()) {
+                List<String> result = new ArrayList<>();
+                for (Object header : adminHeaders) {
+                    if (header instanceof String) {
+                        result.add((String) header);
+                    }
+                }
+                if (!result.isEmpty()) {
+                    return result;
+                }
+            }
+        } else if (group.equalsIgnoreCase("VIP") && 
+                  PermissionUtil.hasPermission(player, "neoessentials.tablist.header.vip")) {
+            // Get VIP-specific headers
+            List<?> vipHeaders = TablistTomlConfig.VIP_HEADERS.get();
+            if (vipHeaders != null && !vipHeaders.isEmpty()) {
+                List<String> result = new ArrayList<>();
+                for (Object header : vipHeaders) {
+                    if (header instanceof String) {
+                        result.add((String) header);
+                    }
+                }
+                if (!result.isEmpty()) {
+                    return result;
+                }
+            }
+        }
+        
+        // Fall back to default headers
+        return headers;
+    }
+    
+    /**
+     * Gets the footer templates specific to a player based on their group, if enabled
+     * 
+     * @param player The player
+     * @param group The player's group
+     * @return The list of footer templates to use
+     */
+    private List<String> getPlayerSpecificFooters(ServerPlayer player, String group) {
+        // Use default footers if player-specific footers are disabled
+        if (!TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_FOOTERS.get()) {
+            return footers;
+        }
+        
+        // Check for permission-based footers
+        if (group.equalsIgnoreCase("Admin") && 
+            PermissionUtil.hasPermission(player, "neoessentials.tablist.footer.admin")) {
+            // Get admin-specific footers
+            List<?> adminFooters = TablistTomlConfig.ADMIN_FOOTERS.get();
+            if (adminFooters != null && !adminFooters.isEmpty()) {
+                List<String> result = new ArrayList<>();
+                for (Object footer : adminFooters) {
+                    if (footer instanceof String) {
+                        result.add((String) footer);
+                    }
+                }
+                if (!result.isEmpty()) {
+                    return result;
+                }
+            }
+        } else if (group.equalsIgnoreCase("VIP") && 
+                  PermissionUtil.hasPermission(player, "neoessentials.tablist.footer.vip")) {
+            // Get VIP-specific footers
+            List<?> vipFooters = TablistTomlConfig.VIP_FOOTERS.get();
+            if (vipFooters != null && !vipFooters.isEmpty()) {
+                List<String> result = new ArrayList<>();
+                for (Object footer : vipFooters) {
+                    if (footer instanceof String) {
+                        result.add((String) footer);
+                    }
+                }
+                if (!result.isEmpty()) {
+                    return result;
+                }
+            }
+        }
+        
+        // Fall back to default footers
+        return footers;
     }
     
     /**
