@@ -32,7 +32,7 @@ NeoEssentials is a powerful server-side utility mod designed to provide all esse
 
 ### 🎮 User Interface
 - **Enhanced Tablist**: Fully customizable tablist with headers, footers, and player sorting
-- **Animated Displays**: Multiple animation types including rotation, scroll, fade, rainbow, typewriter, and blink
+- **Animated Displays**: Multiple animation types including rotation, scroll, fade, rainbow, typewriter, blink, and wave
 - **Placeholder Support**: Extensive placeholder system for dynamic content
 - **Permission-Based Groups**: Display different headers/footers based on player groups
 
@@ -85,6 +85,7 @@ NeoEssentials features a powerful tablist animation system with multiple animati
 - **Rainbow** - Applies rainbow colors to each character
 - **Typewriter** - Types out text character by character
 - **Blink** - Makes text appear and disappear
+- **Wave** - Creates a flowing wave effect with colors
 
 For detailed configuration examples, see the [Tablist Animation Guide](docs/TABLIST_ANIMATIONS.md).
 
