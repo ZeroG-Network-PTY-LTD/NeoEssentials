@@ -16,9 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Handles animations for tablist headers and footers.
  * This class provides various animation types and manages animation state for each player.
  */
-public class TablistAnimationManager {
-
-    /**
+public class TablistAnimationManager {    /**
      * Enum defining the different types of animations available
      */
     public enum AnimationType {
@@ -28,7 +26,8 @@ public class TablistAnimationManager {
         FADE("fade"),
         RAINBOW("rainbow"),
         TYPEWRITER("typewriter"),
-        BLINK("blink");
+        BLINK("blink"),
+        WAVE("wave");
         
         private final String configValue;
         
@@ -59,8 +58,7 @@ public class TablistAnimationManager {
     /**
      * Initializes the animation manager with all animation processors
      */
-    public TablistAnimationManager() {
-        // Register animation processors
+    public TablistAnimationManager() {        // Register animation processors
         animationProcessors.put(AnimationType.NONE, new NoAnimationProcessor());
         animationProcessors.put(AnimationType.ROTATION, new RotationAnimationProcessor());
         animationProcessors.put(AnimationType.SCROLL, new ScrollAnimationProcessor());
@@ -68,6 +66,7 @@ public class TablistAnimationManager {
         animationProcessors.put(AnimationType.RAINBOW, new RainbowAnimationProcessor());
         animationProcessors.put(AnimationType.TYPEWRITER, new TypewriterAnimationProcessor());
         animationProcessors.put(AnimationType.BLINK, new BlinkAnimationProcessor());
+        animationProcessors.put(AnimationType.WAVE, new WaveAnimationProcessor());
         
         NeoEssentials.LOGGER.info("TablistAnimationManager initialized with {} animation types", animationProcessors.size());
     }
@@ -326,8 +325,7 @@ public class TablistAnimationManager {
             return TablistPlaceholderManager.transferColors(template, visiblePortion) + "§r§e_";
         }
     }
-    
-    /**
+      /**
      * Blink animation - makes text blink
      */
     private static class BlinkAnimationProcessor implements AnimationProcessor {
@@ -347,6 +345,41 @@ public class TablistAnimationManager {
                 // This effectively hides the text using a color that matches the background
                 return "§8" + TablistPlaceholderManager.stripColor(template);
             }
+        }
+    }
+    
+    /**
+     * Wave animation - creates a wave effect where characters rise and fall
+     */
+    private static class WaveAnimationProcessor implements AnimationProcessor {
+        private static final ChatFormatting[] WAVE_COLORS = {
+            ChatFormatting.AQUA,
+            ChatFormatting.BLUE,
+            ChatFormatting.DARK_AQUA,
+            ChatFormatting.BLUE,
+            ChatFormatting.AQUA,
+            ChatFormatting.WHITE
+        };
+
+        @Override
+        public String processFrame(List<String> templates, ServerPlayer player, int frame) {
+            if (templates.isEmpty()) {
+                return "";
+            }
+            
+            // Get template to use
+            String template = templates.get(frame / 15 % templates.size());
+            String plainText = TablistPlaceholderManager.stripColor(template);
+            
+            // Build wave text
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < plainText.length(); i++) {
+                // Calculate wave position (shifted by character position for wave effect)
+                int wavePos = (frame + i * 2) % WAVE_COLORS.length;
+                result.append(WAVE_COLORS[wavePos]).append(plainText.charAt(i));
+            }
+            
+            return result.toString();
         }
     }
 }

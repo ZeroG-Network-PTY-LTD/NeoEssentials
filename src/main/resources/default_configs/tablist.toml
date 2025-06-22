@@ -160,10 +160,14 @@
     #   %memory_used%  - Server memory usage (MB)
     #   %memory_max%   - Server maximum memory (MB)
     #   %memory_percent% - Server memory usage percentage
-    #---------------------------------------    #---------------------------------------
-    # ROTATION ANIMATION EXAMPLE (for headers)
+    #---------------------------------------    # ANIMATION EXAMPLES START
+    # Here are examples for each animation type. Uncomment the one you want to use
+    # and set the appropriate animation type in the [tablist] section.
+    #---------------------------------------
+    # ROTATION ANIMATION EXAMPLE
     # Each line will be displayed in sequence, changing every update interval
     # Great for displaying multiple pieces of information
+    # To use: set headerAnimationType = "rotation" in the [tablist] section
     #---------------------------------------
     headers = [
         "&6&l✦ &b&lNeoEssentials Server &6&l✦",
@@ -174,9 +178,10 @@
     ]
     
     #---------------------------------------
-    # RAINBOW ANIMATION EXAMPLE (for footers)
+    # RAINBOW ANIMATION EXAMPLE
     # Text will be displayed with rainbow colors cycling through each character
     # Works best with plain text without too many color codes
+    # To use: set footerAnimationType = "rainbow" in the [tablist] section
     #---------------------------------------
     footers = [
         "Thanks for playing on NeoEssentials Server!",
@@ -186,20 +191,54 @@
     ]
     
     #---------------------------------------
-    # OTHER ANIMATION EXAMPLES (uncomment and change animation type to test):
-    #
-    # SCROLL EXAMPLE (long text that will scroll horizontally):
-    # footers = ["Welcome to the amazing world of NeoEssentials! This long text will scroll horizontally across your screen when using the scroll animation type. Adjust scrollWidth to control how much text is visible at once."]
-    #
-    # FADE EXAMPLE (simple short texts work best):
-    # footers = ["NeoEssentials Server", "Welcome, %player%!", "Enjoy your stay!"]
-    #
-    # TYPEWRITER EXAMPLE (medium length text):
-    # footers = ["Welcome to NeoEssentials. Powered by NeoForge."]
-    #
-    # BLINK EXAMPLE (attention-grabbing text):
-    # footers = ["&c&lIMPORTANT ANNOUNCEMENT!", "&e&lSERVER RESTART IN 5 MINUTES!"]
+    # OTHER ANIMATION EXAMPLES:
+    # Uncomment the one you want to use and change the animation type
+    # in the [tablist] section to match.
     #---------------------------------------
+
+    # SCROLL ANIMATION EXAMPLE
+    # Long text that will scroll horizontally across the screen
+    # Best for long messages that need to be displayed in full
+    # To use: set headerAnimationType or footerAnimationType = "scroll" 
+    # and uncomment these lines:
+    #
+    # headers = [
+    #    "Welcome to the amazing world of NeoEssentials! This long text will scroll horizontally across your screen. Adjust scrollWidth to control how much text is visible at once."
+    # ]
+    
+    # FADE ANIMATION EXAMPLE  
+    # Text cycles through different colors in sequence
+    # Works best with simple, short messages
+    # To use: set headerAnimationType or footerAnimationType = "fade"
+    # and uncomment these lines:
+    #
+    # headers = [
+    #    "&f&lNeoEssentials Server",
+    #    "&f&lWelcome, %player%!",
+    #    "&f&lEnjoy your stay!"
+    # ]
+    
+    # TYPEWRITER ANIMATION EXAMPLE
+    # Text appears letter by letter as if being typed
+    # Perfect for welcome messages or important information
+    # To use: set headerAnimationType or footerAnimationType = "typewriter"
+    # and uncomment these lines:
+    #
+    # footers = [
+    #    "&e&lWelcome to NeoEssentials. Powered by NeoForge."
+    # ]
+    
+    # BLINK ANIMATION EXAMPLE
+    # Text appears and disappears in a blinking pattern
+    # Ideal for important announcements or alerts
+    # To use: set headerAnimationType or footerAnimationType = "blink"
+    # and uncomment these lines:
+    #
+    # footers = [
+    #    "&c&lIMPORTANT ANNOUNCEMENT!",
+    #    "&e&lSERVER RESTART IN 5 MINUTES!"
+    # ]
+    # ANIMATION EXAMPLES END
 
 #=========================
 # Group-Specific Templates

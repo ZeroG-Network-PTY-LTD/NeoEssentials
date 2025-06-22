@@ -57,9 +57,7 @@ public class NeoEssentials {
     private boolean databaseConfigLoaded = false;
     
     /** Scheduled executor service for periodic tasks like AFK checking */
-    private ScheduledExecutorService scheduler;
-
-    /**
+    private ScheduledExecutorService scheduler;    /**
      * Main constructor for NeoEssentials
      * <p>
      * Initializes the mod instance, registers event handlers, and sets up
@@ -77,6 +75,9 @@ public class NeoEssentials {
         // Register config loading event handlers
         modEventBus.addListener(this::onConfigLoad);
         modEventBus.addListener(this::onConfigReady);
+        
+        // Initialize ResourceManager to set up default configurations
+        com.zerog.neoessentials.utils.ResourceManager.initialize();
 
         // Register custom command argument types - now server-side only
         com.zerog.neoessentials.init.ModArgumentTypes.register(modEventBus);
