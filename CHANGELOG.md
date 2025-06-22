@@ -4,34 +4,40 @@
 
 ### Tablist System Overhaul
 - **Enhanced Animation System**
-  - New animation types: scrolling text, fade effects, rainbow colors, typewriter, and blinking text
-  - Customizable animation speeds and transitions
-  - Per-group animation settings
+  - Added 6 new animation types: rotation, scrolling text, fade effects, rainbow colors, typewriter, and blinking text
+  - Implemented customizable animation speeds and transitions via TablistAnimationManager
+  - Created per-group animation settings with permission-based display
 
 - **Advanced Configuration**
-  - Complete migration from legacy JSON to TOML configuration
-  - Expanded configuration options with detailed comments
-  - Group-specific header and footer settings
+  - Complete migration from legacy JSON to TOML configuration format
+  - Expanded configuration options with detailed comments and examples
+  - Added group-specific header and footer settings with permission integration
 
 - **Improved Placeholders**
-  - Expanded placeholder library for server and player information
-  - Dynamic placeholder processing with conditional support
-  - Custom placeholder API for addon development
+  - Created TablistPlaceholderManager with an expanded placeholder library
+  - Added new placeholders for server information (%tps%, %memory_used%, %memory_percent%)
+  - Added new placeholders for player information (%health%, %max_health%, %ping%, %biome%)
+  - Implemented caching system for improved performance
 
 - **Visual Improvements**
-  - Advanced text formatting with rank-based styling
-  - Custom icons and symbols in the tablist
-  - Colored ping indicators and status icons
+  - Enhanced text formatting with better color code and formatting support
+  - Added more icons and symbols for use in headers and footers
+  - Improved readability with better spacing and formatting options
 
 - **Player Grouping and Sorting**
-  - Group players by rank/permissions
-  - Multiple sorting methods (name, rank, playtime)
-  - Group headers within the tablist
+  - Implemented TablistGroupManager for organizing players by rank
+  - Added three sorting methods: name (alphabetical), rank (permission-based), and playtime
+  - Created permission-based group display system
 
 - **Performance Optimizations**
-  - Batch update system to reduce network traffic
-  - Smart update scheduling based on content changes
-  - Optimized placeholder processing and caching
+  - Implemented batch update system to reduce network traffic
+  - Created smart update scheduling based on content changes
+  - Added placeholder caching to reduce processing overhead
+  
+- **Documentation and User Support**
+  - Added comprehensive documentation in docs/TABLIST_DOCUMENTATION.md
+  - Created step-by-step configuration guide in docs/TABLIST_CONFIGURATION_GUIDE.md
+  - Added detailed comments to default configuration files
 
 ## Version 1.0.0.1 (June 22, 2025)
 

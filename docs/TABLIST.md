@@ -1,10 +1,21 @@
-# NeoEssentials Tablist System
+# NeoEssentials Tablist System (Enhanced)
+
+> **Note:** This feature has been significantly enhanced in v1.0.1. For detailed documentation, see [TABLIST_DOCUMENTATION.md](TABLIST_DOCUMENTATION.md) and [TABLIST_CONFIGURATION_GUIDE.md](TABLIST_CONFIGURATION_GUIDE.md).
 
 The NeoEssentials tablist feature provides an animated, customizable tablist with support for headers, footers, player sorting, ranks, and placeholders similar to popular plugins like BungeeTablistPlus and StatsScoreBoard.
 
+## New in v1.0.1
+
+- **Multiple Animation Types**: Now supports rotation, scrolling, fade, rainbow, typewriter, and blinking animations
+- **Enhanced Placeholder System**: More dynamic content options and better performance
+- **Improved Group Management**: Better player sorting and ranking capabilities
+- **Group-specific Templates**: Different headers/footers for different permission groups
+- **Color and Formatting Improvements**: Full support for all Minecraft formatting codes
+- **Performance Optimizations**: More efficient animation processing
+
 ## Features
 
-- **Animated Headers and Footers**: Rotating messages that change at configurable intervals
+- **Animated Headers and Footers**: Multiple animation types to choose from
 - **Player Sorting**: Sort players by name, rank, or playtime
 - **LuckPerms Integration**: Display player ranks, prefixes, and suffixes
 - **Economy Integration**: Show player balances in the tablist
@@ -13,18 +24,28 @@ The NeoEssentials tablist feature provides an animated, customizable tablist wit
 
 ## Configuration
 
-The tablist configuration is stored in `neoessentials/tablist.json` and contains the following settings:
+The tablist configuration is now stored in `config/neoessentials/tablist.toml` and contains the following main settings:
 
 - `updateInterval`: How often to update the tablist (in milliseconds)
-- `serverName`: The server name to use in placeholders
 - `timeFormat`: Date/time format for the `%time%` placeholder
-- `headers`: List of header templates that rotate
-- `footers`: List of footer templates that rotate
 - `enableSorting`: Whether to enable player sorting in the tablist
 - `sortType`: How to sort players (`name`, `rank`, or `playtime`)
+- `enableAnimations`: Whether to enable animations in headers/footers
+- `animationSpeed`: How fast animations should run
+- `headerAnimationType`/`footerAnimationType`: Which animation style to use
+- `scrollWidth`: How many characters to show in scroll animation
 - `showEconomyInTablist`: Whether to show economy info in the tablist
-- `enablePlayerSpecificHeaders`: Whether to replace player-specific placeholders in headers
-- `enablePlayerSpecificFooters`: Whether to replace player-specific placeholders in footers
+- `enablePlayerSpecificHeaders`/`enablePlayerSpecificFooters`: Whether to use player-specific content
+
+## Animation Types Available
+
+- **None**: Static display (first line only)
+- **Rotation**: Cycles through each line in sequence
+- **Scroll**: Scrolls text horizontally
+- **Fade**: Smooth transition between different lines
+- **Rainbow**: Applies rainbow color effect to text
+- **Typewriter**: Types out text character by character
+- **Blink**: Text appears and disappears
 
 ## Available Placeholders
 
