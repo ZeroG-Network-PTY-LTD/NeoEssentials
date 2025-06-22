@@ -6,73 +6,235 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
  * Tablist system configuration for NeoEssentials.
+ * Generates the enhanced tablist.toml configuration file with detailed documentation.
  */
 public class TablistTomlConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
     
-    // General tablist settings
+    // Top-level documentation
     static {
-        BUILDER.comment("Tablist System Settings").push("tablist");
+        BUILDER.comment(
+            "========================================================",
+            "NeoEssentials Tablist Configuration",
+            "========================================================",
+            "This configuration file controls the behavior of the",
+            "tablist display system, including:",
+            "  - Header/footer content and animations",
+            "  - Player sorting and grouping",
+            "  - Display update intervals",
+            "  - Animation settings",
+            "========================================================"
+        );
+        
+        BUILDER.comment(
+            "=========================",
+            "Main Tablist Settings",
+            "========================="
+        ).push("tablist");
     }
     
     public static final ModConfigSpec.LongValue UPDATE_INTERVAL = BUILDER
-        .comment("How often to update the tablist (in milliseconds)")
+        .comment(
+            "---------------------------------------",
+            "How often to update the tablist (in milliseconds)",
+            "Lower values = more frequent updates but higher server load",
+            "Default: 2000 (2 seconds)",
+            "Range: 500 ~ 30000",
+            "---------------------------------------"
+        )
         .defineInRange("updateInterval", 2000L, 500L, 30000L);
     
     public static final ModConfigSpec.ConfigValue<String> TIME_FORMAT = BUILDER
-        .comment("Time format for %time% placeholder (Java DateTimeFormatter syntax)")
+        .comment(
+            "---------------------------------------",
+            "Time format for %time% placeholder",
+            "Uses Java DateTimeFormatter syntax",
+            "", 
+            "Examples:",
+            "  \"HH:mm:ss\" -> 15:45:30 (24h format)",
+            "  \"h:mm a\"   -> 3:45 PM (12h format)",
+            "  \"HH:mm\"    -> 15:45 (24h format, no seconds)",
+            "---------------------------------------"
+        )
         .define("timeFormat", "HH:mm:ss");
     
     // Sorting settings
+    static {
+        BUILDER.comment(
+            "=========================",
+            "Player Sorting Settings",
+            "========================="
+        );
+    }
+    
     public static final ModConfigSpec.BooleanValue ENABLE_SORTING = BUILDER
-        .comment("Enable sorting of players in the tablist")
+        .comment(
+            "---------------------------------------",
+            "Enable sorting of players in the tablist",
+            "true = Players will be sorted according to sortType",
+            "false = Players will use default Minecraft ordering",
+            "---------------------------------------"
+        )
         .define("enableSorting", true);
     
     public static final ModConfigSpec.ConfigValue<String> SORT_TYPE = BUILDER
-        .comment("Sort type (name, rank, playtime)")
+        .comment(
+            "---------------------------------------",
+            "Sort type determines how players are ordered in the tablist",
+            "Available options:",
+            "  \"name\"     - Sort alphabetically by name",
+            "  \"rank\"     - Sort by permission group/rank (admin, mod, vip, etc.)",
+            "  \"playtime\" - Sort by total playtime (longest first)",
+            "---------------------------------------"
+        )
         .define("sortType", "name");
     
     // Display settings
+    static {
+        BUILDER.comment(
+            "=========================",
+            "Display Settings",
+            "========================="
+        );
+    }
+    
     public static final ModConfigSpec.BooleanValue SHOW_ECONOMY_IN_TABLIST = BUILDER
-        .comment("Show players' economy balances in tablist")
+        .comment(
+            "---------------------------------------",
+            "Show players' economy balances in tablist",
+            "Requires an economy plugin/mod to be installed",
+            "---------------------------------------"
+        )
         .define("showEconomyInTablist", true);
     
     public static final ModConfigSpec.BooleanValue ENABLE_PLAYER_SPECIFIC_HEADERS = BUILDER
-        .comment("Allow per-player custom headers based on permissions")
+        .comment(
+            "---------------------------------------",
+            "Allow per-player custom headers based on permissions",
+            "Players with permission \"neoessentials.tablist.header.<groupname>\"",
+            "will see headers specific to their permission group",
+            "---------------------------------------"
+        )
         .define("enablePlayerSpecificHeaders", true);
     
     public static final ModConfigSpec.BooleanValue ENABLE_PLAYER_SPECIFIC_FOOTERS = BUILDER
-        .comment("Allow per-player custom footers based on permissions")
+        .comment(
+            "---------------------------------------",
+            "Allow per-player custom footers based on permissions",
+            "Players with permission \"neoessentials.tablist.footer.<groupname>\"",
+            "will see footers specific to their permission group",
+            "---------------------------------------"
+        )
         .define("enablePlayerSpecificFooters", true);
     
     // Animation settings
+    static {
+        BUILDER.comment(
+            "=========================",
+            "Animation Settings",
+            "========================="
+        );
+    }
+    
     public static final ModConfigSpec.BooleanValue ENABLE_ANIMATIONS = BUILDER
-        .comment("Enable tablist animations")
+        .comment(
+            "---------------------------------------",
+            "Enable tablist animations",
+            "true = Headers/footers will animate according to animation settings",
+            "false = Static display only",
+            "---------------------------------------"
+        )
         .define("enableAnimations", true);
         
     public static final ModConfigSpec.IntValue ANIMATION_SPEED = BUILDER
-        .comment("Animation speed multiplier (higher = faster)")
+        .comment(
+            "---------------------------------------",
+            "Animation speed multiplier",
+            "Higher values make animations run faster",
+            "Default: 1",
+            "Range: 1 ~ 10",
+            "---------------------------------------"
+        )
         .defineInRange("animationSpeed", 1, 1, 10);
         
     public static final ModConfigSpec.ConfigValue<String> HEADER_ANIMATION_TYPE = BUILDER
-        .comment("Animation type for headers (none, rotation, scroll, fade, rainbow, typewriter, blink)")
+        .comment(
+            "---------------------------------------",
+            "Animation type for headers",
+            "Available options:",
+            "  \"none\"       - No animation, displays first line only",
+            "  \"rotation\"   - Cycles through each line in sequence",
+            "  \"scroll\"     - Scrolls text horizontally",
+            "  \"fade\"       - Fades between different lines",
+            "  \"rainbow\"    - Applies rainbow color effect to text",
+            "  \"typewriter\" - Types out text character by character",
+            "  \"blink\"      - Text appears and disappears",
+            "---------------------------------------"
+        )
         .define("headerAnimationType", "rotation");
         
     public static final ModConfigSpec.ConfigValue<String> FOOTER_ANIMATION_TYPE = BUILDER
-        .comment("Animation type for footers (none, rotation, scroll, fade, rainbow, typewriter, blink)")
+        .comment(
+            "---------------------------------------",
+            "Animation type for footers",
+            "Uses same options as headerAnimationType",
+            "---------------------------------------"
+        )
         .define("footerAnimationType", "rotation");
         
     public static final ModConfigSpec.IntValue SCROLL_WIDTH = BUILDER
-        .comment("Number of characters visible in scrolling text")
+        .comment(
+            "---------------------------------------",
+            "Number of characters visible in scrolling text",
+            "Only applies to \"scroll\" animation type",
+            "Default: 20",
+            "Range: 10 ~ 100",
+            "---------------------------------------"
+        )
         .defineInRange("scrollWidth", 20, 10, 100);
     
     static {
         BUILDER.pop(); // End tablist section
         
         // Header/footer content
-        BUILDER.comment("Header and Footer Templates").push("templates");
-    }    public static final ModConfigSpec.ConfigValue<List<? extends String>> HEADERS = BUILDER
-        .comment("List of header lines to display in rotation (supports placeholders like %server%, %online%, %time%)")
+        BUILDER.comment(
+            "=========================",
+            "Header and Footer Templates",
+            "========================="
+        ).push("templates");
+    }
+    
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> HEADERS = BUILDER
+        .comment(
+            "---------------------------------------",
+            "List of header lines to display",
+            "For \"rotation\" animation, each line is shown in sequence",
+            "For other animations, these lines are combined",
+            "", 
+            "Formatting:",
+            "  \"&<code>\" - Color/format codes (e.g., &a for green, &l for bold)",
+            "  \"%<n>%\" - Placeholders (replaced with dynamic content)",
+            "",
+            "Available placeholders:",
+            "  %server%       - Server name",
+            "  %online%       - Online player count",
+            "  %max%          - Maximum player slots",
+            "  %player%       - Player name",
+            "  %displayname%  - Player display name",
+            "  %time%         - Current time (format set by timeFormat)",
+            "  %date%         - Current date",
+            "  %tps%          - Server TPS (ticks per second)",
+            "  %ping%         - Player's ping/latency",
+            "  %health%       - Player's current health",
+            "  %max_health%   - Player's maximum health",
+            "  %balance%      - Player's economy balance (if available)",
+            "  %world%        - Current world name",
+            "  %biome%        - Current biome name",
+            "  %memory_used%  - Server memory usage (MB)",
+            "  %memory_max%   - Server maximum memory (MB)",
+            "  %memory_percent% - Server memory usage percentage",
+            "---------------------------------------"
+        )
         .define("headers", 
             Arrays.asList(
                 "&6&l✦ &b&lNeoEssentials Server &6&l✦",
@@ -80,18 +242,108 @@ public class TablistTomlConfig {
                 "&eOnline players: &a%online%/%max%",
                 "&eServer time: &a%time%"
             ));
-      public static final ModConfigSpec.ConfigValue<List<? extends String>> FOOTERS = BUILDER
-        .comment("List of footer lines to display in rotation (supports placeholders like %server%, %online%, %time%)")
+    
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> FOOTERS = BUILDER
+        .comment(
+            "---------------------------------------",
+            "List of footer lines to display",
+            "Uses the same formatting and placeholders as headers",
+            "---------------------------------------"
+        )
         .define("footers", 
             Arrays.asList(
                 "&eBalance: &a%balance% coins",
                 "&eWebsite: &awww.example.com",
                 "&eThanks for playing!",
-                "&eRunning &aNeoForge %neoforge%"
+                "&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%"
             ));
     
     static {
         BUILDER.pop(); // End templates section
+        
+        // Group-specific templates
+        BUILDER.comment(
+            "=========================",
+            "Group-Specific Templates",
+            "========================="
+        ).push("groups");
+        
+        // Add admin group headers comment
+        BUILDER.comment(
+            "---------------------------------------",
+            "Custom headers for specific player groups",
+            "These override the default headers for players with the", 
+            "permission \"neoessentials.tablist.header.<groupname>\"",
+            "---------------------------------------"
+        ).push("admin");
+    }
+    
+    // Admin group headers
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> ADMIN_HEADERS = BUILDER
+        .define("headers", 
+            Arrays.asList(
+                "&4&l★ &c&lAdmin Panel &4&l★",
+                "&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%",
+                "&cOnline players: &f%online%/%max%"
+            ));
+    
+    static {
+        BUILDER.pop(); // End admin section
+        
+        // Add VIP group headers
+        BUILDER.push("vip");
+    }
+    
+    // VIP group headers
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> VIP_HEADERS = BUILDER
+        .define("headers", 
+            Arrays.asList(
+                "&6&l⚜ &e&lVIP Perks Active &6&l⚜",
+                "&eWelcome back, &6%player%&e!",
+                "&eThank you for supporting our server!"
+            ));
+    
+    static {
+        BUILDER.pop(); // End vip section
+        
+        // Add admin group footers comment
+        BUILDER.comment(
+            "---------------------------------------",
+            "Custom footers for specific player groups",
+            "These override the default footers for players with the",
+            "permission \"neoessentials.tablist.footer.<groupname>\"",
+            "---------------------------------------"
+        ).push("admin");
+    }
+    
+    // Admin group footers
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> ADMIN_FOOTERS = BUILDER
+        .define("footers", 
+            Arrays.asList(
+                "&cAdmin Command Help: &f/neoessentials help",
+                "&cServer uptime: &f%uptime%",
+                "&cMemory usage: &f%memory_used%&c/&f%memory_max% MB"
+            ));
+    
+    static {
+        BUILDER.pop(); // End admin section
+        
+        // Add VIP group footers
+        BUILDER.push("vip");
+    }
+    
+    // VIP group footers
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> VIP_FOOTERS = BUILDER
+        .define("footers", 
+            Arrays.asList(
+                "&6VIP Balance: &e%balance% coins",
+                "&6Use &e/vip help &6for a list of perks",
+                "&6Website: &ewww.example.com/vip"
+            ));
+    
+    static {
+        BUILDER.pop(); // End vip section
+        BUILDER.pop(); // End groups section
     }
     
     public static final ModConfigSpec SPEC = BUILDER.build();
