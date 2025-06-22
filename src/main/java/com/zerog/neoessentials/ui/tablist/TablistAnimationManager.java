@@ -2,7 +2,6 @@ package com.zerog.neoessentials.ui.tablist;
 
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.config.TablistTomlConfig;
-import com.zerog.neoessentials.utils.TextUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -122,7 +121,7 @@ public class TablistAnimationManager {
         animatedText = placeholderManager.processPlaceholders(animatedText, player);
         
         // Convert to Component
-        return TextUtil.colorize(animatedText);
+        return TablistPlaceholderManager.colorize(animatedText);
     }
     
     /**
@@ -145,7 +144,7 @@ public class TablistAnimationManager {
         animatedText = placeholderManager.processPlaceholders(animatedText, player);
         
         // Convert to Component
-        return TextUtil.colorize(animatedText);
+        return TablistPlaceholderManager.colorize(animatedText);
     }
     
     /**
@@ -212,7 +211,7 @@ public class TablistAnimationManager {
             String template = templates.get(frame % templates.size());
             
             // Remove color codes for scrolling calculation
-            String plainText = TextUtil.stripColor(template);
+            String plainText = TablistPlaceholderManager.stripColor(template);
             
             // If text is shorter than scroll width, no need to scroll
             int scrollWidth = TablistTomlConfig.SCROLL_WIDTH.get();
@@ -225,10 +224,10 @@ public class TablistAnimationManager {
             
             // Create scrolled text with padding
             String scrolledText = plainText + " " + plainText;
-            String visiblePortion = TextUtil.substring(scrolledText, effectiveFrame, effectiveFrame + scrollWidth);
+            String visiblePortion = TablistPlaceholderManager.substring(scrolledText, effectiveFrame, effectiveFrame + scrollWidth);
             
             // Preserve color codes from the original template
-            return TextUtil.transferColors(template, visiblePortion);
+            return TablistPlaceholderManager.transferColors(template, visiblePortion);
         }
     }
     
@@ -261,7 +260,7 @@ public class TablistAnimationManager {
             ChatFormatting color = FADE_COLORS[frame % FADE_COLORS.length];
             
             // Apply the color to the template
-            return color + TextUtil.stripColor(template);
+            return color + TablistPlaceholderManager.stripColor(template);
         }
     }
     
@@ -286,7 +285,7 @@ public class TablistAnimationManager {
             
             // Get template to use
             String template = templates.get(frame % templates.size());
-            String plainText = TextUtil.stripColor(template);
+            String plainText = TablistPlaceholderManager.stripColor(template);
             
             // Build rainbow text
             StringBuilder result = new StringBuilder();
@@ -311,7 +310,7 @@ public class TablistAnimationManager {
             
             // Get template to use
             String template = templates.get(frame / 20 % templates.size()); // Slower rotation
-            String plainText = TextUtil.stripColor(template);
+            String plainText = TablistPlaceholderManager.stripColor(template);
             
             // Calculate how many characters to show
             int charactersToShow = frame % (plainText.length() + 15);
@@ -324,7 +323,7 @@ public class TablistAnimationManager {
             String visiblePortion = plainText.substring(0, charactersToShow);
             
             // Preserve color codes from the original template
-            return TextUtil.transferColors(template, visiblePortion) + "§r§e_";
+            return TablistPlaceholderManager.transferColors(template, visiblePortion) + "§r§e_";
         }
     }
     
@@ -346,7 +345,7 @@ public class TablistAnimationManager {
                 return template;
             } else {
                 // This effectively hides the text using a color that matches the background
-                return "§8" + TextUtil.stripColor(template);
+                return "§8" + TablistPlaceholderManager.stripColor(template);
             }
         }
     }
