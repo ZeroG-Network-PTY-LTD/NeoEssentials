@@ -17,10 +17,8 @@ This directory contains documentation for NeoEssentials - a comprehensive server
 ## Feature Documentation
 
 ### Core Systems
-- [Economy System](ECONOMY_SYSTEM.md) - Information on the economy system
 - [Home & Warp System](HOME_WARP_SYSTEM.md) - Information on teleportation systems
 - [Kit System](KIT_SYSTEM.md) - Information on the kit system
-- [Jail System](JAIL_SYSTEM.md) - Information on the jail system
 
 ### Configuration
 - [Configuration System](CONFIGURATION_SYSTEM.md) - Details on the configuration system
