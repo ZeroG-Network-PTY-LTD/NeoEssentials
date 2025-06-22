@@ -159,8 +159,7 @@ public class TablistTomlConfig {
         
     public static final ModConfigSpec.ConfigValue<String> HEADER_ANIMATION_TYPE = BUILDER
         .comment(
-            "---------------------------------------",
-            "Animation type for headers",
+            "---------------------------------------",            "Animation type for headers",
             "Available options:",
             "  \"none\"       - No animation, displays first line only",
             "  \"rotation\"   - Cycles through each line in sequence",
@@ -169,6 +168,7 @@ public class TablistTomlConfig {
             "  \"rainbow\"    - Applies rainbow color effect to text",
             "  \"typewriter\" - Types out text character by character",
             "  \"blink\"      - Text appears and disappears",
+            "  \"wave\"       - Creates a wave effect with rising and falling colors",
             "---------------------------------------"
         )
         .define("headerAnimationType", "rotation");
