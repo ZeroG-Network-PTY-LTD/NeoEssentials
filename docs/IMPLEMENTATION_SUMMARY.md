@@ -49,6 +49,15 @@ To solve the client disconnection issue when using custom command argument types
 3. **Added Post-Processing**: Created `VanillaBooleanParser` to handle conversion after parsing
 4. **Provided Suggestions**: Added suggestion providers for better user experience
 
+### 6. Configuration System Overhaul
+
+- Fully migrated all configuration to TOML format using NeoForge's config system
+- Eliminated duplicate/legacy JSON configurations
+- Ensured all user data is stored separately from configuration
+- Improved tablist configuration with comprehensive animation examples
+- Added detailed documentation for different animation types
+- Created working examples for all seven animation types (none, rotation, scroll, fade, rainbow, typewriter, blink)
+
 This approach ensures no custom registry entries need to be synchronized between client and server, eliminating disconnection issues.
 
 ## Expected Behavior

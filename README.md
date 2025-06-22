@@ -28,6 +28,12 @@ NeoEssentials is a powerful server-side utility mod designed to provide all esse
 - **Payments**: Transfer money between players with `/pay`
 - **Server Shop Integration**: Ready integration with shop systems
 
+### 🎮 User Interface
+- **Enhanced Tablist**: Fully customizable tablist with headers, footers, and player sorting
+- **Animated Displays**: Multiple animation types including rotation, scroll, fade, rainbow, typewriter, and blink
+- **Placeholder Support**: Extensive placeholder system for dynamic content
+- **Permission-Based Groups**: Display different headers/footers based on player groups
+
 ### 🔧 Administration
 - **Admin Panel**: Intuitive admin interface with `/adminpanel`
 - **Moderation Tools**: Ban, kick, mute players with professional feedback
