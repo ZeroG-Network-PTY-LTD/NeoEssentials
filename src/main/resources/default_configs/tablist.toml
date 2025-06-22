@@ -227,8 +227,7 @@
     # footers = [
     #    "&e&lWelcome to NeoEssentials. Powered by NeoForge."
     # ]
-    
-    # BLINK ANIMATION EXAMPLE
+      # BLINK ANIMATION EXAMPLE
     # Text appears and disappears in a blinking pattern
     # Ideal for important announcements or alerts
     # To use: set headerAnimationType or footerAnimationType = "blink"
@@ -237,6 +236,17 @@
     # footers = [
     #    "&c&lIMPORTANT ANNOUNCEMENT!",
     #    "&e&lSERVER RESTART IN 5 MINUTES!"
+    # ]
+    
+    # WAVE ANIMATION EXAMPLE
+    # Creates a wave effect with colors that rise and fall
+    # Perfect for creating dynamic, eye-catching displays
+    # To use: set headerAnimationType or footerAnimationType = "wave"
+    # and uncomment these lines:
+    #
+    # headers = [
+    #    "~~~ Welcome to NeoEssentials ~~~", 
+    #    "~~~ Enjoy your stay, %player%! ~~~"
     # ]
     # ANIMATION EXAMPLES END
 
