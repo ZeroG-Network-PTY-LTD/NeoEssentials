@@ -9,10 +9,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
  * Manages all configuration for the NeoEssentials mod.
  * Handles loading, registration, and providing access to all config classes.
  */
-public class ModConfigManager {
-    // Reference to the main mod instance
+public class ModConfigManager {    // Reference to the main mod instance
     private final NeoEssentials mod;
-    private TablistConfig tablistConfig; // Legacy JSON-based config, to be migrated later
     
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -35,10 +33,10 @@ public class ModConfigManager {
      * 
      * @param mod The mod instance
      * @param container The mod container
-     */
-    public ModConfigManager(NeoEssentials mod, ModContainer container) {
+     */    public ModConfigManager(NeoEssentials mod, ModContainer container) {
         this.mod = mod;
         
+<<<<<<< HEAD
         // Load legacy tablist config
         tablistConfig = new TablistConfig();
         tablistConfig.load();
@@ -47,6 +45,8 @@ public class ModConfigManager {
 =======
 >>>>>>> 6528176 (feat: Enhance scheduler handling and improve configuration management in NeoEssentials)
         
+=======
+>>>>>>> 89588f4 (Add configuration management and tablist functionality)
         // Create compatibility config
         compatConfig = new CompatNeoEssentialsConfig();
         
@@ -70,12 +70,7 @@ public class ModConfigManager {
     
     /**
      * Gets the tablist config
-     * @return The tablist config
-     */
-    public TablistConfig getTablistConfig() {
-        return tablistConfig;
-    }
-    
+     * @return The tablist config     */
     /**
      * Helper method to check if a feature is enabled in the general config
      * 

@@ -15,7 +15,6 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -286,15 +285,14 @@ public class EnhancedTablistManager {
         // Update the tablist for the player immediately
         updatePlayerTablist(player);
     }
-    
-    /**
+      /**
      * Handles a player leaving the server
      * 
-     * @param playerId The UUID of the player who left
+     * @param player The player who left
      */
-    public void onPlayerLeave(UUID playerId) {
+    public void onPlayerLeave(ServerPlayer player) {
         // Clean up any player-specific data
-        animationManager.removePlayer(playerId);
+        animationManager.removePlayer(player.getUUID());
     }
     
     /**
