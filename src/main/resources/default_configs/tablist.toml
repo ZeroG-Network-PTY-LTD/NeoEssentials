@@ -75,8 +75,7 @@
     # will see footers specific to their permission group
     #---------------------------------------
     enablePlayerSpecificFooters = true
-    
-    #=========================
+      #=========================
     # Animation Settings
     #=========================
     
@@ -105,6 +104,14 @@
     #   "rainbow"    - Applies rainbow color effect to text
     #   "typewriter" - Types out text character by character
     #   "blink"      - Text appears and disappears
+    #
+    # EXAMPLES:
+    #   For "rotation": Set multiple header lines and they will rotate in sequence
+    #   For "scroll": Works best with a single long text line that exceeds the scrollWidth
+    #   For "fade": Text will cycle through different colors (white, yellow, gold, etc.)
+    #   For "rainbow": Each character will be colored differently in a rainbow pattern
+    #   For "typewriter": Text will appear letter by letter as if being typed
+    #   For "blink": Text will appear and disappear in a blinking pattern
     #---------------------------------------
     headerAnimationType = "rotation"
     
@@ -112,7 +119,7 @@
     # Animation type for footers
     # Uses same options as headerAnimationType
     #---------------------------------------
-    footerAnimationType = "rotation"
+    footerAnimationType = "rainbow"
     
     #---------------------------------------
     # Number of characters visible in scrolling text
@@ -153,24 +160,46 @@
     #   %memory_used%  - Server memory usage (MB)
     #   %memory_max%   - Server maximum memory (MB)
     #   %memory_percent% - Server memory usage percentage
+    #---------------------------------------    #---------------------------------------
+    # ROTATION ANIMATION EXAMPLE (for headers)
+    # Each line will be displayed in sequence, changing every update interval
+    # Great for displaying multiple pieces of information
     #---------------------------------------
     headers = [
         "&6&l✦ &b&lNeoEssentials Server &6&l✦",
         "&eWelcome, &a%player%&e!",
         "&eOnline players: &a%online%/%max%",
-        "&eServer time: &a%time%"
+        "&eServer time: &a%time%",
+        "&d&lPlaying on &5&l%world% &d&l- TPS: &5&l%tps%"
     ]
     
     #---------------------------------------
-    # List of footer lines to display
-    # Uses the same formatting and placeholders as headers
+    # RAINBOW ANIMATION EXAMPLE (for footers)
+    # Text will be displayed with rainbow colors cycling through each character
+    # Works best with plain text without too many color codes
     #---------------------------------------
     footers = [
-        "&eBalance: &a%balance% coins",
-        "&eWebsite: &awww.example.com",
-        "&eThanks for playing!",
-        "&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%"
+        "Thanks for playing on NeoEssentials Server!",
+        "Your balance: %balance% coins | Website: www.example.com",
+        "Server performance: %tps% TPS | Memory: %memory_percent%",
+        "Welcome to the world of %world%!"
     ]
+    
+    #---------------------------------------
+    # OTHER ANIMATION EXAMPLES (uncomment and change animation type to test):
+    #
+    # SCROLL EXAMPLE (long text that will scroll horizontally):
+    # footers = ["Welcome to the amazing world of NeoEssentials! This long text will scroll horizontally across your screen when using the scroll animation type. Adjust scrollWidth to control how much text is visible at once."]
+    #
+    # FADE EXAMPLE (simple short texts work best):
+    # footers = ["NeoEssentials Server", "Welcome, %player%!", "Enjoy your stay!"]
+    #
+    # TYPEWRITER EXAMPLE (medium length text):
+    # footers = ["Welcome to NeoEssentials. Powered by NeoForge."]
+    #
+    # BLINK EXAMPLE (attention-grabbing text):
+    # footers = ["&c&lIMPORTANT ANNOUNCEMENT!", "&e&lSERVER RESTART IN 5 MINUTES!"]
+    #---------------------------------------
 
 #=========================
 # Group-Specific Templates
