@@ -65,11 +65,28 @@ NeoEssentials is a powerful server-side utility mod designed to provide all esse
 
 NeoEssentials creates the following configuration files:
 ```
-config/neoessentials-general.toml   # General mod settings
-config/neoessentials-database.toml  # Storage backend configuration
+config/neoessentials/general.toml   # General mod settings
+config/neoessentials/economy.toml   # Economy system settings
+config/neoessentials/homes.toml     # Home teleportation settings
+config/neoessentials/warps.toml     # Server warp settings
+config/neoessentials/kits.toml      # Item kit configuration
+config/neoessentials/tablist.toml   # Tablist display and animations
+config/neoessentials/database.toml  # Storage backend configuration
 ```
 
-The mod automatically generates all necessary config files with detailed comments explaining each option.
+The mod automatically generates all necessary config files with detailed comments explaining each option. Each file includes working examples and detailed explanations.
+
+### Tablist Animations
+
+NeoEssentials features a powerful tablist animation system with multiple animation types:
+- **Rotation** - Cycles through multiple lines of text
+- **Scroll** - Horizontally scrolls long text
+- **Fade** - Cycles through colors for text
+- **Rainbow** - Applies rainbow colors to each character
+- **Typewriter** - Types out text character by character
+- **Blink** - Makes text appear and disappear
+
+For detailed configuration examples, see the [Tablist Animation Guide](docs/TABLIST_ANIMATIONS.md).
 
 ### Storage System
 

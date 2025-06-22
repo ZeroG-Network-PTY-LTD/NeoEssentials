@@ -79,6 +79,7 @@ public class NeoEssentials {
     private boolean databaseConfigLoaded = false;
     
     /** Scheduled executor service for periodic tasks like AFK checking */
+<<<<<<< HEAD
     private ScheduledExecutorService scheduler;
 =======
     // Flag to track if config is loaded
@@ -96,6 +97,9 @@ public class NeoEssentials {
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
 
     /**
+=======
+    private ScheduledExecutorService scheduler;    /**
+>>>>>>> 9f2a583 (feat: Update README and configuration files with detailed tablist animation examples and new settings)
      * Main constructor for NeoEssentials
      * <p>
      * Initializes the mod instance, registers event handlers, and sets up
@@ -115,6 +119,7 @@ public class NeoEssentials {
         // Register config loading event handlers
         modEventBus.addListener(this::onConfigLoad);
         modEventBus.addListener(this::onConfigReady);
+<<<<<<< HEAD
 =======
         // Register config loading event handler
         modEventBus.addListener(this::onConfigLoad);
@@ -124,6 +129,11 @@ public class NeoEssentials {
         modEventBus.addListener(this::onConfigLoad);
         modEventBus.addListener(this::onConfigReady);
 >>>>>>> 3caece6 (feat: Register additional config loading event handler for improved config management)
+=======
+        
+        // Initialize ResourceManager to set up default configurations
+        com.zerog.neoessentials.utils.ResourceManager.initialize();
+>>>>>>> 9f2a583 (feat: Update README and configuration files with detailed tablist animation examples and new settings)
 
 <<<<<<< HEAD
 <<<<<<< HEAD
