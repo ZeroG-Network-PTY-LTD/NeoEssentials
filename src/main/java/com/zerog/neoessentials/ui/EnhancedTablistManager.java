@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Enhanced TablistManager that incorporates the new animation, placeholder, and grouping systems.
@@ -25,8 +26,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class EnhancedTablistManager {
 
-    // Configuration
-    private final MinecraftServer server;
+    // Configuration - using AtomicReference to safely update server reference
+    private final AtomicReference<MinecraftServer> serverRef = new AtomicReference<>(null);
     
     // Components for tablist functionality
     private final TablistAnimationManager animationManager;
@@ -41,29 +42,60 @@ public class EnhancedTablistManager {
     private final List<String> headers = new ArrayList<>();
     private final List<String> footers = new ArrayList<>();
     
+    // Flag to track initialization status
+    private boolean initialized = false;
+    
     /**
      * Creates a new EnhancedTablistManager
      * 
-     * @param server The Minecraft server instance
      * @param scheduler The scheduler to use for tablist updates
      */
-    public EnhancedTablistManager(MinecraftServer server, ScheduledExecutorService scheduler) {
-        this.server = server;
+    public EnhancedTablistManager(ScheduledExecutorService scheduler) {
         this.scheduler = scheduler;
         
         // Initialize components
         this.animationManager = new TablistAnimationManager();
-        this.placeholderManager = new TablistPlaceholderManager(server);
+        this.placeholderManager = new TablistPlaceholderManager(null); // Will set server later
         this.groupManager = new TablistGroupManager();
         
-        NeoEssentials.LOGGER.info("Enhanced TablistManager initialized");
+        NeoEssentials.LOGGER.info("Enhanced TablistManager created (waiting for server)");
+    }
+    
+    /**
+     * Updates the server reference and initializes components that need the server
+     * 
+     * @param server The Minecraft server instance
+     */
+    public void setServer(MinecraftServer server) {
+        if (server == null) {
+            NeoEssentials.LOGGER.warn("Attempted to set null server in EnhancedTablistManager");
+            return;
+        }
+        
+        // Update the server reference
+        this.serverRef.set(server);
+        
+        // Update components that need the server reference
+        this.placeholderManager.setServer(server);
+        
+        NeoEssentials.LOGGER.info("EnhancedTablistManager server reference updated");
+        
+        // If not yet initialized, initialize now
+        if (!initialized) {
+            initialize();
+        }
     }
     
     /**
      * Initializes the tablist manager and starts the update task
      */
     public void initialize() {
-        NeoEssentials.LOGGER.info("Starting enhanced tablist system");
+        if (initialized) {
+            NeoEssentials.LOGGER.debug("EnhancedTablistManager already initialized, skipping");
+            return;
+        }
+        
+        NeoEssentials.LOGGER.info("Initializing enhanced tablist system");
         
         // Load headers and footers from config
         loadHeadersAndFooters();
@@ -71,6 +103,8 @@ public class EnhancedTablistManager {
         // Start the update task
         long updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
         startUpdateTask(updateInterval);
+        
+        initialized = true;
     }
     
     /**
@@ -131,10 +165,23 @@ public class EnhancedTablistManager {
      */
     public void updateTablist() {
         try {
+            // Get server from atomic reference
+            MinecraftServer server = serverRef.get();
+            
+            // Check if server is initialized
+            if (server == null) {
+                // Server not yet available, skip this update cycle
+                return;
+            }
+            
             // Update animation frames
             animationManager.updateAnimationFrames();
             
-            // Get all online players
+            // Get all online players (with additional null check)
+            if (server.getPlayerList() == null) {
+                return;
+            }
+            
             Collection<ServerPlayer> players = server.getPlayerList().getPlayers();
             if (players.isEmpty()) {
                 return;
@@ -147,7 +194,9 @@ public class EnhancedTablistManager {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error updating tablist", e);
         }
-    }    /**
+    }
+    
+    /**
      * Updates the tablist for a specific player
      * 
      * @param player The player to update
@@ -227,7 +276,7 @@ public class EnhancedTablistManager {
     }
     
     /**
-     * Gets the footer templates specific to a player based on their group, if enabled
+     * Gets the footer templates specific to a player based on their group
      * 
      * @param player The player
      * @param group The player's group
@@ -277,46 +326,44 @@ public class EnhancedTablistManager {
     }
     
     /**
-     * Handles a player joining the server
-     * 
-     * @param player The player who joined
-     */
-    public void onPlayerJoin(ServerPlayer player) {
-        // Update the tablist for the player immediately
-        updatePlayerTablist(player);
-    }
-      /**
-     * Handles a player leaving the server
-     * 
-     * @param player The player who left
-     */
-    public void onPlayerLeave(ServerPlayer player) {
-        // Clean up any player-specific data
-        animationManager.removePlayer(player.getUUID());
-    }
-    
-    /**
-     * Reloads the tablist configuration
-     */
-    public void reload() {
-        NeoEssentials.LOGGER.info("Reloading tablist configuration");
-        
-        // Reload configuration
-        loadHeadersAndFooters();
-        
-        // Restart update task with potentially new interval
-        long updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
-        startUpdateTask(updateInterval);
-    }
-    
-    /**
-     * Stops the tablist manager
+     * Stops the tablist update task
      */
     public void shutdown() {
         if (updateTask != null) {
             updateTask.cancel(false);
             updateTask = null;
-            NeoEssentials.LOGGER.info("Stopped tablist updates");
         }
+        
+        NeoEssentials.LOGGER.info("Enhanced tablist system shutdown");
+    }
+    
+    /**
+     * Called when a player disconnects
+     * 
+     * @param player The player who disconnected
+     */
+    public void onPlayerDisconnect(ServerPlayer player) {
+        // Remove player from animation manager
+        animationManager.removePlayer(player.getUUID());
+    }
+    
+    /**
+     * Called when a player joins the server
+     * 
+     * @param player The player who joined
+     */
+    public void onPlayerJoin(ServerPlayer player) {
+        // Nothing special needed on join, the player will be included in the next update cycle
+        NeoEssentials.LOGGER.debug("Player joined: {}", player.getScoreboardName());
+    }
+    
+    /**
+     * Called when a player leaves the server
+     * 
+     * @param player The player who left
+     */
+    public void onPlayerLeave(ServerPlayer player) {
+        // This is the same as onPlayerDisconnect
+        onPlayerDisconnect(player);
     }
 }
