@@ -19,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.UUID;
 
 /**
  * Manages placeholders for tablist headers and footers.
@@ -487,12 +488,124 @@ public class TablistPlaceholderManager {
      * Gets the average TPS (ticks per second) of the server
      *
      * @return The average TPS
-     */
-    private double getAverageTPS() {
+     */    private double getAverageTPS() {
         // NeoForge server TPS calculation
         // This is a simplified version - in a real implementation,
         // you would access the server tick times
         return Math.min(20.0, 20.0);
+    }
+    
+    /**
+     * Simple method to check if a player is vanished
+     * 
+     * @param playerUUID The player's UUID
+     * @return True if the player is vanished
+     */
+    private boolean playerStatesContainsVanishedPlayer(UUID playerUUID) {
+        // Implement vanish check here
+        // This is a placeholder implementation - replace with actual vanish detection
+        return false;
+    }
+    
+    /**
+     * Evaluates a simple mathematical expression
+     * 
+     * @param expression The expression to evaluate
+     * @return The result
+     */
+    private double evaluateExpression(String expression) {
+        // This is a simple expression evaluator
+        // In a real implementation, you'd use a proper expression parser library
+        
+        // Remove all whitespace
+        expression = expression.replaceAll("\\s+", "");
+        
+        // First handle parentheses
+        while (expression.contains("(")) {
+            int openIndex = expression.lastIndexOf('(');
+            int closeIndex = expression.indexOf(')', openIndex);
+            
+            if (closeIndex == -1) {
+                throw new IllegalArgumentException("Mismatched parentheses");
+            }
+            
+            String subExpr = expression.substring(openIndex + 1, closeIndex);
+            double subResult = evaluateExpression(subExpr);
+            
+            expression = expression.substring(0, openIndex) + subResult + 
+                expression.substring(closeIndex + 1);
+        }
+        
+        // Handle addition and subtraction
+        List<Double> numbers = new ArrayList<>();
+        List<Character> operations = new ArrayList<>();
+        
+        StringBuilder currentNumber = new StringBuilder();
+        boolean negative = false;
+        
+        for (int i = 0; i < expression.length(); i++) {
+            char c = expression.charAt(i);
+            
+            if (c == '+' || c == '-' || c == '*' || c == '/') {
+                // Handle negative numbers
+                if (c == '-' && (i == 0 || operations.size() == numbers.size())) {
+                    negative = true;
+                    continue;
+                }
+                
+                // Add current number to list
+                if (currentNumber.length() > 0) {
+                    double num = Double.parseDouble(currentNumber.toString());
+                    numbers.add(negative ? -num : num);
+                    negative = false;
+                    currentNumber = new StringBuilder();
+                }
+                
+                operations.add(c);
+            } else if (Character.isDigit(c) || c == '.') {
+                currentNumber.append(c);
+            } else {
+                throw new IllegalArgumentException("Invalid character: " + c);
+            }
+        }
+        
+        // Add the last number
+        if (currentNumber.length() > 0) {
+            double num = Double.parseDouble(currentNumber.toString());
+            numbers.add(negative ? -num : num);
+        }
+        
+        // First pass: multiplication and division
+        for (int i = 0; i < operations.size(); i++) {
+            if (operations.get(i) == '*' || operations.get(i) == '/') {
+                double result;
+                if (operations.get(i) == '*') {
+                    result = numbers.get(i) * numbers.get(i + 1);
+                } else {
+                    if (numbers.get(i + 1) == 0) {
+                        throw new ArithmeticException("Division by zero");
+                    }
+                    result = numbers.get(i) / numbers.get(i + 1);
+                }
+                
+                numbers.set(i, result);
+                numbers.remove(i + 1);
+                operations.remove(i);
+                i--;
+            }
+        }
+        
+        // Second pass: addition and subtraction
+        double result = numbers.get(0);
+        for (int i = 0; i < operations.size(); i++) {
+            if (operations.get(i) == '+') {
+                result += numbers.get(i + 1);
+            } else if (operations.get(i) == '-') {
+                result -= numbers.get(i + 1);
+            }
+        }
+        
+        return result;
     }
     
     /**

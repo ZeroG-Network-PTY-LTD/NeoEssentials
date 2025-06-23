@@ -443,6 +443,26 @@ public class FlexibleTablistManager {
         // Default group
         return "default";
     }
+      /**
+     * Gets the TablistPlayerData for a player
+     * @param uuid The player's UUID
+     * @return The player data, or null if not found
+     */
+    public TablistPlayerData getPlayerData(UUID uuid) {
+        return playerData.get(uuid);
+    }
+    
+    /**
+     * Sets a player as vanished or visible
+     * @param player The player
+     * @param vanished Whether the player is vanished
+     */
+    public void setPlayerVanished(ServerPlayer player, boolean vanished) {
+        TablistPlayerData data = playerData.get(player.getUUID());
+        if (data != null) {
+            data.setVanished(vanished);
+        }
+    }
     
     /**
      * Shuts down the tablist manager
