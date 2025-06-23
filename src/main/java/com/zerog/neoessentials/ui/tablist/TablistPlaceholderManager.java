@@ -243,6 +243,144 @@ public class TablistPlaceholderManager {
             }
         ));
         
+        // Expression evaluator - for dynamic calculations
+        customPlaceholderRegistry.register(new CustomPlaceholder(
+            "expr",
+            "Evaluates a mathematical expression: %expr:2+3*4%",
+            (player, args) -> {
+                if (args.length < 1) return "[Invalid expr format]";
+                
+                try {
+                    // Very simple expression evaluator that supports basic operations
+                    String expr = args[0];
+                    return String.valueOf(evaluateExpression(expr));
+                } catch (Exception e) {
+                    return "[Expr error: " + e.getMessage() + "]";
+                }
+            }
+        ));
+        
+        // Format placeholder - for number formatting
+        customPlaceholderRegistry.register(new CustomPlaceholder(
+            "format",
+            "Formats a number with decimal places: %format:number,decimals%",
+            (player, args) -> {
+                if (args.length < 2) return "[Invalid format]";
+                
+                try {
+                    double number = Double.parseDouble(args[0]);
+                    int decimals = Integer.parseInt(args[1]);
+                    return String.format("%." + decimals + "f", number);
+                } catch (Exception e) {
+                    return "[Format error]";
+                }
+            }
+        ));
+        
+        // Date formatter
+        customPlaceholderRegistry.register(new CustomPlaceholder(
+            "date_format",
+            "Formats current date/time with pattern: %date_format:yyyy-MM-dd HH:mm:ss%",
+            (player, args) -> {
+                if (args.length < 1) return "[Invalid date format]";
+                
+                try {
+                    String pattern = args[0];
+                    return new SimpleDateFormat(pattern).format(new Date());
+                } catch (Exception e) {
+                    return "[Date format error]";
+                }
+            }
+        ));
+        
+        // Player presence check (for vanish integration)
+        customPlaceholderRegistry.register(new CustomPlaceholder(
+            "is_visible",
+            "Checks if a player is visible: %is_visible:playerName,visibleText,hiddenText%",
+            (player, args) -> {
+                if (args.length < 3) return "[Invalid format]";
+                
+                String playerName = args[0];
+                String visibleText = args[1];
+                String hiddenText = args[2];
+                
+                boolean isVisible = true;
+                
+                // Check if player is online and visible
+                if (server != null) {
+                    ServerPlayer targetPlayer = server.getPlayerList().getPlayerByName(playerName);
+                    if (targetPlayer == null) {
+                        isVisible = false;
+                    } else {
+                        // Check for vanish status
+                        TablistPlayerData data = NeoEssentials.getInstance().getDataManager()
+                            .getTablistManager().getPlayerData(targetPlayer.getUUID());
+                        if (data != null && data.isVanished()) {
+                            isVisible = false;
+                        }
+                    }
+                }
+                
+                return isVisible ? visibleText : hiddenText;
+            }
+        ));
+        
+        // Table cell text formatter
+        customPlaceholderRegistry.register(new CustomPlaceholder(
+            "cell",
+            "Formats text for a fixed-width table cell: %cell:text,width,alignment%",
+            (player, args) -> {
+                if (args.length < 3) return "[Invalid cell format]";
+                
+                String text = args[0];
+                int width = Integer.parseInt(args[1]);
+                String align = args[2].toLowerCase();
+                
+                // Truncate if too long
+                if (text.length() > width) {
+                    return text.substring(0, width);
+                }
+                
+                // Pad to fill width
+                StringBuilder result = new StringBuilder();
+                int padding = width - text.length();
+                
+                switch (align) {
+                    case "left":
+                        result.append(text);
+                        for (int i = 0; i < padding; i++) {
+                            result.append(" ");
+                        }
+                        break;
+                    case "right":
+                        for (int i = 0; i < padding; i++) {
+                            result.append(" ");
+                        }
+                        result.append(text);
+                        break;
+                    case "center":
+                        int leftPad = padding / 2;
+                        int rightPad = padding - leftPad;
+                        for (int i = 0; i < leftPad; i++) {
+                            result.append(" ");
+                        }
+                        result.append(text);
+                        for (int i = 0; i < rightPad; i++) {
+                            result.append(" ");
+                        }
+                        break;
+                    default:
+                        // Default to left align
+                        result.append(text);
+                        for (int i = 0; i < padding; i++) {
+                            result.append(" ");
+                        }
+                }
+                
+                return result.toString();
+            }
+        ));
+        
         NeoEssentials.LOGGER.info("Registered default custom placeholders");
     }
     
