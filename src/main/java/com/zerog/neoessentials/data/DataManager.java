@@ -2,6 +2,7 @@ package com.zerog.neoessentials.data;
 
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.ui.EnhancedTablistManager;
+import com.zerog.neoessentials.ui.tablist.FlexibleTablistManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 
@@ -18,10 +19,10 @@ public class DataManager {    private UserManager userManager;
     private HomeManager homeManager;
     private WarpManager warpManager;
     private SpawnManager spawnManager;
-    private KitManager kitManager;
-    private JailManager jailManager;
+    private KitManager kitManager;    private JailManager jailManager;
     private PowerToolManager powerToolManager;
-    private MailManager mailManager;    private EnhancedTablistManager tablistManager;
+    private MailManager mailManager;
+    private FlexibleTablistManager tablistManager;
     
     private final String dataFolder = "neoessentials/";
     
@@ -42,7 +43,7 @@ public class DataManager {    private UserManager userManager;
         powerToolManager = new PowerToolManager(dataFolderFile);
         mailManager = new MailManager(dataFolderFile);        // Get the scheduler from NeoEssentials for scheduled tasks like tablist updates
         java.util.concurrent.ScheduledExecutorService scheduler = neoEssentials.getScheduler();
-        tablistManager = new EnhancedTablistManager(scheduler);
+        tablistManager = new FlexibleTablistManager(scheduler);
     }
     
     /**
