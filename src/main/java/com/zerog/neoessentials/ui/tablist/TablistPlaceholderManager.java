@@ -311,12 +311,14 @@ public class TablistPlaceholderManager {
                     ServerPlayer targetPlayer = server.getPlayerList().getPlayerByName(playerName);
                     if (targetPlayer == null) {
                         isVisible = false;
-                    } else {
-                        // Check for vanish status
-                        TablistPlayerData data = NeoEssentials.getInstance().getDataManager()
-                            .getTablistManager().getPlayerData(targetPlayer.getUUID());
-                        if (data != null && data.isVanished()) {
-                            isVisible = false;
+                    } else {                        // Check for vanish status - safely extract player data
+                        try {
+                            if (playerStatesContainsVanishedPlayer(targetPlayer.getUUID())) {
+                                isVisible = false;
+                            }
+                        } catch (Exception e) {
+                            // If we can't check vanish status, assume player is visible
+                            isVisible = true;
                         }
                     }
                 }
