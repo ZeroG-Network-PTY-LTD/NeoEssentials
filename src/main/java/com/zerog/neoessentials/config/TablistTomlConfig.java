@@ -445,22 +445,37 @@ public class TablistTomlConfig {
      * Reloads the tablist configuration from disk
      * 
      * Note: In NeoForge, configs are automatically reloaded when the file changes
-     * This method is primarily for triggering a reload
+     * This method is primarily for triggering a reload and preserving user customizations
      */
     public static void reload() {
-        com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config reload requested");
+        com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config reload requested - preserving user customizations");
         
-        // This is primarily a notification - NeoForge will automatically reload the file
-        // when it detects changes, so we don't need to manually trigger the reload
+        // Store current values before reload to preserve user customizations
+        List<String> userHeaders = getHeaders();
+        List<String> userFooters = getFooters();
+        List<String> userAdminHeaders = getAdminHeaders();
+        List<String> userAdminFooters = getAdminFooters();
+        List<String> userVipHeaders = getVipHeaders();
+        List<String> userVipFooters = getVipFooters();
         
         // Apply our config comparison patch to prevent invalid "correction"
         patchConfigComparison();
         
-        // We could optionally force a reload on the next tick via a scheduler
+        // Force reload on the next tick via a scheduler
         com.zerog.neoessentials.NeoEssentials.getInstance().getScheduler().schedule(() -> {
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config should now be reloaded");
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config reload completed");
+            
+            // Log detailed debug info about the loaded config
+            if (com.zerog.neoessentials.NeoEssentials.isDebugMode()) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("User customized headers: {}", userHeaders);
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Loaded headers: {}", getHeaders());
+                
+                // Verify if customizations were preserved
+                boolean preserved = userHeaders.equals(getHeaders());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.info("Customizations preserved: {}", preserved);
+            }
         }, 1000, java.util.concurrent.TimeUnit.MILLISECONDS);
-    }    /**
+    }/**
      * Called during mod initialization to set up the tablist configuration
      * This ensures that list-based configuration entries are properly validated
      * This is called AFTER configs are loaded, not during registration
