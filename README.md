@@ -31,8 +31,9 @@ NeoEssentials is a powerful server-side utility mod designed to provide all esse
 ### 🎮 User Interface
 - **Enhanced Tablist**: Fully customizable tablist with headers, footers, and player sorting
 - **Animated Displays**: Multiple animation types including rotation, scroll, fade, rainbow, typewriter, blink, and wave
-- **Placeholder Support**: Extensive placeholder system for dynamic content
+- **Placeholder Support**: Extensive placeholder system for dynamic content including %uptime%, %time%, %player%
 - **Permission-Based Groups**: Display different headers/footers based on player groups
+- **Easy Configuration**: Simple TOML configuration with detailed examples
 
 ### 🔧 Administration
 - **Admin Panel**: Intuitive admin interface with `/adminpanel`
@@ -107,6 +108,43 @@ Below is a summary of the main command categories. For a complete list with perm
 - **Economy**: `/balance`, `/pay`, `/eco`
 - **Player Utilities**: `/kit`, `/mail`, `/powertool`
 - **World Management**: `/time`, `/weather`
+
+## Key Commands
+
+NeoEssentials includes dozens of useful commands. Here's a summary of the most important ones:
+
+### Teleportation Commands
+- `/home` - Teleport to your home
+- `/sethome [name]` - Set your home at your current position
+- `/delhome [name]` - Delete a home
+- `/warp [name]` - Teleport to a server warp
+- `/tpa <player>` - Send a teleport request
+- `/tpaccept` - Accept a teleport request
+- `/back` - Return to your previous location
+
+### Economy Commands
+- `/balance` - Check your account balance
+- `/pay <player> <amount>` - Send money to another player
+- `/baltop` - View richest players on the server
+
+### Kit Commands
+- `/kit <name>` - Receive an item kit
+- `/kits` - List available kits
+
+### Administrative Commands
+- `/adminpanel` - Open admin control panel
+- `/heal [player]` - Heal a player
+- `/feed [player]` - Feed a player
+- `/gm <mode> [player]` - Change gamemode
+
+### UI Commands
+- `/workbench` - Open a virtual crafting table
+- `/anvil` - Open a virtual anvil
+- `/tablist reload` - Reload the tablist configuration
+- `/tablist reset` - Reset tablist config to defaults
+- `/tablist debug` - Toggle tablist debug mode
+
+For a complete list of commands and permissions, see [Commands Documentation](docs/COMMANDS_FULL.md).
 
 ## Permissions
 
