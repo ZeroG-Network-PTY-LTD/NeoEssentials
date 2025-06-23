@@ -11,15 +11,15 @@ import java.util.List;
 /**
  * Manages resources for NeoEssentials, including copying default configs.
  */
-public class ResourceManager {
-    private static final List<String> CONFIG_FILES = Arrays.asList(
+public class ResourceManager {    private static final List<String> CONFIG_FILES = Arrays.asList(
         "general.toml",
         "economy.toml",
         "homes.toml",
         "warps.toml",
         "kits.toml",
         "tablist.toml",
-        "database.toml"
+        "database.toml",
+        "animations.toml"
     );
 
     /**
