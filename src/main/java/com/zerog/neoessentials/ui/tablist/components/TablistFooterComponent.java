@@ -1,0 +1,94 @@
+package com.zerog.neoessentials.ui.tablist.components;
+
+import net.minecraft.server.level.ServerPlayer;
+
+import java.util.*;
+
+/**
+ * The footer component for the tablist
+ */
+public class TablistFooterComponent implements TablistComponent {
+    private final String id = "footer";
+    private final String displayName = "Tab Footer";
+    
+    private List<String> lines = new ArrayList<>();
+    private Map<String, List<String>> groupLines = new HashMap<>();
+    private String animationType = "rotation";
+    
+    /**
+     * Gets the unique ID of this component
+     */
+    @Override
+    public String getId() {
+        return id;
+    }
+    
+    /**
+     * Gets the display name of this component
+     */
+    @Override
+    public String getDisplayName() {
+        return displayName;
+    }
+    
+    /**
+     * Called when the tablist is being updated
+     */
+    @Override
+    public void update(ServerPlayer player) {
+        // No special update logic needed for footer
+    }
+    
+    /**
+     * Gets the lines of text to display for a player
+     * @param player The player
+     * @param group The player's group
+     * @return The list of lines to display
+     */
+    public List<String> getLinesForPlayer(ServerPlayer player, String group) {
+        // Check if player-specific footers are enabled
+        boolean enablePlayerSpecific = com.zerog.neoessentials.config.TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_FOOTERS.get();
+        if (!enablePlayerSpecific) {
+            return new ArrayList<>(lines);
+        }
+        
+        // Check for group-specific lines
+        if (group != null && !group.isEmpty() && groupLines.containsKey(group)) {
+            List<String> specificLines = groupLines.get(group);
+            if (specificLines != null && !specificLines.isEmpty()) {
+                return new ArrayList<>(specificLines);
+            }
+        }
+        
+        // Fall back to default lines
+        return new ArrayList<>(lines);
+    }
+    
+    /**
+     * Gets the animation type for this footer
+     */
+    public String getAnimationType() {
+        return animationType;
+    }
+    
+    /**
+     * Sets the lines of text to display
+     */
+    public void setLines(List<String> lines) {
+        this.lines = new ArrayList<>(lines);
+    }
+    
+    /**
+     * Sets the group-specific lines of text
+     */
+    public void setGroupLines(Map<String, List<String>> groupLines) {
+        this.groupLines = new HashMap<>(groupLines);
+    }
+    
+    /**
+     * Sets the animation type
+     */
+    public void setAnimationType(String animationType) {
+        this.animationType = animationType;
+    }
+}
