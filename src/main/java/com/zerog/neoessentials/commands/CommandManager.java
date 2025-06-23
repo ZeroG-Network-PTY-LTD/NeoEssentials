@@ -157,11 +157,15 @@ public class CommandManager {    // Command classes
           // Register mail commands
         mailCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered mail commands");
-        
-        // Register admin panel commands
+          // Register admin panel commands
         adminPanelCommand.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered admin panel commands");
-          // Note: ItemCommands require CommandBuildContext which is not available here
+          
+        // Register tablist commands
+        TablistCommand.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered tablist commands");
+        
+        // Note: ItemCommands require CommandBuildContext which is not available here
         // In a full implementation, you would need to get the CommandBuildContext properly
         
         // For now, we'll skip registering ItemCommands until we can find a proper way
