@@ -62,6 +62,7 @@ public class CommandManager {    // Command classes
     private final JailCommands jailCommands;
     private final PowerToolCommands powerToolCommands;
     private final MailCommands mailCommands;
+<<<<<<< HEAD
     private final AdminPanelCommand adminPanelCommand;    public CommandManager() {
 =======
     
@@ -94,6 +95,10 @@ public class CommandManager {    // Command classes
 =======
     private final AdminPanelCommand adminPanelCommand;    public CommandManager() {
 >>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
+=======
+    private final AdminPanelCommand adminPanelCommand;
+    private final TablistCommand tablistCommand;    public CommandManager() {
+>>>>>>> 7091c8e (feat: Add TablistCommand to CommandManager for enhanced command management)
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -116,6 +121,7 @@ public class CommandManager {    // Command classes
         powerToolCommands = new PowerToolCommands();
         mailCommands = new MailCommands();
         adminPanelCommand = new AdminPanelCommand();
+        tablistCommand = new TablistCommand();
         // ItemCommands needs CommandBuildContext which is only available during register event
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
