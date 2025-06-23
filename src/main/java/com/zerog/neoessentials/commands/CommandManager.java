@@ -275,10 +275,10 @@ public class CommandManager {    // Command classes
           // Register mail commands
         mailCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered mail commands");
-        
-        // Register admin panel commands
+          // Register admin panel commands
         adminPanelCommand.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered admin panel commands");
+<<<<<<< HEAD
 =======
         // Register power tool commands
         powerToolCommands.register(dispatcher);
@@ -305,6 +305,14 @@ public class CommandManager {    // Command classes
         NeoEssentials.LOGGER.info("Registered admin panel commands");
 >>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
           // Note: ItemCommands require CommandBuildContext which is not available here
+=======
+          
+        // Register tablist commands
+        TablistCommand.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered tablist commands");
+        
+        // Note: ItemCommands require CommandBuildContext which is not available here
+>>>>>>> 571b1ce (feat: Register tablist commands in CommandManager)
         // In a full implementation, you would need to get the CommandBuildContext properly
         
         // For now, we'll skip registering ItemCommands until we can find a proper way
