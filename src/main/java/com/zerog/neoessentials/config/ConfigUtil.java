@@ -101,15 +101,62 @@ public class ConfigUtil {
      * Compares two lists for equality, accounting for TOML array parsing quirks
      * This is especially useful for checking if config values need correction
      * 
+     * IMPORTANT: For tablist configuration, we ALWAYS return TRUE to prevent
+     * NeoForge from overwriting user customizations. This effectively tells
+     * NeoForge that the user's configuration is valid as-is.
+     * 
      * @param configList The list from the config file
      * @param defaultList The default list from the code
-     * @return True if the lists are equal in content, false otherwise
+     * @return True if the lists are equal in content (or for tablist configs, always true)
      */
     public static boolean areListsEqual(java.util.List<?> configList, java.util.List<?> defaultList) {
         if (configList == null || defaultList == null) {
             return configList == defaultList;
         }
         
+        // Get the current stack trace to determine the caller
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        boolean isTablistConfig = false;
+        for (StackTraceElement element : stackTrace) {
+            if (element.getClassName().contains("TablistTomlConfig")) {
+                isTablistConfig = true;
+                break;
+            }
+        }
+        
+        // For tablist configuration, ALWAYS return true to prevent overwriting user customizations
+        if (isTablistConfig) {
+            com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Tablist config comparison intercepted - preserving user customizations");
+            // Log the lists for debugging, but don't perform actual comparison
+            logListsForDebug(configList, defaultList);
+            return true;
+        }
+        
+        // For non-tablist configs, perform normal comparison
+        return performDetailedListComparison(configList, defaultList);
+    }
+    
+    /**
+     * Log list contents for debugging purposes
+     */
+    private static void logListsForDebug(java.util.List<?> configList, java.util.List<?> defaultList) {
+        try {
+            if (com.zerog.neoessentials.NeoEssentials.isDebugMode()) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("List comparison debug info:");
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("  Config list size: {}", configList.size());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("  Default list size: {}", defaultList.size());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("  Config list: {}", configList);
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("  Default list: {}", defaultList);
+            }
+        } catch (Exception e) {
+            // Ignore any exceptions during debug logging
+        }
+    }
+    
+    /**
+     * Performs a detailed comparison of two lists, accounting for TOML parsing quirks
+     */
+    private static boolean performDetailedListComparison(java.util.List<?> configList, java.util.List<?> defaultList) {
         // For debugging purposes, log the raw list contents
         if (com.zerog.neoessentials.NeoEssentials.isDebugMode()) {
             com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Comparing lists for equality:");
