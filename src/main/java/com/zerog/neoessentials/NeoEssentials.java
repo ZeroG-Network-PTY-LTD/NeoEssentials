@@ -545,6 +545,7 @@ public class NeoEssentials {
      * </p>
      *
      * @param event The server starting event
+<<<<<<< HEAD
      */
 <<<<<<< HEAD
 =======
@@ -596,6 +597,9 @@ public class NeoEssentials {
 =======
 >>>>>>> 05e6600 (feat: Enhance documentation for NeoEssentials and command management classes)
     @SubscribeEvent
+=======
+     */    @SubscribeEvent
+>>>>>>> 30dc8b4 (feat: Refactor tablist management to improve server reference handling and placeholder processing)
     public void onServerStarting(ServerStartingEvent event) {
         // Store the server instance
         server = event.getServer();
@@ -607,6 +611,14 @@ public class NeoEssentials {
         // Log mod activation
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
+        
+        // Update the server reference in EnhancedTablistManager if it exists
+        if (dataManager != null && dataManager.getTablistManager() != null) {
+            LOGGER.info("Updating server reference in EnhancedTablistManager");
+            dataManager.getTablistManager().setServer(server);
+        } else {
+            LOGGER.info("TablistManager not yet initialized, server reference will be set during initialization");
+        }
         
         // Initialize the AFK checker task
         scheduler = Executors.newSingleThreadScheduledExecutor();

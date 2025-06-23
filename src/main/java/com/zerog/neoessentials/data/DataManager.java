@@ -110,15 +110,18 @@ public class DataManager {    private UserManager userManager;
 <<<<<<< HEAD
         kitManager = new KitManager();        jailManager = new JailManager(dataFolderFile);
         powerToolManager = new PowerToolManager(dataFolderFile);
-        mailManager = new MailManager(dataFolderFile);
-      // Get the scheduler from NeoEssentials for scheduled tasks like tablist updates
+        mailManager = new MailManager(dataFolderFile);        // Get the scheduler from NeoEssentials for scheduled tasks like tablist updates
         java.util.concurrent.ScheduledExecutorService scheduler = neoEssentials.getScheduler();
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         tablistManager = new com.zerog.neoessentials.ui.TablistManager(scheduler);
 =======
         tablistManager = new EnhancedTablistManager(neoEssentials.getServer(), scheduler);
 >>>>>>> 89588f4 (Add configuration management and tablist functionality)
+=======
+        tablistManager = new EnhancedTablistManager(scheduler);
+>>>>>>> 30dc8b4 (feat: Refactor tablist management to improve server reference handling and placeholder processing)
     }
     
     /**
@@ -221,9 +224,11 @@ public class DataManager {    private UserManager userManager;
             mailManager = new MailManager(dataFolderFile);
         }        if (tablistManager == null && NeoEssentials.getInstance().getConfigManager().isTablistEnabled()) {
             // Create scheduler in NeoEssentials class
-            tablistManager = new EnhancedTablistManager(NeoEssentials.getInstance().getServer(), 
-                                                       NeoEssentials.getInstance().getScheduler());
-            tablistManager.initialize();
+            tablistManager = new EnhancedTablistManager(NeoEssentials.getInstance().getScheduler());
+            // The server will be set later when available
+            if (NeoEssentials.getInstance().getServer() != null) {
+                tablistManager.setServer(NeoEssentials.getInstance().getServer());
+            }
         }
 =======
         // Initialize any managers that need special initialization
