@@ -200,9 +200,11 @@ public class TablistTomlConfig {
             "=========================",
             "Header and Footer Templates",
             "========================="
-        ).push("templates");
-    }    // Define the headers as string literal instead of List<String> to avoid equality comparison issues
-    // This is a workaround for NeoForge's config validation system having issues with List equality    public static final ModConfigSpec.ConfigValue<String> HEADERS_STRING = BUILDER
+        ).push("templates");    }    
+    
+    // Define the headers as string literal instead of List<String> to avoid equality comparison issues
+    // This is a workaround for NeoForge's config validation system having issues with List equality
+    public static final ModConfigSpec.ConfigValue<String> HEADERS_STRING = BUILDER
         .comment(
             "---------------------------------------",
             "List of header lines to display (JSON string format)",
@@ -234,7 +236,7 @@ public class TablistTomlConfig {
             "  %uptime%       - Server uptime in days, hours, minutes format",
             "---------------------------------------"
         )
-        .define("headers", "[\"&6&l✦ &b&lNeoEssentials Server &6&l✦\", \"&eWelcome, &a%player%&e!\", \"&eOnline players: &a%online%/%max%\", \"&eServer time: &a%time%\"]");
+        .define("headers", "\"[\\\"&6&l✦ &b&lNeoEssentials Server &6&l✦\\\", \\\"&eWelcome, &a%player%&e!\\\", \\\"&eOnline players: &a%online%/%max%\\\", \\\"&eServer time: &a%time%\\\"]\"");
         
     // Define a getter method to parse the string back into a List<String>
     public static List<String> getHeaders() {
@@ -257,7 +259,7 @@ public class TablistTomlConfig {
             "Uses the same formatting and placeholders as headers",
             "---------------------------------------"
         )
-        .define("footers", "[\"&eBalance: &a%balance% coins\", \"&eWebsite: &awww.example.com\", \"&eThanks for playing!\", \"&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%\"]");
+        .define("footers", "\"[\\\"&eBalance: &a%balance% coins\\\", \\\"&eWebsite: &awww.example.com\\\", \\\"&eThanks for playing!\\\", \\\"&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%\\\"]\"");
     
     // Define a getter method to parse the string back into a List<String>
     public static List<String> getFooters() {
@@ -294,7 +296,7 @@ public class TablistTomlConfig {
         ).push("admin");
     }        // Admin group headers    
     public static final ModConfigSpec.ConfigValue<String> ADMIN_HEADERS_STRING = BUILDER
-        .define("headers", "[\"&4&l★ &c&lAdmin Panel &4&l★\", \"&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%\", \"&cOnline players: &f%online%/%max%\"]");
+        .define("headers", "\"[\\\"&4&l★ &c&lAdmin Panel &4&l★\\\", \\\"&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%\\\", \\\"&cOnline players: &f%online%/%max%\\\"]\"");
     
     // Define a getter method to parse the string back into a List<String>
     public static List<String> getAdminHeaders() {
@@ -317,7 +319,7 @@ public class TablistTomlConfig {
         BUILDER.push("vip");
     }    // VIP group headers
     public static final ModConfigSpec.ConfigValue<String> VIP_HEADERS_STRING = BUILDER
-        .define("headers", "[\"&6&l⚜ &e&lVIP Perks Active &6&l⚜\", \"&eWelcome back, &6%player%&e!\", \"&eThank you for supporting our server!\"]");
+        .define("headers", "\"[\\\"&6&l⚜ &e&lVIP Perks Active &6&l⚜\\\", \\\"&eWelcome back, &6%player%&e!\\\", \\\"&eThank you for supporting our server!\\\"]\"");
     
     // Define a getter method to parse the string back into a List<String>
     public static List<String> getVipHeaders() {
@@ -346,7 +348,7 @@ public class TablistTomlConfig {
         ).push("admin");
     }      // Admin group footers
     public static final ModConfigSpec.ConfigValue<String> ADMIN_FOOTERS_STRING = BUILDER
-        .define("footers", "[\"&cAdmin Command Help: &f/neoessentials help\", \"&cServer uptime: &f%uptime%\", \"&cMemory usage: &f%memory_used%&c/&f%memory_max% MB\"]");
+        .define("footers", "\"[\\\"&cAdmin Command Help: &f/neoessentials help\\\", \\\"&cServer uptime: &f%uptime%\\\", \\\"&cMemory usage: &f%memory_used%&c/&f%memory_max% MB\\\"]\"");
     
     // Define a getter method to parse the string back into a List<String>
     public static List<String> getAdminFooters() {
@@ -369,7 +371,7 @@ public class TablistTomlConfig {
         BUILDER.push("vip");
     }      // VIP group footers
     public static final ModConfigSpec.ConfigValue<String> VIP_FOOTERS_STRING = BUILDER
-        .define("footers", "[\"&6VIP Balance: &e%balance% coins\", \"&6Use &e/vip help &6for a list of perks\", \"&6Website: &ewww.example.com/vip\"]");
+        .define("footers", "\"[\\\"&6VIP Balance: &e%balance% coins\\\", \\\"&6Use &e/vip help &6for a list of perks\\\", \\\"&6Website: &ewww.example.com/vip\\\"]\"");
     
     // Define a getter method to parse the string back into a List<String>
     public static List<String> getVipFooters() {
@@ -519,16 +521,23 @@ public class TablistTomlConfig {
      * @param jsonString The JSON array string
      * @return A List<String> containing the parsed values
      * @throws Exception If parsing fails
-     */
-    private static List<String> parseJsonStringList(String jsonString) throws Exception {
+     */    private static List<String> parseJsonStringList(String jsonString) throws Exception {
         // Simple JSON array string parser
         // This avoids adding a dependency on a JSON library
         if (jsonString == null || jsonString.isEmpty()) {
             return java.util.Collections.emptyList();
         }
         
+        // Handle the case where the string is wrapped in quotes (as in TOML)
+        String workingString = jsonString;
+        if (workingString.startsWith("\"") && workingString.endsWith("\"")) {
+            // Remove the outer quotes
+            workingString = workingString.substring(1, workingString.length() - 1);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Unwrapped quoted JSON string: {}", workingString);
+        }
+        
         // Trim brackets and whitespace
-        String trimmed = jsonString.trim();
+        String trimmed = workingString.trim();
         if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) {
             throw new IllegalArgumentException("Invalid JSON array format: " + jsonString);
         }
