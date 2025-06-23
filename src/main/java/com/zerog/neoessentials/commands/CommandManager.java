@@ -41,7 +41,8 @@ public class CommandManager {    // Command classes
     private final JailCommands jailCommands;
     private final PowerToolCommands powerToolCommands;
     private final MailCommands mailCommands;
-    private final AdminPanelCommand adminPanelCommand;    public CommandManager() {
+    private final AdminPanelCommand adminPanelCommand;
+    private final TablistCommand tablistCommand;    public CommandManager() {
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -60,6 +61,7 @@ public class CommandManager {    // Command classes
         powerToolCommands = new PowerToolCommands();
         mailCommands = new MailCommands();
         adminPanelCommand = new AdminPanelCommand();
+        tablistCommand = new TablistCommand();
         // ItemCommands needs CommandBuildContext which is only available during register event
     }
     
