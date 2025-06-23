@@ -1,6 +1,5 @@
 package com.zerog.neoessentials.config;
 
-import java.util.Arrays;
 import java.util.List;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
@@ -202,9 +201,7 @@ public class TablistTomlConfig {
             "Header and Footer Templates",
             "========================="
         ).push("templates");
-    }
-    
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> HEADERS = BUILDER
+    }    public static final ModConfigSpec.ConfigValue<List<String>> HEADERS = BUILDER
         .comment(
             "---------------------------------------",
             "List of header lines to display",
@@ -233,17 +230,17 @@ public class TablistTomlConfig {
             "  %memory_used%  - Server memory usage (MB)",
             "  %memory_max%   - Server maximum memory (MB)",
             "  %memory_percent% - Server memory usage percentage",
+            "  %uptime%       - Server uptime in days, hours, minutes format",
             "---------------------------------------"
         )
         .define("headers", 
-            Arrays.asList(
+            java.util.List.of(
                 "&6&l✦ &b&lNeoEssentials Server &6&l✦",
                 "&eWelcome, &a%player%&e!",
                 "&eOnline players: &a%online%/%max%",
                 "&eServer time: &a%time%"
             ));
-    
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> FOOTERS = BUILDER
+    public static final ModConfigSpec.ConfigValue<List<String>> FOOTERS = BUILDER
         .comment(
             "---------------------------------------",
             "List of footer lines to display",
@@ -251,7 +248,7 @@ public class TablistTomlConfig {
             "---------------------------------------"
         )
         .define("footers", 
-            Arrays.asList(
+            java.util.List.of(
                 "&eBalance: &a%balance% coins",
                 "&eWebsite: &awww.example.com",
                 "&eThanks for playing!",
@@ -276,12 +273,10 @@ public class TablistTomlConfig {
             "permission \"neoessentials.tablist.header.<groupname>\"",
             "---------------------------------------"
         ).push("admin");
-    }
-    
-    // Admin group headers
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> ADMIN_HEADERS = BUILDER
+    }      // Admin group headers
+    public static final ModConfigSpec.ConfigValue<List<String>> ADMIN_HEADERS = BUILDER
         .define("headers", 
-            Arrays.asList(
+            java.util.List.of(
                 "&4&l★ &c&lAdmin Panel &4&l★",
                 "&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%",
                 "&cOnline players: &f%online%/%max%"
@@ -292,12 +287,10 @@ public class TablistTomlConfig {
         
         // Add VIP group headers
         BUILDER.push("vip");
-    }
-    
-    // VIP group headers
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> VIP_HEADERS = BUILDER
+    }    // VIP group headers
+    public static final ModConfigSpec.ConfigValue<List<String>> VIP_HEADERS = BUILDER
         .define("headers", 
-            Arrays.asList(
+            java.util.List.of(
                 "&6&l⚜ &e&lVIP Perks Active &6&l⚜",
                 "&eWelcome back, &6%player%&e!",
                 "&eThank you for supporting our server!"
@@ -315,11 +308,10 @@ public class TablistTomlConfig {
             "---------------------------------------"
         ).push("admin");
     }
-    
-    // Admin group footers
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> ADMIN_FOOTERS = BUILDER
+      // Admin group footers
+    public static final ModConfigSpec.ConfigValue<List<String>> ADMIN_FOOTERS = BUILDER
         .define("footers", 
-            Arrays.asList(
+            java.util.List.of(
                 "&cAdmin Command Help: &f/neoessentials help",
                 "&cServer uptime: &f%uptime%",
                 "&cMemory usage: &f%memory_used%&c/&f%memory_max% MB"
@@ -331,11 +323,10 @@ public class TablistTomlConfig {
         // Add VIP group footers
         BUILDER.push("vip");
     }
-    
-    // VIP group footers
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> VIP_FOOTERS = BUILDER
+      // VIP group footers
+    public static final ModConfigSpec.ConfigValue<List<String>> VIP_FOOTERS = BUILDER
         .define("footers", 
-            Arrays.asList(
+            java.util.List.of(
                 "&6VIP Balance: &e%balance% coins",
                 "&6Use &e/vip help &6for a list of perks",
                 "&6Website: &ewww.example.com/vip"

@@ -131,3 +131,21 @@ When FTB Ranks is installed and LuckPerms is not, NeoEssentials integrates with 
 | `neoessentials.adminpanel.kits`           | Access kit management panel            | false   |
 | `neoessentials.adminpanel.warps`          | Access warp management panel           | false   |
 | `neoessentials.adminpanel.players`        | Access player management panel         | false   |
+
+## Tablist Permissions
+
+### Command Permissions
+- `neoessentials.command.tablist` - Base permission to use tablist commands
+- `neoessentials.command.tablist.reload` - Permission to reload the tablist configuration
+- `neoessentials.command.tablist.reset` - Permission to reset tablist configuration to defaults
+- `neoessentials.command.tablist.debug` - Permission to toggle tablist debug mode
+
+### Group-Specific Display Permissions
+- `neoessentials.tablist.header.<groupname>` - Permission to see group-specific headers
+- `neoessentials.tablist.footer.<groupname>` - Permission to see group-specific footers
+
+Examples:
+- `neoessentials.tablist.header.admin` - See admin-specific headers
+- `neoessentials.tablist.footer.vip` - See VIP-specific footers
+
+These permissions can be used to show different information to different player groups.
