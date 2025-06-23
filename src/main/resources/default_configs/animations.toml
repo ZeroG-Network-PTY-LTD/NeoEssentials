@@ -1,0 +1,86 @@
+# NeoEssentials Custom Hex Color Animations
+# Format: &#RRGGBB for hex colors
+# 
+# You can define multiple animations in this file.
+# Each animation has a name, change interval, and a list of text frames.
+# To use these animations in your tablist, use the template format:
+# animation:name_of_animation
+#
+# Example: animation:blue_gradient or animation:rainbow_wave
+
+[default]
+change-interval = 50
+texts = [
+  "&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e",
+  "&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe",
+  "&#549CD5E&#54B1DFx&#54C5EAa&#54DAF4m&#54C5EAp&#54B1DFl&#549CD5e",
+  "&#5487CBE&#549CD5x&#54B1DFa&#54C5EAm&#54DAF4p&#54C5EAl&#54B1DFe",
+  "&#5473C0E&#5487CBx&#549CD5a&#54B1DFm&#54C5EAp&#54DAF4l&#54C5EAe",
+  "&#545EB6E&#5473C0x&#5487CBa&#549CD5m&#54B1DFp&#54C5EAl&#54DAF4e",
+  "&#5473C0E&#545EB6x&#5473C0a&#5487CBm&#549CD5p&#54B1DFl&#54C5EAe",
+  "&#5487CBE&#5473C0x&#545EB6a&#5473C0m&#5487CBp&#549CD5l&#54B1DFe",
+  "&#549CD5E&#5487CBx&#5473C0a&#545EB6m&#5473C0p&#5487CBl&#549CD5e",
+  "&#54B1DFE&#549CD5x&#5487CBa&#5473C0m&#545EB6p&#5473C0l&#5487CBe",
+  "&#54C5EAE&#54B1DFx&#549CD5a&#5487CBm&#5473C0p&#545EB6l&#5473C0e",
+  "&#54DAF4E&#54C5EAx&#54B1DFa&#549CD5m&#5487CBp&#5473C0l&#545EB6e"
+]
+
+[rainbow_wave]
+change-interval = 30
+texts = [
+  "&#FF0000R&#FF7F00a&#FFFF00i&#00FF00n&#0000FFb&#4B0082o&#9400D3w",
+  "&#FF7F00R&#FFFF00a&#00FF00i&#0000FFn&#4B0082b&#9400D3o&#FF0000w",
+  "&#FFFF00R&#00FF00a&#0000FFi&#4B0082n&#9400D3b&#FF0000o&#FF7F00w",
+  "&#00FF00R&#0000FFa&#4B0082i&#9400D3n&#FF0000b&#FF7F00o&#FFFF00w",
+  "&#0000FFR&#4B0082a&#9400D3i&#FF0000n&#FF7F00b&#FFFF00o&#00FF00w",
+  "&#4B0082R&#9400D3a&#FF0000i&#FF7F00n&#FFFF00b&#00FF00o&#0000FFw"
+]
+
+[fire]
+change-interval = 40
+texts = [
+  "&#FF0000F&#FF3000i&#FF5000r&#FF7000e",
+  "&#FF1000F&#FF4000i&#FF6000r&#FF9000e",
+  "&#FF2000F&#FF5000i&#FF7000r&#FFAA00e",
+  "&#FF3000F&#FF6000i&#FF8000r&#FFC000e",
+  "&#FF4000F&#FF7000i&#FF9000r&#FFD000e",
+  "&#FF3000F&#FF6000i&#FF8000r&#FFC000e",
+  "&#FF2000F&#FF5000i&#FF7000r&#FFAA00e",
+  "&#FF1000F&#FF4000i&#FF6000r&#FF9000e"
+]
+
+[water]
+change-interval = 45
+texts = [
+  "&#0000FFW&#0033FFa&#0066FFt&#0099FFe&#00CCFFr",
+  "&#0033FFW&#0066FFa&#0099FFt&#00CCFFe&#0000FFr",
+  "&#0066FFW&#0099FFa&#00CCFFt&#0000FFe&#0033FFr",
+  "&#0099FFW&#00CCFFa&#0000FFt&#0033FFe&#0066FFr",
+  "&#00CCFFW&#0000FFa&#0033FFt&#0066FFe&#0099FFr"
+]
+
+[gold]
+change-interval = 35
+texts = [
+  "&#FFD700G&#FFCC00o&#FFC100l&#FFB600d",
+  "&#FFCC00G&#FFC100o&#FFB600l&#FFAB00d",
+  "&#FFC100G&#FFB600o&#FFAB00l&#FFA000d",
+  "&#FFB600G&#FFAB00o&#FFA000l&#FF9500d",
+  "&#FFAB00G&#FFA000o&#FF9500l&#FF8A00d",
+  "&#FFA000G&#FF9500o&#FF8A00l&#FF7F00d",
+  "&#FFAB00G&#FFA000o&#FF9500l&#FF8A00d",
+  "&#FFB600G&#FFAB00o&#FFA000l&#FF9500d",
+  "&#FFC100G&#FFB600o&#FFAB00l&#FFA000d",
+  "&#FFCC00G&#FFC100o&#FFB600l&#FFAB00d"
+]
+
+[energy]
+change-interval = 25
+texts = [
+  "&#00FF00E&#22FF22n&#44FF44e&#66FF66r&#88FF88g&#AAFFAAy",
+  "&#22FF22E&#44FF44n&#66FF66e&#88FF88r&#AAFFAAg&#00FF00y",
+  "&#44FF44E&#66FF66n&#88FF88e&#AAFFAAr&#00FF00g&#22FF22y",
+  "&#66FF66E&#88FF88n&#AAFFAAe&#00FF00r&#22FF22g&#44FF44y",
+  "&#88FF88E&#AAFFAAn&#00FF00e&#22FF22r&#44FF44g&#66FF66y",
+  "&#AAFFAAE&#00FF00n&#22FF22e&#44FF44r&#66FF66g&#88FF88y"
+]
