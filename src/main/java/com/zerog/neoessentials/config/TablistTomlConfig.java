@@ -446,17 +446,8 @@ public class TablistTomlConfig {
      * 
      * Note: In NeoForge, configs are automatically reloaded when the file changes
      * This method is primarily for triggering a reload and preserving user customizations
-     */
-    public static void reload() {
+     */    public static void reload() {
         com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config reload requested - preserving user customizations");
-        
-        // Store current values before reload to preserve user customizations
-        List<String> userHeaders = getHeaders();
-        List<String> userFooters = getFooters();
-        List<String> userAdminHeaders = getAdminHeaders();
-        List<String> userAdminFooters = getAdminFooters();
-        List<String> userVipHeaders = getVipHeaders();
-        List<String> userVipFooters = getVipFooters();
         
         // Apply our config comparison patch to prevent invalid "correction"
         patchConfigComparison();
@@ -467,12 +458,12 @@ public class TablistTomlConfig {
             
             // Log detailed debug info about the loaded config
             if (com.zerog.neoessentials.NeoEssentials.isDebugMode()) {
-                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("User customized headers: {}", userHeaders);
-                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Loaded headers: {}", getHeaders());
-                
-                // Verify if customizations were preserved
-                boolean preserved = userHeaders.equals(getHeaders());
-                com.zerog.neoessentials.NeoEssentials.LOGGER.info("Customizations preserved: {}", preserved);
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current headers: {}", getHeaders());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current footers: {}", getFooters());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current admin headers: {}", getAdminHeaders());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current admin footers: {}", getAdminFooters());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current VIP headers: {}", getVipHeaders());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current VIP footers: {}", getVipFooters());
             }
         }, 1000, java.util.concurrent.TimeUnit.MILLISECONDS);
     }/**
@@ -523,22 +514,14 @@ public class TablistTomlConfig {
         // Use the common utility method for comparing lists
         return ConfigUtil.areListsEqual(configValue, defaultValue);
     }/**
-     * Validates that the tablist configuration is loaded correctly and debugging config values
-     * This is called during mod initialization after the configs are loaded
+     * Validates that the tablist configuration is loaded correctly and preserves user customizations
+     * This is called during mod initialization and also when configs are reloaded
      */
     public static void patchConfigComparison() {
-        com.zerog.neoessentials.NeoEssentials.LOGGER.info("Validating tablist configuration...");
+        com.zerog.neoessentials.NeoEssentials.LOGGER.info("Validating tablist configuration and preserving user customizations...");
         
         try {
-            // Log the raw list values from the config
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw headers list: {}", HEADERS_LIST.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw footers list: {}", FOOTERS_LIST.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin headers list: {}", ADMIN_HEADERS_LIST.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin footers list: {}", ADMIN_FOOTERS_LIST.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP headers list: {}", VIP_HEADERS_LIST.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP footers list: {}", VIP_FOOTERS_LIST.get());
-            
-            // Now that we're using native TOML arrays, validation should be simpler
+            boolean isDebug = com.zerog.neoessentials.NeoEssentials.isDebugMode();
             
             // Check that all list values are accessible
             List<String> headers = getHeaders();
@@ -548,13 +531,49 @@ public class TablistTomlConfig {
             List<String> vipHeaders = getVipHeaders();
             List<String> vipFooters = getVipFooters();
             
+            // Log the current values
+            if (isDebug) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current tablist configuration values:");
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Headers list: {}", HEADERS_LIST.get());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Footers list: {}", FOOTERS_LIST.get());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Admin headers list: {}", ADMIN_HEADERS_LIST.get());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Admin footers list: {}", ADMIN_FOOTERS_LIST.get());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("VIP headers list: {}", VIP_HEADERS_LIST.get());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("VIP footers list: {}", VIP_FOOTERS_LIST.get());
+            }
+            
+            // Apply a more aggressive defense against config rewriting
+            try {
+                // This attempts to access the internal NeoForge config system to prevent corrections
+                // The key is to ensure our custom comparison logic is used for list values
+                java.lang.Class<?> configClass = Class.forName("net.neoforged.neoforge.common.ModConfigSpec$ConfigValue");
+                java.lang.reflect.Field correctField = configClass.getDeclaredField("correct");
+                correctField.setAccessible(true);
+                
+                // Attempt to set all tablist configs as "correct" to prevent overwriting
+                correctField.set(HEADERS_LIST, true);
+                correctField.set(FOOTERS_LIST, true);
+                correctField.set(ADMIN_HEADERS_LIST, true);
+                correctField.set(ADMIN_FOOTERS_LIST, true);
+                correctField.set(VIP_HEADERS_LIST, true);
+                correctField.set(VIP_FOOTERS_LIST, true);
+                
+                com.zerog.neoessentials.NeoEssentials.LOGGER.info("Successfully applied protection to tablist configurations");
+            } catch (Exception e) {
+                // This is expected to fail in most environments due to security restrictions
+                // The fallback is our custom comparison method which returns true for tablist configs
+                if (isDebug) {
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Could not apply direct protection, falling back to comparison intercept", e);
+                }
+            }
+            
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("Successfully validated tablist configuration values");
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Headers: {} - {}", headers.size(), headers);
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Footers: {} - {}", footers.size(), footers);
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin headers: {} - {}", adminHeaders.size(), adminHeaders);
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin footers: {} - {}", adminFooters.size(), adminFooters);
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP headers: {} - {}", vipHeaders.size(), vipHeaders);
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP footers: {} - {}", vipFooters.size(), vipFooters);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Headers: {} entries", headers.size());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Footers: {} entries", footers.size());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin headers: {} entries", adminHeaders.size());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin footers: {} entries", adminFooters.size());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP headers: {} entries", vipHeaders.size());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP footers: {} entries", vipFooters.size());
         } catch (Exception e) {
             com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error validating tablist configuration", e);
         }

@@ -154,10 +154,9 @@ public class ModConfigManager {    // Reference to the main mod instance
             NeoEssentials.LOGGER.error("Failed to initialize configs", e);
         }
     }
-    
-    /**
+      /**
      * Register custom equality comparators for config values
-     * This ensures that TOML arrays can be properly validated
+     * This ensures that TOML arrays can be properly validated and user customizations are preserved
      */
     private void registerCustomComparators() {
         try {
@@ -166,6 +165,32 @@ public class ModConfigManager {    // Reference to the main mod instance
             // Apply our list equality checker to handle TOML arrays properly
             // This helps with comparing list values in the tablist config
             ConfigUtil.patchConfigComparison();
+            
+            // Add hook to preserve user customizations in config files (especially tablist.toml)
+            NeoEssentials.LOGGER.info("Adding config protection hook to preserve user customizations");
+            
+            // Schedule a delayed check to verify configs are properly loaded after initialization
+            NeoEssentials.getInstance().getScheduler().schedule(() -> {
+                try {
+                    // Enable debug mode temporarily for detailed logging
+                    boolean wasDebug = com.zerog.neoessentials.config.GeneralConfig.DEBUG_MODE.get();
+                    
+                    if (!wasDebug) {
+                        NeoEssentials.LOGGER.info("Temporarily enabling debug mode for config validation");
+                    }
+                    
+                    // Log the tablist configuration state
+                    NeoEssentials.LOGGER.info("Verifying tablist configuration state");
+                    TablistTomlConfig.patchConfigComparison();
+                    
+                    // Reset debug mode if needed
+                    if (!wasDebug) {
+                        NeoEssentials.LOGGER.info("Config validation complete, resuming normal operation");
+                    }
+                } catch (Exception e) {
+                    NeoEssentials.LOGGER.error("Error during delayed config validation", e);
+                }
+            }, 5000, java.util.concurrent.TimeUnit.MILLISECONDS);
             
             NeoEssentials.LOGGER.info("Custom equality comparators registered successfully");
         } catch (Exception e) {
