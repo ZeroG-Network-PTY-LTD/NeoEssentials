@@ -55,4 +55,53 @@ public class ConfigUtil {
         
         com.zerog.neoessentials.NeoEssentials.LOGGER.info("Config comparison patch applied");
     }
+    
+    /**
+     * Compares two lists for equality, accounting for TOML array parsing quirks
+     * This is especially useful for checking if config values need correction
+     * 
+     * @param <T> The type of elements in the lists
+     * @param configList The list from the config file
+     * @param defaultList The default list from the code
+     * @return True if the lists are equal in content, false otherwise
+     */
+    public static <T> boolean areListsEqual(java.util.List<T> configList, java.util.List<T> defaultList) {
+        if (configList == null || defaultList == null) {
+            return configList == defaultList;
+        }
+        
+        if (configList.size() != defaultList.size()) {
+            com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Lists have different sizes: {} vs {}", configList.size(), defaultList.size());
+            return false;
+        }
+        
+        // Use a more lenient comparison for TOML arrays
+        for (int i = 0; i < configList.size(); i++) {
+            T configItem = configList.get(i);
+            T defaultItem = defaultList.get(i);
+            
+            if (configItem == null && defaultItem == null) {
+                continue;
+            }
+            
+            if ((configItem == null && defaultItem != null) || (configItem != null && defaultItem == null)) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("List items differ at index {} (null check): {} vs {}", i, configItem, defaultItem);
+                return false;
+            }
+            
+            String configStr = configItem.toString().trim();
+            String defaultStr = defaultItem.toString().trim();
+            
+            // Trim whitespace and quotes that might be added by TOML parser
+            configStr = configStr.replaceAll("^\"|\"$", "");
+            defaultStr = defaultStr.replaceAll("^\"|\"$", "");
+            
+            if (!configStr.equals(defaultStr)) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("List items differ at index {}: '{}' vs '{}'", i, configStr, defaultStr);
+                return false;
+            }
+        }
+        
+        return true;
+    }
 }
