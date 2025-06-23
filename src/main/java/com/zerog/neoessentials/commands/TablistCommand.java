@@ -10,7 +10,6 @@ import com.zerog.neoessentials.utils.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Commands to manage tablist functionality
@@ -22,7 +21,7 @@ public class TablistCommand {
      * 
      * @param dispatcher The command dispatcher
      */
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {        LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("tablist")
+    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("tablist")
             .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.tablist"))
             .then(Commands.literal("reload")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.tablist.reload"))
