@@ -86,36 +86,15 @@ public class TablistFixedLayout implements TablistLayout {
             return row * columns + col;
         }
     }
-    
-    /**
+      /**
      * Gets the total number of slots in the layout
      * @return The total number of slots
      */
     public int getTotalSlots() {
         return rows * columns;
     }
-    
-    /**
-     * Sets the number of columns in this layout
-     * @param columns The number of columns
      */
     public void setColumns(int columns) {
         this.columns = Math.max(1, Math.min(20, columns));
-    }
-    
-    /**
-     * Checks if this layout uses vertical ordering
-     * @return True if using vertical ordering, false for horizontal
-     */
-    public boolean isUsingVerticalOrder() {
-        return useVerticalOrder;
-    }
-    
-    /**
-     * Sets whether this layout uses vertical ordering
-     * @param useVerticalOrder True for vertical ordering, false for horizontal
-     */
-    public void setUseVerticalOrder(boolean useVerticalOrder) {
-        this.useVerticalOrder = useVerticalOrder;
     }
 }
