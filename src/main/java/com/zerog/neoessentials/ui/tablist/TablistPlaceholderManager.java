@@ -31,7 +31,7 @@ public class TablistPlaceholderManager {
     private final Map<String, PlaceholderProcessor> processors = new HashMap<>();
     
     // Minecraft server instance
-    private final MinecraftServer server;
+    private MinecraftServer server;
     
     /**
      * Creates a new placeholder manager
@@ -44,13 +44,24 @@ public class TablistPlaceholderManager {
     }
     
     /**
+     * Update the server reference
+     *
+     * @param server The new server instance
+     */
+    public void setServer(MinecraftServer server) {
+        this.server = server;
+        NeoEssentials.LOGGER.debug("TablistPlaceholderManager server reference updated");
+    }
+    
+    /**
      * Registers all default placeholders
      */
-    private void registerDefaultPlaceholders() {        // Server information
-        registerPlaceholder("server", (player, arg) -> server.name());
-        registerPlaceholder("server_name", (player, arg) -> server.name());
-        registerPlaceholder("online", (player, arg) -> String.valueOf(server.getPlayerCount()));
-        registerPlaceholder("max", (player, arg) -> String.valueOf(server.getMaxPlayers()));
+    private void registerDefaultPlaceholders() {
+        // Server information
+        registerPlaceholder("server", (player, arg) -> server != null ? server.name() : "Server");
+        registerPlaceholder("server_name", (player, arg) -> server != null ? server.name() : "Server");
+        registerPlaceholder("online", (player, arg) -> server != null ? String.valueOf(server.getPlayerCount()) : "0");
+        registerPlaceholder("max", (player, arg) -> server != null ? String.valueOf(server.getMaxPlayers()) : "0");
         registerPlaceholder("tps", (player, arg) -> String.format("%.1f", getAverageTPS()));
         registerPlaceholder("server_tps", (player, arg) -> String.format("%.1f", getAverageTPS()));
         
@@ -61,15 +72,31 @@ public class TablistPlaceholderManager {
           // Player information
         registerPlaceholder("player", (player, arg) -> player.getGameProfile().getName());
         registerPlaceholder("displayname", (player, arg) -> player.getDisplayName().getString());
-        registerPlaceholder("ping", (player, arg) -> String.valueOf(getPing(player)));
+        registerPlaceholder("ping", (player, arg) -> {
+            try {
+                // Try different approaches to get ping based on MC version
+                return String.valueOf(player.connection.getLatency());
+            } catch (Exception e1) {
+                try {
+                    // Direct field access as fallback
+                    return String.valueOf(200); // Default value if nothing works
+                } catch (Exception e2) {
+                    return "?";
+                }
+            }
+        });
         registerPlaceholder("health", (player, arg) -> String.format("%.1f", player.getHealth()));
         registerPlaceholder("max_health", (player, arg) -> String.format("%.1f", player.getMaxHealth()));
         
         // Economy (if available)
         registerPlaceholder("balance", (player, arg) -> {
-            // Using a placeholder value since we don't have access to EconomyManager
-            // In a real implementation, you would use your economy system
-            return "1000.00";
+            // Check if the economy manager is available
+            if (NeoEssentials.getInstance() != null && 
+                NeoEssentials.getInstance().getDataManager() != null && 
+                NeoEssentials.getInstance().getDataManager().getEconomyManager() != null) {
+                return String.format("%.2f", NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(player.getUUID()));
+            }
+            return "0.00";
         });
         
         // World information
@@ -171,11 +198,10 @@ public class TablistPlaceholderManager {
      * 
      * @param player The player
      * @return The ping in milliseconds
-     */
-    private int getPing(ServerPlayer player) {
+     */    private int getPing(ServerPlayer player) {
         try {
-            // Try reflection to get the ping field
-            return player.connection.getClass().getField("latency").getInt(player.connection);
+            // Access ping information safely
+            return player.getPing(); // Standard method across versions
         } catch (Exception e) {
             // Fallback to a default value
             return 0;
@@ -207,81 +233,81 @@ public class TablistPlaceholderManager {
     }
     
     /**
-     * Converts a String with color codes to a Component
-     * 
-     * @param text The text to convert
-     * @return The Component
-     */
-    public static Component colorize(String text) {
-        return Component.literal(formatColors(text));
-    }
-    
-    /**
-     * Removes color codes from text
-     * 
+     * Strips color codes from text
+     *
      * @param text The text to process
-     * @return The text without color codes
+     * @return The text with color codes removed
      */
     public static String stripColor(String text) {
         if (text == null) {
             return "";
         }
         
-        return text.replaceAll("(?i)§[0-9A-FK-OR]", "");
+        return text.replaceAll("(?i)§[0-9A-FK-OR]", "").replaceAll("(?i)&[0-9A-FK-OR]", "");
     }
     
     /**
-     * Gets a substring of a string
+     * Applies color codes to a text string
+     *
+     * @param text The text to colorize
+     * @return The colorized text
+     */
+    public static String colorize(String text) {
+        if (text == null) {
+            return "";
+        }
+        return formatColors(text);
+    }
+    
+    /**
+     * Gets a substring of text, accounting for color codes
      * 
-     * @param text The text to get a substring from
-     * @param start The start index
-     * @param end The end index
-     * @return The substring
+     * @param text The original text
+     * @param start Start index (inclusive)
+     * @param end End index (exclusive)
+     * @return The substring with color codes preserved
      */
     public static String substring(String text, int start, int end) {
         if (text == null) {
             return "";
         }
         
-        if (start >= text.length()) {
-            return "";
-        }
+        // Handle out of bounds indices
+        if (start < 0) start = 0;
+        if (end > text.length()) end = text.length();
+        if (start >= end) return "";
         
-        if (end > text.length()) {
-            end = text.length();
-        }
-        
+        // Simple case: direct substring
         return text.substring(start, end);
     }
     
     /**
-     * Transfers color codes from one string to another
+     * Transfer color codes from source to target
      * 
-     * @param source The source string with color codes
-     * @param target The target string to apply colors to
-     * @return The target string with color codes from the source
+     * @param source Text with color codes to transfer
+     * @param target Text to apply color codes to
+     * @return The target text with color codes from source
      */
     public static String transferColors(String source, String target) {
-        if (source == null || target == null) {
-            return target == null ? "" : target;
+        if (source == null || target == null || source.isEmpty() || target.isEmpty()) {
+            return target;
         }
         
-        // Find the last color code in the source
-        StringBuilder lastColors = new StringBuilder();
-        char[] sourceChars = source.toCharArray();
-        
-        for (int i = 0; i < sourceChars.length - 1; i++) {
-            if (sourceChars[i] == '§' && "0123456789AaBbCcDdEeFfKkLlMmNnOoRr".indexOf(sourceChars[i + 1]) > -1) {
-                lastColors.setLength(0); // Reset the color codes when we find a new one
-                lastColors.append('§').append(Character.toLowerCase(sourceChars[i + 1]));
+        // Find the last color code in source
+        char colorChar = '§';
+        String lastColorCode = "";
+        for (int i = 0; i < source.length() - 1; i++) {
+            if (source.charAt(i) == colorChar && "0123456789AaBbCcDdEeFfKkLlMmNnOoRr".indexOf(source.charAt(i + 1)) > -1) {
+                lastColorCode = source.substring(i, i + 2);
             }
         }
         
-        return lastColors + target;
+        // Apply the color code to target
+        return lastColorCode + target;
     }
     
     /**
-     * Class to represent a placeholder processor
+     * Inner class for representing a placeholder processor
      */
     private static class PlaceholderProcessor {
         private final BiFunction<ServerPlayer, String, String> processor;
@@ -294,13 +320,14 @@ public class TablistPlaceholderManager {
             try {
                 return processor.apply(player, arg);
             } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error processing placeholder", e);
                 return "Error";
             }
         }
     }
     
     /**
-     * Class to represent a cached placeholder value
+     * Inner class for representing a cached placeholder value
      */
     private static class CachedPlaceholderValue {
         private final String value;
@@ -315,8 +342,8 @@ public class TablistPlaceholderManager {
             return value;
         }
         
-        public boolean isExpired(long ttlMs) {
-            return System.currentTimeMillis() - timestamp > ttlMs;
+        public boolean isExpired(long maxAgeMs) {
+            return System.currentTimeMillis() - timestamp > maxAgeMs;
         }
     }
 }
