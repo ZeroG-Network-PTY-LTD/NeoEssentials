@@ -19,8 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class TablistAnimationManager {    /**
      * Enum defining the different types of animations available
-     */
-    public enum AnimationType {
+     */    public enum AnimationType {
         NONE("none"),
         ROTATION("rotation"),
         SCROLL("scroll"),
@@ -28,7 +27,9 @@ public class TablistAnimationManager {    /**
         RAINBOW("rainbow"),
         TYPEWRITER("typewriter"),
         BLINK("blink"),
-        WAVE("wave");
+        WAVE("wave"),
+        GRADIENT("gradient"),
+        PULSE("pulse");
         
         private final String configValue;
         
@@ -68,6 +69,8 @@ public class TablistAnimationManager {    /**
         animationProcessors.put(AnimationType.TYPEWRITER, new TypewriterAnimationProcessor());
         animationProcessors.put(AnimationType.BLINK, new BlinkAnimationProcessor());
         animationProcessors.put(AnimationType.WAVE, new WaveAnimationProcessor());
+        animationProcessors.put(AnimationType.GRADIENT, new GradientAnimationProcessor());
+        animationProcessors.put(AnimationType.PULSE, new PulseAnimationProcessor());
         
         NeoEssentials.LOGGER.info("TablistAnimationManager initialized with {} animation types", animationProcessors.size());
     }

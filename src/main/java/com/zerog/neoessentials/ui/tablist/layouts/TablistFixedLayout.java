@@ -85,16 +85,10 @@ public class TablistFixedLayout implements TablistLayout {
             // Horizontal order: fill rows first, then columns
             return row * columns + col;
         }
-    }
-      /**
+    }    /**
      * Gets the total number of slots in the layout
      * @return The total number of slots
-     */
-    public int getTotalSlots() {
+     */    public int getTotalSlots() {
         return rows * columns;
-    }
-     */
-    public void setColumns(int columns) {
-        this.columns = Math.max(1, Math.min(20, columns));
     }
 }
