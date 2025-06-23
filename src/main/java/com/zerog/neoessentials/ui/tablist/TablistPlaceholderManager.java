@@ -145,8 +145,7 @@ public class TablistPlaceholderManager {
         });
         
         NeoEssentials.LOGGER.info("Registered {} default placeholders", processors.size());    }
-    
-    /**
+      /**
      * Registers default custom placeholders with parameter support
      */
     private void registerDefaultCustomPlaceholders() {
