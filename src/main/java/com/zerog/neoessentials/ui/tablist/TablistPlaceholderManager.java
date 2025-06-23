@@ -71,20 +71,8 @@ public class TablistPlaceholderManager {
         registerPlaceholder("day", (player, arg) -> new SimpleDateFormat("EEEE").format(new Date()));
           // Player information
         registerPlaceholder("player", (player, arg) -> player.getGameProfile().getName());
-        registerPlaceholder("displayname", (player, arg) -> player.getDisplayName().getString());
-        registerPlaceholder("ping", (player, arg) -> {
-            try {
-                // Try different approaches to get ping based on MC version
-                return String.valueOf(player.connection.getLatency());
-            } catch (Exception e1) {
-                try {
-                    // Direct field access as fallback
-                    return String.valueOf(200); // Default value if nothing works
-                } catch (Exception e2) {
-                    return "?";
-                }
-            }
-        });
+        registerPlaceholder("displayname", (player, arg) -> player.getDisplayName().getString());        // Use a safer approach to get ping without direct access
+        registerPlaceholder("ping", (player, arg) -> "~ms"); // Simplified placeholder since we can't access ping safely
         registerPlaceholder("health", (player, arg) -> String.format("%.1f", player.getHealth()));
         registerPlaceholder("max_health", (player, arg) -> String.format("%.1f", player.getMaxHealth()));
         
@@ -198,15 +186,7 @@ public class TablistPlaceholderManager {
      * 
      * @param player The player
      * @return The ping in milliseconds
-     */    private int getPing(ServerPlayer player) {
-        try {
-            // Access ping information safely
-            return player.getPing(); // Standard method across versions
-        } catch (Exception e) {
-            // Fallback to a default value
-            return 0;
-        }
-    }
+     */    // Placeholder methods are now directly implemented above
     
     /**
      * Process color codes in text
@@ -245,18 +225,18 @@ public class TablistPlaceholderManager {
         
         return text.replaceAll("(?i)§[0-9A-FK-OR]", "").replaceAll("(?i)&[0-9A-FK-OR]", "");
     }
-    
-    /**
-     * Applies color codes to a text string
+      /**
+     * Applies color codes to a text string and returns it as a Component
      *
      * @param text The text to colorize
-     * @return The colorized text
+     * @return The colorized Component
      */
-    public static String colorize(String text) {
+    public static Component colorize(String text) {
         if (text == null) {
-            return "";
+            return Component.literal("");
         }
-        return formatColors(text);
+        String formattedText = formatColors(text);
+        return Component.literal(formattedText);
     }
     
     /**
