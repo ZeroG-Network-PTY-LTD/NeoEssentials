@@ -496,8 +496,7 @@ public class TablistTomlConfig {
             com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error in tablist configuration setup", e);
         }
     }
-    
-    /**
+      /**
      * Implements a custom equality check for list-based config entries
      * This method overrides the default NeoForge config validation logic which 
      * incorrectly marks some list-based configurations as "not correct" during startup.
@@ -512,20 +511,30 @@ public class TablistTomlConfig {
         }
         
         if (configValue.size() != defaultValue.size()) {
+            com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Lists have different sizes: {} vs {}", configValue.size(), defaultValue.size());
             return false;
         }
         
+        // Use a more lenient comparison for TOML arrays
         for (int i = 0; i < configValue.size(); i++) {
             Object configItem = configValue.get(i);
             Object defaultItem = defaultValue.get(i);
             
-            if (!configItem.toString().equals(defaultItem.toString())) {
+            String configStr = configItem != null ? configItem.toString() : "null";
+            String defaultStr = defaultItem != null ? defaultItem.toString() : "null";
+            
+            // Trim whitespace and quotes that might be added by TOML parser
+            configStr = configStr.trim().replaceAll("^\"|\"$", "");
+            defaultStr = defaultStr.trim().replaceAll("^\"|\"$", "");
+            
+            if (!configStr.equals(defaultStr)) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("List items differ at index {}: '{}' vs '{}'", i, configStr, defaultStr);
                 return false;
             }
         }
         
         return true;
-    }    /**
+    }/**
      * Validates that the tablist configuration is loaded correctly and debugging config values
      * This is called during mod initialization after the configs are loaded
      */

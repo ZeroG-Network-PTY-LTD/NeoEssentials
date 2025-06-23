@@ -125,11 +125,11 @@ public class ModConfigManager {    // Reference to the main mod instance
             NeoEssentials.LOGGER.info("Created new compatibility config instance");
         }
         return compatConfig;
-    }
-      /**
+    }    /**
      * Initialize config values after all configs are loaded
      * This should be called after the mod loading phase when config values are available
-     */    public void initializeConfigs() {
+     */    
+    public void initializeConfigs() {
         NeoEssentials.LOGGER.info("Initializing config values");
         try {
             // Check if configs are available before initializing
@@ -143,12 +143,33 @@ public class ModConfigManager {    // Reference to the main mod instance
                 NeoEssentials.LOGGER.info("Compatibility config layer initialized successfully");
             }
             
+            // Register our custom list comparison logic for tablist array configs
+            registerCustomComparators();
+            
             // Now that configs are loaded, set up the tablist config validation
             // This ensures we only run the validation after configs are available
             TablistTomlConfig.setup();
             NeoEssentials.LOGGER.info("Tablist config validation initialized");
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to initialize configs", e);
+        }
+    }
+    
+    /**
+     * Register custom equality comparators for config values
+     * This ensures that TOML arrays can be properly validated
+     */
+    private void registerCustomComparators() {
+        try {
+            NeoEssentials.LOGGER.info("Registering custom equality comparators for config values");
+            
+            // Apply our list equality checker to handle TOML arrays properly
+            // This helps with comparing list values in the tablist config
+            ConfigUtil.patchConfigComparison();
+            
+            NeoEssentials.LOGGER.info("Custom equality comparators registered successfully");
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to register custom equality comparators", e);
         }
     }
 }
