@@ -8,8 +8,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
@@ -108,6 +110,27 @@ public class TablistPlaceholderManager {
             return String.format("%.1f%%", (used * 100.0) / max);
         });
         
+        // Server uptime
+        registerPlaceholder("uptime", (player, arg) -> {
+            if (server == null) return "Server offline";
+            
+            long ticks = server.getTickCount();
+            long seconds = ticks / 20;
+            long minutes = seconds / 60;
+            long hours = minutes / 60;
+            long days = hours / 24;
+            
+            if (days > 0) {
+                return days + "d " + (hours % 24) + "h " + (minutes % 60) + "m";
+            } else if (hours > 0) {
+                return hours + "h " + (minutes % 60) + "m " + (seconds % 60) + "s";
+            } else if (minutes > 0) {
+                return minutes + "m " + (seconds % 60) + "s";
+            } else {
+                return seconds + "s";
+            }
+        });
+        
         NeoEssentials.LOGGER.info("Registered {} default placeholders", processors.size());
     }
     
@@ -128,10 +151,14 @@ public class TablistPlaceholderManager {
      * @param text The text to process
      * @param player The player to process placeholders for
      * @return The processed text with placeholders replaced
-     */
-    public String processPlaceholders(String text, ServerPlayer player) {
+     */    public String processPlaceholders(String text, ServerPlayer player) {
         if (text == null || text.isEmpty() || player == null) {
             return text;
+        }
+        
+        // Check for missing placeholders first (only in debug mode)
+        if (NeoEssentials.LOGGER.isDebugEnabled()) {
+            logMissingPlaceholders(text);
         }
         
         StringBuffer result = new StringBuffer();
@@ -142,8 +169,19 @@ public class TablistPlaceholderManager {
             PlaceholderProcessor processor = processors.get(placeholderName);
             
             if (processor != null) {
-                String replacement = processor.process(player, "");
-                matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+                try {
+                    String replacement = processor.process(player, "");
+                    matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+                } catch (Exception e) {
+                    // Handle processing errors gracefully
+                    NeoEssentials.LOGGER.error("Error processing placeholder %{}%: {}", 
+                        placeholderName, e.getMessage());
+                    matcher.appendReplacement(result, Matcher.quoteReplacement("[Error]"));
+                }
+            } else {
+                // Leave unknown placeholders as is
+                matcher.appendReplacement(result, Matcher.quoteReplacement(
+                    "%" + placeholderName + "%"));
             }
         }
         
@@ -324,6 +362,41 @@ public class TablistPlaceholderManager {
         
         public boolean isExpired(long maxAgeMs) {
             return System.currentTimeMillis() - timestamp > maxAgeMs;
+        }
+    }
+    
+    /**
+     * Debugging method to help identify missing placeholders
+     *
+     * @param text Text with placeholders
+     * @return List of unhandled placeholders
+     */
+    private List<String> findMissingPlaceholders(String text) {
+        List<String> missing = new ArrayList<>();
+        if (text == null || text.isEmpty()) {
+            return missing;
+        }
+        
+        Matcher matcher = PLACEHOLDER_PATTERN.matcher(text);
+        while (matcher.find()) {
+            String placeholder = matcher.group(2).toLowerCase();
+            if (!processors.containsKey(placeholder)) {
+                missing.add(placeholder);
+            }
+        }
+        
+        return missing;
+    }
+    
+    /**
+     * Logs any missing placeholders found in the text
+     * 
+     * @param text Text to check for missing placeholders
+     */
+    public void logMissingPlaceholders(String text) {
+        List<String> missing = findMissingPlaceholders(text);
+        if (!missing.isEmpty()) {
+            NeoEssentials.LOGGER.warn("Missing placeholders in text: {}", String.join(", ", missing));
         }
     }
 }
