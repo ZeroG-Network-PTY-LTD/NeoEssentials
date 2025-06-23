@@ -6,6 +6,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,8 +90,7 @@ public class TablistAnimationManager {    /**
     public void removePlayer(UUID playerId) {
         playerStates.remove(playerId);
     }
-    
-    /**
+      /**
      * Updates the animation frame for all players
      */
     public void updateAnimationFrames() {
@@ -98,6 +98,54 @@ public class TablistAnimationManager {    /**
             state.headerFrame++;
             state.footerFrame++;
         });
+    }
+    
+    /**
+     * Creates an animated component from a list of text lines
+     * 
+     * @param player The player to create the component for
+     * @param lines The lines of text to animate
+     * @param animationTypeStr The animation type name
+     * @param placeholderManager The placeholder manager
+     * @return The animated component
+     */
+    public Component createAnimatedComponent(
+            ServerPlayer player,
+            List<String> lines,
+            String animationTypeStr,
+            TablistPlaceholderManager placeholderManager) {
+        
+        // Convert type string to enum
+        AnimationType animationType = AnimationType.fromConfigValue(animationTypeStr);
+        
+        // Get the processor
+        AnimationProcessor processor = animationProcessors.get(animationType);
+        if (processor == null) {
+            // Default to no animation
+            processor = animationProcessors.get(AnimationType.NONE);
+        }
+        
+        // Process placeholders
+        List<String> processedLines = new ArrayList<>();
+        for (String line : lines) {
+            processedLines.add(placeholderManager.processPlaceholders(line, player));
+        }
+        
+        // Get player state
+        PlayerAnimationState state = getPlayerState(player);
+        
+        // Process the animation frame
+        String text = processor.processFrame(
+            processedLines,
+            player,
+            state.headerFrame
+        );
+        
+        // Process color codes
+        text = TablistPlaceholderManager.formatColors(text);
+        
+        // Return as component
+        return net.minecraft.network.chat.Component.literal(text);
     }
     
     /**
