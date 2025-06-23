@@ -80,3 +80,25 @@ Consider setting up a GitHub Wiki with the following sections:
 8. Troubleshooting
 
 This would complement the in-repo documentation and provide a more interactive way for users to find information.
+
+## Updated/Expanded Documentation
+
+1. **Tablist Animation System**
+   - `docs/TABLIST_ANIMATIONS.md`: Comprehensive guide to the tablist animation system
+   - Added detailed examples for all animation types:
+     - Rotation animation
+     - Scroll animation
+     - Fade animation
+     - Rainbow animation
+     - Typewriter animation
+     - Blink animation
+     - Wave animation
+   - Complete working configuration examples with visual explanations
+   - New section on placeholder support with %uptime% and other placeholders
+   - Troubleshooting guides for common animation issues
+
+2. **Command Documentation**
+   - Added documentation for `/tablist` commands
+     - `/tablist reload` - Reload tablist configuration
+     - `/tablist reset` - Reset tablist config to defaults
+     - `/tablist debug` - Toggle tablist debug mode
