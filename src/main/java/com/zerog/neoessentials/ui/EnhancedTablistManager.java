@@ -366,4 +366,49 @@ public class EnhancedTablistManager {
         // This is the same as onPlayerDisconnect
         onPlayerDisconnect(player);
     }
+    
+    /**
+     * Reloads the tablist configuration and restarts the service
+     * 
+     * @param forceExtractConfig Whether to force extract the default config
+     * @return True if successful, false otherwise
+     */
+    public boolean reload(boolean forceExtractConfig) {
+        NeoEssentials.LOGGER.info("Reloading tablist configuration...");
+        
+        // Optionally force extract the config
+        if (forceExtractConfig) {
+            boolean extracted = com.zerog.neoessentials.utils.ResourceManager.forceExtractTablistConfig();
+            if (!extracted) {
+                NeoEssentials.LOGGER.warn("Failed to extract tablist config");
+                return false;
+            }
+            
+            // Give config system time to detect the change
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        
+        // Reload configs
+        TablistTomlConfig.reload();
+        
+        // Stop current task
+        if (updateTask != null) {
+            updateTask.cancel(false);
+            updateTask = null;
+        }
+        
+        // Reload headers and footers
+        loadHeadersAndFooters();
+        
+        // Restart the update task
+        long updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
+        startUpdateTask(updateInterval);
+        
+        NeoEssentials.LOGGER.info("Tablist reloaded successfully");
+        return true;
+    }
 }

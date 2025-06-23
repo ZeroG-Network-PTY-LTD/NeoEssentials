@@ -347,4 +347,21 @@ public class TablistTomlConfig {
     }
     
     public static final ModConfigSpec SPEC = BUILDER.build();
+      /**
+     * Reloads the tablist configuration from disk
+     * 
+     * Note: In NeoForge, configs are automatically reloaded when the file changes
+     * This method is primarily for triggering a reload
+     */
+    public static void reload() {
+        com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config reload requested");
+        
+        // This is primarily a notification - NeoForge will automatically reload the file
+        // when it detects changes, so we don't need to manually trigger the reload
+        
+        // We could optionally force a reload on the next tick via a scheduler
+        com.zerog.neoessentials.NeoEssentials.getInstance().getScheduler().schedule(() -> {
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config should now be reloaded");
+        }, 1000, java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
 }

@@ -170,4 +170,47 @@ public class ResourceManager {
             return null;
         }
     }
+
+    /**
+     * Force extracts the tablist.toml file, creating a backup of the existing one if it exists.
+     * This is useful when troubleshooting animation or placeholder issues.
+     * 
+     * @return True if the extraction was successful, false otherwise
+     */
+    public static boolean forceExtractTablistConfig() {
+        Path configDir = FMLPaths.CONFIGDIR.get().resolve("neoessentials");
+        String fileName = "tablist.toml";
+        Path configPath = configDir.resolve(fileName);
+        
+        try {
+            // Create config directory if it doesn't exist
+            if (!Files.exists(configDir)) {
+                Files.createDirectories(configDir);
+                NeoEssentials.LOGGER.info("Created config directory: {}", configDir);
+            }
+            
+            // If file exists, make a backup
+            if (Files.exists(configPath)) {
+                Path backupPath = configDir.resolve(fileName + ".backup-" + System.currentTimeMillis() + ".toml");
+                Files.copy(configPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                NeoEssentials.LOGGER.info("Created backup of existing tablist.toml at: {}", backupPath);
+            }
+            
+            // Extract the resource
+            String resourceContent = readResourceFile("/default_configs/" + fileName);
+            if (resourceContent == null) {
+                NeoEssentials.LOGGER.error("Could not find default tablist.toml in resources");
+                return false;
+            }
+            
+            // Write the content
+            Files.write(configPath, resourceContent.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            NeoEssentials.LOGGER.info("Successfully extracted fresh tablist.toml configuration to: {}", configPath);
+            
+            return true;
+        } catch (IOException e) {
+            NeoEssentials.LOGGER.error("Failed to extract tablist.toml", e);
+            return false;
+        }
+    }
 }
