@@ -30,9 +30,11 @@ public class TablistPlaceholderManager {
     
     // Cache for expensive placeholder values
     private final Map<String, CachedPlaceholderValue> placeholderCache = new ConcurrentHashMap<>();
-    
-    // Placeholder processors mapped by name
+      // Placeholder processors mapped by name
     private final Map<String, PlaceholderProcessor> processors = new HashMap<>();
+    
+    // Custom placeholder registry
+    private final CustomPlaceholderRegistry customPlaceholderRegistry = new CustomPlaceholderRegistry();
     
     // Minecraft server instance
     private MinecraftServer server;
@@ -45,6 +47,15 @@ public class TablistPlaceholderManager {
     public TablistPlaceholderManager(MinecraftServer server) {
         this.server = server;
         registerDefaultPlaceholders();
+        registerDefaultCustomPlaceholders();
+    }
+    
+    /**
+     * Gets the custom placeholder registry
+     * @return The custom placeholder registry
+     */
+    public CustomPlaceholderRegistry getCustomPlaceholderRegistry() {
+        return customPlaceholderRegistry;
     }
     
     /**
@@ -133,7 +144,126 @@ public class TablistPlaceholderManager {
             }
         });
         
-        NeoEssentials.LOGGER.info("Registered {} default placeholders", processors.size());
+        NeoEssentials.LOGGER.info("Registered {} default placeholders", processors.size());    }
+    
+    /**
+     * Registers default custom placeholders with parameter support
+     */
+    private void registerDefaultCustomPlaceholders() {
+        // Register custom placeholder for ranks with optional formatting
+        customPlaceholderRegistry.register(new CustomPlaceholder(
+            "rank",
+            "Shows player's rank with optional color/formatting",
+            (player, args) -> {
+                String group = determinePlayerGroup(player);
+                if (args.length > 0) {
+                    // If format specifier provided, apply it
+                    return args[0] + group;
+                }
+                return group;
+            }
+        ));
+        
+        // Register custom placeholder for conditional text
+        customPlaceholderRegistry.register(new CustomPlaceholder(
+            "if",
+            "Conditional text based on comparison: %if:value1,op,value2,trueText,falseText%",
+            (player, args) -> {
+                if (args.length < 5) return "[Invalid if format]";
+                
+                String val1 = args[0];
+                String op = args[1];
+                String val2 = args[2];
+                String trueText = args[3];
+                String falseText = args[4];
+                
+                boolean result = false;
+                try {
+                    switch (op) {
+                        case "=":
+                        case "==":
+                            result = val1.equals(val2);
+                            break;
+                        case "!=":
+                            result = !val1.equals(val2);
+                            break;
+                        case ">":
+                            result = Double.parseDouble(val1) > Double.parseDouble(val2);
+                            break;
+                        case "<":
+                            result = Double.parseDouble(val1) < Double.parseDouble(val2);
+                            break;
+                        case ">=":
+                            result = Double.parseDouble(val1) >= Double.parseDouble(val2);
+                            break;
+                        case "<=":
+                            result = Double.parseDouble(val1) <= Double.parseDouble(val2);
+                            break;
+                        default:
+                            return "[Invalid operator: " + op + "]";
+                    }
+                } catch (NumberFormatException e) {
+                    // For non-numeric comparisons, default to string comparison
+                    result = val1.equals(val2);
+                }
+                
+                return result ? trueText : falseText;
+            }
+        ));
+        
+        // Progress bar placeholder
+        customPlaceholderRegistry.register(new CustomPlaceholder(
+            "progress",
+            "Shows a progress bar: %progress:value,max,length,filledChar,emptyChar%",
+            (player, args) -> {
+                if (args.length < 5) return "[Invalid progress format]";
+                
+                try {
+                    double value = Double.parseDouble(args[0]);
+                    double max = Double.parseDouble(args[1]);
+                    int length = Integer.parseInt(args[2]);
+                    String filledChar = args[3];
+                    String emptyChar = args[4];
+                    
+                    double percentage = Math.max(0, Math.min(1, value / max));
+                    int filledCount = (int) Math.round(length * percentage);
+                    int emptyCount = length - filledCount;
+                    
+                    StringBuilder bar = new StringBuilder();
+                    for (int i = 0; i < filledCount; i++) {
+                        bar.append(filledChar);
+                    }
+                    for (int i = 0; i < emptyCount; i++) {
+                        bar.append(emptyChar);
+                    }
+                    
+                    return bar.toString();
+                } catch (NumberFormatException e) {
+                    return "[Invalid number format]";
+                }
+            }
+        ));
+        
+        NeoEssentials.LOGGER.info("Registered default custom placeholders");
+    }
+    
+    /**
+     * Determines the player's group based on permissions
+     * @param player The player
+     * @return The player's group name
+     */
+    private String determinePlayerGroup(ServerPlayer player) {
+        // This is a placeholder method - the actual implementation
+        // would use a permission system to determine the player's group
+        if (player.hasPermissions(4)) {
+            return "admin";
+        } else if (player.hasPermissions(2)) {
+            return "mod";
+        } else if (player.hasPermissions(1)) {
+            return "vip";
+        } else {
+            return "default";
+        }
     }
     
     /**
@@ -163,6 +293,7 @@ public class TablistPlaceholderManager {
             logMissingPlaceholders(text);
         }
         
+        // First process standard placeholders
         StringBuffer result = new StringBuffer();
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(text);
         
@@ -181,14 +312,18 @@ public class TablistPlaceholderManager {
                     matcher.appendReplacement(result, Matcher.quoteReplacement("[Error]"));
                 }
             } else {
-                // Leave unknown placeholders as is
+                // Leave unknown placeholders as is - they might be custom placeholders
+                // that will be processed in the next step
                 matcher.appendReplacement(result, Matcher.quoteReplacement(
                     "%" + placeholderName + "%"));
             }
         }
+          matcher.appendTail(result);
         
-        matcher.appendTail(result);
-        return result.toString();
+        // Now process custom placeholders with arguments
+        String processed = customPlaceholderRegistry.processPlaceholders(result.toString(), player);
+        
+        return processed;
     }
     
     /**
