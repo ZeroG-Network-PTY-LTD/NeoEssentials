@@ -2,6 +2,8 @@ package com.zerog.neoessentials.ui.tablist;
 
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.EconomyManager;
+import com.zerog.neoessentials.ui.tablist.placeholders.CustomPlaceholder;
+import com.zerog.neoessentials.ui.tablist.placeholders.CustomPlaceholderRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
