@@ -34,9 +34,8 @@ public class ModConfigManager {    // Reference to the main mod instance
         container.registerConfig(ModConfig.Type.COMMON, DatabaseTomlConfig.SPEC, "neoessentials/database.toml");
         
         NeoEssentials.LOGGER.info("Registered all NeoEssentials config files");
-        
-        // Initialize the tablist config with our fix for list-based configurations
-        TablistTomlConfig.setup();
+          // We'll set up the tablist config later, during initialization
+        // TablistTomlConfig.setup() is now called during mod initialization
     }
     
     /**
@@ -130,8 +129,7 @@ public class ModConfigManager {    // Reference to the main mod instance
       /**
      * Initialize config values after all configs are loaded
      * This should be called after the mod loading phase when config values are available
-     */
-    public void initializeConfigs() {
+     */    public void initializeConfigs() {
         NeoEssentials.LOGGER.info("Initializing config values");
         try {
             // Check if configs are available before initializing
@@ -144,6 +142,11 @@ public class ModConfigManager {    // Reference to the main mod instance
                 compatConfig.initialize();
                 NeoEssentials.LOGGER.info("Compatibility config layer initialized successfully");
             }
+            
+            // Now that configs are loaded, set up the tablist config validation
+            // This ensures we only run the validation after configs are available
+            TablistTomlConfig.setup();
+            NeoEssentials.LOGGER.info("Tablist config validation initialized");
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to initialize configs", e);
         }

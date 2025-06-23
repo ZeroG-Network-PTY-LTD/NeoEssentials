@@ -202,8 +202,7 @@ public class TablistTomlConfig {
             "========================="
         ).push("templates");
     }    // Define the headers as string literal instead of List<String> to avoid equality comparison issues
-    // This is a workaround for NeoForge's config validation system having issues with List equality
-    public static final ModConfigSpec.ConfigValue<String> HEADERS_STRING = BUILDER
+    // This is a workaround for NeoForge's config validation system having issues with List equality    public static final ModConfigSpec.ConfigValue<String> HEADERS_STRING = BUILDER
         .comment(
             "---------------------------------------",
             "List of header lines to display (JSON string format)",
@@ -235,7 +234,7 @@ public class TablistTomlConfig {
             "  %uptime%       - Server uptime in days, hours, minutes format",
             "---------------------------------------"
         )
-        .define("headers", "[\"&6&l✦ &b&lNeoEssentials Server &6&l✦\",\"&eWelcome, &a%player%&e!\",\"&eOnline players: &a%online%/%max%\",\"&eServer time: &a%time%\"]");
+        .define("headers", "[\"&6&l✦ &b&lNeoEssentials Server &6&l✦\", \"&eWelcome, &a%player%&e!\", \"&eOnline players: &a%online%/%max%\", \"&eServer time: &a%time%\"]");
         
     // Define a getter method to parse the string back into a List<String>
     public static List<String> getHeaders() {
@@ -258,7 +257,7 @@ public class TablistTomlConfig {
             "Uses the same formatting and placeholders as headers",
             "---------------------------------------"
         )
-        .define("footers", "[\"&eBalance: &a%balance% coins\",\"&eWebsite: &awww.example.com\",\"&eThanks for playing!\",\"&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%\"]");
+        .define("footers", "[\"&eBalance: &a%balance% coins\", \"&eWebsite: &awww.example.com\", \"&eThanks for playing!\", \"&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%\"]");
     
     // Define a getter method to parse the string back into a List<String>
     public static List<String> getFooters() {
@@ -295,7 +294,7 @@ public class TablistTomlConfig {
         ).push("admin");
     }        // Admin group headers    
     public static final ModConfigSpec.ConfigValue<String> ADMIN_HEADERS_STRING = BUILDER
-        .define("headers", "[\"&4&l★ &c&lAdmin Panel &4&l★\",\"&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%\",\"&cOnline players: &f%online%/%max%\"]");
+        .define("headers", "[\"&4&l★ &c&lAdmin Panel &4&l★\", \"&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%\", \"&cOnline players: &f%online%/%max%\"]");
     
     // Define a getter method to parse the string back into a List<String>
     public static List<String> getAdminHeaders() {
@@ -317,13 +316,22 @@ public class TablistTomlConfig {
         // Add VIP group headers
         BUILDER.push("vip");
     }    // VIP group headers
-    public static final ModConfigSpec.ConfigValue<List<String>> VIP_HEADERS = BUILDER
-        .define("headers", 
-            java.util.List.of(
+    public static final ModConfigSpec.ConfigValue<String> VIP_HEADERS_STRING = BUILDER
+        .define("headers", "[\"&6&l⚜ &e&lVIP Perks Active &6&l⚜\", \"&eWelcome back, &6%player%&e!\", \"&eThank you for supporting our server!\"]");
+    
+    // Define a getter method to parse the string back into a List<String>
+    public static List<String> getVipHeaders() {
+        try {
+            return parseJsonStringList(VIP_HEADERS_STRING.get());
+        } catch (Exception e) {
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error parsing VIP headers from config", e);
+            return java.util.List.of(
                 "&6&l⚜ &e&lVIP Perks Active &6&l⚜",
                 "&eWelcome back, &6%player%&e!",
                 "&eThank you for supporting our server!"
-            ));
+            );
+        }
+    }
     
     static {
         BUILDER.pop(); // End vip section
@@ -336,30 +344,46 @@ public class TablistTomlConfig {
             "permission \"neoessentials.tablist.footer.<groupname>\"",
             "---------------------------------------"
         ).push("admin");
-    }
-      // Admin group footers
-    public static final ModConfigSpec.ConfigValue<List<String>> ADMIN_FOOTERS = BUILDER
-        .define("footers", 
-            java.util.List.of(
+    }      // Admin group footers
+    public static final ModConfigSpec.ConfigValue<String> ADMIN_FOOTERS_STRING = BUILDER
+        .define("footers", "[\"&cAdmin Command Help: &f/neoessentials help\", \"&cServer uptime: &f%uptime%\", \"&cMemory usage: &f%memory_used%&c/&f%memory_max% MB\"]");
+    
+    // Define a getter method to parse the string back into a List<String>
+    public static List<String> getAdminFooters() {
+        try {
+            return parseJsonStringList(ADMIN_FOOTERS_STRING.get());
+        } catch (Exception e) {
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error parsing admin footers from config", e);
+            return java.util.List.of(
                 "&cAdmin Command Help: &f/neoessentials help",
                 "&cServer uptime: &f%uptime%",
                 "&cMemory usage: &f%memory_used%&c/&f%memory_max% MB"
-            ));
+            );
+        }
+    }
     
     static {
         BUILDER.pop(); // End admin section
         
         // Add VIP group footers
         BUILDER.push("vip");
-    }
-      // VIP group footers
-    public static final ModConfigSpec.ConfigValue<List<String>> VIP_FOOTERS = BUILDER
-        .define("footers", 
-            java.util.List.of(
+    }      // VIP group footers
+    public static final ModConfigSpec.ConfigValue<String> VIP_FOOTERS_STRING = BUILDER
+        .define("footers", "[\"&6VIP Balance: &e%balance% coins\", \"&6Use &e/vip help &6for a list of perks\", \"&6Website: &ewww.example.com/vip\"]");
+    
+    // Define a getter method to parse the string back into a List<String>
+    public static List<String> getVipFooters() {
+        try {
+            return parseJsonStringList(VIP_FOOTERS_STRING.get());
+        } catch (Exception e) {
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error parsing VIP footers from config", e);
+            return java.util.List.of(
                 "&6VIP Balance: &e%balance% coins",
                 "&6Use &e/vip help &6for a list of perks",
                 "&6Website: &ewww.example.com/vip"
-            ));
+            );
+        }
+    }
     
     static {
         BUILDER.pop(); // End vip section
@@ -386,14 +410,41 @@ public class TablistTomlConfig {
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config should now be reloaded");
         }, 1000, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
-    
-    /**
+      /**
      * Called during mod initialization to set up the tablist configuration
      * This ensures that list-based configuration entries are properly validated
+     * This is called AFTER configs are loaded, not during registration
      */
     public static void setup() {
         com.zerog.neoessentials.NeoEssentials.LOGGER.info("Setting up tablist configuration validation...");
-        patchConfigComparison();
+        
+        try {
+            // Log the raw string values from the config for debugging
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw headers string: {}", HEADERS_STRING.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw footers string: {}", FOOTERS_STRING.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin headers string: {}", ADMIN_HEADERS_STRING.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin footers string: {}", ADMIN_FOOTERS_STRING.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP headers string: {}", VIP_HEADERS_STRING.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP footers string: {}", VIP_FOOTERS_STRING.get());
+            
+            // Validate all list values by parsing them
+            List<String> headers = getHeaders();
+            List<String> footers = getFooters();
+            List<String> adminHeaders = getAdminHeaders();
+            List<String> adminFooters = getAdminFooters();
+            List<String> vipHeaders = getVipHeaders();
+            List<String> vipFooters = getVipFooters();
+            
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Successfully validated tablist configuration values");
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Headers: {} - {}", headers.size(), headers);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Footers: {} - {}", footers.size(), footers);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin headers: {} - {}", adminHeaders.size(), adminHeaders);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin footers: {} - {}", adminFooters.size(), adminFooters);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP headers: {} - {}", vipHeaders.size(), vipHeaders);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP footers: {} - {}", vipFooters.size(), vipFooters);
+        } catch (Exception e) {
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error in tablist configuration setup", e);
+        }
     }
     
     /**
@@ -424,39 +475,45 @@ public class TablistTomlConfig {
         }
         
         return true;
-    }
-      /**
-     * Patches the configuration comparison for list-based config entries
-     * This method should be called whenever the tablist config is loaded/reloaded
+    }    /**
+     * Validates that the tablist configuration is loaded correctly and debugging config values
+     * This is called during mod initialization after the configs are loaded
      */
     public static void patchConfigComparison() {
-        com.zerog.neoessentials.NeoEssentials.LOGGER.info("Patching tablist config validation for list-based entries...");
+        com.zerog.neoessentials.NeoEssentials.LOGGER.info("Validating tablist configuration...");
         
         try {
-            // The issue is that NeoForge's ModConfigSpec validation is incorrectly comparing List<String> values
-            // Instead of trying to patch the config validation itself, we'll update the default values to match
-            // what's in the config file, which should prevent the "correction" warnings
+            // Log the raw string values from the config
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw headers string: {}", HEADERS_STRING.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw footers string: {}", FOOTERS_STRING.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin headers string: {}", ADMIN_HEADERS_STRING.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin footers string: {}", ADMIN_FOOTERS_STRING.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP headers string: {}", VIP_HEADERS_STRING.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP footers string: {}", VIP_FOOTERS_STRING.get());
             
-            // Get the current tablist.toml file
-            java.nio.file.Path configPath = java.nio.file.Paths.get("config/neoessentials/tablist.toml");
-            if (!java.nio.file.Files.exists(configPath)) {
-                com.zerog.neoessentials.NeoEssentials.LOGGER.error("Tablist config file not found, cannot apply fix");
-                return;
-            }
+            // Since we've changed the storage format from List<String> to JSON string format,
+            // we need to verify that the values can be parsed correctly
             
-            // Read all lines from the config file and log them
-            java.util.List<String> configLines = java.nio.file.Files.readAllLines(configPath);
+            // Check that all list values can be parsed
+            List<String> headers = getHeaders();
+            List<String> footers = getFooters();
+            List<String> adminHeaders = getAdminHeaders();
+            List<String> adminFooters = getAdminFooters();
+            List<String> vipHeaders = getVipHeaders();
+            List<String> vipFooters = getVipFooters();
             
-            // Parse the config file manually to extract the exact values as strings
-            // This bypasses the normal config system which is causing the comparison issues
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Successfully loaded tablist config for validation fix");
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config validation fix applied");
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Successfully validated tablist configuration values");
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Headers: {} - {}", headers.size(), headers);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Footers: {} - {}", footers.size(), footers);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin headers: {} - {}", adminHeaders.size(), adminHeaders);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin footers: {} - {}", adminFooters.size(), adminFooters);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP headers: {} - {}", vipHeaders.size(), vipHeaders);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP footers: {} - {}", vipFooters.size(), vipFooters);
         } catch (Exception e) {
-            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error patching tablist config validation", e);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error validating tablist configuration", e);
         }
     }
-    
-    /**
+      /**
      * Parse a JSON array string into a List<String>
      * 
      * @param jsonString The JSON array string
@@ -520,6 +577,32 @@ public class TablistTomlConfig {
             result.add(current.toString().trim());
         }
         
+        // Debug output for validation
+        com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Parsed JSON string: {} -> {}", jsonString, result);
+        
         return result;
+    }
+    
+    /**
+     * Creates a normalized JSON array string with consistent formatting
+     * This is important because NeoForge's config comparison looks for exact string matches
+     */
+    public static String normalizeJsonArrayString(String jsonString) {
+        try {
+            List<String> items = parseJsonStringList(jsonString);
+            // Format with exactly the same spacing as what appears in the TOML file
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < items.size(); i++) {
+                sb.append("\"").append(items.get(i)).append("\"");
+                if (i < items.size() - 1) {
+                    sb.append(", ");
+                }
+            }
+            sb.append("]");
+            return sb.toString();
+        } catch (Exception e) {
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error normalizing JSON array", e);
+            return jsonString;
+        }
     }
 }
