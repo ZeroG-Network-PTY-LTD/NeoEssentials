@@ -79,12 +79,11 @@ public class ConfigUtil {
         for (int i = 0; i < configList.size(); i++) {
             T configItem = configList.get(i);
             T defaultItem = defaultList.get(i);
-            
-            if (configItem == null && defaultItem == null) {
+              if (configItem == null && defaultItem == null) {
                 continue;
             }
             
-            if ((configItem == null && defaultItem != null) || (configItem != null && defaultItem == null)) {
+            if (configItem == null || defaultItem == null) {
                 com.zerog.neoessentials.NeoEssentials.LOGGER.debug("List items differ at index {} (null check): {} vs {}", i, configItem, defaultItem);
                 return false;
             }
