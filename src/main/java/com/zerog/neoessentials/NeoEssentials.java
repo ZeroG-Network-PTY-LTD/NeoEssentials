@@ -418,4 +418,20 @@ public class NeoEssentials {
         }
         return scheduler;
     }
+    
+    /**
+     * Check if debug mode is enabled in the configuration
+     * 
+     * @return true if debug mode is enabled, false otherwise
+     */
+    public static boolean isDebugMode() {
+        try {
+            if (instance != null && instance.configManager != null) {
+                return com.zerog.neoessentials.config.GeneralConfig.DEBUG_MODE.get();
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Error checking debug mode status", e);
+        }
+        return false;
+    }
 }
