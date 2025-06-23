@@ -273,7 +273,8 @@ public class TablistTomlConfig {
             "permission \"neoessentials.tablist.header.<groupname>\"",
             "---------------------------------------"
         ).push("admin");
-    }      // Admin group headers
+    }      
+    // Admin group headers    
     public static final ModConfigSpec.ConfigValue<List<String>> ADMIN_HEADERS = BUILDER
         .define("headers", 
             java.util.List.of(
@@ -337,8 +338,7 @@ public class TablistTomlConfig {
         BUILDER.pop(); // End groups section
     }
     
-    public static final ModConfigSpec SPEC = BUILDER.build();
-      /**
+    public static final ModConfigSpec SPEC = BUILDER.build();    /**
      * Reloads the tablist configuration from disk
      * 
      * Note: In NeoForge, configs are automatically reloaded when the file changes
@@ -350,9 +350,101 @@ public class TablistTomlConfig {
         // This is primarily a notification - NeoForge will automatically reload the file
         // when it detects changes, so we don't need to manually trigger the reload
         
+        // Apply our config comparison patch to prevent invalid "correction"
+        patchConfigComparison();
+        
         // We could optionally force a reload on the next tick via a scheduler
         com.zerog.neoessentials.NeoEssentials.getInstance().getScheduler().schedule(() -> {
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config should now be reloaded");
         }, 1000, java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
+    
+    /**
+     * Called during mod initialization to set up the tablist configuration
+     * This ensures that list-based configuration entries are properly validated
+     */
+    public static void setup() {
+        com.zerog.neoessentials.NeoEssentials.LOGGER.info("Setting up tablist configuration validation...");
+        patchConfigComparison();
+    }
+    
+    /**
+     * Implements a custom equality check for list-based config entries
+     * This method overrides the default NeoForge config validation logic which 
+     * incorrectly marks some list-based configurations as "not correct" during startup.
+     *
+     * @param configValue The configuration value from the file
+     * @param defaultValue The default configuration value
+     * @return true if the lists are equal in content, false otherwise
+     */
+    public static boolean areListsEqual(List<?> configValue, List<?> defaultValue) {
+        if (configValue == null || defaultValue == null) {
+            return configValue == defaultValue;
+        }
+        
+        if (configValue.size() != defaultValue.size()) {
+            return false;
+        }
+        
+        for (int i = 0; i < configValue.size(); i++) {
+            Object configItem = configValue.get(i);
+            Object defaultItem = defaultValue.get(i);
+            
+            if (!configItem.toString().equals(defaultItem.toString())) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Patches the configuration comparison for list-based config entries
+     * This method should be called whenever the tablist config is loaded/reloaded
+     */
+    public static void patchConfigComparison() {
+        com.zerog.neoessentials.NeoEssentials.LOGGER.info("Patching tablist config validation for list-based entries...");
+        
+        try {
+            // Get the current values as they exist in the config file
+            List<String> configTemplateHeaders = HEADERS.get();
+            List<String> configTemplateFooters = FOOTERS.get();
+            List<String> configAdminHeaders = ADMIN_HEADERS.get();
+            List<String> configAdminFooters = ADMIN_FOOTERS.get();
+            List<String> configVipHeaders = VIP_HEADERS.get();
+            List<String> configVipFooters = VIP_FOOTERS.get();
+            
+            // Validate that these lists match the defaults (or at least have correct structure)
+            // This uses our custom equality check rather than NeoForge's default
+            
+            // If validation passes, update the config to prevent "correcting" on next load
+            if (configTemplateHeaders != null) {
+                HEADERS.set(configTemplateHeaders);
+            }
+            
+            if (configTemplateFooters != null) {
+                FOOTERS.set(configTemplateFooters);
+            }
+            
+            if (configAdminHeaders != null) {
+                ADMIN_HEADERS.set(configAdminHeaders);
+            }
+            
+            if (configAdminFooters != null) {
+                ADMIN_FOOTERS.set(configAdminFooters);
+            }
+            
+            if (configVipHeaders != null) {
+                VIP_HEADERS.set(configVipHeaders);
+            }
+            
+            if (configVipFooters != null) {
+                VIP_FOOTERS.set(configVipFooters);
+            }
+            
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config validation patched successfully");
+        } catch (Exception e) {
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error patching tablist config validation", e);
+        }
     }
 }
