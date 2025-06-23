@@ -29,7 +29,8 @@ public class TablistAnimationManager {    /**
         BLINK("blink"),
         WAVE("wave"),
         GRADIENT("gradient"),
-        PULSE("pulse");
+        PULSE("pulse"),
+        HEX_CUSTOM("hex_custom");
         
         private final String configValue;
         
@@ -67,10 +68,10 @@ public class TablistAnimationManager {    /**
         animationProcessors.put(AnimationType.FADE, new FadeAnimationProcessor());
         animationProcessors.put(AnimationType.RAINBOW, new RainbowAnimationProcessor());
         animationProcessors.put(AnimationType.TYPEWRITER, new TypewriterAnimationProcessor());
-        animationProcessors.put(AnimationType.BLINK, new BlinkAnimationProcessor());
-        animationProcessors.put(AnimationType.WAVE, new WaveAnimationProcessor());
+        animationProcessors.put(AnimationType.BLINK, new BlinkAnimationProcessor());        animationProcessors.put(AnimationType.WAVE, new WaveAnimationProcessor());
         animationProcessors.put(AnimationType.GRADIENT, new GradientAnimationProcessor());
         animationProcessors.put(AnimationType.PULSE, new PulseAnimationProcessor());
+        animationProcessors.put(AnimationType.HEX_CUSTOM, new HexCustomAnimationProcessor());
         
         NeoEssentials.LOGGER.info("TablistAnimationManager initialized with {} animation types", animationProcessors.size());
     }
