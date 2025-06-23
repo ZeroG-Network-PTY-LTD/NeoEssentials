@@ -40,22 +40,20 @@ NeoEssentials is a powerful server-side utility mod designed to provide all esse
 - **Moderation Tools**: Ban, kick, mute players with professional feedback
 - **Performance Monitoring**: Track server TPS, memory usage, and entities
 - **Maintenance Mode**: Toggle server maintenance status
+- **Jail System**: Restrict problematic players to designated areas
+- **Vanish**: Become invisible to regular players
+- **PowerTools**: Bind commands to items for quick execution
+- **Chat Management**: Format, color, and manage chat messages
+- **Time & Weather Control**: Manage game environment
 
 ### 📦 Player Utilities
 - **Kits**: Create and distribute item kits with cooldowns
 - **Mail System**: Send offline messages to players
-- **Jail System**: Restrict problematic players to designated areas
-- **Vanish**: Become invisible to regular players
-- **PowerTools**: Bind commands to items for quick execution
-
-### ⚙️ Other Features
 - **AFK System**: Detect and mark idle players
-- **Chat Management**: Format, color, and manage chat messages
-- **Time & Weather Control**: Manage game environment
 
 ## Installation
 
-1. Download NeoEssentials from [CurseForge](https://curseforge.com) or [Modrinth](https://modrinth.com)
+1. Download NeoEssentials from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/neoessentials) or [Modrinth](https://modrinth.com/mod/neoessentials)
 2. Place the JAR file in your server's `mods` folder
 3. Start or restart your server
 4. Configure the mod using generated config files (see Configuration section)
