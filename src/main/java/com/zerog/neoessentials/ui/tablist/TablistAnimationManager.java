@@ -481,8 +481,7 @@ public class TablistAnimationManager {    /**
             return result.toString();
         }
     }
-    
-    /**
+      /**
      * Pulse animation - text pulses between two colors
      */
     private static class PulseAnimationProcessor implements AnimationProcessor {
@@ -508,6 +507,279 @@ public class TablistAnimationManager {    /**
             
             // Apply current pulse color to entire text
             return currentColor + plainText;
+        }
+    }
+    
+    /**
+     * Custom Hex Color Animation - uses pre-defined hex colored text from animations.toml/json
+     */
+    private static class HexCustomAnimationProcessor implements AnimationProcessor {
+        // Cache animations by name for quick lookup
+        private static final Map<String, CustomHexAnimation> animationCache = new HashMap<>();
+        // Default change interval if not specified
+        private static final int DEFAULT_CHANGE_INTERVAL = 50; 
+        // Flag to track if initialization has happened
+        private static boolean initialized = false;
+        
+        /**
+         * Process a frame using custom hex-color-coded text
+         */
+        @Override
+        public String processFrame(List<String> templates, ServerPlayer player, int frame) {
+            if (templates.isEmpty()) {
+                return "";
+            }
+            
+            // Ensure animations are loaded
+            if (!initialized) {
+                loadCustomAnimations();
+                initialized = true;
+            }
+            
+            // Get animation name from template (if specified)
+            String template = templates.get(0);
+            String animationName = "default";
+            
+            // Check if template specifies an animation
+            if (template.startsWith("animation:")) {
+                String[] parts = template.split(":", 2);
+                if (parts.length == 2) {
+                    animationName = parts[1].trim();
+                }
+                
+                // If more templates exist, use the second one as the base text
+                if (templates.size() > 1) {
+                    template = templates.get(1);
+                } else {
+                    template = "";
+                }
+            }
+            
+            // Get the custom animation
+            CustomHexAnimation animation = animationCache.getOrDefault(animationName, getDefaultAnimation());
+            
+            // If we have specified text, replace the content but keep the colors
+            if (!template.isEmpty() && !template.startsWith("animation:")) {
+                String plainContent = TablistPlaceholderManager.stripColor(template);
+                return applyTextToAnimation(animation, plainContent, frame);
+            }
+            
+            // Get the appropriate text based on the current frame
+            int effectiveFrameIndex = (frame / animation.changeInterval) % animation.texts.size();
+            return animation.texts.get(effectiveFrameIndex);
+        }
+        
+        /**
+         * Load custom animations from config files
+         */
+        private void loadCustomAnimations() {
+            // Clear existing cache
+            animationCache.clear();
+            
+            // First try to load from TOML as it's the preferred format
+            Path tomlPath = FMLPaths.CONFIGDIR.get().resolve("neoessentials/animations.toml");
+            if (Files.exists(tomlPath)) {
+                loadFromToml(tomlPath);
+            } else {
+                // If TOML doesn't exist, try JSON
+                Path jsonPath = FMLPaths.CONFIGDIR.get().resolve("neoessentials/animations.json");
+                if (Files.exists(jsonPath)) {
+                    loadFromJson(jsonPath);
+                } else {
+                    // If no files exist, create default files
+                    createDefaultAnimationFiles();
+                }
+            }
+            
+            // Always ensure we have at least the default animation
+            if (!animationCache.containsKey("default")) {
+                animationCache.put("default", getDefaultAnimation());
+            }
+            
+            NeoEssentials.LOGGER.info("Loaded {} custom hex animations", animationCache.size());
+        }
+        
+        /**
+         * Load animations from a TOML file
+         */
+        private void loadFromToml(Path path) {
+            try {
+                String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+                Toml toml = new Toml().read(content);
+                
+                // Process each animation section
+                for (Map.Entry<String, Object> entry : toml.entrySet()) {
+                    String animationName = entry.getKey();
+                    if (entry.getValue() instanceof Toml) {
+                        Toml animData = (Toml) entry.getValue();
+                        
+                        // Get change interval
+                        Long changeInterval = animData.getLong("change-interval");
+                        int interval = changeInterval != null ? changeInterval.intValue() : DEFAULT_CHANGE_INTERVAL;
+                        
+                        // Get texts
+                        List<String> texts = animData.getList("texts");
+                        if (texts != null && !texts.isEmpty()) {
+                            animationCache.put(animationName, new CustomHexAnimation(interval, texts));
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error loading custom hex animations from TOML", e);
+            }
+        }
+        
+        /**
+         * Load animations from a JSON file
+         */
+        private void loadFromJson(Path path) {
+            try {
+                String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+                JsonObject json = JsonParser.parseString(content).getAsJsonObject();
+                
+                // Process each animation entry
+                for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                    String animationName = entry.getKey();
+                    if (entry.getValue().isJsonObject()) {
+                        JsonObject animData = entry.getValue().getAsJsonObject();
+                        
+                        // Get change interval
+                        int interval = DEFAULT_CHANGE_INTERVAL;
+                        if (animData.has("change-interval")) {
+                            interval = animData.get("change-interval").getAsInt();
+                        }
+                        
+                        // Get texts
+                        if (animData.has("texts") && animData.get("texts").isJsonArray()) {
+                            JsonArray textsArray = animData.get("texts").getAsJsonArray();
+                            List<String> texts = new ArrayList<>();
+                            
+                            for (JsonElement textElement : textsArray) {
+                                texts.add(textElement.getAsString());
+                            }
+                            
+                            if (!texts.isEmpty()) {
+                                animationCache.put(animationName, new CustomHexAnimation(interval, texts));
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error loading custom hex animations from JSON", e);
+            }
+        }
+        
+        /**
+         * Create default animation files if none exist
+         */
+        private void createDefaultAnimationFiles() {
+            // Create TOML file with example
+            Path tomlPath = FMLPaths.CONFIGDIR.get().resolve("neoessentials/animations.toml");
+            StringBuilder tomlBuilder = new StringBuilder();
+            tomlBuilder.append("# NeoEssentials Custom Hex Color Animations\n");
+            tomlBuilder.append("# Format: &#RRGGBB for hex colors\n\n");
+            tomlBuilder.append("[default]\n");
+            tomlBuilder.append("change-interval = 50\n");
+            tomlBuilder.append("texts = [\n");
+            
+            // Add example texts with hex colors
+            List<String> exampleTexts = getDefaultAnimation().texts;
+            for (int i = 0; i < exampleTexts.size(); i++) {
+                tomlBuilder.append("  \"").append(exampleTexts.get(i)).append("\"");
+                if (i < exampleTexts.size() - 1) {
+                    tomlBuilder.append(",");
+                }
+                tomlBuilder.append("\n");
+            }
+            tomlBuilder.append("]\n\n");
+            
+            // Add another example
+            tomlBuilder.append("[rainbow_wave]\n");
+            tomlBuilder.append("change-interval = 30\n");
+            tomlBuilder.append("texts = [\n");
+            tomlBuilder.append("  \"&#FF0000R&#FF7F00a&#FFFF00i&#00FF00n&#0000FFb&#4B0082o&#9400D3w\",\n");
+            tomlBuilder.append("  \"&#FF7F00R&#FFFF00a&#00FF00i&#0000FFn&#4B0082b&#9400D3o&#FF0000w\",\n");
+            tomlBuilder.append("  \"&#FFFF00R&#00FF00a&#0000FFi&#4B0082n&#9400D3b&#FF0000o&#FF7F00w\",\n");
+            tomlBuilder.append("  \"&#00FF00R&#0000FFa&#4B0082i&#9400D3n&#FF0000b&#FF7F00o&#FFFF00w\",\n");
+            tomlBuilder.append("  \"&#0000FFR&#4B0082a&#9400D3i&#FF0000n&#FF7F00b&#FFFF00o&#00FF00w\",\n");
+            tomlBuilder.append("  \"&#4B0082R&#9400D3a&#FF0000i&#FF7F00n&#FFFF00b&#00FF00o&#0000FFw\"\n");
+            tomlBuilder.append("]\n");
+            
+            try {
+                Files.createDirectories(tomlPath.getParent());
+                Files.write(tomlPath, tomlBuilder.toString().getBytes(StandardCharsets.UTF_8));
+                NeoEssentials.LOGGER.info("Created default animations.toml file");
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error creating default animations.toml file", e);
+            }
+        }
+        
+        /**
+         * Get the default animation if none is specified
+         */
+        private CustomHexAnimation getDefaultAnimation() {
+            List<String> texts = new ArrayList<>();
+            texts.add("&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e");
+            texts.add("&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe");
+            texts.add("&#549CD5E&#54B1DFx&#54C5EAa&#54DAF4m&#54C5EAp&#54B1DFl&#549CD5e");
+            texts.add("&#5487CBE&#549CD5x&#54B1DFa&#54C5EAm&#54DAF4p&#54C5EAl&#54B1DFe");
+            texts.add("&#5473C0E&#5487CBx&#549CD5a&#54B1DFm&#54C5EAp&#54DAF4l&#54C5EAe");
+            texts.add("&#545EB6E&#5473C0x&#5487CBa&#549CD5m&#54B1DFp&#54C5EAl&#54DAF4e");
+            return new CustomHexAnimation(DEFAULT_CHANGE_INTERVAL, texts);
+        }
+        
+        /**
+         * Apply new text content to an animation while preserving color patterns
+         */
+        private String applyTextToAnimation(CustomHexAnimation animation, String content, int frame) {
+            // Get the animation frame
+            int effectiveFrameIndex = (frame / animation.changeInterval) % animation.texts.size();
+            String animationText = animation.texts.get(effectiveFrameIndex);
+            
+            // Extract just the color codes from the animation
+            List<String> colorCodes = extractHexCodes(animationText);
+            
+            // If we don't have any color codes, just return the content
+            if (colorCodes.isEmpty()) {
+                return content;
+            }
+            
+            // Apply colors to content
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < content.length(); i++) {
+                int colorIndex = i % colorCodes.size();
+                result.append(colorCodes.get(colorIndex)).append(content.charAt(i));
+            }
+            
+            return result.toString();
+        }
+        
+        /**
+         * Extract hex color codes from a text string
+         */
+        private List<String> extractHexCodes(String text) {
+            List<String> codes = new ArrayList<>();
+            Pattern hexPattern = Pattern.compile("&#[0-9A-Fa-f]{6}");
+            Matcher matcher = hexPattern.matcher(text);
+            
+            while (matcher.find()) {
+                codes.add(matcher.group());
+            }
+            
+            return codes;
+        }
+        
+        /**
+         * Custom Hex Animation data class
+         */
+        private static class CustomHexAnimation {
+            final int changeInterval;
+            final List<String> texts;
+            
+            CustomHexAnimation(int changeInterval, List<String> texts) {
+                this.changeInterval = changeInterval;
+                this.texts = texts;
+            }
         }
     }
 }
