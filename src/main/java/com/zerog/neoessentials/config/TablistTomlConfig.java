@@ -9,8 +9,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
  */
 public class TablistTomlConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
-    
-    // Top-level documentation
+      // Top-level documentation
     static {
         BUILDER.comment(
             "========================================================",
@@ -200,14 +199,11 @@ public class TablistTomlConfig {
             "=========================",
             "Header and Footer Templates",
             "========================="
-        ).push("templates");    }    
-    
-    // Define the headers as string literal instead of List<String> to avoid equality comparison issues
-    // This is a workaround for NeoForge's config validation system having issues with List equality
-    public static final ModConfigSpec.ConfigValue<String> HEADERS_STRING = BUILDER
+        ).push("templates");    }    // Define the headers using native TOML array format for better readability
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> HEADERS_LIST = BUILDER
         .comment(
             "---------------------------------------",
-            "List of header lines to display (JSON string format)",
+            "List of header lines to display",
             "For \"rotation\" animation, each line is shown in sequence",
             "For other animations, these lines are combined",
             "", 
@@ -236,14 +232,23 @@ public class TablistTomlConfig {
             "  %uptime%       - Server uptime in days, hours, minutes format",
             "---------------------------------------"
         )
-        .define("headers", "\"[\\\"&6&l✦ &b&lNeoEssentials Server &6&l✦\\\", \\\"&eWelcome, &a%player%&e!\\\", \\\"&eOnline players: &a%online%/%max%\\\", \\\"&eServer time: &a%time%\\\"]\"");
-        
-    // Define a getter method to parse the string back into a List<String>
+        .define("headers", 
+            java.util.List.of(
+                "&6&l✦ &b&lNeoEssentials Server &6&l✦",
+                "&eWelcome, &a%player%&e!",
+                "&eOnline players: &a%online%/%max%",
+                "&eServer time: &a%time%"
+            )
+        );
+      // Legacy fields removed - native TOML arrays are now used
+    
+    // Define a getter method for headers
+    @SuppressWarnings("unchecked")
     public static List<String> getHeaders() {
         try {
-            return parseJsonStringList(HEADERS_STRING.get());
+            return (List<String>)HEADERS_LIST.get();
         } catch (Exception e) {
-            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error parsing headers from config", e);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error getting headers from config", e);
             return java.util.List.of(
                 "&6&l✦ &b&lNeoEssentials Server &6&l✦",
                 "&eWelcome, &a%player%&e!",
@@ -251,22 +256,34 @@ public class TablistTomlConfig {
                 "&eServer time: &a%time%"
             );
         }
-    }    // Define footers as string literal instead of List<String> to avoid equality comparison issues
-    public static final ModConfigSpec.ConfigValue<String> FOOTERS_STRING = BUILDER
+    }    // Define footers using native TOML array format for better readability
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> FOOTERS_LIST = BUILDER
         .comment(
             "---------------------------------------",
-            "List of footer lines to display (JSON string format)",
+            "List of footer lines to display",
             "Uses the same formatting and placeholders as headers",
             "---------------------------------------"
         )
-        .define("footers", "\"[\\\"&eBalance: &a%balance% coins\\\", \\\"&eWebsite: &awww.example.com\\\", \\\"&eThanks for playing!\\\", \\\"&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%\\\"]\"");
+        .define("footers", 
+            java.util.List.of(
+                "&eBalance: &a%balance% coins", 
+                "&eWebsite: &awww.example.com", 
+                "&eThanks for playing!", 
+                "&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%"
+            )
+        );
     
-    // Define a getter method to parse the string back into a List<String>
+    // Legacy field for backward compatibility - will be removed in future versions
+    @Deprecated
+    public static final ModConfigSpec.ConfigValue<String> FOOTERS_STRING = null;
+    
+    // Define a getter method that returns the list directly
+    @SuppressWarnings("unchecked")
     public static List<String> getFooters() {
         try {
-            return parseJsonStringList(FOOTERS_STRING.get());
+            return (List<String>)FOOTERS_LIST.get();
         } catch (Exception e) {
-            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error parsing footers from config", e);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error getting footers from config", e);
             return java.util.List.of(
                 "&eBalance: &a%balance% coins",
                 "&eWebsite: &awww.example.com",
@@ -294,16 +311,24 @@ public class TablistTomlConfig {
             "permission \"neoessentials.tablist.header.<groupname>\"",
             "---------------------------------------"
         ).push("admin");
-    }        // Admin group headers    
-    public static final ModConfigSpec.ConfigValue<String> ADMIN_HEADERS_STRING = BUILDER
-        .define("headers", "\"[\\\"&4&l★ &c&lAdmin Panel &4&l★\\\", \\\"&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%\\\", \\\"&cOnline players: &f%online%/%max%\\\"]\"");
+    }    // Admin group headers using native TOML array format for better readability
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> ADMIN_HEADERS_LIST = BUILDER
+        .define("headers", 
+            java.util.List.of(
+                "&4&l★ &c&lAdmin Panel &4&l★",
+                "&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%",
+                "&cOnline players: &f%online%/%max%"
+            )
+        );
+      // Legacy fields removed - native TOML arrays are now used
     
-    // Define a getter method to parse the string back into a List<String>
+    // Define a getter method for admin headers
+    @SuppressWarnings("unchecked")
     public static List<String> getAdminHeaders() {
         try {
-            return parseJsonStringList(ADMIN_HEADERS_STRING.get());
+            return (List<String>)ADMIN_HEADERS_LIST.get();
         } catch (Exception e) {
-            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error parsing admin headers from config", e);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error getting admin headers from config", e);
             return java.util.List.of(
                 "&4&l★ &c&lAdmin Panel &4&l★",
                 "&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%",
@@ -317,16 +342,24 @@ public class TablistTomlConfig {
         
         // Add VIP group headers
         BUILDER.push("vip");
-    }    // VIP group headers
-    public static final ModConfigSpec.ConfigValue<String> VIP_HEADERS_STRING = BUILDER
-        .define("headers", "\"[\\\"&6&l⚜ &e&lVIP Perks Active &6&l⚜\\\", \\\"&eWelcome back, &6%player%&e!\\\", \\\"&eThank you for supporting our server!\\\"]\"");
+    }    // VIP group headers using native TOML array format for better readability
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> VIP_HEADERS_LIST = BUILDER
+        .define("headers", 
+            java.util.List.of(
+                "&6&l⚜ &e&lVIP Perks Active &6&l⚜",
+                "&eWelcome back, &6%player%&e!",
+                "&eThank you for supporting our server!"
+            )
+        );
+      // Legacy fields removed - native TOML arrays are now used
     
-    // Define a getter method to parse the string back into a List<String>
+    // Define a getter method for VIP headers
+    @SuppressWarnings("unchecked")
     public static List<String> getVipHeaders() {
         try {
-            return parseJsonStringList(VIP_HEADERS_STRING.get());
+            return (List<String>)VIP_HEADERS_LIST.get();
         } catch (Exception e) {
-            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error parsing VIP headers from config", e);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error getting VIP headers from config", e);
             return java.util.List.of(
                 "&6&l⚜ &e&lVIP Perks Active &6&l⚜",
                 "&eWelcome back, &6%player%&e!",
@@ -346,16 +379,24 @@ public class TablistTomlConfig {
             "permission \"neoessentials.tablist.footer.<groupname>\"",
             "---------------------------------------"
         ).push("admin");
-    }      // Admin group footers
-    public static final ModConfigSpec.ConfigValue<String> ADMIN_FOOTERS_STRING = BUILDER
-        .define("footers", "\"[\\\"&cAdmin Command Help: &f/neoessentials help\\\", \\\"&cServer uptime: &f%uptime%\\\", \\\"&cMemory usage: &f%memory_used%&c/&f%memory_max% MB\\\"]\"");
+    }      // Admin group footers using native TOML array format for better readability
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> ADMIN_FOOTERS_LIST = BUILDER
+        .define("footers", 
+            java.util.List.of(
+                "&cAdmin Command Help: &f/neoessentials help",
+                "&cServer uptime: &f%uptime%",
+                "&cMemory usage: &f%memory_used%&c/&f%memory_max% MB"
+            )
+        );
+      // Legacy fields removed - native TOML arrays are now used
     
-    // Define a getter method to parse the string back into a List<String>
+    // Define a getter method for admin footers
+    @SuppressWarnings("unchecked")
     public static List<String> getAdminFooters() {
         try {
-            return parseJsonStringList(ADMIN_FOOTERS_STRING.get());
+            return (List<String>)ADMIN_FOOTERS_LIST.get();
         } catch (Exception e) {
-            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error parsing admin footers from config", e);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error getting admin footers from config", e);
             return java.util.List.of(
                 "&cAdmin Command Help: &f/neoessentials help",
                 "&cServer uptime: &f%uptime%",
@@ -369,16 +410,24 @@ public class TablistTomlConfig {
         
         // Add VIP group footers
         BUILDER.push("vip");
-    }      // VIP group footers
-    public static final ModConfigSpec.ConfigValue<String> VIP_FOOTERS_STRING = BUILDER
-        .define("footers", "\"[\\\"&6VIP Balance: &e%balance% coins\\\", \\\"&6Use &e/vip help &6for a list of perks\\\", \\\"&6Website: &ewww.example.com/vip\\\"]\"");
+    }      // VIP group footers using native TOML array format for better readability
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> VIP_FOOTERS_LIST = BUILDER
+        .define("footers", 
+            java.util.List.of(
+                "&6VIP Balance: &e%balance% coins",
+                "&6Use &e/vip help &6for a list of perks",
+                "&6Website: &ewww.example.com/vip"
+            )
+        );
+      // Legacy fields removed - native TOML arrays are now used
     
-    // Define a getter method to parse the string back into a List<String>
+    // Define a getter method for VIP footers
+    @SuppressWarnings("unchecked")
     public static List<String> getVipFooters() {
         try {
-            return parseJsonStringList(VIP_FOOTERS_STRING.get());
+            return (List<String>)VIP_FOOTERS_LIST.get();
         } catch (Exception e) {
-            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error parsing VIP footers from config", e);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error getting VIP footers from config", e);
             return java.util.List.of(
                 "&6VIP Balance: &e%balance% coins",
                 "&6Use &e/vip help &6for a list of perks",
@@ -411,8 +460,7 @@ public class TablistTomlConfig {
         com.zerog.neoessentials.NeoEssentials.getInstance().getScheduler().schedule(() -> {
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config should now be reloaded");
         }, 1000, java.util.concurrent.TimeUnit.MILLISECONDS);
-    }
-      /**
+    }    /**
      * Called during mod initialization to set up the tablist configuration
      * This ensures that list-based configuration entries are properly validated
      * This is called AFTER configs are loaded, not during registration
@@ -421,15 +469,15 @@ public class TablistTomlConfig {
         com.zerog.neoessentials.NeoEssentials.LOGGER.info("Setting up tablist configuration validation...");
         
         try {
-            // Log the raw string values from the config for debugging
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw headers string: {}", HEADERS_STRING.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw footers string: {}", FOOTERS_STRING.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin headers string: {}", ADMIN_HEADERS_STRING.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin footers string: {}", ADMIN_FOOTERS_STRING.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP headers string: {}", VIP_HEADERS_STRING.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP footers string: {}", VIP_FOOTERS_STRING.get());
+            // Log the raw list values from the config for debugging
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw headers list: {}", HEADERS_LIST.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw footers list: {}", FOOTERS_LIST.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin headers list: {}", ADMIN_HEADERS_LIST.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin footers list: {}", ADMIN_FOOTERS_LIST.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP headers list: {}", VIP_HEADERS_LIST.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP footers list: {}", VIP_FOOTERS_LIST.get());
             
-            // Validate all list values by parsing them
+            // Validate all list values
             List<String> headers = getHeaders();
             List<String> footers = getFooters();
             List<String> adminHeaders = getAdminHeaders();
@@ -485,18 +533,17 @@ public class TablistTomlConfig {
         com.zerog.neoessentials.NeoEssentials.LOGGER.info("Validating tablist configuration...");
         
         try {
-            // Log the raw string values from the config
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw headers string: {}", HEADERS_STRING.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw footers string: {}", FOOTERS_STRING.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin headers string: {}", ADMIN_HEADERS_STRING.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin footers string: {}", ADMIN_FOOTERS_STRING.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP headers string: {}", VIP_HEADERS_STRING.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP footers string: {}", VIP_FOOTERS_STRING.get());
+            // Log the raw list values from the config
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw headers list: {}", HEADERS_LIST.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw footers list: {}", FOOTERS_LIST.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin headers list: {}", ADMIN_HEADERS_LIST.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw admin footers list: {}", ADMIN_FOOTERS_LIST.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP headers list: {}", VIP_HEADERS_LIST.get());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Raw VIP footers list: {}", VIP_FOOTERS_LIST.get());
             
-            // Since we've changed the storage format from List<String> to JSON string format,
-            // we need to verify that the values can be parsed correctly
+            // Now that we're using native TOML arrays, validation should be simpler
             
-            // Check that all list values can be parsed
+            // Check that all list values are accessible
             List<String> headers = getHeaders();
             List<String> footers = getFooters();
             List<String> adminHeaders = getAdminHeaders();
