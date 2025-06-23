@@ -24,8 +24,7 @@ public class ModConfigManager {    // Reference to the main mod instance
         
         // Create compatibility config
         compatConfig = new CompatNeoEssentialsConfig();
-        
-        // Register all configuration files
+          // Register all configuration files
         container.registerConfig(ModConfig.Type.COMMON, GeneralConfig.SPEC, "neoessentials/general.toml");
         container.registerConfig(ModConfig.Type.COMMON, EconomyConfig.SPEC, "neoessentials/economy.toml");
         container.registerConfig(ModConfig.Type.COMMON, HomeConfig.SPEC, "neoessentials/homes.toml");
@@ -35,6 +34,9 @@ public class ModConfigManager {    // Reference to the main mod instance
         container.registerConfig(ModConfig.Type.COMMON, DatabaseTomlConfig.SPEC, "neoessentials/database.toml");
         
         NeoEssentials.LOGGER.info("Registered all NeoEssentials config files");
+        
+        // Initialize the tablist config with our fix for list-based configurations
+        TablistTomlConfig.setup();
     }
     
     /**
