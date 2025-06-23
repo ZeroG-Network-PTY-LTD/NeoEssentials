@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.data;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.ui.EnhancedTablistManager;
 import com.zerog.neoessentials.ui.tablist.FlexibleTablistManager;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
@@ -106,7 +105,7 @@ public class DataManager {    private UserManager userManager;
             mailManager = new MailManager(dataFolderFile);
         }        if (tablistManager == null && NeoEssentials.getInstance().getConfigManager().isTablistEnabled()) {
             // Create scheduler in NeoEssentials class
-            tablistManager = new EnhancedTablistManager(NeoEssentials.getInstance().getScheduler());
+            tablistManager = new FlexibleTablistManager(NeoEssentials.getInstance().getScheduler());
             // The server will be set later when available
             if (NeoEssentials.getInstance().getServer() != null) {
                 tablistManager.setServer(NeoEssentials.getInstance().getServer());
@@ -257,12 +256,11 @@ public class DataManager {    private UserManager userManager;
     public MailManager getMailManager() {
         return mailManager;
     }
-    
-    /**
+      /**
      * Gets the tablist manager.
      * 
      * @return The tablist manager
-     */    public EnhancedTablistManager getTablistManager() {
+     */    public FlexibleTablistManager getTablistManager() {
         return tablistManager;
     }
     

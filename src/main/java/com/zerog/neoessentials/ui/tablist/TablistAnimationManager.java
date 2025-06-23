@@ -429,8 +429,84 @@ public class TablistAnimationManager {    /**
                 int wavePos = (frame + i * 2) % WAVE_COLORS.length;
                 result.append(WAVE_COLORS[wavePos]).append(plainText.charAt(i));
             }
+              return result.toString();
+        }
+    }
+    
+    /**
+     * Gradient animation - applies a color gradient across the text
+     */
+    private static class GradientAnimationProcessor implements AnimationProcessor {
+        @Override
+        public String processFrame(List<String> templates, ServerPlayer player, int frame) {
+            if (templates.isEmpty()) {
+                return "";
+            }
+            
+            // Get the template
+            String template = templates.get(frame % templates.size());
+            
+            // Remove color codes for processing
+            String plainText = TablistPlaceholderManager.stripColor(template);
+            
+            // If text is too short, just return it
+            if (plainText.length() < 3) {
+                return template;
+            }
+            
+            // Define gradient colors (can be customized later from config)
+            ChatFormatting[] gradientColors = {
+                ChatFormatting.RED,
+                ChatFormatting.GOLD,
+                ChatFormatting.YELLOW,
+                ChatFormatting.GREEN,
+                ChatFormatting.AQUA,
+                ChatFormatting.BLUE,
+                ChatFormatting.LIGHT_PURPLE
+            };
+            
+            // Calculate gradient starting position that shifts over time
+            int startColorIndex = frame % gradientColors.length;
+            
+            StringBuilder result = new StringBuilder();
+            for (int i = 0; i < plainText.length(); i++) {
+                // Calculate color index for this character
+                int colorIndex = (startColorIndex + i) % gradientColors.length;
+                
+                // Apply gradient color to character
+                result.append(gradientColors[colorIndex]).append(plainText.charAt(i));
+            }
             
             return result.toString();
+        }
+    }
+    
+    /**
+     * Pulse animation - text pulses between two colors
+     */
+    private static class PulseAnimationProcessor implements AnimationProcessor {
+        @Override
+        public String processFrame(List<String> templates, ServerPlayer player, int frame) {
+            if (templates.isEmpty()) {
+                return "";
+            }
+            
+            // Get the template
+            String template = templates.get(frame % templates.size());
+            
+            // Remove color codes for processing
+            String plainText = TablistPlaceholderManager.stripColor(template);
+            
+            // Define pulse colors (primary and secondary)
+            ChatFormatting primaryColor = ChatFormatting.WHITE;
+            ChatFormatting secondaryColor = ChatFormatting.YELLOW;
+            
+            // Determine current pulse state (8 frames per pulse cycle)
+            int pulseState = (frame / 4) % 2;
+            ChatFormatting currentColor = (pulseState == 0) ? primaryColor : secondaryColor;
+            
+            // Apply current pulse color to entire text
+            return currentColor + plainText;
         }
     }
 }
