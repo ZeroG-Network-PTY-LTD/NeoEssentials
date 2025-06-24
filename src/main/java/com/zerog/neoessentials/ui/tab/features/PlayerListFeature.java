@@ -169,13 +169,23 @@ public class PlayerListFeature extends AbstractFeature {
                 if (!displayName.equals(lastDisplayName)) {
                     // Update player's display name in tablist
                     Component nameComponent = Component.literal(displayName);
-                      // Create entry for the update packet
+                      // Create entry for the update packet                    // Convert ServerPlayerGameMode to GameType
+                    net.minecraft.world.level.GameType gameType = net.minecraft.world.level.GameType.DEFAULT_MODE;
+                    try {
+                        // Get the gameType from the player's gameMode using reflection
+                        java.lang.reflect.Method getGameModeMethod = 
+                            player.gameMode.getClass().getMethod("getGameMode");
+                        gameType = (net.minecraft.world.level.GameType) getGameModeMethod.invoke(player.gameMode);
+                    } catch (Exception e) {
+                        NeoEssentials.LOGGER.warn("Could not get player game mode, using default");
+                    }
+                    
                     ClientboundPlayerInfoUpdatePacket.Entry entry = new ClientboundPlayerInfoUpdatePacket.Entry(
                         player.getUUID(),
                         player.getGameProfile(),
                         true, // Listed in tab
                         playerData.getPing(), // Use ping from TabPlayerData
-                        player.gameMode, // Game mode
+                        gameType, // Game mode - converted to GameType
                         nameComponent, // Display name
                         null // No profile text component
                     );
