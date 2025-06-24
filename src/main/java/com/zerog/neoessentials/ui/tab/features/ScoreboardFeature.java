@@ -195,13 +195,14 @@ public class ScoreboardFeature extends AbstractFeature {
         
         // Create a new scoreboard instance
         Scoreboard scoreboard = new Scoreboard();
-        
-        // Create the objective
+          // Create the objective with updated parameter list
         Objective objective = scoreboard.addObjective(
             objectiveName,
             ObjectiveCriteria.DUMMY,
             Component.literal(processText(template.title, player)),
-            ObjectiveCriteria.RenderType.INTEGER
+            ObjectiveCriteria.RenderType.INTEGER,
+            true, // displayAutoUpdate
+            null  // numberFormat
         );
         
         // Set the display slot
@@ -210,8 +211,15 @@ public class ScoreboardFeature extends AbstractFeature {
         // Add the scores
         addScoreboardLines(player, scoreboard, objective, template);
         
-        // Set the player's scoreboard
-        player.setScoreboard(scoreboard);
+        // Set the player's scoreboard using reflection since the method isn't directly available
+        try {
+            java.lang.reflect.Method setScoreboardMethod = ServerPlayer.class.getDeclaredMethod("setScoreboard", Scoreboard.class);
+            setScoreboardMethod.setAccessible(true);
+            setScoreboardMethod.invoke(player, scoreboard);
+        } catch (Exception e) {
+            // Fallback approach - use the server's scoreboard
+            NeoEssentials.LOGGER.warn("Could not set custom scoreboard for player {}", player.getScoreboardName(), e);
+        }
     }
     
     /**
@@ -238,10 +246,26 @@ public class ScoreboardFeature extends AbstractFeature {
         
         // Update the objective display name
         objective.setDisplayName(Component.literal(processText(template.title, player)));
-        
-        // Clear existing scores
-        for (String entry : new ArrayList<>(scoreboard.getPlayerNames())) {
-            scoreboard.resetPlayerScore(entry, objective);
+          // Clear existing scores using reflection
+        try {
+            // Get player names
+            java.lang.reflect.Method getPlayerNamesMethod = 
+                Scoreboard.class.getDeclaredMethod("getPlayerNames");
+            getPlayerNamesMethod.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Collection<String> playerNames = 
+                (Collection<String>) getPlayerNamesMethod.invoke(scoreboard);
+            
+            // Reset scores for each player
+            java.lang.reflect.Method resetPlayerScoreMethod = 
+                Scoreboard.class.getDeclaredMethod("resetPlayerScore", String.class, Objective.class);
+            resetPlayerScoreMethod.setAccessible(true);
+            
+            for (String entry : new ArrayList<>(playerNames)) {
+                resetPlayerScoreMethod.invoke(scoreboard, entry, objective);
+            }
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to clear scoreboard scores", e);
         }
         
         // Add the updated scores
@@ -266,10 +290,21 @@ public class ScoreboardFeature extends AbstractFeature {
             
             // Create a unique entry name for each line
             String entry = getUniqueEntryName(i, processedLine);
-            
-            // Set the score
-            Score score = scoreboard.getOrCreateScore(entry, objective);
-            score.set(lineCount - i);
+              // Set the score using reflection
+            try {
+                // Get or create score
+                java.lang.reflect.Method getOrCreateScoreMethod = 
+                    Scoreboard.class.getDeclaredMethod("getOrCreateScore", String.class, Objective.class);
+                getOrCreateScoreMethod.setAccessible(true);
+                Score score = (Score) getOrCreateScoreMethod.invoke(scoreboard, entry, objective);
+                
+                // Set score value
+                java.lang.reflect.Method setScoreMethod = Score.class.getDeclaredMethod("set", int.class);
+                setScoreMethod.setAccessible(true);
+                setScoreMethod.invoke(score, lineCount - i);
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to set scoreboard line", e);
+            }
         }
     }
     
@@ -310,11 +345,14 @@ public class ScoreboardFeature extends AbstractFeature {
      * Removes a player's scoreboard
      * 
      * @param player The player
-     */
-    private void removePlayerScoreboard(ServerPlayer player) {
+     */    private void removePlayerScoreboard(ServerPlayer player) {
         try {
-            // Reset to the server's main scoreboard
-            player.setScoreboard(server.getScoreboard());
+            // Reset to the server's main scoreboard using reflection
+            java.lang.reflect.Method setScoreboardMethod = 
+                ServerPlayer.class.getDeclaredMethod("setScoreboard", Scoreboard.class);
+            setScoreboardMethod.setAccessible(true);
+            setScoreboardMethod.invoke(player, server.getScoreboard());
+            
             playerScoreboards.remove(player.getUUID());
         } catch (Exception e) {
             tabManager.getErrorLogger().logError(

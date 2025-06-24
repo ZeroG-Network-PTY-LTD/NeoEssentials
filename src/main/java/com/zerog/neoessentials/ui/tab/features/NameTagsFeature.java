@@ -155,11 +155,9 @@ public class NameTagsFeature extends AbstractFeature {
             // Create new team
             return scoreboard.addPlayerTeam(teamName);
         });
-        
-        // Set team properties
-        team.setPlayerPrefix(prefix);
-        team.setPlayerSuffix(suffix);
-        
+          // Set team properties - convert String to Component
+        team.setPlayerPrefix(net.minecraft.network.chat.Component.literal(prefix));
+        team.setPlayerSuffix(net.minecraft.network.chat.Component.literal(suffix));
         if (useTeamColors) {
             String colorName = groupColors.getOrDefault(group, "white");
             try {
