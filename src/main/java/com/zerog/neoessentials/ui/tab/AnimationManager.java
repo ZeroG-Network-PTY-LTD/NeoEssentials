@@ -70,12 +70,8 @@ public class AnimationManager {
     
     // Animation processors by type
     private final Map<AnimationType, AnimationProcessor> animationProcessors = new HashMap<>();
-    
-    // Custom hex animations loaded from config
-    private final Map<String, CustomHexAnimation> customHexAnimations = new HashMap<>();
-    private boolean customHexAnimationsLoaded = false;
-    
-    /**
+      // Custom hex animations loaded from config
+    private final Map<String, CustomHexAnimation> customHexAnimations = new HashMap<>();/**
      * Initializes animation system
      */
     public void initialize() {
@@ -183,9 +179,7 @@ public class AnimationManager {
             defaultTexts.add("&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e");
             defaultTexts.add("&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe");
             customHexAnimations.put("default", new CustomHexAnimation(50, defaultTexts));
-        }
-        
-        customHexAnimationsLoaded = true;
+        }        
         NeoEssentials.LOGGER.info("Loaded {} custom hex animations", customHexAnimations.size());
     }
     
@@ -301,22 +295,71 @@ public class AnimationManager {
     /**
      * Gets a custom hex animation by name
      * 
-     * @param name Animation name
-     * @return The animation, or default if not found
+     * @param name The animation name
+     * @return The animation or null if not found
      */
     public CustomHexAnimation getCustomHexAnimation(String name) {
-        if (!customHexAnimationsLoaded) {
-            loadCustomHexAnimations();
+        return customHexAnimations.get(name);
+    }
+    
+    /**
+     * Process any animation tags in a text string
+     * 
+     * @param text The text to process for animations
+     * @return The processed text with animations applied
+     */
+    public String processAnimations(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
         }
         
-        return customHexAnimations.getOrDefault(name, 
-            customHexAnimations.getOrDefault("default", null));
+        // Process animation tags: {animation:name}text to animate{/animation}
+        Pattern pattern = Pattern.compile("\\{animation:([a-z_]+)\\}(.*?)\\{/animation\\}", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(text);
+        StringBuffer result = new StringBuffer();
+        
+        while (matcher.find()) {
+            String animationName = matcher.group(1);
+            String content = matcher.group(2);
+            
+            // Process the animation based on type
+            AnimationType type = AnimationType.fromString(animationName);
+            if (type == AnimationType.NONE) {
+                // Not a standard animation, check for custom hex animation
+                if (customHexAnimations.containsKey(animationName)) {
+                    CustomHexAnimation animation = customHexAnimations.get(animationName);
+                    List<String> frames = animation.getFrames();
+                    
+                    // Use the global frame for animation without player context
+                    int frame = globalFrame.get() % frames.size();
+                    content = frames.get(frame);
+                } 
+                // No replacement if not found
+                matcher.appendReplacement(result, Matcher.quoteReplacement(content));
+            } else {
+                // Handle standard animations that require a player
+                // For these global animations without player context, we use a simpler approach
+                List<String> templates = new ArrayList<>();
+                templates.add(content);
+                
+                // Use the animation processor with null player
+                AnimationProcessor processor = animationProcessors.get(type);
+                if (processor != null) {
+                    String processed = processor.processFrame(templates, null, globalFrame.get());
+                    matcher.appendReplacement(result, Matcher.quoteReplacement(processed));
+                } else {
+                    matcher.appendReplacement(result, Matcher.quoteReplacement(content));
+                }
+            }
+        }
+        
+        matcher.appendTail(result);
+        return result.toString();
     }
     
     /**
      * Storage class for custom hex animations
-     */
-    public static class CustomHexAnimation {
+     */    public static class CustomHexAnimation {
         private final int changeInterval;
         private final List<String> texts;
         
@@ -329,7 +372,19 @@ public class AnimationManager {
             return changeInterval;
         }
         
+        /**
+         * Get the animation texts/frames
+         * @return The list of animation frames
+         */
         public List<String> getTexts() {
+            return texts;
+        }
+        
+        /**
+         * Get the animation frames (alias for getTexts)
+         * @return The list of animation frames
+         */
+        public List<String> getFrames() {
             return texts;
         }
     }
@@ -590,12 +645,11 @@ public class AnimationManager {
             return color + plainText;
         }
     }
-    
-    /**
+      /**
      * Custom hex color animation - uses hex color animations from config file
      */
-    private static class HexCustomAnimationProcessor implements AnimationProcessor {
-        private static final Pattern HEX_PATTERN = Pattern.compile("&#[0-9A-Fa-f]{6}");
+    private class HexCustomAnimationProcessor implements AnimationProcessor {
+        private final Pattern HEX_PATTERN = Pattern.compile("&#[0-9A-Fa-f]{6}");
         
         @Override
         public String processFrame(List<String> templates, ServerPlayer player, int frame) {
@@ -619,9 +673,8 @@ public class AnimationManager {
                 }
             }
             
-            // Get animation
-            AnimationManager manager = NeoEssentials.getInstance().getTabManager().getAnimationManager();
-            CustomHexAnimation animation = manager.getCustomHexAnimation(animationName);
+            // Get animation directly from the outer class instance
+            CustomHexAnimation animation = getCustomHexAnimation(animationName);
             if (animation == null) return template;
             
             // If we have a template and it's not an animation command, apply animation to it

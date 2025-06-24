@@ -35,6 +35,9 @@ public class BossBarFeature extends AbstractFeature {
     private List<String> globalBossBars = new ArrayList<>();
     private Map<String, List<String>> groupBossBars = new HashMap<>();
     
+    // Max number of boss bars per player
+    private int maxBossBarsPerPlayer = 3;
+
     /**
      * Creates a new BossBar feature
      * 
@@ -43,10 +46,18 @@ public class BossBarFeature extends AbstractFeature {
     public BossBarFeature(TabManager tabManager) {
         super(tabManager);
     }
-    
-    @Override
+      @Override
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing boss bar feature");
+        
+        // Set up any additional initialization such as registering event handlers
+        try {
+            maxBossBarsPerPlayer = com.zerog.neoessentials.config.TablistTomlConfig.BOSSBAR_LIMIT_PER_PLAYER.get();
+            NeoEssentials.LOGGER.info("Boss bar feature initialized (max {} per player)", maxBossBarsPerPlayer);
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error initializing boss bar feature", e);
+            maxBossBarsPerPlayer = 3; // Fallback
+        }
     }
       @Override
     public void loadConfig() {
@@ -156,8 +167,7 @@ public class BossBarFeature extends AbstractFeature {
      * Updates boss bars for a specific player
      * 
      * @param player The player to update
-     */
-    private void updatePlayerBossBars(ServerPlayer player) {
+     */    private void updatePlayerBossBars(ServerPlayer player) {
         executeWithErrorLogging(() -> {
             TabPlayerData playerData = tabManager.getPlayerData(player);
             if (playerData == null) return;
@@ -184,21 +194,33 @@ public class BossBarFeature extends AbstractFeature {
             // Track which boss bars to keep
             Set<String> barsToKeep = new HashSet<>();
             
+            // Enforce max boss bars per player by limiting the barsToShow list
+            int barsToProcess = Math.min(barsToShow.size(), maxBossBarsPerPlayer);
+            if (barsToShow.size() > maxBossBarsPerPlayer) {
+                barsToShow = barsToShow.subList(0, maxBossBarsPerPlayer);
+                NeoEssentials.LOGGER.debug("Limited boss bars to {} for player {}", 
+                    maxBossBarsPerPlayer, player.getScoreboardName());
+            }
+            
             // Process each boss bar
-            for (int i = 0; i < barsToShow.size(); i++) {
-                String barId = "bar_" + i;
+            for (int i = 0; i < barsToProcess; i++) {
+                final int index = i;
+                String barId = index < globalBossBars.size() ? "global_" + index : "group_" + (index - globalBossBars.size());
                 barsToKeep.add(barId);
                 
-                String template = barsToShow.get(i);
+                String template = barsToShow.get(index);
                 
-                // Parse the template and extract properties
-                BossBarConfig config = parseBossBarTemplate(template);
+                // Get the cached configuration or reparse it
+                BossBarConfig config = bossBarConfigs.getOrDefault(barId, parseBossBarTemplate(template));
                 
                 // Replace placeholders in title
                 String processedTitle = tabManager.getPlaceholderManager().replacePlaceholders(config.title, player);
                 
+                // Apply animations if any are found
+                processedTitle = tabManager.getAnimationManager().processAnimations(processedTitle);
+                
                 // Process placeholders in progress
-                if (config.progress < 0) {
+                if (config.progress < 0 && config.progressVariable != null) {
                     // Negative progress means it should be dynamically calculated from a placeholder
                     try {
                         String progressValue = config.progressVariable;
@@ -230,6 +252,9 @@ public class BossBarFeature extends AbstractFeature {
                 bossBar.setColor(config.color);
                 bossBar.setOverlay(config.overlay);
                 bossBar.setProgress(config.progress);
+                
+                // Remember any custom data for this boss bar
+                playerData.setCustomData("bossbar_" + barId + "_config", config);
             }
             
             // Remove any boss bars that are no longer needed
@@ -338,6 +363,98 @@ public class BossBarFeature extends AbstractFeature {
         
         // Update boss bars when player changes world
         updatePlayerBossBars(player);
+    }
+    
+    /**
+     * Gets a boss bar by ID
+     * 
+     * @param player The player
+     * @param barId The boss bar ID
+     * @return The boss bar, or null if not found
+     */
+    public ServerBossEvent getBossBar(ServerPlayer player, String barId) {
+        Map<String, ServerBossEvent> bossBars = playerBossBars.get(player.getUUID());
+        if (bossBars == null) return null;
+        return bossBars.get(barId);
+    }
+    
+    /**
+     * Gets all boss bars for a player
+     * 
+     * @param player The player
+     * @return Map of boss bar IDs to their events
+     */
+    public Map<String, ServerBossEvent> getPlayerBossBars(ServerPlayer player) {
+        return playerBossBars.getOrDefault(player.getUUID(), Collections.emptyMap());
+    }
+    
+    /**
+     * Manually adds a boss bar to a specific player with a custom ID
+     * This can be useful for temporary boss bars or announcements
+     * 
+     * @param player The target player
+     * @param barId A unique ID for this boss bar
+     * @param title The boss bar title text
+     * @param color The boss bar color
+     * @param overlay The boss bar overlay style
+     * @param progress The progress value (0.0-1.0)
+     * @return The created/updated boss bar event
+     */
+    public ServerBossEvent addCustomBossBar(ServerPlayer player, String barId, String title, 
+            BossBarColor color, BossBarOverlay overlay, float progress) {
+        
+        // Get or create map for this player
+        Map<String, ServerBossEvent> bossBars = playerBossBars.computeIfAbsent(
+            player.getUUID(), k -> new ConcurrentHashMap<>());
+            
+        // Check if we need to enforce the limit
+        if (!bossBars.containsKey(barId) && bossBars.size() >= maxBossBarsPerPlayer) {
+            // We're at the limit and trying to add a new one, so remove the oldest one
+            // For this we'll use the fact that we always prefix IDs based on their type and index
+            String oldestId = bossBars.keySet().iterator().next();
+            ServerBossEvent oldBar = bossBars.remove(oldestId);
+            if (oldBar != null) {
+                oldBar.removePlayer(player);
+                NeoEssentials.LOGGER.debug("Removed oldest boss bar {} for player {} due to limit", 
+                    oldestId, player.getScoreboardName());
+            }
+        }
+        
+        // Create or update the boss bar
+        ServerBossEvent bossBar = bossBars.computeIfAbsent(barId, k -> {
+            ServerBossEvent newBar = new ServerBossEvent(
+                Component.literal(title), color, overlay
+            );
+            newBar.setProgress(progress);
+            newBar.addPlayer(player);
+            return newBar;
+        });
+        
+        // Update existing boss bar
+        bossBar.setName(Component.literal(title));
+        bossBar.setColor(color);
+        bossBar.setOverlay(overlay);
+        bossBar.setProgress(progress);
+        
+        return bossBar;
+    }
+    
+    /**
+     * Removes a specific boss bar from a player
+     * 
+     * @param player The player
+     * @param barId The boss bar ID to remove
+     * @return true if the boss bar was found and removed
+     */
+    public boolean removeBossBar(ServerPlayer player, String barId) {
+        Map<String, ServerBossEvent> bossBars = playerBossBars.get(player.getUUID());
+        if (bossBars == null) return false;
+        
+        ServerBossEvent bossBar = bossBars.remove(barId);
+        if (bossBar == null) return false;
+        
+        bossBar.removePlayer(player);
+        return true;
     }
     
     /**

@@ -1,6 +1,9 @@
 package com.zerog.neoessentials.config;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -439,6 +442,73 @@ public class TablistTomlConfig {
     static {
         BUILDER.pop(); // End vip section
         BUILDER.pop(); // End groups section
+    }
+    
+    // BossBar settings
+    static {
+        BUILDER.comment(
+            "=========================",
+            "BossBar Settings",
+            "========================="
+        ).push("bossbars");
+    }
+    
+    public static final ModConfigSpec.BooleanValue ENABLE_BOSSBARS = BUILDER
+        .comment(
+            "---------------------------------------",
+            "Enable the boss bar feature",
+            "true = Show boss bars based on configuration",
+            "false = No boss bars will be shown",
+            "---------------------------------------"
+        )
+        .define("enabled", true);
+        
+    public static final ModConfigSpec.ConfigValue<List<String>> GLOBAL_BOSSBARS = BUILDER
+        .comment(
+            "---------------------------------------",
+            "Global boss bars shown to all players",
+            "Format: \"{color:<color>}{style:<style>}{progress:<value>}Text with %placeholders%\"",
+            "",
+            "Available colors: pink, blue, red, green, yellow, purple, white",
+            "Available styles: progress, notched_6, notched_10, notched_12, notched_20",
+            "Progress: 0.0 to 1.0 or placeholders like %tps/20%",
+            "---------------------------------------"
+        )
+        .define("globalBossBars", Arrays.asList(
+            "{color:red}{style:progress}{progress:1.0}Server TPS: %tps%",
+            "{color:green}{style:notched_6}{progress:0.8}Welcome to the server!",
+            "{color:blue}{style:progress}{progress:%memory_percent/100%}Memory: %memory_percent%% (%memory_used%/%memory_max% MB)"
+        ));
+        
+    public static final ModConfigSpec.ConfigValue<Map<String, List<String>>> GROUP_BOSSBARS = BUILDER
+        .comment(
+            "---------------------------------------",
+            "Group-specific boss bars",
+            "Format is the same as globalBossBars but shown only to players in specific groups",
+            "---------------------------------------"
+        )
+        .define("groupBossBars", new HashMap<String, List<String>>() {{
+            put("admin", Arrays.asList(
+                "{color:purple}{style:progress}{progress:1.0}Admin Mode Active",
+                "{color:red}{style:notched_10}{progress:1.0}Server control panel"
+            ));
+            put("vip", Arrays.asList(
+                "{color:gold}{style:progress}{progress:1.0}VIP Status Active",
+                "{color:yellow}{style:notched_6}{progress:1.0}Thank you for supporting us!"
+            ));
+        }});
+        
+    public static final ModConfigSpec.IntValue BOSSBAR_LIMIT_PER_PLAYER = BUILDER
+        .comment(
+            "---------------------------------------",
+            "Maximum number of boss bars to display per player",
+            "Set lower if multiple boss bars cause performance issues",
+            "---------------------------------------"
+        )
+        .defineInRange("bossBarLimitPerPlayer", 3, 1, 10);
+        
+    static {
+        BUILDER.pop(); // end bossbars section
     }
     
     public static final ModConfigSpec SPEC = BUILDER.build();    /**
