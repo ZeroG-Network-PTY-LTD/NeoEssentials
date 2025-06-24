@@ -44,9 +44,7 @@ public class TabPlayerData {
         this.uuid = player.getUUID();
         this.displayName = player.getDisplayName().getString();
         update(player);
-    }
-
-    /**
+    }    /**
      * Updates player data from a ServerPlayer
      * @param player The server player
      */
@@ -54,14 +52,20 @@ public class TabPlayerData {
         // Update basic information
         this.displayName = player.getDisplayName().getString();
         this.world = player.level().dimension().location().toString();
-        this.ping = player.latency;
-        
-        // On NeoForge 1.21.1 we can get the ping directly
-        if (this.ping <= 0) {
+          // Get ping safely from the connection
+        try {
+            // Try to get the ping using reflection
+            java.lang.reflect.Field pingField = player.connection.getClass().getDeclaredField("latency");
+            pingField.setAccessible(true);
+            this.ping = pingField.getInt(player.connection);
+        } catch (Exception e1) {
             try {
-                this.ping = player.connection.latency;
-            } catch (Exception e) {
-                this.ping = 0;
+                // Alternative approach - try another field name
+                java.lang.reflect.Field pingField = player.connection.getClass().getDeclaredField("e"); // Obfuscated field name
+                pingField.setAccessible(true);
+                this.ping = pingField.getInt(player.connection);
+            } catch (Exception e2) {                // Fallback to a reasonable default
+                this.ping = 50;
             }
         }
     }
