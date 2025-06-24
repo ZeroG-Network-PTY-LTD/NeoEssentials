@@ -169,13 +169,12 @@ public class PlayerListFeature extends AbstractFeature {
                 if (!displayName.equals(lastDisplayName)) {
                     // Update player's display name in tablist
                     Component nameComponent = Component.literal(displayName);
-                    
-                    // Create entry for the update packet
+                      // Create entry for the update packet
                     ClientboundPlayerInfoUpdatePacket.Entry entry = new ClientboundPlayerInfoUpdatePacket.Entry(
                         player.getUUID(),
                         player.getGameProfile(),
                         true, // Listed in tab
-                        player.ping, // Use actual ping or spoofed value
+                        playerData.getPing(), // Use ping from TabPlayerData
                         player.gameMode, // Game mode
                         nameComponent, // Display name
                         null // No profile text component
@@ -197,15 +196,26 @@ public class PlayerListFeature extends AbstractFeature {
                     // This would typically set a fixed or custom ping value per group
                 }
             }
-            
-            // Send the packet if any entries were added
+              // Send the packet if any entries were added
             if (!addEntries.isEmpty()) {
-                addPacket = new ClientboundPlayerInfoUpdatePacket(
-                    ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME,
-                    addEntries
-                );
+                // Create EnumSet with the UPDATE_DISPLAY_NAME action
+                java.util.EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions = 
+                    java.util.EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME);
                 
-                viewer.connection.send(addPacket);
+                // Get the actual ServerPlayer objects since the packet constructor requires Collection<ServerPlayer>
+                java.util.List<ServerPlayer> playerList = new java.util.ArrayList<>();
+                for (ClientboundPlayerInfoUpdatePacket.Entry entry : addEntries) {
+                    ServerPlayer player = server.getPlayerList().getPlayer(entry.profileId());
+                    if (player != null) {
+                        playerList.add(player);
+                    }
+                }
+                
+                // Only send if we have players
+                if (!playerList.isEmpty()) {
+                    addPacket = new ClientboundPlayerInfoUpdatePacket(actions, playerList);
+                    viewer.connection.send(addPacket);
+                }
             }
         }, "Error updating player list for viewer " + viewer.getScoreboardName());
     }

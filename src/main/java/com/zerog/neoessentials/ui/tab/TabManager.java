@@ -146,13 +146,12 @@ public class TabManager {
         initialized = true;
         NeoEssentials.LOGGER.info("TabManager initialized");
     }
-    
-    /**
+      /**
      * Loads configuration settings for the tablist
      */
     public void loadConfig() {
         // Load general settings
-        updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
+        updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get().intValue(); // Convert Long to int
         
         // Each feature loads its own config
         headerFooterFeature.loadConfig();
