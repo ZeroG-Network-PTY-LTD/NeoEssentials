@@ -143,17 +143,17 @@ public class NameTagsFeature extends AbstractFeature {
         if (teamName.length() > 16) {
             teamName = teamName.substring(0, 16);
         }
-        
-        // Get or create team
-        PlayerTeam team = teamCache.computeIfAbsent(teamName, k -> {
+          // Get or create team
+        final String finalTeamName = teamName;  // Create final version for lambda
+        PlayerTeam team = teamCache.computeIfAbsent(finalTeamName, k -> {
             // Check if team exists already
-            PlayerTeam existing = scoreboard.getPlayerTeam(teamName);
+            PlayerTeam existing = scoreboard.getPlayerTeam(finalTeamName);
             if (existing != null) {
                 return existing;
             }
             
             // Create new team
-            return scoreboard.addPlayerTeam(teamName);
+            return scoreboard.addPlayerTeam(finalTeamName);
         });
           // Set team properties - convert String to Component
         team.setPlayerPrefix(net.minecraft.network.chat.Component.literal(prefix));

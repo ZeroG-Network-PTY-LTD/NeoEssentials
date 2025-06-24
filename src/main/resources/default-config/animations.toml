@@ -1,0 +1,111 @@
+# NeoEssentials TabManager Animations Configuration
+# Based on TAB plugin animations
+
+[animations]
+# Animation refresh interval in milliseconds
+refresh_interval = 200
+
+[animations.standard]
+# Standard text-based animations (frame by frame)
+welcome = [
+  "&cW&felcome!",
+  "&cWe&flcome!",
+  "&cWel&fcome!",
+  "&cWelc&fome!",
+  "&cWelco&fme!",
+  "&cWelcom&fe!",
+  "&cWelcome&f!",
+  "&fW&celcome!",
+  "&fWe&clcome!",
+  "&fWel&ccome!",
+  "&fWelc&come!",
+  "&fWelco&cme!",
+  "&fWelcom&ce!"
+]
+
+server_name = [
+  "&c&lNeoEssentials",
+  "&c&l&nNeoEssentials",
+  "&b&lNeoEssentials",
+  "&b&l&nNeoEssentials",
+  "&e&lNeoEssentials",
+  "&e&l&nNeoEssentials"
+]
+
+loading = [
+  "&aLoading.",
+  "&aLoading..",
+  "&aLoading...",
+  "&aLoading",
+  "&aLoading",
+]
+
+online_players = [
+  "&aOnline: %online%",
+  "&eOnline: %online%",
+  "&6Online: %online%"
+]
+
+[animations.gradient]
+# Gradient animations that smoothly transition between colors
+rainbow = {
+  colors = ["#FF0000", "#FFAA00", "#AAFF00", "#00FF00", "#00FFAA", "#00AAFF", "#0000FF", "#AA00FF", "#FF00AA", "#FF0000"],
+  steps = 24
+}
+
+evening_sky = {
+  colors = ["#1E2A5E", "#493267", "#FB5858", "#D68060"],
+  steps = 15
+}
+
+forest = {
+  colors = ["#1B512D", "#2D7D4D", "#A4DE02"],
+  steps = 10
+}
+
+water = {
+  colors = ["#015C92", "#2D82B5", "#88CDF6", "#72EFDD"],
+  steps = 12
+}
+
+fire = {
+  colors = ["#FDCA40", "#F79824", "#FC2E20", "#580000"],
+  steps = 12
+}
+
+[animations.pulse]
+# Pulse animations that fade in and out
+warning = {
+  color = "#FF0000",
+  seconds = 1.5
+}
+
+gold = {
+  color = "#FFD700",
+  seconds = 2.0
+}
+
+aqua = {
+  color = "#00FFFF",
+  seconds = 3.0
+}
+
+[animations.hex_custom]
+# Custom hex animations with more control
+matrix = {
+  colors = ["#03A062", "#05C67D", "#00FF9F", "#05C67D", "#03A062"],
+  steps_per_color = 5,
+  speed = 100
+}
+
+sunset = {
+  colors = ["#F47B39", "#FFB288", "#FF7E6B", "#D63447", "#7A2048", "#390040"],
+  steps_per_color = 8,
+  speed = 150
+}
+
+ocean = {
+  colors = ["#006D77", "#83C5BE", "#EDF6F9", "#83C5BE", "#006D77"],
+  steps_per_color = 10,
+  speed = 120
+}
