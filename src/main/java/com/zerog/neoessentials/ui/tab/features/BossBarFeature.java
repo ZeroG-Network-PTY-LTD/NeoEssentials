@@ -1,15 +1,12 @@
 package com.zerog.neoessentials.ui.tab.features;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.ui.tab.AnimationManager;
 import com.zerog.neoessentials.ui.tab.TabManager;
 import com.zerog.neoessentials.ui.tab.TabPlayerData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.BossEvent;
 import net.minecraft.world.BossEvent.BossBarColor;
 import net.minecraft.world.BossEvent.BossBarOverlay;
-import net.minecraft.world.level.BossEvent.BossBarCreateEvent;
 import net.minecraft.server.level.ServerBossEvent;
 
 import java.util.*;
@@ -19,6 +16,31 @@ import java.util.regex.Pattern;
 
 /**
  * Handles boss bars for the TabManager system
+ * 
+ * Example Usage in tablist.toml:
+ * 
+ * [bossbars]
+ * enabled = true
+ * bossBarLimitPerPlayer = 3
+ * 
+ * # Global boss bars shown to all players
+ * globalBossBars = [
+ *   "{color:red}{style:progress}{progress:1.0}Server TPS: %tps%",
+ *   "{color:green}{style:notched_6}{progress:0.8}Welcome to the server!",
+ *   "{color:blue}{style:progress}{progress:%memory_percent/100%}Memory: %memory_percent%% (%memory_used%/%memory_max% MB)",
+ *   "{color:pink}{style:notched_10}{progress:0.5}{animation:rainbow}Animated Boss Bar Example{/animation}"
+ * ]
+ * 
+ * # Group-specific boss bars (only shown to players in specific groups)
+ * [bossbars.groupBossBars]
+ * admin = [
+ *   "{color:purple}{style:progress}{progress:1.0}Admin Mode Active",
+ *   "{color:red}{style:notched_10}{progress:1.0}Server control panel"
+ * ]
+ * vip = [
+ *   "{color:gold}{style:progress}{progress:1.0}VIP Status Active", 
+ *   "{color:yellow}{style:notched_6}{progress:1.0}Thank you for supporting us!"
+ * ]
  */
 public class BossBarFeature extends AbstractFeature {
     // Patterns for color and style in templates
@@ -212,13 +234,11 @@ public class BossBarFeature extends AbstractFeature {
                 
                 // Get the cached configuration or reparse it
                 BossBarConfig config = bossBarConfigs.getOrDefault(barId, parseBossBarTemplate(template));
-                
-                // Replace placeholders in title
-                String processedTitle = tabManager.getPlaceholderManager().replacePlaceholders(config.title, player);
-                
-                // Apply animations if any are found
-                processedTitle = tabManager.getAnimationManager().processAnimations(processedTitle);
-                
+                  // Replace placeholders in title and apply animations
+                final String processedTitle = tabManager.getAnimationManager()
+                    .processAnimations(
+                        tabManager.getPlaceholderManager().replacePlaceholders(config.title, player)
+                    );
                 // Process placeholders in progress
                 if (config.progress < 0 && config.progressVariable != null) {
                     // Negative progress means it should be dynamically calculated from a placeholder
@@ -455,6 +475,243 @@ public class BossBarFeature extends AbstractFeature {
         
         bossBar.removePlayer(player);
         return true;
+    }
+    
+    /**
+     * Creates a temporary boss bar for announcement purposes
+     * 
+     * @param player The player to show the announcement to
+     * @param title The boss bar title
+     * @param color The boss bar color
+     * @param durationSeconds How long to show the announcement (seconds)
+     * @return true if the announcement was created, false otherwise
+     */
+    public boolean createAnnouncement(ServerPlayer player, String title, BossBarColor color, int durationSeconds) {
+        if (!isEnabled() || player == null) return false;
+        
+        // Generate a unique ID for this announcement
+        String announcementId = "announcement_" + System.currentTimeMillis();
+        
+        // Create the boss bar
+        ServerBossEvent bossBar = addCustomBossBar(
+            player, 
+            announcementId, 
+            title, 
+            color, 
+            BossBarOverlay.PROGRESS, 
+            1.0f
+        );
+        
+        if (bossBar == null) return false;
+          // Schedule removal
+        NeoEssentials.getInstance().getScheduler().schedule(() -> {
+            removeBossBar(player, announcementId);
+        }, durationSeconds, java.util.concurrent.TimeUnit.SECONDS);
+        
+        return true;
+    }
+    
+    /**
+     * Creates a temporary global announcement boss bar
+     * 
+     * @param title The boss bar title
+     * @param color The boss bar color
+     * @param durationSeconds How long to show the announcement (seconds)
+     */
+    public void createGlobalAnnouncement(String title, BossBarColor color, int durationSeconds) {
+        if (!isEnabled() || server == null) return;
+        
+        // For each online player
+        for (ServerPlayer player : tabManager.getOnlinePlayers()) {
+            createAnnouncement(player, title, color, durationSeconds);
+        }
+    }
+    
+    /**
+     * Processes a boss bar command
+     * 
+     * @param sender Command sender (player or console)
+     * @param args Command arguments
+     * @return true if command was processed successfully
+     */
+    public boolean processCommand(CommandSource sender, String[] args) {
+        if (!isEnabled()) {
+            sender.sendMessage(Component.literal("§cBoss bar feature is disabled"));
+            return false;
+        }
+        
+        if (args.length < 1) {
+            sender.sendMessage(Component.literal("§cUsage: /bossbar <announce|send|toggle>"));
+            return false;
+        }
+        
+        String subCommand = args[0].toLowerCase();
+        
+        switch (subCommand) {
+            case "announce": return handleAnnounceCommand(sender, args);
+            case "send": return handleSendCommand(sender, args);
+            case "toggle": return handleToggleCommand(sender, args);
+            default:
+                sender.sendMessage(Component.literal("§cUnknown boss bar command: " + subCommand));
+                return false;
+        }
+    }
+    
+    /**
+     * Handles the announce command - shows a global announcement
+     */
+    private boolean handleAnnounceCommand(CommandSource sender, String[] args) {
+        // /bossbar announce <message> [duration] [color]
+        if (args.length < 2) {
+            sender.sendMessage(Component.literal("§cUsage: /bossbar announce <message> [duration] [color]"));
+            return false;
+        }
+        
+        String message = args[1];
+        int duration = 10; // Default 10 seconds
+        BossBarColor color = BossBarColor.WHITE; // Default white
+        
+        if (args.length >= 3) {
+            try {
+                duration = Integer.parseInt(args[2]);
+            } catch (NumberFormatException e) {
+                sender.sendMessage(Component.literal("§cInvalid duration: " + args[2]));
+                return false;
+            }
+        }
+        
+        if (args.length >= 4) {
+            try {
+                color = BossBarColor.valueOf(args[3].toUpperCase());
+            } catch (IllegalArgumentException e) {
+                sender.sendMessage(Component.literal("§cInvalid color: " + args[3]));
+                return false;
+            }
+        }
+        
+        // Create the announcement
+        createGlobalAnnouncement(message, color, duration);
+        sender.sendMessage(Component.literal("§aAnnouncement boss bar created for " + duration + " seconds"));
+        return true;
+    }
+    
+    /**
+     * Handles the send command - sends a boss bar to a specific player
+     */
+    private boolean handleSendCommand(CommandSource sender, String[] args) {
+        // /bossbar send <player> <message> [duration] [color]
+        if (args.length < 3) {
+            sender.sendMessage(Component.literal("§cUsage: /bossbar send <player> <message> [duration] [color]"));
+            return false;
+        }
+        
+        String playerName = args[1];
+        String message = args[2];
+        int duration = 10; // Default 10 seconds
+        BossBarColor color = BossBarColor.WHITE; // Default white
+        
+        // Find the player
+        ServerPlayer targetPlayer = server.getPlayerList().getPlayerByName(playerName);
+        if (targetPlayer == null) {
+            sender.sendMessage(Component.literal("§cPlayer not found: " + playerName));
+            return false;
+        }
+        
+        if (args.length >= 4) {
+            try {
+                duration = Integer.parseInt(args[3]);
+            } catch (NumberFormatException e) {
+                sender.sendMessage(Component.literal("§cInvalid duration: " + args[3]));
+                return false;
+            }
+        }
+        
+        if (args.length >= 5) {
+            try {
+                color = BossBarColor.valueOf(args[4].toUpperCase());
+            } catch (IllegalArgumentException e) {
+                sender.sendMessage(Component.literal("§cInvalid color: " + args[4]));
+                return false;
+            }
+        }
+        
+        // Create the announcement for the target player
+        createAnnouncement(targetPlayer, message, color, duration);
+        sender.sendMessage(Component.literal("§aBoss bar sent to " + playerName + " for " + duration + " seconds"));
+        return true;
+    }
+    
+    /**
+     * Handles the toggle command - toggles boss bars for a player
+     */
+    private boolean handleToggleCommand(CommandSource sender, String[] args) {
+        // /bossbar toggle [player]
+        ServerPlayer targetPlayer;
+        
+        if (args.length >= 2) {
+            // Toggle for specified player
+            String playerName = args[1];
+            targetPlayer = server.getPlayerList().getPlayerByName(playerName);
+            if (targetPlayer == null) {
+                sender.sendMessage(Component.literal("§cPlayer not found: " + playerName));
+                return false;
+            }
+        } else {
+            // Toggle for command sender
+            if (!(sender instanceof ServerPlayer)) {
+                sender.sendMessage(Component.literal("§cConsole cannot toggle boss bars for itself"));
+                return false;
+            }
+            targetPlayer = (ServerPlayer) sender;
+        }
+        
+        // Get player data
+        TabPlayerData playerData = tabManager.getPlayerData(targetPlayer);
+        if (playerData == null) {
+            sender.sendMessage(Component.literal("§cNo player data found for " + targetPlayer.getScoreboardName()));
+            return false;
+        }
+        
+        // Toggle boss bar visibility
+        boolean currentVisibility = playerData.getCustomData("bossbar_visible", Boolean.class);
+        if (currentVisibility == false) {
+            // Currently hidden, show them
+            playerData.setCustomData("bossbar_visible", true);
+            updatePlayerBossBars(targetPlayer);
+            sender.sendMessage(Component.literal("§aBoss bars enabled for " + targetPlayer.getScoreboardName()));
+        } else {
+            // Currently visible, hide them
+            playerData.setCustomData("bossbar_visible", false);
+            removeAllBossBars(targetPlayer);
+            sender.sendMessage(Component.literal("§aBoss bars disabled for " + targetPlayer.getScoreboardName()));
+        }
+        
+        return true;
+    }
+
+    /**
+     * Returns information about boss bars for the help command
+     */
+    public String getHelpInfo() {
+        if (!isEnabled()) {
+            return "§cBoss bar feature is disabled";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("§6§lBossBar Commands:§r\n");
+        sb.append("§e/bossbar announce <message> [duration] [color]§r - Show a global announcement boss bar\n");
+        sb.append("§e/bossbar send <player> <message> [duration] [color]§r - Send a boss bar to a specific player\n");
+        sb.append("§e/bossbar toggle [player]§r - Toggle boss bar visibility\n");
+        sb.append("§6Valid colors:§r WHITE, BLUE, RED, GREEN, YELLOW, PURPLE, PINK\n");
+        
+        return sb.toString();
+    }
+
+    /**
+     * Inner class representing a CommandSource (abstraction for player or console)
+     */
+    public interface CommandSource {
+        void sendMessage(Component message);
     }
     
     /**
