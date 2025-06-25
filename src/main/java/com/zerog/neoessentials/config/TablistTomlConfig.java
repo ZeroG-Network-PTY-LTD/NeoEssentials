@@ -194,18 +194,21 @@ public class TablistTomlConfig {
         )
         .defineInRange("scrollWidth", 20, 10, 100);
       static {
-        BUILDER.pop(); // End tablist section
-        
+        BUILDER.pop(); // End tablist section        
         // Add a note about templates.json
         BUILDER.comment(
             "=========================",
             "Template Configuration",
             "=========================",
             "Templates for headers, footers, and group-specific settings",
-            "have been moved to templates.json for easier editing",
+            "have been moved to the neoessentials/templates.json file for easier editing",
             "and to avoid TOML serialization issues.",
             "",
-            "See the README_TEMPLATES.md file for more information.",
+            "Templates are now stored in JSON format in the server's main directory:",
+            "- neoessentials/templates.json - Contains all header/footer templates",
+            "- neoessentials/animations.json - Contains all animation configurations",
+            "",
+            "See the README_TEMPLATES.md file in config/neoessentials for more information.",
             "========================="
         );
     }
@@ -228,11 +231,13 @@ public class TablistTomlConfig {
             "---------------------------------------"
         )
         .define("enabled", true);
-        
-    public static final ModConfigSpec.ConfigValue<List<String>> GLOBAL_BOSSBARS = BUILDER
+          public static final ModConfigSpec.ConfigValue<List<String>> GLOBAL_BOSSBARS = BUILDER
         .comment(
             "---------------------------------------",
             "Global boss bars shown to all players",
+            "NOTE: THIS SETTING IS DEPRECATED",
+            "Boss bars are now configured in neoessentials/templates.json",
+            "",
             "Format: \"{color:<color>}{style:<style>}{progress:<value>}Text with %placeholders%\"",
             "",
             "Available colors: pink, blue, red, green, yellow, purple, white",
@@ -241,10 +246,8 @@ public class TablistTomlConfig {
             "---------------------------------------"
         )
         .define("globalBossBars", Arrays.asList(
-            "{color:red}{style:progress}{progress:1.0}Server TPS: %tps%",
-            "{color:green}{style:notched_6}{progress:0.8}Welcome to the server!",
-            "{color:blue}{style:progress}{progress:%memory_percent/100%}Memory: %memory_percent%% (%memory_used%/%memory_max% MB)"
-        ));    // Push into a groupBossBars section for better organization
+            "DEPRECATED - Configure in neoessentials/templates.json instead"
+        ));// Push into a groupBossBars section for better organization
     static {
         BUILDER.comment(
             "---------------------------------------",
@@ -253,21 +256,18 @@ public class TablistTomlConfig {
             "---------------------------------------"
         ).push("groupBossBars");
     }
-        
-    // Admin group boss bars
+          // Admin group boss bars
     public static final ModConfigSpec.ConfigValue<List<String>> ADMIN_BOSSBARS = BUILDER
-        .comment("Boss bars for admin group")
+        .comment("Boss bars for admin group - DEPRECATED - Use neoessentials/templates.json instead")
         .define("admin", Arrays.asList(
-            "{color:purple}{style:progress}{progress:1.0}Admin Mode Active",
-            "{color:red}{style:notched_10}{progress:1.0}Server control panel"
+            "DEPRECATED - Configure in neoessentials/templates.json instead"
         ));
         
     // VIP group boss bars
     public static final ModConfigSpec.ConfigValue<List<String>> VIP_BOSSBARS = BUILDER
-        .comment("Boss bars for VIP group")
+        .comment("Boss bars for VIP group - DEPRECATED - Use neoessentials/templates.json instead")
         .define("vip", Arrays.asList(
-            "{color:gold}{style:progress}{progress:1.0}VIP Status Active",
-            "{color:yellow}{style:notched_6}{progress:1.0}Thank you for supporting us!"
+            "DEPRECATED - Configure in neoessentials/templates.json instead"
         ));
     
     static {
