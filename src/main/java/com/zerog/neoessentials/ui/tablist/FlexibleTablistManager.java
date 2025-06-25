@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.ui.tablist;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.TablistTomlConfig;
+import com.zerog.neoessentials.config.TablistYamlConfig;
 import com.zerog.neoessentials.ui.tab.TabManager;
 import com.zerog.neoessentials.ui.tablist.components.*;
 import com.zerog.neoessentials.ui.tablist.layouts.*;
@@ -49,14 +49,13 @@ public class FlexibleTablistManager {
     private ScheduledFuture<?> updateTask;
     
     // State tracking
-    private boolean initialized = false;
-    private ConfigMode configMode = ConfigMode.TOML_CONFIG;
+    private boolean initialized = false;    private ConfigMode configMode = ConfigMode.YAML_CONFIG;
     
     /**
      * Configuration mode for the tablist
      */
     public enum ConfigMode {
-        TOML_CONFIG,    // Use the tablist.toml configuration file
+        YAML_CONFIG,    // Use the tablist.yml configuration file
         API_OVERRIDE,   // Allow external API to override config
         HYBRID          // Use config but allow API modifications
     }
@@ -136,9 +135,8 @@ public class FlexibleTablistManager {
         
         // Load configuration
         loadConfiguration();
-        
-        // Start the update task
-        long updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
+          // Start the update task
+        long updateInterval = TablistYamlConfig.getUpdateInterval();
         startUpdateTask(updateInterval);
         
         initialized = true;
@@ -151,11 +149,11 @@ public class FlexibleTablistManager {
         NeoEssentials.LOGGER.info("Loading tablist configuration (preserving customizations)");
         
         try {
-            // Load values directly from TablistTomlConfig but don't allow overwrites
+            // Load values directly from TablistYamlConfig but don't allow overwrites
             // This ensures user customizations are preserved
             
             // We only use configuration values loaded from file, never the default values
-            if (configMode == ConfigMode.TOML_CONFIG || configMode == ConfigMode.HYBRID) {
+            if (configMode == ConfigMode.YAML_CONFIG || configMode == ConfigMode.HYBRID) {
                 // Initialize layout based on config
                 initializeLayoutFromConfig();
                 
@@ -229,9 +227,8 @@ public class FlexibleTablistManager {
                 
                 header.setLines(headerLines);
                 header.setGroupLines(groupHeaders);
-                
-                // Set animation type
-                String animType = TablistTomlConfig.HEADER_ANIMATION_TYPE.get();
+                  // Set animation type
+                String animType = TablistYamlConfig.getHeaderAnimationType();
                 header.setAnimationType(animType);
             }
         });
@@ -263,9 +260,8 @@ public class FlexibleTablistManager {
                 
                 footer.setLines(footerLines);
                 footer.setGroupLines(groupFooters);
-                
-                // Set animation type
-                String animType = TablistTomlConfig.FOOTER_ANIMATION_TYPE.get();
+                  // Set animation type
+                String animType = TablistYamlConfig.getFooterAnimationType();
                 footer.setAnimationType(animType);
             }
         });
@@ -559,9 +555,8 @@ public class FlexibleTablistManager {
         
         // Reload configuration
         loadConfiguration();
-        
-        // Restart the update task
-        long updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
+          // Restart the update task
+        long updateInterval = TablistYamlConfig.getUpdateInterval();
         startUpdateTask(updateInterval);
         
         NeoEssentials.LOGGER.info("Tablist reloaded successfully");

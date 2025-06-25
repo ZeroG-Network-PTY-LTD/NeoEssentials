@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.ui;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.TablistTomlConfig;
+import com.zerog.neoessentials.config.TablistYamlConfig;
 import com.zerog.neoessentials.ui.tab.TabManager;
 import com.zerog.neoessentials.ui.tab.DataManagerHooks;
 import com.zerog.neoessentials.ui.tablist.TablistAnimationManager;
@@ -102,9 +102,8 @@ public class EnhancedTablistManager {
         
         // Load headers and footers from config
         loadHeadersAndFooters();
-        
-        // Start the update task
-        long updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
+          // Start the update task
+        long updateInterval = TablistYamlConfig.getUpdateInterval();
         startUpdateTask(updateInterval);
         
         initialized = true;
@@ -244,11 +243,10 @@ public class EnhancedTablistManager {
      * @param group The player's group
      * @return The list of header templates to use
      */
-    private List<String> getPlayerSpecificHeaders(ServerPlayer player, String group) {
-        // Use default headers if player-specific headers are disabled
-        if (!TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_HEADERS.get()) {
+    private List<String> getPlayerSpecificHeaders(ServerPlayer player, String group) {        // Use default headers if player-specific headers are disabled
+        if (!TablistYamlConfig.isEnablePlayerSpecificHeaders()) {
             return headers;
-        }        // Get a TabManager instance to access templates
+        }// Get a TabManager instance to access templates
         TabManager tabManager = DataManagerHooks.getTabManager();
         if (tabManager != null && tabManager.getTemplateManager() != null) {        // Check for permission-based headers
             if (group.equalsIgnoreCase("Admin") && 
@@ -279,11 +277,10 @@ public class EnhancedTablistManager {
      * @param group The player's group
      * @return The list of footer templates to use
      */
-    private List<String> getPlayerSpecificFooters(ServerPlayer player, String group) {
-        // Use default footers if player-specific footers are disabled
-        if (!TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_FOOTERS.get()) {
+    private List<String> getPlayerSpecificFooters(ServerPlayer player, String group) {        // Use default footers if player-specific footers are disabled
+        if (!TablistYamlConfig.isEnablePlayerSpecificFooters()) {
             return footers;
-        }        // Get a TabManager instance to access templates
+        }// Get a TabManager instance to access templates
         TabManager tabManager = DataManagerHooks.getTabManager();
         if (tabManager != null && tabManager.getTemplateManager() != null) {
             // Check for permission-based footers
@@ -374,9 +371,8 @@ public class EnhancedTablistManager {
                 Thread.currentThread().interrupt();
             }
         }
-        
-        // Reload configs
-        TablistTomlConfig.reload();
+          // Reload configs
+        TablistYamlConfig.reload();
         
         // Stop current task
         if (updateTask != null) {
@@ -388,7 +384,7 @@ public class EnhancedTablistManager {
         loadHeadersAndFooters();
         
         // Restart the update task
-        long updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get();
+        long updateInterval = TablistYamlConfig.getUpdateInterval();
         startUpdateTask(updateInterval);
         
         NeoEssentials.LOGGER.info("Tablist reloaded successfully");

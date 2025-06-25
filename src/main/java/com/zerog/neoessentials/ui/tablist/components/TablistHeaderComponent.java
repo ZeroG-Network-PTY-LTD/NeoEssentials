@@ -45,9 +45,8 @@ public class TablistHeaderComponent implements TablistComponent {
      * @param group The player's group
      * @return The list of lines to display
      */
-    public List<String> getLinesForPlayer(ServerPlayer player, String group) {
-        // Check if player-specific headers are enabled
-        boolean enablePlayerSpecific = com.zerog.neoessentials.config.TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_HEADERS.get();
+    public List<String> getLinesForPlayer(ServerPlayer player, String group) {        // Check if player-specific headers are enabled
+        boolean enablePlayerSpecific = com.zerog.neoessentials.config.TablistYamlConfig.isEnablePlayerSpecificHeaders();
         if (!enablePlayerSpecific) {
             return new ArrayList<>(lines);
         }

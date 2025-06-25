@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.ui.tab.features;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.TablistTomlConfig;
+import com.zerog.neoessentials.config.TablistYamlConfig;
 import com.zerog.neoessentials.ui.tab.AnimationManager;
 import com.zerog.neoessentials.ui.tab.TabManager;
 import com.zerog.neoessentials.ui.tab.TabPlayerData;
@@ -57,20 +57,20 @@ public class HeaderFooterFeature extends AbstractFeature {
         this.headerTemplates = getTabManager().getTemplateManager().getGlobalHeaders();
         this.footerTemplates = getTabManager().getTemplateManager().getGlobalFooters();
         
-        // Load animation types
-        String headerAnimType = TablistTomlConfig.HEADER_ANIMATION_TYPE.get();
-        String footerAnimType = TablistTomlConfig.FOOTER_ANIMATION_TYPE.get();
+        // Load animation types from YAML config
+        String headerAnimType = TablistYamlConfig.getHeaderAnimationType();
+        String footerAnimType = TablistYamlConfig.getFooterAnimationType();
         this.headerAnimationType = AnimationManager.AnimationType.fromString(headerAnimType);
         this.footerAnimationType = AnimationManager.AnimationType.fromString(footerAnimType);
         
-        // Load group-specific settings
-        this.enablePlayerSpecificHeaders = TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_HEADERS.get();
-        this.enablePlayerSpecificFooters = TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_FOOTERS.get();
+        // Load group-specific settings from YAML config
+        this.enablePlayerSpecificHeaders = TablistYamlConfig.isEnablePlayerSpecificHeaders();
+        this.enablePlayerSpecificFooters = TablistYamlConfig.isEnablePlayerSpecificFooters();
         
         // Load group-specific headers/footers from the template manager
         loadGroupSpecificTemplatesFromManager();
         
-        NeoEssentials.LOGGER.info("Header/footer feature config loaded");
+        NeoEssentials.LOGGER.info("Header/footer feature config loaded from YAML");
     }
       /**
      * Loads group-specific header and footer templates from template manager

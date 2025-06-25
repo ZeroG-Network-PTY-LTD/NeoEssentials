@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.ui.tab.placeholders;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.TablistTomlConfig;
+import com.zerog.neoessentials.config.TablistYamlConfig;
 import com.zerog.neoessentials.ui.tab.TabManager;
 import com.zerog.neoessentials.ui.tab.TabPlayerData;
 import net.minecraft.server.MinecraftServer;
@@ -93,9 +93,8 @@ public class PlaceholderManager {
      */
     public PlaceholderManager(TabManager tabManager) {
         this.tabManager = tabManager;
-        
-        // Set default time formatter
-        updateTimeFormatter(TablistTomlConfig.TIME_FORMAT.get());
+          // Set default time formatter from YAML config
+        updateTimeFormatter(TablistYamlConfig.getTimeFormat());
     }
     
     /**
