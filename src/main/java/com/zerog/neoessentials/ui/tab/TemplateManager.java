@@ -123,26 +123,31 @@ public class TemplateManager {
                 templatesFile = targetFile;                
                 NeoEssentials.LOGGER.info("Created default templates.json in neoessentials directory");
                 
+                // Add README file to explain the new location
+                try {
+                    Path readmePath = configDir.resolve("README_TEMPLATES.md");
+                    String readmeContent = "# NeoEssentials Templates\n\n" +
+                            "The templates for the tablist system have been moved to the `neoessentials/templates.json` file.\n" +
+                            "This provides better configuration flexibility and avoids TOML serialization issues.\n\n" +
+                            "## Location\n\n" +
+                            "- Primary location: `neoessentials/templates.json`\n" +
+                            "- Legacy location (no longer recommended): `config/neoessentials/templates.json`\n\n" +
+                            "## Format\n\n" +
+                            "The templates file uses JSON format for maximum compatibility and flexibility.\n\n" +
+                            "## Migration\n\n" +
+                            "Your existing templates have been automatically migrated to the new location.\n" +
+                            "All customizations are preserved.";
+                    
+                    if (!Files.exists(readmePath)) {
+                        Files.writeString(readmePath, readmeContent);
+                    }
+                } catch (Exception e) {
+                    NeoEssentials.LOGGER.error("Error creating README file", e);
+                    // Don't fail over README issues
+                }
+                
                 // Return success
                 return true;
-                
-                // Add README file to explain the new location
-                Path readmePath = configDir.resolve("README_TEMPLATES.md");
-                String readmeContent = "# NeoEssentials Templates\n\n" +
-                        "The templates for the tablist system have been moved to the `neoessentials/templates.json` file.\n" +
-                        "This provides better configuration flexibility and avoids TOML serialization issues.\n\n" +
-                        "## Location\n\n" +
-                        "- Primary location: `neoessentials/templates.json`\n" +
-                        "- Legacy location (no longer recommended): `config/neoessentials/templates.json`\n\n" +
-                        "## Format\n\n" +
-                        "The templates file uses JSON format for maximum compatibility and flexibility.\n\n" +
-                        "## Migration\n\n" +
-                        "Your existing templates have been automatically migrated to the new location.\n" +
-                        "All customizations are preserved.";
-                
-                if (!Files.exists(readmePath)) {
-                    Files.writeString(readmePath, readmeContent);
-                }
                 
             } else {
                 // Fallback to creating a basic templates file
@@ -232,11 +237,12 @@ public class TemplateManager {
                 
                 // Update the templatesFile reference
                 templatesFile = targetFile;
-                
-                NeoEssentials.LOGGER.info("Created fallback templates.json file in neoessentials directory");
+                  NeoEssentials.LOGGER.info("Created fallback templates.json file in neoessentials directory");
+                return true;
             }
         } catch (IOException e) {
             NeoEssentials.LOGGER.error("Failed to create default templates file", e);
+            return false;
         }
     }    /**
      * Loads templates from the templates.json or templates.yml file
