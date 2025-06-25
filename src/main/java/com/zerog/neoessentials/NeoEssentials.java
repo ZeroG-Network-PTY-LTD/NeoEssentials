@@ -432,8 +432,7 @@ public class NeoEssentials {
     public ModContainer getModContainer() {
         return modContainer;
     }
-    
-    /**
+      /**
      * Initialize the managers
      */
     public void initializeManagers() {
@@ -488,6 +487,9 @@ public class NeoEssentials {
 >>>>>>> ecf8e9a (feat: Refactor DataManager initialization and loading process for improved data handling)
         dataManager.initialize();
         
+        // Initialize permission handler manager
+        initializePermissionHandlers();
+        
         // Initialize command manager and register it with the event bus
         commandManager = new com.zerog.neoessentials.commands.CommandManager();
         NeoForge.EVENT_BUS.register(commandManager);
@@ -495,6 +497,19 @@ public class NeoEssentials {
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+    /**
+     * Initialize the permission handlers
+     */
+    private void initializePermissionHandlers() {
+        try {
+            LOGGER.info("Initializing permission handlers");
+            // This will register all available permission handlers (LuckPerms, FTB Ranks, etc.)
+            com.zerog.neoessentials.permissions.PermissionHandlerManager.getInstance();
+        } catch (Exception e) {
+            LOGGER.error("Error initializing permission handlers", e);
+        }
+    }
+    
     /**
      * Initialize the storage manager (called after database config is loaded)
      * 

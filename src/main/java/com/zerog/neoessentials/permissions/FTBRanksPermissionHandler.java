@@ -40,13 +40,11 @@ public class FTBRanksPermissionHandler implements PermissionHandler {
             return false;
         }
     }
-    
-    @Override
+      @Override
     public boolean isAvailable() {
         return ftbRanksAvailable;
     }
-    
-    @Override
+      @Override
     public String getName() {
         return "FTB Ranks";
     }
