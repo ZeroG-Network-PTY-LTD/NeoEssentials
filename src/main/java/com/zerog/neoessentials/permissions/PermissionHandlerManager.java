@@ -47,12 +47,13 @@ public class PermissionHandlerManager {
      * Register a new permission handler
      * 
      * @param handler The handler to register
-     */
-    public void registerHandler(PermissionHandler handler) {
+     */    public void registerHandler(PermissionHandler handler) {
         if (handler != null) {
             handlers.add(handler);
             if (handler.isAvailable()) {
                 NeoEssentials.LOGGER.info("Registered permission handler: {}", handler.getName());
+            } else {
+                NeoEssentials.LOGGER.debug("Permission handler unavailable: {} - skipping", handler.getName());
             }
         }
     }

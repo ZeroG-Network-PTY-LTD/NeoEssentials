@@ -16,11 +16,12 @@ public class FTBRanksPermissionHandler implements PermissionHandler {
     private static final String FTB_RANKS_MOD_ID = "ftbranks";
     private static final String FTB_LIBRARY_MOD_ID = "ftblibrary";
     private static final String FTB_RANKS_API_CLASS = "dev.ftb.mods.ftbranks.api.RanksAPI";
-    
-    public FTBRanksPermissionHandler() {
+      public FTBRanksPermissionHandler() {
         try {
             // Check if FTB Ranks is loaded using ModList
             if (ModList.get().isLoaded(FTB_RANKS_MOD_ID)) {
+                NeoEssentials.LOGGER.info("FTB Ranks mod found - attempting to initialize permission handler");
+                
                 // Check if FTB Library is also loaded (required dependency)
                 if (!ModList.get().isLoaded(FTB_LIBRARY_MOD_ID)) {
                     NeoEssentials.LOGGER.error("FTB Ranks detected but FTB Library is missing! FTB Ranks will not function correctly.");
@@ -28,21 +29,33 @@ public class FTBRanksPermissionHandler implements PermissionHandler {
                     return;
                 }
                 
-                // FTB Ranks and its dependencies are loaded, get the API instance
-                Class<?> apiClass = Class.forName(FTB_RANKS_API_CLASS);
-                // Get the API instance using the getAPI static method
-                ranksAPI = apiClass.getMethod("getAPI").invoke(null);
+                NeoEssentials.LOGGER.info("FTB Library found - attempting to load FTB Ranks API");
                 
-                if (ranksAPI != null) {
-                    ftbRanksAvailable = true;
-                    NeoEssentials.LOGGER.info("FTB Ranks detected - using for permission checks");
-                }
+                try {
+                    // FTB Ranks and its dependencies are loaded, get the API instance
+                    Class<?> apiClass = Class.forName(FTB_RANKS_API_CLASS);
+                    NeoEssentials.LOGGER.info("FTB Ranks API class found: {}", apiClass.getName());
+                    
+                    // Get the API instance using the getAPI static method
+                    ranksAPI = apiClass.getMethod("getAPI").invoke(null);
+                    
+                    if (ranksAPI != null) {
+                        ftbRanksAvailable = true;
+                        NeoEssentials.LOGGER.info("FTB Ranks API loaded successfully - permission handler ready");
+                    } else {
+                        NeoEssentials.LOGGER.error("FTB Ranks API returned null - permission handling will not work");
+                    }
+                } catch (ClassNotFoundException e) {
+                    NeoEssentials.LOGGER.error("FTB Ranks API class not found: {}", FTB_RANKS_API_CLASS);
+                    NeoEssentials.LOGGER.error("This could be due to a version mismatch - please ensure compatible versions");
+                    NeoEssentials.LOGGER.debug("Full exception: ", e);
+                } catch (NoClassDefFoundError e) {
+                    NeoEssentials.LOGGER.error("FTB Ranks class loading error: {}", e.getMessage());
+                    NeoEssentials.LOGGER.error("This is likely due to a dependency issue - check FTB Library version");
+                    NeoEssentials.LOGGER.debug("Full exception: ", e);                }
             } else {
                 NeoEssentials.LOGGER.debug("FTB Ranks mod not found, skipping permission handler");
             }
-        } catch (ClassNotFoundException e) {
-            ftbRanksAvailable = false;
-            NeoEssentials.LOGGER.debug("FTB Ranks API class not found, skipping permission handler");
         } catch (NoClassDefFoundError e) {
             ftbRanksAvailable = false;
             NeoEssentials.LOGGER.error("FTB Ranks is missing a required dependency: " + e.getMessage());
@@ -50,10 +63,10 @@ public class FTBRanksPermissionHandler implements PermissionHandler {
         } catch (Exception e) {
             ftbRanksAvailable = false;
             NeoEssentials.LOGGER.warn("Error initializing FTB Ranks permission handler", e);
+            NeoEssentials.LOGGER.debug("Exception details:", e);
         }
     }
-    
-    @Override
+      @Override
     public boolean hasPermission(ServerPlayer player, String permission) {
         if (!ftbRanksAvailable || player == null || ranksAPI == null) {
             return false;
@@ -67,11 +80,19 @@ public class FTBRanksPermissionHandler implements PermissionHandler {
             
             if (permValue != null) {
                 // Get the boolean value from the permission result
-                return (boolean) permValue.getClass().getMethod("getAsBoolean").invoke(permValue);
+                boolean result = (boolean) permValue.getClass().getMethod("getAsBoolean").invoke(permValue);
+                if (result) {
+                    NeoEssentials.LOGGER.debug("FTB Ranks granted permission '{}' to player {}", 
+                            permission, player.getName().getString());
+                }
+                return result;
             }
             return false;
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Error checking FTB Ranks permission: {}", permission, e);
+            NeoEssentials.LOGGER.error("Error checking FTB Ranks permission: {}", permission);
+            NeoEssentials.LOGGER.debug("FTB Ranks permission check exception details:", e);
+            ftbRanksAvailable = false; // Disable to prevent repeated errors
+            NeoEssentials.LOGGER.error("FTB Ranks permission handler has been disabled due to errors");
             return false;
         }
     }
