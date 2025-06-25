@@ -115,13 +115,22 @@ public class BossBarFeature extends AbstractFeature {
         
         // Load group-specific boss bars
         try {
-            Map<String, List<String>> configGroupBars = com.zerog.neoessentials.config.TablistTomlConfig.GROUP_BOSSBARS.get();
-            if (configGroupBars != null && !configGroupBars.isEmpty()) {
-                // Create a deep copy to avoid reference issues
-                Map<String, List<String>> groupBars = new HashMap<>();
-                for (Map.Entry<String, List<String>> entry : configGroupBars.entrySet()) {
-                    groupBars.put(entry.getKey(), new ArrayList<>(entry.getValue()));
-                }
+            // Create a map to hold all group-specific boss bars
+            Map<String, List<String>> groupBars = new HashMap<>();
+            
+            // Load admin boss bars
+            List<String> adminBars = com.zerog.neoessentials.config.TablistTomlConfig.ADMIN_BOSSBARS.get();
+            if (adminBars != null && !adminBars.isEmpty()) {
+                groupBars.put("admin", new ArrayList<>(adminBars));
+            }
+            
+            // Load VIP boss bars
+            List<String> vipBars = com.zerog.neoessentials.config.TablistTomlConfig.VIP_BOSSBARS.get();
+            if (vipBars != null && !vipBars.isEmpty()) {
+                groupBars.put("vip", new ArrayList<>(vipBars));
+            }
+            
+            if (!groupBars.isEmpty()) {
                 this.groupBossBars = groupBars;
             } else {
                 // Fallback to example groups if none are configured
