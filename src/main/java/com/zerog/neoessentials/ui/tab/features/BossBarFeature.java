@@ -80,27 +80,26 @@ public class BossBarFeature extends AbstractFeature {
             NeoEssentials.LOGGER.error("Error initializing boss bar feature", e);
             maxBossBarsPerPlayer = 3; // Fallback
         }
-    }
-      @Override
+    }    @Override
     public void loadConfig() {
         // Load general settings
-        enabled = TablistTomlConfig.ENABLE_BOSSBARS.get();
-        bossBarLimit = TablistTomlConfig.BOSSBAR_LIMIT_PER_PLAYER.get();
+        enabled = com.zerog.neoessentials.config.TablistTomlConfig.ENABLE_BOSSBARS.get();
+        maxBossBarsPerPlayer = com.zerog.neoessentials.config.TablistTomlConfig.BOSSBAR_LIMIT_PER_PLAYER.get();
         
-        // First try to load from template manager
+        // Load boss bars from template manager
         try {
+            // Load global boss bars from template manager
             List<String> templateGlobalBars = getTabManager().getTemplateManager().getGlobalBossBars();
-            Map<String, List<String>> templateGroupBars = getTabManager().getTemplateManager().getGroupBossBars();
-            
             if (templateGlobalBars != null && !templateGlobalBars.isEmpty()) {
-                // Use templates for global boss bars
-                globalBossBars = new ArrayList<>(templateGlobalBars);
+                this.globalBossBars = new ArrayList<>(templateGlobalBars);
                 NeoEssentials.LOGGER.info("Loaded {} global boss bars from template manager", globalBossBars.size());
             } else {
-                // Fall back to config-based loading for global boss bars
+                // Create default boss bars if none are configured
                 loadGlobalBossBarsFromConfig();
             }
             
+            // Load group-specific boss bars from template manager
+            Map<String, List<String>> templateGroupBars = getTabManager().getTemplateManager().getGroupBossBars();
             if (templateGroupBars != null && !templateGroupBars.isEmpty()) {
                 // Use templates for group boss bars
                 this.groupBossBars = new HashMap<>();
@@ -122,13 +121,12 @@ public class BossBarFeature extends AbstractFeature {
         // Register animated boss bars for scheduled updating
         registerAnimatedBossBars();
     }
-    
-    /**
+      /**
      * Loads global boss bars from the config
      */
     private void loadGlobalBossBarsFromConfig() {
         try {
-            List<String> configGlobalBars = TablistTomlConfig.GLOBAL_BOSSBARS.get();
+            List<String> configGlobalBars = com.zerog.neoessentials.config.TablistTomlConfig.GLOBAL_BOSSBARS.get();
             if (configGlobalBars != null && !configGlobalBars.isEmpty()) {
                 globalBossBars = new ArrayList<>(configGlobalBars);
                 NeoEssentials.LOGGER.info("Loaded {} global boss bars from config", globalBossBars.size());
@@ -764,5 +762,14 @@ public class BossBarFeature extends AbstractFeature {
         BossBarOverlay overlay = BossBarOverlay.PROGRESS;
         float progress = 1.0f;
         String progressVariable = null;
+    }
+
+    /**
+     * Registers animated boss bars for updating
+     */
+    private void registerAnimatedBossBars() {
+        // No implementation needed yet - this will be fleshed out
+        // when animation system is fully integrated with boss bars
+        NeoEssentials.LOGGER.debug("Registering animated boss bars (placeholder for now)");
     }
 }
