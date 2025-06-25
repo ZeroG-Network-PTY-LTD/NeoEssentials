@@ -15,10 +15,10 @@ public class PermissionHandlerManager {
     
     private final List<PermissionHandler> handlers = new ArrayList<>();
     private static PermissionHandlerManager instance;
-    
-    /**
+      /**
      * Initialize the permission handler manager and register available handlers
-     */    public PermissionHandlerManager() {
+     */    
+    public PermissionHandlerManager() {
         // Register LuckPerms handler
         registerHandler(new LuckPermsPermissionHandler());
         
@@ -38,6 +38,14 @@ public class PermissionHandlerManager {
         if (getAvailableHandlers().isEmpty()) {
             NeoEssentials.LOGGER.info("No external permission handlers available. Using NeoEssentials built-in permission system.");
             registerHandler(new VanillaPermissionHandler());
+        }
+        
+        // Log the final active handler
+        List<PermissionHandler> activeHandlers = getAvailableHandlers();
+        if (!activeHandlers.isEmpty()) {
+            NeoEssentials.LOGGER.info("Active permission system: {}", activeHandlers.get(0).getName());
+        } else {
+            NeoEssentials.LOGGER.error("No permission handlers available. Permission checks will fail!");
         }
         
         instance = this;
