@@ -166,6 +166,9 @@ public class NeoEssentials {
         LOGGER.info("HELLO FROM COMMON SETUP");
         LOGGER.info("Initializing NeoEssentials managers");
         
+        // Initialize FTB Registry compatibility helpers
+        com.zerog.neoessentials.compat.FTBRegistryCompat.init();
+        
         // Additional registrations that need to happen during common setup
         event.enqueueWork(() -> {
             LOGGER.info("Registering command argument types in common setup");
