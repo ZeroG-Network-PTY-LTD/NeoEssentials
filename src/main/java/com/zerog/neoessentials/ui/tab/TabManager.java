@@ -43,6 +43,10 @@ public class TabManager {
     // Configuration
     private int updateInterval = 2000; // Default 2 seconds
     
+    // Managers
+    private final AnimationManager animationManager;
+    private final TemplateManager templateManager;
+    
     // Feature managers
     private final HeaderFooterFeature headerFooterFeature;
     private final BelowNameFeature belowNameFeature;
@@ -54,7 +58,6 @@ public class TabManager {
     
     // Support systems
     private final PlaceholderManager placeholderManager;
-    private final AnimationManager animationManager;
     private final ErrorLogger errorLogger;
     
     // Player data storage
@@ -70,7 +73,6 @@ public class TabManager {
         
         // Initialize support systems first
         this.placeholderManager = new PlaceholderManager(this);
-        this.animationManager = new AnimationManager();
         this.errorLogger = new ErrorLogger();
         
         // Initialize feature managers
@@ -81,6 +83,10 @@ public class TabManager {
         this.playerListFeature = new PlayerListFeature(this);
         this.scoreboardFeature = new ScoreboardFeature(this);
         this.layoutFeature = new LayoutFeature(this);
+        
+        // Initialize managers
+        this.animationManager = new AnimationManager();
+        this.templateManager = new TemplateManager(this);
         
         NeoEssentials.LOGGER.info("TabManager created - waiting for server initialization");
     }
@@ -290,7 +296,18 @@ public class TabManager {
     }
     
     /**
+     * Gets the template manager
+     * 
+     * @return The template manager
+     */
+    public TemplateManager getTemplateManager() {
+        return templateManager;
+    }
+    
+    /**
      * Gets the animation manager
+     * 
+     * @return The animation manager
      */
     public AnimationManager getAnimationManager() {
         return animationManager;
