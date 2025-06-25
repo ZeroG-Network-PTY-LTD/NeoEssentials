@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 /**
@@ -45,8 +46,7 @@ public class TemplateManager {
     
     // Main reference
     private final TabManager tabManager;
-    
-    /**
+      /**
      * Creates a template manager with references to necessary components
      * 
      * @param tabManager The parent TabManager instance
@@ -56,15 +56,23 @@ public class TemplateManager {
         this.neoEssentialsDir = Paths.get("neoessentials");
         this.configDir = Paths.get("config", "neoessentials");
         
-        // First check if templates exist in neoessentials directory
-        Path neoTemplatesFile = neoEssentialsDir.resolve("templates.json");
+        // Check in priority order:
+        // 1. neoessentials/templates.json
+        // 2. neoessentials/templates.yml
+        // 3. config/neoessentials/templates.json
         
-        // If not found there, use the one in config directory
-        if (Files.exists(neoTemplatesFile)) {
-            this.templatesFile = neoTemplatesFile;
+        Path neoTemplatesJsonFile = neoEssentialsDir.resolve("templates.json");
+        Path neoTemplatesYmlFile = neoEssentialsDir.resolve("templates.yml");
+        Path configTemplatesFile = configDir.resolve("templates.json");
+        
+        if (Files.exists(neoTemplatesJsonFile)) {
+            this.templatesFile = neoTemplatesJsonFile;
             NeoEssentials.LOGGER.info("Using templates.json from neoessentials directory");
+        } else if (Files.exists(neoTemplatesYmlFile)) {
+            this.templatesFile = neoTemplatesYmlFile;
+            NeoEssentials.LOGGER.info("Using templates.yml from neoessentials directory");
         } else {
-            this.templatesFile = configDir.resolve("templates.json");
+            this.templatesFile = configTemplatesFile;
             NeoEssentials.LOGGER.info("Using templates.json from config/neoessentials directory");
         }
         
@@ -225,16 +233,35 @@ public class TemplateManager {
         } catch (IOException e) {
             NeoEssentials.LOGGER.error("Failed to create default templates file", e);
         }
-    }
-    
-    /**
-     * Loads templates from the templates.json file
+    }    /**
+     * Loads templates from the templates.json or templates.yml file
      */
     public void loadTemplates() {
         try {
             // Read the templates file
             String content = Files.readString(templatesFile, StandardCharsets.UTF_8);
-            JsonObject root = JsonParser.parseString(content).getAsJsonObject();
+            JsonObject root;
+            
+            // Check if we're loading a YML file
+            if (templatesFile.toString().endsWith(".yml")) {
+                NeoEssentials.LOGGER.info("Loading templates from YAML file");
+                try {
+                    // Simple YAML parsing - this is basic but handles most common YAML structures
+                    // For complex YAML, would need SnakeYAML dependency
+                    root = parseSimpleYaml(content);
+                    if (root == null) {
+                        throw new Exception("Failed to parse YAML");
+                    }
+                } catch (Exception e) {
+                    NeoEssentials.LOGGER.error("Failed to parse YAML file, falling back to default templates", e);
+                    createDefaultTemplatesFile();
+                    content = Files.readString(templatesFile, StandardCharsets.UTF_8);
+                    root = JsonParser.parseString(content).getAsJsonObject();
+                }
+            } else {
+                // Load JSON directly
+                root = JsonParser.parseString(content).getAsJsonObject();
+            }
             
             // Load global headers and footers
             if (root.has("templates")) {
@@ -441,6 +468,118 @@ public class TemplateManager {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to reload templates", e);
             return false;
+        }
+    }
+    
+    /**
+     * Parse simple YAML content into a JsonObject
+     * This is a basic parser that handles simple YAML structures commonly used in templates
+     * 
+     * @param content YAML content as string
+     * @return JsonObject representation of the YAML
+     */
+    private JsonObject parseSimpleYaml(String content) {
+        JsonObject root = new JsonObject();
+        try {
+            String[] lines = content.split("\\r?\\n");
+            String currentSection = null;
+            JsonObject currentObject = root;
+            int currentIndent = 0;
+            Stack<JsonObject> objectStack = new Stack<>();
+            Stack<String> sectionStack = new Stack<>();
+            Stack<Integer> indentStack = new Stack<>();
+            
+            for (String line : lines) {
+                // Skip comments and empty lines
+                if (line.trim().isEmpty() || line.trim().startsWith("#")) {
+                    continue;
+                }
+                
+                // Calculate indentation level
+                int indent = 0;
+                while (indent < line.length() && line.charAt(indent) == ' ') {
+                    indent++;
+                }
+                
+                // Remove indentation
+                String trimmed = line.trim();
+                
+                // Handle section
+                if (trimmed.endsWith(":")) {
+                    String section = trimmed.substring(0, trimmed.length() - 1);
+                    
+                    // If indentation increases, push current object to stack
+                    if (indent > currentIndent) {
+                        objectStack.push(currentObject);
+                        sectionStack.push(currentSection);
+                        indentStack.push(currentIndent);
+                    }
+                    // If indentation decreases, pop from stack
+                    else if (indent < currentIndent) {
+                        while (!indentStack.isEmpty() && indent < indentStack.peek()) {
+                            currentObject = objectStack.pop();
+                            currentSection = sectionStack.pop();
+                            currentIndent = indentStack.pop();
+                        }
+                    }
+                    
+                    // Create new object for this section
+                    JsonObject newObject = new JsonObject();
+                    currentObject.add(section, newObject);
+                    currentObject = newObject;
+                    currentSection = section;
+                    currentIndent = indent;
+                }
+                // Handle list item
+                else if (trimmed.startsWith("- ")) {
+                    String value = trimmed.substring(2);
+                    
+                    // Get or create array for current section
+                    JsonArray array;
+                    if (currentObject.has(currentSection) && currentObject.get(currentSection).isJsonArray()) {
+                        array = currentObject.getAsJsonArray(currentSection);
+                    } else {
+                        array = new JsonArray();
+                        currentObject.add(currentSection, array);
+                    }
+                    
+                    // Add value to array - remove quotes if present
+                    if ((value.startsWith("'") && value.endsWith("'")) || 
+                        (value.startsWith("\"") && value.endsWith("\""))) {
+                        value = value.substring(1, value.length() - 1);
+                    }
+                    array.add(value);
+                }
+                // Handle key-value pair
+                else if (trimmed.contains(": ")) {
+                    String[] parts = trimmed.split(": ", 2);
+                    String key = parts[0].trim();
+                    String value = parts[1].trim();
+                    
+                    // Remove quotes if present
+                    if ((value.startsWith("'") && value.endsWith("'")) || 
+                        (value.startsWith("\"") && value.endsWith("\""))) {
+                        value = value.substring(1, value.length() - 1);
+                    }
+                    
+                    // Try to parse as number or boolean
+                    if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
+                        currentObject.addProperty(key, Boolean.parseBoolean(value));
+                    } else if (value.matches("\\d+")) {
+                        currentObject.addProperty(key, Integer.parseInt(value));
+                    } else if (value.matches("\\d+\\.\\d+")) {
+                        currentObject.addProperty(key, Double.parseDouble(value));
+                    } else {
+                        currentObject.addProperty(key, value);
+                    }
+                }
+            }
+            
+            NeoEssentials.LOGGER.info("Successfully parsed YAML content");
+            return root;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error parsing YAML content", e);
+            return null;
         }
     }
 }
