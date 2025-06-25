@@ -364,46 +364,66 @@ public class PermissionUtil {
         }
         
         return false;
-    }
-      /**
+    }    /**
      * Check permission using FTB Ranks API if available
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if permission is granted, false otherwise
-     */
-    static boolean checkFTBRanksPermission(ServerPlayer player, String permission) {
+     */    static boolean checkFTBRanksPermission(ServerPlayer player, String permission) {
         try {
-            // Check if FTB Ranks is loaded using reflection
-            Class<?> ftbRanksClass = Class.forName("dev.ftb.mods.ftbranks.api.FTBRanksAPI");
-            
-            // Get the FTB Ranks API instance
-            Object api = ftbRanksClass.getMethod("getInstance").invoke(null);
-            
-            // Check permission
-            Object result = api.getClass()
-                .getMethod("getPermissionValue", ServerPlayer.class, String.class)
-                .invoke(api, player, permission);
-            
-            // Get the result value
-            if (result != null) {
-                // Check if the result has a getAsBoolean method
-                try {
-                    Object booleanValue = result.getClass().getMethod("getAsBoolean").invoke(result);
-                    return (Boolean) booleanValue;
-                } catch (NoSuchMethodException e) {
-                    // Try alternative methods if getAsBoolean doesn't exist
-                    try {
-                        Object booleanValue = result.getClass().getMethod("booleanValue").invoke(result);
-                        return (Boolean) booleanValue;
-                    } catch (NoSuchMethodException ex) {
-                        // Just return the string value converted to boolean
-                        return Boolean.parseBoolean(result.toString());
+            // Check if FTB Ranks is loaded using ModList
+            if (net.neoforged.fml.ModList.get().isLoaded("ftbranks")) {
+                // Check if FTB Library is also loaded (required dependency)
+                if (!net.neoforged.fml.ModList.get().isLoaded("ftblibrary")) {
+                    // Only log this once per server run to avoid spam
+                    if (NeoEssentials.getInstance().getConfigManager().getConfig().isDebug()) {
+                        NeoEssentials.LOGGER.error("FTB Ranks detected but FTB Library is missing - permission checks will fail!");
                     }
+                    return false;
+                }
+                
+                try {
+                    // FTB Ranks is loaded, get the API class through reflection
+                    Class<?> apiClass = Class.forName("dev.ftb.mods.ftbranks.api.RanksAPI");
+                    // Get the API instance using the getAPI static method
+                    Object api = apiClass.getMethod("getAPI").invoke(null);
+                    
+                    if (api != null) {
+                        // Check permission
+                        Object result = api.getClass()
+                            .getMethod("getPermissionValue", ServerPlayer.class, String.class)
+                            .invoke(api, player, permission);
+                        
+                        // Get the result value
+                        if (result != null) {
+                            // Check if the result has a getAsBoolean method
+                            try {
+                                Object booleanValue = result.getClass().getMethod("getAsBoolean").invoke(result);
+                                return (Boolean) booleanValue;
+                            } catch (NoSuchMethodException e) {
+                                // Try alternative methods if getAsBoolean doesn't exist
+                                try {
+                                    Object booleanValue = result.getClass().getMethod("booleanValue").invoke(result);
+                                    return (Boolean) booleanValue;
+                                } catch (NoSuchMethodException ex) {
+                                    // Just return the string value converted to boolean
+                                    return Boolean.parseBoolean(result.toString());
+                                }
+                            }
+                        }
+                    }
+                } catch (NoClassDefFoundError e) {
+                    // This happens when FTB Ranks is missing dependencies at runtime
+                    if (NeoEssentials.getInstance().getConfigManager().getConfig().isDebug()) {
+                        NeoEssentials.LOGGER.error("FTB Ranks dependency error: {}", e.getMessage());
+                    }
+                    return false;
                 }
             }
+            return false;
         } catch (ClassNotFoundException e) {
-            // FTB Ranks not found, that's fine
+            // FTB Ranks API class not found, that's fine
             return false;
         } catch (Exception e) {
             // Something went wrong, log it
@@ -411,7 +431,7 @@ public class PermissionUtil {
         }
         
         return false;
-    }    /**     * Check if a permission should be granted by default when no permission system is found
+    }/**     * Check if a permission should be granted by default when no permission system is found
      * 
      * @param permission The permission string to check
      * @return True if the permission should be granted by default, false otherwise

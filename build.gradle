@@ -129,10 +129,10 @@ configurations {
 dependencies {    // Database dependencies
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
     implementation 'com.mysql:mysql-connector-j:8.3.0'
-    implementation 'com.zaxxer:HikariCP:5.1.0'
-      // Permission system APIs (soft dependencies)
+    implementation 'com.zaxxer:HikariCP:5.1.0'    // Permission system APIs (soft dependencies)
     compileOnly 'net.luckperms:api:5.4'
-    compileOnly fg.deobf('maven.modrinth:ftb-ranks:2001.2.3')
+    // FTB Ranks is integrated via ModList and reflection to avoid direct dependencies
+    // No compile dependency needed as we check for mod presence at runtime
       // TOML parsing library for custom animations (legacy)
     implementation 'com.moandjiezana.toml:toml4j:0.7.2'
       // YAML parsing library for configuration
