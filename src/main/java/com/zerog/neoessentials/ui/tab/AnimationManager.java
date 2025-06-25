@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.moandjiezana.toml.Toml;
 import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerPlayer;
@@ -159,50 +158,60 @@ public class AnimationManager {
     private void loadCustomHexAnimations() {
         // Clear existing cache
         customHexAnimations.clear();
-        
-        // Paths to check (in order of preference)
+          // Paths to check (in order of preference)
         Path neoEssentialsDir = Paths.get("neoessentials");
         Path configDir = Paths.get("config", "neoessentials");
         
         // First check neoessentials directory for JSON file (preferred)
         Path neoJsonPath = neoEssentialsDir.resolve("animations.json");
+        Path neoYmlPath = neoEssentialsDir.resolve("animations.yml");
+        Path configJsonPath = configDir.resolve("animations.json");
+        Path configTomlPath = configDir.resolve("animations.toml");
+        
+        // Check in priority order:
+        // 1. neoessentials/animations.json
+        // 2. neoessentials/animations.yml
+        // 3. config/neoessentials/animations.json
+        // 4. config/neoessentials/animations.toml (legacy)
+        
         if (Files.exists(neoJsonPath)) {
             loadFromJson(neoJsonPath);
             NeoEssentials.LOGGER.info("Loaded animations from neoessentials/animations.json");
         }
-        // Then check config directory for JSON file
+        else if (Files.exists(neoYmlPath)) {
+            try {
+                loadFromYaml(neoYmlPath);
+                NeoEssentials.LOGGER.info("Loaded animations from neoessentials/animations.yml");
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to load YAML animations, falling back to defaults", e);
+                createDefaultAnimationFile(neoEssentialsDir);
+            }
+        }
+        else if (Files.exists(configJsonPath)) {
+            loadFromJson(configJsonPath);
+            NeoEssentials.LOGGER.info("Loaded animations from config/neoessentials/animations.json");
+        }
+        else if (Files.exists(configTomlPath)) {
+            loadFromToml(configTomlPath);
+            
+            // Convert TOML to JSON for future use
+            NeoEssentials.LOGGER.info("Found legacy TOML animations, converting to JSON format");
+            
+            // Create directories if needed
+            try {
+                if (!Files.exists(neoEssentialsDir)) {
+                    Files.createDirectories(neoEssentialsDir);
+                }
+                
+                // Convert existing animations to JSON format
+                convertTomlToJson(configTomlPath, neoJsonPath);
+            } catch (IOException e) {
+                NeoEssentials.LOGGER.error("Failed to create neoessentials directory", e);
+            }
+        }
         else {
-            Path configJsonPath = configDir.resolve("animations.json");
-            if (Files.exists(configJsonPath)) {
-                loadFromJson(configJsonPath);
-                NeoEssentials.LOGGER.info("Loaded animations from config/neoessentials/animations.json");
-            }
-            // Then check for TOML file (legacy support)
-            else {
-                Path configTomlPath = configDir.resolve("animations.toml");
-                if (Files.exists(configTomlPath)) {
-                    loadFromToml(configTomlPath);
-                    
-                    // Convert TOML to JSON for future use
-                    NeoEssentials.LOGGER.info("Found legacy TOML animations, converting to JSON format");
-                    
-                    // Create directories if needed
-                    try {
-                        if (!Files.exists(neoEssentialsDir)) {
-                            Files.createDirectories(neoEssentialsDir);
-                        }
-                        
-                        // Convert existing animations to JSON format
-                        convertTomlToJson(configTomlPath, neoJsonPath);
-                    } catch (IOException e) {
-                        NeoEssentials.LOGGER.error("Failed to create neoessentials directory", e);
-                    }
-                }
-                // No existing file found, create default JSON file
-                else {
-                    createDefaultAnimationFile(neoEssentialsDir);
-                }
-            }
+            // No existing file found, create default JSON file
+            createDefaultAnimationFile(neoEssentialsDir);
         }
         
         // Ensure we have a default animation
@@ -233,37 +242,113 @@ public class AnimationManager {
             NeoEssentials.LOGGER.debug("Could not create README_ANIMATIONS.md file", e);
         }
     }
-    
-    /**
-     * Loads animations from TOML file
+      /**
+     * Loads animations from TOML file - simplified parser
      */
     private void loadFromToml(Path path) {
         try {
             String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-            Toml toml = new Toml().read(content);
             
-            for (Map.Entry<String, Object> entry : toml.entrySet()) {
-                String name = entry.getKey();
-                if (entry.getValue() instanceof Toml) {
-                    Toml animData = (Toml) entry.getValue();
+            // Simple TOML parser - just enough to handle our animations format
+            Map<String, Map<String, Object>> sections = new HashMap<>();
+            String currentSection = null;
+            Map<String, Object> currentValues = null;
+            
+            // Parse line by line
+            for (String line : content.split("\\r?\\n")) {
+                line = line.trim();
+                
+                // Skip comments and empty lines
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+                
+                // Handle section headers [section_name]
+                if (line.startsWith("[") && line.endsWith("]")) {
+                    currentSection = line.substring(1, line.length() - 1);
+                    currentValues = new HashMap<>();
+                    sections.put(currentSection, currentValues);
+                    continue;
+                }
+                
+                // Handle key-value pairs
+                if (line.contains("=") && currentValues != null) {
+                    String[] parts = line.split("=", 2);
+                    String key = parts[0].trim();
+                    String value = parts[1].trim();
                     
-                    // Get change interval
-                    Long interval = animData.getLong("change-interval");
-                    int changeInterval = interval != null ? interval.intValue() : 50;
-                    
-                    // Get animation texts
-                    List<String> texts = animData.getList("texts");
-                    if (texts != null && !texts.isEmpty()) {
-                        customHexAnimations.put(name, new CustomHexAnimation(changeInterval, texts));
+                    // Handle change-interval number
+                    if (key.equals("change-interval")) {
+                        try {
+                            int intVal = Integer.parseInt(value);
+                            currentValues.put(key, intVal);
+                        } catch (NumberFormatException e) {
+                            currentValues.put(key, 50); // Default
+                        }
                     }
+                    // Handle texts array
+                    else if (key.equals("texts") && value.startsWith("[") && value.endsWith("]")) {
+                        String arrayContent = value.substring(1, value.length() - 1);
+                        List<String> texts = new ArrayList<>();
+                        
+                        // Very basic CSV parsing - assumes properly quoted strings
+                        boolean inQuotes = false;
+                        StringBuilder currentText = new StringBuilder();
+                        
+                        for (int i = 0; i < arrayContent.length(); i++) {
+                            char c = arrayContent.charAt(i);
+                            
+                            if (c == '"') {
+                                inQuotes = !inQuotes;
+                                if (!inQuotes) {
+                                    // End of quoted string
+                                    texts.add(currentText.toString());
+                                    currentText = new StringBuilder();
+                                }
+                            } else if (c == ',' && !inQuotes) {
+                                // Skip comma separators
+                                continue;
+                            } else if (inQuotes) {
+                                currentText.append(c);
+                            }
+                        }
+                        
+                        currentValues.put(key, texts);
+                    }
+                }
+            }
+            
+            // Create animations from parsed sections
+            for (Map.Entry<String, Map<String, Object>> entry : sections.entrySet()) {
+                String name = entry.getKey();
+                Map<String, Object> data = entry.getValue();
+                
+                // Get change interval
+                int changeInterval = 50; // Default
+                if (data.containsKey("change-interval")) {
+                    Object interval = data.get("change-interval");
+                    if (interval instanceof Integer) {
+                        changeInterval = (Integer) interval;
+                    }
+                }
+                
+                // Get texts
+                List<String> texts = new ArrayList<>();
+                if (data.containsKey("texts") && data.get("texts") instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<String> textList = (List<String>) data.get("texts");
+                    texts.addAll(textList);
+                }
+                
+                if (!texts.isEmpty()) {
+                    customHexAnimations.put(name, new CustomHexAnimation(changeInterval, texts));
                 }
             }
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to load animations.toml", e);
         }
     }
-    
-    /**
+      /**
      * Loads animations from JSON file
      */
     private void loadFromJson(Path path) {
@@ -302,6 +387,259 @@ public class AnimationManager {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to load animations.json", e);
         }
+    }
+    
+    /**
+     * Loads animations from YAML file
+     * 
+     * @param path Path to the YAML file
+     */
+    private void loadFromYaml(Path path) {
+        try {
+            String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+            Map<String, Object> yamlRoot = parseYaml(content);
+            
+            // Check if animations are in root or under "animations" key
+            Map<String, Object> animations = yamlRoot;
+            if (yamlRoot.containsKey("animations") && yamlRoot.get("animations") instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> animationsMap = (Map<String, Object>) yamlRoot.get("animations");
+                animations = animationsMap;
+            }
+            
+            // Process each animation
+            for (Map.Entry<String, Object> entry : animations.entrySet()) {
+                String name = entry.getKey();
+                
+                // Skip metadata section if present
+                if (name.equals("metadata")) continue;
+                
+                if (entry.getValue() instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> animData = (Map<String, Object>) entry.getValue();
+                    
+                    // Get change interval
+                    int changeInterval = 50; // Default
+                    if (animData.containsKey("change-interval")) {
+                        Object intervalValue = animData.get("change-interval");
+                        if (intervalValue instanceof Integer) {
+                            changeInterval = (Integer) intervalValue;
+                        } else if (intervalValue instanceof String) {
+                            try {
+                                changeInterval = Integer.parseInt((String) intervalValue);
+                            } catch (NumberFormatException e) {
+                                // Keep default
+                            }
+                        }
+                    }
+                    
+                    // Get animation texts
+                    if (animData.containsKey("texts")) {
+                        Object textsObj = animData.get("texts");
+                        List<String> texts = new ArrayList<>();
+                        
+                        if (textsObj instanceof List) {
+                            @SuppressWarnings("unchecked")
+                            List<Object> textList = (List<Object>) textsObj;
+                            
+                            for (Object text : textList) {
+                                if (text != null) {
+                                    texts.add(text.toString());
+                                }
+                            }
+                            
+                            if (!texts.isEmpty()) {
+                                customHexAnimations.put(name, new CustomHexAnimation(changeInterval, texts));
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to load animations.yml", e);
+        }
+    }
+    
+    /**
+     * Simple YAML parser for animations file
+     * Supports basic YAML structure needed for animations
+     * 
+     * @param content YAML content as string
+     * @return Map representing the parsed YAML
+     */
+    private Map<String, Object> parseYaml(String content) {
+        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> currentMap = result;
+        List<Object> currentList = null;
+        int currentIndent = 0;
+        Map<Integer, Object> indentMap = new HashMap<>();
+        indentMap.put(0, result);
+        
+        Pattern listItemPattern = Pattern.compile("^(\\s*)-\\s+(.*)$");
+        Pattern keyValuePattern = Pattern.compile("^(\\s*)([^:]+):\\s*(.*)$");
+        
+        String[] lines = content.split("\\r?\\n");
+        for (String rawLine : lines) {
+            String line = rawLine;
+            
+            // Skip comments and empty lines
+            if (line.trim().isEmpty() || line.trim().startsWith("#")) {
+                continue;
+            }
+            
+            // Handle list items (- item)
+            Matcher listMatcher = listItemPattern.matcher(line);
+            if (listMatcher.matches()) {
+                int indent = listMatcher.group(1).length();
+                String value = listMatcher.group(2).trim();
+                
+                // Get or create list at this indent level
+                if (indent > currentIndent) {
+                    // New nested list
+                    currentList = new ArrayList<>();
+                    Object parent = indentMap.get(currentIndent);
+                    if (parent instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> parentMap = (Map<String, Object>) parent;
+                        parentMap.put(getLastKey(parentMap), currentList);
+                    }
+                    indentMap.put(indent, currentList);
+                } else if (indentMap.get(indent) instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<Object> list = (List<Object>) indentMap.get(indent);
+                    currentList = list;
+                }
+                
+                // Add the value to the list
+                if (currentList != null) {
+                    // Handle quoted strings
+                    if ((value.startsWith("\"") && value.endsWith("\"")) || 
+                        (value.startsWith("'") && value.endsWith("'"))) {
+                        value = value.substring(1, value.length() - 1);
+                    }
+                    currentList.add(value);
+                }
+                
+                currentIndent = indent;
+                continue;
+            }
+            
+            // Handle key-value pairs (key: value)
+            Matcher keyValMatcher = keyValuePattern.matcher(line);
+            if (keyValMatcher.matches()) {
+                int indent = keyValMatcher.group(1).length();
+                String key = keyValMatcher.group(2).trim();
+                String value = keyValMatcher.group(3).trim();
+                
+                // Get the map at this indent level
+                if (indent < currentIndent) {
+                    if (indentMap.containsKey(indent) && indentMap.get(indent) instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> indentedMap = (Map<String, Object>) indentMap.get(indent);
+                        currentMap = indentedMap;
+                    }
+                } else if (indent > currentIndent) {
+                    // New nested map
+                    Map<String, Object> nestedMap = new HashMap<>();
+                    if (indentMap.get(currentIndent) instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> parentMap = (Map<String, Object>) indentMap.get(currentIndent);
+                        parentMap.put(getLastKey(parentMap), nestedMap);
+                    }
+                    currentMap = nestedMap;
+                    indentMap.put(indent, nestedMap);
+                }
+                
+                // Process the value
+                if (value.isEmpty()) {
+                    // Empty value could indicate a nested structure coming up
+                    Map<String, Object> nestedMap = new HashMap<>();
+                    currentMap.put(key, nestedMap);
+                    indentMap.put(indent + 2, nestedMap); // Assume 2-space indentation
+                } else {
+                    // Handle quoted strings
+                    if ((value.startsWith("\"") && value.endsWith("\"")) || 
+                        (value.startsWith("'") && value.endsWith("'"))) {
+                        value = value.substring(1, value.length() - 1);
+                        currentMap.put(key, value);
+                    }
+                    // Handle numbers
+                    else if (value.matches("^-?\\d+$")) {
+                        currentMap.put(key, Integer.parseInt(value));
+                    }
+                    // Handle booleans
+                    else if (value.equalsIgnoreCase("true")) {
+                        currentMap.put(key, Boolean.TRUE);
+                    }
+                    else if (value.equalsIgnoreCase("false")) {
+                        currentMap.put(key, Boolean.FALSE);
+                    }
+                    // Handle lists [...] - simple arrays
+                    else if (value.startsWith("[") && value.endsWith("]")) {
+                        List<String> items = new ArrayList<>();
+                        String listContent = value.substring(1, value.length() - 1);
+                        
+                        // Split by comma but respect quotes
+                        boolean inQuotes = false;
+                        char quoteChar = '"';
+                        StringBuilder currentItem = new StringBuilder();
+                        
+                        for (int i = 0; i < listContent.length(); i++) {
+                            char c = listContent.charAt(i);
+                            
+                            if ((c == '"' || c == '\'') && (i == 0 || listContent.charAt(i - 1) != '\\')) {
+                                if (!inQuotes) {
+                                    inQuotes = true;
+                                    quoteChar = c;
+                                } else if (c == quoteChar) {
+                                    inQuotes = false;
+                                    items.add(currentItem.toString());
+                                    currentItem = new StringBuilder();
+                                } else {
+                                    currentItem.append(c);
+                                }
+                            } else if (c == ',' && !inQuotes) {
+                                String item = currentItem.toString().trim();
+                                if (!item.isEmpty()) {
+                                    items.add(item);
+                                }
+                                currentItem = new StringBuilder();
+                            } else {
+                                currentItem.append(c);
+                            }
+                        }
+                        
+                        // Add the last item if any
+                        String item = currentItem.toString().trim();
+                        if (!item.isEmpty()) {
+                            items.add(item);
+                        }
+                        
+                        currentMap.put(key, items);
+                    }
+                    // Default to string
+                    else {
+                        currentMap.put(key, value);
+                    }
+                }
+                
+                currentIndent = indent;
+                currentList = null;
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Helper method to get the last used key in a map
+     */
+    private String getLastKey(Map<String, Object> map) {
+        String lastKey = null;
+        for (String key : map.keySet()) {
+            lastKey = key;
+        }
+        return lastKey;
     }
       /**
      * Creates default animation file using JSON format
@@ -383,8 +721,7 @@ public class AnimationManager {
             NeoEssentials.LOGGER.error("Failed to create default animations.json", e);
         }
     }
-    
-    /**
+      /**
      * Converts a TOML animations file to JSON format
      * 
      * @param tomlPath Path to the source TOML file
@@ -392,9 +729,77 @@ public class AnimationManager {
      */
     private void convertTomlToJson(Path tomlPath, Path jsonPath) {
         try {
-            // Load the TOML file
+            // Load the TOML file using our simple parser
             String tomlContent = new String(Files.readAllBytes(tomlPath), StandardCharsets.UTF_8);
-            Toml toml = new Toml().read(tomlContent);
+            
+            // Parse TOML content with our custom parser
+            Map<String, Map<String, Object>> parsedData = new HashMap<>();
+            String currentSection = null;
+            Map<String, Object> currentValues = null;
+            
+            // Parse line by line
+            for (String line : tomlContent.split("\\r?\\n")) {
+                line = line.trim();
+                
+                // Skip comments and empty lines
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+                
+                // Handle section headers [section_name]
+                if (line.startsWith("[") && line.endsWith("]")) {
+                    currentSection = line.substring(1, line.length() - 1);
+                    currentValues = new HashMap<>();
+                    parsedData.put(currentSection, currentValues);
+                    continue;
+                }
+                
+                // Handle key-value pairs
+                if (line.contains("=") && currentValues != null) {
+                    String[] parts = line.split("=", 2);
+                    String key = parts[0].trim();
+                    String value = parts[1].trim();
+                    
+                    // Handle change-interval number
+                    if (key.equals("change-interval")) {
+                        try {
+                            int intVal = Integer.parseInt(value);
+                            currentValues.put(key, intVal);
+                        } catch (NumberFormatException e) {
+                            currentValues.put(key, 50); // Default
+                        }
+                    }
+                    // Handle texts array
+                    else if (key.equals("texts") && value.startsWith("[") && value.endsWith("]")) {
+                        String arrayContent = value.substring(1, value.length() - 1);
+                        List<String> texts = new ArrayList<>();
+                        
+                        // Very basic CSV parsing - assumes properly quoted strings
+                        boolean inQuotes = false;
+                        StringBuilder currentText = new StringBuilder();
+                        
+                        for (int i = 0; i < arrayContent.length(); i++) {
+                            char c = arrayContent.charAt(i);
+                            
+                            if (c == '"') {
+                                inQuotes = !inQuotes;
+                                if (!inQuotes) {
+                                    // End of quoted string
+                                    texts.add(currentText.toString());
+                                    currentText = new StringBuilder();
+                                }
+                            } else if (c == ',' && !inQuotes) {
+                                // Skip comma separators
+                                continue;
+                            } else if (inQuotes) {
+                                currentText.append(c);
+                            }
+                        }
+                        
+                        currentValues.put(key, texts);
+                    }
+                }
+            }
             
             // Create JSON structure
             JsonObject root = new JsonObject();
@@ -409,33 +814,35 @@ public class AnimationManager {
             // Add animations
             JsonObject animations = new JsonObject();
             
-            // Convert each animation from TOML to JSON
-            for (Map.Entry<String, Object> entry : toml.entrySet()) {
+            // Convert each animation section to JSON
+            for (Map.Entry<String, Map<String, Object>> entry : parsedData.entrySet()) {
                 String name = entry.getKey();
-                if (entry.getValue() instanceof Toml) {
-                    Toml animData = (Toml) entry.getValue();
-                    JsonObject jsonAnim = new JsonObject();
-                    
-                    // Convert interval
-                    Long interval = animData.getLong("change-interval");
-                    if (interval != null) {
-                        jsonAnim.addProperty("change-interval", interval.intValue());
-                    } else {
-                        jsonAnim.addProperty("change-interval", 50); // Default value
-                    }
-                    
-                    // Convert text list
-                    List<String> texts = animData.getList("texts");
-                    if (texts != null && !texts.isEmpty()) {
+                Map<String, Object> animData = entry.getValue();
+                JsonObject jsonAnim = new JsonObject();
+                
+                // Convert interval
+                Object intervalObj = animData.get("change-interval");
+                if (intervalObj instanceof Integer) {
+                    jsonAnim.addProperty("change-interval", (Integer) intervalObj);
+                } else {
+                    jsonAnim.addProperty("change-interval", 50); // Default value
+                }
+                
+                // Convert text list
+                Object textsObj = animData.get("texts");
+                if (textsObj instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<String> texts = (List<String>) textsObj;
+                    if (!texts.isEmpty()) {
                         JsonArray jsonTexts = new JsonArray();
                         for (String text : texts) {
                             jsonTexts.add(text);
                         }
                         jsonAnim.add("texts", jsonTexts);
                     }
-                    
-                    animations.add(name, jsonAnim);
                 }
+                
+                animations.add(name, jsonAnim);
             }
             
             root.add("animations", animations);

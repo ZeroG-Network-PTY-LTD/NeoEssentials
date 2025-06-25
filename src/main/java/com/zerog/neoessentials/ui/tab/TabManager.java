@@ -115,8 +115,7 @@ public class TabManager {
         
         NeoEssentials.LOGGER.info("TabManager server reference updated");
     }
-    
-    /**
+      /**
      * Initializes the tablist system on server startup
      */
     public void initialize() {
@@ -135,6 +134,7 @@ public class TabManager {
         
         // Initialize all systems
         animationManager.initialize();
+        templateManager.initialize(); // Make sure templates are loaded
         placeholderManager.initialize();
         
         // Initialize feature managers
