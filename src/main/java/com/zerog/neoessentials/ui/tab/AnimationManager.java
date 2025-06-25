@@ -9,9 +9,12 @@ import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.io.InputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -304,103 +307,78 @@ public class AnimationManager {
      * Creates default animation file using JSON format
      * 
      * @param baseDir The directory to create the file in
-     */
-    private void createDefaultAnimationFile(Path baseDir) {
+     */    private void createDefaultAnimationFile(Path baseDir) {
         Path path = baseDir.resolve("animations.json");
         
         try {
             // Create directory if needed
             Files.createDirectories(baseDir);
             
-            // Create JSON content
-            JsonObject root = new JsonObject();
+            // Try to load the default animations from resources
+            InputStream inputStream = AnimationManager.class.getClassLoader()
+                    .getResourceAsStream("default-neoessentials/animations.json");
             
-            // Add metadata
-            JsonObject metadata = new JsonObject();
-            metadata.addProperty("version", "1.0.0");
-            metadata.addProperty("description", "NeoEssentials Tablist Animations");
-            metadata.addProperty("created", java.time.LocalDateTime.now().toString());
-            root.add("metadata", metadata);
+            if (inputStream != null) {
+                // Copy the default animations file from resources
+                Files.copy(inputStream, path, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                inputStream.close();
+                
+                NeoEssentials.LOGGER.info("Created default animations.json in {} from embedded resources", baseDir);
+            } else {
+                // Fallback - create a basic JSON structure manually
+                NeoEssentials.LOGGER.warn("Could not find default animations.json in resources, creating basic version");
+                
+                JsonObject root = new JsonObject();
+                
+                // Add metadata
+                JsonObject metadata = new JsonObject();
+                metadata.addProperty("version", "1.0.0");
+                metadata.addProperty("description", "NeoEssentials Tablist Animations");
+                metadata.addProperty("created", java.time.LocalDateTime.now().toString());
+                root.add("metadata", metadata);
+                
+                // Add animations
+                JsonObject animations = new JsonObject();
+                
+                // Default animation
+                JsonObject defaultAnim = new JsonObject();
+                defaultAnim.addProperty("change-interval", 50);
+                JsonArray defaultTexts = new JsonArray();
+                defaultTexts.add("&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e");
+                defaultTexts.add("&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe");
+                defaultAnim.add("texts", defaultTexts);
+                animations.add("default", defaultAnim);
+                
+                // Add animations to root
+                root.add("animations", animations);
+                
+                // Write the JSON to file with pretty printing
+                com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+                Files.writeString(path, gson.toJson(root));
+                
+                NeoEssentials.LOGGER.info("Created basic default animations.json in {}", baseDir);
+            }
             
-            // Add animations
-            JsonObject animations = new JsonObject();
-            
-            // Default animation
-            JsonObject defaultAnim = new JsonObject();
-            defaultAnim.addProperty("change-interval", 50);
-            JsonArray defaultTexts = new JsonArray();
-            defaultTexts.add("&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e");
-            defaultTexts.add("&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe");
-            defaultTexts.add("&#549CD5E&#54B1DFx&#54C5EAa&#54DAF4m&#54C5EAp&#54B1DFl&#549CD5e");
-            defaultTexts.add("&#5487CBE&#549CD5x&#54B1DFa&#54C5EAm&#54DAF4p&#54C5EAl&#54B1DFe");
-            defaultTexts.add("&#5473C0E&#5487CBx&#549CD5a&#54B1DFm&#54C5EAp&#54DAF4l&#54C5EAe");
-            defaultAnim.add("texts", defaultTexts);
-            animations.add("default", defaultAnim);
-            
-            // Rainbow animation
-            JsonObject rainbowAnim = new JsonObject();
-            rainbowAnim.addProperty("change-interval", 30);
-            JsonArray rainbowTexts = new JsonArray();
-            rainbowTexts.add("&#FF0000R&#FF7F00a&#FFFF00i&#00FF00n&#0000FFb&#4B0082o&#9400D3w");
-            rainbowTexts.add("&#FF7F00R&#FFFF00a&#00FF00i&#0000FFn&#4B0082b&#9400D3o&#FF0000w");
-            rainbowTexts.add("&#FFFF00R&#00FF00a&#0000FFi&#4B0082n&#9400D3b&#FF0000o&#FF7F00w");
-            rainbowAnim.add("texts", rainbowTexts);
-            animations.add("rainbow", rainbowAnim);
-            
-            // Gradient animations section
-            JsonObject gradientAnimations = new JsonObject();
-            
-            // Evening sky gradient
-            JsonObject eveningSky = new JsonObject();
-            JsonArray skyColors = new JsonArray();
-            skyColors.add("#1E2A5E");
-            skyColors.add("#493267");
-            skyColors.add("#FB5858");
-            skyColors.add("#D68060");
-            eveningSky.add("colors", skyColors);
-            eveningSky.addProperty("steps", 15);
-            gradientAnimations.add("evening_sky", eveningSky);
-            
-            // Water gradient
-            JsonObject water = new JsonObject();
-            JsonArray waterColors = new JsonArray();
-            waterColors.add("#015C92");
-            waterColors.add("#2D82B5");
-            waterColors.add("#88CDF6");
-            waterColors.add("#72EFDD");
-            water.add("colors", waterColors);
-            water.addProperty("steps", 12);
-            gradientAnimations.add("water", water);
-            
-            // Add gradient animations to root
-            animations.add("gradients", gradientAnimations);
-            
-            // Add pulse animations
-            JsonObject pulseAnimations = new JsonObject();
-            
-            // Warning pulse
-            JsonObject warningPulse = new JsonObject();
-            warningPulse.addProperty("color", "#FF0000");
-            warningPulse.addProperty("seconds", 1.5);
-            pulseAnimations.add("warning", warningPulse);
-            
-            // Gold pulse
-            JsonObject goldPulse = new JsonObject();
-            goldPulse.addProperty("color", "#FFD700");
-            goldPulse.addProperty("seconds", 2.0);
-            pulseAnimations.add("gold", goldPulse);
-            
-            // Add pulse animations to root
-            animations.add("pulses", pulseAnimations);
-            
-            // Add animations to root
-            root.add("animations", animations);
-            
-            // Write the JSON to file with pretty printing
-            com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
-            Files.writeString(path, gson.toJson(root));
-            
-            NeoEssentials.LOGGER.info("Created default animations.json in {}", baseDir);
+            // Create a README file in the config directory explaining the location change
+            Path configDir = Paths.get("config", "neoessentials");
+            if (Files.exists(configDir)) {
+                Path readmePath = configDir.resolve("README_ANIMATIONS.md");
+                String readmeContent = "# NeoEssentials Animations\n\n" +
+                        "The animations for the tablist system have been moved to the `neoessentials/animations.json` file.\n" +
+                        "This provides better configuration flexibility and avoids TOML serialization issues.\n\n" +
+                        "## Location\n\n" +
+                        "- Primary location: `neoessentials/animations.json`\n" +
+                        "- Legacy location (no longer recommended): `config/neoessentials/animations.json`\n\n" +
+                        "## Format\n\n" +
+                        "The animations file now uses JSON format for maximum compatibility and flexibility.\n\n" +
+                        "## Migration\n\n" +
+                        "Your existing animations have been automatically migrated to JSON format.\n"+
+                        "A backup of your old TOML file has been created with the .bak extension.";
+                
+                if (!Files.exists(readmePath)) {
+                    Files.writeString(readmePath, readmeContent);
+                }
+            }
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to create default animations.json", e);
         }
