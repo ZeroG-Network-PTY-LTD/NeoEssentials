@@ -66,34 +66,18 @@ public class ConfigUtil {
     /**
      * Attempt to directly patch NeoForge's config system to prevent unnecessary "correction" warnings
      * This uses reflection to access and modify NeoForge's internal config validation mechanisms
-     */
-    private static void patchNeoForgeConfigComparison() {
+     */    private static void patchNeoForgeConfigComparison() {
         try {
-            // Log detailed info about our tablist arrays for debugging
-            com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Tablist headers (actual): {}", TablistTomlConfig.HEADERS_LIST.get());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Tablist headers (default): {}", java.util.List.of(
-                "&6&l✦ &b&lNeoEssentials Server &6&l✦",
-                "&eWelcome, &a%player%&e!",
-                "&eOnline players: &a%online%/%max%",
-                "&eServer time: &a%time%"
-            ));
+            // Log that templates have moved to templates.json
+            com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Templates have been moved to templates.json");
+            com.zerog.neoessentials.NeoEssentials.LOGGER.debug("No need to patch tablist config comparisons anymore");
+              // The template system now loads from templates.json instead of TOML config
+            boolean configValid = TablistTomlConfig.UPDATE_INTERVAL.get() > 0;
             
-            // The reflection approach is limited in what it can do, so we'll use a custom logging approach
-            // to better understand the comparison issue
-            boolean headersEqual = areListsEqual(
-                TablistTomlConfig.HEADERS_LIST.get(),
-                java.util.List.of(
-                    "&6&l✦ &b&lNeoEssentials Server &6&l✦",
-                    "&eWelcome, &a%player%&e!",
-                    "&eOnline players: &a%online%/%max%",
-                    "&eServer time: &a%time%"
-                )
-            );
-            
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Headers equality check (our method): {}", headersEqual);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist configuration status: {}", configValid ? "valid" : "invalid");
             
             // Our approach is to improve logging rather than try to patch NeoForge directly
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Applied logging-based patch for config comparison");
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Templates now in templates.json, no need to patch TOML comparison");
         } catch (Exception e) {
             com.zerog.neoessentials.NeoEssentials.LOGGER.error("Failed to apply NeoForge config comparison patch", e);
         }

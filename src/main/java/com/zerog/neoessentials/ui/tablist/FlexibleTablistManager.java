@@ -2,6 +2,7 @@ package com.zerog.neoessentials.ui.tablist;
 
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.config.TablistTomlConfig;
+import com.zerog.neoessentials.ui.tab.TabManager;
 import com.zerog.neoessentials.ui.tablist.components.*;
 import com.zerog.neoessentials.ui.tablist.layouts.*;
 import com.zerog.neoessentials.utils.PermissionUtil;
@@ -202,15 +203,29 @@ public class FlexibleTablistManager {
         headerComponent.ifPresent(component -> {
             if (component instanceof TablistHeaderComponent) {
                 TablistHeaderComponent header = (TablistHeaderComponent) component;
-                
-                // Get header lines from config
-                List<String> headerLines = TablistTomlConfig.getHeaders();
-                header.setLines(headerLines);
-                
-                // Get admin/VIP headers for permission-based display
+                  // Get header lines from template manager
+                TabManager tabManager = NeoEssentials.getInstance().getTabManager();
+                List<String> headerLines;
                 Map<String, List<String>> groupHeaders = new HashMap<>();
-                groupHeaders.put("admin", TablistTomlConfig.getAdminHeaders());
-                groupHeaders.put("vip", TablistTomlConfig.getVipHeaders());
+                
+                if (tabManager != null && tabManager.getTemplateManager() != null) {
+                    // Load from template manager
+                    headerLines = new ArrayList<>(tabManager.getTemplateManager().getGlobalHeaders());
+                    
+                    // Load group-specific headers
+                    groupHeaders.put("admin", tabManager.getTemplateManager().getGroupHeaders("admin"));
+                    groupHeaders.put("vip", tabManager.getTemplateManager().getGroupHeaders("vip"));
+                } else {
+                    // Fallback to defaults if template manager is not available
+                    headerLines = Arrays.asList(
+                        "&6&l✦ &b&lNeoEssentials Server &6&l✦",
+                        "&eWelcome, &a%player%&e!",
+                        "&eOnline players: &a%online%/%max%",
+                        "&eServer time: &a%time%"
+                    );
+                }
+                
+                header.setLines(headerLines);
                 header.setGroupLines(groupHeaders);
                 
                 // Set animation type
@@ -223,15 +238,29 @@ public class FlexibleTablistManager {
         footerComponent.ifPresent(component -> {
             if (component instanceof TablistFooterComponent) {
                 TablistFooterComponent footer = (TablistFooterComponent) component;
-                
-                // Get footer lines from config
-                List<String> footerLines = TablistTomlConfig.getFooters();
-                footer.setLines(footerLines);
-                
-                // Get admin/VIP footers for permission-based display
+                  // Get footer lines from template manager
+                TabManager tabManager = NeoEssentials.getInstance().getTabManager();
+                List<String> footerLines;
                 Map<String, List<String>> groupFooters = new HashMap<>();
-                groupFooters.put("admin", TablistTomlConfig.getAdminFooters());
-                groupFooters.put("vip", TablistTomlConfig.getVipFooters());
+                
+                if (tabManager != null && tabManager.getTemplateManager() != null) {
+                    // Load from template manager
+                    footerLines = new ArrayList<>(tabManager.getTemplateManager().getGlobalFooters());
+                    
+                    // Load group-specific footers
+                    groupFooters.put("admin", tabManager.getTemplateManager().getGroupFooters("admin"));
+                    groupFooters.put("vip", tabManager.getTemplateManager().getGroupFooters("vip"));
+                } else {
+                    // Fallback to defaults if template manager is not available
+                    footerLines = Arrays.asList(
+                        "&eBalance: &a%balance% coins", 
+                        "&eWebsite: &awww.example.com", 
+                        "&eThanks for playing!", 
+                        "&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%"
+                    );
+                }
+                
+                footer.setLines(footerLines);
                 footer.setGroupLines(groupFooters);
                 
                 // Set animation type

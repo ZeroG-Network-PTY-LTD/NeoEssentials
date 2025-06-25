@@ -2,6 +2,7 @@ package com.zerog.neoessentials.ui;
 
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.config.TablistTomlConfig;
+import com.zerog.neoessentials.ui.tab.TabManager;
 import com.zerog.neoessentials.ui.tablist.TablistAnimationManager;
 import com.zerog.neoessentials.ui.tablist.TablistGroupManager;
 import com.zerog.neoessentials.ui.tablist.TablistPlaceholderManager;
@@ -13,6 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -111,20 +113,37 @@ public class EnhancedTablistManager {
      * Loads header and footer templates from config
      */
     private void loadHeadersAndFooters() {
-        // Clear existing headers and footers
-        headers.clear();
+        // Clear existing headers and footers        headers.clear();
         footers.clear();
-          // Load from TOML config using the new getter methods
-        List<String> configHeaders = TablistTomlConfig.getHeaders();
-        List<String> configFooters = TablistTomlConfig.getFooters();
-        
-        // Clear and add headers
-        headers.clear();
-        headers.addAll(configHeaders);
-        
-        // Clear and add footers
-        footers.clear();
-        footers.addAll(configFooters);
+          
+        // Get a TabManager instance if available, or use default templates
+        TabManager tabManager = NeoEssentials.getInstance().getTabManager();
+        if (tabManager != null && tabManager.getTemplateManager() != null) {
+            // Load from TemplateManager
+            List<String> configHeaders = tabManager.getTemplateManager().getGlobalHeaders();
+            List<String> configFooters = tabManager.getTemplateManager().getGlobalFooters();
+            
+            // Add headers
+            headers.addAll(configHeaders);
+            
+            // Add footers
+            footers.addAll(configFooters);
+        } else {
+            // Fallback to default templates if TabManager not available
+            headers.addAll(Arrays.asList(
+                "&6&l✦ &b&lNeoEssentials Server &6&l✦",
+                "&eWelcome, &a%player%&e!",
+                "&eOnline players: &a%online%/%max%",
+                "&eServer time: &a%time%"
+            ));
+            
+            footers.addAll(Arrays.asList(
+                "&eBalance: &a%balance% coins", 
+                "&eWebsite: &awww.example.com", 
+                "&eThanks for playing!", 
+                "&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%"
+            ));
+        }
         
         // Log loaded templates
         NeoEssentials.LOGGER.info("Loaded {} header templates and {} footer templates", 
@@ -229,21 +248,24 @@ public class EnhancedTablistManager {
         // Use default headers if player-specific headers are disabled
         if (!TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_HEADERS.get()) {
             return headers;
-        }
-          // Check for permission-based headers
-        if (group.equalsIgnoreCase("Admin") && 
-            PermissionUtil.hasPermission(player, "neoessentials.tablist.header.admin")) {
-            // Get admin-specific headers using new getter method
-            List<String> adminHeaders = TablistTomlConfig.getAdminHeaders();
-            if (adminHeaders != null && !adminHeaders.isEmpty()) {
-                return new ArrayList<>(adminHeaders);
-            }
-        } else if (group.equalsIgnoreCase("VIP") && 
-                  PermissionUtil.hasPermission(player, "neoessentials.tablist.header.vip")) {
-            // Get VIP-specific headers using new getter method
-            List<String> vipHeaders = TablistTomlConfig.getVipHeaders();
-            if (vipHeaders != null && !vipHeaders.isEmpty()) {
-                return new ArrayList<>(vipHeaders);
+        }        // Get a TabManager instance to access templates
+        TabManager tabManager = NeoEssentials.getInstance().getTabManager();
+        if (tabManager != null && tabManager.getTemplateManager() != null) {
+            // Check for permission-based headers
+            if (group.equalsIgnoreCase("Admin") && 
+                PermissionUtil.hasPermission(player, "neoessentials.tablist.header.admin")) {
+                // Get admin-specific headers from template manager
+                List<String> adminHeaders = tabManager.getTemplateManager().getGroupHeaders("admin");
+                if (adminHeaders != null && !adminHeaders.isEmpty()) {
+                    return new ArrayList<>(adminHeaders);
+                }
+            } else if (group.equalsIgnoreCase("VIP") && 
+                      PermissionUtil.hasPermission(player, "neoessentials.tablist.header.vip")) {
+                // Get VIP-specific headers from template manager
+                List<String> vipHeaders = tabManager.getTemplateManager().getGroupHeaders("vip");
+                if (vipHeaders != null && !vipHeaders.isEmpty()) {
+                    return new ArrayList<>(vipHeaders);
+                }
             }
         }
         
@@ -262,21 +284,24 @@ public class EnhancedTablistManager {
         // Use default footers if player-specific footers are disabled
         if (!TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_FOOTERS.get()) {
             return footers;
-        }
-          // Check for permission-based footers
-        if (group.equalsIgnoreCase("Admin") && 
-            PermissionUtil.hasPermission(player, "neoessentials.tablist.footer.admin")) {
-            // Get admin-specific footers using new getter method
-            List<String> adminFooters = TablistTomlConfig.getAdminFooters();
-            if (adminFooters != null && !adminFooters.isEmpty()) {
-                return new ArrayList<>(adminFooters);
-            }
-        } else if (group.equalsIgnoreCase("VIP") && 
-                  PermissionUtil.hasPermission(player, "neoessentials.tablist.footer.vip")) {
-            // Get VIP-specific footers using new getter method
-            List<String> vipFooters = TablistTomlConfig.getVipFooters();
-            if (vipFooters != null && !vipFooters.isEmpty()) {
-                return new ArrayList<>(vipFooters);
+        }        // Get a TabManager instance to access templates
+        TabManager tabManager = NeoEssentials.getInstance().getTabManager();
+        if (tabManager != null && tabManager.getTemplateManager() != null) {
+            // Check for permission-based footers
+            if (group.equalsIgnoreCase("Admin") && 
+                PermissionUtil.hasPermission(player, "neoessentials.tablist.footer.admin")) {
+                // Get admin-specific footers from template manager
+                List<String> adminFooters = tabManager.getTemplateManager().getGroupFooters("admin");
+                if (adminFooters != null && !adminFooters.isEmpty()) {
+                    return new ArrayList<>(adminFooters);
+                }
+            } else if (group.equalsIgnoreCase("VIP") && 
+                      PermissionUtil.hasPermission(player, "neoessentials.tablist.footer.vip")) {
+                // Get VIP-specific footers from template manager
+                List<String> vipFooters = tabManager.getTemplateManager().getGroupFooters("vip");
+                if (vipFooters != null && !vipFooters.isEmpty()) {
+                    return new ArrayList<>(vipFooters);
+                }
             }
         }
         
