@@ -3,6 +3,7 @@ package com.zerog.neoessentials.ui;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.config.TablistTomlConfig;
 import com.zerog.neoessentials.ui.tab.TabManager;
+import com.zerog.neoessentials.ui.tab.DataManagerHooks;
 import com.zerog.neoessentials.ui.tablist.TablistAnimationManager;
 import com.zerog.neoessentials.ui.tablist.TablistGroupManager;
 import com.zerog.neoessentials.ui.tablist.TablistPlaceholderManager;
@@ -116,7 +117,7 @@ public class EnhancedTablistManager {
         // Clear existing headers and footers        headers.clear();
         footers.clear();
             // Get a TabManager instance if available, or use default templates
-        TabManager tabManager = com.zerog.neoessentials.ui.tab.DataManagerHooks.getTabManager();
+        TabManager tabManager = DataManagerHooks.getTabManager();
         if (tabManager != null && tabManager.getTemplateManager() != null) {
             // Load from TemplateManager
             List<String> configHeaders = tabManager.getTemplateManager().getGlobalHeaders();
@@ -248,7 +249,7 @@ public class EnhancedTablistManager {
         if (!TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_HEADERS.get()) {
             return headers;
         }        // Get a TabManager instance to access templates
-        TabManager tabManager = NeoEssentials.getInstance().getTabManager();
+        TabManager tabManager = DataManagerHooks.getTabManager();
         if (tabManager != null && tabManager.getTemplateManager() != null) {        // Check for permission-based headers
             if (group.equalsIgnoreCase("Admin") && 
                 PermissionUtil.hasPermission(player, "neoessentials.tablist.header.admin")) {
@@ -283,7 +284,7 @@ public class EnhancedTablistManager {
         if (!TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_FOOTERS.get()) {
             return footers;
         }        // Get a TabManager instance to access templates
-        TabManager tabManager = NeoEssentials.getInstance().getTabManager();
+        TabManager tabManager = DataManagerHooks.getTabManager();
         if (tabManager != null && tabManager.getTemplateManager() != null) {
             // Check for permission-based footers
             if (group.equalsIgnoreCase("Admin") && 
