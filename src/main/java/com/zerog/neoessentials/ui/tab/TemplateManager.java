@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -265,6 +266,34 @@ public class TemplateManager {
     }
     
     /**
+     * Gets all group headers
+     * 
+     * @return Map of group names to their header templates
+     */
+    public Map<String, List<String>> getAllGroupHeaders() {
+        // Create a deep copy to prevent modifications
+        Map<String, List<String>> result = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : groupHeaders.entrySet()) {
+            result.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+        return result;
+    }
+    
+    /**
+     * Gets all group footers
+     * 
+     * @return Map of group names to their footer templates
+     */
+    public Map<String, List<String>> getAllGroupFooters() {
+        // Create a deep copy to prevent modifications
+        Map<String, List<String>> result = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : groupFooters.entrySet()) {
+            result.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+        return result;
+    }
+    
+    /**
      * Gets the global boss bars
      * 
      * @return List of global boss bars
@@ -285,6 +314,19 @@ public class TemplateManager {
         for (Map.Entry<String, List<String>> entry : groupBossBars.entrySet()) {
             result.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
+        return result;
+    }
+    
+    /**
+     * Gets the names of all groups that have templates defined
+     * 
+     * @return Set of group names
+     */
+    public Set<String> getGroupNames() {
+        // Combine keys from both maps
+        Set<String> result = new java.util.HashSet<>();
+        result.addAll(groupHeaders.keySet());
+        result.addAll(groupFooters.keySet());
         return result;
     }
     

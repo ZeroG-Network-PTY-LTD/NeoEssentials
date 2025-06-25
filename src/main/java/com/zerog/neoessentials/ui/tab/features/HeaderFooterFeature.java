@@ -11,9 +11,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -48,8 +51,7 @@ public class HeaderFooterFeature extends AbstractFeature {
     @Override
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing header/footer feature");
-    }
-      @Override
+    }    @Override
     public void loadConfig() {
         // Load templates from the template manager
         this.headerTemplates = getTabManager().getTemplateManager().getGlobalHeaders();
@@ -65,51 +67,41 @@ public class HeaderFooterFeature extends AbstractFeature {
         this.enablePlayerSpecificHeaders = TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_HEADERS.get();
         this.enablePlayerSpecificFooters = TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_FOOTERS.get();
         
-        // Load group-specific headers/footers from config
-        loadGroupSpecificTemplates();
+        // Load group-specific headers/footers from the template manager
+        loadGroupSpecificTemplatesFromManager();
         
         NeoEssentials.LOGGER.info("Header/footer feature config loaded");
     }
-    
-    /**
-     * Loads group-specific header and footer templates from config
+      /**
+     * Loads group-specific header and footer templates from template manager
      */
-    private void loadGroupSpecificTemplates() {
-        // TODO: Implement loading of group-specific templates from config
-        // This would typically load from a section in the TOML config like:
-        // [templates.groups.admin]
-        // headers = ["Admin-specific header"]
-        // footers = ["Admin-specific footer"]
-        
-        // For now, let's add some examples
+    private void loadGroupSpecificTemplatesFromManager() {
+        // Clear existing data
         groupHeaders.clear();
         groupFooters.clear();
+          // Get available group names from the template manager's headers and footers
+        Map<String, List<String>> templateGroupHeaders = getTabManager().getTemplateManager().getAllGroupHeaders();
+        Map<String, List<String>> templateGroupFooters = getTabManager().getTemplateManager().getAllGroupFooters();
         
-        // Example for admin group
-        groupHeaders.put("admin", List.of(
-            "&c&l✦ &4&lADMIN &c&l✦",
-            "&eWelcome, &4%player%&e!",
-            "&eCommand access: &aFULL"
-        ));
+        // Process headers for all groups
+        for (Map.Entry<String, List<String>> entry : templateGroupHeaders.entrySet()) {
+            String groupName = entry.getKey();
+            List<String> headers = entry.getValue();
+            if (headers != null && !headers.isEmpty()) {
+                groupHeaders.put(groupName, new ArrayList<>(headers));
+            }
+        }
         
-        groupFooters.put("admin", List.of(
-            "&eServer performance: &a%tps% TPS",
-            "&eMemory: &a%memory_used%/%memory_max% MB",
-            "&c&lADMIN TOOLS ENABLED"
-        ));
+        // Process footers for all groups
+        for (Map.Entry<String, List<String>> entry : templateGroupFooters.entrySet()) {
+            String groupName = entry.getKey();
+            List<String> footers = entry.getValue();
+            if (footers != null && !footers.isEmpty()) {
+                groupFooters.put(groupName, new ArrayList<>(footers));
+            }
+        }
         
-        // Example for vip group
-        groupHeaders.put("vip", List.of(
-            "&6&l✦ &e&lVIP &6&l✦",
-            "&eWelcome, &e%player%&e!",
-            "&eThank you for supporting the server!"
-        ));
-        
-        groupFooters.put("vip", List.of(
-            "&eVIP benefits active",
-            "&eBalance: &6%balance% coins",
-            "&eVisit /vip for all your perks"
-        ));
+        NeoEssentials.LOGGER.info("Loaded header/footer templates for {} groups", groupHeaders.size());
     }
     
     @Override
