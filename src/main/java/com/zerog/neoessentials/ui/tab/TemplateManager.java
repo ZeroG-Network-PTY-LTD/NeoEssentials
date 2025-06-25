@@ -96,15 +96,14 @@ public class TemplateManager {
     }
       /**
      * Creates the default templates file from embedded resources
-     */
-    private void createDefaultTemplatesFile() {
+     */    private void createDefaultTemplatesFile() {
         try {
             // Determine the target directory - prefer neoessentials directory
             Path targetFile = neoEssentialsDir.resolve("templates.json");
             
             // First check if we have the file in resources
             InputStream inputStream = TemplateManager.class.getClassLoader()
-                    .getResourceAsStream("default-config/templates.json");
+                    .getResourceAsStream("default-neoessentials/templates.json");
             
             if (inputStream != null) {
                 // Copy from resources to target directory
@@ -114,8 +113,7 @@ public class TemplateManager {
                 templatesFile = targetFile;
                 
                 NeoEssentials.LOGGER.info("Created default templates.json in neoessentials directory");
-                
-                // Add README file to explain the new location
+                  // Add README file to explain the new location
                 Path readmePath = configDir.resolve("README_TEMPLATES.md");
                 String readmeContent = "# NeoEssentials Templates\n\n" +
                         "The templates for the tablist system have been moved to the `neoessentials/templates.json` file.\n" +
@@ -124,9 +122,14 @@ public class TemplateManager {
                         "- Primary location: `neoessentials/templates.json`\n" +
                         "- Legacy location (no longer recommended): `config/neoessentials/templates.json`\n\n" +
                         "## Format\n\n" +
-                        "The templates file uses JSON format for maximum compatibility and flexibility.";
+                        "The templates file uses JSON format for maximum compatibility and flexibility.\n\n" +
+                        "## Migration\n\n" +
+                        "Your existing templates have been automatically migrated to the new location.\n" +
+                        "All customizations are preserved.";
                 
-                Files.writeString(readmePath, readmeContent);
+                if (!Files.exists(readmePath)) {
+                    Files.writeString(readmePath, readmeContent);
+                }
                 
             } else {
                 // Fallback to creating a basic templates file

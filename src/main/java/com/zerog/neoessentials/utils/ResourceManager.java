@@ -21,12 +21,20 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
         "database.toml",
         "animations.toml"
     );
+    
+    // Files to be placed in the main neoessentials directory (outside of config)
+    private static final List<String> NEOESSENTIALS_FILES = Arrays.asList(
+        "templates.json",
+        "animations.json",
+        "README.md"
+    );
 
     /**
      * Initializes the resource manager and copies default configs
      */
     public static void initialize() {
         copyDefaultConfigs();
+        copyNeoEssentialsFiles();
     }
 
     /**
@@ -211,6 +219,57 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
         } catch (IOException e) {
             NeoEssentials.LOGGER.error("Failed to extract tablist.toml", e);
             return false;
+        }
+    }
+
+    /**
+     * Copies default files to the neoessentials directory (not in config)
+     */
+    public static void copyNeoEssentialsFiles() {
+        Path neoEssentialsDir = Paths.get("neoessentials");
+        
+        try {
+            // Create neoessentials directory if it doesn't exist
+            if (!Files.exists(neoEssentialsDir)) {
+                Files.createDirectories(neoEssentialsDir);
+                NeoEssentials.LOGGER.info("Created neoessentials directory: {}", neoEssentialsDir);
+            }
+
+            // Copy each default file
+            for (String fileName : NEOESSENTIALS_FILES) {
+                copyNeoEssentialsFile(neoEssentialsDir, fileName);
+            }
+            
+            NeoEssentials.LOGGER.info("Default neoessentials files processed");
+        } catch (IOException e) {
+            NeoEssentials.LOGGER.error("Failed to copy default neoessentials files", e);
+        }
+    }
+    
+    /**
+     * Copies a specific file from resources to the neoessentials directory if it doesn't exist
+     * 
+     * @param neoEssentialsDir The neoessentials directory
+     * @param fileName The file name
+     * @throws IOException If an I/O error occurs
+     */
+    private static void copyNeoEssentialsFile(Path neoEssentialsDir, String fileName) throws IOException {
+        Path filePath = neoEssentialsDir.resolve(fileName);
+        
+        // Check if file already exists
+        if (Files.exists(filePath)) {
+            NeoEssentials.LOGGER.debug("File already exists: {}", filePath);
+            return;
+        }
+
+        // Copy file from resources
+        try (InputStream in = ResourceManager.class.getResourceAsStream("/default-neoessentials/" + fileName)) {
+            if (in != null) {
+                Files.copy(in, filePath, StandardCopyOption.REPLACE_EXISTING);
+                NeoEssentials.LOGGER.info("Copied default file to neoessentials directory: {}", fileName);
+            } else {
+                NeoEssentials.LOGGER.warn("Default file not found in resources: {}", fileName);
+            }
         }
     }
 }
