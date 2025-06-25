@@ -44,13 +44,11 @@ public class CommandManager {    // Command classes
     private final AdminPanelCommand adminPanelCommand;
     private final TablistCommand tablistCommand;
     
-    // Debug command    private com.zerog.neoessentials.commands.debug.TablistDebugCommand tablistDebugCommand;
-    
-    // NeoEssentials main reference
-    private final NeoEssentials mod;
-    
-    public CommandManager(NeoEssentials mod) {
-        this.mod = mod;
+    // Debug command disabled while developing TablistFix
+      // NeoEssentials main reference - disabled while developing TablistFix
+    // private final NeoEssentials mod;
+      public CommandManager() {
+        // mod reference removed while disabling debug commands
         
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
@@ -100,15 +98,14 @@ public class CommandManager {    // Command classes
         ItemCommands itemCommands = new ItemCommands(event.getBuildContext());
         itemCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered item commands");
-        
-        // Register debug commands if TabManager is available
+          // Debug command temporarily disabled while developing TablistFix
+        /*
         if (mod != null && mod.getTabManager() != null) {
-            tablistDebugCommand = new com.zerog.neoessentials.commands.debug.TablistDebugCommand(mod.getTabManager());
-            tablistDebugCommand.register(dispatcher);
-            NeoEssentials.LOGGER.info("Registered tablist debug command");
+            // Debug command code goes here when re-enabled
         } else {
             NeoEssentials.LOGGER.warn("Could not register tablist debug command: TabManager not available");
         }
+        */
     }
       /**
      * Registers all command categories with the dispatcher.

@@ -90,11 +90,14 @@ public class TablistFix {
                     // Copy from config dir to neoessentials dir
                     Files.copy(configTemplatesFile, neoTemplatesJsonFile, StandardCopyOption.REPLACE_EXISTING);
                     source.sendSystemMessage(Component.literal("§aCopied templates.json from config dir to neoessentials dir"));
-                } else {
-                    // Extract from resources
+                } else {                    // Extract from resources
                     TemplateManager templateManager = tabManager.getTemplateManager();
-                    templateManager.createDefaultTemplatesFile();
-                    source.sendSystemMessage(Component.literal("§aCreated default templates.json in neoessentials dir"));
+                    boolean created = templateManager.createDefaultTemplatesFile();
+                    if (created) {
+                        source.sendSystemMessage(Component.literal("§aCreated default templates.json in neoessentials dir"));
+                    } else {
+                        source.sendSystemMessage(Component.literal("§cFailed to create default templates.json file"));
+                    }
                 }
             } else {
                 source.sendSystemMessage(Component.literal("§7Using existing templates.json in neoessentials dir"));
