@@ -1,43 +1,71 @@
-# NeoEssentials Documentation
+# NeoEssentials
 
-This directory contains documentation for NeoEssentials - a comprehensive server-side essentials mod for NeoForge Minecraft servers.
+![NeoEssentials Logo](https://raw.githubusercontent.com/zerog-project/neoessentials/main/Logo.png)
 
-## User Documentation
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen.svg)](https://www.minecraft.net/)
+[![NeoForge](https://img.shields.io/badge/NeoForge-52.1.1+-blue.svg)](https://neoforged.net/)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT)
 
-### Core Documentation
-- [Commands](COMMANDS_FULL.md) - Complete command reference with syntax and permissions
-- [Permissions](PERMISSIONS.md) - Detailed permissions system documentation
-- [Storage](STORAGE.md) - Storage system configuration and information
+## 🌟 Overview
 
-### Server Information
-- [Server Deployment Guide](SERVER_DEPLOYMENT_GUIDE.md) - Guide for deploying NeoEssentials on a server
-- [Server-Side Implementation](SERVER_SIDE_IMPLEMENTATION.md) - Technical details on server-side compatibility
-- [Client Compatibility](CLIENT_COMPATIBILITY.md) - Information on client compatibility
+NeoEssentials is a comprehensive server management and quality-of-life mod for Minecraft NeoForge servers. It provides essential commands, utilities, and features to enhance the multiplayer experience for both players and administrators.
 
-## Feature Documentation
+## ✨ Key Features
 
-### Core Systems
-- [Economy System](ECONOMY_SYSTEM.md) - Information on the economy system
-- [Home & Warp System](HOME_WARP_SYSTEM.md) - Information on teleportation systems
-- [Kit System](KIT_SYSTEM.md) - Information on the kit system
-- [Jail System](JAIL_SYSTEM.md) - Information on the jail system
+- **Enhanced Tablist System**: Customizable headers, footers, and boss bars with animations
+- **Home & Warp System**: Player homes and server teleportation points
+- **Economy System**: Complete player economy with transactions and shop integration
+- **Kit System**: Configurable item kits for players with cooldowns
+- **Moderation Tools**: Advanced tools for server moderation and administration
+- **Permission Integration**: Works with popular permission systems (LuckPerms, FTB Ranks)
+- **Performance Optimized**: Designed for minimal server impact
+- **Extensive Configuration**: JSON-based configuration for maximum flexibility
 
-### Configuration
-- [Configuration System](CONFIGURATION_SYSTEM.md) - Details on the configuration system
-- [Safe Config Access](SAFE_CONFIG_ACCESS.md) - Information on safely accessing configuration
+## 📋 Requirements
 
-## Developer Documentation
+- Minecraft 1.21.1+
+- NeoForge 52.1.1+
 
-### Implementation Details
-- [Command System Implementation](COMMANDS.md) - Technical details on command implementation
-- [Permission System Implementation](PERMISSIONS_IMPL.md) - Technical details on the permission system
-- [Storage System Implementation](STORAGE_IMPL.md) - Technical details on the storage system
+## 🚀 Installation
 
-### Technical Guides
-- [Multi-version Guide](MULTIVERSION_GUIDE.md) - Guide for supporting multiple Minecraft versions
-- [Server-Side Test Plan](SERVER_SIDE_TEST_PLAN.md) - Test plan for server-side compatibility
+1. Download the latest version from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/neoessentials) or [Modrinth](https://modrinth.com/mod/neoessentials)
+2. Place the JAR file in your server's `mods` folder
+3. Start or restart your server
+4. Configure the mod in `config/neoessentials/` and `neoessentials/` directories
 
-## Release Information
+## 📚 Documentation
 
-- [Changelog](CHANGELOG.md) - Detailed changelog of all versions
-- [Migration Guide](MIGRATION_GUIDE.md) - Guide for migrating from previous versions
+Comprehensive documentation is available:
+
+- [Wiki](https://github.com/zerog-project/neoessentials/wiki) - Complete usage guides
+- [Commands](https://github.com/zerog-project/neoessentials/wiki/Commands) - Command reference
+- [Permissions](https://github.com/zerog-project/neoessentials/wiki/Permissions) - Permission list
+- [Configuration](https://github.com/zerog-project/neoessentials/wiki/Configuration) - Config guide
+- [JSON Templates](https://github.com/zerog-project/neoessentials/wiki/JSON-Templates) - Template system guide
+
+## 🛠️ Configuration
+
+NeoEssentials uses both TOML for basic configuration and JSON for complex templates:
+
+- **TOML Configs**: Located in `config/neoessentials/` directory
+- **JSON Templates**: Located in `neoessentials/` directory (server root)
+
+The mod will generate default configurations on first startup.
+
+## 📢 Support & Community
+
+- [Discord](https://discord.gg/zerogproject) - Get help and chat with other users
+- [GitHub Issues](https://github.com/zerog-project/neoessentials/issues) - Report bugs and suggest features
+- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/neoessentials) - Leave reviews and comments
+
+## 🔄 Compatibility
+
+NeoEssentials works with:
+
+- Most permission mods (LuckPerms, FTB Ranks)
+- Popular placeholder APIs
+- Other utility and management mods
+
+## 📜 License
+
+NeoEssentials is licensed under the MIT License. See the LICENSE file for details.
