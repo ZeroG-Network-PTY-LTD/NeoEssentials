@@ -243,8 +243,53 @@ public class PermissionUtil {
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if the player has the permission, false otherwise
+     */    static boolean checkPermission(ServerPlayer player, String permission) {
+        boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
+        String playerName = player.getScoreboardName();
+        
+        // Use the PermissionHandlerManager to check permissions
+        com.zerog.neoessentials.permissions.PermissionHandlerManager manager = 
+            com.zerog.neoessentials.permissions.PermissionHandlerManager.getInstance();
+        
+        // First check if any registered handlers have the permission
+        if (!manager.getAvailableHandlers().isEmpty()) {
+            boolean result = manager.hasPermission(player, permission);
+            
+            if (result && debug) {
+                NeoEssentials.LOGGER.debug("Permission '{}' granted to player {} by permission handler", 
+                    permission, playerName);
+                return true;
+            }
+            
+            // If permission handlers exist but didn't grant permission, fall back to default config
+            if (!result) {
+                result = checkDefaultPermission(permission);
+                
+                if (debug) {
+                    NeoEssentials.LOGGER.debug("Using default permission for '{}': {} (player: {})", 
+                        permission, result, playerName);
+                }
+                
+                return result;
+            }
+        }
+        
+        // If no permission handlers are available, use legacy reflection-based method
+        // for backward compatibility during transitional period
+        boolean result = checkLegacyPermission(player, permission);
+        
+        if (debug) {
+            NeoEssentials.LOGGER.debug("Using legacy permission check for '{}': {} (player: {})", 
+                permission, result, playerName);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Legacy permission check method for backward compatibility
      */
-    static boolean checkPermission(ServerPlayer player, String permission) {
+    static boolean checkLegacyPermission(ServerPlayer player, String permission) {
         boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
         String playerName = player.getScoreboardName();
         
