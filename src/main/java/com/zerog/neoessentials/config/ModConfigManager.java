@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.config;
 
 import com.zerog.neoessentials.NeoEssentials;
+import com.zerog.neoessentials.config.TablistYamlConfig;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -23,19 +24,17 @@ public class ModConfigManager {    // Reference to the main mod instance
         this.mod = mod;
         
         // Create compatibility config
-        compatConfig = new CompatNeoEssentialsConfig();
-          // Register all configuration files
+        compatConfig = new CompatNeoEssentialsConfig();        // Register all configuration files
         container.registerConfig(ModConfig.Type.COMMON, GeneralConfig.SPEC, "neoessentials/general.toml");
         container.registerConfig(ModConfig.Type.COMMON, EconomyConfig.SPEC, "neoessentials/economy.toml");
         container.registerConfig(ModConfig.Type.COMMON, HomeConfig.SPEC, "neoessentials/homes.toml");
         container.registerConfig(ModConfig.Type.COMMON, WarpConfig.SPEC, "neoessentials/warps.toml");
         container.registerConfig(ModConfig.Type.COMMON, KitConfig.SPEC, "neoessentials/kits.toml");
-        container.registerConfig(ModConfig.Type.COMMON, TablistTomlConfig.SPEC, "neoessentials/tablist.toml");
-        container.registerConfig(ModConfig.Type.COMMON, DatabaseTomlConfig.SPEC, "neoessentials/database.toml");
+        container.registerConfig(ModConfig.Type.COMMON, DatabaseTomlConfig.SPEC, "neoessentials/database.toml");        // tablist.yml is now handled by TablistYamlConfig rather than the Forge config system
         
         NeoEssentials.LOGGER.info("Registered all NeoEssentials config files");
-          // We'll set up the tablist config later, during initialization
-        // TablistTomlConfig.setup() is now called during mod initialization
+        // We'll set up the tablist YAML config during initialization
+        // TablistYamlConfig.setup() is called during mod initialization
     }
     
     /**
@@ -145,11 +144,9 @@ public class ModConfigManager {    // Reference to the main mod instance
             
             // Register our custom list comparison logic for tablist array configs
             registerCustomComparators();
-            
-            // Now that configs are loaded, set up the tablist config validation
-            // This ensures we only run the validation after configs are available
-            TablistTomlConfig.setup();
-            NeoEssentials.LOGGER.info("Tablist config validation initialized");
+              // Initialize YAML tablist config instead of TOML
+            TablistYamlConfig.initialize();
+            NeoEssentials.LOGGER.info("YAML Tablist config initialized");
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to initialize configs", e);
         }
@@ -166,7 +163,7 @@ public class ModConfigManager {    // Reference to the main mod instance
             // This helps with comparing list values in the tablist config
             ConfigUtil.patchConfigComparison();
             
-            // Add hook to preserve user customizations in config files (especially tablist.toml)
+            // Add hook to preserve user customizations in config files (now using tablist.yml)
             NeoEssentials.LOGGER.info("Adding config protection hook to preserve user customizations");
             
             // Schedule a delayed check to verify configs are properly loaded after initialization
@@ -178,10 +175,10 @@ public class ModConfigManager {    // Reference to the main mod instance
                     if (!wasDebug) {
                         NeoEssentials.LOGGER.info("Temporarily enabling debug mode for config validation");
                     }
-                    
-                    // Log the tablist configuration state
+                      // Log the tablist configuration state
                     NeoEssentials.LOGGER.info("Verifying tablist configuration state");
-                    TablistTomlConfig.patchConfigComparison();
+                    // Reload YAML config to make sure it's up to date
+                    TablistYamlConfig.reload();
                     
                     // Reset debug mode if needed
                     if (!wasDebug) {

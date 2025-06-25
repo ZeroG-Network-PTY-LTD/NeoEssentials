@@ -4,13 +4,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.moandjiezana.toml.Toml;
+// TOML import removed in YAML migration
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.TablistTomlConfig;
+import com.zerog.neoessentials.config.TablistYamlConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.loading.FMLPaths;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -174,7 +175,7 @@ public class TablistAnimationManager {    /**
      */
     public Component getAnimatedHeader(ServerPlayer player, List<String> headerTemplates, TablistPlaceholderManager placeholderManager) {
         PlayerAnimationState state = getPlayerState(player);
-        AnimationType animationType = AnimationType.fromConfigValue(TablistTomlConfig.HEADER_ANIMATION_TYPE.get());
+        AnimationType animationType = AnimationType.fromConfigValue(TablistYamlConfig.getHeaderAnimationType());
         AnimationProcessor processor = animationProcessors.getOrDefault(animationType, animationProcessors.get(AnimationType.ROTATION));
         
         // Process the animation
@@ -197,7 +198,7 @@ public class TablistAnimationManager {    /**
      */
     public Component getAnimatedFooter(ServerPlayer player, List<String> footerTemplates, TablistPlaceholderManager placeholderManager) {
         PlayerAnimationState state = getPlayerState(player);
-        AnimationType animationType = AnimationType.fromConfigValue(TablistTomlConfig.FOOTER_ANIMATION_TYPE.get());
+        AnimationType animationType = AnimationType.fromConfigValue(TablistYamlConfig.getFooterAnimationType());
         AnimationProcessor processor = animationProcessors.getOrDefault(animationType, animationProcessors.get(AnimationType.ROTATION));
         
         // Process the animation
@@ -277,7 +278,7 @@ public class TablistAnimationManager {    /**
             String plainText = TablistPlaceholderManager.stripColor(template);
             
             // If text is shorter than scroll width, no need to scroll
-            int scrollWidth = TablistTomlConfig.SCROLL_WIDTH.get();
+            int scrollWidth = TablistYamlConfig.getScrollWidth();
             if (plainText.length() <= scrollWidth) {
                 return template;
             }
@@ -610,34 +611,40 @@ public class TablistAnimationManager {    /**
             
             NeoEssentials.LOGGER.info("Loaded {} custom hex animations", animationCache.size());
         }
-        
-        /**
-         * Load animations from a TOML file
+          /**
+         * Load animations from a YAML file
          */
         private void loadFromToml(Path path) {
             try {
                 String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-                Toml toml = new Toml().read(content);
+                Map<String, Object> yamlData = new Yaml().load(content);
                 
                 // Process each animation section
-                for (Map.Entry<String, Object> entry : toml.entrySet()) {
+                for (Map.Entry<String, Object> entry : yamlData.entrySet()) {
                     String animationName = entry.getKey();
-                    if (entry.getValue() instanceof Toml) {
-                        Toml animData = (Toml) entry.getValue();
+                    if (entry.getValue() instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> animData = (Map<String, Object>) entry.getValue();
                         
                         // Get change interval
-                        Long changeInterval = animData.getLong("change-interval");
-                        int interval = changeInterval != null ? changeInterval.intValue() : DEFAULT_CHANGE_INTERVAL;
+                        Object intervalObj = animData.get("change-interval");
+                        int interval = (intervalObj instanceof Number) 
+                            ? ((Number) intervalObj).intValue() 
+                            : DEFAULT_CHANGE_INTERVAL;
                         
                         // Get texts
-                        List<String> texts = animData.getList("texts");
-                        if (texts != null && !texts.isEmpty()) {
-                            animationCache.put(animationName, new CustomHexAnimation(interval, texts));
+                        Object textsObj = animData.get("texts");
+                        if (textsObj instanceof List) {
+                            @SuppressWarnings("unchecked")
+                            List<String> texts = (List<String>) textsObj;
+                            if (!texts.isEmpty()) {
+                                animationCache.put(animationName, new CustomHexAnimation(interval, texts));
+                            }
                         }
                     }
                 }
             } catch (Exception e) {
-                NeoEssentials.LOGGER.error("Error loading custom hex animations from TOML", e);
+                NeoEssentials.LOGGER.error("Error loading custom hex animations from YAML", e);
             }
         }
         
@@ -680,49 +687,41 @@ public class TablistAnimationManager {    /**
                 NeoEssentials.LOGGER.error("Error loading custom hex animations from JSON", e);
             }
         }
-        
-        /**
+          /**
          * Create default animation files if none exist
          */
         private void createDefaultAnimationFiles() {
-            // Create TOML file with example
-            Path tomlPath = FMLPaths.CONFIGDIR.get().resolve("neoessentials/animations.toml");
-            StringBuilder tomlBuilder = new StringBuilder();
-            tomlBuilder.append("# NeoEssentials Custom Hex Color Animations\n");
-            tomlBuilder.append("# Format: &#RRGGBB for hex colors\n\n");
-            tomlBuilder.append("[default]\n");
-            tomlBuilder.append("change-interval = 50\n");
-            tomlBuilder.append("texts = [\n");
+            // Create YAML file with example
+            Path yamlPath = FMLPaths.CONFIGDIR.get().resolve("neoessentials/animations.yml");
+            StringBuilder yamlBuilder = new StringBuilder();
+            yamlBuilder.append("# NeoEssentials Custom Hex Color Animations\n");
+            yamlBuilder.append("# Format: &#RRGGBB for hex colors\n\n");
+            yamlBuilder.append("default:\n");
+            yamlBuilder.append("  change-interval: 50\n");
+            yamlBuilder.append("  texts:\n");
             
             // Add example texts with hex colors
             List<String> exampleTexts = getDefaultAnimation().texts;
             for (int i = 0; i < exampleTexts.size(); i++) {
-                tomlBuilder.append("  \"").append(exampleTexts.get(i)).append("\"");
-                if (i < exampleTexts.size() - 1) {
-                    tomlBuilder.append(",");
-                }
-                tomlBuilder.append("\n");
+                yamlBuilder.append("    - \"").append(exampleTexts.get(i)).append("\"\n");
             }
-            tomlBuilder.append("]\n\n");
-            
-            // Add another example
-            tomlBuilder.append("[rainbow_wave]\n");
-            tomlBuilder.append("change-interval = 30\n");
-            tomlBuilder.append("texts = [\n");
-            tomlBuilder.append("  \"&#FF0000R&#FF7F00a&#FFFF00i&#00FF00n&#0000FFb&#4B0082o&#9400D3w\",\n");
-            tomlBuilder.append("  \"&#FF7F00R&#FFFF00a&#00FF00i&#0000FFn&#4B0082b&#9400D3o&#FF0000w\",\n");
-            tomlBuilder.append("  \"&#FFFF00R&#00FF00a&#0000FFi&#4B0082n&#9400D3b&#FF0000o&#FF7F00w\",\n");
-            tomlBuilder.append("  \"&#00FF00R&#0000FFa&#4B0082i&#9400D3n&#FF0000b&#FF7F00o&#FFFF00w\",\n");
-            tomlBuilder.append("  \"&#0000FFR&#4B0082a&#9400D3i&#FF0000n&#FF7F00b&#FFFF00o&#00FF00w\",\n");
-            tomlBuilder.append("  \"&#4B0082R&#9400D3a&#FF0000i&#FF7F00n&#FFFF00b&#00FF00o&#0000FFw\"\n");
-            tomlBuilder.append("]\n");
+            yamlBuilder.append("\n");
+              // Add another example
+            yamlBuilder.append("rainbow_wave:\n");
+            yamlBuilder.append("  change-interval: 30\n");
+            yamlBuilder.append("  texts:\n");
+            yamlBuilder.append("    - \"&#FF0000R&#FF7F00a&#FFFF00i&#00FF00n&#0000FFb&#4B0082o&#9400D3w\"\n");
+            yamlBuilder.append("    - \"&#FF7F00R&#FFFF00a&#00FF00i&#0000FFn&#4B0082b&#9400D3o&#FF0000w\"\n");
+            yamlBuilder.append("    - \"&#FFFF00R&#00FF00a&#0000FFi&#4B0082n&#9400D3b&#FF0000o&#FF7F00w\"\n");
+            yamlBuilder.append("    - \"&#00FF00R&#0000FFa&#4B0082i&#9400D3n&#FF0000b&#FF7F00o&#FFFF00w\"\n");
+            yamlBuilder.append("    - \"&#0000FFR&#4B0082a&#9400D3i&#FF0000n&#FF7F00b&#FFFF00o&#00FF00w\"\n");            yamlBuilder.append("    - \"&#4B0082R&#9400D3a&#FF0000i&#FF7F00n&#FFFF00b&#00FF00o&#0000FFw\"\n");
             
             try {
-                Files.createDirectories(tomlPath.getParent());
-                Files.write(tomlPath, tomlBuilder.toString().getBytes(StandardCharsets.UTF_8));
-                NeoEssentials.LOGGER.info("Created default animations.toml file");
+                Files.createDirectories(yamlPath.getParent());
+                Files.write(yamlPath, yamlBuilder.toString().getBytes(StandardCharsets.UTF_8));
+                NeoEssentials.LOGGER.info("Created default animations.yml file");
             } catch (Exception e) {
-                NeoEssentials.LOGGER.error("Error creating default animations.toml file", e);
+                NeoEssentials.LOGGER.error("Error creating default animations.yml file", e);
             }
         }
         

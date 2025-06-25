@@ -45,9 +45,8 @@ public class TablistFooterComponent implements TablistComponent {
      * @param group The player's group
      * @return The list of lines to display
      */
-    public List<String> getLinesForPlayer(ServerPlayer player, String group) {
-        // Check if player-specific footers are enabled
-        boolean enablePlayerSpecific = com.zerog.neoessentials.config.TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_FOOTERS.get();
+    public List<String> getLinesForPlayer(ServerPlayer player, String group) {        // Check if player-specific footers are enabled
+        boolean enablePlayerSpecific = com.zerog.neoessentials.config.TablistYamlConfig.isEnablePlayerSpecificFooters();
         if (!enablePlayerSpecific) {
             return new ArrayList<>(lines);
         }

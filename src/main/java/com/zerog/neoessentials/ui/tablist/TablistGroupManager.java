@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.ui.tablist;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.TablistTomlConfig;
+import com.zerog.neoessentials.config.TablistYamlConfig;
 import com.zerog.neoessentials.utils.PermissionUtil;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -144,7 +144,7 @@ public class TablistGroupManager {
      * @return A sorted list of players
      */
     public List<ServerPlayer> getSortedPlayers(Collection<ServerPlayer> players) {
-        if (!TablistTomlConfig.ENABLE_SORTING.get()) {
+        if (!TablistYamlConfig.isEnableSorting()) {
             return new ArrayList<>(players);
         }
         
@@ -213,7 +213,7 @@ public class TablistGroupManager {
      * @return The sort type
      */
     private SortType getSortTypeFromConfig() {
-        String configValue = TablistTomlConfig.SORT_TYPE.get().toLowerCase();
+        String configValue = TablistYamlConfig.getSortType().toLowerCase();
         
         switch (configValue) {
             case "rank":

@@ -52,7 +52,7 @@ NeoEssentials uses a hybrid configuration system:
 - **JSON/YML Templates**: Located in `neoessentials/` directory (server root) for complex data
 
 Files are organized as follows:
-- Basic settings: `config/neoessentials/tablist.toml`
+- Basic settings: `config/neoessentials/tablist.yml`
 - Templates: `neoessentials/templates.json` or `templates.yml`
 - Animations: `neoessentials/animations.json` or `animations.yml`
 
