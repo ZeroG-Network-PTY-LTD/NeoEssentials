@@ -150,26 +150,55 @@ public class AnimationManager {
         if (typeFrames == null) return 0;
         return typeFrames.getOrDefault(player, 0);
     }
-    
-    /**
+      /**
      * Loads custom hex color animations from config file
      */
     private void loadCustomHexAnimations() {
         // Clear existing cache
         customHexAnimations.clear();
         
-        // Try TOML first
-        Path tomlPath = Path.of("config/neoessentials/animations.toml");
-        if (Files.exists(tomlPath)) {
-            loadFromToml(tomlPath);
-        } else {
-            // If TOML doesn't exist, try JSON
-            Path jsonPath = Path.of("config/neoessentials/animations.json");
-            if (Files.exists(jsonPath)) {
-                loadFromJson(jsonPath);
-            } else {
-                // Create default file if none exists
-                createDefaultAnimationFile();
+        // Paths to check (in order of preference)
+        Path neoEssentialsDir = Paths.get("neoessentials");
+        Path configDir = Paths.get("config", "neoessentials");
+        
+        // First check neoessentials directory for JSON file (preferred)
+        Path neoJsonPath = neoEssentialsDir.resolve("animations.json");
+        if (Files.exists(neoJsonPath)) {
+            loadFromJson(neoJsonPath);
+            NeoEssentials.LOGGER.info("Loaded animations from neoessentials/animations.json");
+        }
+        // Then check config directory for JSON file
+        else {
+            Path configJsonPath = configDir.resolve("animations.json");
+            if (Files.exists(configJsonPath)) {
+                loadFromJson(configJsonPath);
+                NeoEssentials.LOGGER.info("Loaded animations from config/neoessentials/animations.json");
+            }
+            // Then check for TOML file (legacy support)
+            else {
+                Path configTomlPath = configDir.resolve("animations.toml");
+                if (Files.exists(configTomlPath)) {
+                    loadFromToml(configTomlPath);
+                    
+                    // Convert TOML to JSON for future use
+                    NeoEssentials.LOGGER.info("Found legacy TOML animations, converting to JSON format");
+                    
+                    // Create directories if needed
+                    try {
+                        if (!Files.exists(neoEssentialsDir)) {
+                            Files.createDirectories(neoEssentialsDir);
+                        }
+                        
+                        // Convert existing animations to JSON format
+                        convertTomlToJson(configTomlPath, neoJsonPath);
+                    } catch (IOException e) {
+                        NeoEssentials.LOGGER.error("Failed to create neoessentials directory", e);
+                    }
+                }
+                // No existing file found, create default JSON file
+                else {
+                    createDefaultAnimationFile(neoEssentialsDir);
+                }
             }
         }
         
@@ -181,6 +210,25 @@ public class AnimationManager {
             customHexAnimations.put("default", new CustomHexAnimation(50, defaultTexts));
         }        
         NeoEssentials.LOGGER.info("Loaded {} custom hex animations", customHexAnimations.size());
+        
+        // Create a README file in the config directory to explain the new location
+        try {
+            Path readmePath = configDir.resolve("README_ANIMATIONS.md");
+            String readmeContent = "# NeoEssentials Animations\n\n" +
+                    "The animations for the tablist system have been moved to the `neoessentials/animations.json` file.\n" +
+                    "This provides better configuration flexibility and avoids TOML serialization issues.\n\n" +
+                    "## Location\n\n" +
+                    "- Primary location: `neoessentials/animations.json`\n" +
+                    "- Legacy location (no longer recommended): `config/neoessentials/animations.toml`\n\n" +
+                    "## Format\n\n" +
+                    "The animations file now uses JSON format for maximum compatibility and flexibility.";
+            
+            if (!Files.exists(readmePath)) {
+                Files.writeString(readmePath, readmeContent);
+            }
+        } catch (IOException e) {
+            NeoEssentials.LOGGER.debug("Could not create README_ANIMATIONS.md file", e);
+        }
     }
     
     /**
@@ -252,43 +300,181 @@ public class AnimationManager {
             NeoEssentials.LOGGER.error("Failed to load animations.json", e);
         }
     }
-    
-    /**
-     * Creates default animation file
+      /**
+     * Creates default animation file using JSON format
+     * 
+     * @param baseDir The directory to create the file in
      */
-    private void createDefaultAnimationFile() {
-        Path path = Path.of("config/neoessentials/animations.toml");
+    private void createDefaultAnimationFile(Path baseDir) {
+        Path path = baseDir.resolve("animations.json");
         
         try {
             // Create directory if needed
-            Files.createDirectories(path.getParent());
+            Files.createDirectories(baseDir);
             
-            // Create default content
-            StringBuilder sb = new StringBuilder();
-            sb.append("# NeoEssentials Custom Hex Color Animations\n");
-            sb.append("# Format: &#RRGGBB for hex colors\n\n");
+            // Create JSON content
+            JsonObject root = new JsonObject();
             
-            sb.append("[default]\n");
-            sb.append("change-interval = 50\n");
-            sb.append("texts = [\n");
-            sb.append("  \"&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e\",\n");
-            sb.append("  \"&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe\",\n");
-            sb.append("  \"&#549CD5E&#54B1DFx&#54C5EAa&#54DAF4m&#54C5EAp&#54B1DFl&#549CD5e\",\n");
-            sb.append("  \"&#5487CBE&#549CD5x&#54B1DFa&#54C5EAm&#54DAF4p&#54C5EAl&#54B1DFe\",\n");
-            sb.append("  \"&#5473C0E&#5487CBx&#549CD5a&#54B1DFm&#54C5EAp&#54DAF4l&#54C5EAe\"\n");
-            sb.append("]\n\n");
+            // Add metadata
+            JsonObject metadata = new JsonObject();
+            metadata.addProperty("version", "1.0.0");
+            metadata.addProperty("description", "NeoEssentials Tablist Animations");
+            metadata.addProperty("created", java.time.LocalDateTime.now().toString());
+            root.add("metadata", metadata);
             
-            sb.append("[rainbow]\n");
-            sb.append("change-interval = 30\n");
-            sb.append("texts = [\n");
-            sb.append("  \"&#FF0000R&#FF7F00a&#FFFF00i&#00FF00n&#0000FFb&#4B0082o&#9400D3w\",\n");
-            sb.append("  \"&#FF7F00R&#FFFF00a&#00FF00i&#0000FFn&#4B0082b&#9400D3o&#FF0000w\",\n");
-            sb.append("  \"&#FFFF00R&#00FF00a&#0000FFi&#4B0082n&#9400D3b&#FF0000o&#FF7F00w\"\n");
-            sb.append("]\n");
+            // Add animations
+            JsonObject animations = new JsonObject();
             
-            Files.writeString(path, sb.toString());
+            // Default animation
+            JsonObject defaultAnim = new JsonObject();
+            defaultAnim.addProperty("change-interval", 50);
+            JsonArray defaultTexts = new JsonArray();
+            defaultTexts.add("&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e");
+            defaultTexts.add("&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe");
+            defaultTexts.add("&#549CD5E&#54B1DFx&#54C5EAa&#54DAF4m&#54C5EAp&#54B1DFl&#549CD5e");
+            defaultTexts.add("&#5487CBE&#549CD5x&#54B1DFa&#54C5EAm&#54DAF4p&#54C5EAl&#54B1DFe");
+            defaultTexts.add("&#5473C0E&#5487CBx&#549CD5a&#54B1DFm&#54C5EAp&#54DAF4l&#54C5EAe");
+            defaultAnim.add("texts", defaultTexts);
+            animations.add("default", defaultAnim);
+            
+            // Rainbow animation
+            JsonObject rainbowAnim = new JsonObject();
+            rainbowAnim.addProperty("change-interval", 30);
+            JsonArray rainbowTexts = new JsonArray();
+            rainbowTexts.add("&#FF0000R&#FF7F00a&#FFFF00i&#00FF00n&#0000FFb&#4B0082o&#9400D3w");
+            rainbowTexts.add("&#FF7F00R&#FFFF00a&#00FF00i&#0000FFn&#4B0082b&#9400D3o&#FF0000w");
+            rainbowTexts.add("&#FFFF00R&#00FF00a&#0000FFi&#4B0082n&#9400D3b&#FF0000o&#FF7F00w");
+            rainbowAnim.add("texts", rainbowTexts);
+            animations.add("rainbow", rainbowAnim);
+            
+            // Gradient animations section
+            JsonObject gradientAnimations = new JsonObject();
+            
+            // Evening sky gradient
+            JsonObject eveningSky = new JsonObject();
+            JsonArray skyColors = new JsonArray();
+            skyColors.add("#1E2A5E");
+            skyColors.add("#493267");
+            skyColors.add("#FB5858");
+            skyColors.add("#D68060");
+            eveningSky.add("colors", skyColors);
+            eveningSky.addProperty("steps", 15);
+            gradientAnimations.add("evening_sky", eveningSky);
+            
+            // Water gradient
+            JsonObject water = new JsonObject();
+            JsonArray waterColors = new JsonArray();
+            waterColors.add("#015C92");
+            waterColors.add("#2D82B5");
+            waterColors.add("#88CDF6");
+            waterColors.add("#72EFDD");
+            water.add("colors", waterColors);
+            water.addProperty("steps", 12);
+            gradientAnimations.add("water", water);
+            
+            // Add gradient animations to root
+            animations.add("gradients", gradientAnimations);
+            
+            // Add pulse animations
+            JsonObject pulseAnimations = new JsonObject();
+            
+            // Warning pulse
+            JsonObject warningPulse = new JsonObject();
+            warningPulse.addProperty("color", "#FF0000");
+            warningPulse.addProperty("seconds", 1.5);
+            pulseAnimations.add("warning", warningPulse);
+            
+            // Gold pulse
+            JsonObject goldPulse = new JsonObject();
+            goldPulse.addProperty("color", "#FFD700");
+            goldPulse.addProperty("seconds", 2.0);
+            pulseAnimations.add("gold", goldPulse);
+            
+            // Add pulse animations to root
+            animations.add("pulses", pulseAnimations);
+            
+            // Add animations to root
+            root.add("animations", animations);
+            
+            // Write the JSON to file with pretty printing
+            com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+            Files.writeString(path, gson.toJson(root));
+            
+            NeoEssentials.LOGGER.info("Created default animations.json in {}", baseDir);
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Failed to create default animations.toml", e);
+            NeoEssentials.LOGGER.error("Failed to create default animations.json", e);
+        }
+    }
+    
+    /**
+     * Converts a TOML animations file to JSON format
+     * 
+     * @param tomlPath Path to the source TOML file
+     * @param jsonPath Path to the target JSON file
+     */
+    private void convertTomlToJson(Path tomlPath, Path jsonPath) {
+        try {
+            // Load the TOML file
+            String tomlContent = new String(Files.readAllBytes(tomlPath), StandardCharsets.UTF_8);
+            Toml toml = new Toml().read(tomlContent);
+            
+            // Create JSON structure
+            JsonObject root = new JsonObject();
+            
+            // Add metadata
+            JsonObject metadata = new JsonObject();
+            metadata.addProperty("version", "1.0.0");
+            metadata.addProperty("description", "Converted from TOML to JSON format");
+            metadata.addProperty("converted", java.time.LocalDateTime.now().toString());
+            root.add("metadata", metadata);
+            
+            // Add animations
+            JsonObject animations = new JsonObject();
+            
+            // Convert each animation from TOML to JSON
+            for (Map.Entry<String, Object> entry : toml.entrySet()) {
+                String name = entry.getKey();
+                if (entry.getValue() instanceof Toml) {
+                    Toml animData = (Toml) entry.getValue();
+                    JsonObject jsonAnim = new JsonObject();
+                    
+                    // Convert interval
+                    Long interval = animData.getLong("change-interval");
+                    if (interval != null) {
+                        jsonAnim.addProperty("change-interval", interval.intValue());
+                    } else {
+                        jsonAnim.addProperty("change-interval", 50); // Default value
+                    }
+                    
+                    // Convert text list
+                    List<String> texts = animData.getList("texts");
+                    if (texts != null && !texts.isEmpty()) {
+                        JsonArray jsonTexts = new JsonArray();
+                        for (String text : texts) {
+                            jsonTexts.add(text);
+                        }
+                        jsonAnim.add("texts", jsonTexts);
+                    }
+                    
+                    animations.add(name, jsonAnim);
+                }
+            }
+            
+            root.add("animations", animations);
+            
+            // Write the JSON to file with pretty printing
+            com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+            Files.writeString(jsonPath, gson.toJson(root));
+            
+            NeoEssentials.LOGGER.info("Successfully converted animations from TOML to JSON: {}", jsonPath);
+            
+            // Create a backup of the original TOML file
+            Path backupPath = tomlPath.resolveSibling(tomlPath.getFileName().toString() + ".bak");
+            Files.copy(tomlPath, backupPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            NeoEssentials.LOGGER.info("Created backup of original TOML file: {}", backupPath);
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to convert TOML animations to JSON", e);
         }
     }
     

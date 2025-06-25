@@ -38,10 +38,10 @@ public class TemplateManager {
     private Map<String, List<String>> groupFooters = new HashMap<>();
     private List<String> globalBossBars = new ArrayList<>();
     private Map<String, List<String>> groupBossBars = new HashMap<>();
-    
-    // Paths
+      // Paths
     private final Path configDir;
-    private final Path templatesFile;
+    private final Path neoEssentialsDir;
+    private Path templatesFile;
     
     // Main reference
     private final TabManager tabManager;
@@ -53,16 +53,32 @@ public class TemplateManager {
      */
     public TemplateManager(TabManager tabManager) {
         this.tabManager = tabManager;
+        this.neoEssentialsDir = Paths.get("neoessentials");
         this.configDir = Paths.get("config", "neoessentials");
-        this.templatesFile = configDir.resolve("templates.json");
         
-        // Ensure config directory exists
-        if (!Files.exists(configDir)) {
-            try {
-                Files.createDirectories(configDir);
-            } catch (IOException e) {
-                NeoEssentials.LOGGER.error("Failed to create config directory", e);
+        // First check if templates exist in neoessentials directory
+        Path neoTemplatesFile = neoEssentialsDir.resolve("templates.json");
+        
+        // If not found there, use the one in config directory
+        if (Files.exists(neoTemplatesFile)) {
+            this.templatesFile = neoTemplatesFile;
+            NeoEssentials.LOGGER.info("Using templates.json from neoessentials directory");
+        } else {
+            this.templatesFile = configDir.resolve("templates.json");
+            NeoEssentials.LOGGER.info("Using templates.json from config/neoessentials directory");
+        }
+        
+        // Ensure necessary directories exist
+        try {
+            if (!Files.exists(neoEssentialsDir)) {
+                Files.createDirectories(neoEssentialsDir);
             }
+            
+            if (!Files.exists(configDir)) {
+                Files.createDirectories(configDir);
+            }
+        } catch (IOException e) {
+            NeoEssentials.LOGGER.error("Failed to create directories", e);
         }
     }
     
@@ -78,20 +94,40 @@ public class TemplateManager {
         // Load templates from file
         loadTemplates();
     }
-    
-    /**
+      /**
      * Creates the default templates file from embedded resources
      */
     private void createDefaultTemplatesFile() {
         try {
+            // Determine the target directory - prefer neoessentials directory
+            Path targetFile = neoEssentialsDir.resolve("templates.json");
+            
             // First check if we have the file in resources
             InputStream inputStream = TemplateManager.class.getClassLoader()
                     .getResourceAsStream("default-config/templates.json");
             
             if (inputStream != null) {
-                // Copy from resources to config dir
-                Files.copy(inputStream, templatesFile);
-                NeoEssentials.LOGGER.info("Created default templates.json file");
+                // Copy from resources to target directory
+                Files.copy(inputStream, targetFile);
+                
+                // Update the templatesFile reference to point to the new file
+                templatesFile = targetFile;
+                
+                NeoEssentials.LOGGER.info("Created default templates.json in neoessentials directory");
+                
+                // Add README file to explain the new location
+                Path readmePath = configDir.resolve("README_TEMPLATES.md");
+                String readmeContent = "# NeoEssentials Templates\n\n" +
+                        "The templates for the tablist system have been moved to the `neoessentials/templates.json` file.\n" +
+                        "This provides better configuration flexibility and avoids TOML serialization issues.\n\n" +
+                        "## Location\n\n" +
+                        "- Primary location: `neoessentials/templates.json`\n" +
+                        "- Legacy location (no longer recommended): `config/neoessentials/templates.json`\n\n" +
+                        "## Format\n\n" +
+                        "The templates file uses JSON format for maximum compatibility and flexibility.";
+                
+                Files.writeString(readmePath, readmeContent);
+                
             } else {
                 // Fallback to creating a basic templates file
                 JsonObject root = new JsonObject();
@@ -114,6 +150,60 @@ public class TemplateManager {
                 
                 root.add("templates", templates);
                 
+                // Add groups section
+                JsonObject groups = new JsonObject();
+                
+                // Admin group
+                JsonObject adminGroup = new JsonObject();
+                JsonArray adminHeaders = new JsonArray();
+                adminHeaders.add("&4&l★ &c&lAdmin Panel &4&l★");
+                adminHeaders.add("&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%");
+                adminGroup.add("headers", adminHeaders);
+                
+                JsonArray adminFooters = new JsonArray();
+                adminFooters.add("&cAdmin Command Help: &f/neoessentials help");
+                adminFooters.add("&cServer uptime: &f%uptime%");
+                adminGroup.add("footers", adminFooters);
+                
+                groups.add("admin", adminGroup);
+                
+                // VIP group
+                JsonObject vipGroup = new JsonObject();
+                JsonArray vipHeaders = new JsonArray();
+                vipHeaders.add("&6&l⚜ &e&lVIP Perks Active &6&l⚜");
+                vipHeaders.add("&eWelcome back, &6%player%&e!");
+                vipGroup.add("headers", vipHeaders);
+                
+                JsonArray vipFooters = new JsonArray();
+                vipFooters.add("&6VIP Balance: &e%balance% coins");
+                vipFooters.add("&6Use &e/vip help &6for a list of perks");
+                vipGroup.add("footers", vipFooters);
+                
+                groups.add("vip", vipGroup);
+                
+                root.add("groups", groups);
+                
+                // Add bossbars section
+                JsonObject bossbars = new JsonObject();
+                JsonArray globalBars = new JsonArray();
+                globalBars.add("{color:red}{style:progress}{progress:1.0}Server TPS: %tps%");
+                globalBars.add("{color:green}{style:notched_6}{progress:0.8}Welcome to the server!");
+                bossbars.add("global", globalBars);
+                
+                // Add bossbar groups
+                JsonObject bossbarGroups = new JsonObject();
+                
+                JsonArray adminBars = new JsonArray();
+                adminBars.add("{color:purple}{style:progress}{progress:1.0}Admin Mode Active");
+                bossbarGroups.add("admin", adminBars);
+                
+                JsonArray vipBars = new JsonArray();
+                vipBars.add("{color:gold}{style:progress}{progress:1.0}VIP Status Active");
+                bossbarGroups.add("vip", vipBars);
+                
+                bossbars.add("groups", bossbarGroups);
+                root.add("bossbars", bossbars);
+                
                 // Set basic metadata
                 JsonObject meta = new JsonObject();
                 meta.addProperty("schemaVersion", "1.0");
@@ -122,8 +212,12 @@ public class TemplateManager {
                 root.add("metadata", meta);
                 
                 // Write to file
-                Files.writeString(templatesFile, GSON.toJson(root));
-                NeoEssentials.LOGGER.info("Created fallback templates.json file");
+                Files.writeString(targetFile, GSON.toJson(root));
+                
+                // Update the templatesFile reference
+                templatesFile = targetFile;
+                
+                NeoEssentials.LOGGER.info("Created fallback templates.json file in neoessentials directory");
             }
         } catch (IOException e) {
             NeoEssentials.LOGGER.error("Failed to create default templates file", e);
