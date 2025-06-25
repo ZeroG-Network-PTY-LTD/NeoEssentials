@@ -64,10 +64,12 @@ public class NeoEssentials {
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (NeoEssentials) to respond directly to events.
         NeoForge.EVENT_BUS.register(this);
-        
-        // Register the event handlers
+          // Register the event handlers
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.events.EventHandler.class);
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.PowerToolEventHandler());
+        
+        // Register debug commands
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.debug.TablistFix.class);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "neoessentials-general.toml");
