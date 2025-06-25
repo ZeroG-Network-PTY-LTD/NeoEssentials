@@ -115,9 +115,8 @@ public class EnhancedTablistManager {
     private void loadHeadersAndFooters() {
         // Clear existing headers and footers        headers.clear();
         footers.clear();
-          
-        // Get a TabManager instance if available, or use default templates
-        TabManager tabManager = NeoEssentials.getInstance().getTabManager();
+            // Get a TabManager instance if available, or use default templates
+        TabManager tabManager = com.zerog.neoessentials.ui.tab.DataManagerHooks.getTabManager();
         if (tabManager != null && tabManager.getTemplateManager() != null) {
             // Load from TemplateManager
             List<String> configHeaders = tabManager.getTemplateManager().getGlobalHeaders();
@@ -250,8 +249,7 @@ public class EnhancedTablistManager {
             return headers;
         }        // Get a TabManager instance to access templates
         TabManager tabManager = NeoEssentials.getInstance().getTabManager();
-        if (tabManager != null && tabManager.getTemplateManager() != null) {
-            // Check for permission-based headers
+        if (tabManager != null && tabManager.getTemplateManager() != null) {        // Check for permission-based headers
             if (group.equalsIgnoreCase("Admin") && 
                 PermissionUtil.hasPermission(player, "neoessentials.tablist.header.admin")) {
                 // Get admin-specific headers from template manager
