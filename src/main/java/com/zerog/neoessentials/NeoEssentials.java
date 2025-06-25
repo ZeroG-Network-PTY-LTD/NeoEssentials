@@ -336,14 +336,17 @@ public class NeoEssentials {
      * </p>
      *
      * @param event The server starting event
-     */    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
+     */    @SubscribeEvent    public void onServerStarting(ServerStartingEvent event) {
         // Store the server instance
         server = event.getServer();
         
         // Log mod activation
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
+        
+        // Initialize the permission system
+        LOGGER.info("Initializing permission system");
+        com.zerog.neoessentials.permissions.PermissionHandlerManager.getInstance();
         
         // Update the server reference in EnhancedTablistManager if it exists
         if (dataManager != null && dataManager.getTablistManager() != null) {
