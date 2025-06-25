@@ -202,19 +202,21 @@ public class FlexibleTablistManager {
         // Update header component
         headerComponent.ifPresent(component -> {
             if (component instanceof TablistHeaderComponent) {
-                TablistHeaderComponent header = (TablistHeaderComponent) component;
-                  // Get header lines from template manager
-                TabManager tabManager = NeoEssentials.getInstance().getTabManager();
+                TablistHeaderComponent header = (TablistHeaderComponent) component;                // Get header lines from config or fallback
                 List<String> headerLines;
                 Map<String, List<String>> groupHeaders = new HashMap<>();
                 
-                if (tabManager != null && tabManager.getTemplateManager() != null) {
-                    // Load from template manager
-                    headerLines = new ArrayList<>(tabManager.getTemplateManager().getGlobalHeaders());
+                // For now, use default templates until we implement a full bridge to TabManager
+                if (false) { // Disabled for now                    // This section is disabled until we implement a bridge to TabManager
+                    headerLines = new ArrayList<>(Arrays.asList(
+                        "&6&l✦ &b&lNeoEssentials Server &6&l✦",
+                        "&eWelcome, &a%player%&e!",
+                        "&eOnline players: &a%online%/%max%"
+                    ));
                     
-                    // Load group-specific headers
-                    groupHeaders.put("admin", tabManager.getTemplateManager().getGroupHeaders("admin"));
-                    groupHeaders.put("vip", tabManager.getTemplateManager().getGroupHeaders("vip"));
+                    // Set default group headers
+                    groupHeaders.put("admin", Arrays.asList("&c&lAdmin Header"));
+                    groupHeaders.put("vip", Arrays.asList("&e&lVIP Header"));
                 } else {
                     // Fallback to defaults if template manager is not available
                     headerLines = Arrays.asList(
@@ -237,19 +239,18 @@ public class FlexibleTablistManager {
         // Update footer component
         footerComponent.ifPresent(component -> {
             if (component instanceof TablistFooterComponent) {
-                TablistFooterComponent footer = (TablistFooterComponent) component;
-                  // Get footer lines from template manager
-                TabManager tabManager = NeoEssentials.getInstance().getTabManager();
+                TablistFooterComponent footer = (TablistFooterComponent) component;                // Get footer lines from config or fallback
                 List<String> footerLines;
                 Map<String, List<String>> groupFooters = new HashMap<>();
                 
-                if (tabManager != null && tabManager.getTemplateManager() != null) {
-                    // Load from template manager
-                    footerLines = new ArrayList<>(tabManager.getTemplateManager().getGlobalFooters());
+                // For now, use default templates until we implement a full bridge to TabManager
+                if (false) { // Disabled for now
+                    // This section is disabled until we implement a bridge to TabManager
+                    footerLines = new ArrayList<>(); // Placeholder
                     
-                    // Load group-specific footers
-                    groupFooters.put("admin", tabManager.getTemplateManager().getGroupFooters("admin"));
-                    groupFooters.put("vip", tabManager.getTemplateManager().getGroupFooters("vip"));
+                    // Set default group footers
+                    groupFooters.put("admin", Arrays.asList("&c&lAdmin Footer"));
+                    groupFooters.put("vip", Arrays.asList("&e&lVIP Footer"));
                 } else {
                     // Fallback to defaults if template manager is not available
                     footerLines = Arrays.asList(
