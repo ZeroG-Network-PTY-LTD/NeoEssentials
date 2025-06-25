@@ -1,0 +1,135 @@
+# NeoEssentials Tablist Configuration
+# This file contains all settings for the tablist features
+
+# General settings for the tablist system
+general:
+  # Enable or disable the tablist features
+  enabled: true
+  
+  # Update frequency in ticks (20 ticks = 1 second)
+  updateFrequency: 20
+  
+  # Enable custom header/footer
+  headerFooterEnabled: true
+  
+  # Enable name formatting
+  nameFormattingEnabled: true
+  
+  # Debug mode (shows more information in logs)
+  debug: false
+
+# Header configuration
+header:
+  # Enable the header
+  enabled: true
+  
+  # Header template (can use HTML-like formatting)
+  # You can use placeholders like: {ONLINE}, {SERVER_NAME}, etc.
+  template: "<gradient:#FF5F6D:#FFC371>Welcome to the server!</gradient>"
+  
+  # Animation settings
+  animation:
+    enabled: false
+    # Frames per second for animations
+    frequency: 10
+    # List of templates to cycle through
+    frames:
+      - "<gradient:#FF5F6D:#FFC371>Welcome to the server!</gradient>"
+      - "<gradient:#FFC371:#FF5F6D>Welcome to the server!</gradient>"
+
+# Footer configuration
+footer:
+  # Enable the footer
+  enabled: true
+  
+  # Footer template (can use HTML-like formatting)
+  template: "&bPlayers online: &e{ONLINE}&7/&e{MAX_PLAYERS}"
+  
+  # Animation settings
+  animation:
+    enabled: false
+    # Frames per second for animations
+    frequency: 5
+    # List of templates to cycle through
+    frames:
+      - "&bPlayers online: &e{ONLINE}&7/&e{MAX_PLAYERS}"
+      - "&eServer TPS: &a{TPS}"
+
+# Player list features
+playerlist:
+  # Enable custom player names in the tab list
+  enabled: true
+  
+  # Format for player names (supports placeholders)
+  format: "{PREFIX}{PLAYER}{SUFFIX}"
+  
+  # Sorting method (NAME, GROUP, CUSTOM)
+  sortingMethod: "NAME"
+  
+  # Prefix and suffix configuration
+  prefixes:
+    default: "&7"
+    admin: "&c[Admin] "
+    mod: "&b[Mod] "
+    
+  suffixes:
+    default: ""
+    vip: " &e✦"
+
+# Groups configuration
+groups:
+  # Enable tablist groups
+  enabled: false
+  
+  # List of groups to display
+  definitions:
+    # Staff group
+    staff:
+      header: "&c&lSTAFF MEMBERS"
+      players:
+        - "permission:essentials.admin"
+    
+    # Regular players
+    players:
+      header: "&a&lPLAYERS"
+      players:
+        - "all"
+
+# Boss bar settings
+bossbar:
+  # Enable the custom boss bar
+  enabled: false
+  
+  # Boss bar color (BLUE, GREEN, PINK, PURPLE, RED, WHITE, YELLOW)
+  color: "RED"
+  
+  # Boss bar style (PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20)
+  style: "PROGRESS"
+  
+  # Boss bar title (supports placeholders)
+  title: "Server TPS: {TPS}"
+  
+  # Progress value (0.0-1.0)
+  progress: 1.0
+  
+  # Animation settings
+  animation:
+    enabled: false
+    frequency: 5
+    titles:
+      - "Server TPS: {TPS}"
+      - "Players: {ONLINE}/{MAX_PLAYERS}"
+
+# Advanced features
+advanced:
+  # Maximum packet frequency (limit outgoing packets)
+  maxPacketFrequency: 5
+  
+  # Use optimized packet batching
+  usePacketBatching: true
+  
+  # Force update on player join
+  forceUpdateOnJoin: true
+  
+  # Placeholder refresh rate in ticks
+  placeholderRefreshRate: 20

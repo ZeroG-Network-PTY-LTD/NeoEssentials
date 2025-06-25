@@ -3,7 +3,7 @@ package com.zerog.neoessentials.debug;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.ui.tab.TabManager;
 import com.zerog.neoessentials.ui.tab.TemplateManager;
-import com.zerog.neoessentials.config.TablistTomlConfig;
+import com.zerog.neoessentials.config.TablistYamlConfig;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
@@ -61,15 +61,14 @@ public class TablistDebugger {
     
     /**
      * Debug tablist configuration settings
-     */
-    private static void debugConfig(CommandSourceStack source) {
+     */    private static void debugConfig(CommandSourceStack source) {
         sendMessage(source, "§e----- Config Settings -----");
-        sendMessage(source, "§7Enable animations: §f" + TablistTomlConfig.ENABLE_ANIMATIONS.get());
-        sendMessage(source, "§7Header animation type: §f" + TablistTomlConfig.HEADER_ANIMATION_TYPE.get());
-        sendMessage(source, "§7Footer animation type: §f" + TablistTomlConfig.FOOTER_ANIMATION_TYPE.get());
-        sendMessage(source, "§7Enable player-specific headers: §f" + TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_HEADERS.get());
-        sendMessage(source, "§7Enable player-specific footers: §f" + TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_FOOTERS.get());
-        sendMessage(source, "§7Update interval: §f" + TablistTomlConfig.UPDATE_INTERVAL.get() + "ms");
+        sendMessage(source, "§7Enable animations: §f" + TablistYamlConfig.isEnableAnimations());
+        sendMessage(source, "§7Header animation type: §f" + TablistYamlConfig.getHeaderAnimationType());
+        sendMessage(source, "§7Footer animation type: §f" + TablistYamlConfig.getFooterAnimationType());
+        sendMessage(source, "§7Enable player-specific headers: §f" + TablistYamlConfig.isEnablePlayerSpecificHeaders());
+        sendMessage(source, "§7Enable player-specific footers: §f" + TablistYamlConfig.isEnablePlayerSpecificFooters());
+        sendMessage(source, "§7Update interval: §f" + TablistYamlConfig.getUpdateInterval() + "ms");
     }
     
     /**
@@ -169,10 +168,9 @@ public class TablistDebugger {
      */
     private static void debugPlayerSpecificSettings(CommandSourceStack source) {
         sendMessage(source, "§e----- Player-Specific Settings -----");
-        
-        // Check if settings are properly enabled/disabled
-        boolean headersEnabled = TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_HEADERS.get();
-        boolean footersEnabled = TablistTomlConfig.ENABLE_PLAYER_SPECIFIC_FOOTERS.get();
+          // Check if settings are properly enabled/disabled
+        boolean headersEnabled = TablistYamlConfig.isEnablePlayerSpecificHeaders();
+        boolean footersEnabled = TablistYamlConfig.isEnablePlayerSpecificFooters();
         
         sendMessage(source, "§7Player-specific headers enabled in config: §f" + 
             (headersEnabled ? "§aYes" : "§cNo"));

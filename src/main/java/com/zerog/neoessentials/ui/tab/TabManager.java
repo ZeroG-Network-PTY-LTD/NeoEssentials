@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.ui.tab;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.TablistTomlConfig;
+import com.zerog.neoessentials.config.TablistYamlConfig;
 import com.zerog.neoessentials.ui.tab.features.*;
 import com.zerog.neoessentials.ui.tab.placeholders.PlaceholderManager;
 import com.zerog.neoessentials.ui.tab.utils.ErrorLogger;
@@ -154,10 +154,9 @@ public class TabManager {
     }
       /**
      * Loads configuration settings for the tablist
-     */
-    public void loadConfig() {
-        // Load general settings
-        updateInterval = TablistTomlConfig.UPDATE_INTERVAL.get().intValue(); // Convert Long to int
+     */    public void loadConfig() {
+        // Load general settings from YAML config
+        updateInterval = (int)TablistYamlConfig.getUpdateInterval(); // Convert Long to int
         
         // Each feature loads its own config
         headerFooterFeature.loadConfig();
@@ -168,7 +167,7 @@ public class TabManager {
         scoreboardFeature.loadConfig();
         layoutFeature.loadConfig();
         
-        NeoEssentials.LOGGER.info("TabManager configuration loaded");
+        NeoEssentials.LOGGER.info("TabManager configuration loaded from YAML");
     }
     
     /**

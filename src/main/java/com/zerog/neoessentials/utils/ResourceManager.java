@@ -17,9 +17,9 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
         "homes.toml",
         "warps.toml",
         "kits.toml",
-        "tablist.toml",
+        "tablist.yml",
         "database.toml",
-        "animations.toml"
+        "animations.yml"
     );
     
     // Files to be placed in the main neoessentials directory (outside of config)
@@ -177,17 +177,15 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
             NeoEssentials.LOGGER.error("Failed to read resource file: {}", resourcePath, e);
             return null;
         }
-    }
-
-    /**
-     * Force extracts the tablist.toml file, creating a backup of the existing one if it exists.
+    }    /**
+     * Force extracts the tablist.yml file, creating a backup of the existing one if it exists.
      * This is useful when troubleshooting animation or placeholder issues.
      * 
      * @return True if the extraction was successful, false otherwise
      */
     public static boolean forceExtractTablistConfig() {
         Path configDir = FMLPaths.CONFIGDIR.get().resolve("neoessentials");
-        String fileName = "tablist.toml";
+        String fileName = "tablist.yml";
         Path configPath = configDir.resolve(fileName);
         
         try {
@@ -199,25 +197,25 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
             
             // If file exists, make a backup
             if (Files.exists(configPath)) {
-                Path backupPath = configDir.resolve(fileName + ".backup-" + System.currentTimeMillis() + ".toml");
+                Path backupPath = configDir.resolve(fileName + ".backup-" + System.currentTimeMillis() + ".yml");
                 Files.copy(configPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                NeoEssentials.LOGGER.info("Created backup of existing tablist.toml at: {}", backupPath);
+                NeoEssentials.LOGGER.info("Created backup of existing tablist.yml at: {}", backupPath);
             }
             
             // Extract the resource
             String resourceContent = readResourceFile("/default_configs/" + fileName);
             if (resourceContent == null) {
-                NeoEssentials.LOGGER.error("Could not find default tablist.toml in resources");
+                NeoEssentials.LOGGER.error("Could not find default tablist.yml in resources");
                 return false;
             }
             
             // Write the content
             Files.write(configPath, resourceContent.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            NeoEssentials.LOGGER.info("Successfully extracted fresh tablist.toml configuration to: {}", configPath);
+            NeoEssentials.LOGGER.info("Successfully extracted fresh tablist.yml configuration to: {}", configPath);
             
             return true;
         } catch (IOException e) {
-            NeoEssentials.LOGGER.error("Failed to extract tablist.toml", e);
+            NeoEssentials.LOGGER.error("Failed to extract tablist.yml", e);
             return false;
         }
     }

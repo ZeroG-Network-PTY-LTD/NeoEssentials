@@ -52,10 +52,8 @@ public class ConfigUtil {
             // Apply internal patch to NeoForge's config system for list comparison
             // This is a workaround to prevent unnecessary "correction" warnings
             patchNeoForgeConfigComparison();
-            
-            // Apply our custom validator for tablist headers and footers
-            // This ensures that TOML arrays are compared properly
-            TablistTomlConfig.patchConfigComparison();
+              // No need to patch YAML configs, this was a TOML-specific issue
+            // TablistYamlConfig doesn't need patching like the old TOML config
             
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("Config comparison patch applied successfully");
         } catch (Exception e) {
@@ -67,17 +65,15 @@ public class ConfigUtil {
      * Attempt to directly patch NeoForge's config system to prevent unnecessary "correction" warnings
      * This uses reflection to access and modify NeoForge's internal config validation mechanisms
      */    private static void patchNeoForgeConfigComparison() {
-        try {
-            // Log that templates have moved to templates.json
+        try {            // Log that templates have moved to templates.json
             com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Templates have been moved to templates.json");
             com.zerog.neoessentials.NeoEssentials.LOGGER.debug("No need to patch tablist config comparisons anymore");
               // The template system now loads from templates.json instead of TOML config
-            boolean configValid = TablistTomlConfig.UPDATE_INTERVAL.get() > 0;
+            boolean configValid = TablistYamlConfig.getUpdateInterval() > 0;
             
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist configuration status: {}", configValid ? "valid" : "invalid");
-            
-            // Our approach is to improve logging rather than try to patch NeoForge directly
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Templates now in templates.json, no need to patch TOML comparison");
+              // Our approach is to improve logging rather than try to patch NeoForge directly
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Templates now in templates.json, no need to patch YAML comparison");
         } catch (Exception e) {
             com.zerog.neoessentials.NeoEssentials.LOGGER.error("Failed to apply NeoForge config comparison patch", e);
         }
@@ -102,7 +98,7 @@ public class ConfigUtil {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         boolean isTablistConfig = false;
         for (StackTraceElement element : stackTrace) {
-            if (element.getClassName().contains("TablistTomlConfig")) {
+            if (element.getClassName().contains("TablistYamlConfig")) {
                 isTablistConfig = true;
                 break;
             }

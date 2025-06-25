@@ -101,6 +101,18 @@ group = mod_group_id
 repositories {
     // Add LuckPerms repository
     maven { url = 'https://repo.lucko.me/' }
+    
+    // Add Maven Central for SnakeYAML
+    mavenCentral()
+    
+    // Add Modrinth repository for FTB mods
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 base {
@@ -191,18 +203,23 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 // "optional", meaning it will not be pulled by dependents of this mod.
 configurations {
     runtimeClasspath.extendsFrom localRuntime
+    include
+    implementation.extendsFrom include
 }
 
-dependencies {
-    // Database dependencies
+dependencies {    // Database dependencies
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
     implementation 'com.mysql:mysql-connector-j:8.3.0'
     implementation 'com.zaxxer:HikariCP:5.1.0'
-      // LuckPerms API (soft dependency for permission checking)
+      // Permission system APIs (soft dependencies)
     compileOnly 'net.luckperms:api:5.4'
-    
-    // TOML parsing library for custom animations
+    compileOnly fg.deobf('maven.modrinth:ftb-ranks:2001.2.3')
+      // TOML parsing library for custom animations (legacy)
     implementation 'com.moandjiezana.toml:toml4j:0.7.2'
+      // YAML parsing library for configuration
+    implementation 'org.yaml:snakeyaml:2.2'
+    // Make sure SnakeYAML is included in the JAR
+    include 'org.yaml:snakeyaml:2.2'
     
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
@@ -537,6 +554,14 @@ jar {
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         )
     }
+    
+    // Include all dependencies from the 'include' configuration
+    from {
+        configurations.include.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    
+    // Avoid duplicate entries when including dependencies
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 <<<<<<< HEAD

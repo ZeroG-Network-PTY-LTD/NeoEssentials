@@ -46,7 +46,7 @@ public class NameTagsFeature extends AbstractFeature {
     @Override
     public void loadConfig() {
         // TODO: Load from config
-        // In a real implementation, you'd load these from TablistTomlConfig
+        // In a real implementation, you'd load these from TablistYamlConfig
         enabled = true;
         useTeamColors = true;
         

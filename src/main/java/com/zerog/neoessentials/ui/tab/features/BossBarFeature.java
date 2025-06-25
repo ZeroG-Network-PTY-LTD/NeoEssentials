@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.ui.tab.features;
 
 import com.zerog.neoessentials.NeoEssentials;
+import com.zerog.neoessentials.config.TablistYamlConfig;
 import com.zerog.neoessentials.ui.tab.TabManager;
 import com.zerog.neoessentials.ui.tab.TabPlayerData;
 import net.minecraft.network.chat.Component;
@@ -17,7 +18,7 @@ import java.util.regex.Pattern;
 /**
  * Handles boss bars for the TabManager system
  * 
- * Example Usage in tablist.toml:
+ * Example Usage in tablist.yml:
  * 
  * [bossbars]
  * enabled = true
@@ -67,14 +68,13 @@ public class BossBarFeature extends AbstractFeature {
      */
     public BossBarFeature(TabManager tabManager) {
         super(tabManager);
-    }
-      @Override
+    }    @Override
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing boss bar feature");
         
         // Set up any additional initialization such as registering event handlers
         try {
-            maxBossBarsPerPlayer = com.zerog.neoessentials.config.TablistTomlConfig.BOSSBAR_LIMIT_PER_PLAYER.get();
+            maxBossBarsPerPlayer = com.zerog.neoessentials.config.TablistYamlConfig.getBossBarLimitPerPlayer();
             NeoEssentials.LOGGER.info("Boss bar feature initialized (max {} per player)", maxBossBarsPerPlayer);
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error initializing boss bar feature", e);
@@ -82,9 +82,9 @@ public class BossBarFeature extends AbstractFeature {
         }
     }    @Override
     public void loadConfig() {
-        // Load general settings
-        enabled = com.zerog.neoessentials.config.TablistTomlConfig.ENABLE_BOSSBARS.get();
-        maxBossBarsPerPlayer = com.zerog.neoessentials.config.TablistTomlConfig.BOSSBAR_LIMIT_PER_PLAYER.get();
+        // Load general settings from YAML config
+        enabled = TablistYamlConfig.isEnableBossbars();
+        maxBossBarsPerPlayer = TablistYamlConfig.getBossBarLimitPerPlayer();
         
         // Load boss bars from template manager
         try {
@@ -123,10 +123,9 @@ public class BossBarFeature extends AbstractFeature {
     }
       /**
      * Loads global boss bars from the config
-     */
-    private void loadGlobalBossBarsFromConfig() {
+     */    private void loadGlobalBossBarsFromConfig() {
         try {
-            List<String> configGlobalBars = com.zerog.neoessentials.config.TablistTomlConfig.GLOBAL_BOSSBARS.get();
+            List<String> configGlobalBars = TablistYamlConfig.getGlobalBossbars();
             if (configGlobalBars != null && !configGlobalBars.isEmpty()) {
                 globalBossBars = new ArrayList<>(configGlobalBars);
                 NeoEssentials.LOGGER.info("Loaded {} global boss bars from config", globalBossBars.size());
@@ -147,22 +146,26 @@ public class BossBarFeature extends AbstractFeature {
     
     /**
      * Loads group-specific boss bars from the config
-     */
-    private void loadGroupBossBarsFromConfig() {
+     */    private void loadGroupBossBarsFromConfig() {
         try {
-            // Create a map to hold all group-specific boss bars
-            Map<String, List<String>> groupBars = new HashMap<>();
+            // Load group-specific boss bars from YAML config
+            Map<String, List<String>> groupBars = TablistYamlConfig.getGroupBossbars();
             
-            // Load admin boss bars
-            List<String> adminBars = com.zerog.neoessentials.config.TablistTomlConfig.ADMIN_BOSSBARS.get();
-            if (adminBars != null && !adminBars.isEmpty()) {
-                groupBars.put("admin", new ArrayList<>(adminBars));
+            // Make sure we have the expected groups
+            if (!groupBars.containsKey("admin") || groupBars.get("admin").isEmpty()) {
+                List<String> defaultAdminBars = Arrays.asList(
+                    "{color:purple}{style:progress}{progress:1.0}Admin Mode Active",
+                    "{color:red}{style:notched_10}{progress:1.0}Server control panel"
+                );
+                groupBars.put("admin", defaultAdminBars);
             }
             
-            // Load VIP boss bars
-            List<String> vipBars = com.zerog.neoessentials.config.TablistTomlConfig.VIP_BOSSBARS.get();
-            if (vipBars != null && !vipBars.isEmpty()) {
-                groupBars.put("vip", new ArrayList<>(vipBars));
+            if (!groupBars.containsKey("vip") || groupBars.get("vip").isEmpty()) {
+                List<String> defaultVipBars = Arrays.asList(
+                    "{color:gold}{style:progress}{progress:1.0}VIP Status Active",
+                    "{color:yellow}{style:notched_6}{progress:1.0}Thank you for supporting us!"
+                );
+                groupBars.put("vip", defaultVipBars);
             }
             
             if (!groupBars.isEmpty()) {
