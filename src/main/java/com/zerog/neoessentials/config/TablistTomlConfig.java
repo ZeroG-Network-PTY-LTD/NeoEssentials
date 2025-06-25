@@ -1,9 +1,7 @@
 package com.zerog.neoessentials.config;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -478,25 +476,35 @@ public class TablistTomlConfig {
             "{color:red}{style:progress}{progress:1.0}Server TPS: %tps%",
             "{color:green}{style:notched_6}{progress:0.8}Welcome to the server!",
             "{color:blue}{style:progress}{progress:%memory_percent/100%}Memory: %memory_percent%% (%memory_used%/%memory_max% MB)"
-        ));
-        
-    public static final ModConfigSpec.ConfigValue<Map<String, List<String>>> GROUP_BOSSBARS = BUILDER
-        .comment(
+        ));    // Push into a groupBossBars section for better organization
+    static {
+        BUILDER.comment(
             "---------------------------------------",
             "Group-specific boss bars",
             "Format is the same as globalBossBars but shown only to players in specific groups",
             "---------------------------------------"
-        )
-        .define("groupBossBars", new HashMap<String, List<String>>() {{
-            put("admin", Arrays.asList(
-                "{color:purple}{style:progress}{progress:1.0}Admin Mode Active",
-                "{color:red}{style:notched_10}{progress:1.0}Server control panel"
-            ));
-            put("vip", Arrays.asList(
-                "{color:gold}{style:progress}{progress:1.0}VIP Status Active",
-                "{color:yellow}{style:notched_6}{progress:1.0}Thank you for supporting us!"
-            ));
-        }});
+        ).push("groupBossBars");
+    }
+        
+    // Admin group boss bars
+    public static final ModConfigSpec.ConfigValue<List<String>> ADMIN_BOSSBARS = BUILDER
+        .comment("Boss bars for admin group")
+        .define("admin", Arrays.asList(
+            "{color:purple}{style:progress}{progress:1.0}Admin Mode Active",
+            "{color:red}{style:notched_10}{progress:1.0}Server control panel"
+        ));
+        
+    // VIP group boss bars
+    public static final ModConfigSpec.ConfigValue<List<String>> VIP_BOSSBARS = BUILDER
+        .comment("Boss bars for VIP group")
+        .define("vip", Arrays.asList(
+            "{color:gold}{style:progress}{progress:1.0}VIP Status Active",
+            "{color:yellow}{style:notched_6}{progress:1.0}Thank you for supporting us!"
+        ));
+    
+    static {
+        BUILDER.pop(); // End groupBossBars section
+    }
         
     public static final ModConfigSpec.IntValue BOSSBAR_LIMIT_PER_PLAYER = BUILDER
         .comment(
@@ -746,5 +754,6 @@ public class TablistTomlConfig {
             com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error normalizing JSON array", e);
             return jsonString;
         }
-    }
+    }    // Removed the createDefaultGroupBossBars method as it is no longer needed
+    // Group boss bars are now defined directly in the config spec as individual lists
 }

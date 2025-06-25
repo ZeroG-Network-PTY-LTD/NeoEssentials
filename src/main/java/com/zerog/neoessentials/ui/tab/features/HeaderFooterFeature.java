@@ -49,12 +49,11 @@ public class HeaderFooterFeature extends AbstractFeature {
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing header/footer feature");
     }
-    
-    @Override
+      @Override
     public void loadConfig() {
-        // Load templates
-        this.headerTemplates = TablistTomlConfig.getHeaders();
-        this.footerTemplates = TablistTomlConfig.getFooters();
+        // Load templates from the template manager
+        this.headerTemplates = getTabManager().getTemplateManager().getGlobalHeaders();
+        this.footerTemplates = getTabManager().getTemplateManager().getGlobalFooters();
         
         // Load animation types
         String headerAnimType = TablistTomlConfig.HEADER_ANIMATION_TYPE.get();
