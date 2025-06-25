@@ -42,7 +42,16 @@ public class CommandManager {    // Command classes
     private final PowerToolCommands powerToolCommands;
     private final MailCommands mailCommands;
     private final AdminPanelCommand adminPanelCommand;
-    private final TablistCommand tablistCommand;    public CommandManager() {
+    private final TablistCommand tablistCommand;
+    
+    // Debug command    private com.zerog.neoessentials.commands.debug.TablistDebugCommand tablistDebugCommand;
+    
+    // NeoEssentials main reference
+    private final NeoEssentials mod;
+    
+    public CommandManager(NeoEssentials mod) {
+        this.mod = mod;
+        
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -62,6 +71,8 @@ public class CommandManager {    // Command classes
         mailCommands = new MailCommands();
         adminPanelCommand = new AdminPanelCommand();
         tablistCommand = new TablistCommand();
+        
+        // Debug commands will be initialized later when TabManager is available
         // ItemCommands needs CommandBuildContext which is only available during register event
     }
     
@@ -89,6 +100,15 @@ public class CommandManager {    // Command classes
         ItemCommands itemCommands = new ItemCommands(event.getBuildContext());
         itemCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered item commands");
+        
+        // Register debug commands if TabManager is available
+        if (mod != null && mod.getTabManager() != null) {
+            tablistDebugCommand = new com.zerog.neoessentials.commands.debug.TablistDebugCommand(mod.getTabManager());
+            tablistDebugCommand.register(dispatcher);
+            NeoEssentials.LOGGER.info("Registered tablist debug command");
+        } else {
+            NeoEssentials.LOGGER.warn("Could not register tablist debug command: TabManager not available");
+        }
     }
       /**
      * Registers all command categories with the dispatcher.

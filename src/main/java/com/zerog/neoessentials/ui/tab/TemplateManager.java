@@ -101,10 +101,12 @@ public class TemplateManager {
         
         // Load templates from file
         loadTemplates();
-    }
-      /**
+    }    /**
      * Creates the default templates file from embedded resources
-     */    private void createDefaultTemplatesFile() {
+     * 
+     * @return True if the file was created successfully
+     */
+    public boolean createDefaultTemplatesFile() {
         try {
             // Determine the target directory - prefer neoessentials directory
             Path targetFile = neoEssentialsDir.resolve("templates.json");
@@ -118,10 +120,13 @@ public class TemplateManager {
                 Files.copy(inputStream, targetFile);
                 
                 // Update the templatesFile reference to point to the new file
-                templatesFile = targetFile;
-                
+                templatesFile = targetFile;                
                 NeoEssentials.LOGGER.info("Created default templates.json in neoessentials directory");
-                  // Add README file to explain the new location
+                
+                // Return success
+                return true;
+                
+                // Add README file to explain the new location
                 Path readmePath = configDir.resolve("README_TEMPLATES.md");
                 String readmeContent = "# NeoEssentials Templates\n\n" +
                         "The templates for the tablist system have been moved to the `neoessentials/templates.json` file.\n" +
@@ -467,6 +472,48 @@ public class TemplateManager {
             return true;
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to reload templates", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Force reloads templates from the templates file
+     * This is mainly used for debugging purposes
+     * 
+     * @return True if templates were successfully reloaded
+     */
+    public boolean forceReload() {
+        try {
+            // Check if templates file exists
+            if (!Files.exists(templatesFile)) {
+                NeoEssentials.LOGGER.error("Cannot reload templates: File does not exist at {}", templatesFile);
+                return false;
+            }
+            
+            // Calculate a hash of the current file content to detect changes
+            String fileContent = Files.readString(templatesFile, StandardCharsets.UTF_8);
+            int contentHash = fileContent.hashCode();
+            
+            // Log debug info
+            NeoEssentials.LOGGER.info("Force reloading templates from {} (content hash: {})", templatesFile, contentHash);
+            
+            // Clear current templates
+            globalHeaders.clear();
+            globalFooters.clear();
+            groupHeaders.clear();
+            groupFooters.clear();
+            globalBossBars.clear();
+            groupBossBars.clear();
+            
+            // Load templates from file
+            loadTemplates();
+            
+            NeoEssentials.LOGGER.info("Templates force reloaded: {} headers, {} footers, {} group headers, {} group footers", 
+                    globalHeaders.size(), globalFooters.size(), groupHeaders.size(), groupFooters.size());
+            
+            return true;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to force reload templates", e);
             return false;
         }
     }
