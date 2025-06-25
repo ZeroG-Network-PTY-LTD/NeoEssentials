@@ -2,6 +2,8 @@ package com.zerog.neoessentials.config;
 
 import java.util.Arrays;
 import java.util.List;
+import com.zerog.neoessentials.NeoEssentials;
+import com.zerog.neoessentials.ui.tab.TabManager;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -290,7 +292,8 @@ public class TablistTomlConfig {
      * 
      * Note: In NeoForge, configs are automatically reloaded when the file changes
      * This method is primarily for triggering a reload and preserving user customizations
-     */    public static void reload() {
+     */    
+    public static void reload() {
         com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist config reload requested - preserving user customizations");
         
         // Apply our config comparison patch to prevent invalid "correction"
@@ -302,12 +305,18 @@ public class TablistTomlConfig {
             
             // Log detailed debug info about the loaded config
             if (com.zerog.neoessentials.NeoEssentials.isDebugMode()) {
-                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current headers: {}", getHeaders());
-                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current footers: {}", getFooters());
-                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current admin headers: {}", getAdminHeaders());
-                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current admin footers: {}", getAdminFooters());
-                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current VIP headers: {}", getVipHeaders());
-                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Current VIP footers: {}", getVipFooters());
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Tab config loaded - templates are now in templates.json");
+                
+                // Get TabManager to access templates
+                TabManager tabManager = com.zerog.neoessentials.ui.tab.DataManagerHooks.getTabManager();
+                if (tabManager != null && tabManager.getTemplateManager() != null) {
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Global headers: {}", tabManager.getTemplateManager().getGlobalHeaders());
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Global footers: {}", tabManager.getTemplateManager().getGlobalFooters());
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Admin headers: {}", tabManager.getTemplateManager().getGroupHeaders("admin"));
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Admin footers: {}", tabManager.getTemplateManager().getGroupFooters("admin"));
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.debug("VIP headers: {}", tabManager.getTemplateManager().getGroupHeaders("vip"));
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.debug("VIP footers: {}", tabManager.getTemplateManager().getGroupFooters("vip"));
+                }
             }
         }, 1000, java.util.concurrent.TimeUnit.MILLISECONDS);
     }    /**
@@ -381,14 +390,17 @@ public class TablistTomlConfig {
                 java.lang.Class<?> configClass = Class.forName("net.neoforged.neoforge.common.ModConfigSpec$ConfigValue");
                 java.lang.reflect.Field correctField = configClass.getDeclaredField("correct");
                 correctField.setAccessible(true);
-                
-                // Attempt to set all tablist configs as "correct" to prevent overwriting
-                correctField.set(HEADERS_LIST, true);
-                correctField.set(FOOTERS_LIST, true);
-                correctField.set(ADMIN_HEADERS_LIST, true);
-                correctField.set(ADMIN_FOOTERS_LIST, true);
-                correctField.set(VIP_HEADERS_LIST, true);
-                correctField.set(VIP_FOOTERS_LIST, true);
+                  // No need to set any template configs as "correct" since they've been moved to templates.json
+                // Only validate the remaining core config options
+                correctField.set(UPDATE_INTERVAL, true);
+                correctField.set(TIME_FORMAT, true);
+                correctField.set(ENABLE_SORTING, true);
+                correctField.set(SORT_TYPE, true);
+                correctField.set(ENABLE_PLAYER_SPECIFIC_HEADERS, true);
+                correctField.set(ENABLE_PLAYER_SPECIFIC_FOOTERS, true);
+                correctField.set(ENABLE_ANIMATIONS, true);
+                correctField.set(HEADER_ANIMATION_TYPE, true);
+                correctField.set(FOOTER_ANIMATION_TYPE, true);
                 
                 com.zerog.neoessentials.NeoEssentials.LOGGER.info("Successfully applied protection to tablist configurations");
             } catch (Exception e) {
@@ -399,13 +411,31 @@ public class TablistTomlConfig {
                 }
             }
             
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Successfully validated tablist configuration values");
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Headers: {} entries", headers.size());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Footers: {} entries", footers.size());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin headers: {} entries", adminHeaders.size());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin footers: {} entries", adminFooters.size());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP headers: {} entries", vipHeaders.size());
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP footers: {} entries", vipFooters.size());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Successfully validated tablist configuration values");            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Templates are now managed by TemplateManager from templates.json");
+              // Try to access template data counts if available
+            try {
+                TabManager tabManager = com.zerog.neoessentials.ui.tab.DataManagerHooks.getTabManager();
+                if (tabManager != null && tabManager.getTemplateManager() != null) {
+                    int globalHeadersCount = tabManager.getTemplateManager().getGlobalHeaders().size();
+                    int globalFootersCount = tabManager.getTemplateManager().getGlobalFooters().size();
+                    int adminHeadersCount = tabManager.getTemplateManager().getGroupHeaders("admin").size();
+                    int adminFootersCount = tabManager.getTemplateManager().getGroupFooters("admin").size();
+                    int vipHeadersCount = tabManager.getTemplateManager().getGroupHeaders("vip").size();
+                    int vipFootersCount = tabManager.getTemplateManager().getGroupFooters("vip").size();
+                    
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.info("Template counts from TemplateManager:");
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.info("Global headers: {} entries", globalHeadersCount);
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.info("Global footers: {} entries", globalFootersCount);
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin headers: {} entries", adminHeadersCount);
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.info("Admin footers: {} entries", adminFootersCount);
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP headers: {} entries", vipHeadersCount);
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.info("VIP footers: {} entries", vipFootersCount);
+                } else {
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.info("TabManager or TemplateManager not available, template counts not available");
+                }
+            } catch (Exception e) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Could not access template data counts", e);
+            }
         } catch (Exception e) {
             com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error validating tablist configuration", e);
         }
