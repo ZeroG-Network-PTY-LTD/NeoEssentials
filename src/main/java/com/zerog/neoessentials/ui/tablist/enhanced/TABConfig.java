@@ -343,6 +343,7 @@ public class TABConfig {
         private String color = "BLUE";
         private String progress = "100";
         private String text = "";
+        private String displayCondition = "";
         
         // Getters and setters
         public String getStyle() { return style; }
@@ -356,6 +357,9 @@ public class TABConfig {
         
         public String getText() { return text; }
         public void setText(String text) { this.text = text; }
+        
+        public String getDisplayCondition() { return displayCondition; }
+        public void setDisplayCondition(String displayCondition) { this.displayCondition = displayCondition; }
     }
     
     public static class LayoutConfig {
