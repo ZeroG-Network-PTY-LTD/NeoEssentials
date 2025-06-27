@@ -78,11 +78,17 @@ public class TabFixCommand {
     private static int executeTabReload(CommandSourceStack source) {
         ChatUtil.sendMessage(source, "§6Reloading tablist templates...");
         
-        // Make sure we're using the new TabManager
-        TablistMigrationManager.applyMigration();
+        // Get the enhanced tablist manager
+        var dataManager = NeoEssentials.getInstance().getDataManager();
+        var tablistManager = dataManager != null ? dataManager.getTablistManager() : null;
         
-        // Reload templates
-        boolean success = DataManagerHooks.reloadTemplates();
+        if (tablistManager == null) {
+            ChatUtil.sendError(source, "§cTablist manager not available");
+            return 0;
+        }
+        
+        // Reload configuration
+        boolean success = tablistManager.reloadConfig();
         
         if (success) {
             ChatUtil.sendSuccess(source, "§aTablist templates reloaded successfully!");
@@ -265,8 +271,10 @@ public class TabFixCommand {
             java.nio.file.Files.writeString(templatesPath, yamlContent, java.nio.charset.StandardCharsets.UTF_8);
             ChatUtil.sendSuccess(source, "§aCreated templates.yml file in neoessentials directory");
             
-            // Reload templates
-            boolean reloadSuccess = DataManagerHooks.reloadTemplates();
+            // Reload configuration
+            var dataManager = NeoEssentials.getInstance().getDataManager();
+            var tablistManager = dataManager != null ? dataManager.getTablistManager() : null;
+            boolean reloadSuccess = tablistManager != null && tablistManager.reloadConfig();
             if (reloadSuccess) {
                 ChatUtil.sendSuccess(source, "§aTemplate system reloaded successfully!");
             } else {

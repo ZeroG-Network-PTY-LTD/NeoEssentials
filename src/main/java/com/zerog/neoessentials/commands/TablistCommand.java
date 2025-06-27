@@ -93,11 +93,10 @@ public class TablistCommand {
             return 0;
         }
         
-        // Force extract default config and reload
-        boolean forceCreateSuccess = tablistManager.getTemplateManager().createDefaultTemplatesFile();
-        boolean reloadSuccess = com.zerog.neoessentials.ui.tab.DataManagerHooks.reloadTemplates();
+        // Force reload configuration using the enhanced system
+        boolean success = tablistManager.reloadConfig();
         
-        if (forceCreateSuccess && reloadSuccess) {
+        if (success) {
             source.sendSuccess(() -> Component.literal(TextUtil.colorize("&aTablist configuration reset to defaults and reloaded successfully")), true);
             return 1;
         } else {
