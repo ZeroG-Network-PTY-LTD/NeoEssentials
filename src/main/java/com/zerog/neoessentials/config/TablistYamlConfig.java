@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.config;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.ui.tab.TabManager;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.io.File;
@@ -402,11 +401,12 @@ public class TablistYamlConfig {
     public static void reload() {
         loadConfig();
         
-        // Reload the TabManager if available
-        TabManager tabManager = com.zerog.neoessentials.ui.tab.DataManagerHooks.getTabManager();
-        if (tabManager != null) {
-            tabManager.loadConfig();
-            NeoEssentials.LOGGER.info("TabManager configuration reloaded");
+        // Reload the TABLikeTablistManager if available
+        var dataManager = NeoEssentials.getInstance().getDataManager();
+        var tablistManager = dataManager != null ? dataManager.getTablistManager() : null;
+        if (tablistManager != null) {
+            tablistManager.reloadConfig();
+            NeoEssentials.LOGGER.info("TABLikeTablistManager configuration reloaded");
         }
     }
 }
