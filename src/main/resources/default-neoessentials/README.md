@@ -1,59 +1,59 @@
 # NeoEssentials Configuration
 
-NeoEssentials stores templates and animations in JSON or YML files in the main server directory:
+NeoEssentials stores tablist templates and animations in YAML files in the main server directory:
 
 ## Configuration Structure
 
-- `./neoessentials/templates.json` or `./neoessentials/templates.yml` - Contains all header/footer templates and bossbars
-- `./neoessentials/animations.json` or `./neoessentials/animations.yml` - Contains all animation configurations
+- `./neoessentials/tablist.yml` - Contains all header/footer templates, groups, and tablist settings
+- `./neoessentials/animations.yml` - Contains all animation configurations
 
-These files are automatically created when the mod is first run, or when missing. You can use either JSON or YML format based on your preference.
+These files are automatically created when the mod is first run, or when missing. Configuration is done exclusively in YAML format for better readability and structure.
 
-## Why JSON Instead of TOML?
+## Why YAML Only?
 
-JSON provides better support for complex nested configurations and arrays, which are heavily used in the tablist template system. TOML has limitations when it comes to complex array structures and can cause serialization issues.
+YAML provides better readability and structure for complex nested configurations compared to JSON or TOML. It's easier to edit by hand and supports comments, making it ideal for server configuration files.
 
 ## Migration
 
-If you previously customized templates or animations in the TOML config files, they will be automatically migrated to the new JSON format. The original TOML files will be backed up with a `.bak` extension.
+If you have old JSON or TOML files (templates.json, animations.json, tablist.toml), they should be migrated to the new YAML format. The new system loads configuration exclusively from YAML files.
 
-## Format Options
+## Format
 
-You can choose between two formats:
+Configuration uses YAML format:
 
-1. **JSON** - Standard format (templates.json, animations.json)
-2. **YML** - Alternative YAML format (templates.yml, animations.yml)
+1. **tablist.yml** - Main tablist configuration including headers, footers, groups, and display settings
+2. **animations.yml** - Animation definitions for headers, footers, and other dynamic content
 
-If both formats exist for the same configuration, JSON takes precedence.
+## Tablist Configuration Format
 
-## Templates Format
-
-The `templates.json` file contains:
+The `tablist.yml` file contains:
 
 - Global headers and footers
-- Group-specific headers and footers 
-- Global boss bars
-- Group-specific boss bars
+- Group-specific headers and footers
+- Tablist display settings
+- Player sorting options
+- Update intervals
 
 ## Animations Format
 
-The `animations.json` file contains:
+The `animations.yml` file contains:
 
 - Custom hex color animations with timing settings
 - Gradient animations with color stops
 - Pulse animations
+- Text scroll animations
 
 ## Examples
 
-See the default files for examples of how to configure templates and animations.
+See the default YAML files for examples of how to configure tablist settings and animations.
 
 ## Documentation
 
-For detailed documentation on templates and animations:
+For detailed documentation on YAML configuration:
 
 - Configuration Guide: https://github.com/ZeroG-Network/NeoEssentials/wiki/Configuration
-- JSON Templates: https://github.com/ZeroG-Network/NeoEssentials/wiki/JSON-Templates
-- YML Configuration: https://github.com/ZeroG-Network/NeoEssentials/wiki/YML-Configuration
+- YAML Templates: https://github.com/ZeroG-Network/NeoEssentials/wiki/YAML-Templates
+- Tablist Configuration: https://github.com/ZeroG-Network/NeoEssentials/wiki/Tablist-Configuration
 - Format Guide: https://github.com/ZeroG-Network/NeoEssentials/wiki/Colors-and-Formatting
 
 ## Support
