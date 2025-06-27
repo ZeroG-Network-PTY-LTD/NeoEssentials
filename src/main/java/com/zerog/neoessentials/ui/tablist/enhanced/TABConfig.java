@@ -212,6 +212,9 @@ public class TABConfig {
     public int getGroupPriority(String group) { return groupPriorities.getOrDefault(group, 999); }
     public void setGroupPriority(String group, int priority) { groupPriorities.put(group, priority); }
     
+    public Map<String, Integer> getGroupPriorities() { return new HashMap<>(groupPriorities); }
+    public void setGroupPriorities(Map<String, Integer> priorities) { this.groupPriorities = new HashMap<>(priorities); }
+    
     public boolean isPlayerlistObjectiveEnabled() { return playerlistObjectiveEnabled; }
     public void setPlayerlistObjectiveEnabled(boolean enabled) { this.playerlistObjectiveEnabled = enabled; }
     
