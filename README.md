@@ -48,15 +48,15 @@ Comprehensive documentation is available:
 
 NeoEssentials uses a hybrid configuration system:
 
-- **TOML Configs**: Located in `config/neoessentials/` directory for basic settings
-- **JSON/YML Templates**: Located in `neoessentials/` directory (server root) for complex data
+- **TOML Configs**: Located in `config/neoessentials/` directory for basic mod settings
+- **YAML Configs**: Located in `neoessentials/` directory (server root) for tablist configuration
 
 Files are organized as follows:
-- Basic settings: `config/neoessentials/tablist.yml`
-- Templates: `neoessentials/templates.json` or `templates.yml`
-- Animations: `neoessentials/animations.json` or `animations.yml`
+- Basic mod settings: `config/neoessentials/general.toml`, `economy.toml`, etc.
+- Tablist configuration: `neoessentials/tablist.yml`
+- Animations: `neoessentials/animations.yml`
 
-The mod will automatically generate default configurations and migrate legacy TOML templates to JSON on first startup.
+The mod will automatically generate default YAML configurations on first startup.
 
 ## 📢 Support & Community
 
