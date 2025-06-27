@@ -57,23 +57,29 @@ public class TemplateManager {
         this.configDir = Paths.get("config", "neoessentials");
         
         // Check in priority order:
-        // 1. neoessentials/templates.json
-        // 2. neoessentials/templates.yml
-        // 3. config/neoessentials/templates.json
+        // 1. neoessentials/templates.yml (YAML preferred over JSON)
+        // 2. neoessentials/templates.json
+        // 3. config/neoessentials/templates.yml
+        // 4. config/neoessentials/templates.json
         
-        Path neoTemplatesJsonFile = neoEssentialsDir.resolve("templates.json");
         Path neoTemplatesYmlFile = neoEssentialsDir.resolve("templates.yml");
-        Path configTemplatesFile = configDir.resolve("templates.json");
+        Path neoTemplatesJsonFile = neoEssentialsDir.resolve("templates.json");
+        Path configTemplatesYmlFile = configDir.resolve("templates.yml");
+        Path configTemplatesJsonFile = configDir.resolve("templates.json");
         
-        if (Files.exists(neoTemplatesJsonFile)) {
-            this.templatesFile = neoTemplatesJsonFile;
-            NeoEssentials.LOGGER.info("Using templates.json from neoessentials directory");
-        } else if (Files.exists(neoTemplatesYmlFile)) {
+        // First try to find YAML format (preferred)
+        if (Files.exists(neoTemplatesYmlFile)) {
             this.templatesFile = neoTemplatesYmlFile;
             NeoEssentials.LOGGER.info("Using templates.yml from neoessentials directory");
+        } else if (Files.exists(neoTemplatesJsonFile)) {
+            this.templatesFile = neoTemplatesJsonFile;
+            NeoEssentials.LOGGER.info("Using templates.json from neoessentials directory (YAML format preferred)");
+        } else if (Files.exists(configTemplatesYmlFile)) {
+            this.templatesFile = configTemplatesYmlFile;
+            NeoEssentials.LOGGER.info("Using templates.yml from config/neoessentials directory");
         } else {
-            this.templatesFile = configTemplatesFile;
-            NeoEssentials.LOGGER.info("Using templates.json from config/neoessentials directory");
+            this.templatesFile = configTemplatesJsonFile;
+            NeoEssentials.LOGGER.info("Using templates.json from config/neoessentials directory (YAML format preferred)");
         }
         
         // Ensure necessary directories exist
@@ -108,34 +114,50 @@ public class TemplateManager {
      */
     public boolean createDefaultTemplatesFile() {
         try {
-            // Determine the target directory - prefer neoessentials directory
-            Path targetFile = neoEssentialsDir.resolve("templates.json");
+            // Determine the target directory - prefer neoessentials directory with YAML
+            Path targetYamlFile = neoEssentialsDir.resolve("templates.yml");
+            Path targetJsonFile = neoEssentialsDir.resolve("templates.json");
             
-            // First check if we have the file in resources
-            InputStream inputStream = TemplateManager.class.getClassLoader()
-                    .getResourceAsStream("default-neoessentials/templates.json");
+            boolean success = false;
             
-            if (inputStream != null) {
-                // Copy from resources to target directory
-                Files.copy(inputStream, targetFile);
-                
+            // Try to extract the YAML template first (preferred format)
+            if (extractDefaultTemplate("templates.yml", targetYamlFile)) {
                 // Update the templatesFile reference to point to the new file
-                templatesFile = targetFile;                
+                templatesFile = targetYamlFile;
+                success = true;
+                NeoEssentials.LOGGER.info("Created default templates.yml in neoessentials directory");
+            }
+            // Try default_templates resource next
+            else if (extractDefaultTemplate("default_templates/templates.yml", targetYamlFile)) {
+                // Update the templatesFile reference to point to the new file
+                templatesFile = targetYamlFile;
+                success = true;
+                NeoEssentials.LOGGER.info("Created default templates.yml in neoessentials directory from default_templates resource");
+            }
+            // Fall back to JSON if YAML extraction fails
+            else if (extractDefaultTemplate("default-neoessentials/templates.json", targetJsonFile)) {
+                // Update the templatesFile reference to point to the new file
+                templatesFile = targetJsonFile;
+                success = true;
                 NeoEssentials.LOGGER.info("Created default templates.json in neoessentials directory");
-                
+            }
+            
+            if (success) {
                 // Add README file to explain the new location
                 try {
                     Path readmePath = configDir.resolve("README_TEMPLATES.md");
                     String readmeContent = "# NeoEssentials Templates\n\n" +
-                            "The templates for the tablist system have been moved to the `neoessentials/templates.json` file.\n" +
-                            "This provides better configuration flexibility and avoids TOML serialization issues.\n\n" +
+                            "The templates for the tablist system have been moved to the `neoessentials/templates.yml` file.\n" +
+                            "This provides better configuration flexibility and avoids serialization issues.\n\n" +
                             "## Location\n\n" +
-                            "- Primary location: `neoessentials/templates.json`\n" +
+                            "- Primary location: `neoessentials/templates.yml` (YAML format, preferred)\n" +
+                            "- Alternative: `neoessentials/templates.json` (JSON format, supported)\n" +
                             "- Legacy location (no longer recommended): `config/neoessentials/templates.json`\n\n" +
                             "## Format\n\n" +
-                            "The templates file uses JSON format for maximum compatibility and flexibility.\n\n" +
+                            "The templates file now uses YAML format for improved readability and flexibility.\n" +
+                            "JSON format is still supported for backward compatibility.\n\n" +
                             "## Migration\n\n" +
-                            "Your existing templates have been automatically migrated to the new location.\n" +
+                            "Your existing templates have been automatically migrated to the new location and format.\n" +
                             "All customizations are preserved.";
                     
                     if (!Files.exists(readmePath)) {
@@ -148,98 +170,109 @@ public class TemplateManager {
                 
                 // Return success
                 return true;
-                
-            } else {
-                // Fallback to creating a basic templates file
-                JsonObject root = new JsonObject();
-                
-                // Basic headers and footers
-                JsonObject templates = new JsonObject();
-                JsonArray headers = new JsonArray();
-                headers.add("&6&l✦ &b&lNeoEssentials Server &6&l✦");
-                headers.add("&eWelcome, &a%player%&e!");
-                headers.add("&eOnline players: &a%online%/%max%");
-                headers.add("&eServer time: &a%time%");
-                templates.add("headers", headers);
-                
-                JsonArray footers = new JsonArray();
-                footers.add("&eBalance: &a%balance% coins");
-                footers.add("&eWebsite: &awww.example.com");
-                footers.add("&eThanks for playing!");
-                footers.add("&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%");
-                templates.add("footers", footers);
-                
-                root.add("templates", templates);
-                
-                // Add groups section
-                JsonObject groups = new JsonObject();
-                
-                // Admin group
-                JsonObject adminGroup = new JsonObject();
-                JsonArray adminHeaders = new JsonArray();
-                adminHeaders.add("&4&l★ &c&lAdmin Panel &4&l★");
-                adminHeaders.add("&cServer TPS: &f%tps% &7| &cMemory: &f%memory_percent%");
-                adminGroup.add("headers", adminHeaders);
-                
-                JsonArray adminFooters = new JsonArray();
-                adminFooters.add("&cAdmin Command Help: &f/neoessentials help");
-                adminFooters.add("&cServer uptime: &f%uptime%");
-                adminGroup.add("footers", adminFooters);
-                
-                groups.add("admin", adminGroup);
-                
-                // VIP group
-                JsonObject vipGroup = new JsonObject();
-                JsonArray vipHeaders = new JsonArray();
-                vipHeaders.add("&6&l⚜ &e&lVIP Perks Active &6&l⚜");
-                vipHeaders.add("&eWelcome back, &6%player%&e!");
-                vipGroup.add("headers", vipHeaders);
-                
-                JsonArray vipFooters = new JsonArray();
-                vipFooters.add("&6VIP Balance: &e%balance% coins");
-                vipFooters.add("&6Use &e/vip help &6for a list of perks");
-                vipGroup.add("footers", vipFooters);
-                
-                groups.add("vip", vipGroup);
-                
-                root.add("groups", groups);
-                
-                // Add bossbars section
-                JsonObject bossbars = new JsonObject();
-                JsonArray globalBars = new JsonArray();
-                globalBars.add("{color:red}{style:progress}{progress:1.0}Server TPS: %tps%");
-                globalBars.add("{color:green}{style:notched_6}{progress:0.8}Welcome to the server!");
-                bossbars.add("global", globalBars);
-                
-                // Add bossbar groups
-                JsonObject bossbarGroups = new JsonObject();
-                
-                JsonArray adminBars = new JsonArray();
-                adminBars.add("{color:purple}{style:progress}{progress:1.0}Admin Mode Active");
-                bossbarGroups.add("admin", adminBars);
-                
-                JsonArray vipBars = new JsonArray();
-                vipBars.add("{color:gold}{style:progress}{progress:1.0}VIP Status Active");
-                bossbarGroups.add("vip", vipBars);
-                
-                bossbars.add("groups", bossbarGroups);
-                root.add("bossbars", bossbars);
-                
-                // Set basic metadata
-                JsonObject meta = new JsonObject();
-                meta.addProperty("schemaVersion", "1.0");
-                meta.addProperty("description", "NeoEssentials Tablist Templates");
-                meta.addProperty("generateTime", java.time.LocalDateTime.now().toString());
-                root.add("metadata", meta);
-                
-                // Write to file
-                Files.writeString(targetFile, GSON.toJson(root));
+            }
+            
+            // If no success with resource extraction, create a basic templates file from scratch
+            // We'll create a YAML file since it's our preferred format
+            Path yamlTargetFile = neoEssentialsDir.resolve("templates.yml");
+            
+            // Create basic YAML template content
+            String yamlContent = "# NeoEssentials Tablist Templates\n" +
+                "# Generated: " + java.time.LocalDateTime.now().toString() + "\n\n" +
+                "templates:\n" +
+                "  headers:\n" +
+                "    - \"&6&l✦ &b&lNeoEssentials Server &6&l✦\"\n" +
+                "    - \"&eWelcome, &a{player_name}&e!\"\n" +
+                "    - \"&eOnline players: &a{online_players}/{max_players}\"\n" +
+                "    - \"&eServer time: &a{time}\"\n\n" +
+                "  footers:\n" +
+                "    - \"&eBalance: &a{balance} coins\"\n" +
+                "    - \"&eWebsite: &awww.example.com\"\n" +
+                "    - \"&eThanks for playing!\"\n" +
+                "    - \"&eServer TPS: &a{tps} &7| &eMemory: &a{memory_percent}%\"\n\n" +
+                "groups:\n" +
+                "  admin:\n" +
+                "    headers:\n" +
+                "      - \"&4&l★ &c&lAdmin Panel &4&l★\"\n" +
+                "      - \"&cServer TPS: &f{tps} &7| &cMemory: &f{memory_percent}%\"\n" +
+                "    footers:\n" +
+                "      - \"&cAdmin Command Help: &f/neoessentials help\"\n" +
+                "      - \"&cServer uptime: &f{uptime}\"\n\n" +
+                "  default:\n" +
+                "    headers:\n" +
+                "      - \"&6&l⚜ &e&lWelcome &6&l⚜\"\n" +
+                "      - \"&eWelcome to the server, &6{player_name}&e!\"\n" +
+                "    footers:\n" +
+                "      - \"&6Balance: &e{balance} coins\"\n" +
+                "      - \"&6Use &e/help &6for a list of commands\"\n\n" +
+                "bossbars:\n" +
+                "  global:\n" +
+                "    - \"title:Server TPS: {tps};progress:1.0;color:red\"\n" +
+                "    - \"title:Welcome to the server!;progress:0.8;color:green\"\n" +
+                "  groups:\n" +
+                "    admin:\n" +
+                "      - \"title:Admin Mode Active;progress:1.0;color:purple\"\n" +
+                "    vip:\n" +
+                "      - \"title:VIP Status Active;progress:1.0;color:gold\"\n\n" +
+                "# Metadata\n" +
+                "metadata:\n" +
+                "  schemaVersion: \"1.0\"\n" +
+                "  description: \"NeoEssentials Tablist Templates\"\n" +
+                "  format: \"yaml\"\n";
+                  // Ensure directories exist and write YAML content
+        if (!Files.exists(yamlTargetFile.getParent())) {
+            Files.createDirectories(yamlTargetFile.getParent());
+        }
+        
+        try {
+            // Write YAML content
+            Files.writeString(yamlTargetFile, yamlContent);
+            
+            // Update the templatesFile reference
+            templatesFile = yamlTargetFile;
+            NeoEssentials.LOGGER.info("Created new templates.yml file in neoessentials directory");
+            return true;
+        } catch (IOException e) {
+            NeoEssentials.LOGGER.error("Failed to create YAML templates file, trying JSON format", e);
+            
+            // Fall back to JSON format if YAML fails
+            Path jsonTargetFile = neoEssentialsDir.resolve("templates.json");
+            
+            // Create basic JSON structure
+            JsonObject root = new JsonObject();
+            JsonObject templates = new JsonObject();
+            JsonObject groups = new JsonObject();
+            JsonObject bossbars = new JsonObject();
+            
+            // Add simple templates
+            JsonArray headersArray = new JsonArray();
+            headersArray.add("&6&l✦ &b&lNeoEssentials Server &6&l✦");
+            headersArray.add("&eWelcome, &a{player_name}&e!");
+            templates.add("headers", headersArray);
+            
+            JsonArray footersArray = new JsonArray();
+            footersArray.add("&eBalance: &a{balance} coins");
+            footersArray.add("&eServer TPS: &a{tps}");
+            templates.add("footers", footersArray);
+            
+            // Add minimal structure
+            root.add("templates", templates);
+            root.add("groups", groups);
+            root.add("bossbars", bossbars);
+            
+            try {
+                // Write to JSON file
+                Files.writeString(jsonTargetFile, GSON.toJson(root));
                 
                 // Update the templatesFile reference
-                templatesFile = targetFile;
-                  NeoEssentials.LOGGER.info("Created fallback templates.json file in neoessentials directory");
+                templatesFile = jsonTargetFile;
+                NeoEssentials.LOGGER.info("Created fallback templates.json file in neoessentials directory");
                 return true;
+            } catch (IOException jsonError) {
+                NeoEssentials.LOGGER.error("Failed to create JSON templates file", jsonError);
+                return false;
             }
+        }
         } catch (IOException e) {
             NeoEssentials.LOGGER.error("Failed to create default templates file", e);
             return false;
@@ -249,19 +282,32 @@ public class TemplateManager {
      */
     public void loadTemplates() {
         try {
+            // Check if the file exists first
+            if (!Files.exists(templatesFile)) {
+                NeoEssentials.LOGGER.warn("Template file {} not found, creating default template file", templatesFile);
+                createDefaultTemplatesFile();
+            }
+            
             // Read the templates file
             String content = Files.readString(templatesFile, StandardCharsets.UTF_8);
             JsonObject root;
             
             // Check if we're loading a YML file
             if (templatesFile.toString().endsWith(".yml")) {
-                NeoEssentials.LOGGER.info("Loading templates from YAML file");
+                NeoEssentials.LOGGER.info("Loading templates from YAML file: {}", templatesFile);
                 try {
-                    // Simple YAML parsing - this is basic but handles most common YAML structures
-                    // For complex YAML, would need SnakeYAML dependency
-                    root = parseSimpleYaml(content);
+                    // Use SnakeYAML if available, otherwise fall back to simple parser
+                    try {
+                        Class.forName("org.yaml.snakeyaml.Yaml");
+                        // If we get here, SnakeYAML is available
+                        root = parseYamlWithSnakeYaml(content);
+                    } catch (ClassNotFoundException e) {
+                        NeoEssentials.LOGGER.warn("SnakeYAML not found, using simple YAML parser");
+                        root = parseSimpleYaml(content);
+                    }
+                    
                     if (root == null) {
-                        throw new Exception("Failed to parse YAML");
+                        throw new Exception("Failed to parse YAML file");
                     }
                 } catch (Exception e) {
                     NeoEssentials.LOGGER.error("Failed to parse YAML file, falling back to default templates", e);
@@ -271,6 +317,7 @@ public class TemplateManager {
                 }
             } else {
                 // Load JSON directly
+                NeoEssentials.LOGGER.info("Loading templates from JSON file: {}", templatesFile);
                 root = JsonParser.parseString(content).getAsJsonObject();
             }
             
@@ -466,6 +513,19 @@ public class TemplateManager {
     }
     
     /**
+     * Check if templates are loaded
+     * @return true if at least one template is loaded
+     */
+    public boolean hasTemplates() {
+        return !globalHeaders.isEmpty() 
+               || !globalFooters.isEmpty() 
+               || !groupHeaders.isEmpty() 
+               || !groupFooters.isEmpty()
+               || !globalBossBars.isEmpty()
+               || !groupBossBars.isEmpty();
+    }
+    
+    /**
      * Reloads templates from disk
      * This can be called when the templates file is modified
      * 
@@ -633,6 +693,140 @@ public class TemplateManager {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error parsing YAML content", e);
             return null;
+        }
+    }
+    
+    /**
+     * Parse YAML content using SnakeYAML library
+     * @param yamlContent The YAML content to parse
+     * @return JsonObject representation of the YAML content
+     */
+    private JsonObject parseYamlWithSnakeYaml(String yamlContent) {
+        try {
+            // Use reflection to avoid direct dependency on SnakeYAML
+            Class<?> yamlClass = Class.forName("org.yaml.snakeyaml.Yaml");
+            Object yamlInstance = yamlClass.getDeclaredConstructor().newInstance();
+            
+            // Load the YAML content
+            java.lang.reflect.Method loadMethod = yamlClass.getMethod("load", String.class);
+            Object yamlMap = loadMethod.invoke(yamlInstance, yamlContent);
+            
+            // Convert the map to a JsonObject
+            return convertMapToJsonObject(yamlMap);
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error using SnakeYAML to parse YAML content", e);
+            return null;
+        }
+    }
+    
+    /**
+     * Convert a Map from SnakeYAML to a JsonObject
+     * @param obj The object from SnakeYAML
+     * @return JsonObject representation
+     */
+    @SuppressWarnings("unchecked")
+    private JsonObject convertMapToJsonObject(Object obj) {
+        if (obj == null) return null;
+        
+        JsonObject result = new JsonObject();
+        if (obj instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) obj;
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                
+                if (value instanceof Map) {
+                    result.add(key, convertMapToJsonObject(value));
+                } else if (value instanceof List) {
+                    result.add(key, convertListToJsonArray((List<?>) value));
+                } else if (value instanceof String) {
+                    result.addProperty(key, (String) value);
+                } else if (value instanceof Number) {
+                    result.addProperty(key, (Number) value);
+                } else if (value instanceof Boolean) {
+                    result.addProperty(key, (Boolean) value);
+                } else if (value == null) {
+                    result.add(key, null);
+                } else {
+                    result.addProperty(key, value.toString());
+                }
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * Convert a List from SnakeYAML to a JsonArray
+     * @param list The list from SnakeYAML
+     * @return JsonArray representation
+     */
+    private JsonArray convertListToJsonArray(List<?> list) {
+        JsonArray array = new JsonArray();
+        for (Object item : list) {
+            if (item instanceof Map) {
+                array.add(convertMapToJsonObject(item));
+            } else if (item instanceof List) {
+                array.add(convertListToJsonArray((List<?>) item));
+            } else if (item instanceof String) {
+                array.add((String) item);
+            } else if (item instanceof Number) {
+                array.add((Number) item);
+            } else if (item instanceof Boolean) {
+                array.add((Boolean) item);
+            } else if (item == null) {
+                array.add((String) null);
+            } else {
+                array.add(item.toString());
+            }
+        }
+        return array;
+    }
+    
+    /**
+     * Reload templates from disk
+     */
+    public void reloadTemplates() {
+        NeoEssentials.LOGGER.info("Reloading tablist templates");
+        // Clear all existing templates
+        globalHeaders.clear();
+        globalFooters.clear();
+        groupHeaders.clear();
+        groupFooters.clear();
+        globalBossBars.clear();
+        groupBossBars.clear();
+        
+        // Load templates
+        loadTemplates();
+    }
+    
+    /**
+     * Extract a default template file from the JAR resources to the given path
+     * 
+     * @param resourcePath The path to the resource in the JAR
+     * @param targetPath The path to extract the resource to
+     * @return True if successful, false otherwise
+     */
+    private boolean extractDefaultTemplate(String resourcePath, Path targetPath) {
+        try {
+            // Get the resource as a stream
+            InputStream resourceStream = TemplateManager.class.getClassLoader().getResourceAsStream(resourcePath);
+            if (resourceStream == null) {
+                NeoEssentials.LOGGER.warn("Resource not found: {}", resourcePath);
+                return false;
+            }
+            
+            // Create parent directories if they don't exist
+            if (targetPath.getParent() != null && !Files.exists(targetPath.getParent())) {
+                Files.createDirectories(targetPath.getParent());
+            }
+            
+            // Copy the resource to the target path
+            Files.copy(resourceStream, targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            NeoEssentials.LOGGER.info("Extracted default template: {} -> {}", resourcePath, targetPath);
+            return true;
+        } catch (IOException e) {
+            NeoEssentials.LOGGER.error("Failed to extract default template: {}", resourcePath, e);
+            return false;
         }
     }
 }

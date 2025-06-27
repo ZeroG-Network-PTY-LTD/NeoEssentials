@@ -4,7 +4,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Interface for permission system handlers.
- * Implementations will handle permission checks for different backends (LuckPerms, FTB Ranks, etc.)
+ * Implementations will handle permission checks for different backends (LuckPerms, etc.)
  */
 public interface PermissionHandler {
     

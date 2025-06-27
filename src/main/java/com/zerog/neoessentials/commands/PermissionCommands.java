@@ -1,12 +1,9 @@
 package com.zerog.neoessentials.commands;
 
-import java.util.UUID;
-
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.permissions.PermissionHandler;
 import com.zerog.neoessentials.permissions.PermissionHandlerManager;
 import com.zerog.neoessentials.permissions.VanillaPermissionHandler;
@@ -203,15 +200,14 @@ public class PermissionCommands {
      */
     private static int checkPermission(CommandContext<CommandSourceStack> ctx, ServerPlayer player, String permission) {
         boolean hasPermission = PermissionHandlerManager.getInstance().hasPermission(player, permission);
-        
-        if (hasPermission) {
+          if (hasPermission) {
             ChatUtil.sendSuccess(ctx.getSource(), String.format(
                     "Player %s has permission: %s", 
                     player.getName().getString(), permission));
         } else {
-            ctx.getSource().sendSuccess(Component.literal(String.format(
+            ChatUtil.sendError(ctx.getSource(), String.format(
                     "Player %s does not have permission: %s", 
-                    player.getName().getString(), permission)), false);
+                    player.getName().getString(), permission));
         }
         
         return 1;

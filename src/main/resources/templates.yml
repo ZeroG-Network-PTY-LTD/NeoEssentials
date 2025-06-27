@@ -1,0 +1,47 @@
+# Default Templates Configuration
+# This file defines templates for headers, footers and boss bars
+
+templates:
+  # Global headers shown to all players
+  headers:
+    - "&6=== &b&lNeoEssentials Server &6==="
+    - "&aWelcome to the server!"
+    - "&fOnline Players: &e{online_players}&f/&e{max_players}"
+  
+  # Global footers shown to all players
+  footers:
+    - "&7Server TPS: &a{tps}"
+    - "&7Running &eNeoEssentials v{version}"
+    - "&7Use &e/help&7 to see available commands"
+
+# Group-specific templates
+groups:
+  admin:
+    headers:
+      - "&c&l=== &4&lADMIN VIEW &c&l==="
+      - "&6Server Status: &a{server_status}"
+      - "&6Memory: &a{memory_used}MB&f/&a{memory_total}MB"
+    footers:
+      - "&7TPS: &a{tps} &7| Memory: &a{memory_percent}%"
+      - "&7Players: &e{online_players}&f/&e{max_players} &7| Chunks: &e{loaded_chunks}"
+  
+  default:
+    headers:
+      - "&6=== &b&lWelcome, &e{player_name} &6==="
+      - "&aEnjoy your stay!"
+    footers:
+      - "&7Balance: &a${balance}"
+      - "&7Use &e/help&7 for commands"
+
+# Boss bar templates
+bossbars:
+  global:
+    - "title:&6Welcome to NeoEssentials Server;progress:1.0;color:yellow"
+    - "title:&aOnline Players: &e{online_players};progress:{online_player_percent};color:green"
+  
+  groups:
+    admin:
+      - "title:&c&lAdmin Mode;progress:1.0;color:red"
+      - "title:&4Server TPS: &e{tps};progress:{tps_percent};color:red"
+    vip:
+      - "title:&e&lVIP Status Active;progress:1.0;color:yellow"

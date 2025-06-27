@@ -22,8 +22,8 @@ public class PermissionHandlerManager {
         // Register LuckPerms handler
         registerHandler(new LuckPermsPermissionHandler());
         
-        // Register FTB Ranks handler
-        registerHandler(new FTBRanksPermissionHandler());
+        // Register ForgePerms handler
+        registerHandler(new ForgePermsPermissionHandler());
         
         // Log registered handlers
         for (PermissionHandler handler : handlers) {
