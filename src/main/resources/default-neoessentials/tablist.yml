@@ -19,15 +19,15 @@ settings:
 templates:
   headers:
     - "&6&l✦ &b&lNeoEssentials Server &6&l✦"
-    - "&eWelcome, &a%player%&e!"
-    - "&eOnline players: &a%online%/%max%"
-    - "&eServer time: &a%time%"
+    - "&eWelcome, &#FF5722%player%&e!"
+    - "&eOnline players: &#4CAF50%online%/%max%"
+    - "&eServer time: &#2196F3%time%"
   
   footers:
-    - "&eBalance: &a%balance% coins"
-    - "&eWebsite: &awww.example.com"
-    - "&eThanks for playing!"
-    - "&eServer TPS: &a%tps% &7| &eMemory: &a%memory_percent%"
+    - "&eBalance: &#FFD700%balance% coins"
+    - "&eWebsite: &#9C27B0www.example.com"
+    - "&#FF6B35Thanks for playing!"
+    - "&eServer TPS: &#4CAF50%tps% &7| &eMemory: &#FF9800%memory_percent%"
 
 # Group-specific templates
 groups:

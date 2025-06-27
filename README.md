@@ -12,7 +12,7 @@ NeoEssentials is a comprehensive server management and quality-of-life mod for M
 
 ## ✨ Key Features
 
-- **Enhanced Tablist System**: Customizable headers, footers, and boss bars with animations
+- **Enhanced Tablist System**: Customizable headers, footers, and boss bars with animations and native hex color support
 - **Home & Warp System**: Player homes and server teleportation points
 - **Economy System**: Complete player economy with transactions and shop integration
 - **Kit System**: Configurable item kits for players with cooldowns
