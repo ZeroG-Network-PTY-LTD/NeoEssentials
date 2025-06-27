@@ -26,7 +26,7 @@ import java.util.UUID;
 public class AdminPanel {
 
     /**
-     * Displays the economy management panel.
+     * Displays the economy management panel.f
      *
      * @param player The player viewing the panel
      */
