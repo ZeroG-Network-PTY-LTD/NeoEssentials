@@ -410,17 +410,8 @@ public class TablistPlaceholderManager {
      * @return The player's group name
      */
     private String determinePlayerGroup(ServerPlayer player) {
-        // This is a placeholder method - the actual implementation
-        // would use a permission system to determine the player's group
-        if (player.hasPermissions(4)) {
-            return "admin";
-        } else if (player.hasPermissions(2)) {
-            return "mod";
-        } else if (player.hasPermissions(1)) {
-            return "vip";
-        } else {
-            return "default";
-        }
+        // Use the centralized permission system to determine player's group
+        return com.zerog.neoessentials.utils.PermissionUtil.getPlayerGroup(player);
     }
     
     /**
@@ -823,7 +814,9 @@ public class TablistPlaceholderManager {
         StringBuffer result = new StringBuffer();
         Matcher matcher = ANIMATION_PATTERN.matcher(text);
         
+        boolean foundAnimations = false;
         while (matcher.find()) {
+            foundAnimations = true;
             String animationName = matcher.group(2);
             
             try {
@@ -831,15 +824,23 @@ public class TablistPlaceholderManager {
                 String animatedText = animationManager.getAnimationFrame(animationName, player);
                 if (animatedText != null) {
                     matcher.appendReplacement(result, Matcher.quoteReplacement(animatedText));
+                    NeoEssentials.LOGGER.debug("Replaced animation placeholder '{}' with '{}'", 
+                        matcher.group(0), animatedText);
                 } else {
                     // Animation not found, leave placeholder as is
                     matcher.appendReplacement(result, Matcher.quoteReplacement(matcher.group(0)));
+                    NeoEssentials.LOGGER.warn("Animation '{}' not found, leaving placeholder as-is", animationName);
                 }
             } catch (Exception e) {
                 NeoEssentials.LOGGER.error("Error processing animation placeholder {}: {}", 
                     animationName, e.getMessage());
                 matcher.appendReplacement(result, Matcher.quoteReplacement("[Anim Error]"));
             }
+        }
+        
+        if (foundAnimations) {
+            NeoEssentials.LOGGER.debug("Processed animation placeholders in text: '{}' -> '{}'", 
+                text, result.toString());
         }
         
         matcher.appendTail(result);

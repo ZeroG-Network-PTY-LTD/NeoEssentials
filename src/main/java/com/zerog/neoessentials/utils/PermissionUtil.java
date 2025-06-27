@@ -5,10 +5,10 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.lang.reflect.Method;
-
-import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -471,6 +471,85 @@ public class PermissionUtil {
     public static void clearAllCache() {
         permissionCache.clear();
         lastAccessTime.clear();
+    }
+      /**
+     * Get the primary group for a player based on tablist permissions
+     * Checks for tablist-specific group permissions in priority order
+     * 
+     * @param player The player to check
+     * @return The group name (e.g., "admin", "mod", "vip", "default")
+     */
+    public static String getPlayerGroup(ServerPlayer player) {
+        if (player == null) {
+            return "default";
+        }
+        
+        String playerName = player.getScoreboardName();
+        
+        // Check tablist-specific group permissions in priority order
+        String[] groups = {"owner", "admin", "mod", "helper", "builder", "vip"};
+        
+        for (String group : groups) {
+            String permission = "neoessentials.tablist.group." + group;
+            if (hasPermission(player, permission)) {
+                NeoEssentials.LOGGER.info("Player {} has tablist group permission {} - assigned to group '{}'", 
+                    playerName, permission, group);
+                return group;
+            }
+        }
+        
+        // Also check legacy neoessentials.group.* permissions for backward compatibility
+        for (String group : groups) {
+            String permission = "neoessentials.group." + group;
+            if (hasPermission(player, permission)) {
+                NeoEssentials.LOGGER.info("Player {} has legacy group permission {} - assigned to group '{}'", 
+                    playerName, permission, group);
+                return group;
+            }
+        }
+        
+        NeoEssentials.LOGGER.info("Player {} has no special group permissions - assigned to group 'default'", playerName);
+        return "default";
+    }
+    
+    /**
+     * Get all groups a player belongs to
+     * 
+     * @param player The player to check
+     * @return Set of group names the player belongs to
+     */
+    public static Set<String> getPlayerGroups(ServerPlayer player) {
+        Set<String> groups = new HashSet<>();
+        
+        if (player == null) {
+            groups.add("default");
+            return groups;
+        }
+        
+        // Check tablist-specific group permissions
+        String[] allGroups = {"owner", "admin", "mod", "helper", "builder", "vip", "default"};
+        
+        for (String group : allGroups) {
+            String permission = "neoessentials.tablist.group." + group;
+            if (hasPermission(player, permission)) {
+                groups.add(group);
+            }
+        }
+        
+        // Also check legacy neoessentials.group.* permissions
+        for (String group : allGroups) {
+            String permission = "neoessentials.group." + group;
+            if (hasPermission(player, permission)) {
+                groups.add(group);
+            }
+        }
+        
+        // Always include default if no other groups found
+        if (groups.isEmpty()) {
+            groups.add("default");
+        }
+        
+        return groups;
     }
   
 }
