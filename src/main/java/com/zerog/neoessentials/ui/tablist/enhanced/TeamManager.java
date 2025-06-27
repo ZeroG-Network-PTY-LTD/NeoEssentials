@@ -132,14 +132,8 @@ public class TeamManager {
      * Clean up all teams
      */
     public void shutdown() {
-        if (server != null) {
-            Scoreboard scoreboard = server.getScoreboard();
-            for (PlayerTeam team : teams.values()) {
-                scoreboard.removePlayerTeam(team);
-            }
-        }
-        
+        // Clear teams and cleanup
         teams.clear();
-        NeoEssentials.LOGGER.info("TeamManager shutdown");
+        NeoEssentials.LOGGER.debug("TeamManager shutdown");
     }
 }

@@ -368,19 +368,9 @@ public class BossBarManager {
      * Clean up all boss bars
      */
     public void shutdown() {
-        // Remove all boss bars from all players
-        if (server != null) {
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                for (BossBarInstance bossBar : bossBars.values()) {
-                    hideBossBar(player, bossBar);
-                }
-            }
-        }
-        
+        // Remove all boss bars and cleanup
         bossBars.clear();
-        playerVisibility.clear();
-        
-        NeoEssentials.LOGGER.info("BossBarManager shutdown");
+        NeoEssentials.LOGGER.debug("BossBarManager shutdown");
     }
     
     /**
