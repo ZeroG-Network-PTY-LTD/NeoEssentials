@@ -712,84 +712,131 @@ public class TablistPlaceholderManager {
             return Component.empty();
         }
         
-        return parseColoredText(text);
+        return parseTextWithColors(text);
     }
     
     /**
-     * Parse text with color codes into a Component with proper hex support
+     * Parse text with both hex and legacy color codes into Components
      */
-    private static MutableComponent parseColoredText(String text) {
-        MutableComponent result = Component.empty();
+    private static Component parseTextWithColors(String input) {
+        MutableComponent finalComponent = Component.empty();
         
-        // Pattern to match color codes: &#RRGGBB or &X where X is legacy color
-        Pattern colorPattern = Pattern.compile("(&#[0-9A-Fa-f]{6})|(&[0-9A-Fa-fK-Ok-oRr])");
+        StringBuilder currentText = new StringBuilder();
+        int i = 0;
         
-        int lastEnd = 0;
-        ChatFormatting currentLegacyFormatting = null;
-        
-        while (lastEnd < text.length()) {
-            Matcher matcher = colorPattern.matcher(text);
-            if (!matcher.find(lastEnd)) {
-                // No more color codes, add remaining text
-                String remainingText = text.substring(lastEnd);
-                if (!remainingText.isEmpty()) {
-                    if (currentLegacyFormatting != null) {
-                        result = result.append(Component.literal(remainingText).withStyle(currentLegacyFormatting));
-                    } else {
-                        result = result.append(Component.literal(remainingText));
-                    }
-                }
-                break;
-            }
+        while (i < input.length()) {
+            char c = input.charAt(i);
             
-            // Add text before this color code
-            if (matcher.start() > lastEnd) {
-                String beforeText = text.substring(lastEnd, matcher.start());
-                if (!beforeText.isEmpty()) {
-                    if (currentLegacyFormatting != null) {
-                        result = result.append(Component.literal(beforeText).withStyle(currentLegacyFormatting));
-                    } else {
-                        result = result.append(Component.literal(beforeText));
-                    }
-                }
-            }
-            
-            String colorCode = matcher.group();
-            int colorEnd = matcher.end();
-            
-            if (colorCode.startsWith("&#")) {
-                // Hex color - apply to next character only
-                currentLegacyFormatting = null; // Reset legacy formatting
+            if (c == '&' && i + 1 < input.length()) {
+                char next = input.charAt(i + 1);
                 
-                try {
-                    String hexColor = colorCode.substring(2);
-                    int rgb = Integer.parseInt(hexColor, 16);
-                    
-                    // Get the next character to color
-                    if (colorEnd < text.length()) {
-                        String nextChar = text.substring(colorEnd, colorEnd + 1);
-                        result = result.append(Component.literal(nextChar).withStyle(style -> style.withColor(rgb)));
-                        lastEnd = colorEnd + 1;
-                    } else {
-                        lastEnd = colorEnd;
+                // Check for hex color: &#RRGGBB
+                if (next == '#' && i + 7 < input.length()) {
+                    String hexPart = input.substring(i + 2, i + 8);
+                    if (isValidHex(hexPart)) {
+                        // Add any accumulated text before this color
+                        if (currentText.length() > 0) {
+                            finalComponent = finalComponent.append(Component.literal(currentText.toString()));
+                            currentText.setLength(0);
+                        }
+                        
+                        // Apply hex color to the next character
+                        if (i + 8 < input.length()) {
+                            char coloredChar = input.charAt(i + 8);
+                            int rgb = Integer.parseInt(hexPart, 16);
+                            finalComponent = finalComponent.append(
+                                Component.literal(String.valueOf(coloredChar))
+                                    .withStyle(style -> style.withColor(rgb))
+                            );
+                            i += 9; // Skip &#RRGGBB + the colored character
+                        } else {
+                            i += 8; // Skip &#RRGGBB if no character follows
+                        }
+                        continue;
                     }
-                } catch (NumberFormatException e) {
-                    // Invalid hex, treat as literal text
-                    result = result.append(Component.literal(colorCode));
-                    lastEnd = colorEnd;
                 }
-            } else {
-                // Legacy color - affects all following text until next color
-                char code = colorCode.charAt(1);
-                ChatFormatting formatting = ChatFormatting.getByCode(code);
-                if (formatting != null) {
-                    currentLegacyFormatting = formatting;
+                
+                // Check for legacy color: &a, &c, etc.
+                if (isLegacyColorCode(next)) {
+                    // Add any accumulated text before this color
+                    if (currentText.length() > 0) {
+                        finalComponent = finalComponent.append(Component.literal(currentText.toString()));
+                        currentText.setLength(0);
+                    }
+                    
+                    // Apply legacy color to all following text until next color
+                    ChatFormatting formatting = ChatFormatting.getByCode(next);
+                    if (formatting != null) {
+                        String restOfText = input.substring(i + 2);
+                        String textUntilNextColor = getTextUntilNextColor(restOfText);
+                        
+                        if (!textUntilNextColor.isEmpty()) {
+                            finalComponent = finalComponent.append(
+                                Component.literal(textUntilNextColor).withStyle(formatting)
+                            );
+                        }
+                        
+                        i += 2 + textUntilNextColor.length();
+                        continue;
+                    }
                 }
-                lastEnd = colorEnd;
             }
+            
+            // Regular character - add to current text
+            currentText.append(c);
+            i++;
         }
         
-        return result;
+        // Add any remaining text
+        if (currentText.length() > 0) {
+            finalComponent = finalComponent.append(Component.literal(currentText.toString()));
+        }
+        
+        return finalComponent;
+    }
+    
+    /**
+     * Check if a string is a valid 6-character hex color
+     */
+    private static boolean isValidHex(String hex) {
+        if (hex.length() != 6) return false;
+        for (char c : hex.toCharArray()) {
+            if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Check if a character is a valid legacy color code
+     */
+    private static boolean isLegacyColorCode(char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || 
+               (c >= 'A' && c <= 'F') || "klmnorKLMNOR".indexOf(c) >= 0;
+    }
+    
+    /**
+     * Get text until the next color code
+     */
+    private static String getTextUntilNextColor(String text) {
+        for (int i = 0; i < text.length() - 1; i++) {
+            if (text.charAt(i) == '&') {
+                char next = text.charAt(i + 1);
+                // Check for hex color
+                if (next == '#' && i + 7 < text.length()) {
+                    String hexPart = text.substring(i + 2, i + 8);
+                    if (isValidHex(hexPart)) {
+                        return text.substring(0, i);
+                    }
+                }
+                // Check for legacy color
+                if (isLegacyColorCode(next)) {
+                    return text.substring(0, i);
+                }
+            }
+        }
+        return text; // No color code found, return all text
     }
     
     /**
