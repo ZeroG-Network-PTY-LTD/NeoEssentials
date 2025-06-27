@@ -106,7 +106,7 @@ public class TABConfig {
             "&eBalance: &a%balance% coins",
             "&eWebsite: &awww.example.com",
             "&eThanks for playing!",
-            "&eRunning &aNeoForge %neoforge%"
+            "&eRunning &aNeoForge Server"
         ));
         
         // Default sorting

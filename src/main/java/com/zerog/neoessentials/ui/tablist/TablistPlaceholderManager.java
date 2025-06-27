@@ -145,6 +145,9 @@ public class TablistPlaceholderManager {
             }
         });
         
+        // NeoForge version
+        registerPlaceholder("neoforge", (player, arg) -> "21.1.179+");
+        
         NeoEssentials.LOGGER.info("Registered {} default placeholders", processors.size());    }
       /**
      * Registers default custom placeholders with parameter support
