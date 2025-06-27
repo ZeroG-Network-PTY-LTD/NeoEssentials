@@ -788,7 +788,12 @@ public class TablistAnimationManager {    /**
         String animationText = animation.texts.get(effectiveFrameIndex);
         
         // Process the animation text for color codes
-        return TablistPlaceholderManager.formatColors(animationText);
+        String processedText = TablistPlaceholderManager.formatColors(animationText);
+        
+        NeoEssentials.LOGGER.debug("Animation '{}' frame {}: '{}' -> '{}'", 
+            animationName, effectiveFrameIndex, animationText, processedText);
+        
+        return processedText;
     }
     
     /**
