@@ -85,6 +85,15 @@ public class TABConfig {
     // Update interval
     private long updateInterval = 1000; // 1 second default
     
+    // Individual header/footer controls
+    private boolean enableHeaders = true;
+    private boolean enableFooters = true;
+    
+    // Animation and group control
+    private boolean animationsEnabled = true;
+    private boolean groupSpecificEnabled = true;
+    private Map<String, Object> animationsData = new HashMap<>();
+    
     // Spectator effect prevention
     private boolean preventSpectatorEffect = false;
     
@@ -329,6 +338,21 @@ public class TABConfig {
     
     public long getUpdateInterval() { return updateInterval; }
     public void setUpdateInterval(long interval) { this.updateInterval = interval; }
+    
+    public boolean isEnableHeaders() { return enableHeaders; }
+    public void setEnableHeaders(boolean enable) { this.enableHeaders = enable; }
+    
+    public boolean isEnableFooters() { return enableFooters; }
+    public void setEnableFooters(boolean enable) { this.enableFooters = enable; }
+    
+    public boolean isAnimationsEnabled() { return animationsEnabled; }
+    public void setAnimationsEnabled(boolean enabled) { this.animationsEnabled = enabled; }
+    
+    public boolean isGroupSpecificEnabled() { return groupSpecificEnabled; }
+    public void setGroupSpecificEnabled(boolean enabled) { this.groupSpecificEnabled = enabled; }
+    
+    public Map<String, Object> getAnimationsData() { return animationsData; }
+    public void setAnimationsData(Map<String, Object> data) { this.animationsData = new HashMap<>(data); }
     
     public boolean isPreventSpectatorEffect() { return preventSpectatorEffect; }
     public void setPreventSpectatorEffect(boolean prevent) { this.preventSpectatorEffect = prevent; }
