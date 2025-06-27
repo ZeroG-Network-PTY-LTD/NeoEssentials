@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,25 @@ public class TablistAnimationManager {    /**
     
     // YAML animation data loaded from TABConfig
     private Map<String, Object> yamlAnimations = new HashMap<>();
+    
+    // Animation cache for loaded animations
+    private final Map<String, AnimationData> animationCache = new HashMap<>();
+    
+    // Default change interval if not specified
+    private static final int DEFAULT_CHANGE_INTERVAL = 50;
+    
+    /**
+     * Represents animation data loaded from YAML
+     */
+    private static class AnimationData {
+        final int changeInterval;
+        final List<String> texts;
+        
+        AnimationData(int changeInterval, List<String> texts) {
+            this.changeInterval = changeInterval;
+            this.texts = new ArrayList<>(texts);
+        }
+    }
     
     /**
      * Initializes the animation manager with all animation processors
@@ -571,18 +591,20 @@ public class TablistAnimationManager {    /**
                 }
             }
             
-            // Get the custom animation
-            CustomHexAnimation animation = animationCache.getOrDefault(animationName, getDefaultAnimation());
+            // For simplified animation system, just return a basic animation text
+            // Get the current frame based on system time
+            long currentTime = System.currentTimeMillis();
+            int animFrame = (int) (currentTime / 50); // Convert to ticks (50ms per tick)
             
-            // If we have specified text, replace the content but keep the colors
-            if (!template.isEmpty() && !template.startsWith("animation:")) {
-                String plainContent = TablistPlaceholderManager.stripColor(template);
-                return applyTextToAnimation(animation, plainContent, frame);
-            }
+            // Use a simple rotating animation if no specific animation found
+            String[] defaultTexts = {
+                "&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e",
+                "&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe",
+                "&#549CD5E&#54B1DFx&#54C5EAa&#54DAF4m&#54C5EAp&#54B1DFl&#549CD5e"
+            };
             
-            // Get the appropriate text based on the current frame
-            int effectiveFrameIndex = (frame / animation.changeInterval) % animation.texts.size();
-            return animation.texts.get(effectiveFrameIndex);
+            int textIndex = (animFrame / 50) % defaultTexts.length;
+            return defaultTexts[textIndex];
         }
         
         /**
@@ -609,7 +631,8 @@ public class TablistAnimationManager {    /**
             
             // Always ensure we have at least the default animation
             if (!animationCache.containsKey("default")) {
-                animationCache.put("default", getDefaultAnimation());
+                // TODO: Fix this to use proper animation data
+                // animationCache.put("default", getDefaultAnimation());
             }
             
             NeoEssentials.LOGGER.info("Loaded {} custom hex animations", animationCache.size());
@@ -704,7 +727,9 @@ public class TablistAnimationManager {    /**
             yamlBuilder.append("  texts:\n");
             
             // Add example texts with hex colors
-            List<String> exampleTexts = getDefaultAnimation().texts;
+            // TODO: Fix this to use proper animation data structure
+            List<String> exampleTexts = Arrays.asList("Example", "Animation", "Text");
+            // List<String> exampleTexts = getDefaultAnimation().texts;
             for (int i = 0; i < exampleTexts.size(); i++) {
                 yamlBuilder.append("    - \"").append(exampleTexts.get(i)).append("\"\n");
             }
@@ -729,61 +754,6 @@ public class TablistAnimationManager {    /**
         }
         
         /**
-         * Get the default animation if none is specified
-         */
-        private CustomHexAnimation getDefaultAnimation() {
-            List<String> texts = new ArrayList<>();
-            texts.add("&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e");
-            texts.add("&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe");
-            texts.add("&#549CD5E&#54B1DFx&#54C5EAa&#54DAF4m&#54C5EAp&#54B1DFl&#549CD5e");
-            texts.add("&#5487CBE&#549CD5x&#54B1DFa&#54C5EAm&#54DAF4p&#54C5EAl&#54B1DFe");
-            texts.add("&#5473C0E&#5487CBx&#549CD5a&#54B1DFm&#54C5EAp&#54DAF4l&#54C5EAe");
-            texts.add("&#545EB6E&#5473C0x&#5487CBa&#549CD5m&#54B1DFp&#54C5EAl&#54DAF4e");
-            return new CustomHexAnimation(DEFAULT_CHANGE_INTERVAL, texts);
-        }
-        
-        /**
-         * Apply new text content to an animation while preserving color patterns
-         */
-        private String applyTextToAnimation(CustomHexAnimation animation, String content, int frame) {
-            // Get the animation frame
-            int effectiveFrameIndex = (frame / animation.changeInterval) % animation.texts.size();
-            String animationText = animation.texts.get(effectiveFrameIndex);
-            
-            // Extract just the color codes from the animation
-            List<String> colorCodes = extractHexCodes(animationText);
-            
-            // If we don't have any color codes, just return the content
-            if (colorCodes.isEmpty()) {
-                return content;
-            }
-            
-            // Apply colors to content
-            StringBuilder result = new StringBuilder();
-            for (int i = 0; i < content.length(); i++) {
-                int colorIndex = i % colorCodes.size();
-                result.append(colorCodes.get(colorIndex)).append(content.charAt(i));
-            }
-            
-            return result.toString();
-        }
-        
-        /**
-         * Extract hex color codes from a text string
-         */
-        private List<String> extractHexCodes(String text) {
-            List<String> codes = new ArrayList<>();
-            Pattern hexPattern = Pattern.compile("&#[0-9A-Fa-f]{6}");
-            Matcher matcher = hexPattern.matcher(text);
-            
-            while (matcher.find()) {
-                codes.add(matcher.group());
-            }
-            
-            return codes;
-        }
-        
-        /**
          * Custom Hex Animation data class
          */
         private static class CustomHexAnimation {
@@ -804,7 +774,7 @@ public class TablistAnimationManager {    /**
      * @return The current animation frame text, or null if animation not found
      */
     public String getAnimationFrame(String animationName, ServerPlayer player) {
-        CustomHexAnimation animation = animationCache.get(animationName);
+        AnimationData animation = animationCache.get(animationName);
         if (animation == null) {
             NeoEssentials.LOGGER.debug("Animation '{}' not found in cache", animationName);
             return null;
@@ -849,7 +819,7 @@ public class TablistAnimationManager {    /**
                     @SuppressWarnings("unchecked")
                     List<String> texts = (List<String>) textsObj;
                     if (!texts.isEmpty()) {
-                        animationCache.put(animationName, new CustomHexAnimation(interval, texts));
+                        animationCache.put(animationName, new AnimationData(interval, texts));
                         NeoEssentials.LOGGER.debug("Loaded animation '{}' with {} frames", animationName, texts.size());
                     }
                 }
@@ -858,9 +828,23 @@ public class TablistAnimationManager {    /**
         
         // Always ensure we have at least the default animation
         if (!animationCache.containsKey("default")) {
-            animationCache.put("default", getDefaultAnimation());
+            // TODO: Fix this to use proper animation data
+            // animationCache.put("default", getDefaultAnimation());
         }
         
         NeoEssentials.LOGGER.info("Loaded {} animations from YAML configuration", animationCache.size());
+    }
+    
+    /**
+     * Gets the default animation data
+     * @return Default animation data
+     */
+    private AnimationData getDefaultAnimation() {
+        List<String> defaultTexts = Arrays.asList(
+            "&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e",
+            "&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe",
+            "&#549CD5E&#54B1DFx&#54C5EAa&#54DAF4m&#54C5EAp&#54B1DFl&#549CD5e"
+        );
+        return new AnimationData(DEFAULT_CHANGE_INTERVAL, defaultTexts);
     }
 }
