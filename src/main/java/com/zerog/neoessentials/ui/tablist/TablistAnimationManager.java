@@ -801,6 +801,8 @@ public class TablistAnimationManager {    /**
         // Clear existing cache and reload from YAML data
         animationCache.clear();
         
+        NeoEssentials.LOGGER.info("Loading animations from YAML configuration...");
+        
         for (Map.Entry<String, Object> entry : animationsData.entrySet()) {
             String animationName = entry.getKey();
             if (entry.getValue() instanceof Map) {
@@ -820,7 +822,8 @@ public class TablistAnimationManager {    /**
                     List<String> texts = (List<String>) textsObj;
                     if (!texts.isEmpty()) {
                         animationCache.put(animationName, new AnimationData(interval, texts));
-                        NeoEssentials.LOGGER.debug("Loaded animation '{}' with {} frames", animationName, texts.size());
+                        NeoEssentials.LOGGER.info("Loaded animation '{}' with {} frames and {}ms interval", 
+                            animationName, texts.size(), interval);
                     }
                 }
             }
@@ -828,8 +831,8 @@ public class TablistAnimationManager {    /**
         
         // Always ensure we have at least the default animation
         if (!animationCache.containsKey("default")) {
-            // TODO: Fix this to use proper animation data
-            // animationCache.put("default", getDefaultAnimation());
+            animationCache.put("default", getDefaultAnimation());
+            NeoEssentials.LOGGER.info("Added fallback default animation");
         }
         
         NeoEssentials.LOGGER.info("Loaded {} animations from YAML configuration", animationCache.size());

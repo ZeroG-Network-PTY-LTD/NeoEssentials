@@ -4,6 +4,7 @@ import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.ui.tablist.TablistAnimationManager;
 import com.zerog.neoessentials.ui.tablist.TablistPlaceholderManager;
 import com.zerog.neoessentials.utils.PermissionUtil;
+import com.zerog.neoessentials.utils.PermissionUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.server.MinecraftServer;
@@ -341,15 +342,8 @@ public class TABLikeTablistManager {
     }
     
     private String getPlayerGroup(ServerPlayer player) {
-        // Check permission-based groups in priority order
-        if (PermissionUtil.hasPermission(player, "neoessentials.group.owner")) return "owner";
-        if (PermissionUtil.hasPermission(player, "neoessentials.group.admin")) return "admin";
-        if (PermissionUtil.hasPermission(player, "neoessentials.group.mod")) return "mod";
-        if (PermissionUtil.hasPermission(player, "neoessentials.group.helper")) return "helper";
-        if (PermissionUtil.hasPermission(player, "neoessentials.group.builder")) return "builder";
-        if (PermissionUtil.hasPermission(player, "neoessentials.group.vip")) return "vip";
-        
-        return "default";
+        // Use the centralized permission system to determine player group
+        return PermissionUtil.getPlayerGroup(player);
     }
     
     private String getServerName() {
