@@ -65,15 +65,15 @@ public class ConfigUtil {
      * Attempt to directly patch NeoForge's config system to prevent unnecessary "correction" warnings
      * This uses reflection to access and modify NeoForge's internal config validation mechanisms
      */    private static void patchNeoForgeConfigComparison() {
-        try {            // Log that templates have moved to templates.json
-            com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Templates have been moved to templates.json");
+        try {            // Log that templates have moved to tablist.yml
+            com.zerog.neoessentials.NeoEssentials.LOGGER.debug("Templates have been moved to tablist.yml");
             com.zerog.neoessentials.NeoEssentials.LOGGER.debug("No need to patch tablist config comparisons anymore");
-              // The template system now loads from templates.json instead of TOML config
+              // The template system now loads from tablist.yml instead of TOML config
             boolean configValid = TablistYamlConfig.getUpdateInterval() > 0;
             
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("Tablist configuration status: {}", configValid ? "valid" : "invalid");
               // Our approach is to improve logging rather than try to patch NeoForge directly
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Templates now in templates.json, no need to patch YAML comparison");
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Templates now in tablist.yml, no need to patch YAML comparison");
         } catch (Exception e) {
             com.zerog.neoessentials.NeoEssentials.LOGGER.error("Failed to apply NeoForge config comparison patch", e);
         }
