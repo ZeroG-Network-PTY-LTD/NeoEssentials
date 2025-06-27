@@ -24,8 +24,8 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
     
     // Files to be placed in the main neoessentials directory (outside of config)
     private static final List<String> NEOESSENTIALS_FILES = Arrays.asList(
-        "templates.json",
-        "animations.json",
+        "tablist.yml",
+        "animations.yml",
         "README.md"
     );
 
