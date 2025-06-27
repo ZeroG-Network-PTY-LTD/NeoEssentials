@@ -41,6 +41,7 @@ Comprehensive documentation is available:
 - [Commands](https://github.com/ZeroG-Network/NeoEssentials/wiki/Commands) - Command reference
 - [Permissions](https://github.com/ZeroG-Network/NeoEssentials/wiki/Permissions) - Permission list
 - [Configuration](https://github.com/ZeroG-Network/NeoEssentials/wiki/Configuration) - Config guide
+- [Tablist Hex Colors](docs/HEX_COLOR_SUPPORT.md) - Native hex color support guide
 - [JSON Templates](https://github.com/ZeroG-Network/NeoEssentials/wiki/JSON-Templates) - Template system guide
 - [TOML to JSON Migration](https://github.com/ZeroG-Network/NeoEssentials/wiki/TOML-to-JSON-Migration) - Migration guide
 

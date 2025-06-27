@@ -492,8 +492,6 @@ public class PermissionUtil {
         for (String group : groups) {
             String permission = "neoessentials.tablist.group." + group;
             if (hasPermission(player, permission)) {
-                NeoEssentials.LOGGER.info("Player {} has tablist group permission {} - assigned to group '{}'", 
-                    playerName, permission, group);
                 return group;
             }
         }
@@ -502,13 +500,11 @@ public class PermissionUtil {
         for (String group : groups) {
             String permission = "neoessentials.group." + group;
             if (hasPermission(player, permission)) {
-                NeoEssentials.LOGGER.info("Player {} has legacy group permission {} - assigned to group '{}'", 
-                    playerName, permission, group);
                 return group;
             }
         }
         
-        NeoEssentials.LOGGER.info("Player {} has no special group permissions - assigned to group 'default'", playerName);
+        NeoEssentials.LOGGER.debug("Player {} has no special group permissions - assigned to group 'default'", playerName);
         return "default";
     }
     
