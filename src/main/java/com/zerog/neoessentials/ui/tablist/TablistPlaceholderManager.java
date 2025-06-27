@@ -29,6 +29,9 @@ public class TablistPlaceholderManager {
     // Regex pattern for placeholders like %player%, {player}, etc.
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("(%|\\{)(\\w+)(}|%)");
     
+    // Regex pattern for animation placeholders like {animation:name}, <anim:name>
+    private static final Pattern ANIMATION_PATTERN = Pattern.compile("(\\{animation:|<anim:)([^}]+)(}|>)");
+    
     // Cache for expensive placeholder values
     private final Map<String, CachedPlaceholderValue> placeholderCache = new ConcurrentHashMap<>();
       // Placeholder processors mapped by name
@@ -36,6 +39,9 @@ public class TablistPlaceholderManager {
     
     // Custom placeholder registry
     private final CustomPlaceholderRegistry customPlaceholderRegistry = new CustomPlaceholderRegistry();
+    
+    // Animation manager reference for processing animation placeholders
+    private TablistAnimationManager animationManager;
     
     // Minecraft server instance
     private MinecraftServer server;
@@ -49,6 +55,14 @@ public class TablistPlaceholderManager {
         this.server = server;
         registerDefaultPlaceholders();
         registerDefaultCustomPlaceholders();
+    }
+    
+    /**
+     * Sets the animation manager for processing animation placeholders
+     * @param animationManager The animation manager
+     */
+    public void setAnimationManager(TablistAnimationManager animationManager) {
+        this.animationManager = animationManager;
     }
     
     /**
@@ -431,6 +445,9 @@ public class TablistPlaceholderManager {
             return text;
         }
         
+        // First process animation placeholders
+        text = processAnimationPlaceholders(text, player);
+        
         // Check for missing placeholders first (only in debug mode)
         if (NeoEssentials.LOGGER.isDebugEnabled()) {
             logMissingPlaceholders(text);
@@ -790,5 +807,42 @@ public class TablistPlaceholderManager {
         if (!missing.isEmpty()) {
             NeoEssentials.LOGGER.warn("Missing placeholders in text: {}", String.join(", ", missing));
         }
+    }
+    
+    /**
+     * Process animation placeholders in text
+     * @param text The text to process
+     * @param player The player for context
+     * @return Text with animation placeholders replaced
+     */
+    private String processAnimationPlaceholders(String text, ServerPlayer player) {
+        if (animationManager == null) {
+            return text;
+        }
+        
+        StringBuffer result = new StringBuffer();
+        Matcher matcher = ANIMATION_PATTERN.matcher(text);
+        
+        while (matcher.find()) {
+            String animationName = matcher.group(2);
+            
+            try {
+                // Get the current animation frame for this animation
+                String animatedText = animationManager.getAnimationFrame(animationName, player);
+                if (animatedText != null) {
+                    matcher.appendReplacement(result, Matcher.quoteReplacement(animatedText));
+                } else {
+                    // Animation not found, leave placeholder as is
+                    matcher.appendReplacement(result, Matcher.quoteReplacement(matcher.group(0)));
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error processing animation placeholder {}: {}", 
+                    animationName, e.getMessage());
+                matcher.appendReplacement(result, Matcher.quoteReplacement("[Anim Error]"));
+            }
+        }
+        
+        matcher.appendTail(result);
+        return result.toString();
     }
 }

@@ -86,13 +86,9 @@ public class TABConfigManager {
      * Apply tablist configuration values to TABConfig
      */
     private void applyTablistConfig(Map<String, Object> config) {
-        // Extract tablist section
-        Map<String, Object> tablist = getMapOrDefault(config, "tablist");
-        
-        // Apply header/footer settings
-        if (tablist.containsKey("headerFooterEnabled")) {
-            currentConfig.setHeaderFooterEnabled(getBooleanOrDefault(tablist, "headerFooterEnabled", true));
-        }
+        // Apply settings section first
+        Map<String, Object> settings = getMapOrDefault(config, "settings");
+        applySettings(settings);
         
         // Apply templates section
         Map<String, Object> templates = getMapOrDefault(config, "templates");
@@ -142,17 +138,83 @@ public class TABConfigManager {
                 }
             }
         }
+        
+        // Apply bossbars configuration
+        Map<String, Object> bossbars = getMapOrDefault(config, "bossbars");
+        if (!bossbars.isEmpty()) {
+            currentConfig.setBossBarEnabled(true);
+            NeoEssentials.LOGGER.info("Loaded bossbar configurations");
+        }
+    }
+    
+    /**
+     * Apply settings from the settings section
+     */
+    private void applySettings(Map<String, Object> settings) {
+        if (settings.isEmpty()) {
+            NeoEssentials.LOGGER.debug("No settings section found, using defaults");
+            return;
+        }
+        
+        NeoEssentials.LOGGER.info("Applying tablist settings from YAML configuration");
+        
+        // Update interval
+        if (settings.containsKey("update_interval")) {
+            Object interval = settings.get("update_interval");
+            if (interval instanceof Number) {
+                long intervalMs = ((Number) interval).longValue();
+                currentConfig.setUpdateInterval(intervalMs);
+                NeoEssentials.LOGGER.info("Set update interval to: {}ms", intervalMs);
+            }
+        }
+        
+        // Enable/disable headers and footers
+        boolean enableHeaders = getBooleanOrDefault(settings, "enable_headers", true);
+        boolean enableFooters = getBooleanOrDefault(settings, "enable_footers", true);
+        
+        // For TAB compatibility, headers and footers are controlled together
+        boolean headerFooterEnabled = enableHeaders || enableFooters;
+        currentConfig.setHeaderFooterEnabled(headerFooterEnabled);
+        NeoEssentials.LOGGER.info("Header/Footer system enabled: {} (headers: {}, footers: {})", 
+                                 headerFooterEnabled, enableHeaders, enableFooters);
+        
+        // Store individual settings for later use if needed
+        currentConfig.setEnableHeaders(enableHeaders);
+        currentConfig.setEnableFooters(enableFooters);
+        
+        // Enable/disable boss bars
+        if (settings.containsKey("enable_bossbars")) {
+            boolean enableBossbars = getBooleanOrDefault(settings, "enable_bossbars", false);
+            currentConfig.setBossBarEnabled(enableBossbars);
+            NeoEssentials.LOGGER.info("Boss bars enabled: {}", enableBossbars);
+        }
+        
+        // Enable/disable animations
+        if (settings.containsKey("enable_animations")) {
+            boolean enableAnimations = getBooleanOrDefault(settings, "enable_animations", true);
+            currentConfig.setAnimationsEnabled(enableAnimations);
+            NeoEssentials.LOGGER.info("Animations enabled: {}", enableAnimations);
+        }
+        
+        // Enable/disable group-specific templates
+        if (settings.containsKey("enable_group_specific")) {
+            boolean enableGroupSpecific = getBooleanOrDefault(settings, "enable_group_specific", true);
+            currentConfig.setGroupSpecificEnabled(enableGroupSpecific);
+            NeoEssentials.LOGGER.info("Group-specific templates enabled: {}", enableGroupSpecific);
+        }
     }
     
     /**
      * Apply animations configuration values to TABConfig
      */
     private void applyAnimationsConfig(Map<String, Object> config) {
-        // For now, animations are handled by the TablistAnimationManager
-        // We just log that they were loaded
+        // Store animations data for the TablistAnimationManager
         Map<String, Object> animations = getMapOrDefault(config, "animations");
         if (!animations.isEmpty()) {
-            NeoEssentials.LOGGER.info("Loaded {} animation configurations", animations.size());
+            currentConfig.setAnimationsData(animations);
+            NeoEssentials.LOGGER.info("Loaded {} animation configurations from YAML", animations.size());
+        } else {
+            NeoEssentials.LOGGER.warn("No animations found in animations.yml");
         }
     }
     
