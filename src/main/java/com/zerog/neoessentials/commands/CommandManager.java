@@ -70,7 +70,7 @@ public class CommandManager {    // Command classes
         adminPanelCommand = new AdminPanelCommand();
         tablistCommand = new TablistCommand();
         
-        // Debug commands will be initialized later when TabManager is available
+        // Debug commands will be initialized later when TABLikeTablistManager is available
         // ItemCommands needs CommandBuildContext which is only available during register event
     }
     
@@ -100,10 +100,10 @@ public class CommandManager {    // Command classes
         NeoEssentials.LOGGER.info("Registered item commands");
           // Debug command temporarily disabled while developing TablistFix
         /*
-        if (mod != null && mod.getTabManager() != null) {
+        if (mod != null && mod.getTablistManager() != null) {
             // Debug command code goes here when re-enabled
         } else {
-            NeoEssentials.LOGGER.warn("Could not register tablist debug command: TabManager not available");
+            NeoEssentials.LOGGER.warn("Could not register tablist debug command: TABLikeTablistManager not available");
         }
         */
     }
