@@ -1,8 +1,5 @@
 package com.zerog.neoessentials.ui.tablist.enhanced;
 
-import com.zerog.neoessentials.NeoEssentials;
-import net.minecraft.server.level.ServerPlayer;
-
 import java.util.*;
 
 /**

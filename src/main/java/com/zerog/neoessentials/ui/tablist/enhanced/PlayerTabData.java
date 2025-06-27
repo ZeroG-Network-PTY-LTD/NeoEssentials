@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.ui.tablist.enhanced;
 
-import com.zerog.neoessentials.NeoEssentials;
+import com.zerog.neoessentials.ui.tablist.TablistPlaceholderManager;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.UUID;
@@ -112,8 +112,8 @@ public class PlayerTabData {
         }
         
         // Apply placeholders to prefix and suffix
-        this.prefix = placeholderManager.replacePlaceholders(this.prefix, player);
-        this.suffix = placeholderManager.replacePlaceholders(this.suffix, player);
+        this.prefix = placeholderManager.processPlaceholders(this.prefix, player);
+        this.suffix = placeholderManager.processPlaceholders(this.suffix, player);
         
         // Create tab format
         this.tabFormat = this.prefix + "&f" + playerName + this.suffix;
@@ -124,13 +124,13 @@ public class PlayerTabData {
         // Update playerlist objective value
         if (config.isPlayerlistObjectiveEnabled()) {
             String rawValue = config.getPlayerlistObjectiveValue();
-            this.playerlistValue = placeholderManager.replacePlaceholders(rawValue, player);
+            this.playerlistValue = placeholderManager.processPlaceholders(rawValue, player);
         }
         
         // Update belowname objective value
         if (config.isBelownameObjectiveEnabled()) {
             String rawValue = config.getBelownameObjectiveValue();
-            this.belownameValue = placeholderManager.replacePlaceholders(rawValue, player);
+            this.belownameValue = placeholderManager.processPlaceholders(rawValue, player);
         }
     }
     
