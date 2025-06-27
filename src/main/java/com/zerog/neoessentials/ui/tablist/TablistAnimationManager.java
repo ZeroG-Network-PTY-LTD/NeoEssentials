@@ -71,6 +71,9 @@ public class TablistAnimationManager {    /**
     // Animation processors for each animation type
     private final Map<AnimationType, AnimationProcessor> animationProcessors = new HashMap<>();
     
+    // YAML animation data loaded from TABConfig
+    private Map<String, Object> yamlAnimations = new HashMap<>();
+    
     /**
      * Initializes the animation manager with all animation processors
      */
@@ -792,5 +795,72 @@ public class TablistAnimationManager {    /**
                 this.texts = texts;
             }
         }
+    }
+    
+    /**
+     * Get the current animation frame for a specific animation
+     * @param animationName The name of the animation
+     * @param player The player (for context if needed)
+     * @return The current animation frame text, or null if animation not found
+     */
+    public String getAnimationFrame(String animationName, ServerPlayer player) {
+        CustomHexAnimation animation = animationCache.get(animationName);
+        if (animation == null) {
+            NeoEssentials.LOGGER.debug("Animation '{}' not found in cache", animationName);
+            return null;
+        }
+        
+        // Get current frame based on system time and animation interval
+        long currentTime = System.currentTimeMillis();
+        int frame = (int) (currentTime / 50); // Convert to ticks (50ms per tick)
+        int effectiveFrameIndex = (frame / animation.changeInterval) % animation.texts.size();
+        
+        String animationText = animation.texts.get(effectiveFrameIndex);
+        
+        // Process the animation text for color codes
+        return TablistPlaceholderManager.formatColors(animationText);
+    }
+    
+    /**
+     * Load animations from TABConfig YAML data
+     * @param animationsData The animations data from TABConfig
+     */
+    public void loadAnimationsFromConfig(Map<String, Object> animationsData) {
+        this.yamlAnimations = new HashMap<>(animationsData);
+        
+        // Clear existing cache and reload from YAML data
+        animationCache.clear();
+        
+        for (Map.Entry<String, Object> entry : animationsData.entrySet()) {
+            String animationName = entry.getKey();
+            if (entry.getValue() instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> animData = (Map<String, Object>) entry.getValue();
+                
+                // Get change interval
+                Object intervalObj = animData.get("change_interval");
+                int interval = (intervalObj instanceof Number) 
+                    ? ((Number) intervalObj).intValue() 
+                    : DEFAULT_CHANGE_INTERVAL;
+                
+                // Get texts
+                Object textsObj = animData.get("texts");
+                if (textsObj instanceof List) {
+                    @SuppressWarnings("unchecked")
+                    List<String> texts = (List<String>) textsObj;
+                    if (!texts.isEmpty()) {
+                        animationCache.put(animationName, new CustomHexAnimation(interval, texts));
+                        NeoEssentials.LOGGER.debug("Loaded animation '{}' with {} frames", animationName, texts.size());
+                    }
+                }
+            }
+        }
+        
+        // Always ensure we have at least the default animation
+        if (!animationCache.containsKey("default")) {
+            animationCache.put("default", getDefaultAnimation());
+        }
+        
+        NeoEssentials.LOGGER.info("Loaded {} animations from YAML configuration", animationCache.size());
     }
 }

@@ -89,6 +89,15 @@ public class TABLikeTablistManager {
         // Load configuration
         this.config = configManager.loadConfig();
         
+        // Wire animation manager with placeholder manager
+        placeholderManager.setAnimationManager(animationManager);
+        
+        // Load animations from config if available
+        if (config.getAnimationsData() != null && !config.getAnimationsData().isEmpty()) {
+            animationManager.loadAnimationsFromConfig(config.getAnimationsData());
+            NeoEssentials.LOGGER.info("Loaded animations from YAML configuration");
+        }
+        
         // Initialize components
         teamManager.initialize(config);
         objectiveManager.initialize(config);
@@ -165,9 +174,17 @@ public class TABLikeTablistManager {
                 continue;
             }
             
-            // Get header and footer for this player
-            Component header = getHeaderForPlayer(player, data);
-            Component footer = getFooterForPlayer(player, data);
+            // Get header and footer for this player based on individual settings
+            Component header = Component.empty();
+            Component footer = Component.empty();
+            
+            if (config.isEnableHeaders()) {
+                header = getHeaderForPlayer(player, data);
+            }
+            
+            if (config.isEnableFooters()) {
+                footer = getFooterForPlayer(player, data);
+            }
             
             // Send packet
             player.connection.send(new ClientboundTabListPacket(header, footer));
@@ -402,23 +419,30 @@ public class TABLikeTablistManager {
         NeoEssentials.LOGGER.info("TAB-like tablist system reloaded");
     }
     
-    // Reload configuration and templates
+    /**
+     * Reload the tablist configuration and update all components
+     * @return true if reload was successful, false otherwise
+     */
     public boolean reloadConfig() {
+        NeoEssentials.LOGGER.info("Reloading TAB-like tablist configuration");
+        
         try {
-            NeoEssentials.LOGGER.info("Reloading TAB-like tablist configuration");
-            
             // Reload configuration
-            this.config = configManager.loadConfig();
+            this.config = configManager.reloadConfig();
             
-            // Reinitialize components with new config
+            // Reload animations if available
+            if (config.getAnimationsData() != null && !config.getAnimationsData().isEmpty()) {
+                animationManager.loadAnimationsFromConfig(config.getAnimationsData());
+                NeoEssentials.LOGGER.info("Reloaded animations from YAML configuration");
+            }
+            
+            // Re-initialize components with new config
             teamManager.initialize(config);
             objectiveManager.initialize(config);
             bossBarManager.initialize(config);
             
-            // Restart update task if needed
-            if (initialized) {
-                startUpdateTask();
-            }
+            // Restart update task with new interval
+            startUpdateTask();
             
             NeoEssentials.LOGGER.info("TAB-like tablist configuration reloaded successfully");
             return true;
