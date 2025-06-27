@@ -1,16 +1,18 @@
 package com.zerog.neoessentials.utils;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.config.CompatNeoEssentialsConfig;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.lang.reflect.Method;
+
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Utility class for handling permission checks with integration for LuckPerms and FTB Ranks.
+ * Utility class for handling permission checks with integration for LuckPerms.
  * This provides a centralized way to check permissions throughout the mod.
  */
 public class PermissionUtil {
@@ -41,7 +43,7 @@ public class PermissionUtil {
     
     /**
      * Check if a command source has a specific permission.
-     * Will check LuckPerms, FTB Ranks, and then fall back to config defaults.
+     * Will check LuckPerms and then fall back to config defaults.
      *
      * @param source The command source to check
      * @param permission The permission string to check
@@ -106,7 +108,7 @@ public class PermissionUtil {
     }
       /**
      * Check if a player has a specific permission.
-     * Will check LuckPerms, FTB Ranks, and then fall back to config defaults.
+     * Will check LuckPerms and then fall back to config defaults.
      *
      * @param player The player to check
      * @param permission The permission string to check
@@ -302,15 +304,13 @@ public class PermissionUtil {
             return true;
         }
         
-        // If not found in LuckPerms, try FTB Ranks
-        if (!result) {
-            result = checkFTBRanksPermission(player, permission);
-            
-            if (result && debug) {
-                NeoEssentials.LOGGER.debug("FTB Ranks granted permission '{}' to player {}", 
-                    permission, playerName);
-                return true;
-            }
+        // Check ForgePerms
+        result = checkForgePermsPermission(player, permission);
+        
+        if (result && debug) {
+            NeoEssentials.LOGGER.debug("ForgePerms granted permission '{}' to player {}", 
+                permission, playerName);
+            return true;
         }
         
         // If no permission system gave a result, check default config
@@ -365,73 +365,51 @@ public class PermissionUtil {
         
         return false;
     }    /**
-     * Check permission using FTB Ranks API if available
+     * Check permission using ForgePerms API if available
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if permission is granted, false otherwise
-     */    static boolean checkFTBRanksPermission(ServerPlayer player, String permission) {
+     */
+    static boolean checkForgePermsPermission(ServerPlayer player, String permission) {
         try {
-            // Check if FTB Ranks is loaded using ModList
-            if (net.neoforged.fml.ModList.get().isLoaded("ftbranks")) {
-                // Check if FTB Library is also loaded (required dependency)
-                if (!net.neoforged.fml.ModList.get().isLoaded("ftblibrary")) {
-                    // Only log this once per server run to avoid spam
-                    if (NeoEssentials.getInstance().getConfigManager().getConfig().isDebug()) {
-                        NeoEssentials.LOGGER.error("FTB Ranks detected but FTB Library is missing - permission checks will fail!");
-                    }
-                    return false;
-                }
+            // Check if ForgePerms is loaded using reflection
+            Class<?> forgePermsClass = Class.forName("com.sperion.forgeperms.ForgePerms");
+            Class<?> permissionsBaseClass = Class.forName("com.sperion.forgeperms.PermissionsBase");
+            
+            // Get the methods needed from ForgePerms
+            Method getPermissionHandlerMethod = forgePermsClass.getMethod("getPermissionHandler");
+            Method canAccessMethod = permissionsBaseClass.getMethod("canAccess", String.class, String.class, String.class);
+            
+            // Get the actual permission handler instance
+            Object permissionHandler = getPermissionHandlerMethod.invoke(null);
+            
+            if (permissionHandler != null) {
+                // Get player name and world name
+                String username = player.getName().getString();
+                String world = player.level().dimension().location().toString();
                 
-                try {
-                    // FTB Ranks is loaded, get the API class through reflection
-                    Class<?> apiClass = Class.forName("dev.ftb.mods.ftbranks.api.RanksAPI");
-                    // Get the API instance using the getAPI static method
-                    Object api = apiClass.getMethod("getAPI").invoke(null);
-                    
-                    if (api != null) {
-                        // Check permission
-                        Object result = api.getClass()
-                            .getMethod("getPermissionValue", ServerPlayer.class, String.class)
-                            .invoke(api, player, permission);
-                        
-                        // Get the result value
-                        if (result != null) {
-                            // Check if the result has a getAsBoolean method
-                            try {
-                                Object booleanValue = result.getClass().getMethod("getAsBoolean").invoke(result);
-                                return (Boolean) booleanValue;
-                            } catch (NoSuchMethodException e) {
-                                // Try alternative methods if getAsBoolean doesn't exist
-                                try {
-                                    Object booleanValue = result.getClass().getMethod("booleanValue").invoke(result);
-                                    return (Boolean) booleanValue;
-                                } catch (NoSuchMethodException ex) {
-                                    // Just return the string value converted to boolean
-                                    return Boolean.parseBoolean(result.toString());
-                                }
-                            }
-                        }
-                    }
-                } catch (NoClassDefFoundError e) {
-                    // This happens when FTB Ranks is missing dependencies at runtime
-                    if (NeoEssentials.getInstance().getConfigManager().getConfig().isDebug()) {
-                        NeoEssentials.LOGGER.error("FTB Ranks dependency error: {}", e.getMessage());
-                    }
-                    return false;
+                // Use reflection to call the canAccess method
+                Object result = canAccessMethod.invoke(permissionHandler, username, world, permission);
+                
+                // Check if the result is a Boolean and return its value
+                if (result instanceof Boolean) {
+                    return (Boolean) result;
                 }
             }
-            return false;
         } catch (ClassNotFoundException e) {
-            // FTB Ranks API class not found, that's fine
+            // ForgePerms not found, that's fine
             return false;
         } catch (Exception e) {
             // Something went wrong, log it
-            NeoEssentials.LOGGER.error("Error checking FTB Ranks permission", e);
+            NeoEssentials.LOGGER.error("Error checking ForgePerms permission", e);
         }
         
         return false;
-    }/**     * Check if a permission should be granted by default when no permission system is found
+    }
+    
+    /**
+     * Check if a permission should be granted by default when no permission system is found
      * 
      * @param permission The permission string to check
      * @return True if the permission should be granted by default, false otherwise

@@ -166,9 +166,6 @@ public class NeoEssentials {
         LOGGER.info("HELLO FROM COMMON SETUP");
         LOGGER.info("Initializing NeoEssentials managers");
         
-        // Initialize FTB Registry compatibility helpers
-        com.zerog.neoessentials.compat.FTBRegistryCompat.init();
-        
         // Additional registrations that need to happen during common setup
         event.enqueueWork(() -> {
             LOGGER.info("Registering command argument types in common setup");
@@ -279,7 +276,7 @@ public class NeoEssentials {
     private void initializePermissionHandlers() {
         try {
             LOGGER.info("Initializing permission handlers");
-            // This will register all available permission handlers (LuckPerms, FTB Ranks, etc.)
+            // This will register all available permission handlers (LuckPerms, etc.)
             com.zerog.neoessentials.permissions.PermissionHandlerManager.getInstance();
         } catch (Exception e) {
             LOGGER.error("Error initializing permission handlers", e);
@@ -336,17 +333,14 @@ public class NeoEssentials {
      * </p>
      *
      * @param event The server starting event
-     */    @SubscribeEvent    public void onServerStarting(ServerStartingEvent event) {
+     */    @SubscribeEvent
+    public void onServerStarting(ServerStartingEvent event) {
         // Store the server instance
         server = event.getServer();
         
         // Log mod activation
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
-        
-        // Initialize the permission system
-        LOGGER.info("Initializing permission system");
-        com.zerog.neoessentials.permissions.PermissionHandlerManager.getInstance();
         
         // Update the server reference in EnhancedTablistManager if it exists
         if (dataManager != null && dataManager.getTablistManager() != null) {

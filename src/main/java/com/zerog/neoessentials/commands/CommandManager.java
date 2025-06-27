@@ -41,8 +41,8 @@ public class CommandManager {    // Command classes
     private final JailCommands jailCommands;
     private final PowerToolCommands powerToolCommands;
     private final MailCommands mailCommands;
-    private final AdminPanelCommand adminPanelCommand;    private final TablistCommand tablistCommand;
-    private final PermissionCommands permissionCommands;
+    private final AdminPanelCommand adminPanelCommand;
+    private final TablistCommand tablistCommand;
     
     // Debug command disabled while developing TablistFix
       // NeoEssentials main reference - disabled while developing TablistFix
@@ -69,7 +69,6 @@ public class CommandManager {    // Command classes
         mailCommands = new MailCommands();
         adminPanelCommand = new AdminPanelCommand();
         tablistCommand = new TablistCommand();
-        permissionCommands = new PermissionCommands();
         
         // Debug commands will be initialized later when TabManager is available
         // ItemCommands needs CommandBuildContext which is only available during register event
@@ -177,9 +176,18 @@ public class CommandManager {    // Command classes
         NeoEssentials.LOGGER.info("Registered mail commands");
           // Register admin panel commands
         adminPanelCommand.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered admin panel commands");        // Register tablist commands
+        NeoEssentials.LOGGER.info("Registered admin panel commands");
+            // Register tablist commands
         tablistCommand.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered tablist commands");
+        
+        // Register permission commands
+        PermissionCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered permission commands");
+        
+        // Register tabfix commands
+        TabFixCommand.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered tablist fix commands");
         
         // Register permission commands
         PermissionCommands.register(dispatcher);

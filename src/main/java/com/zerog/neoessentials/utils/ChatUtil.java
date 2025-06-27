@@ -40,6 +40,16 @@ public class ChatUtil {
     }
 
     /**
+     * Send a message to a command source.
+     * 
+     * @param source The command source to send the message to
+     * @param message The message to send
+     */
+    public static void sendMessage(CommandSourceStack source, String message) {
+        source.sendSystemMessage(Component.literal(message));
+    }
+
+    /**
      * Send a message to a player with a specific color.
      * 
      * @param player The player to send the message to

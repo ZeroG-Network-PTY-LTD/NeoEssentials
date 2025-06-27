@@ -23,15 +23,6 @@ repositories {
     
     // Add Maven Central for SnakeYAML
     mavenCentral()
-    
-    // Add Modrinth repository for FTB mods
-    maven {
-        name = "Modrinth"
-        url = "https://api.modrinth.com/maven"
-        content {
-            includeGroup "maven.modrinth"
-        }
-    }
 }
 
 base {
@@ -131,9 +122,8 @@ dependencies {    // Database dependencies
     implementation 'com.mysql:mysql-connector-j:8.3.0'
     implementation 'com.zaxxer:HikariCP:5.1.0'    // Permission system APIs (soft dependencies)
     compileOnly 'net.luckperms:api:5.4'
-    // FTB Ranks is integrated via ModList and reflection to avoid direct dependencies
-    // No compile dependency needed as we check for mod presence at runtime
-      // TOML parsing library for custom animations (legacy)
+    
+    // TOML parsing library for custom animations (legacy)
     implementation 'com.moandjiezana.toml:toml4j:0.7.2'
       // YAML parsing library for configuration
     implementation 'org.yaml:snakeyaml:2.2'
@@ -257,6 +247,8 @@ jar {
     // Avoid duplicate entries when including dependencies
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+
+// Configuration adjustments if needed go here
 
 // Improved BuildNumber handling with Configuration Cache compatibility
 

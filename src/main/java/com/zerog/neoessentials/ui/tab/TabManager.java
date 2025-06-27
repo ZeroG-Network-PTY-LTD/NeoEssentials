@@ -384,4 +384,62 @@ public class TabManager {
     public LayoutFeature getLayoutFeature() {
         return layoutFeature;
     }
+    
+    /**
+     * Check if the TabManager is initialized
+     * @return true if initialized
+     */
+    public boolean isInitialized() {
+        return initialized;
+    }
+    
+    /**
+     * Check if the TabManager has a valid server reference
+     * @return true if server reference is set
+     */
+    public boolean hasServerReference() {
+        return serverRef.get() != null;
+    }
+    
+    /**
+     * Check if templates are loaded
+     * @return true if templates are loaded
+     */
+    public boolean hasTemplates() {
+        return templateManager != null && templateManager.hasTemplates();
+    }
+    
+    /**
+     * Check if the update task is running
+     * @return true if update task is running
+     */
+    public boolean isUpdateTaskRunning() {
+        return updateTask != null && !updateTask.isCancelled() && !updateTask.isDone();
+    }
+    
+    /**
+     * Get the number of players being tracked
+     * @return player count
+     */
+    public int getPlayerCount() {
+        return playerData.size();
+    }
+    
+    /**
+     * Reload templates from disk
+     * @return true if reload was successful
+     */
+    public boolean reloadTemplates() {
+        try {
+            if (templateManager != null) {
+                templateManager.reloadTemplates();
+                NeoEssentials.LOGGER.info("Templates reloaded successfully");
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to reload templates", e);
+            return false;
+        }
+    }
 }

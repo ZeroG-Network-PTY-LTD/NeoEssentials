@@ -89,4 +89,43 @@ public class DataManagerHooks {
             tabManager.onPlayerChangeWorld(player, worldName);
         }
     }
+    
+    /**
+     * Ensures the TabManager is initialized. If not, creates and initializes it.
+     * 
+     * @return True if TabManager is initialized, false otherwise
+     */
+    public static boolean ensureTabManagerInitialized() {
+        if (tabManager == null) {
+            ScheduledExecutorService scheduler = NeoEssentials.getInstance().getScheduler();
+            if (scheduler != null) {
+                tabManager = new TabManager(scheduler);
+                NeoEssentials.LOGGER.info("TabManager created via ensureTabManagerInitialized");
+                
+                // Set server if available
+                if (NeoEssentials.getInstance().getServer() != null) {
+                    tabManager.setServer(NeoEssentials.getInstance().getServer());
+                }
+                
+                // Initialize the TabManager
+                tabManager.initialize();
+                return true;
+            }
+            return false;
+        }
+        
+        return tabManager.isInitialized();
+    }
+    
+    /**
+     * Reload templates from disk
+     * 
+     * @return True if reload was successful, false otherwise
+     */
+    public static boolean reloadTemplates() {
+        if (ensureTabManagerInitialized()) {
+            return tabManager.reloadTemplates();
+        }
+        return false;
+    }
 }

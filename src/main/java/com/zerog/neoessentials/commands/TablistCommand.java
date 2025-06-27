@@ -59,8 +59,8 @@ public class TablistCommand {
             return 0;
         }
         
-        // Reload the tablist
-        boolean success = tablistManager.reload(false);
+        // Reload the tablist templates using DataManagerHooks
+        boolean success = com.zerog.neoessentials.ui.tab.DataManagerHooks.reloadTemplates();
         
         if (success) {
             source.sendSuccess(() -> Component.literal(TextUtil.colorize("&aTablist configuration reloaded successfully")), true);
@@ -94,9 +94,10 @@ public class TablistCommand {
         }
         
         // Force extract default config and reload
-        boolean success = tablistManager.reload(true);
+        boolean forceCreateSuccess = tablistManager.getTemplateManager().createDefaultTemplatesFile();
+        boolean reloadSuccess = com.zerog.neoessentials.ui.tab.DataManagerHooks.reloadTemplates();
         
-        if (success) {
+        if (forceCreateSuccess && reloadSuccess) {
             source.sendSuccess(() -> Component.literal(TextUtil.colorize("&aTablist configuration reset to defaults and reloaded successfully")), true);
             return 1;
         } else {
