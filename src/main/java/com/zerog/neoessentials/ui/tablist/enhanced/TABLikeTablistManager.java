@@ -459,4 +459,12 @@ public class TABLikeTablistManager {
     public boolean isInitialized() {
         return initialized;
     }
+    
+    public AtomicReference<MinecraftServer> getServerRef() {
+        return serverRef;
+    }
+    
+    public int getPlayerCount() {
+        return playerData.size();
+    }
 }
