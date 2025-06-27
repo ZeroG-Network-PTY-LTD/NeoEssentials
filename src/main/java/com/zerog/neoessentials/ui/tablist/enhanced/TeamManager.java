@@ -2,7 +2,6 @@ package com.zerog.neoessentials.ui.tablist.enhanced;
 
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.utils.PermissionUtil;
-import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.PlayerTeam;
@@ -67,7 +66,7 @@ public class TeamManager {
                     PlayerTeam.CollisionRule.ALWAYS : PlayerTeam.CollisionRule.NEVER);
                 team.setNameTagVisibility(config.isInvisibleNametags() ? 
                     PlayerTeam.Visibility.NEVER : PlayerTeam.Visibility.ALWAYS);
-                team.setCanSeeFriendlyInvisibles(config.isCanSeeFriendlyInvisibles());
+                team.setSeeFriendlyInvisibles(config.isCanSeeFriendlyInvisibles());
                 
                 teams.put(groupName, team);
                 NeoEssentials.LOGGER.debug("Created team for group: {}", groupName);
