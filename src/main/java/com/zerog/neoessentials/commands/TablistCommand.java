@@ -59,8 +59,8 @@ public class TablistCommand {
             return 0;
         }
         
-        // Reload the tablist templates using DataManagerHooks
-        boolean success = com.zerog.neoessentials.ui.tab.DataManagerHooks.reloadTemplates();
+        // Reload the tablist configuration using the enhanced system
+        boolean success = tablistManager.reloadConfig();
         
         if (success) {
             source.sendSuccess(() -> Component.literal(TextUtil.colorize("&aTablist configuration reloaded successfully")), true);

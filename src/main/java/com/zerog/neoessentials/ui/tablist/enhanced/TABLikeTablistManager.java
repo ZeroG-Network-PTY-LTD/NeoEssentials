@@ -402,17 +402,48 @@ public class TABLikeTablistManager {
         NeoEssentials.LOGGER.info("TAB-like tablist system reloaded");
     }
     
+    // Reload configuration and templates
+    public boolean reloadConfig() {
+        try {
+            NeoEssentials.LOGGER.info("Reloading TAB-like tablist configuration");
+            
+            // Reload configuration
+            this.config = configManager.loadConfig();
+            
+            // Reinitialize components with new config
+            teamManager.initialize(config);
+            objectiveManager.initialize(config);
+            bossBarManager.initialize(config);
+            
+            // Restart update task if needed
+            if (initialized) {
+                startUpdateTask();
+            }
+            
+            NeoEssentials.LOGGER.info("TAB-like tablist configuration reloaded successfully");
+            return true;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to reload TAB-like tablist configuration", e);
+            return false;
+        }
+    }
+    
+    // Shutdown method for clean cleanup
     public void shutdown() {
         if (updateTask != null) {
             updateTask.cancel(false);
+            updateTask = null;
         }
         
+        // Clear player data
+        playerData.clear();
+        
+        // Shutdown component managers
         teamManager.shutdown();
         objectiveManager.shutdown();
         bossBarManager.shutdown();
         
-        playerData.clear();
-        
+        initialized = false;
         NeoEssentials.LOGGER.info("TAB-like tablist system shutdown");
     }
     

@@ -101,6 +101,7 @@ public class NeoEssentials {
         // Register the event handlers
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.events.EventHandler.class);
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.PowerToolEventHandler());
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.ui.tablist.enhanced.TABLikeEventListener.class);
 
         // Initialize our configuration system
         configManager = new com.zerog.neoessentials.config.ModConfigManager(this, modContainer);
@@ -342,12 +343,12 @@ public class NeoEssentials {
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
         
-        // Update the server reference in EnhancedTablistManager if it exists
+        // Update the server reference in TABLikeTablistManager if it exists
         if (dataManager != null && dataManager.getTablistManager() != null) {
-            LOGGER.info("Updating server reference in EnhancedTablistManager");
+            LOGGER.info("Updating server reference in TABLikeTablistManager");
             dataManager.getTablistManager().setServer(server);
         } else {
-            LOGGER.info("TablistManager not yet initialized, server reference will be set during initialization");
+            LOGGER.info("TABLikeTablistManager not yet initialized, server reference will be set during initialization");
         }
         
         // Initialize the AFK checker task
