@@ -94,47 +94,50 @@ public class TABConfigManager {
             currentConfig.setHeaderFooterEnabled(getBooleanOrDefault(tablist, "headerFooterEnabled", true));
         }
         
-        // Apply default headers
-        Map<String, Object> headers = getMapOrDefault(config, "headers");
-        if (headers.containsKey("default")) {
-            Object defaultHeaders = headers.get("default");
+        // Apply templates section
+        Map<String, Object> templates = getMapOrDefault(config, "templates");
+        
+        // Apply default headers from templates.headers
+        if (templates.containsKey("headers")) {
+            Object defaultHeaders = templates.get("headers");
             if (defaultHeaders instanceof List) {
                 currentConfig.setDefaultHeaders(convertToStringList((List<?>) defaultHeaders));
+                NeoEssentials.LOGGER.info("Loaded {} default headers from YAML", ((List<?>) defaultHeaders).size());
             }
         }
         
-        // Apply default footers
-        Map<String, Object> footers = getMapOrDefault(config, "footers");
-        if (footers.containsKey("default")) {
-            Object defaultFooters = footers.get("default");
+        // Apply default footers from templates.footers
+        if (templates.containsKey("footers")) {
+            Object defaultFooters = templates.get("footers");
             if (defaultFooters instanceof List) {
                 currentConfig.setDefaultFooters(convertToStringList((List<?>) defaultFooters));
+                NeoEssentials.LOGGER.info("Loaded {} default footers from YAML", ((List<?>) defaultFooters).size());
             }
         }
         
-        // Apply group headers
-        if (headers.containsKey("groups")) {
-            Object groupHeaders = headers.get("groups");
-            if (groupHeaders instanceof Map) {
+        // Apply groups configuration
+        Map<String, Object> groups = getMapOrDefault(config, "groups");
+        for (Map.Entry<String, Object> groupEntry : groups.entrySet()) {
+            String groupName = groupEntry.getKey();
+            if (groupEntry.getValue() instanceof Map) {
                 @SuppressWarnings("unchecked")
-                Map<String, Object> groupHeadersMap = (Map<String, Object>) groupHeaders;
-                for (Map.Entry<String, Object> entry : groupHeadersMap.entrySet()) {
-                    if (entry.getValue() instanceof List) {
-                        currentConfig.setGroupHeaders(entry.getKey(), convertToStringList((List<?>) entry.getValue()));
+                Map<String, Object> groupConfig = (Map<String, Object>) groupEntry.getValue();
+                
+                // Apply group headers
+                if (groupConfig.containsKey("headers")) {
+                    Object groupHeaders = groupConfig.get("headers");
+                    if (groupHeaders instanceof List) {
+                        currentConfig.setGroupHeaders(groupName, convertToStringList((List<?>) groupHeaders));
+                        NeoEssentials.LOGGER.debug("Loaded headers for group: {}", groupName);
                     }
                 }
-            }
-        }
-        
-        // Apply group footers
-        if (footers.containsKey("groups")) {
-            Object groupFooters = footers.get("groups");
-            if (groupFooters instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> groupFootersMap = (Map<String, Object>) groupFooters;
-                for (Map.Entry<String, Object> entry : groupFootersMap.entrySet()) {
-                    if (entry.getValue() instanceof List) {
-                        currentConfig.setGroupFooters(entry.getKey(), convertToStringList((List<?>) entry.getValue()));
+                
+                // Apply group footers
+                if (groupConfig.containsKey("footers")) {
+                    Object groupFooters = groupConfig.get("footers");
+                    if (groupFooters instanceof List) {
+                        currentConfig.setGroupFooters(groupName, convertToStringList((List<?>) groupFooters));
+                        NeoEssentials.LOGGER.debug("Loaded footers for group: {}", groupName);
                     }
                 }
             }
