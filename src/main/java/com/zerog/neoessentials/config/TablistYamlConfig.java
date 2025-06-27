@@ -217,9 +217,9 @@ public class TablistYamlConfig {
             bossbars.put("enabled", DEFAULT_ENABLE_BOSSBARS);
             bossbars.put("bossBarLimitPerPlayer", DEFAULT_BOSSBAR_LIMIT);
             
-            // Add deprecated notice for settings moved to templates.json/yml
+            // Add deprecated notice for settings moved to tablist.yml
             List<String> deprecatedNote = Collections.singletonList(
-                "DEPRECATED - Configure in neoessentials/templates.json or templates.yml instead"
+                "DEPRECATED - Configure in neoessentials/tablist.yml instead"
             );
             bossbars.put("globalBossBars", deprecatedNote);
             
@@ -232,7 +232,7 @@ public class TablistYamlConfig {
             
             // Template note
             Map<String, Object> templateNote = new HashMap<>();
-            templateNote.put("note", "Templates for headers, footers, and bossbars are now stored in neoessentials/templates.yml or templates.json");
+            templateNote.put("note", "Templates for headers, footers, and bossbars are now stored in neoessentials/tablist.yml");
             config.put("templateNote", templateNote);
             
             // Write to file with header
@@ -270,8 +270,7 @@ public class TablistYamlConfig {
                     "This change allows for more flexible configuration options and better supports\n" +
                     "multi-line text in headers, footers, and messages.\n\n" +
                     "## Templates\n\n" +
-                    "Templates are now configured in `neoessentials/templates.yml` (preferred) or\n" +
-                    "`neoessentials/templates.json` (also supported).\n\n" +
+                    "Templates are now configured in `neoessentials/tablist.yml`.\n\n" +
                     "Your existing settings have been automatically migrated.";
             
             Files.writeString(migrationNoticePath, migrationContent);
