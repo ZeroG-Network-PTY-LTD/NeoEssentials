@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.ui.tablist.enhanced;
 
 import com.zerog.neoessentials.NeoEssentials;
-import net.minecraft.server.MinecraftServer;
 
 /**
  * Configuration manager for TAB-like system

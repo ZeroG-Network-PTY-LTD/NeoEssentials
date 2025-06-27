@@ -4,9 +4,6 @@ import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.ui.tablist.TablistPlaceholderManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetDisplayObjectivePacket;
-import net.minecraft.network.protocol.game.ClientboundSetObjectivePacket;
-import net.minecraft.network.protocol.game.ClientboundSetScorePacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.DisplaySlot;
@@ -14,7 +11,6 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -109,7 +105,10 @@ public class ObjectiveManager {
         playerlistObjective = scoreboard.addObjective(
             objectiveName,
             ObjectiveCriteria.DUMMY,
-            Component.literal(config.getPlayerlistObjectiveTitle())
+            Component.literal(config.getPlayerlistObjectiveTitle()),
+            ObjectiveCriteria.RenderType.INTEGER,
+            false,
+            null
         );
         
         // Set display slot to player list
@@ -135,7 +134,10 @@ public class ObjectiveManager {
         belownameObjective = scoreboard.addObjective(
             objectiveName,
             ObjectiveCriteria.DUMMY,
-            Component.literal(config.getBelownameObjectiveTitle())
+            Component.literal(config.getBelownameObjectiveTitle()),
+            ObjectiveCriteria.RenderType.INTEGER,
+            false,
+            null
         );
         
         // Set display slot to below name

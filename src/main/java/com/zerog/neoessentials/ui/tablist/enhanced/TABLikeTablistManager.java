@@ -5,17 +5,12 @@ import com.zerog.neoessentials.ui.tablist.TablistAnimationManager;
 import com.zerog.neoessentials.ui.tablist.TablistPlaceholderManager;
 import com.zerog.neoessentials.utils.PermissionUtil;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetObjectivePacket;
-import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.scores.Objective;
-import net.minecraft.world.scores.PlayerTeam;
-import net.minecraft.world.scores.Scoreboard;
-import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -190,20 +185,13 @@ public class TABLikeTablistManager {
             if (data == null) continue;
             
             // Update team for this player
-            teamManager.updatePlayerTeam(player, data, config);
+            teamManager.onPlayerJoin(player);
         }
     }
     
     private void updateObjectives(Collection<ServerPlayer> players) {
-        // Update playerlist objective (shown next to names in tab)
-        if (config.isPlayerlistObjectiveEnabled()) {
-            objectiveManager.updatePlayerlistObjective(players, playerData, config, placeholderManager);
-        }
-        
-        // Update belowname objective (shown below nameplates)
-        if (config.isBelownameObjectiveEnabled()) {
-            objectiveManager.updateBelownameObjective(players, playerData, config, placeholderManager);
-        }
+        // Update objectives for all players
+        objectiveManager.updateObjectives();
     }
     
     private void updateBossBars(Collection<ServerPlayer> players) {
@@ -213,7 +201,7 @@ public class TABLikeTablistManager {
             PlayerTabData data = playerData.get(player.getUUID());
             if (data == null) continue;
             
-            bossBarManager.updatePlayerBossBars(player, data, config, placeholderManager);
+            bossBarManager.updatePlayerBossBars(player);
         }
     }
     
@@ -321,16 +309,16 @@ public class TABLikeTablistManager {
     }
     
     private int compareByPlaceholder(ServerPlayer p1, ServerPlayer p2, boolean ascending) {
-        String value1 = placeholderManager.replacePlaceholders("%player%", p1);
-        String value2 = placeholderManager.replacePlaceholders("%player%", p2);
+        String value1 = placeholderManager.processPlaceholders("%player%", p1);
+        String value2 = placeholderManager.processPlaceholders("%player%", p2);
         
         int result = value1.compareToIgnoreCase(value2);
         return ascending ? result : -result;
     }
     
     private int compareByCustomPlaceholder(ServerPlayer p1, ServerPlayer p2, String placeholder) {
-        String value1 = placeholderManager.replacePlaceholders(placeholder, p1);
-        String value2 = placeholderManager.replacePlaceholders(placeholder, p2);
+        String value1 = placeholderManager.processPlaceholders(placeholder, p1);
+        String value2 = placeholderManager.processPlaceholders(placeholder, p2);
         
         return value1.compareToIgnoreCase(value2);
     }
@@ -361,7 +349,7 @@ public class TABLikeTablistManager {
             String placeholder = parts[0];
             String value = parts[1];
             
-            String actualValue = placeholderManager.replacePlaceholders(placeholder, player);
+            String actualValue = placeholderManager.processPlaceholders(placeholder, player);
             return actualValue.equals(value);
         }
         
