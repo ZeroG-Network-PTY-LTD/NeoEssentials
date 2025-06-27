@@ -3,9 +3,6 @@ package com.zerog.neoessentials.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.ui.tab.DataManagerHooks;
-import com.zerog.neoessentials.ui.tab.TabManager;
-import com.zerog.neoessentials.ui.tab.TablistMigrationManager;
 import com.zerog.neoessentials.utils.ChatUtil;
 
 import net.minecraft.commands.CommandSourceStack;
@@ -54,17 +51,22 @@ public class TabFixCommand {
     private static int executeTabFix(CommandSourceStack source) {
         ChatUtil.sendMessage(source, "§6Running tablist system check and fix...");
         
-        // Apply migration to ensure we're using the new TabManager
-        TablistMigrationManager.applyMigration();
+        // Get the enhanced tablist manager
+        var dataManager = NeoEssentials.getInstance().getDataManager();
+        var tablistManager = dataManager != null ? dataManager.getTablistManager() : null;
         
-        // Make sure the TabManager is initialized
-        boolean success = DataManagerHooks.ensureTabManagerInitialized();
+        if (tablistManager == null) {
+            ChatUtil.sendError(source, "§cTablist manager not available");
+            return 0;
+        }
+        
+        boolean success = tablistManager.isInitialized();
         
         if (success) {
-            ChatUtil.sendSuccess(source, "§aTablist system fixed successfully!");
+            ChatUtil.sendSuccess(source, "§aTablist system is working correctly!");
             return 1;
         } else {
-            ChatUtil.sendError(source, "§cTablist fix failed. Check logs for details.");
+            ChatUtil.sendError(source, "§cTablist system not initialized. Check logs for details.");
             return 0;
         }
     }
@@ -108,24 +110,25 @@ public class TabFixCommand {
     private static int executeTabDiagnose(CommandSourceStack source) {
         ChatUtil.sendMessage(source, "§6Diagnosing tablist system...");
         
-        // Get the TabManager instance
-        TabManager tabManager = DataManagerHooks.getTabManager();
+        // Get the enhanced tablist manager
+        var dataManager = NeoEssentials.getInstance().getDataManager();
+        var tablistManager = dataManager != null ? dataManager.getTablistManager() : null;
         
-        if (tabManager == null) {
-            ChatUtil.sendError(source, "§cTabManager not initialized. Run /tabfix to fix this issue.");
+        if (tablistManager == null) {
+            ChatUtil.sendError(source, "§cTablist manager not initialized.");
             return 0;
         }
         
         // Check initialization status
-        boolean initialized = tabManager.isInitialized();
-        ChatUtil.sendMessage(source, "§7TabManager initialized: §e" + initialized);
+        boolean initialized = tablistManager.isInitialized();
+        ChatUtil.sendMessage(source, "§7TAB-like tablist initialized: §e" + initialized);
         
         // Check server reference
-        boolean hasServer = tabManager.hasServerReference();
-        ChatUtil.sendMessage(source, "§7TabManager server reference: §e" + hasServer);
+        boolean hasServer = tablistManager.getServerRef().get() != null;
+        ChatUtil.sendMessage(source, "§7Server reference available: §e" + hasServer);
         
-        // Check template status
-        boolean templatesLoaded = tabManager.hasTemplates();
+        // Check configuration
+        boolean hasConfig = tablistManager.getConfig() != null;
         ChatUtil.sendMessage(source, "§7Templates loaded: §e" + templatesLoaded);
         
         // Detailed template file check
