@@ -135,29 +135,13 @@ public class ObjectiveManager {
         belownameObjective = scoreboard.addObjective(
             objectiveName,
             ObjectiveCriteria.DUMMY,
-            Component.literal(config.getBelownameObjectiveTitle()),
-            ObjectiveCriteria.RenderType.INTEGER // belowname always uses integer
+            Component.literal(config.getBelownameObjectiveTitle())
         );
         
         // Set display slot to below name
-        scoreboard.setDisplayObjective(1, belownameObjective); // 1 = BELOW_NAME slot
+        scoreboard.setDisplayObjective(DisplaySlot.BELOW_NAME, belownameObjective);
         
         NeoEssentials.LOGGER.debug("Created belowname objective: {}", objectiveName);
-    }
-    
-    /**
-     * Convert string render type to ObjectiveCriteria.RenderType
-     * @param renderType The string render type
-     * @return The ObjectiveCriteria.RenderType
-     */
-    private ObjectiveCriteria.RenderType getObjectiveRenderType(String renderType) {
-        switch (renderType.toUpperCase()) {
-            case "HEARTS":
-                return ObjectiveCriteria.RenderType.HEARTS;
-            case "INTEGER":
-            default:
-                return ObjectiveCriteria.RenderType.INTEGER;
-        }
     }
     
     /**
@@ -212,7 +196,7 @@ public class ObjectiveManager {
     public void updatePlayerlistScore(ServerPlayer player) {
         if (playerlistObjective == null || placeholderManager == null) return;
         
-        String valueText = placeholderManager.replacePlaceholders(
+        String valueText = placeholderManager.processPlaceholders(
             config.getPlayerlistObjectiveValue(), player);
         
         int score = parseScoreValue(valueText);
@@ -221,7 +205,7 @@ public class ObjectiveManager {
         // Only update if score changed
         Integer lastScore = playerlistScores.get(playerName);
         if (lastScore == null || lastScore != score) {
-            server.getScoreboard().getOrCreatePlayerScore(playerName, playerlistObjective).setScore(score);
+            server.getScoreboard().getOrCreatePlayerScore(player, playerlistObjective).set(score);
             playerlistScores.put(playerName, score);
         }
     }
@@ -233,7 +217,7 @@ public class ObjectiveManager {
     public void updateBelownameScore(ServerPlayer player) {
         if (belownameObjective == null || placeholderManager == null) return;
         
-        String valueText = placeholderManager.replacePlaceholders(
+        String valueText = placeholderManager.processPlaceholders(
             config.getBelownameObjectiveValue(), player);
         
         int score = parseScoreValue(valueText);
@@ -242,7 +226,7 @@ public class ObjectiveManager {
         // Only update if score changed
         Integer lastScore = belownameScores.get(playerName);
         if (lastScore == null || lastScore != score) {
-            server.getScoreboard().getOrCreatePlayerScore(playerName, belownameObjective).setScore(score);
+            server.getScoreboard().getOrCreatePlayerScore(player, belownameObjective).set(score);
             belownameScores.put(playerName, score);
         }
     }
@@ -258,7 +242,8 @@ public class ObjectiveManager {
         }
         
         // Remove common suffixes and formatting
-        String cleaned = ChatFormatting.stripFormatting(value)
+        String stripped = ChatFormatting.stripFormatting(value);
+        String cleaned = (stripped != null ? stripped : value)
             .replaceAll("[^0-9-]", ""); // Keep only numbers and minus sign
         
         try {
@@ -298,11 +283,11 @@ public class ObjectiveManager {
         
         // Remove from objectives
         if (playerlistObjective != null) {
-            server.getScoreboard().resetPlayerScore(playerName, playerlistObjective);
+            server.getScoreboard().resetSinglePlayerScore(player, playerlistObjective);
         }
         
         if (belownameObjective != null) {
-            server.getScoreboard().resetPlayerScore(playerName, belownameObjective);
+            server.getScoreboard().resetSinglePlayerScore(player, belownameObjective);
         }
     }
     
