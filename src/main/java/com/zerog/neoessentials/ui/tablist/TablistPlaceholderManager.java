@@ -6,6 +6,7 @@ import com.zerog.neoessentials.ui.tablist.placeholders.CustomPlaceholder;
 import com.zerog.neoessentials.ui.tablist.placeholders.CustomPlaceholderRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -701,17 +702,114 @@ public class TablistPlaceholderManager {
         return text;
     }
       /**
-     * Applies color codes to a text string and returns it as a Component
+     * Applies color codes to a text string and returns it as a Component with native hex support
      *
      * @param text The text to colorize
-     * @return The colorized Component
+     * @return The colorized Component with proper hex colors
      */
     public static Component colorize(String text) {
-        if (text == null) {
-            return Component.literal("");
+        if (text == null || text.isEmpty()) {
+            return Component.empty();
         }
-        String formattedText = formatColors(text);
-        return Component.literal(formattedText);
+        
+        // Create a text component builder
+        MutableComponent result = Component.empty();
+        
+        // Pattern to match both hex colors (&#RRGGBB) and legacy colors (&a, &c, etc.)
+        Pattern colorPattern = Pattern.compile("(&#[0-9A-Fa-f]{6}|&[0-9A-Fa-fK-Ok-oRr])");
+        Matcher matcher = colorPattern.matcher(text);
+        
+        int lastEnd = 0;
+        ChatFormatting currentFormatting = null;
+        
+        while (matcher.find()) {
+            // Add text before the color code
+            if (matcher.start() > lastEnd) {
+                String textPart = text.substring(lastEnd, matcher.start());
+                if (!textPart.isEmpty()) {
+                    if (currentFormatting != null) {
+                        result = result.append(Component.literal(textPart).withStyle(currentFormatting));
+                    } else {
+                        result = result.append(Component.literal(textPart));
+                    }
+                }
+            }
+            
+            String colorCode = matcher.group();
+            
+            if (colorCode.startsWith("&#")) {
+                // Handle hex color (&#RRGGBB)
+                try {
+                    String hexColor = colorCode.substring(2); // Remove &#
+                    int rgb = Integer.parseInt(hexColor, 16);
+                    
+                    // Find the end of this color segment
+                    int nextColorStart = findNextColorCode(text, matcher.end());
+                    String coloredText = text.substring(matcher.end(), nextColorStart);
+                    
+                    if (!coloredText.isEmpty()) {
+                        result = result.append(Component.literal(coloredText).withStyle(style -> style.withColor(rgb)));
+                    }
+                    
+                    // Reset current formatting and move to next segment
+                    currentFormatting = null;
+                    lastEnd = nextColorStart;
+                    
+                    // If there's more text, continue processing from the next color code
+                    if (nextColorStart < text.length()) {
+                        String remainingText = text.substring(nextColorStart);
+                        Matcher newMatcher = colorPattern.matcher(remainingText);
+                        if (newMatcher.find()) {
+                            // Recursively process the remaining text
+                            Component remainingComponent = colorize(remainingText);
+                            result = result.append(remainingComponent);
+                        } else {
+                            // No more color codes, add remaining text as-is
+                            result = result.append(Component.literal(remainingText));
+                        }
+                        return result;
+                    }
+                } catch (NumberFormatException e) {
+                    // Invalid hex color, treat as regular text
+                    result = result.append(Component.literal(colorCode));
+                    lastEnd = matcher.end();
+                }
+            } else {
+                // Handle legacy color (&a, &c, etc.)
+                char code = colorCode.charAt(1);
+                ChatFormatting formatting = ChatFormatting.getByCode(code);
+                if (formatting != null) {
+                    currentFormatting = formatting;
+                }
+                lastEnd = matcher.end();
+            }
+        }
+        
+        // Add remaining text
+        if (lastEnd < text.length()) {
+            String remainingText = text.substring(lastEnd);
+            if (!remainingText.isEmpty()) {
+                if (currentFormatting != null) {
+                    result = result.append(Component.literal(remainingText).withStyle(currentFormatting));
+                } else {
+                    result = result.append(Component.literal(remainingText));
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Find the start index of the next color code in the text
+     */
+    private static int findNextColorCode(String text, int startIndex) {
+        Pattern nextColorPattern = Pattern.compile("(&#[0-9A-Fa-f]{6}|&[0-9A-Fa-fK-Ok-oRr])");
+        Matcher nextMatcher = nextColorPattern.matcher(text);
+        if (nextMatcher.find(startIndex)) {
+            return nextMatcher.start();
+        }
+        return text.length();
     }
     
     /**
