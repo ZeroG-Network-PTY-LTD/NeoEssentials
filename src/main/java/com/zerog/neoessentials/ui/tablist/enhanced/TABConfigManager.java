@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -87,37 +89,81 @@ public class TABConfigManager {
         // Extract tablist section
         Map<String, Object> tablist = getMapOrDefault(config, "tablist");
         
-        // Apply basic settings
-        if (tablist.containsKey("enabled")) {
-            currentConfig.setEnabled(getBooleanOrDefault(tablist, "enabled", true));
+        // Apply header/footer settings
+        if (tablist.containsKey("headerFooterEnabled")) {
+            currentConfig.setHeaderFooterEnabled(getBooleanOrDefault(tablist, "headerFooterEnabled", true));
         }
         
-        if (tablist.containsKey("updateInterval")) {
-            Object interval = tablist.get("updateInterval");
-            if (interval instanceof Number) {
-                currentConfig.setUpdateInterval(((Number) interval).longValue());
+        // Apply default headers
+        Map<String, Object> headers = getMapOrDefault(config, "headers");
+        if (headers.containsKey("default")) {
+            Object defaultHeaders = headers.get("default");
+            if (defaultHeaders instanceof List) {
+                currentConfig.setDefaultHeaders(convertToStringList((List<?>) defaultHeaders));
             }
         }
         
-        // Apply header/footer templates
-        Map<String, Object> headers = getMapOrDefault(config, "headers");
-        currentConfig.setHeaders(headers);
-        
+        // Apply default footers
         Map<String, Object> footers = getMapOrDefault(config, "footers");
-        currentConfig.setFooters(footers);
+        if (footers.containsKey("default")) {
+            Object defaultFooters = footers.get("default");
+            if (defaultFooters instanceof List) {
+                currentConfig.setDefaultFooters(convertToStringList((List<?>) defaultFooters));
+            }
+        }
         
-        // Apply groups configuration
-        Map<String, Object> groups = getMapOrDefault(config, "groups");
-        currentConfig.setGroups(groups);
+        // Apply group headers
+        if (headers.containsKey("groups")) {
+            Object groupHeaders = headers.get("groups");
+            if (groupHeaders instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> groupHeadersMap = (Map<String, Object>) groupHeaders;
+                for (Map.Entry<String, Object> entry : groupHeadersMap.entrySet()) {
+                    if (entry.getValue() instanceof List) {
+                        currentConfig.setGroupHeaders(entry.getKey(), convertToStringList((List<?>) entry.getValue()));
+                    }
+                }
+            }
+        }
+        
+        // Apply group footers
+        if (footers.containsKey("groups")) {
+            Object groupFooters = footers.get("groups");
+            if (groupFooters instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> groupFootersMap = (Map<String, Object>) groupFooters;
+                for (Map.Entry<String, Object> entry : groupFootersMap.entrySet()) {
+                    if (entry.getValue() instanceof List) {
+                        currentConfig.setGroupFooters(entry.getKey(), convertToStringList((List<?>) entry.getValue()));
+                    }
+                }
+            }
+        }
     }
     
     /**
      * Apply animations configuration values to TABConfig
      */
     private void applyAnimationsConfig(Map<String, Object> config) {
-        // Apply animations
+        // For now, animations are handled by the TablistAnimationManager
+        // We just log that they were loaded
         Map<String, Object> animations = getMapOrDefault(config, "animations");
-        currentConfig.setAnimations(animations);
+        if (!animations.isEmpty()) {
+            NeoEssentials.LOGGER.info("Loaded {} animation configurations", animations.size());
+        }
+    }
+    
+    /**
+     * Convert a list of objects to a list of strings
+     */
+    private List<String> convertToStringList(List<?> list) {
+        List<String> result = new ArrayList<>();
+        for (Object item : list) {
+            if (item != null) {
+                result.add(item.toString());
+            }
+        }
+        return result;
     }
     
     /**
@@ -126,7 +172,9 @@ public class TABConfigManager {
     private Map<String, Object> getMapOrDefault(Map<String, Object> config, String key) {
         Object value = config.get(key);
         if (value instanceof Map) {
-            return (Map<String, Object>) value;
+            @SuppressWarnings("unchecked")
+            Map<String, Object> mapValue = (Map<String, Object>) value;
+            return mapValue;
         }
         return new HashMap<>();
     }
