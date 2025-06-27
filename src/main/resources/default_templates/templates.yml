@@ -1,0 +1,43 @@
+# NeoEssentials Tablist Templates
+# Default templates that will be extracted when the mod loads if no templates file is found
+
+templates:
+  headers:
+    - "&6&l✦ &b&lNeoEssentials Server &6&l✦"
+    - "&eWelcome, &a{player_name}&e!"
+    - "&eOnline players: &a{online_players}/{max_players}"
+    - "&eServer time: &a{time}"
+
+  footers:
+    - "&eBalance: &a{balance} coins"
+    - "&eWebsite: &awww.example.com"
+    - "&eThanks for playing!"
+    - "&eServer TPS: &a{tps} &7| &eMemory: &a{memory_percent}%"
+
+groups:
+  admin:
+    headers:
+      - "&4&l★ &c&lAdmin Panel &4&l★"
+      - "&cServer TPS: &f{tps} &7| &cMemory: &f{memory_percent}%"
+    footers:
+      - "&cAdmin Command Help: &f/neoessentials help"
+      - "&cServer uptime: &f{uptime}"
+
+  default:
+    headers:
+      - "&6&l⚜ &e&lWelcome &6&l⚜"
+      - "&eWelcome to the server, &6{player_name}&e!"
+    footers:
+      - "&6Balance: &e{balance} coins"
+      - "&6Use &e/help &6for a list of commands"
+
+bossbars:
+  global:
+    - "&4&lImportant Server Announcement"
+    - "&c&lServer will restart in {server_restart_time}"
+  
+  groups:
+    admin:
+      - "&4&lAdmin Notifications: &f{admin_notifications}"
+    default:
+      - "&6Welcome to the server, &e{player_name}&6!"

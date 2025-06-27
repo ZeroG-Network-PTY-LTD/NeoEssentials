@@ -131,6 +131,13 @@ public class FlexibleTablistManager {
             return;
         }
         
+        // Check if this manager should be active or if we should use TabManager instead
+        if (!isActive()) {
+            NeoEssentials.LOGGER.info("FlexibleTablistManager is deprecated. Using TabManager instead.");
+            com.zerog.neoessentials.ui.tab.DataManagerHooks.initializeIfExists();
+            return;
+        }
+        
         NeoEssentials.LOGGER.info("Initializing flexible tablist system");
         
         // Load configuration
@@ -303,6 +310,11 @@ public class FlexibleTablistManager {
      */
     public void updateTablist() {
         try {
+            // Skip updates if this manager is no longer active
+            if (!isActive()) {
+                return;
+            }
+            
             // Get server from atomic reference
             MinecraftServer server = serverRef.get();
             
@@ -561,5 +573,14 @@ public class FlexibleTablistManager {
         
         NeoEssentials.LOGGER.info("Tablist reloaded successfully");
         return true;
+    }
+    
+    /**
+     * Check if this manager should be active
+     * 
+     * @return true if this manager is active, false if it has been deprecated in favor of TabManager
+     */
+    private boolean isActive() {
+        return !com.zerog.neoessentials.ui.tab.TablistMigrationManager.shouldDeactivate(this);
     }
 }

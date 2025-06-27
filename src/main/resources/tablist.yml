@@ -1,0 +1,43 @@
+# Default Tablist Configuration
+# This file defines how the tablist will be displayed to players
+
+# Main tablist settings
+settings:
+  update_interval: 2000    # Update interval in milliseconds
+  header_format: "{header}" # How the header is formatted
+  footer_format: "{footer}" # How the footer is formatted
+  default_layout: "dynamic" # Default layout type: dynamic, fixed, or custom
+
+# Layout definitions
+layouts:
+  dynamic:
+    type: "dynamic"      # Dynamic layout adjusts based on player count
+    player_sort: "none"  # Sorting method: none, name, rank, custom
+    sections: []         # No specific sections, uses dynamic allocation
+
+  fixed:
+    type: "fixed"        # Fixed layout has predefined slots for players
+    slots: 80            # Total slots to use
+    column_count: 4      # Number of columns
+    priority_slots: 10   # Number of slots reserved for priority players
+
+# Player list configuration
+player_list:
+  format: "&f{player_name}"  # Default format for players in the list
+  afk_format: "&7[AFK] {player_name}" # Format for AFK players
+
+# Animations
+animations:
+  enabled: true
+  types:
+    - "scroll"
+    - "flash"
+    - "fade"
+    - "rainbow"
+
+# Conditional elements (display different elements based on conditions)
+conditional:
+  admin:
+    condition: "permission:neoessentials.admin"
+    header: ["&6⚡ &c&lADMIN MODE &6⚡"]
+    footer: ["&7Using NeoEssentials v{version}"]

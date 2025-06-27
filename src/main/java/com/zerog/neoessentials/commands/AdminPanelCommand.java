@@ -1213,7 +1213,7 @@ public class AdminPanelCommand {
     private void displayPermissionsSection(ServerPlayer player) {
         player.sendSystemMessage(Component.literal(TextUtil.colorize("&9❖ &1Permissions Management")));
         player.sendSystemMessage(Component.literal(TextUtil.colorize("&7- &fView and edit player or group permissions.")));
-        player.sendSystemMessage(Component.literal(TextUtil.colorize("&7- &fIntegrates with LuckPerms/FTB Ranks if available.")));
+        player.sendSystemMessage(Component.literal(TextUtil.colorize("&7- &fIntegrates with LuckPerms if available.")));
         player.sendSystemMessage(Component.literal(TextUtil.colorize("&7- &fUse &e/permissions &fto open the permissions editor.")));
     }
 

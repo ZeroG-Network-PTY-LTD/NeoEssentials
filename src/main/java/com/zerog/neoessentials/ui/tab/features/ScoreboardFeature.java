@@ -213,9 +213,84 @@ public class ScoreboardFeature extends AbstractFeature {
         
         // Set the player's scoreboard using reflection since the method isn't directly available
         try {
-            java.lang.reflect.Method setScoreboardMethod = ServerPlayer.class.getDeclaredMethod("setScoreboard", Scoreboard.class);
-            setScoreboardMethod.setAccessible(true);
-            setScoreboardMethod.invoke(player, scoreboard);
+            // In Minecraft 1.21.1, we need to use the connection approach
+            // Try to access player's connection field - try multiple possible field names
+            Object connection = null;
+            
+            // Get all fields to look for the connection field
+            java.lang.reflect.Field[] fields = ServerPlayer.class.getDeclaredFields();
+            
+            // Try common names and patterns for the connection field
+            String[] possibleNames = {"connection", "playerConnection", "f_8941_", "connection", "field_71135_a"};
+            
+            // First try exact name matches
+            for (String possibleName : possibleNames) {
+                try {
+                    java.lang.reflect.Field field = ServerPlayer.class.getDeclaredField(possibleName);
+                    field.setAccessible(true);
+                    connection = field.get(player);
+                    if (connection != null) {
+                        NeoEssentials.LOGGER.debug("Found connection field with name: {}", possibleName);
+                        break;
+                    }
+                } catch (Exception ex) {
+                    // Continue trying other names
+                }
+            }
+            
+            // If still null, try all fields that might be the connection
+            if (connection == null) {
+                for (java.lang.reflect.Field field : fields) {
+                    try {
+                        field.setAccessible(true);
+                        Object obj = field.get(player);
+                        if (obj != null && obj.getClass().getName().contains("Connection")) {
+                            connection = obj;
+                            NeoEssentials.LOGGER.debug("Found connection field by pattern: {}", field.getName());
+                            break;
+                        }
+                    } catch (Exception ex) {
+                        // Skip fields that can't be accessed
+                    }
+                }
+            }
+            
+            // Then try to find a method to set the scoreboard on the connection
+            if (connection != null) {
+                // Try known method names based on common mappings (may vary based on MCP mappings)
+                java.lang.reflect.Method setScoreboardMethod = null;
+                
+                // Look for methods that take a Scoreboard parameter
+                for (java.lang.reflect.Method method : connection.getClass().getDeclaredMethods()) {
+                    if (method.getParameterCount() == 1 && 
+                        method.getParameterTypes()[0].getName().endsWith("Scoreboard")) {
+                        setScoreboardMethod = method;
+                        break;
+                    }
+                }
+                
+                if (setScoreboardMethod != null) {
+                    setScoreboardMethod.setAccessible(true);
+                    setScoreboardMethod.invoke(connection, scoreboard);
+                    NeoEssentials.LOGGER.debug("Successfully set custom scoreboard for player {}", player.getScoreboardName());
+                } else {
+                    // If we can't find a direct method, try to use another approach
+                    NeoEssentials.LOGGER.warn("Could not find appropriate method to set scoreboard for player {}", player.getScoreboardName());
+                }
+            } else {
+                // Try alternative approaches if we couldn't find the connection field
+                try {
+                    NeoEssentials.LOGGER.debug("Connection field not found for player {}. Trying alternative approaches.", 
+                        player.getScoreboardName());
+                        
+                    // Attempt to use server's functions to set player's scoreboard
+                    // This is a placeholder for custom logic that would be version-specific
+                    // For 1.21.1, we need to find the correct method for setting a scoreboard
+                } catch (Exception alternativeEx) {
+                    NeoEssentials.LOGGER.debug("Alternative scoreboard setting approach failed too: {}", 
+                        alternativeEx.getMessage());
+                }
+            }
         } catch (Exception e) {
             // Fallback approach - use the server's scoreboard
             NeoEssentials.LOGGER.warn("Could not set custom scoreboard for player {}", player.getScoreboardName(), e);
@@ -345,15 +420,99 @@ public class ScoreboardFeature extends AbstractFeature {
      * Removes a player's scoreboard
      * 
      * @param player The player
-     */    private void removePlayerScoreboard(ServerPlayer player) {
+     */    
+    private void removePlayerScoreboard(ServerPlayer player) {
         try {
-            // Reset to the server's main scoreboard using reflection
-            java.lang.reflect.Method setScoreboardMethod = 
-                ServerPlayer.class.getDeclaredMethod("setScoreboard", Scoreboard.class);
-            setScoreboardMethod.setAccessible(true);
-            setScoreboardMethod.invoke(player, server.getScoreboard());
+            // In Minecraft 1.21.1, the direct setScoreboard method no longer exists
+            // Instead, we need to use the connection object to set the scoreboard
+            // or get the player's connection first
+            try {
+                // Try to access player's connection field - try multiple possible field names
+                Object connection = null;
+                
+                // Get all fields to look for the connection field
+                java.lang.reflect.Field[] fields = ServerPlayer.class.getDeclaredFields();
+                
+                // Try common names and patterns for the connection field
+                String[] possibleNames = {"connection", "playerConnection", "f_8941_", "connection", "field_71135_a"};
+                
+                // First try exact name matches
+                for (String possibleName : possibleNames) {
+                    try {
+                        java.lang.reflect.Field field = ServerPlayer.class.getDeclaredField(possibleName);
+                        field.setAccessible(true);
+                        connection = field.get(player);
+                        if (connection != null) {
+                            NeoEssentials.LOGGER.debug("Found connection field with name: {}", possibleName);
+                            break;
+                        }
+                    } catch (Exception ex) {
+                        // Continue trying other names
+                    }
+                }
+                
+                // If still null, try all fields that might be the connection
+                if (connection == null) {
+                    for (java.lang.reflect.Field field : fields) {
+                        try {
+                            field.setAccessible(true);
+                            Object obj = field.get(player);
+                            if (obj != null && obj.getClass().getName().contains("Connection")) {
+                                connection = obj;
+                                NeoEssentials.LOGGER.debug("Found connection field by pattern: {}", field.getName());
+                                break;
+                            }
+                        } catch (Exception ex) {
+                            // Skip fields that can't be accessed
+                        }
+                    }
+                }
+                
+                // Then try to find a method to set the scoreboard on the connection
+                if (connection != null) {
+                    Class<?> connectionClass = connection.getClass();
+                    java.lang.reflect.Method setScoreboardMethod = null;
+                    
+                    // Try to find the appropriate method (may have different names)
+                    for (java.lang.reflect.Method method : connectionClass.getDeclaredMethods()) {
+                        if (method.getParameterCount() == 1 && 
+                            method.getParameterTypes()[0].getName().endsWith("Scoreboard")) {
+                            setScoreboardMethod = method;
+                            break;
+                        }
+                    }
+                    
+                    // If we found a method, use it
+                    if (setScoreboardMethod != null) {
+                        setScoreboardMethod.setAccessible(true);
+                        setScoreboardMethod.invoke(connection, server.getScoreboard());
+                        NeoEssentials.LOGGER.debug("Successfully reset scoreboard for player {} using connection", player.getScoreboardName());
+                    } else {
+                        NeoEssentials.LOGGER.debug("Couldn't find scoreboard reset method for player {}", player.getScoreboardName());
+                    }
+                } else {
+                    // Try alternative approaches if we couldn't find the connection field
+                    try {
+                        // Try sending a direct scoreboard packet using Minecraft's packet system
+                        NeoEssentials.LOGGER.debug("Connection field not found for player {}. Trying alternative approaches.", 
+                            player.getScoreboardName());
+                            
+                        // Just log it for now - the scoreboards will reset themselves when players move between worlds
+                        // or eventually when they reconnect
+                    } catch (Exception alternativeEx) {
+                        NeoEssentials.LOGGER.debug("Alternative scoreboard reset approach failed too: {}", 
+                            alternativeEx.getMessage());
+                    }
+                }
+            } catch (Exception methodException) {
+                // Fallback to letting the scoreboard manager handle it naturally
+                NeoEssentials.LOGGER.debug("Using fallback method to reset scoreboard - connection approach failed: {}", 
+                    methodException.getMessage());
+            }
             
+            // Remove from our tracking regardless of outcome
             playerScoreboards.remove(player.getUUID());
+            NeoEssentials.LOGGER.debug("Removed player {} from scoreboard tracking", player.getScoreboardName());
         } catch (Exception e) {
             tabManager.getErrorLogger().logError(
                 "Error removing scoreboard for player " + player.getScoreboardName(), e);
