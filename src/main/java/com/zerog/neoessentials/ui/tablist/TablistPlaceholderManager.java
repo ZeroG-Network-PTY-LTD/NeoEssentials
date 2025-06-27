@@ -55,6 +55,9 @@ public class TablistPlaceholderManager {
         this.server = server;
         registerDefaultPlaceholders();
         registerDefaultCustomPlaceholders();
+        
+        // Test hex color conversion
+        testHexColorConversion();
     }
     
     /**
@@ -627,7 +630,7 @@ public class TablistPlaceholderManager {
      */    // Placeholder methods are now directly implemented above
     
     /**
-     * Process color codes in text
+     * Process color codes in text, including hex colors
      *
      * @param text The text to process
      * @return The text with color codes processed
@@ -637,6 +640,30 @@ public class TablistPlaceholderManager {
             return "";
         }
         
+        // First, handle hex color codes (&#RRGGBB format)
+        text = text.replaceAll("&#([A-Fa-f0-9]{6})", "§x§$1");
+        
+        // Convert hex string to individual character format that Minecraft expects
+        // Minecraft expects hex colors as §x§R§R§G§G§B§B
+        Pattern hexPattern = Pattern.compile("§x§([A-Fa-f0-9]{6})");
+        Matcher hexMatcher = hexPattern.matcher(text);
+        StringBuffer hexResult = new StringBuffer();
+        
+        while (hexMatcher.find()) {
+            String hexCode = hexMatcher.group(1);
+            StringBuilder mcHexFormat = new StringBuilder("§x");
+            
+            // Convert RRGGBB to §R§R§G§G§B§B format
+            for (char c : hexCode.toCharArray()) {
+                mcHexFormat.append("§").append(Character.toLowerCase(c));
+            }
+            
+            hexMatcher.appendReplacement(hexResult, Matcher.quoteReplacement(mcHexFormat.toString()));
+        }
+        hexMatcher.appendTail(hexResult);
+        text = hexResult.toString();
+        
+        // Then handle standard color codes (&a, &c, etc.)
         char colorChar = '&';
         char[] b = text.toCharArray();
         
@@ -651,7 +678,7 @@ public class TablistPlaceholderManager {
     }
     
     /**
-     * Strips color codes from text
+     * Strips color codes from text, including hex colors
      *
      * @param text The text to process
      * @return The text with color codes removed
@@ -661,7 +688,17 @@ public class TablistPlaceholderManager {
             return "";
         }
         
-        return text.replaceAll("(?i)§[0-9A-FK-OR]", "").replaceAll("(?i)&[0-9A-FK-OR]", "");
+        // Remove hex color codes first (&#RRGGBB format)
+        text = text.replaceAll("&#[A-Fa-f0-9]{6}", "");
+        
+        // Remove Minecraft hex color codes (§x§R§R§G§G§B§B format)
+        text = text.replaceAll("§x(§[A-Fa-f0-9]){6}", "");
+        
+        // Remove standard color codes
+        text = text.replaceAll("(?i)§[0-9A-FK-OR]", "");
+        text = text.replaceAll("(?i)&[0-9A-FK-OR]", "");
+        
+        return text;
     }
       /**
      * Applies color codes to a text string and returns it as a Component
@@ -845,5 +882,19 @@ public class TablistPlaceholderManager {
         
         matcher.appendTail(result);
         return result.toString();
+    }
+    
+    /**
+     * Test method for hex color conversion - can be called during initialization
+     */
+    public static void testHexColorConversion() {
+        String testText = "&#54C5EAExample&#FF0000Text";
+        String converted = formatColors(testText);
+        NeoEssentials.LOGGER.info("Hex color test: '{}' -> '{}'", testText, converted);
+        
+        // Also test standard colors
+        String testStandard = "&cRed&aGreen&fWhite";
+        String convertedStandard = formatColors(testStandard);
+        NeoEssentials.LOGGER.info("Standard color test: '{}' -> '{}'", testStandard, convertedStandard);
     }
 }
