@@ -14,6 +14,10 @@ settings:
   enable_footers: true
   enable_bossbars: true
   enable_group_specific: true
+  
+  # Animation intervals in ticks (1 tick = 50ms)
+  header_animation_interval: 20  # 1 second between header frames
+  footer_animation_interval: 20  # 1 second between footer frames
 
 # Default templates for all players
 templates:

@@ -168,6 +168,28 @@ public class TABConfigManager {
             }
         }
         
+        // Header animation interval
+        if (settings.containsKey("header_animation_interval")) {
+            Object interval = settings.get("header_animation_interval");
+            if (interval instanceof Number) {
+                int intervalTicks = ((Number) interval).intValue();
+                currentConfig.setHeaderAnimationInterval(intervalTicks);
+                NeoEssentials.LOGGER.info("Set header animation interval to: {} ticks ({}ms)", 
+                                         intervalTicks, intervalTicks * 50);
+            }
+        }
+        
+        // Footer animation interval
+        if (settings.containsKey("footer_animation_interval")) {
+            Object interval = settings.get("footer_animation_interval");
+            if (interval instanceof Number) {
+                int intervalTicks = ((Number) interval).intValue();
+                currentConfig.setFooterAnimationInterval(intervalTicks);
+                NeoEssentials.LOGGER.info("Set footer animation interval to: {} ticks ({}ms)", 
+                                         intervalTicks, intervalTicks * 50);
+            }
+        }
+        
         // Enable/disable headers and footers
         boolean enableHeaders = getBooleanOrDefault(settings, "enable_headers", true);
         boolean enableFooters = getBooleanOrDefault(settings, "enable_footers", true);
