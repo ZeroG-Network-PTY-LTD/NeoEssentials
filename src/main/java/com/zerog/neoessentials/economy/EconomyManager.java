@@ -2,6 +2,7 @@ package com.zerog.neoessentials.economy;
 
 import com.zerog.neoessentials.config.EnhancedEconomyConfig;
 import com.zerog.neoessentials.economy.persistence.EconomyPersistenceManager;
+import com.zerog.neoessentials.NeoEssentials;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -473,6 +474,28 @@ public class EconomyManager {
             System.out.println("Economy manager shutdown complete");
         } catch (Exception e) {
             System.err.println("Error during economy manager shutdown: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Initialize the economy system - load essential data at startup
+     */
+    public void initialize() {
+        NeoEssentials.LOGGER.info("Initializing NeoEssentials Economy System...");
+        
+        try {
+            // Preload all active loans for better performance
+            List<Loan> activeLoans = persistenceManager.loadAllActiveLoans().join();
+            NeoEssentials.LOGGER.info("Loaded {} active loans from database", activeLoans.size());
+            
+            // Cache them in the bank manager by calling a public method
+            for (Loan loan : activeLoans) {
+                bankManager.cacheLoan(loan);
+            }
+            
+            NeoEssentials.LOGGER.info("Economy system initialization complete");
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to initialize economy system", e);
         }
     }
     
