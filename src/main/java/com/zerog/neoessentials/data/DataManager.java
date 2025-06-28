@@ -42,7 +42,8 @@ import java.util.Map;
  * Main data manager class that initializes and manages all data storage components.
  */
 public class DataManager {    private UserManager userManager;
-    private EconomyManager economyManager;
+    private EconomyManager economyManager; // Legacy economy manager for backward compatibility
+    private com.zerog.neoessentials.economy.EconomyManager newEconomyManager; // New v1.0.2 economy system
     private HomeManager homeManager;
     private WarpManager warpManager;
     private SpawnManager spawnManager;
@@ -102,7 +103,8 @@ public class DataManager {    private UserManager userManager;
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
         // Initialize all managers
         userManager = new UserManager();
-        economyManager = new EconomyManager();
+        economyManager = new EconomyManager(); // Legacy economy manager for backward compatibility
+        newEconomyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance(); // New v1.0.2 economy system
         homeManager = new HomeManager();
         warpManager = new WarpManager();
         spawnManager = new SpawnManager();
@@ -163,7 +165,8 @@ public class DataManager {    private UserManager userManager;
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");            // Initialize all data managers
 >>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
         userManager.initialize();
-        economyManager.initialize();
+        economyManager.initialize(); // Legacy economy system
+        // newEconomyManager is already initialized via singleton getInstance()
         homeManager.initialize();
         warpManager.initialize();
         spawnManager.initialize();
@@ -196,6 +199,10 @@ public class DataManager {    private UserManager userManager;
         
         if (economyManager == null) {
             economyManager = new EconomyManager();
+        }
+        
+        if (newEconomyManager == null) {
+            newEconomyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
         }
         
         if (homeManager == null) {
@@ -442,6 +449,15 @@ public class DataManager {    private UserManager userManager;
      */
     public EconomyManager getEconomyManager() {
         return economyManager;
+    }
+    
+    /**
+     * Gets the new v1.0.2 economy manager instance
+     * 
+     * @return The new economy manager
+     */
+    public com.zerog.neoessentials.economy.EconomyManager getNewEconomyManager() {
+        return newEconomyManager;
     }
     
     /**

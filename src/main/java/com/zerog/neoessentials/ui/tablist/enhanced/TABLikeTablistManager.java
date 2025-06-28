@@ -135,11 +135,11 @@ public class TABLikeTablistManager {
             TimeUnit.MILLISECONDS
         );
         
-        // 2. Animation frame update task (runs every 50ms for smooth animations)
+        // 2. Animation frame update task (runs every 25ms for ultra-smooth animations)
         animationTask = scheduler.scheduleAtFixedRate(
             this::updateAnimationsOnly,
             0,
-            50, // Always 50ms for smooth animations
+            25, // Ultra-smooth 25ms updates (0.5 ticks)
             TimeUnit.MILLISECONDS
         );
         
@@ -152,7 +152,7 @@ public class TABLikeTablistManager {
             TimeUnit.MILLISECONDS
         );
         
-        NeoEssentials.LOGGER.info("Started tablist tasks: main={}ms, animations=50ms, placeholders={}ms", 
+        NeoEssentials.LOGGER.info("Started tablist tasks: main={}ms, animations=25ms, placeholders={}ms", 
             config.getUpdateInterval(), placeholderInterval);
     }
     
@@ -236,35 +236,6 @@ public class TABLikeTablistManager {
         // Remove offline players
         playerData.entrySet().removeIf(entry -> 
             players.stream().noneMatch(p -> p.getUUID().equals(entry.getKey())));
-    }
-    
-    private void updateHeaderFooter(Collection<ServerPlayer> players) {
-        if (!config.isHeaderFooterEnabled()) return;
-        
-        for (ServerPlayer player : players) {
-            PlayerTabData data = playerData.get(player.getUUID());
-            if (data == null) continue;
-            
-            // Check disable condition
-            if (checkDisableCondition(player, config.getHeaderFooterDisableCondition())) {
-                continue;
-            }
-            
-            // Get header and footer for this player based on individual settings
-            Component header = Component.empty();
-            Component footer = Component.empty();
-            
-            if (config.isEnableHeaders()) {
-                header = getHeaderForPlayer(player, data);
-            }
-            
-            if (config.isEnableFooters()) {
-                footer = getFooterForPlayer(player, data);
-            }
-            
-            // Send packet
-            player.connection.send(new ClientboundTabListPacket(header, footer));
-        }
     }
     
     private void updatePlayerNames(Collection<ServerPlayer> players) {

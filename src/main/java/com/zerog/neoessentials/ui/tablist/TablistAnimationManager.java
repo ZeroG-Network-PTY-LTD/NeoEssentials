@@ -151,33 +151,41 @@ public class TablistAnimationManager {    /**
     public boolean hasAnimationFrameChanged() {
         long currentTime = System.currentTimeMillis();
         
+        // For very fast animations, check every call to ensure smoothness
+        boolean anyChange = false;
+        
         // Check template header/footer animation timing
         int currentHeaderFrame = getCurrentHeaderFrame();
         int currentFooterFrame = getCurrentFooterFrame();
         
-        boolean templateChanged = (currentHeaderFrame != lastHeaderFrame || currentFooterFrame != lastFooterFrame);
+        if (currentHeaderFrame != lastHeaderFrame || currentFooterFrame != lastFooterFrame) {
+            lastHeaderFrame = currentHeaderFrame;
+            lastFooterFrame = currentFooterFrame;
+            anyChange = true;
+        }
         
-        // Check placeholder animations for changes
-        boolean placeholderChanged = false;
+        // Check ALL placeholder animations for changes
         for (String animationName : animationCache.keySet()) {
             int currentFrame = getCurrentPlaceholderFrame(animationName);
             Integer lastFrame = lastPlaceholderFrames.get(animationName);
             
             if (lastFrame == null || lastFrame != currentFrame) {
                 lastPlaceholderFrames.put(animationName, currentFrame);
-                placeholderChanged = true;
+                anyChange = true;
+                
+                // Debug log for fast animations
+                if (lastFrame != null && lastFrame != currentFrame) {
+                    NeoEssentials.LOGGER.debug("Animation '{}' frame changed: {} -> {}", 
+                        animationName, lastFrame, currentFrame);
+                }
             }
         }
         
-        // Update state if anything changed
-        if (templateChanged || placeholderChanged) {
-            lastHeaderFrame = currentHeaderFrame;
-            lastFooterFrame = currentFooterFrame;
+        if (anyChange) {
             lastAnimationCheck = currentTime;
-            return true;
         }
         
-        return false;
+        return anyChange;
     }
     
     /**

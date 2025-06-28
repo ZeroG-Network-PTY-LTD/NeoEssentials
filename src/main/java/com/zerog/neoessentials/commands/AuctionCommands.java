@@ -1,0 +1,476 @@
+package com.zerog.neoessentials.commands;
+
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.zerog.neoessentials.economy.*;
+import com.zerog.neoessentials.utils.MessageUtil;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.server.level.ServerPlayer;
+
+import java.util.List;
+
+/**
+ * Handles all auction-related commands for the NeoEssentials economy system.
+ * 
+ * Commands:
+ * - /auction create <type> <item> <starting-price> [duration] - Create an auction
+ * - /auction list [type] - List active auctions
+ * - /auction info <auction-id> - Get auction information
+ * - /auction bid <auction-id> <amount> - Place a bid on an auction
+ * - /auction buyout <auction-id> - Buy auction immediately (if buy-it-now)
+ * - /auction cancel <auction-id> - Cancel your auction
+ * - /auction history [player] - View auction history
+ * - /auction search <item> - Search for specific item auctions
+ * - /auction watch <auction-id> - Watch an auction for updates
+ * - /auction unwatch <auction-id> - Stop watching an auction
+ */
+public class AuctionCommands {
+    
+    /**
+     * Registers all auction commands with the command dispatcher.
+     *
+     * @param dispatcher The command dispatcher to register commands with
+     */
+    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        
+        // Main /auction command with subcommands
+        dispatcher.register(
+            Commands.literal("auction")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction"))
+                .executes(context -> {
+                    // Show auction help when no subcommand is provided
+                    return showAuctionHelp(context.getSource());
+                })
+                
+                // /auction create <type> <item> <starting-price> [duration]
+                .then(Commands.literal("create")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.create"))
+                    .then(Commands.argument("type", StringArgumentType.string())
+                        .suggests((context, builder) -> {
+                            builder.suggest("standard");
+                            builder.suggest("buyitnow");
+                            builder.suggest("reserve");
+                            builder.suggest("dutch");
+                            return builder.buildFuture();
+                        })
+                        .then(Commands.argument("item", StringArgumentType.string())
+                            .then(Commands.argument("starting_price", DoubleArgumentType.doubleArg(0.01))
+                                .executes(context -> {
+                                    ServerPlayer player = context.getSource().getPlayerOrException();
+                                    String type = StringArgumentType.getString(context, "type");
+                                    String item = StringArgumentType.getString(context, "item");
+                                    double startingPrice = DoubleArgumentType.getDouble(context, "starting_price");
+                                    return createAuction(player, type, item, startingPrice, 86400); // 24 hours default
+                                })
+                                .then(Commands.argument("duration", IntegerArgumentType.integer(300, 604800)) // 5 min to 1 week
+                                    .executes(context -> {
+                                        ServerPlayer player = context.getSource().getPlayerOrException();
+                                        String type = StringArgumentType.getString(context, "type");
+                                        String item = StringArgumentType.getString(context, "item");
+                                        double startingPrice = DoubleArgumentType.getDouble(context, "starting_price");
+                                        int duration = IntegerArgumentType.getInteger(context, "duration");
+                                        return createAuction(player, type, item, startingPrice, duration);
+                                    })
+                                )
+                            )
+                        )
+                    )
+                )
+                
+                // /auction list [type]
+                .then(Commands.literal("list")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.list"))
+                    .executes(context -> {
+                        ServerPlayer player = context.getSource().getPlayerOrException();
+                        return listAuctions(player, null);
+                    })
+                    .then(Commands.argument("type", StringArgumentType.string())
+                        .suggests((context, builder) -> {
+                            builder.suggest("all");
+                            builder.suggest("standard");
+                            builder.suggest("buyitnow");
+                            builder.suggest("reserve");
+                            builder.suggest("dutch");
+                            builder.suggest("ending");
+                            return builder.buildFuture();
+                        })
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            String type = StringArgumentType.getString(context, "type");
+                            return listAuctions(player, type);
+                        })
+                    )
+                )
+                
+                // /auction info <auction-id>
+                .then(Commands.literal("info")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.info"))
+                    .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            String auctionId = StringArgumentType.getString(context, "auction_id");
+                            return showAuctionInfo(player, auctionId);
+                        })
+                    )
+                )
+                
+                // /auction bid <auction-id> <amount>
+                .then(Commands.literal("bid")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.bid"))
+                    .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
+                            .executes(context -> {
+                                ServerPlayer player = context.getSource().getPlayerOrException();
+                                String auctionId = StringArgumentType.getString(context, "auction_id");
+                                double amount = DoubleArgumentType.getDouble(context, "amount");
+                                return placeBid(player, auctionId, amount);
+                            })
+                        )
+                    )
+                )
+                
+                // /auction buyout <auction-id>
+                .then(Commands.literal("buyout")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.buyout"))
+                    .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            String auctionId = StringArgumentType.getString(context, "auction_id");
+                            return buyoutAuction(player, auctionId);
+                        })
+                    )
+                )
+                
+                // /auction cancel <auction-id>
+                .then(Commands.literal("cancel")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.cancel"))
+                    .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            String auctionId = StringArgumentType.getString(context, "auction_id");
+                            return cancelAuction(player, auctionId);
+                        })
+                    )
+                )
+                
+                // /auction history [player]
+                .then(Commands.literal("history")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.history"))
+                    .executes(context -> {
+                        ServerPlayer player = context.getSource().getPlayerOrException();
+                        return showAuctionHistory(player, null);
+                    })
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.history.others"))
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                            return showAuctionHistory(player, target);
+                        })
+                    )
+                )
+                
+                // /auction search <item>
+                .then(Commands.literal("search")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.search"))
+                    .then(Commands.argument("item", StringArgumentType.greedyString())
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            String item = StringArgumentType.getString(context, "item");
+                            return searchAuctions(player, item);
+                        })
+                    )
+                )
+                
+                // /auction watch <auction-id>
+                .then(Commands.literal("watch")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.watch"))
+                    .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            String auctionId = StringArgumentType.getString(context, "auction_id");
+                            return watchAuction(player, auctionId);
+                        })
+                    )
+                )
+                
+                // /auction unwatch <auction-id>
+                .then(Commands.literal("unwatch")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.watch"))
+                    .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .executes(context -> {
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            String auctionId = StringArgumentType.getString(context, "auction_id");
+                            return unwatchAuction(player, auctionId);
+                        })
+                    )
+                )
+        );
+        
+        // Add alias commands
+        dispatcher.register(
+            Commands.literal("auc")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction"))
+                .redirect(dispatcher.getRoot().getChild("auction"))
+        );
+    }
+    
+    // Auction command implementations
+    
+    private int showAuctionHelp(CommandSourceStack source) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            MessageUtil.sendMessage(player, "§6=== NeoEssentials Auction House ===");
+            MessageUtil.sendMessage(player, "§e/auction create <type> <item> <price> [duration] §7- Create auction");
+            MessageUtil.sendMessage(player, "§e/auction list [type] §7- List active auctions");
+            MessageUtil.sendMessage(player, "§e/auction info <id> §7- Get auction information");
+            MessageUtil.sendMessage(player, "§e/auction bid <id> <amount> §7- Place a bid");
+            MessageUtil.sendMessage(player, "§e/auction buyout <id> §7- Buy immediately");
+            MessageUtil.sendMessage(player, "§e/auction cancel <id> §7- Cancel your auction");
+            MessageUtil.sendMessage(player, "§e/auction history [player] §7- View auction history");
+            MessageUtil.sendMessage(player, "§e/auction search <item> §7- Search for items");
+            MessageUtil.sendMessage(player, "§e/auction watch <id> §7- Watch auction for updates");
+            MessageUtil.sendMessage(player, "§e/auction unwatch <id> §7- Stop watching auction");
+            MessageUtil.sendMessage(player, "§7Auction Types: standard, buyitnow, reserve, dutch");
+            MessageUtil.sendMessage(player, "§7Alias: §e/auc§7 can be used instead of §e/auction");
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(net.minecraft.network.chat.Component.literal("Command can only be used by players."));
+            return 0;
+        }
+    }
+    
+    private int createAuction(ServerPlayer player, String typeStr, String itemName, double startingPrice, int duration) {
+        try {
+            Auction.AuctionType type = Auction.AuctionType.valueOf(typeStr.toUpperCase().replace("BUYITNOW", "BUY_IT_NOW"));
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+            
+            // Create the auction (using proper constructor parameters)
+            Auction auction = auctionHouse.createAuction(player.getUUID(), itemName, itemName, 1, 
+                startingPrice, duration * 1000L); // Convert seconds to milliseconds
+            
+            if (auction != null) {
+                String auctionId = auction.getAuctionId().toString().substring(0, 8);
+                MessageUtil.sendMessage(player, "§aSuccessfully created " + type.name().toLowerCase().replace("_", "-") + 
+                    " auction for §e" + itemName);
+                MessageUtil.sendMessage(player, "§7Auction ID: §e" + auctionId);
+                MessageUtil.sendMessage(player, "§7Starting Price: §e" + defaultCurrency.format(startingPrice));
+                MessageUtil.sendMessage(player, "§7Duration: §e" + formatDuration(duration));
+                MessageUtil.sendMessage(player, "§7Players can now bid using: §e/auction bid " + auctionId + " <amount>");
+                return 1;
+            } else {
+                MessageUtil.sendErrorMessage(player, "Failed to create auction. Please try again.");
+                return 0;
+            }
+        } catch (IllegalArgumentException e) {
+            MessageUtil.sendErrorMessage(player, "Invalid auction type. Valid types: standard, buyitnow, reserve, dutch");
+            return 0;
+        }
+    }
+    
+    private int listAuctions(ServerPlayer player, String typeFilter) {
+        try {
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            List<Auction> auctions = auctionHouse.getActiveAuctions();
+            
+            if (typeFilter != null && !typeFilter.equalsIgnoreCase("all")) {
+                // Filter by type
+                String filterUpper = typeFilter.toUpperCase().replace("BUYITNOW", "BUY_IT_NOW");
+                if (filterUpper.equals("ENDING")) {
+                    // Show auctions ending soon (within 1 hour)
+                    long oneHour = 3600;
+                    auctions = auctions.stream()
+                        .filter(auction -> auction.getTimeRemaining() <= oneHour)
+                        .toList();
+                } else {
+                    try {
+                        Auction.AuctionType type = Auction.AuctionType.valueOf(filterUpper);
+                        auctions = auctions.stream()
+                            .filter(auction -> auction.getAuctionType() == type)
+                            .toList();
+                    } catch (IllegalArgumentException e) {
+                        MessageUtil.sendErrorMessage(player, "Invalid auction type filter.");
+                        return 0;
+                    }
+                }
+            }
+            
+            if (auctions.isEmpty()) {
+                MessageUtil.sendMessage(player, "§7No active auctions found.");
+                return 1;
+            }
+            
+            String title = typeFilter != null ? "=== " + typeFilter.toUpperCase() + " Auctions ===" : "=== Active Auctions ===";
+            MessageUtil.sendMessage(player, "§6" + title);
+            
+            for (Auction auction : auctions.stream().limit(10).toList()) {
+                Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+                String timeLeft = formatDuration((int) auction.getTimeRemaining());
+                String currentBid = auction.getCurrentBid() > 0 ? 
+                    defaultCurrency.format(auction.getCurrentBid()) : 
+                    defaultCurrency.format(auction.getStartingBid());
+                
+                String auctionId = auction.getAuctionId().toString().substring(0, 8);
+                MessageUtil.sendMessage(player, "§e" + auctionId + " §7- §e" + auction.getItemName() + 
+                    " §7- §a" + currentBid + " §7- §e" + timeLeft + " §8[" + auction.getAuctionType().name() + "]");
+            }
+            
+            if (auctions.size() > 10) {
+                MessageUtil.sendMessage(player, "§7... and " + (auctions.size() - 10) + " more auctions.");
+            }
+            
+            MessageUtil.sendMessage(player, "§7Use §e/auction info <id>§7 for detailed information.");
+            return 1;
+        } catch (Exception e) {
+            MessageUtil.sendErrorMessage(player, "An error occurred while listing auctions: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int showAuctionInfo(ServerPlayer player, String auctionId) {
+        try {
+            // This would need a getAuctionById method in AuctionHouse
+            MessageUtil.sendMessage(player, "§eAuction info system integration coming soon!");
+            MessageUtil.sendMessage(player, "§7Auction ID: §e" + auctionId);
+            MessageUtil.sendMessage(player, "§7This will show detailed auction information when fully integrated.");
+            return 1;
+        } catch (Exception e) {
+            MessageUtil.sendErrorMessage(player, "An error occurred while retrieving auction info: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int placeBid(ServerPlayer player, String auctionId, double amount) {
+        try {
+            // This would need auction lookup and bidding integration
+            MessageUtil.sendMessage(player, "§eBid system integration coming soon!");
+            MessageUtil.sendMessage(player, "§7Placing bid of §e" + amount + "§7 on auction §e" + auctionId);
+            MessageUtil.sendMessage(player, "§7This will validate funds and place bids when fully integrated.");
+            return 1;
+        } catch (Exception e) {
+            MessageUtil.sendErrorMessage(player, "An error occurred while placing bid: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int buyoutAuction(ServerPlayer player, String auctionId) {
+        try {
+            // This would need auction lookup and buy-it-now integration
+            MessageUtil.sendMessage(player, "§eBuy-it-now system integration coming soon!");
+            MessageUtil.sendMessage(player, "§7Attempting to buy auction §e" + auctionId + "§7 immediately");
+            MessageUtil.sendMessage(player, "§7This will process immediate purchases when fully integrated.");
+            return 1;
+        } catch (Exception e) {
+            MessageUtil.sendErrorMessage(player, "An error occurred during buyout: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int cancelAuction(ServerPlayer player, String auctionId) {
+        try {
+            // This would need auction lookup and cancellation integration
+            MessageUtil.sendMessage(player, "§eAuction cancellation integration coming soon!");
+            MessageUtil.sendMessage(player, "§7Cancelling auction §e" + auctionId);
+            MessageUtil.sendMessage(player, "§7This will cancel auctions and refund items when fully integrated.");
+            return 1;
+        } catch (Exception e) {
+            MessageUtil.sendErrorMessage(player, "An error occurred while cancelling auction: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int showAuctionHistory(ServerPlayer player, ServerPlayer target) {
+        try {
+            String targetName = target != null ? target.getScoreboardName() : "Your";
+            
+            MessageUtil.sendMessage(player, "§6=== " + targetName + " Auction History ===");
+            MessageUtil.sendMessage(player, "§eAuction history system integration coming soon!");
+            MessageUtil.sendMessage(player, "§7This will show completed auctions, bids won/lost, and statistics.");
+            
+            return 1;
+        } catch (Exception e) {
+            MessageUtil.sendErrorMessage(player, "An error occurred while retrieving auction history: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int searchAuctions(ServerPlayer player, String itemQuery) {
+        try {
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            List<Auction> auctions = auctionHouse.getActiveAuctions();
+            
+            // Filter auctions by item name
+            List<Auction> matchingAuctions = auctions.stream()
+                .filter(auction -> auction.getItemName().toLowerCase().contains(itemQuery.toLowerCase()))
+                .toList();
+            
+            if (matchingAuctions.isEmpty()) {
+                MessageUtil.sendMessage(player, "§7No auctions found for '" + itemQuery + "'");
+                return 1;
+            }
+            
+            MessageUtil.sendMessage(player, "§6=== Search Results for '" + itemQuery + "' ===");
+            
+            for (Auction auction : matchingAuctions.stream().limit(10).toList()) {
+                Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+                String timeLeft = formatDuration((int) auction.getTimeRemaining());
+                String currentBid = auction.getCurrentBid() > 0 ? 
+                    defaultCurrency.format(auction.getCurrentBid()) : 
+                    defaultCurrency.format(auction.getStartingBid());
+                
+                String auctionId = auction.getAuctionId().toString().substring(0, 8);
+                MessageUtil.sendMessage(player, "§e" + auctionId + " §7- §e" + auction.getItemName() + 
+                    " §7- §a" + currentBid + " §7- §e" + timeLeft);
+            }
+            
+            if (matchingAuctions.size() > 10) {
+                MessageUtil.sendMessage(player, "§7... and " + (matchingAuctions.size() - 10) + " more matches.");
+            }
+            
+            return 1;
+        } catch (Exception e) {
+            MessageUtil.sendErrorMessage(player, "An error occurred while searching auctions: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    private int watchAuction(ServerPlayer player, String auctionId) {
+        // This would be implemented when auction watching system is added
+        MessageUtil.sendMessage(player, "§eAuction watching system coming soon!");
+        MessageUtil.sendMessage(player, "§7You will receive notifications when auction §e" + auctionId + "§7 updates.");
+        return 1;
+    }
+    
+    private int unwatchAuction(ServerPlayer player, String auctionId) {
+        // This would be implemented when auction watching system is added
+        MessageUtil.sendMessage(player, "§eAuction watching system coming soon!");
+        MessageUtil.sendMessage(player, "§7Stopped watching auction §e" + auctionId);
+        return 1;
+    }
+    
+    // Helper methods
+    
+    private String formatDuration(int seconds) {
+        if (seconds <= 0) return "Ended";
+        
+        int days = seconds / 86400;
+        int hours = (seconds % 86400) / 3600;
+        int minutes = (seconds % 3600) / 60;
+        
+        if (days > 0) {
+            return days + "d " + hours + "h " + minutes + "m";
+        } else if (hours > 0) {
+            return hours + "h " + minutes + "m";
+        } else {
+            return minutes + "m " + (seconds % 60) + "s";
+        }
+    }
+}
