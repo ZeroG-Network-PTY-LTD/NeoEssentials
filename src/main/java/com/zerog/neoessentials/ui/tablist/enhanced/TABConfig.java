@@ -89,6 +89,9 @@ public class TABConfig {
     private int headerAnimationInterval = 20; // 1 second default
     private int footerAnimationInterval = 20; // 1 second default
     
+    // Placeholder update interval (for dynamic data like %memory%, %tps%)
+    private long placeholderUpdateInterval = 500; // 500ms default
+    
     // Individual header/footer controls
     private boolean enableHeaders = true;
     private boolean enableFooters = true;
@@ -348,6 +351,9 @@ public class TABConfig {
     
     public int getFooterAnimationInterval() { return footerAnimationInterval; }
     public void setFooterAnimationInterval(int interval) { this.footerAnimationInterval = interval; }
+    
+    public long getPlaceholderUpdateInterval() { return placeholderUpdateInterval; }
+    public void setPlaceholderUpdateInterval(long interval) { this.placeholderUpdateInterval = interval; }
     
     public boolean isEnableHeaders() { return enableHeaders; }
     public void setEnableHeaders(boolean enable) { this.enableHeaders = enable; }

@@ -41,6 +41,7 @@ public class TABLikeTablistManager {
     private final ScheduledExecutorService scheduler;
     private ScheduledFuture<?> updateTask;
     private ScheduledFuture<?> animationTask;
+    private ScheduledFuture<?> placeholderTask;
     
     // Core managers
     private final TablistAnimationManager animationManager;
@@ -122,8 +123,11 @@ public class TABLikeTablistManager {
         if (animationTask != null) {
             animationTask.cancel(false);
         }
+        if (placeholderTask != null) {
+            placeholderTask.cancel(false);
+        }
         
-        // Main tablist update task (for player data, placeholders, etc.)
+        // 1. Main tablist update task (for player data, team management, etc.)
         updateTask = scheduler.scheduleAtFixedRate(
             this::updateTablist,
             0,
@@ -131,13 +135,25 @@ public class TABLikeTablistManager {
             TimeUnit.MILLISECONDS
         );
         
-        // Separate animation update task (runs more frequently for smooth animations)
+        // 2. Animation frame update task (runs every 50ms for smooth animations)
         animationTask = scheduler.scheduleAtFixedRate(
             this::updateAnimationsOnly,
             0,
-            50, // Update animations every 50ms (1 tick)
+            50, // Always 50ms for smooth animations
             TimeUnit.MILLISECONDS
         );
+        
+        // 3. Placeholder data update task (for dynamic data like %memory%, %tps%)
+        long placeholderInterval = config.getPlaceholderUpdateInterval();
+        placeholderTask = scheduler.scheduleAtFixedRate(
+            this::updatePlaceholdersOnly,
+            0,
+            placeholderInterval,
+            TimeUnit.MILLISECONDS
+        );
+        
+        NeoEssentials.LOGGER.info("Started tablist tasks: main={}ms, animations=50ms, placeholders={}ms", 
+            config.getUpdateInterval(), placeholderInterval);
     }
     
     public void updateTablist() {
