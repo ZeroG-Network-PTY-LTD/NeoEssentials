@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 // TOML import removed in YAML migration
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.config.TablistYamlConfig;
+import com.zerog.neoessentials.ui.tablist.enhanced.TABConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -196,16 +197,20 @@ public class TablistAnimationManager {    /**
      * Gets the header animation interval from config
      */
     private int getHeaderAnimationInterval() {
-        // Default to 20 ticks (1 second) if not configured
-        return 20; // TODO: Make this configurable
+        if (config != null) {
+            return config.getHeaderAnimationInterval();
+        }
+        return 20; // Default to 20 ticks (1 second) if no config
     }
     
     /**
      * Gets the footer animation interval from config
      */
     private int getFooterAnimationInterval() {
-        // Default to 20 ticks (1 second) if not configured
-        return 20; // TODO: Make this configurable
+        if (config != null) {
+            return config.getFooterAnimationInterval();
+        }
+        return 20; // Default to 20 ticks (1 second) if no config
     }
     
     public void removePlayer(UUID playerId) {
@@ -855,13 +860,31 @@ public class TablistAnimationManager {    /**
             return null;
         }
         
+        // Validate animation data
+        if (animation.texts.isEmpty()) {
+            NeoEssentials.LOGGER.warn("Animation '{}' has no text entries", animationName);
+            return "[Empty Animation]";
+        }
+        
+        if (animation.changeInterval <= 0) {
+            NeoEssentials.LOGGER.warn("Animation '{}' has invalid change interval: {}, using default", 
+                animationName, animation.changeInterval);
+            return animation.texts.get(0); // Return first frame
+        }
+        
         // Get current frame based on system time and animation interval
         // changeInterval is in ticks (1 tick = 50ms)
         long currentTime = System.currentTimeMillis();
         long tickTime = currentTime / 50; // Convert to ticks
         
         // Calculate frame index based on the animation's change interval
-        int frameIndex = (int) (tickTime / animation.changeInterval) % animation.texts.size();
+        long framePosition = tickTime / animation.changeInterval;
+        int frameIndex = (int) (framePosition % animation.texts.size());
+        
+        // Ensure frame index is never negative
+        if (frameIndex < 0) {
+            frameIndex = 0;
+        }
         
         String animationText = animation.texts.get(frameIndex);
         
@@ -890,11 +913,21 @@ public class TablistAnimationManager {    /**
                 @SuppressWarnings("unchecked")
                 Map<String, Object> animData = (Map<String, Object>) entry.getValue();
                 
-                // Get change interval
+                // Get change interval - support both formats
                 Object intervalObj = animData.get("change_interval");
+                if (intervalObj == null) {
+                    intervalObj = animData.get("change-interval"); // Support hyphenated version
+                }
                 int interval = (intervalObj instanceof Number) 
                     ? ((Number) intervalObj).intValue() 
                     : DEFAULT_CHANGE_INTERVAL;
+                
+                // Validate interval
+                if (interval <= 0) {
+                    NeoEssentials.LOGGER.warn("Animation '{}' has invalid interval {}, using default {}", 
+                        animationName, interval, DEFAULT_CHANGE_INTERVAL);
+                    interval = DEFAULT_CHANGE_INTERVAL;
+                }
                 
                 // Get texts
                 Object textsObj = animData.get("texts");

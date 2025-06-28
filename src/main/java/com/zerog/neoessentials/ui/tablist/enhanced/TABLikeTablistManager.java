@@ -94,6 +94,9 @@ public class TABLikeTablistManager {
         // Wire animation manager with placeholder manager
         placeholderManager.setAnimationManager(animationManager);
         
+        // Pass config to animation manager for interval settings
+        animationManager.setConfig(config);
+        
         // Load animations from config if available
         if (config.getAnimationsData() != null && !config.getAnimationsData().isEmpty()) {
             animationManager.loadAnimationsFromConfig(config.getAnimationsData());
