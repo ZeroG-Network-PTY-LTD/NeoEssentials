@@ -292,6 +292,38 @@ public class EconomicAnalytics {
     }
     
     /**
+     * Get current inflation rate
+     */
+    public double getInflationRate() {
+        String currentDate = getDateKey(System.currentTimeMillis());
+        return inflationHistory.getOrDefault(currentDate, 0.02); // Default 2% inflation
+    }
+    
+    /**
+     * Get economic velocity (money circulation speed)
+     */
+    public double getEconomicVelocity() {
+        // Calculate based on transaction volume vs money supply
+        return 1.5; // Placeholder value
+    }
+    
+    /**
+     * Get wealth distribution analysis
+     */
+    public WealthDistribution getWealthDistribution() {
+        return new WealthDistribution();
+    }
+    
+    /**
+     * Inner class for wealth distribution data
+     */
+    public static class WealthDistribution {
+        public double getGiniCoefficient() {
+            return 0.4; // Placeholder Gini coefficient
+        }
+    }
+    
+    /**
      * Inner class for economic metrics
      */
     public static class EconomicMetrics {
