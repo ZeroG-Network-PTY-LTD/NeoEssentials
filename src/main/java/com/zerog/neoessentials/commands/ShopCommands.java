@@ -271,8 +271,9 @@ public class ShopCommands {
             for (Shop shop : shops.stream().limit(10).toList()) {
                 String ownerType = shop.getShopType() == Shop.ShopType.SERVER_SHOP || 
                                   shop.getShopType() == Shop.ShopType.ADMIN ? "§cServer" : "§aPlayer";
-                MessageUtil.sendMessage(player, String.format("§e%s §7- %s §7- §6ID: %s", 
-                    shop.getName(), ownerType, shop.getShopId().toString().substring(0, 8)));
+                String status = shop.isActive() ? "§aActive" : "§cInactive";
+                MessageUtil.sendMessage(player, String.format("§e%s §7[%s] §7- %s §7- %s §7- §6ID: %s", 
+                    shop.getName(), shop.getCategory(), ownerType, status, shop.getShopId().toString().substring(0, 8)));
             }
             
             if (shops.size() > 10) {
@@ -293,17 +294,29 @@ public class ShopCommands {
                 NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
             ShopManager shopManager = economyManager.getShopManager();
             
-            MessageUtil.sendMessage(player, "§6=== Shop Information: §e" + shopName + " §6===");
-            MessageUtil.sendMessage(player, "§7Owner: §eSteve");
-            MessageUtil.sendMessage(player, "§7Type: §ePlayer Shop");
-            MessageUtil.sendMessage(player, "§7Status: §aOpen");
-            MessageUtil.sendMessage(player, "§7Location: §e100, 64, 200");
-            MessageUtil.sendMessage(player, "§7Items for Sale: §e15");
-            MessageUtil.sendMessage(player, "§7Total Sales: §e$1,250.50");
-            MessageUtil.sendMessage(player, "§7Rating: §e★★★★☆ (4.2/5)");
+            // Search for shop by name
+            List<Shop> shops = shopManager.searchShops(shopName, 1);
+            if (shops.isEmpty()) {
+                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                return 0;
+            }
+            
+            Shop shop = shops.get(0);
+            
+            // Display shop information
+            MessageUtil.sendMessage(player, "§6=== Shop Information: §e" + shop.getShopName() + " §6===");
+            MessageUtil.sendMessage(player, "§7Shop ID: §e" + shop.getShopId().toString().substring(0, 8) + "...");
+            MessageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
+            MessageUtil.sendMessage(player, "§7Type: §e" + shop.getShopType().getDisplayName());
+            MessageUtil.sendMessage(player, "§7Status: §" + (shop.isActive() ? "aActive" : "cInactive"));
+            MessageUtil.sendMessage(player, "§7Location: §e" + shop.getLocation());
+            MessageUtil.sendMessage(player, "§7Items for Sale: §e" + shop.getAvailableItems().size());
+            MessageUtil.sendMessage(player, "§7Total Revenue: §e$" + String.format("%.2f", shop.getTotalRevenue()));
+            MessageUtil.sendMessage(player, "§7Total Sales: §e" + shop.getTotalSales());
+            MessageUtil.sendMessage(player, "§7Customers: §e" + shop.getCustomerCount());
+            MessageUtil.sendMessage(player, "§7Created: §e" + new java.util.Date(shop.getCreatedTime()));
             MessageUtil.sendMessage(player, "");
             MessageUtil.sendMessage(player, "§7Use §e/shop buy " + shopName + " <item> §7to purchase items");
-            MessageUtil.sendMessage(player, "§7Note: Shop information is in development");
             
             return 1;
         } catch (CommandSyntaxException e) {
