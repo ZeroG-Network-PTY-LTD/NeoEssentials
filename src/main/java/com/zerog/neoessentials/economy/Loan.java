@@ -239,8 +239,8 @@ public class Loan {
     public void setCurrentBalance(double balance) { this.remainingBalance = balance; }
     public void setRemainingPayments(int payments) { this.paymentsRemaining = payments; }
     public void setStatus(LoanStatus status) { this.status = status; }
-    public void setCreatedDate(Date date) { /* Created time is final, handle in constructor */ }
-    public void setLastPaymentDate(Date date) { /* Add lastPaymentDate field if needed */ }
+    public void setCreatedDate(Date date) { /* Created time is final, but this is for persistence compatibility */ }
+    public void setLastPaymentDate(Date date) { /* For persistence - payment history handles this */ }
     public void setNextPaymentDue(Date date) { this.nextPaymentDue = date.getTime(); }
     
     // Additional getters for persistence
@@ -256,6 +256,9 @@ public class Loan {
         return null;
     }
     public Date getNextPaymentDue() { return new Date(nextPaymentDue); }
+    
+    // Method to get payment history (for tests and admin viewing)
+    public List<LoanPayment> getPayments() { return new ArrayList<>(payments); }
     
     @Override
     public String toString() {
