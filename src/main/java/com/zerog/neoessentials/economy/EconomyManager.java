@@ -47,7 +47,7 @@ public class EconomyManager {
         this.currencyManager = CurrencyManager.getInstance();
         this.bankManager = BankManager.getInstance();
         this.transactionManager = new TransactionManager();
-        this.shopManager = new ShopManager();
+        this.shopManager = ShopManager.getInstance();
         
         // Set persistence manager for all components
         this.bankManager.setPersistenceManager(this.persistenceManager);

@@ -385,12 +385,9 @@ public class EconomicAnalytics {
         
         public EconomicHealthMonitor() {
             this.currentHealth = new EconomicHealth(
-                EconomicHealth.HealthStatus.GOOD,
-                EconomicHealth.HealthStatus.GOOD,
-                EconomicHealth.HealthStatus.GOOD,
-                EconomicHealth.HealthStatus.GOOD,
-                new ArrayList<>(),
-                new ArrayList<>()
+                EconomicHealth.HealthStatus.UNKNOWN,
+                "Insufficient data",
+                new HashMap<>()
             );
         }
         
