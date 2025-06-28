@@ -95,7 +95,45 @@ public class Loan {
     }
     
     /**
-     * Create a loan for persistence loading (preserves original UUID)
+     * Create a loan for persistence loading (preserves original UUID and all data)
+     * 
+     * @param loanId The original loan UUID from database
+     * @param borrowerId The borrower's UUID
+     * @param principalAmount The loan amount
+     * @param currency The loan currency
+     * @param loanType The type of loan
+     * @param termMonths Loan term in months
+     * @param interestRate Annual interest rate
+     * @param createdTime The original creation time
+     * @param remainingBalance Current remaining balance
+     * @param status Current loan status
+     * @param paymentsRemaining Number of payments remaining
+     * @param nextPaymentDue Next payment due date
+     */
+    public Loan(UUID loanId, UUID borrowerId, double principalAmount, Currency currency, 
+               LoanType loanType, int termMonths, double interestRate, long createdTime,
+               double remainingBalance, LoanStatus status, int paymentsRemaining, long nextPaymentDue) {
+        this.loanId = loanId; // Use provided UUID instead of generating new one
+        this.borrowerId = borrowerId;
+        this.principalAmount = principalAmount;
+        this.currency = currency;
+        this.loanType = loanType;
+        this.termMonths = termMonths;
+        this.interestRate = interestRate;
+        this.createdTime = createdTime; // Use provided creation time
+        this.payments = new ArrayList<>();
+        this.remainingBalance = remainingBalance; // Use provided balance
+        this.status = status; // Use provided status
+        this.paymentsRemaining = paymentsRemaining; // Use provided remaining payments
+        this.totalInterestPaid = 0.0; // Will be calculated from payment history
+        this.nextPaymentDue = nextPaymentDue; // Use provided next payment due
+        
+        // Calculate monthly payment using standard loan formula
+        this.monthlyPayment = calculateMonthlyPayment();
+    }
+    
+    /**
+     * Create a loan for persistence loading (preserves original UUID) - simplified version
      * 
      * @param loanId The original loan UUID from database
      * @param borrowerId The borrower's UUID
