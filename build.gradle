@@ -118,8 +118,12 @@ configurations {
 }
 
 dependencies {    // Database dependencies - SQLite will be bundled for guaranteed availability
-    implementation 'org.xerial:sqlite-jdbc:3.44.1.0' // Bundle SQLite for persistence
-    include 'org.xerial:sqlite-jdbc:3.44.1.0' // Include SQLite in JAR
+    implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
+    }
+    include('org.xerial:sqlite-jdbc:3.44.1.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
+    }
     
     // Other database drivers as optional (compileOnly)
     compileOnly('com.mysql:mysql-connector-j:8.3.0') {
