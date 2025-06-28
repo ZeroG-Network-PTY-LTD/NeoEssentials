@@ -85,6 +85,10 @@ public class TABConfig {
     // Update interval
     private long updateInterval = 1000; // 1 second default
     
+    // Animation intervals in ticks (1 tick = 50ms)
+    private int headerAnimationInterval = 20; // 1 second default
+    private int footerAnimationInterval = 20; // 1 second default
+    
     // Individual header/footer controls
     private boolean enableHeaders = true;
     private boolean enableFooters = true;
@@ -338,6 +342,12 @@ public class TABConfig {
     
     public long getUpdateInterval() { return updateInterval; }
     public void setUpdateInterval(long interval) { this.updateInterval = interval; }
+    
+    public int getHeaderAnimationInterval() { return headerAnimationInterval; }
+    public void setHeaderAnimationInterval(int interval) { this.headerAnimationInterval = interval; }
+    
+    public int getFooterAnimationInterval() { return footerAnimationInterval; }
+    public void setFooterAnimationInterval(int interval) { this.footerAnimationInterval = interval; }
     
     public boolean isEnableHeaders() { return enableHeaders; }
     public void setEnableHeaders(boolean enable) { this.enableHeaders = enable; }

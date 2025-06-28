@@ -133,6 +133,16 @@ public class TablistAnimationManager {    /**
     private int lastHeaderFrame = -1;
     private int lastFooterFrame = -1;
     
+    // Config reference
+    private TABConfig config;
+    
+    /**
+     * Set the config reference for accessing animation intervals
+     */
+    public void setConfig(TABConfig config) {
+        this.config = config;
+    }
+    
     /**
      * Checks if any animation frame has changed since last check
      * This prevents unnecessary packet sending when animations haven't changed
@@ -202,16 +212,6 @@ public class TablistAnimationManager {    /**
         playerStates.remove(playerId);
     }
       /**
-     * Updates the animation frame for all players
-     */
-    public void updateAnimationFrames() {
-        playerStates.forEach((uuid, state) -> {
-            state.headerFrame++;
-            state.footerFrame++;
-        });
-    }
-    
-    /**
      * Creates an animated component from a list of text lines
      * 
      * @param player The player to create the component for
@@ -242,14 +242,14 @@ public class TablistAnimationManager {    /**
             processedLines.add(placeholderManager.processPlaceholders(line, player));
         }
         
-        // Get player state
-        PlayerAnimationState state = getPlayerState(player);
+        // Get player state - use time-based frame calculation
+        int currentFrame = getCurrentHeaderFrame(); // Use header interval as default
         
         // Process the animation frame
         String text = processor.processFrame(
             processedLines,
             player,
-            state.headerFrame
+            currentFrame
         );
         
         // Process color codes
@@ -268,12 +268,14 @@ public class TablistAnimationManager {    /**
      * @return The animated header component
      */
     public Component getAnimatedHeader(ServerPlayer player, List<String> headerTemplates, TablistPlaceholderManager placeholderManager) {
-        PlayerAnimationState state = getPlayerState(player);
         AnimationType animationType = AnimationType.fromConfigValue(TablistYamlConfig.getHeaderAnimationType());
         AnimationProcessor processor = animationProcessors.getOrDefault(animationType, animationProcessors.get(AnimationType.ROTATION));
         
+        // Use time-based frame calculation instead of player-specific counter
+        int currentFrame = getCurrentHeaderFrame();
+        
         // Process the animation
-        String animatedText = processor.processFrame(headerTemplates, player, state.headerFrame);
+        String animatedText = processor.processFrame(headerTemplates, player, currentFrame);
         
         // Process placeholders
         animatedText = placeholderManager.processPlaceholders(animatedText, player);
@@ -291,12 +293,14 @@ public class TablistAnimationManager {    /**
      * @return The animated footer component
      */
     public Component getAnimatedFooter(ServerPlayer player, List<String> footerTemplates, TablistPlaceholderManager placeholderManager) {
-        PlayerAnimationState state = getPlayerState(player);
         AnimationType animationType = AnimationType.fromConfigValue(TablistYamlConfig.getFooterAnimationType());
         AnimationProcessor processor = animationProcessors.getOrDefault(animationType, animationProcessors.get(AnimationType.ROTATION));
         
+        // Use time-based frame calculation instead of player-specific counter
+        int currentFrame = getCurrentFooterFrame();
+        
         // Process the animation
-        String animatedText = processor.processFrame(footerTemplates, player, state.footerFrame);
+        String animatedText = processor.processFrame(footerTemplates, player, currentFrame);
         
         // Process placeholders
         animatedText = placeholderManager.processPlaceholders(animatedText, player);
