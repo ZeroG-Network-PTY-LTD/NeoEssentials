@@ -34,42 +34,52 @@ public class ShopCommands {
                 .then(Commands.literal("create")
                     .then(Commands.argument("name", StringArgumentType.string())
                         .then(Commands.argument("type", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.SHOP_TYPE_SUGGESTIONS)
                             .executes(context -> createShop(context.getSource(),
                                 StringArgumentType.getString(context, "name"),
                                 StringArgumentType.getString(context, "type"))))))
                 .then(Commands.literal("list")
                     .executes(context -> listShops(context.getSource(), null))
                     .then(Commands.argument("filter", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.SHOP_TYPE_SUGGESTIONS)
                         .executes(context -> listShops(context.getSource(),
                             StringArgumentType.getString(context, "filter")))))
                 .then(Commands.literal("info")
                     .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.SHOP_SUGGESTIONS)
                         .executes(context -> shopInfo(context.getSource(),
                             StringArgumentType.getString(context, "shop")))))
                 .then(Commands.literal("delete")
                     .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.SHOP_SUGGESTIONS)
                         .executes(context -> deleteShop(context.getSource(),
                             StringArgumentType.getString(context, "shop")))))
                 
                 // Trading Operations
                 .then(Commands.literal("buy")
                     .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.SHOP_SUGGESTIONS)
                         .then(Commands.argument("item", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.ITEM_SUGGESTIONS)
                             .executes(context -> buyFromShop(context.getSource(),
                                 StringArgumentType.getString(context, "shop"),
                                 StringArgumentType.getString(context, "item"), 1))
                             .then(Commands.argument("quantity", IntegerArgumentType.integer(1))
+                                .suggests(TabCompletionUtil.QUANTITY_SUGGESTIONS)
                                 .executes(context -> buyFromShop(context.getSource(),
                                     StringArgumentType.getString(context, "shop"),
                                     StringArgumentType.getString(context, "item"),
                                     IntegerArgumentType.getInteger(context, "quantity")))))))
                 .then(Commands.literal("sell")
                     .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.SHOP_SUGGESTIONS)
                         .then(Commands.argument("item", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.ITEM_SUGGESTIONS)
                             .executes(context -> sellToShop(context.getSource(),
                                 StringArgumentType.getString(context, "shop"),
                                 StringArgumentType.getString(context, "item"), 1))
                             .then(Commands.argument("quantity", IntegerArgumentType.integer(1))
+                                .suggests(TabCompletionUtil.QUANTITY_SUGGESTIONS)
                                 .executes(context -> sellToShop(context.getSource(),
                                     StringArgumentType.getString(context, "shop"),
                                     StringArgumentType.getString(context, "item"),
@@ -78,9 +88,13 @@ public class ShopCommands {
                 // Shop Management (Owner Operations)
                 .then(Commands.literal("stock")
                     .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.SHOP_SUGGESTIONS)
                         .then(Commands.argument("item", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.ITEM_SUGGESTIONS)
                             .then(Commands.argument("quantity", IntegerArgumentType.integer(1))
+                                .suggests(TabCompletionUtil.QUANTITY_SUGGESTIONS)
                                 .then(Commands.argument("price", DoubleArgumentType.doubleArg(0.01))
+                                    .suggests(TabCompletionUtil.PRICE_SUGGESTIONS)
                                     .executes(context -> stockShop(context.getSource(),
                                         StringArgumentType.getString(context, "shop"),
                                         StringArgumentType.getString(context, "item"),
@@ -88,13 +102,17 @@ public class ShopCommands {
                                         DoubleArgumentType.getDouble(context, "price"))))))))
                 .then(Commands.literal("price")
                     .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.SHOP_SUGGESTIONS)
                         .then(Commands.argument("item", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.ITEM_SUGGESTIONS)
                             .then(Commands.argument("buy-price", DoubleArgumentType.doubleArg(0.01))
+                                .suggests(TabCompletionUtil.PRICE_SUGGESTIONS)
                                 .executes(context -> setItemPrice(context.getSource(),
                                     StringArgumentType.getString(context, "shop"),
                                     StringArgumentType.getString(context, "item"),
                                     DoubleArgumentType.getDouble(context, "buy-price"), -1))
                                 .then(Commands.argument("sell-price", DoubleArgumentType.doubleArg(0.01))
+                                    .suggests(TabCompletionUtil.PRICE_SUGGESTIONS)
                                     .executes(context -> setItemPrice(context.getSource(),
                                         StringArgumentType.getString(context, "shop"),
                                         StringArgumentType.getString(context, "item"),

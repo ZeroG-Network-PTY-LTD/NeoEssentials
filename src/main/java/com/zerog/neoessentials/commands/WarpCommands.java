@@ -72,6 +72,7 @@ public class WarpCommands {
                 })
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
                 .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(TabCompletionUtil.WARP_SUGGESTIONS)
                     .executes(this::executeWarp)
                 )
                 .executes(this::executeWarpList)
@@ -145,6 +146,7 @@ public class WarpCommands {
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.delete"))
 >>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
                 .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(TabCompletionUtil.WARP_SUGGESTIONS)
                     .executes(this::executeDeleteWarp)
                 )
         );
@@ -163,6 +165,7 @@ public class WarpCommands {
 >>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("warp", StringArgumentType.word())
+                        .suggests(TabCompletionUtil.WARP_SUGGESTIONS)
                         .executes(this::executeWarpPlayer)
                     )
                 )

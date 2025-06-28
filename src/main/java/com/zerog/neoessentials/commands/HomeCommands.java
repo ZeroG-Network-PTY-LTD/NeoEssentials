@@ -50,7 +50,8 @@ public class HomeCommands {
                     return teleportToHome(player, "home");
                 })
                 .then(
-                    Commands.argument("name", StringArgumentType.word())                        .executes(context -> {
+                    Commands.argument("name", StringArgumentType.word())                        .suggests(TabCompletionUtil.HOME_SUGGESTIONS)
+                        .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String homeName = StringArgumentType.getString(context, "name");
                             
@@ -86,6 +87,7 @@ public class HomeCommands {
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.delhome"))
                 .then(
                     Commands.argument("name", StringArgumentType.word())
+                        .suggests(TabCompletionUtil.HOME_SUGGESTIONS)
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String homeName = StringArgumentType.getString(context, "name");

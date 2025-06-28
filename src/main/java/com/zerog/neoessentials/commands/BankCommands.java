@@ -32,31 +32,39 @@ public class BankCommands {
                 // Account Management
                 .then(Commands.literal("create")
                     .then(Commands.argument("type", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.BANK_ACCOUNT_TYPE_SUGGESTIONS)
                         .executes(context -> createAccount(context.getSource(), 
                             StringArgumentType.getString(context, "type")))))
                 .then(Commands.literal("deposit")
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
+                        .suggests(TabCompletionUtil.AMOUNT_SUGGESTIONS)
                         .executes(context -> depositMoney(context.getSource(),
                             DoubleArgumentType.getDouble(context, "amount"), null))
                         .then(Commands.argument("account", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
                             .executes(context -> depositMoney(context.getSource(),
                                 DoubleArgumentType.getDouble(context, "amount"),
                                 StringArgumentType.getString(context, "account"))))))
                 .then(Commands.literal("withdraw")
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
+                        .suggests(TabCompletionUtil.AMOUNT_SUGGESTIONS)
                         .executes(context -> withdrawMoney(context.getSource(),
                             DoubleArgumentType.getDouble(context, "amount"), null))
                         .then(Commands.argument("account", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
                             .executes(context -> withdrawMoney(context.getSource(),
                                 DoubleArgumentType.getDouble(context, "amount"),
                                 StringArgumentType.getString(context, "account"))))))
                 .then(Commands.literal("transfer")
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
+                        .suggests(TabCompletionUtil.AMOUNT_SUGGESTIONS)
                         .then(Commands.argument("to-account", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
                             .executes(context -> transferMoney(context.getSource(),
                                 DoubleArgumentType.getDouble(context, "amount"),
                                 StringArgumentType.getString(context, "to-account"), null))
                             .then(Commands.argument("from-account", StringArgumentType.string())
+                                .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
                                 .executes(context -> transferMoney(context.getSource(),
                                     DoubleArgumentType.getDouble(context, "amount"),
                                     StringArgumentType.getString(context, "to-account"),
@@ -64,12 +72,14 @@ public class BankCommands {
                 .then(Commands.literal("balance")
                     .executes(context -> checkBalance(context.getSource(), null))
                     .then(Commands.argument("account", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
                         .executes(context -> checkBalance(context.getSource(),
                             StringArgumentType.getString(context, "account")))))
                 .then(Commands.literal("list")
                     .executes(context -> listAccounts(context.getSource())))
                 .then(Commands.literal("info")
                     .then(Commands.argument("account", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
                         .executes(context -> accountInfo(context.getSource(),
                             StringArgumentType.getString(context, "account")))))
                 
