@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.economy;
 
+import com.zerog.neoessentials.config.EnhancedEconomyConfig;
+import com.zerog.neoessentials.economy.persistence.EconomyPersistenceManager;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -20,10 +23,14 @@ public class EconomyManager {
     private final ShopManager shopManager;
     private final EconomicAnalytics analytics;
     
+    // Configuration and persistence
+    private final EnhancedEconomyConfig config;
+    private final EconomyPersistenceManager persistenceManager;
+    
     // Player data
     private final Map<UUID, PlayerEconomyData> playerData;
     
-    // Economy settings
+    // Economy settings - loaded from config
     private boolean economyEnabled;
     private double startingBalance;
     private boolean negativeBalancesAllowed;
@@ -34,15 +41,18 @@ public class EconomyManager {
     private final ScheduledExecutorService scheduler;
     
     private EconomyManager() {
+        this.config = EnhancedEconomyConfig.getInstance();
+        this.persistenceManager = EconomyPersistenceManager.getInstance();
+        
         this.currencyManager = CurrencyManager.getInstance();
         this.bankManager = BankManager.getInstance();
         this.transactionManager = new TransactionManager();
         this.shopManager = new ShopManager();
         this.analytics = new EconomicAnalytics();
         this.playerData = new ConcurrentHashMap<>();
-        this.scheduler = Executors.newScheduledThreadPool(2);
+        this.scheduler = Executors.newScheduledThreadPool(config.getThreadPoolSize());
         
-        initializeDefaults();
+        loadConfiguration();
         startScheduledTasks();
     }
     
@@ -54,14 +64,38 @@ public class EconomyManager {
     }
     
     /**
-     * Initialize default economy settings
+     * Load configuration from the enhanced config system
      */
-    private void initializeDefaults() {
-        this.economyEnabled = true;
-        this.startingBalance = 100.0;
-        this.negativeBalancesAllowed = false;
-        this.maxBalance = 1000000.0;
-        this.inflationRate = 0.02; // 2% annual inflation
+    private void loadConfiguration() {
+        this.economyEnabled = config.isEconomyEnabled();
+        this.startingBalance = config.getStartingBalance();
+        this.negativeBalancesAllowed = config.allowNegativeBalances();
+        this.maxBalance = config.getMaxBalance();
+        this.inflationRate = config.getInflationRate();
+        
+        // Load configuration file if it exists
+        try {
+            config.loadFromFile("config/neoessentials/economy.yml");
+        } catch (Exception e) {
+            System.err.println("Failed to load economy config, using defaults: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Reload configuration from file
+     */
+    public void reloadConfiguration() {
+        loadConfiguration();
+        
+        // Update components with new configuration
+        currencyManager.reloadConfiguration();
+        bankManager.reloadConfiguration();
+        shopManager.reloadConfiguration();
+        
+        // Restart scheduled tasks with new intervals
+        scheduler.shutdown();
+        // New scheduler will be created with updated thread pool size
+        startScheduledTasks();
     }
     
     /**
@@ -74,11 +108,61 @@ public class EconomyManager {
             1, 24, TimeUnit.HOURS
         );
         
-        // Economic analytics update
+        // Economic analytics update - use config interval
         scheduler.scheduleAtFixedRate(
             () -> analytics.updateEconomicMetrics(),
-            0, 1, TimeUnit.HOURS
+            0, config.getUpdateInterval(), TimeUnit.HOURS
         );
+        
+        // Auto-save player data every 5 minutes
+        scheduler.scheduleAtFixedRate(
+            this::saveAllPlayerData,
+            5, 5, TimeUnit.MINUTES
+        );
+        
+        // Economy health checks every hour
+        scheduler.scheduleAtFixedRate(
+            this::performHealthChecks,
+            1, 1, TimeUnit.HOURS
+        );
+    }
+    
+    /**
+     * Save all player data to persistence
+     */
+    private void saveAllPlayerData() {
+        for (PlayerEconomyData data : playerData.values()) {
+            persistenceManager.savePlayerData(data);
+        }
+    }
+    
+    /**
+     * Perform economy health checks
+     */
+    private void performHealthChecks() {
+        try {
+            analytics.updateEconomicMetrics();
+            
+            // Check inflation rate
+            double currentInflation = analytics.getInflationRate();
+            if (currentInflation > 0.1) { // 10% warning threshold
+                System.out.println("WARNING: High inflation detected: " + (currentInflation * 100) + "%");
+            }
+            
+            // Check wealth inequality
+            double giniCoefficient = analytics.getWealthDistribution().getGiniCoefficient();
+            if (giniCoefficient > 0.7) {
+                System.out.println("WARNING: High wealth inequality detected: " + giniCoefficient);
+            }
+            
+            // Check economic velocity
+            double velocity = analytics.getEconomicVelocity();
+            if (velocity < 0.1 || velocity > 2.0) {
+                System.out.println("WARNING: Unusual economic velocity: " + velocity);
+            }
+        } catch (Exception e) {
+            System.err.println("Error during economy health check: " + e.getMessage());
+        }
     }
     
     /**
@@ -89,6 +173,17 @@ public class EconomyManager {
      */
     public PlayerEconomyData getPlayerData(UUID playerId) {
         return playerData.computeIfAbsent(playerId, id -> {
+            try {
+                // Try to load from persistence first
+                PlayerEconomyData data = persistenceManager.loadPlayerData(id).join();
+                if (data != null) {
+                    return data;
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to load player data for " + id + ": " + e.getMessage());
+            }
+            
+            // Create new player data
             PlayerEconomyData data = new PlayerEconomyData(id);
             
             // Set starting balance in default currency
@@ -97,8 +192,13 @@ public class EconomyManager {
                 data.setBalance(defaultCurrency, startingBalance);
             }
             
-            // Create primary bank account
-            bankManager.getPrimaryAccount(playerId);
+            // Create primary bank account if banking is enabled
+            if (config.isBankingEnabled() && config.isAutoCreateChecking()) {
+                bankManager.getPrimaryAccount(playerId);
+            }
+            
+            // Save the new player data
+            persistenceManager.savePlayerData(data);
             
             return data;
         });
@@ -353,40 +453,68 @@ public class EconomyManager {
         analytics.recordInflationEvent(rate, System.currentTimeMillis());
     }
     
-    // Getters and setters for economy settings
-    public boolean isEconomyEnabled() { return economyEnabled; }
-    public void setEconomyEnabled(boolean enabled) { this.economyEnabled = enabled; }
+    /**
+     * Shutdown the economy manager
+     */
+    public void shutdown() {
+        try {
+            // Save all player data
+            saveAllPlayerData();
+            
+            // Shutdown scheduler
+            scheduler.shutdown();
+            
+            // Shutdown persistence manager
+            persistenceManager.shutdown();
+            
+            System.out.println("Economy manager shutdown complete");
+        } catch (Exception e) {
+            System.err.println("Error during economy manager shutdown: " + e.getMessage());
+        }
+    }
     
-    public double getStartingBalance() { return startingBalance; }
-    public void setStartingBalance(double balance) { this.startingBalance = balance; }
-    
-    public boolean areNegativeBalancesAllowed() { return negativeBalancesAllowed; }
-    public void setNegativeBalancesAllowed(boolean allowed) { this.negativeBalancesAllowed = allowed; }
-    
-    public double getMaxBalance() { return maxBalance; }
-    public void setMaxBalance(double maxBalance) { this.maxBalance = maxBalance; }
-    
-    public double getInflationRate() { return inflationRate; }
-    public void setInflationRate(double rate) { this.inflationRate = rate; }
-    
-    // Manager getters
+    // Getters for managers and configuration
     public CurrencyManager getCurrencyManager() { return currencyManager; }
     public BankManager getBankManager() { return bankManager; }
     public TransactionManager getTransactionManager() { return transactionManager; }
     public ShopManager getShopManager() { return shopManager; }
     public EconomicAnalytics getAnalytics() { return analytics; }
+    public EnhancedEconomyConfig getConfig() { return config; }
+    public EconomyPersistenceManager getPersistenceManager() { return persistenceManager; }
+    
+    // Economy settings getters
+    public boolean isEconomyEnabled() { return economyEnabled; }
+    public double getStartingBalance() { return startingBalance; }
+    public boolean areNegativeBalancesAllowed() { return negativeBalancesAllowed; }
+    public double getMaxBalance() { return maxBalance; }
+    public double getInflationRate() { return inflationRate; }
     
     /**
-     * Shutdown the economy system
+     * Get all player data (for admin purposes)
      */
-    public void shutdown() {
-        scheduler.shutdown();
-        try {
-            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            scheduler.shutdownNow();
-        }
+    public Map<UUID, PlayerEconomyData> getAllPlayerData() {
+        return new HashMap<>(playerData);
+    }
+    
+    /**
+     * Get economy statistics
+     */
+    public Map<String, Object> getEconomyStatistics() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        stats.put("totalPlayers", playerData.size());
+        stats.put("economyEnabled", economyEnabled);
+        stats.put("totalCurrencies", currencyManager.getAllCurrencies().size());
+        stats.put("totalBankAccounts", bankManager.getTotalAccountCount());
+        stats.put("totalActiveLoans", bankManager.getActiveLoansCount());
+        stats.put("totalShops", shopManager.getTotalShopsCount());
+        stats.put("totalActiveAuctions", shopManager.getAuctionHouse().getActiveAuctionsCount());
+        
+        // Economic health metrics
+        stats.put("inflationRate", analytics.getInflationRate());
+        stats.put("economicVelocity", analytics.getEconomicVelocity());
+        stats.put("giniCoefficient", analytics.getWealthDistribution().getGiniCoefficient());
+        
+        return stats;
     }
 }
