@@ -444,6 +444,12 @@ public class CommandManager {    // Command classes
             auctionRegister.invoke(auctionCommands, dispatcher);
             NeoEssentials.LOGGER.info("Registered auction commands");
             
+            Class<?> loanCommandsClass = Class.forName("com.zerog.neoessentials.commands.LoanCommands");
+            Object loanCommands = loanCommandsClass.getDeclaredConstructor().newInstance();
+            java.lang.reflect.Method loanRegister = loanCommandsClass.getMethod("register", CommandDispatcher.class);
+            loanRegister.invoke(loanCommands, dispatcher);
+            NeoEssentials.LOGGER.info("Registered loan commands");
+            
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to register economy commands: " + e.getMessage());
             e.printStackTrace();
