@@ -921,9 +921,9 @@ public class EconomyPersistenceManager {
         int remainingPayments = rs.getInt("remaining_payments");
         Loan.LoanStatus status = Loan.LoanStatus.valueOf(rs.getString("status"));
         
-        // Create loan with basic parameters
+        // Create loan with ORIGINAL loan ID (preserves UUID)
         com.zerog.neoessentials.economy.Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-        Loan loan = new Loan(borrowerId, principalAmount, defaultCurrency, type, termMonths, interestRate);
+        Loan loan = new Loan(loanId, borrowerId, principalAmount, defaultCurrency, type, termMonths, interestRate);
         
         // Set additional properties that aren't in constructor
         loan.setCurrentBalance(currentBalance);

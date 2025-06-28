@@ -95,6 +95,40 @@ public class Loan {
     }
     
     /**
+     * Create a loan for persistence loading (preserves original UUID)
+     * 
+     * @param loanId The original loan UUID from database
+     * @param borrowerId The borrower's UUID
+     * @param principalAmount The loan amount
+     * @param currency The loan currency
+     * @param loanType The type of loan
+     * @param termMonths Loan term in months
+     * @param interestRate Annual interest rate
+     */
+    public Loan(UUID loanId, UUID borrowerId, double principalAmount, Currency currency, 
+               LoanType loanType, int termMonths, double interestRate) {
+        this.loanId = loanId; // Use provided UUID instead of generating new one
+        this.borrowerId = borrowerId;
+        this.principalAmount = principalAmount;
+        this.currency = currency;
+        this.loanType = loanType;
+        this.termMonths = termMonths;
+        this.interestRate = interestRate;
+        this.createdTime = System.currentTimeMillis();
+        this.payments = new ArrayList<>();
+        this.remainingBalance = principalAmount;
+        this.status = LoanStatus.PENDING;
+        this.paymentsRemaining = termMonths;
+        this.totalInterestPaid = 0.0;
+        
+        // Calculate monthly payment using standard loan formula
+        this.monthlyPayment = calculateMonthlyPayment();
+        
+        // Set first payment due date (30 days from creation)
+        this.nextPaymentDue = createdTime + (30L * 24L * 60L * 60L * 1000L);
+    }
+    
+    /**
      * Calculate monthly payment using standard amortization formula
      * 
      * @return Monthly payment amount
