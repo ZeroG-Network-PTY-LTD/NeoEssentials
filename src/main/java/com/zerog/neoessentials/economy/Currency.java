@@ -48,8 +48,9 @@ public class Currency {
         this.type = type;
     }
     
-    // Getters
+    // Getter methods
     public String getId() { return id; }
+    public String getCode() { return id; }  // Alias for getId for compatibility
     public String getDisplayName() { return displayName; }
     public String getSymbol() { return symbol; }
     public String getPluralName() { return pluralName; }

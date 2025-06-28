@@ -286,6 +286,15 @@ public class ShopManager {
                     .toList();
         }
         
+        /**
+         * Get count of active auctions for statistics
+         */
+        public int getActiveAuctionsCount() {
+            return (int) auctions.values().stream()
+                    .filter(Auction::isActive)
+                    .count();
+        }
+        
         // Additional auction methods would go here
     }
     
