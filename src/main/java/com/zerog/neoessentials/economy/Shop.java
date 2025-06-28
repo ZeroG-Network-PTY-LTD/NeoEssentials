@@ -34,6 +34,9 @@ public class Shop {
     private double discountRate; // For bulk purchases
     private int bulkThreshold; // Minimum quantity for bulk discount
     
+    // Employee management
+    private final ShopEmployeeManager employeeManager;
+    
     public enum ShopType {
         PLAYER("Player Shop", true, true, -1),
         PLAYER_OWNED("Player Owned", true, true, -1),
@@ -91,6 +94,10 @@ public class Shop {
         this.allowsHaggling = false;
         this.discountRate = 0.1; // 10% bulk discount
         this.bulkThreshold = 10;
+        
+        // Initialize employee manager and add owner
+        this.employeeManager = new ShopEmployeeManager(this.shopId);
+        this.employeeManager.addEmployee(ownerId, "Owner", ShopEmployeeManager.EmployeeRole.OWNER, ownerId);
     }
     
     /**
@@ -336,6 +343,109 @@ public class Shop {
     public void setDiscountRate(double discountRate) { this.discountRate = Math.max(0.0, Math.min(1.0, discountRate)); }
     public int getBulkThreshold() { return bulkThreshold; }
     public void setBulkThreshold(int bulkThreshold) { this.bulkThreshold = Math.max(1, bulkThreshold); }
+    
+    // Employee management methods
+    public ShopEmployeeManager getEmployeeManager() { return employeeManager; }
+    
+    /**
+     * Check if a player has permission to perform an action in this shop
+     * 
+     * @param playerId The player's UUID
+     * @param permission The permission to check
+     * @return true if player has permission
+     */
+    public boolean hasPermission(UUID playerId, ShopEmployeeManager.ShopPermission permission) {
+        return employeeManager.hasPermission(playerId, permission);
+    }
+    
+    /**
+     * Add an employee to the shop
+     * 
+     * @param managerId The manager adding the employee
+     * @param employeeId The new employee's UUID
+     * @param employeeName The new employee's name
+     * @param role The role to assign
+     * @return true if employee was added successfully
+     */
+    public boolean addEmployee(UUID managerId, UUID employeeId, String employeeName, ShopEmployeeManager.EmployeeRole role) {
+        if (!hasPermission(managerId, ShopEmployeeManager.ShopPermission.HIRE_EMPLOYEES)) {
+            return false;
+        }
+        
+        return employeeManager.addEmployee(employeeId, employeeName, role, managerId);
+    }
+    
+    /**
+     * Remove an employee from the shop
+     * 
+     * @param managerId The manager removing the employee
+     * @param employeeId The employee to remove
+     * @return true if employee was removed successfully
+     */
+    public boolean removeEmployee(UUID managerId, UUID employeeId) {
+        if (!hasPermission(managerId, ShopEmployeeManager.ShopPermission.FIRE_EMPLOYEES)) {
+            return false;
+        }
+        
+        return employeeManager.removeEmployee(employeeId, managerId);
+    }
+    
+    /**
+     * Change an employee's role
+     * 
+     * @param managerId The manager making the change
+     * @param employeeId The employee whose role to change
+     * @param newRole The new role
+     * @return true if role was changed successfully
+     */
+    public boolean changeEmployeeRole(UUID managerId, UUID employeeId, ShopEmployeeManager.EmployeeRole newRole) {
+        if (!hasPermission(managerId, ShopEmployeeManager.ShopPermission.CHANGE_ROLES)) {
+            return false;
+        }
+        
+        return employeeManager.changeEmployeeRole(employeeId, newRole, managerId);
+    }
+    
+    /**
+     * Check if a player is an employee of this shop
+     * 
+     * @param playerId The player to check
+     * @return true if player is an employee
+     */
+    public boolean isEmployee(UUID playerId) {
+        return employeeManager.isEmployee(playerId);
+    }
+    
+    /**
+     * Get all active employees
+     * 
+     * @return List of active employees
+     */
+    public List<ShopEmployeeManager.ShopEmployee> getActiveEmployees() {
+        return employeeManager.getActiveEmployees();
+    }
+    
+    /**
+     * Override the existing addItem method to include permission checking
+     */
+    public boolean addItem(String itemId, int quantity, double price, String itemName, UUID operatorId) {
+        if (operatorId != null && !hasPermission(operatorId, ShopEmployeeManager.ShopPermission.MANAGE_INVENTORY)) {
+            return false;
+        }
+        
+        return addItem(itemId, quantity, price, itemName);
+    }
+    
+    /**
+     * Override the existing setItemPrice method to include permission checking
+     */
+    public boolean setItemPrice(String itemId, double price, UUID operatorId) {
+        if (operatorId != null && !hasPermission(operatorId, ShopEmployeeManager.ShopPermission.SET_PRICES)) {
+            return false;
+        }
+        
+        return setItemPrice(itemId, price);
+    }
     
     @Override
     public String toString() {

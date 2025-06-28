@@ -173,6 +173,116 @@ public class TabCompletionUtil {
     };
     
     /**
+     * Provides shop name suggestions based on player permissions (only shops they can manage).
+     */
+    public static final SuggestionProvider<CommandSourceStack> MANAGEABLE_SHOP_SUGGESTIONS = (context, builder) -> {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            EconomyManager economyManager = EconomyManager.getInstance();
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            List<String> shopNames = shopManager.getAllShops()
+                .stream()
+                .filter(shop -> shop.hasPermission(player.getUUID(), 
+                    com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.VIEW_BASIC_INFO))
+                .map(Shop::getName)
+                .collect(Collectors.toList());
+                
+            return SharedSuggestionProvider.suggest(shopNames, builder);
+        } catch (Exception e) {
+            // Fallback to SHOP_SUGGESTIONS
+            return SHOP_SUGGESTIONS.getSuggestions(context, builder);
+        }
+    };
+    
+    /**
+     * Provides employee role suggestions.
+     */
+    public static final SuggestionProvider<CommandSourceStack> EMPLOYEE_ROLE_SUGGESTIONS = (context, builder) -> {
+        String[] roles = java.util.Arrays.stream(com.zerog.neoessentials.economy.ShopEmployeeManager.EmployeeRole.values())
+            .map(role -> role.name().toLowerCase())
+            .toArray(String[]::new);
+        return SharedSuggestionProvider.suggest(roles, builder);
+    };
+    
+    /**
+     * Provides online player suggestions for hiring employees.
+     */
+    public static final SuggestionProvider<CommandSourceStack> ONLINE_PLAYER_SUGGESTIONS = (context, builder) -> {
+        try {
+            List<String> playerNames = context.getSource().getServer().getPlayerList().getPlayers()
+                .stream()
+                .map(player -> player.getGameProfile().getName())
+                .collect(Collectors.toList());
+            return SharedSuggestionProvider.suggest(playerNames, builder);
+        } catch (Exception e) {
+            return Suggestions.empty();
+        }
+    };
+    
+    /**
+     * Provides shop item suggestions (items currently in the shop).
+     */
+    public static final SuggestionProvider<CommandSourceStack> SHOP_ITEM_SUGGESTIONS = (context, builder) -> {
+        try {
+            // Try to get shop name from previous argument
+            String shopName = getShopNameFromContext(context);
+            if (shopName != null) {
+                EconomyManager economyManager = EconomyManager.getInstance();
+                ShopManager shopManager = economyManager.getShopManager();
+                Shop shop = shopManager.getShopByName(shopName);
+                
+                if (shop != null) {
+                    List<String> itemNames = shop.getInventory().values()
+                        .stream()
+                        .map(item -> item.getItemName())
+                        .collect(Collectors.toList());
+                    return SharedSuggestionProvider.suggest(itemNames, builder);
+                }
+            }
+            
+            // Fallback to general item suggestions
+            return ITEM_SUGGESTIONS.getSuggestions(context, builder);
+        } catch (Exception e) {
+            return ITEM_SUGGESTIONS.getSuggestions(context, builder);
+        }
+    };
+    
+    /**
+     * Provides shop category suggestions based on existing shops.
+     */
+    public static final SuggestionProvider<CommandSourceStack> DYNAMIC_SHOP_CATEGORY_SUGGESTIONS = (context, builder) -> {
+        try {
+            EconomyManager economyManager = EconomyManager.getInstance();
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            Set<String> categories = shopManager.getAllShops()
+                .stream()
+                .map(Shop::getCategory)
+                .filter(category -> category != null && !category.isEmpty())
+                .collect(Collectors.toSet());
+            
+            // Add common categories
+            categories.addAll(List.of(SHOP_TYPES));
+            
+            return SharedSuggestionProvider.suggest(categories, builder);
+        } catch (Exception e) {
+            return SharedSuggestionProvider.suggest(SHOP_TYPES, builder);
+        }
+    };
+    
+    /**
+     * Helper method to extract shop name from command context.
+     */
+    private static String getShopNameFromContext(com.mojang.brigadier.context.CommandContext<CommandSourceStack> context) {
+        try {
+            return com.mojang.brigadier.arguments.StringArgumentType.getString(context, "shop");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    /**
      * Provides item name suggestions (Minecraft items).
      */
     public static final SuggestionProvider<CommandSourceStack> ITEM_SUGGESTIONS = (context, builder) -> {

@@ -123,6 +123,44 @@ public class ShopManager {
     }
 
     /**
+     * Create a new shop without deducting creation fee (payment already handled)
+     * 
+     * @param ownerId The shop owner's UUID
+     * @param shopName The shop name
+     * @param location The shop location
+     * @param category The shop category
+     * @param shopType The type of shop
+     * @param skipPayment If true, skip the payment deduction (payment already handled externally)
+     * @return The created shop, or null if creation failed
+     */
+    public Shop createShop(UUID ownerId, String shopName, String location, String category, Shop.ShopType shopType, boolean skipPayment) {
+        // Check if player can create more shops
+        List<UUID> playerShopIds = playerShops.getOrDefault(ownerId, new ArrayList<>());
+        if (playerShopIds.size() >= maxShopsPerPlayer) {
+            return null;
+        }
+        
+        // Only check/deduct payment if not skipping
+        if (!skipPayment) {
+            EconomyManager economyManager = EconomyManager.getInstance();
+            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+            if (!economyManager.removeBalance(ownerId, defaultCurrency, shopCreationFee, "Shop creation fee")) {
+                return null;
+            }
+        }
+        
+        // Create the shop
+        Shop shop = new Shop(ownerId, shopName, location, category, shopType);
+        shops.put(shop.getShopId(), shop);
+        
+        // Add to indexes
+        playerShops.computeIfAbsent(ownerId, k -> new ArrayList<>()).add(shop.getShopId());
+        shopsByLocation.computeIfAbsent(location, k -> new ArrayList<>()).add(shop.getShopId());
+        
+        return shop;
+    }
+
+    /**
      * Get a shop by ID
      * 
      * @param shopId The shop ID
@@ -132,6 +170,19 @@ public class ShopManager {
         return shops.get(shopId);
     }
     
+    /**
+     * Get a shop by its name
+     * 
+     * @param shopName The name of the shop
+     * @return The shop if found, null otherwise
+     */
+    public Shop getShopByName(String shopName) {
+        return shops.values().stream()
+                .filter(shop -> shop.getShopName().equalsIgnoreCase(shopName))
+                .findFirst()
+                .orElse(null);
+    }
+
     /**
      * Get all shops owned by a player
      * 
@@ -336,6 +387,57 @@ public class ShopManager {
                 .toList();
     }
     
+    /**
+     * Delete a shop
+     * 
+     * @param shopId The ID of the shop to delete
+     * @return true if the shop was successfully deleted, false otherwise
+     */
+    public boolean deleteShop(UUID shopId) {
+        Shop shop = shops.get(shopId);
+        if (shop == null) {
+            return false;
+        }
+        
+        try {
+            // Remove from main shops map
+            shops.remove(shopId);
+            
+            // Remove from player shops mapping
+            if (shop.getOwnerId() != null) {
+                List<UUID> playerShopList = playerShops.get(shop.getOwnerId());
+                if (playerShopList != null) {
+                    playerShopList.remove(shopId);
+                    if (playerShopList.isEmpty()) {
+                        playerShops.remove(shop.getOwnerId());
+                    }
+                }
+            }
+            
+            // Remove from location mapping
+            String location = shop.getLocation();
+            if (location != null) {
+                List<UUID> locationShops = shopsByLocation.get(location);
+                if (locationShops != null) {
+                    locationShops.remove(shopId);
+                    if (locationShops.isEmpty()) {
+                        shopsByLocation.remove(location);
+                    }
+                }
+            }
+            
+            // TODO: Handle shop inventory - could return items to owner or void them
+            // TODO: Handle pending transactions/orders
+            // TODO: Persist deletion to database/file
+            
+            return true;
+        } catch (Exception e) {
+            // Re-add shop if deletion failed
+            shops.put(shopId, shop);
+            return false;
+        }
+    }
+
     // Getters for shop settings
     public int getMaxShopsPerPlayer() { return maxShopsPerPlayer; }
     public double getShopCreationFee() { return shopCreationFee; }
