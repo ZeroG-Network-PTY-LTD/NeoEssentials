@@ -484,6 +484,9 @@ public class EconomyManager {
         try {
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("Initializing NeoEssentials Economy System...");
             
+            // Initialize bank accounts system
+            bankManager.initializeAccounts();
+            
             // Initialize loan persistence and preload active loans
             bankManager.initializeLoans();
             
@@ -497,12 +500,13 @@ public class EconomyManager {
                 .sum();
             
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("Economy system initialized successfully!");
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - Bank account persistence enabled");
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - {} active loans loaded from database", totalLoans);
             if (totalLoans > 0) {
                 com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - Total outstanding loan balance: {}", 
                     defaultCurrency != null ? defaultCurrency.format(totalOutstanding) : String.format("$%.2f", totalOutstanding));
             }
-            com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - Loan applications will persist across server restarts");
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - All economic data will persist across server restarts");
             
         } catch (Exception e) {
             com.zerog.neoessentials.NeoEssentials.LOGGER.error("Failed to initialize economy system: " + e.getMessage(), e);

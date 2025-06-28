@@ -150,6 +150,13 @@ public class BankManager {
         try {
             fromAccount.withdraw(currency, totalDeduction, "Transfer: " + reason + " (including fee: " + fee + ")");
             toAccount.deposit(currency, amount, "Transfer from " + fromAccount.getAccountNumber() + ": " + reason);
+            
+            // Save both accounts to persistence
+            if (persistenceManager != null) {
+                persistenceManager.saveBankAccount(fromAccount);
+                persistenceManager.saveBankAccount(toAccount);
+            }
+            
             return true;
         } catch (Exception e) {
             return false;
@@ -508,8 +515,7 @@ public class BankManager {
             .filter(loan -> loan.getStatus() == Loan.LoanStatus.CURRENT || loan.getStatus() == Loan.LoanStatus.LATE)
             .count();
     }
-    
-    /**
+      /**
      * Deposit money into an account
      * 
      * @param accountId The account ID
@@ -521,11 +527,18 @@ public class BankManager {
         if (account == null) {
             return false;
         }
-        
+
         Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-        return account.deposit(defaultCurrency, amount);
+        boolean success = account.deposit(defaultCurrency, amount);
+        
+        // Save account to persistence if deposit was successful
+        if (success && persistenceManager != null) {
+            persistenceManager.saveBankAccount(account);
+        }
+        
+        return success;
     }
-    
+
     /**
      * Withdraw money from an account
      * 
@@ -538,9 +551,16 @@ public class BankManager {
         if (account == null) {
             return false;
         }
-        
+
         Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-        return account.withdraw(defaultCurrency, amount);
+        boolean success = account.withdraw(defaultCurrency, amount);
+        
+        // Save account to persistence if withdrawal was successful
+        if (success && persistenceManager != null) {
+            persistenceManager.saveBankAccount(account);
+        }
+        
+        return success;
     }
     
     /**
