@@ -251,6 +251,17 @@ public class Shop {
     }
     
     /**
+     * Get available items (items with quantity > 0)
+     * 
+     * @return Collection of available shop items
+     */
+    public Collection<ShopItem> getAvailableItems() {
+        return inventory.values().stream()
+                .filter(item -> item.getQuantity() > 0)
+                .toList();
+    }
+    
+    /**
      * Get shop performance metrics
      * 
      * @param days Number of days to analyze
