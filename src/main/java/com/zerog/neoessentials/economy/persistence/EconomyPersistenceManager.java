@@ -822,11 +822,24 @@ public class EconomyPersistenceManager {
      */
     public CompletableFuture<List<Loan>> loadPlayerLoans(UUID playerId) {
         return CompletableFuture.supplyAsync(() -> {
+            List<Loan> playerLoans = new ArrayList<>();
+            
+            // First check cache for any loans belonging to this player
+            for (Loan loan : loanCache.values()) {
+                if (loan.getBorrowerId().equals(playerId)) {
+                    playerLoans.add(loan);
+                }
+            }
+            
+            // If we found loans in cache, return them (they're already loaded)
+            if (!playerLoans.isEmpty()) {
+                return playerLoans;
+            }
+            
+            // Otherwise load from database
             if (!isUsingDatabase()) {
                 return new ArrayList<>(); // Return empty list if no database
             }
-            
-            List<Loan> playerLoans = new ArrayList<>();
             
             try {
                 String sql = "SELECT * FROM loans WHERE borrower_uuid = ? ORDER BY created_date DESC";
@@ -935,6 +948,29 @@ public class EconomyPersistenceManager {
     }
     
     /**
+     * Load payment history for a loan from the database
+     */
+    private void loadLoanPayments(Loan loan) {
+        if (!isUsingDatabase()) return;
+        
+        try {
+            String sql = "SELECT * FROM loan_payments WHERE loan_id = ? ORDER BY payment_date ASC";
+            try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+                stmt.setString(1, loan.getLoanId().toString());
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        // Create LoanPayment objects and add to loan
+                        // Note: This would require LoanPayment to have appropriate constructors
+                        // For now, we'll skip this and calculate total interest from database if needed
+                    }
+                }
+            }
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.warn("Failed to load payment history for loan " + loan.getLoanId(), e);
+        }
+    }
+    
+    /**
      * Save all loans to JSON file
      */
     private void saveLoansToFile() {
@@ -945,8 +981,9 @@ public class EconomyPersistenceManager {
             
             for (Loan loan : loanCache.values()) {
                 Map<String, Object> loanData = new HashMap<>();
-                loanData.put("borrowerId", loan.getBorrowerId().toString());
-                loanData.put("type", loan.getType().name());
+                loanData.put("loanId", loan.getLoanId().toString());
+                loanData.put("borrowerUuid", loan.getBorrowerId().toString());
+                loanData.put("loanType", loan.getType().name());
                 loanData.put("principalAmount", loan.getPrincipalAmount());
                 loanData.put("currentBalance", loan.getCurrentBalance());
                 loanData.put("interestRate", loan.getInterestRate());
