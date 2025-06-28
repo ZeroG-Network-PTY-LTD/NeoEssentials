@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.93'
     id 'idea'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -115,9 +116,11 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
     include
     implementation.extendsFrom include
+    shadow
 }
 
-dependencies {    // Database dependencies - SQLite will be bundled for guaranteed availability
+dependencies {    
+    // Database dependencies - SQLite will be bundled for guaranteed availability
     implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
     }
@@ -131,15 +134,17 @@ dependencies {    // Database dependencies - SQLite will be bundled for guarante
     }
     compileOnly('com.zaxxer:HikariCP:5.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from HikariCP
-    }    // Permission system APIs (soft dependencies)
+    }
+    
+    // Permission system APIs (soft dependencies)
     compileOnly 'net.luckperms:api:5.4'
     
     // TOML parsing library for custom animations (legacy)
     implementation 'com.moandjiezana.toml:toml4j:0.7.2'
-      // YAML parsing library for configuration
-    implementation 'org.yaml:snakeyaml:2.2'
-    // Make sure SnakeYAML is included in the JAR
-    include 'org.yaml:snakeyaml:2.2'
+    
+    // YAML parsing library for configuration - will be shaded to avoid conflicts
+    shadow 'org.yaml:snakeyaml:2.2'
+    compileOnly 'org.yaml:snakeyaml:2.2' // For compilation, but will use server version if available
     
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
@@ -258,6 +263,33 @@ jar {
     // Avoid duplicate entries when including dependencies
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+
+// Shadow JAR configuration for shading SnakeYAML
+shadowJar {
+    classifier = '' // Don't add classifier so this becomes the main JAR
+    
+    // Relocate SnakeYAML to avoid conflicts with other mods
+    relocate 'org.yaml.snakeyaml', 'com.zerog.neoessentials.lib.yaml.snakeyaml'
+    
+    // Only include SnakeYAML and our main code
+    dependencies {
+        include(dependency('org.yaml:snakeyaml'))
+        include(project(':'))
+    }
+    
+    // Merge service files
+    mergeServiceFiles()
+    
+    // Preserve existing manifest attributes
+    manifest {
+        inheritFrom project.tasks.jar.manifest
+    }
+}
+
+// Use shadowJar as the main jar
+build.dependsOn shadowJar
+// Don't build the regular jar
+jar.enabled = false
 
 // Configuration adjustments if needed go here
 

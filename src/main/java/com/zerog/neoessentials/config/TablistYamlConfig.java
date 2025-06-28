@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.config;
 
 import com.zerog.neoessentials.NeoEssentials;
+import com.zerog.neoessentials.util.YamlUtil;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.io.File;
@@ -11,9 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.DumperOptions;
 
 /**
  * Tablist system YAML configuration for NeoEssentials.
