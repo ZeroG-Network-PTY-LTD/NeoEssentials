@@ -29,6 +29,8 @@ public class ShopCommands {
                 .executes(context -> showShopHelp(context.getSource()))
                 .then(Commands.literal("help")
                     .executes(context -> showShopHelp(context.getSource())))
+                .then(Commands.literal("status")
+                    .executes(context -> showShopStatus(context.getSource())))
                 
                 // Shop Management
                 .then(Commands.literal("create")
@@ -167,6 +169,62 @@ public class ShopCommands {
         }
     }
     
+    private int showShopStatus(CommandSourceStack source) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            // Get player info
+            com.zerog.neoessentials.economy.EconomyManager economyManager2 = 
+                com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            com.zerog.neoessentials.economy.Currency defaultCurrency = 
+                com.zerog.neoessentials.economy.CurrencyManager.getInstance().getDefaultCurrency();
+            double playerBalance = economyManager2.getBalance(player.getUUID(), defaultCurrency);
+            
+            List<Shop> playerShops = shopManager.getPlayerShops(player.getUUID());
+            int maxShops = shopManager.getMaxShopsPerPlayer();
+            double creationFee = shopManager.getShopCreationFee();
+            int totalShops = shopManager.getAllShops().size();
+            
+            MessageUtil.sendMessage(player, "§6=== Your Shop Status ===");
+            MessageUtil.sendMessage(player, "§7Player: §e" + player.getDisplayName().getString());
+            MessageUtil.sendMessage(player, "§7UUID: §e" + player.getUUID());
+            MessageUtil.sendMessage(player, "§7Balance: §e$" + String.format("%.2f", playerBalance));
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§7Your Shops: §e" + playerShops.size() + "§7/§e" + maxShops);
+            MessageUtil.sendMessage(player, "§7Creation Fee: §e$" + String.format("%.2f", creationFee));
+            MessageUtil.sendMessage(player, "§7Total System Shops: §e" + totalShops);
+            MessageUtil.sendMessage(player, "");
+            
+            if (playerBalance < creationFee) {
+                MessageUtil.sendMessage(player, "§c⚠ Insufficient funds to create a shop!");
+                MessageUtil.sendMessage(player, "§7You need §e$" + String.format("%.2f", creationFee - playerBalance) + " §7more.");
+            } else if (playerShops.size() >= maxShops) {
+                MessageUtil.sendMessage(player, "§c⚠ You have reached the shop limit!");
+                MessageUtil.sendMessage(player, "§7Delete a shop to create a new one.");
+            } else {
+                MessageUtil.sendMessage(player, "§a✓ You can create a shop!");
+                MessageUtil.sendMessage(player, "§7Use: §e/shop create <name> <category> player");
+            }
+            
+            if (!playerShops.isEmpty()) {
+                MessageUtil.sendMessage(player, "");
+                MessageUtil.sendMessage(player, "§7Your shops:");
+                for (Shop shop : playerShops) {
+                    String status = shop.isActive() ? "§aActive" : "§cInactive";
+                    MessageUtil.sendMessage(player, "  §e" + shop.getName() + " §7[" + shop.getCategory() + "] - " + status);
+                }
+            }
+            
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use shop commands"));
+            return 0;
+        }
+    }
+    
     private int createShop(CommandSourceStack source, String shopName, String category, String ownership) {
         try {
             ServerPlayer player = source.getPlayerOrException();
@@ -218,6 +276,35 @@ public class ShopCommands {
             MessageUtil.sendMessage(player, "§7Location: §e" + player.position());
             MessageUtil.sendMessage(player, "§7Owner: §e" + player.getDisplayName().getString());
             
+            // Check shop limits and fees before creation
+            List<Shop> playerShops = shopManager.getPlayerShops(player.getUUID());
+            int maxShops = shopManager.getMaxShopsPerPlayer();
+            double creationFee = shopManager.getShopCreationFee();
+            
+            MessageUtil.sendMessage(player, "§7Current shops: §e" + playerShops.size() + "§7/§e" + maxShops);
+            MessageUtil.sendMessage(player, "§7Creation fee: §e$" + String.format("%.2f", creationFee));
+            
+            if (playerShops.size() >= maxShops) {
+                MessageUtil.sendErrorMessage(player, "You have reached the maximum number of shops (" + maxShops + ").");
+                return 0;
+            }
+            
+            // Check player balance
+            com.zerog.neoessentials.economy.EconomyManager economyManager2 = 
+                com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            com.zerog.neoessentials.economy.Currency defaultCurrency = 
+                com.zerog.neoessentials.economy.CurrencyManager.getInstance().getDefaultCurrency();
+            double playerBalance = economyManager2.getBalance(player.getUUID(), defaultCurrency);
+            
+            MessageUtil.sendMessage(player, "§7Your balance: §e$" + String.format("%.2f", playerBalance));
+            
+            if (playerBalance < creationFee) {
+                MessageUtil.sendErrorMessage(player, "Insufficient funds! You need $" + 
+                    String.format("%.2f", creationFee) + " but only have $" + 
+                    String.format("%.2f", playerBalance) + ".");
+                return 0;
+            }
+            
             // Create the shop
             Shop shop = shopManager.createShop(player.getUUID(), shopName, shopName, category, type);
             if (shop != null) {
@@ -225,7 +312,7 @@ public class ShopCommands {
                 MessageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
                 MessageUtil.sendMessage(player, "§7Use §e/shop manage " + shopName + " §7to configure your shop");
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to create shop. You may have reached the shop limit.");
+                MessageUtil.sendErrorMessage(player, "Failed to create shop. Please check server logs for details.");
             }
             
             return 1;
@@ -256,14 +343,22 @@ public class ShopCommands {
             List<Shop> shops;
             if (filter == null || filter.equals("all")) {
                 shops = shopManager.getAllShops();
+                MessageUtil.sendMessage(player, "§8Debug: Total shops in system: " + shops.size());
             } else if (filter.equals("mine")) {
                 shops = shopManager.getPlayerShops(player.getUUID());
+                MessageUtil.sendMessage(player, "§8Debug: Your shops: " + shops.size());
             } else {
                 shops = shopManager.searchShops(filter, 50);
+                MessageUtil.sendMessage(player, "§8Debug: Shops matching '" + filter + "': " + shops.size());
             }
             
             if (shops.isEmpty()) {
                 MessageUtil.sendMessage(player, "§7No shops found.");
+                if (filter == null || filter.equals("mine")) {
+                    MessageUtil.sendMessage(player, "§8Debug: Player UUID: " + player.getUUID());
+                    MessageUtil.sendMessage(player, "§8Debug: Shop creation fee: $" + 
+                        String.format("%.2f", shopManager.getShopCreationFee()));
+                }
                 return 1;
             }
             

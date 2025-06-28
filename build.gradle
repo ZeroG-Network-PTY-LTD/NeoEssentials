@@ -260,23 +260,17 @@ jar {
         configurations.include.collect { it.isDirectory() ? it : zipTree(it) }
     }
     
-    // Include SnakeYAML directly in the JAR
+    // Include SnakeYAML directly in the JAR without relocation
+    // This allows fallback when server SnakeYAML is not available
     from {
         configurations.runtimeClasspath.filter { it.name.contains('snakeyaml') }.collect { zipTree(it) }
-    } {
-        // Relocate SnakeYAML packages manually using file renaming
-        eachFile { file ->
-            if (file.path.startsWith('org/yaml/snakeyaml')) {
-                file.path = file.path.replace('org/yaml/snakeyaml', 'com/zerog/neoessentials/lib/yaml/snakeyaml')
-            }
-        }
     }
     
     // Avoid duplicate entries when including dependencies
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     
     doFirst {
-        println "Building JAR with included SnakeYAML (relocated)..."
+        println "Building JAR with included SnakeYAML (no relocation)..."
     }
 }
 
