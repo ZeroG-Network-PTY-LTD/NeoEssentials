@@ -92,7 +92,7 @@ public class EnhancedEconomyConfig {
      */
     public void loadFromFile(String filePath) {
         try {
-            Yaml yaml = new Yaml(new Constructor(Map.class));
+            Yaml yaml = new Yaml();
             try (InputStream inputStream = new FileInputStream(filePath)) {
                 config = yaml.load(inputStream);
                 parseConfig();

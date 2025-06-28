@@ -277,4 +277,12 @@ public class CurrencyManager {
         exchangeRates.remove(currencyId);
         return true;
     }
+    
+    /**
+     * Reload configuration for currency manager
+     */
+    public void reloadConfiguration() {
+        // TODO: Implement configuration reload when needed
+        // This is a placeholder to fix compilation errors
+    }
 }
