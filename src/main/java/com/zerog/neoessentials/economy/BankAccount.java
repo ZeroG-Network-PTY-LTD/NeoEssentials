@@ -327,6 +327,28 @@ public class BankAccount {
         }
     }
     
+    /**
+     * Get the balance for the default currency (for test compatibility)
+     * 
+     * @return The balance in the default currency
+     */
+    public double getBalance() {
+        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        if (defaultCurrency != null) {
+            return getBalance(defaultCurrency);
+        }
+        return 0.0;
+    }
+    
+    /**
+     * Get the account type
+     * 
+     * @return The account type
+     */
+    public AccountType getAccountType() {
+        return type;
+    }
+    
     // Getters and setters
     public UUID getAccountId() { return accountId; }
     public UUID getOwnerId() { return ownerId; }

@@ -1,7 +1,5 @@
 package com.zerog.neoessentials.economy;
 
-import java.util.UUID;
-
 /**
  * Represents a currency in the NeoEssentials economy system.
  * Supports multiple currencies with different properties and behaviors.
@@ -43,6 +41,29 @@ public class Currency {
         this.symbol = symbol;
         this.pluralName = pluralName;
         this.isDefault = isDefault;
+        this.isPhysical = isPhysical;
+        this.exchangeRate = exchangeRate;
+        this.type = type;
+    }
+    
+    /**
+     * Create a new currency (alternative constructor for test compatibility)
+     * 
+     * @param id Unique identifier for the currency
+     * @param displayName Display name of the currency
+     * @param pluralName Plural form of the currency name
+     * @param symbol Symbol used when displaying amounts
+     * @param type The type of currency
+     * @param isPhysical Whether this currency can be stored as physical items
+     * @param exchangeRate Exchange rate compared to default currency
+     */
+    public Currency(String id, String displayName, String pluralName, String symbol,
+                   CurrencyType type, boolean isPhysical, double exchangeRate) {
+        this.id = id;
+        this.displayName = displayName;
+        this.symbol = symbol;
+        this.pluralName = pluralName;
+        this.isDefault = false; // Default to false for this constructor
         this.isPhysical = isPhysical;
         this.exchangeRate = exchangeRate;
         this.type = type;
