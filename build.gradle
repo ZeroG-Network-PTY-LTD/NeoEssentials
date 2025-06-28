@@ -3,7 +3,8 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.93'
     id 'idea'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    // Temporarily removing Shadow plugin due to Java 21 ASM compatibility issues
+    // id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -116,7 +117,6 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
     include
     implementation.extendsFrom include
-    shadow
 }
 
 dependencies {    
@@ -143,7 +143,7 @@ dependencies {
     implementation 'com.moandjiezana.toml:toml4j:0.7.2'
     
     // YAML parsing library for configuration - will be shaded to avoid conflicts
-    shadow 'org.yaml:snakeyaml:2.2'
+    implementation 'org.yaml:snakeyaml:2.2'
     compileOnly 'org.yaml:snakeyaml:2.2' // For compilation, but will use server version if available
     
     // Example optional mod dependency with JEI
@@ -241,7 +241,7 @@ idea {
     }
 }
 
-// Jar configuration
+// Jar configuration - includes SnakeYAML directly instead of using Shadow plugin
 jar {
     manifest {
         attributes(
@@ -260,36 +260,25 @@ jar {
         configurations.include.collect { it.isDirectory() ? it : zipTree(it) }
     }
     
+    // Include SnakeYAML directly in the JAR
+    from {
+        configurations.runtimeClasspath.filter { it.name.contains('snakeyaml') }.collect { zipTree(it) }
+    } {
+        // Relocate SnakeYAML packages manually using file renaming
+        eachFile { file ->
+            if (file.path.startsWith('org/yaml/snakeyaml')) {
+                file.path = file.path.replace('org/yaml/snakeyaml', 'com/zerog/neoessentials/lib/yaml/snakeyaml')
+            }
+        }
+    }
+    
     // Avoid duplicate entries when including dependencies
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
-
-// Shadow JAR configuration for shading SnakeYAML
-shadowJar {
-    classifier = '' // Don't add classifier so this becomes the main JAR
     
-    // Relocate SnakeYAML to avoid conflicts with other mods
-    relocate 'org.yaml.snakeyaml', 'com.zerog.neoessentials.lib.yaml.snakeyaml'
-    
-    // Only include SnakeYAML and our main code
-    dependencies {
-        include(dependency('org.yaml:snakeyaml'))
-        include(project(':'))
-    }
-    
-    // Merge service files
-    mergeServiceFiles()
-    
-    // Preserve existing manifest attributes
-    manifest {
-        inheritFrom project.tasks.jar.manifest
+    doFirst {
+        println "Building JAR with included SnakeYAML (relocated)..."
     }
 }
-
-// Use shadowJar as the main jar
-build.dependsOn shadowJar
-// Don't build the regular jar
-jar.enabled = false
 
 // Configuration adjustments if needed go here
 
