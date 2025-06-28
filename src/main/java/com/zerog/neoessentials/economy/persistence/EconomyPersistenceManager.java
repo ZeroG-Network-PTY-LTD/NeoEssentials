@@ -79,18 +79,32 @@ public class EconomyPersistenceManager {
      */
     private void initializeStorage() {
         try {
+            NeoEssentials.LOGGER.info("Initializing economy persistence manager...");
+            
             // Create data directory
             Path dataPath = Paths.get(dataFolder);
             if (!Files.exists(dataPath)) {
                 Files.createDirectories(dataPath);
+                NeoEssentials.LOGGER.info("Created economy data directory: " + dataPath);
             }
             
             // Initialize database if enabled
             if (useDatabase) {
+                NeoEssentials.LOGGER.info("Attempting to initialize SQLite database...");
                 initializeDatabase();
+                
+                if (isUsingDatabase()) {
+                    NeoEssentials.LOGGER.info("✓ SQLite database initialized successfully - loan persistence enabled");
+                } else {
+                    NeoEssentials.LOGGER.warn("✗ Database initialization failed - using file storage only");
+                }
+            } else {
+                NeoEssentials.LOGGER.info("Database disabled - using file storage only");
             }
             
-            NeoEssentials.LOGGER.info("Economy persistence manager initialized");
+            NeoEssentials.LOGGER.info("Economy persistence manager initialized (Database: {}, File Backup: {})", 
+                isUsingDatabase() ? "ENABLED" : "DISABLED", 
+                isUsingFileBackup() ? "ENABLED" : "DISABLED");
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to initialize economy persistence: " + e.getMessage());
             e.printStackTrace();
@@ -106,6 +120,7 @@ public class EconomyPersistenceManager {
             Path dbDir = Paths.get(databasePath).getParent();
             if (!Files.exists(dbDir)) {
                 Files.createDirectories(dbDir);
+                NeoEssentials.LOGGER.info("Created economy database directory: " + dbDir);
             }
             
             // Try to load SQLite driver (may not be available if not included)
@@ -116,6 +131,7 @@ public class EconomyPersistenceManager {
                 NeoEssentials.LOGGER.warn("SQLite JDBC driver not available - using file storage only");
                 NeoEssentials.LOGGER.warn("To enable database features, ensure SQLite JDBC is available in classpath");
                 useDatabase = false;
+                dbConnection = null;
                 return;
             }
             
@@ -126,6 +142,15 @@ public class EconomyPersistenceManager {
             dbConnection = DriverManager.getConnection(connectionUrl);
             if (dbConnection == null) {
                 throw new RuntimeException("Failed to create database connection");
+            }
+            
+            // Enable foreign keys and other performance settings
+            try (Statement stmt = dbConnection.createStatement()) {
+                stmt.executeUpdate("PRAGMA foreign_keys = ON");
+                stmt.executeUpdate("PRAGMA journal_mode = WAL");
+                stmt.executeUpdate("PRAGMA synchronous = NORMAL");
+                stmt.executeUpdate("PRAGMA temp_store = memory");
+                stmt.executeUpdate("PRAGMA mmap_size = 268435456"); // 256MB
             }
             
             dbConnection.setAutoCommit(false);
@@ -139,9 +164,11 @@ public class EconomyPersistenceManager {
             createDatabaseTables();
             
             NeoEssentials.LOGGER.info("Economy database initialized successfully at " + databasePath);
+            NeoEssentials.LOGGER.info("Database features enabled - loan applications will persist across restarts");
         } catch (Exception e) {
-            NeoEssentials.LOGGER.warn("Database initialization failed, using file storage: " + e.getMessage());
-            useDatabase = false; // Fall back to file storage
+            NeoEssentials.LOGGER.error("Database initialization failed: " + e.getMessage(), e);
+            NeoEssentials.LOGGER.warn("Falling back to file storage only");
+            useDatabase = false;
             dbConnection = null;
         }
     }
@@ -697,34 +724,40 @@ public class EconomyPersistenceManager {
                 // Update cache first
                 loanCache.put(loan.getLoanId(), loan);
                 
-                // Save to database
-                String sql = """
-                    INSERT OR REPLACE INTO loans (
-                        loan_id, borrower_uuid, loan_type, principal_amount, 
-                        current_balance, interest_rate, term_months, 
-                        remaining_payments, status, created_date, 
-                        last_payment_date, next_payment_due
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """;
-                
-                try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
-                    stmt.setString(1, loan.getLoanId().toString());
-                    stmt.setString(2, loan.getBorrowerId().toString());
-                    stmt.setString(3, loan.getType().name());
-                    stmt.setDouble(4, loan.getPrincipalAmount());
-                    stmt.setDouble(5, loan.getCurrentBalance());
-                    stmt.setDouble(6, loan.getInterestRate());
-                    stmt.setInt(7, loan.getTermMonths());
-                    stmt.setInt(8, loan.getPaymentsRemaining());
-                    stmt.setString(9, loan.getStatus().name());
-                    stmt.setLong(10, loan.getCreatedDate().getTime());
-                    stmt.setLong(11, loan.getLastPaymentDate() != null ? loan.getLastPaymentDate().getTime() : 0);
-                    stmt.setLong(12, loan.getNextPaymentDue() != null ? loan.getNextPaymentDue().getTime() : 0);
+                // Save to database if available
+                if (isUsingDatabase()) {
+                    String sql = """
+                        INSERT OR REPLACE INTO loans (
+                            loan_id, borrower_uuid, loan_type, principal_amount, 
+                            current_balance, interest_rate, term_months, 
+                            remaining_payments, status, created_date, 
+                            last_payment_date, next_payment_due
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """;
                     
-                    stmt.executeUpdate();
+                    try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+                        stmt.setString(1, loan.getLoanId().toString());
+                        stmt.setString(2, loan.getBorrowerId().toString());
+                        stmt.setString(3, loan.getType().name());
+                        stmt.setDouble(4, loan.getPrincipalAmount());
+                        stmt.setDouble(5, loan.getCurrentBalance());
+                        stmt.setDouble(6, loan.getInterestRate());
+                        stmt.setInt(7, loan.getTermMonths());
+                        stmt.setInt(8, loan.getPaymentsRemaining());
+                        stmt.setString(9, loan.getStatus().name());
+                        stmt.setLong(10, loan.getCreatedDate().getTime());
+                        stmt.setLong(11, loan.getLastPaymentDate() != null ? loan.getLastPaymentDate().getTime() : 0);
+                        stmt.setLong(12, loan.getNextPaymentDue() != null ? loan.getNextPaymentDue().getTime() : 0);
+                        
+                        stmt.executeUpdate();
+                        dbConnection.commit();
+                    }
+                    NeoEssentials.LOGGER.debug("Loan saved to database: " + loan.getLoanId().toString().substring(0, 8));
+                } else {
+                    NeoEssentials.LOGGER.debug("Database not available, loan saved to cache only: " + loan.getLoanId().toString().substring(0, 8));
                 }
                 
-                // Save to file if enabled
+                // Save to file backup (always enabled as fallback)
                 if (useFileBackup) {
                     saveLoansToFile();
                 }
@@ -732,6 +765,16 @@ public class EconomyPersistenceManager {
                 return true;
             } catch (Exception e) {
                 NeoEssentials.LOGGER.error("Failed to save loan: " + loan.getLoanId(), e);
+                // Even if database save fails, try to save to file as backup
+                try {
+                    if (useFileBackup) {
+                        saveLoansToFile();
+                        NeoEssentials.LOGGER.info("Loan saved to file backup despite database error");
+                        return true;
+                    }
+                } catch (Exception fileException) {
+                    NeoEssentials.LOGGER.error("Failed to save loan to file backup as well", fileException);
+                }
                 return false;
             }
         });
@@ -745,6 +788,12 @@ public class EconomyPersistenceManager {
             // Check cache first
             if (loanCache.containsKey(loanId)) {
                 return loanCache.get(loanId);
+            }
+            
+            // If database is not available, try to load from file
+            if (!isUsingDatabase()) {
+                NeoEssentials.LOGGER.debug("Database not available, cannot load loan from database: " + loanId);
+                return null;
             }
             
             try {
