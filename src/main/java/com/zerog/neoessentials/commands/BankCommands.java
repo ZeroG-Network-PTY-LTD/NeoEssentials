@@ -36,25 +36,30 @@ public class BankCommands {
                         .executes(context -> createAccount(context.getSource(), 
                             StringArgumentType.getString(context, "type")))))
                 .then(Commands.literal("deposit")
+                    .executes(context -> showDepositHelp(context.getSource()))
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                         .suggests(TabCompletionUtil.AMOUNT_SUGGESTIONS)
-                        .executes(context -> depositMoney(context.getSource(),
-                            DoubleArgumentType.getDouble(context, "amount"), null))
-                        .then(Commands.argument("account", StringArgumentType.string())
+                        .executes(context -> showAccountsForDeposit(context.getSource(),
+                            DoubleArgumentType.getDouble(context, "amount")))
+                        .then(Commands.argument("to-account", StringArgumentType.string())
                             .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
-                            .executes(context -> depositMoney(context.getSource(),
+                            .executes(context -> showFromAccountsForDeposit(context.getSource(),
                                 DoubleArgumentType.getDouble(context, "amount"),
-                                StringArgumentType.getString(context, "account"))))))
+                                StringArgumentType.getString(context, "to-account")))
+                            .then(Commands.argument("from-account", StringArgumentType.string())
+                                .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
+                                .executes(context -> depositMoney(context.getSource(),
+                                    DoubleArgumentType.getDouble(context, "amount"),
+                                    StringArgumentType.getString(context, "to-account"),
+                                    StringArgumentType.getString(context, "from-account")))))))
                 .then(Commands.literal("withdraw")
+                    .executes(context -> showWithdrawHelp(context.getSource()))
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                         .suggests(TabCompletionUtil.AMOUNT_SUGGESTIONS)
-                        .executes(context -> withdrawMoney(context.getSource(),
-                            DoubleArgumentType.getDouble(context, "amount"), null))
+                        .executes(context -> showWithdrawHelp(context.getSource()))
                         .then(Commands.argument("account", StringArgumentType.string())
                             .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
-                            .executes(context -> withdrawMoney(context.getSource(),
-                                DoubleArgumentType.getDouble(context, "amount"),
-                                StringArgumentType.getString(context, "account"))))))
+                            .executes(context -> showWithdrawHelp(context.getSource())))))
                 .then(Commands.literal("transfer")
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                         .suggests(TabCompletionUtil.AMOUNT_SUGGESTIONS)
@@ -115,9 +120,9 @@ public class BankCommands {
             ServerPlayer player = source.getPlayerOrException();
             MessageUtil.sendMessage(player, "§6=== NeoEssentials Banking System ===");
             MessageUtil.sendMessage(player, "§e§lAccount Management:");
-            MessageUtil.sendMessage(player, "§e/bank create <type> §7- Create new account (checking, savings, business, joint, investment)");
-            MessageUtil.sendMessage(player, "§e/bank deposit <amount> [account] §7- Deposit money");
-            MessageUtil.sendMessage(player, "§e/bank withdraw <amount> [account] §7- Withdraw money");
+            MessageUtil.sendMessage(player, "§e/bank create <type> §7- Create new account (checking, savings, business, investment)");
+            MessageUtil.sendMessage(player, "§e/bank deposit <amount> <to-account> <from-account> §7- Transfer between your accounts");
+            MessageUtil.sendMessage(player, "§e/bank withdraw §7- Shows info (withdrawals no longer needed!)");
             MessageUtil.sendMessage(player, "§e/bank transfer <amount> <to-account> [from-account] §7- Transfer money");
             MessageUtil.sendMessage(player, "§e/bank balance [account] §7- Check account balance");
             MessageUtil.sendMessage(player, "§e/bank list §7- List all your accounts");
@@ -129,7 +134,9 @@ public class BankCommands {
             MessageUtil.sendMessage(player, "§e/bank loan list §7- List your loans");
             MessageUtil.sendMessage(player, "§e/bank loan info <loan-id> §7- Loan details");
             MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7Account Types: §eChecking§7, §eSavings§7, §eBusiness§7, §eJoint§7, §eInvestment");
+            MessageUtil.sendMessage(player, "§c§lNew System: §7All money is stored in bank accounts!");
+            MessageUtil.sendMessage(player, "§7Use §e/pay <player> <amount> §7to pay others directly from your bank.");
+            MessageUtil.sendMessage(player, "§7Account Types: §eChecking§7, §eSavings§7, §eBusiness§7, §eInvestment");
             MessageUtil.sendMessage(player, "§7Loan Types: §ePersonal§7, §eMortgage§7, §eBusiness");
             return 1;
         } catch (CommandSyntaxException e) {
@@ -170,50 +177,180 @@ public class BankCommands {
         }
     }
     
-    private int depositMoney(CommandSourceStack source, double amount, String accountNumber) {
+    private int showDepositHelp(CommandSourceStack source) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            MessageUtil.sendMessage(player, "§6§l--- Bank Deposit Help ---");
+            MessageUtil.sendMessage(player, "§eUsage: /bank deposit <amount> <to-account> [from-account]");
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§eExample: /bank deposit 100 CHK001 SAV002");
+            MessageUtil.sendMessage(player, "§7This would transfer $100 from savings account SAV002 to checking account CHK001");
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§eTo see your accounts: /bank list");
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use banking commands"));
+            return 0;
+        }
+    }
+    
+    private int showAccountsForDeposit(CommandSourceStack source, double amount) {
         try {
             ServerPlayer player = source.getPlayerOrException();
             com.zerog.neoessentials.economy.EconomyManager economyManager = 
-                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+                com.zerog.neoessentials.economy.EconomyManager.getInstance();
             BankManager bankManager = economyManager.getBankManager();
-            CurrencyManager currencyManager = economyManager.getCurrencyManager();
-            Currency defaultCurrency = currencyManager.getDefaultCurrency();
+            
+            List<BankAccount> accounts = bankManager.getPlayerAccounts(player.getUUID());
+            if (accounts.isEmpty()) {
+                MessageUtil.sendErrorMessage(player, "You don't have any bank accounts. Create one with: /bank create checking");
+                return 0;
+            }
+            
+            MessageUtil.sendMessage(player, "§6§l--- Select Destination Account ---");
+            MessageUtil.sendMessage(player, "§7Depositing: §e$" + String.format("%.2f", amount));
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§eYour accounts:");
+            
+            for (BankAccount account : accounts) {
+                if (account.isActive()) {
+                    Currency defaultCurrency = economyManager.getCurrencyManager().getDefaultCurrency();
+                    double balance = account.getBalance(defaultCurrency);
+                    String accountInfo = String.format("§7- §e%s §7(%s) - §a$%.2f", 
+                        account.getAccountNumber(), 
+                        account.getType().toString().toLowerCase(), 
+                        balance);
+                    MessageUtil.sendMessage(player, accountInfo);
+                }
+            }
+            
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§7Use: §e/bank deposit " + amount + " <account-number> [from-account]");
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use banking commands"));
+            return 0;
+        }
+    }
+    
+    private int showFromAccountsForDeposit(CommandSourceStack source, double amount, String toAccountNumber) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            Currency defaultCurrency = economyManager.getCurrencyManager().getDefaultCurrency();
+            
+            // Verify destination account exists and is owned by player
+            BankAccount toAccount = bankManager.getAccountByNumber(toAccountNumber);
+            if (toAccount == null || !toAccount.getOwnerId().equals(player.getUUID())) {
+                MessageUtil.sendErrorMessage(player, "Destination account not found or you don't have access to it.");
+                return 0;
+            }
+            
+            List<BankAccount> accounts = bankManager.getPlayerAccounts(player.getUUID());
+            List<BankAccount> validFromAccounts = accounts.stream()
+                .filter(account -> account.isActive() 
+                    && !account.getAccountNumber().equals(toAccountNumber)
+                    && account.getBalance(defaultCurrency) >= amount)
+                .toList();
+            
+            if (validFromAccounts.isEmpty()) {
+                MessageUtil.sendErrorMessage(player, "No accounts found with sufficient funds ($" + 
+                    String.format("%.2f", amount) + ") to transfer from.");
+                return 0;
+            }
+            
+            MessageUtil.sendMessage(player, "§6§l--- Select Source Account ---");
+            MessageUtil.sendMessage(player, "§7Transferring: §e$" + String.format("%.2f", amount));
+            MessageUtil.sendMessage(player, "§7To: §e" + toAccount.getAccountNumber() + " §7(" + 
+                toAccount.getType().toString().toLowerCase() + ")");
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§eAccounts with sufficient funds:");
+            
+            for (BankAccount account : validFromAccounts) {
+                double balance = account.getBalance(defaultCurrency);
+                String accountInfo = String.format("§7- §e%s §7(%s) - §a$%.2f", 
+                    account.getAccountNumber(), 
+                    account.getType().toString().toLowerCase(), 
+                    balance);
+                MessageUtil.sendMessage(player, accountInfo);
+            }
+            
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§7Use: §e/bank deposit " + amount + " " + toAccountNumber + " <from-account>");
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use banking commands"));
+            return 0;
+        }
+    }
+    
+    private int depositMoney(CommandSourceStack source, double amount, String toAccountNumber, String fromAccountNumber) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            Currency defaultCurrency = economyManager.getCurrencyManager().getDefaultCurrency();
             
             if (defaultCurrency == null) {
                 MessageUtil.sendErrorMessage(player, "No default currency configured.");
                 return 0;
             }
             
-            BankAccount account;
-            if (accountNumber != null) {
-                account = bankManager.getAccountByNumber(accountNumber);
-                if (account == null || !account.getOwnerId().equals(player.getUUID())) {
-                    MessageUtil.sendErrorMessage(player, "Account not found or you don't have access to it.");
-                    return 0;
-                }
-            } else {
-                account = bankManager.getPrimaryAccount(player.getUUID());
-                if (account == null) {
-                    MessageUtil.sendErrorMessage(player, "No primary account found. Create one with /bank create checking");
-                    return 0;
-                }
-            }
+            // Get both accounts
+            BankAccount toAccount = bankManager.getAccountByNumber(toAccountNumber);
+            BankAccount fromAccount = bankManager.getAccountByNumber(fromAccountNumber);
             
-            double playerBalance = economyManager.getBalance(player.getUUID(), defaultCurrency);
-            if (playerBalance < amount) {
-                MessageUtil.sendErrorMessage(player, "Insufficient funds. You have " + 
-                    defaultCurrency.format(playerBalance));
+            // Verify accounts exist and are owned by player
+            if (toAccount == null || !toAccount.getOwnerId().equals(player.getUUID())) {
+                MessageUtil.sendErrorMessage(player, "Destination account not found or you don't have access to it.");
                 return 0;
             }
             
-            if (economyManager.removeBalance(player.getUUID(), defaultCurrency, amount, "Bank deposit") &&
-                account.deposit(defaultCurrency, amount, "Player deposit")) {
+            if (fromAccount == null || !fromAccount.getOwnerId().equals(player.getUUID())) {
+                MessageUtil.sendErrorMessage(player, "Source account not found or you don't have access to it.");
+                return 0;
+            }
+            
+            // Check if accounts are different
+            if (toAccount.getAccountNumber().equals(fromAccount.getAccountNumber())) {
+                MessageUtil.sendErrorMessage(player, "Cannot transfer money to the same account.");
+                return 0;
+            }
+            
+            // Check if both accounts are active
+            if (!toAccount.isActive() || !fromAccount.isActive()) {
+                MessageUtil.sendErrorMessage(player, "One or both accounts are inactive.");
+                return 0;
+            }
+            
+            // Check if source account has sufficient funds
+            double fromBalance = fromAccount.getBalance(defaultCurrency);
+            if (fromBalance < amount) {
+                MessageUtil.sendErrorMessage(player, "Insufficient funds in source account. Available: $" + 
+                    String.format("%.2f", fromBalance));
+                return 0;
+            }
+            
+            // Perform the transfer
+            if (bankManager.transferBetweenAccounts(fromAccount, toAccount, amount, defaultCurrency, 
+                "Internal transfer via deposit command")) {
                 
-                MessageUtil.sendSuccessMessage(player, "Successfully deposited " + 
-                    defaultCurrency.format(amount) + " to account " + account.getAccountNumber());
+                MessageUtil.sendSuccessMessage(player, String.format(
+                    "Successfully transferred $%.2f from %s to %s", 
+                    amount, fromAccount.getAccountNumber(), toAccount.getAccountNumber()));
+                    
+                // Show updated balances
+                MessageUtil.sendMessage(player, String.format("§7%s balance: §a$%.2f", 
+                    fromAccount.getAccountNumber(), fromAccount.getBalance(defaultCurrency)));
+                MessageUtil.sendMessage(player, String.format("§7%s balance: §a$%.2f", 
+                    toAccount.getAccountNumber(), toAccount.getBalance(defaultCurrency)));
+                    
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to deposit money");
+                MessageUtil.sendErrorMessage(player, "Transfer failed. Please try again.");
                 return 0;
             }
         } catch (CommandSyntaxException e) {
@@ -222,56 +359,31 @@ public class BankCommands {
         }
     }
     
-    private int withdrawMoney(CommandSourceStack source, double amount, String accountNumber) {
+    private int showWithdrawHelp(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            com.zerog.neoessentials.economy.EconomyManager economyManager = 
-                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
-            BankManager bankManager = economyManager.getBankManager();
-            CurrencyManager currencyManager = economyManager.getCurrencyManager();
-            Currency defaultCurrency = currencyManager.getDefaultCurrency();
-            
-            if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured.");
-                return 0;
-            }
-            
-            BankAccount account;
-            if (accountNumber != null) {
-                account = bankManager.getAccountByNumber(accountNumber);
-                if (account == null || !account.getOwnerId().equals(player.getUUID())) {
-                    MessageUtil.sendErrorMessage(player, "Account not found or you don't have access to it.");
-                    return 0;
-                }
-            } else {
-                account = bankManager.getPrimaryAccount(player.getUUID());
-                if (account == null) {
-                    MessageUtil.sendErrorMessage(player, "No primary account found.");
-                    return 0;
-                }
-            }
-            
-            double accountBalance = account.getBalance(defaultCurrency);
-            if (accountBalance < amount) {
-                MessageUtil.sendErrorMessage(player, "Insufficient funds in account. Balance: " + 
-                    defaultCurrency.format(accountBalance));
-                return 0;
-            }
-            
-            if (account.withdraw(defaultCurrency, amount, "Player withdrawal") &&
-                economyManager.addBalance(player.getUUID(), defaultCurrency, amount, "Bank withdrawal")) {
-                
-                MessageUtil.sendSuccessMessage(player, "Successfully withdrew " + 
-                    defaultCurrency.format(amount) + " from account " + account.getAccountNumber());
-                return 1;
-            } else {
-                MessageUtil.sendErrorMessage(player, "Failed to withdraw money");
-                return 0;
-            }
+            MessageUtil.sendMessage(player, "§6§l--- Bank Withdrawal Notice ---");
+            MessageUtil.sendMessage(player, "§cWithdrawals are no longer needed!");
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§7In the new bank-only economy system, all your money is safely");
+            MessageUtil.sendMessage(player, "§7stored in bank accounts. You can:");
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§e• Check balances: §f/bank balance [account]");
+            MessageUtil.sendMessage(player, "§e• Transfer between accounts: §f/bank deposit <amount> <to> <from>");
+            MessageUtil.sendMessage(player, "§e• Pay other players: §f/pay <player> <amount>");
+            MessageUtil.sendMessage(player, "§e• View all accounts: §f/bank list");
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§aYour money is always available directly from your bank accounts!");
+            return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
             return 0;
         }
+    }
+    
+    // Legacy method - no longer used but kept for compatibility
+    private int withdrawMoney(CommandSourceStack source, double amount, String accountNumber) {
+        return showWithdrawHelp(source);
     }
     
     private int transferMoney(CommandSourceStack source, double amount, String toAccountNumber, String fromAccountNumber) {
