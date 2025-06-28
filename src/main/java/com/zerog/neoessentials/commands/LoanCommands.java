@@ -60,6 +60,20 @@ public class LoanCommands {
                         .executes(context -> listPlayerLoans(context.getSource(),
                             EntityArgument.getPlayer(context, "player")))))
                 
+                // List Applications (pending/approved loans)
+                .then(Commands.literal("applications")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.list"))
+                    .executes(context -> listLoanApplications(context.getSource()))
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.list.others"))
+                        .executes(context -> listLoanApplications(context.getSource(),
+                            EntityArgument.getPlayer(context, "player")))))
+                
+                // Quick recent applications view
+                .then(Commands.literal("recent")
+                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.list"))
+                    .executes(context -> listRecentApplications(context.getSource())))
+                
                 // Make Payment
                 .then(Commands.literal("pay")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.pay"))
@@ -95,8 +109,10 @@ public class LoanCommands {
             MessageUtil.sendMessage(player, "§6=== NeoEssentials Loan System ===");
             MessageUtil.sendMessage(player, "§e§lLoan Commands:");
             MessageUtil.sendMessage(player, "§e/loan apply <amount> <type> <term-months> §7- Apply for a loan");
+            MessageUtil.sendMessage(player, "§a/loan applications §7- View ALL your loan applications");
+            MessageUtil.sendMessage(player, "§a/loan recent §7- View your 5 most recent applications");
+            MessageUtil.sendMessage(player, "§e/loan list §7- List active loans only");
             MessageUtil.sendMessage(player, "§e/loan info <loan-id> §7- View loan details");
-            MessageUtil.sendMessage(player, "§e/loan list §7- List your loans");
             MessageUtil.sendMessage(player, "§e/loan pay <amount> [loan-id] §7- Make loan payment");
             MessageUtil.sendMessage(player, "§e/loan credit §7- View your credit score");
             
@@ -152,13 +168,20 @@ public class LoanCommands {
             Loan loan = bankManager.new LoanManager().applyForLoan(player.getUUID(), amount, defaultCurrency, loanType, termMonths);
             
             if (loan != null) {
-                MessageUtil.sendMessage(player, "§aLoan application submitted successfully!");
-                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
-                MessageUtil.sendMessage(player, "§7Amount: §a" + defaultCurrency.format(amount));
-                MessageUtil.sendMessage(player, "§7Type: §e" + loanType.getDisplayName());
-                MessageUtil.sendMessage(player, "§7Term: §e" + termMonths + " months");
-                MessageUtil.sendMessage(player, "§7Status: §6" + loan.getStatus().name());
-                MessageUtil.sendMessage(player, "§7Note: This is a demonstration. Full loan system integration pending.");
+                MessageUtil.sendMessage(player, "§a✓ Loan application submitted successfully!");
+                MessageUtil.sendMessage(player, "§7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                MessageUtil.sendMessage(player, "§7📋 Application Details:");
+                MessageUtil.sendMessage(player, "§7   Loan ID: §e" + loan.getLoanId().toString().substring(0, 8) + "...");
+                MessageUtil.sendMessage(player, "§7   Amount: §a" + defaultCurrency.format(amount));
+                MessageUtil.sendMessage(player, "§7   Type: §e" + loanType.getDisplayName());
+                MessageUtil.sendMessage(player, "§7   Term: §e" + termMonths + " months");
+                MessageUtil.sendMessage(player, "§7   Monthly Payment: §e" + defaultCurrency.format(loan.getMonthlyPayment()));
+                MessageUtil.sendMessage(player, "§7   Interest Rate: §e" + String.format("%.2f%%", loan.getInterestRate() * 100));
+                MessageUtil.sendMessage(player, "§7   Status: §6" + loan.getStatus().name());
+                MessageUtil.sendMessage(player, "§7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                MessageUtil.sendMessage(player, "§a💾 Application saved to database - persists across server restarts!");
+                MessageUtil.sendMessage(player, "§e📱 Use §a/loan applications §eto view all your applications");
+                MessageUtil.sendMessage(player, "§e📱 Use §a/loan info " + loan.getLoanId().toString().substring(0, 8) + " §efor full details");
             } else {
                 MessageUtil.sendErrorMessage(player, "Loan application failed. You may not be eligible for this loan type.");
             }
@@ -453,6 +476,212 @@ public class LoanCommands {
             source.sendFailure(Component.literal("An error occurred while listing loans: " + e.getMessage()));
             return 0;
         }
+    }
+    
+    private int listLoanApplications(CommandSourceStack source) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            return listLoanApplications(source, player);
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("This command can only be used by players."));
+            return 0;
+        }
+    }
+    
+    private int listLoanApplications(CommandSourceStack source, ServerPlayer targetPlayer) {
+        try {
+            ServerPlayer executor = source.getPlayerOrException();
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            
+            // Check if viewing own applications or has permission to view others
+            if (!targetPlayer.getUUID().equals(executor.getUUID()) && 
+                !CommandManager.hasPermission(source, "neoessentials.command.loan.list.others")) {
+                MessageUtil.sendErrorMessage(executor, "You don't have permission to view other players' loan applications.");
+                return 0;
+            }
+            
+            List<Loan> allLoans = bankManager.getPlayerLoans(targetPlayer.getUUID());
+            
+            String targetName = targetPlayer.getUUID().equals(executor.getUUID()) ? "Your" : targetPlayer.getDisplayName().getString() + "'s";
+            MessageUtil.sendMessage(executor, "§6=== " + targetName + " Loan Applications ===");
+            
+            if (allLoans.isEmpty()) {
+                MessageUtil.sendMessage(executor, "§7No loan applications found.");
+                return 1;
+            }
+            
+            // Categorize loans by status
+            List<Loan> pending = allLoans.stream().filter(l -> l.getStatus() == Loan.LoanStatus.PENDING).toList();
+            List<Loan> approved = allLoans.stream().filter(l -> l.getStatus() == Loan.LoanStatus.APPROVED).toList();
+            List<Loan> active = allLoans.stream().filter(l -> l.getStatus() == Loan.LoanStatus.CURRENT).toList();
+            List<Loan> overdue = allLoans.stream().filter(l -> l.getStatus() == Loan.LoanStatus.LATE || l.getStatus() == Loan.LoanStatus.DEFAULT).toList();
+            List<Loan> completed = allLoans.stream().filter(l -> l.getStatus() == Loan.LoanStatus.PAID_OFF).toList();
+            List<Loan> denied = allLoans.stream().filter(l -> l.getStatus() == Loan.LoanStatus.FORECLOSED).toList();
+            
+            // Show pending applications
+            if (!pending.isEmpty()) {
+                MessageUtil.sendMessage(executor, "§e§lPending Applications (" + pending.size() + "):");
+                for (Loan loan : pending) {
+                    showLoanApplicationSummary(executor, loan);
+                }
+            }
+            
+            // Show approved applications
+            if (!approved.isEmpty()) {
+                MessageUtil.sendMessage(executor, "§a§lApproved Applications (" + approved.size() + "):");
+                for (Loan loan : approved) {
+                    showLoanApplicationSummary(executor, loan);
+                }
+            }
+            
+            // Show active loans
+            if (!active.isEmpty()) {
+                MessageUtil.sendMessage(executor, "§2§lActive Loans (" + active.size() + "):");
+                for (Loan loan : active) {
+                    showLoanApplicationSummary(executor, loan);
+                }
+            }
+            
+            // Show overdue loans
+            if (!overdue.isEmpty()) {
+                MessageUtil.sendMessage(executor, "§c§lOverdue Loans (" + overdue.size() + "):");
+                for (Loan loan : overdue) {
+                    showLoanApplicationSummary(executor, loan);
+                }
+            }
+            
+            // Show completed loans
+            if (!completed.isEmpty()) {
+                MessageUtil.sendMessage(executor, "§7§lCompleted Loans (" + completed.size() + "):");
+                for (Loan loan : completed) {
+                    showLoanApplicationSummary(executor, loan);
+                }
+            }
+            
+            // Show denied applications
+            if (!denied.isEmpty()) {
+                MessageUtil.sendMessage(executor, "§4§lDenied Applications (" + denied.size() + "):");
+                for (Loan loan : denied) {
+                    showLoanApplicationSummary(executor, loan);
+                }
+            }
+            
+            // Summary
+            Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
+            double totalActive = active.stream().mapToDouble(Loan::getCurrentBalance).sum() + 
+                               overdue.stream().mapToDouble(Loan::getCurrentBalance).sum();
+            
+            MessageUtil.sendMessage(executor, "");
+            MessageUtil.sendMessage(executor, "§6§lSummary:");
+            MessageUtil.sendMessage(executor, "§7Total Applications: §e" + allLoans.size());
+            MessageUtil.sendMessage(executor, "§7Active Loan Balance: §c" + currency.format(totalActive));
+            MessageUtil.sendMessage(executor, "");
+            MessageUtil.sendMessage(executor, "§7Use §e/loan info <loan-id>§7 for detailed information.");
+            
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("This command can only be used by players."));
+            return 0;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("An error occurred while listing loan applications: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private int listRecentApplications(CommandSourceStack source) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            
+            List<Loan> allLoans = bankManager.getPlayerLoans(player.getUUID());
+            
+            MessageUtil.sendMessage(player, "§6=== Your Recent Loan Applications ===");
+            
+            if (allLoans.isEmpty()) {
+                MessageUtil.sendMessage(player, "§7No loan applications found.");
+                MessageUtil.sendMessage(player, "§e💡 Use §a/loan apply <amount> <type> <term> §eto apply for your first loan!");
+                return 1;
+            }
+            
+            // Sort by creation date (most recent first) and take first 5
+            List<Loan> recentLoans = allLoans.stream()
+                .sorted((a, b) -> Long.compare(b.getCreatedTime(), a.getCreatedTime()))
+                .limit(5)
+                .toList();
+            
+            MessageUtil.sendMessage(player, "§7Showing your " + recentLoans.size() + " most recent applications:");
+            MessageUtil.sendMessage(player, "");
+            
+            for (int i = 0; i < recentLoans.size(); i++) {
+                Loan loan = recentLoans.get(i);
+                String statusColor = switch (loan.getStatus()) {
+                    case PENDING -> "§e";
+                    case APPROVED -> "§a";
+                    case CURRENT -> "§2";
+                    case LATE -> "§c";
+                    case DEFAULT -> "§4";
+                    case PAID_OFF -> "§7";
+                    case FORECLOSED -> "§4";
+                };
+                
+                Currency currency = loan.getCurrency();
+                String dateStr = new java.text.SimpleDateFormat("MMM dd, yyyy").format(new java.util.Date(loan.getCreatedTime()));
+                
+                MessageUtil.sendMessage(player, "§7" + (i + 1) + ". §e" + loan.getLoanId().toString().substring(0, 8) + 
+                    " §7| " + statusColor + loan.getStatus().name() + 
+                    " §7| §e" + loan.getType().getDisplayName() + 
+                    " §7| §a" + currency.format(loan.getPrincipalAmount()) + 
+                    " §7| §8" + dateStr);
+                
+                if (loan.getStatus() == Loan.LoanStatus.CURRENT || loan.getStatus() == Loan.LoanStatus.LATE) {
+                    MessageUtil.sendMessage(player, "§7   Balance: §c" + currency.format(loan.getCurrentBalance()) + 
+                        " §7| Monthly: §e" + currency.format(loan.getMonthlyPayment()));
+                }
+            }
+            
+            MessageUtil.sendMessage(player, "");
+            if (allLoans.size() > 5) {
+                MessageUtil.sendMessage(player, "§7📋 You have §e" + (allLoans.size() - 5) + "§7 more applications.");
+                MessageUtil.sendMessage(player, "§7📋 Use §a/loan applications §7to see all applications.");
+            }
+            MessageUtil.sendMessage(player, "§7📋 Use §a/loan info <loan-id> §7for detailed information.");
+            
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("This command can only be used by players."));
+            return 0;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("An error occurred while listing recent applications: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private void showLoanApplicationSummary(ServerPlayer player, Loan loan) {
+        Currency currency = loan.getCurrency();
+        String statusColor = switch (loan.getStatus()) {
+            case PENDING -> "§e";
+            case APPROVED -> "§a";
+            case CURRENT -> "§2";
+            case LATE -> "§c";
+            case DEFAULT -> "§4";
+            case PAID_OFF -> "§7";
+            case FORECLOSED -> "§4";
+        };
+        
+        String loanInfo = "§7  • §e" + loan.getLoanId().toString().substring(0, 8) + 
+                         " §7| §e" + loan.getType().getDisplayName() + 
+                         " §7| §a" + currency.format(loan.getPrincipalAmount());
+        
+        if (loan.getStatus() == Loan.LoanStatus.CURRENT || loan.getStatus() == Loan.LoanStatus.LATE) {
+            loanInfo += " §7| Balance: §c" + currency.format(loan.getCurrentBalance());
+            loanInfo += " §7| Payment: §e" + currency.format(loan.getMonthlyPayment());
+        }
+        
+        loanInfo += " §7| " + statusColor + loan.getStatus().name();
+        
+        MessageUtil.sendMessage(player, loanInfo);
     }
     
     // Helper methods for sending messages to CommandSourceStack
