@@ -512,6 +512,12 @@ public class TABLikeTablistManager {
             Collection<ServerPlayer> players = server.getPlayerList().getPlayers();
             if (players.isEmpty()) return;
             
+            // Check if any animation frames have actually changed
+            boolean animationChanged = animationManager.hasAnimationFrameChanged();
+            if (!animationChanged) {
+                return; // No need to send packets if animations haven't changed
+            }
+            
             // Only update header/footer animations, not full player data
             for (ServerPlayer player : players) {
                 PlayerTabData data = playerData.get(player.getUUID());

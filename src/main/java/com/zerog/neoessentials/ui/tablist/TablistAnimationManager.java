@@ -127,6 +127,77 @@ public class TablistAnimationManager {    /**
      * 
      * @param playerId The UUID of the disconnected player
      */
+    // Animation timing state
+    private long lastHeaderAnimationTime = 0;
+    private long lastFooterAnimationTime = 0;
+    private int lastHeaderFrame = -1;
+    private int lastFooterFrame = -1;
+    
+    /**
+     * Checks if any animation frame has changed since last check
+     * This prevents unnecessary packet sending when animations haven't changed
+     */
+    public boolean hasAnimationFrameChanged() {
+        long currentTime = System.currentTimeMillis();
+        
+        // Check header animation timing
+        int currentHeaderFrame = getCurrentHeaderFrame();
+        int currentFooterFrame = getCurrentFooterFrame();
+        
+        boolean changed = (currentHeaderFrame != lastHeaderFrame || currentFooterFrame != lastFooterFrame);
+        
+        if (changed) {
+            lastHeaderFrame = currentHeaderFrame;
+            lastFooterFrame = currentFooterFrame;
+            lastHeaderAnimationTime = currentTime;
+            lastFooterAnimationTime = currentTime;
+        }
+        
+        return changed;
+    }
+    
+    /**
+     * Gets the current header animation frame using time-based calculation
+     */
+    private int getCurrentHeaderFrame() {
+        // Get header animation interval from config (default to 20 ticks if not set)
+        int interval = getHeaderAnimationInterval();
+        
+        long currentTime = System.currentTimeMillis();
+        long tickTime = currentTime / 50; // Convert to ticks
+        
+        return (int) (tickTime / interval);
+    }
+    
+    /**
+     * Gets the current footer animation frame using time-based calculation
+     */
+    private int getCurrentFooterFrame() {
+        // Get footer animation interval from config (default to 20 ticks if not set)
+        int interval = getFooterAnimationInterval();
+        
+        long currentTime = System.currentTimeMillis();
+        long tickTime = currentTime / 50; // Convert to ticks
+        
+        return (int) (tickTime / interval);
+    }
+    
+    /**
+     * Gets the header animation interval from config
+     */
+    private int getHeaderAnimationInterval() {
+        // Default to 20 ticks (1 second) if not configured
+        return 20; // TODO: Make this configurable
+    }
+    
+    /**
+     * Gets the footer animation interval from config
+     */
+    private int getFooterAnimationInterval() {
+        // Default to 20 ticks (1 second) if not configured
+        return 20; // TODO: Make this configurable
+    }
+    
     public void removePlayer(UUID playerId) {
         playerStates.remove(playerId);
     }
