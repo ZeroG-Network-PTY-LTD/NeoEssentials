@@ -219,9 +219,10 @@ public class ShopCommands {
             MessageUtil.sendMessage(player, "§7Owner: §e" + player.getDisplayName().getString());
             
             // Create the shop
-            Shop shop = shopManager.createShop(player.getUUID(), shopName, shopName, type);
+            Shop shop = shopManager.createShop(player.getUUID(), shopName, shopName, category, type);
             if (shop != null) {
                 MessageUtil.sendSuccessMessage(player, "Shop created successfully! ID: " + shop.getShopId());
+                MessageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
                 MessageUtil.sendMessage(player, "§7Use §e/shop manage " + shopName + " §7to configure your shop");
             } else {
                 MessageUtil.sendErrorMessage(player, "Failed to create shop. You may have reached the shop limit.");

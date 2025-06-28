@@ -64,7 +64,7 @@ public class ShopManager {
         }
         
         // Create the shop
-        Shop shop = new Shop(ownerId, shopName, location, shopType);
+        Shop shop = new Shop(ownerId, shopName, location, "general", shopType);
         shops.put(shop.getShopId(), shop);
         
         // Add to indexes
@@ -75,7 +75,7 @@ public class ShopManager {
     }
     
     /**
-     * Create a new shop (alternative signature for test compatibility)
+     * Create a new shop (simplified signature for tests)
      * 
      * @param ownerId The shop owner's UUID
      * @param shopName The shop name
@@ -83,10 +83,45 @@ public class ShopManager {
      * @return The created shop, or null if creation failed
      */
     public Shop createShop(UUID ownerId, String shopName, Shop.ShopType shopType) {
-        String defaultLocation = "default"; // Use default location
-        return createShop(ownerId, shopName, defaultLocation, shopType);
+        // Use default location and category for test compatibility
+        return createShop(ownerId, shopName, "Default Location", "general", shopType);
     }
-    
+
+    /**
+     * Create a new shop with category
+     * 
+     * @param ownerId The shop owner's UUID
+     * @param shopName The shop name
+     * @param location The shop location
+     * @param category The shop category
+     * @param shopType The type of shop
+     * @return The created shop, or null if creation failed
+     */
+    public Shop createShop(UUID ownerId, String shopName, String location, String category, Shop.ShopType shopType) {
+        // Check if player can create more shops
+        List<UUID> playerShopIds = playerShops.getOrDefault(ownerId, new ArrayList<>());
+        if (playerShopIds.size() >= maxShopsPerPlayer) {
+            return null;
+        }
+        
+        // Check if player has enough money for creation fee
+        EconomyManager economyManager = EconomyManager.getInstance();
+        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        if (!economyManager.removeBalance(ownerId, defaultCurrency, shopCreationFee, "Shop creation fee")) {
+            return null;
+        }
+        
+        // Create the shop
+        Shop shop = new Shop(ownerId, shopName, location, category, shopType);
+        shops.put(shop.getShopId(), shop);
+        
+        // Add to indexes
+        playerShops.computeIfAbsent(ownerId, k -> new ArrayList<>()).add(shop.getShopId());
+        shopsByLocation.computeIfAbsent(location, k -> new ArrayList<>()).add(shop.getShopId());
+        
+        return shop;
+    }
+
     /**
      * Get a shop by ID
      * 
