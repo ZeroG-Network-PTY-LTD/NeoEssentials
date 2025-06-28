@@ -1,0 +1,338 @@
+# NeoEssentials v1.0.2 Economy System Configuration
+
+# ===========================================
+# ECONOMY SYSTEM CONFIGURATION
+# ===========================================
+
+economy:
+  # Enable or disable the entire economy system
+  enabled: true
+  
+  # Starting balance for new players (in default currency)
+  starting_balance: 100.0
+  
+  # Maximum balance a player can have (prevents inflation)
+  max_balance: 1000000.0
+  
+  # Allow negative balances (debt system)
+  allow_negative_balances: false
+  
+  # Global inflation rate (annual percentage)
+  inflation_rate: 0.02
+
+# ===========================================
+# CURRENCY CONFIGURATION
+# ===========================================
+
+currencies:
+  # Default server currency
+  coins:
+    display_name: "Coin"
+    plural_name: "Coins"
+    symbol: "$"
+    is_default: true
+    is_physical: false
+    exchange_rate: 1.0
+    type: "STANDARD"
+    
+  # Resource-backed currencies
+  gold_ingots:
+    display_name: "Gold Ingot"
+    plural_name: "Gold Ingots"
+    symbol: "⚆"
+    is_default: false
+    is_physical: true
+    exchange_rate: 10.0
+    type: "RESOURCE"
+    
+  diamonds:
+    display_name: "Diamond"
+    plural_name: "Diamonds"
+    symbol: "♦"
+    is_default: false
+    is_physical: true
+    exchange_rate: 50.0
+    type: "RESOURCE"
+    
+  # Event tokens
+  event_tokens:
+    display_name: "Event Token"
+    plural_name: "Event Tokens"
+    symbol: "✦"
+    is_default: false
+    is_physical: false
+    exchange_rate: 5.0
+    type: "TOKEN"
+
+# ===========================================
+# BANKING SYSTEM CONFIGURATION
+# ===========================================
+
+banking:
+  # Enable banking system
+  enabled: true
+  
+  # Account creation settings
+  account_creation:
+    # Fee to create new accounts (except first checking account)
+    creation_fee: 100.0
+    # Maximum accounts per player
+    max_accounts_per_player: 5
+    # Auto-create checking account for new players
+    auto_create_checking: true
+  
+  # Account type configurations
+  account_types:
+    checking:
+      display_name: "Checking Account"
+      base_interest_rate: 0.01
+      monthly_withdrawal_limit: -1  # Unlimited
+      minimum_months_before_withdrawal: 0
+      transaction_fee_rate: 0.005
+      
+    savings:
+      display_name: "Savings Account"
+      base_interest_rate: 0.05
+      monthly_withdrawal_limit: 500.0
+      minimum_months_before_withdrawal: 6
+      transaction_fee_rate: 0.0
+      
+    business:
+      display_name: "Business Account"
+      base_interest_rate: 0.02
+      monthly_withdrawal_limit: -1  # Unlimited
+      minimum_months_before_withdrawal: 0
+      transaction_fee_rate: 0.01
+      
+    joint:
+      display_name: "Joint Account"
+      base_interest_rate: 0.01
+      monthly_withdrawal_limit: -1  # Unlimited
+      minimum_months_before_withdrawal: 0
+      transaction_fee_rate: 0.005
+      
+    investment:
+      display_name: "Investment Account"
+      base_interest_rate: 0.08
+      monthly_withdrawal_limit: 1000.0
+      minimum_months_before_withdrawal: 12
+      transaction_fee_rate: 0.02
+  
+  # Interest calculation
+  interest:
+    # How often to calculate interest (in hours)
+    calculation_interval: 24
+    # Compound interest daily
+    compound_daily: true
+
+# ===========================================
+# LOAN SYSTEM CONFIGURATION
+# ===========================================
+
+loans:
+  # Enable loan system
+  enabled: true
+  
+  # Loan type configurations
+  loan_types:
+    personal:
+      display_name: "Personal Loan"
+      min_amount: 500.0
+      max_amount: 50000.0
+      max_term_months: 60
+      base_interest_rate: 0.08
+      requires_collateral: true
+      
+    mortgage:
+      display_name: "Mortgage"
+      min_amount: 10000.0
+      max_amount: 1000000.0
+      max_term_months: 360
+      base_interest_rate: 0.05
+      requires_collateral: false
+      
+    business:
+      display_name: "Business Loan"
+      min_amount: 1000.0
+      max_amount: 500000.0
+      max_term_months: 120
+      base_interest_rate: 0.06
+      requires_collateral: true
+  
+  # Credit scoring
+  credit_scoring:
+    # Starting credit score for new players
+    starting_score: 750.0
+    # Minimum credit score
+    min_score: 300.0
+    # Maximum credit score
+    max_score: 850.0
+    # Update interval (in hours)
+    update_interval: 24
+
+# ===========================================
+# SHOP SYSTEM CONFIGURATION
+# ===========================================
+
+shops:
+  # Enable shop system
+  enabled: true
+  
+  # Shop creation settings
+  creation:
+    # Fee to create a new shop
+    creation_fee: 500.0
+    # Maximum shops per player
+    max_shops_per_player: 5
+    # Daily rental fee for rental shops
+    rental_fee: 50.0
+  
+  # Shop taxation
+  taxation:
+    # Tax rate on all shop sales
+    sales_tax_rate: 0.05
+    # Tax collection interval (in hours)
+    collection_interval: 24
+  
+  # Dynamic pricing
+  dynamic_pricing:
+    # Enable dynamic pricing engine
+    enabled: true
+    # Price adjustment factor based on demand
+    demand_multiplier: 0.1
+    # Maximum price increase percentage
+    max_price_increase: 0.5
+    # Maximum price decrease percentage
+    max_price_decrease: 0.3
+
+# ===========================================
+# AUCTION HOUSE CONFIGURATION
+# ===========================================
+
+auctions:
+  # Enable auction house
+  enabled: true
+  
+  # Auction settings
+  settings:
+    # Minimum auction duration (in hours)
+    min_duration: 1
+    # Maximum auction duration (in hours)
+    max_duration: 168  # 7 days
+    # Default auction duration (in hours)
+    default_duration: 24
+    # Minimum bid increment percentage
+    min_bid_increment: 0.05
+  
+  # Auction fees
+  fees:
+    # Listing fee percentage of starting bid
+    listing_fee_rate: 0.02
+    # Success fee percentage of final sale price
+    success_fee_rate: 0.05
+
+# ===========================================
+# TRANSACTION MANAGEMENT
+# ===========================================
+
+transactions:
+  # Transaction history retention (in days)
+  history_retention: 365
+  
+  # Transaction limits
+  limits:
+    # Maximum transaction amount
+    max_transaction_amount: 100000.0
+    # Daily transaction limit per player
+    daily_limit: 500000.0
+    # Transaction cooldown (in seconds)
+    cooldown: 1
+  
+  # Cleanup settings
+  cleanup:
+    # How often to clean up old transactions (in hours)
+    interval: 24
+    # Archive transactions instead of deleting
+    archive_old_transactions: true
+
+# ===========================================
+# ECONOMIC ANALYTICS
+# ===========================================
+
+analytics:
+  # Enable economic analytics
+  enabled: true
+  
+  # Data collection
+  collection:
+    # How often to update metrics (in hours)
+    update_interval: 1
+    # Data retention period (in days)
+    retention_period: 365
+  
+  # Health monitoring
+  health_monitoring:
+    # Economic velocity thresholds
+    velocity_warning_low: 0.1
+    velocity_warning_high: 2.0
+    # Wealth inequality warning threshold (Gini coefficient)
+    inequality_warning: 0.7
+    # Inflation warning threshold (annual rate)
+    inflation_warning: 0.1
+  
+  # Reporting
+  reporting:
+    # Auto-generate daily reports
+    daily_reports: true
+    # Auto-generate weekly reports
+    weekly_reports: true
+    # Auto-generate monthly reports
+    monthly_reports: true
+
+# ===========================================
+# CURRENCY EXCHANGE
+# ===========================================
+
+exchange:
+  # Enable currency exchange
+  enabled: true
+  
+  # Exchange rates
+  rates:
+    # How often to update exchange rates (in hours)
+    update_interval: 24
+    # Exchange rate volatility (for crypto currencies)
+    volatility: 0.05
+  
+  # Exchange fees
+  fees:
+    # Base conversion fee percentage
+    base_fee_rate: 0.02
+    # Additional fee for cross-type conversions
+    cross_type_fee_rate: 0.01
+
+# ===========================================
+# PERFORMANCE SETTINGS
+# ===========================================
+
+performance:
+  # Background task settings
+  background_tasks:
+    # Thread pool size for economy tasks
+    thread_pool_size: 2
+    # Task queue size
+    queue_size: 1000
+  
+  # Caching settings
+  caching:
+    # Cache size for player data
+    player_data_cache_size: 1000
+    # Cache expiry time (in minutes)
+    cache_expiry: 30
+  
+  # Database settings
+  database:
+    # Connection pool size
+    connection_pool_size: 10
+    # Query timeout (in seconds)
+    query_timeout: 30

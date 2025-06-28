@@ -57,9 +57,10 @@ desktop.ini
 # Development documentation (not needed in release branch)
 README_DEV.md
 docs/*
-!docs/COMMANDS.md
-!docs/PERMISSIONS.md
-!docs/STORAGE.md
+!docs/wiki/
+!docs/images/
+docs/images/tablist-update.gif
+!docs/README.md
 
 # Development build files
 buildnumber.properties

@@ -1,0 +1,387 @@
+package com.zerog.neoessentials.economy;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Represents a shop in the NeoEssentials economy system.
+ * Supports different shop types with varying features and restrictions.
+ */
+public class Shop {
+    private final UUID shopId;
+    private final UUID ownerId;
+    private String shopName;
+    private String location;
+    private final ShopType shopType;
+    private final long createdTime;
+    private boolean isActive;
+    private final Currency currency;
+    
+    // Shop inventory and pricing
+    private final Map<String, ShopItem> inventory; // Item ID -> Shop Item
+    private final Map<String, Double> itemPrices; // Item ID -> Price
+    
+    // Shop statistics
+    private final List<Sale> salesHistory;
+    private double totalRevenue;
+    private int totalSales;
+    private final Set<UUID> customers; // Unique customers
+    
+    // Shop settings
+    private String description;
+    private boolean allowsHaggling;
+    private double discountRate; // For bulk purchases
+    private int bulkThreshold; // Minimum quantity for bulk discount
+    
+    public enum ShopType {
+        PLAYER_OWNED("Player Owned", true, true, -1),
+        PLAYER_RENTAL("Player Rental", true, true, 30), // 30 day max rental
+        SERVER_SHOP("Server Shop", false, false, -1),
+        AUCTION_HOUSE("Auction House", true, false, 7), // 7 day max auctions
+        DYNAMIC_SHOP("Dynamic Shop", false, true, -1); // Prices change based on supply/demand
+        
+        private final String displayName;
+        private final boolean playerManaged;
+        private final boolean allowsPriceChanges;
+        private final int maxDuration; // -1 means unlimited
+        
+        ShopType(String displayName, boolean playerManaged, boolean allowsPriceChanges, int maxDuration) {
+            this.displayName = displayName;
+            this.playerManaged = playerManaged;
+            this.allowsPriceChanges = allowsPriceChanges;
+            this.maxDuration = maxDuration;
+        }
+        
+        public String getDisplayName() { return displayName; }
+        public boolean isPlayerManaged() { return playerManaged; }
+        public boolean allowsPriceChanges() { return allowsPriceChanges; }
+        public int getMaxDuration() { return maxDuration; }
+    }
+    
+    /**
+     * Create a new shop
+     * 
+     * @param ownerId The owner's UUID
+     * @param shopName The shop name
+     * @param location The shop location
+     * @param shopType The type of shop
+     */
+    public Shop(UUID ownerId, String shopName, String location, ShopType shopType) {
+        this.shopId = UUID.randomUUID();
+        this.ownerId = ownerId;
+        this.shopName = shopName;
+        this.location = location;
+        this.shopType = shopType;
+        this.createdTime = System.currentTimeMillis();
+        this.isActive = true;
+        this.currency = CurrencyManager.getInstance().getDefaultCurrency();
+        
+        this.inventory = new ConcurrentHashMap<>();
+        this.itemPrices = new ConcurrentHashMap<>();
+        this.salesHistory = new ArrayList<>();
+        this.totalRevenue = 0.0;
+        this.totalSales = 0;
+        this.customers = new HashSet<>();
+        
+        this.description = "";
+        this.allowsHaggling = false;
+        this.discountRate = 0.1; // 10% bulk discount
+        this.bulkThreshold = 10;
+    }
+    
+    /**
+     * Add an item to the shop inventory
+     * 
+     * @param itemId The item identifier
+     * @param quantity The quantity to add
+     * @param price The price per item
+     * @param itemName Display name of the item
+     * @return true if item was added successfully
+     */
+    public boolean addItem(String itemId, int quantity, double price, String itemName) {
+        if (!isActive || quantity <= 0 || price < 0) {
+            return false;
+        }
+        
+        // Check if shop type allows price changes
+        if (!shopType.allowsPriceChanges() && itemPrices.containsKey(itemId)) {
+            // Use existing price for fixed-price shops
+            price = itemPrices.get(itemId);
+        }
+        
+        ShopItem existingItem = inventory.get(itemId);
+        if (existingItem != null) {
+            // Update existing item
+            existingItem.addQuantity(quantity);
+        } else {
+            // Add new item
+            ShopItem shopItem = new ShopItem(itemId, itemName, quantity);
+            inventory.put(itemId, shopItem);
+        }
+        
+        itemPrices.put(itemId, price);
+        return true;
+    }
+    
+    /**
+     * Remove an item from the shop inventory
+     * 
+     * @param itemId The item identifier
+     * @param quantity The quantity to remove
+     * @return true if item was removed successfully
+     */
+    public boolean removeItem(String itemId, int quantity) {
+        ShopItem item = inventory.get(itemId);
+        if (item == null || item.getQuantity() < quantity) {
+            return false;
+        }
+        
+        item.removeQuantity(quantity);
+        
+        // Remove item completely if quantity reaches 0
+        if (item.getQuantity() <= 0) {
+            inventory.remove(itemId);
+            itemPrices.remove(itemId);
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Check if shop has an item in stock
+     * 
+     * @param itemId The item identifier
+     * @param quantity The required quantity
+     * @return true if item is available in sufficient quantity
+     */
+    public boolean hasItemInStock(String itemId, int quantity) {
+        ShopItem item = inventory.get(itemId);
+        return item != null && item.getQuantity() >= quantity;
+    }
+    
+    /**
+     * Check if shop has any item for sale (by name)
+     * 
+     * @param searchTerm The search term
+     * @return true if shop has item matching the search term
+     */
+    public boolean hasItemForSale(String searchTerm) {
+        String lowerSearch = searchTerm.toLowerCase();
+        return inventory.values().stream()
+                .anyMatch(item -> item.getItemName().toLowerCase().contains(lowerSearch));
+    }
+    
+    /**
+     * Get the price of an item
+     * 
+     * @param itemId The item identifier
+     * @return The price per item, or 0.0 if item not found
+     */
+    public double getItemPrice(String itemId) {
+        return itemPrices.getOrDefault(itemId, 0.0);
+    }
+    
+    /**
+     * Set the price of an item
+     * 
+     * @param itemId The item identifier
+     * @param price The new price
+     * @return true if price was set successfully
+     */
+    public boolean setItemPrice(String itemId, double price) {
+        if (!shopType.allowsPriceChanges() || price < 0) {
+            return false;
+        }
+        
+        if (inventory.containsKey(itemId)) {
+            itemPrices.put(itemId, price);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Calculate the total price for a purchase including discounts
+     * 
+     * @param itemId The item identifier
+     * @param quantity The quantity to purchase
+     * @return The total price after any applicable discounts
+     */
+    public double calculateTotalPrice(String itemId, int quantity) {
+        double basePrice = getItemPrice(itemId) * quantity;
+        
+        // Apply bulk discount if applicable
+        if (quantity >= bulkThreshold) {
+            basePrice *= (1.0 - discountRate);
+        }
+        
+        return basePrice;
+    }
+    
+    /**
+     * Record a sale
+     * 
+     * @param buyerId The buyer's UUID
+     * @param itemId The item sold
+     * @param quantity The quantity sold
+     * @param totalPrice The total sale price
+     * @param timestamp The sale timestamp
+     */
+    public void recordSale(UUID buyerId, String itemId, int quantity, double totalPrice, long timestamp) {
+        Sale sale = new Sale(buyerId, itemId, quantity, totalPrice, timestamp);
+        salesHistory.add(sale);
+        
+        totalRevenue += totalPrice;
+        totalSales++;
+        customers.add(buyerId);
+    }
+    
+    /**
+     * Get all items currently for sale
+     * 
+     * @return Map of item ID to shop item
+     */
+    public Map<String, ShopItem> getInventory() {
+        return new HashMap<>(inventory);
+    }
+    
+    /**
+     * Get shop performance metrics
+     * 
+     * @param days Number of days to analyze
+     * @return Map of performance metrics
+     */
+    public Map<String, Object> getPerformanceMetrics(int days) {
+        long cutoffTime = System.currentTimeMillis() - (days * 24L * 60L * 60L * 1000L);
+        
+        List<Sale> recentSales = salesHistory.stream()
+                .filter(sale -> sale.getTimestamp() >= cutoffTime)
+                .toList();
+        
+        double recentRevenue = recentSales.stream()
+                .mapToDouble(Sale::getTotalPrice)
+                .sum();
+        
+        int recentSalesCount = recentSales.size();
+        
+        Set<UUID> recentCustomers = recentSales.stream()
+                .map(Sale::getBuyerId)
+                .collect(HashSet::new, HashSet::add, HashSet::addAll);
+        
+        Map<String, Object> metrics = new HashMap<>();
+        metrics.put("revenue", recentRevenue);
+        metrics.put("sales", recentSalesCount);
+        metrics.put("customers", recentCustomers.size());
+        metrics.put("averageSale", recentSalesCount > 0 ? recentRevenue / recentSalesCount : 0.0);
+        metrics.put("itemsInStock", inventory.values().stream().mapToInt(ShopItem::getQuantity).sum());
+        metrics.put("uniqueItems", inventory.size());
+        
+        return metrics;
+    }
+    
+    /**
+     * Get sales history within a time period
+     * 
+     * @param days Number of days to look back
+     * @return List of sales
+     */
+    public List<Sale> getSalesHistory(int days) {
+        long cutoffTime = System.currentTimeMillis() - (days * 24L * 60L * 60L * 1000L);
+        
+        return salesHistory.stream()
+                .filter(sale -> sale.getTimestamp() >= cutoffTime)
+                .sorted((s1, s2) -> Long.compare(s2.getTimestamp(), s1.getTimestamp()))
+                .toList();
+    }
+    
+    // Getters and setters
+    public UUID getShopId() { return shopId; }
+    public UUID getOwnerId() { return ownerId; }
+    public String getShopName() { return shopName; }
+    public void setShopName(String shopName) { this.shopName = shopName; }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+    public ShopType getShopType() { return shopType; }
+    public long getCreatedTime() { return createdTime; }
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { this.isActive = active; }
+    public Currency getCurrency() { return currency; }
+    public double getTotalRevenue() { return totalRevenue; }
+    public int getTotalSales() { return totalSales; }
+    public int getCustomerCount() { return customers.size(); }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public boolean allowsHaggling() { return allowsHaggling; }
+    public void setAllowsHaggling(boolean allowsHaggling) { this.allowsHaggling = allowsHaggling; }
+    public double getDiscountRate() { return discountRate; }
+    public void setDiscountRate(double discountRate) { this.discountRate = Math.max(0.0, Math.min(1.0, discountRate)); }
+    public int getBulkThreshold() { return bulkThreshold; }
+    public void setBulkThreshold(int bulkThreshold) { this.bulkThreshold = Math.max(1, bulkThreshold); }
+    
+    @Override
+    public String toString() {
+        return "Shop{" +
+                "shopId=" + shopId +
+                ", shopName='" + shopName + '\'' +
+                ", location='" + location + '\'' +
+                ", type=" + shopType +
+                ", isActive=" + isActive +
+                '}';
+    }
+    
+    /**
+     * Inner class representing an item in the shop
+     */
+    public static class ShopItem {
+        private final String itemId;
+        private final String itemName;
+        private int quantity;
+        private final long addedTime;
+        
+        public ShopItem(String itemId, String itemName, int quantity) {
+            this.itemId = itemId;
+            this.itemName = itemName;
+            this.quantity = quantity;
+            this.addedTime = System.currentTimeMillis();
+        }
+        
+        public void addQuantity(int amount) {
+            this.quantity += amount;
+        }
+        
+        public void removeQuantity(int amount) {
+            this.quantity = Math.max(0, this.quantity - amount);
+        }
+        
+        public String getItemId() { return itemId; }
+        public String getItemName() { return itemName; }
+        public int getQuantity() { return quantity; }
+        public long getAddedTime() { return addedTime; }
+    }
+    
+    /**
+     * Inner class representing a sale record
+     */
+    public static class Sale {
+        private final UUID buyerId;
+        private final String itemId;
+        private final int quantity;
+        private final double totalPrice;
+        private final long timestamp;
+        
+        public Sale(UUID buyerId, String itemId, int quantity, double totalPrice, long timestamp) {
+            this.buyerId = buyerId;
+            this.itemId = itemId;
+            this.quantity = quantity;
+            this.totalPrice = totalPrice;
+            this.timestamp = timestamp;
+        }
+        
+        public UUID getBuyerId() { return buyerId; }
+        public String getItemId() { return itemId; }
+        public int getQuantity() { return quantity; }
+        public double getTotalPrice() { return totalPrice; }
+        public long getTimestamp() { return timestamp; }
+    }
+}
