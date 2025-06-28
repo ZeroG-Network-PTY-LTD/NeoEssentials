@@ -920,31 +920,16 @@ public class EconomyPersistenceManager {
         int termMonths = rs.getInt("term_months");
         int remainingPayments = rs.getInt("remaining_payments");
         Loan.LoanStatus status = Loan.LoanStatus.valueOf(rs.getString("status"));
-        
-        // Create loan with ORIGINAL loan ID (preserves UUID)
-        com.zerog.neoessentials.economy.Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-        Loan loan = new Loan(loanId, borrowerId, principalAmount, defaultCurrency, type, termMonths, interestRate);
-        
-        // Set additional properties that aren't in constructor
-        loan.setCurrentBalance(currentBalance);
-        loan.setRemainingPayments(remainingPayments);
-        loan.setStatus(status);
-        
-        // Set dates if available
         long createdDate = rs.getLong("created_date");
-        if (createdDate > 0) {
-            loan.setCreatedDate(new java.util.Date(createdDate));
-        }
-        
-        long lastPaymentDate = rs.getLong("last_payment_date");
-        if (lastPaymentDate > 0) {
-            loan.setLastPaymentDate(new java.util.Date(lastPaymentDate));
-        }
-        
         long nextPaymentDue = rs.getLong("next_payment_due");
-        if (nextPaymentDue > 0) {
-            loan.setNextPaymentDue(new java.util.Date(nextPaymentDue));
-        }
+        
+        // Use comprehensive persistence constructor to preserve ALL original data
+        com.zerog.neoessentials.economy.Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        Loan loan = new Loan(loanId, borrowerId, principalAmount, defaultCurrency, type, termMonths, 
+                            interestRate, createdDate, currentBalance, status, remainingPayments, nextPaymentDue);
+        
+        // Load payment history if available
+        loadLoanPayments(loan);
         
         return loan;
     }
