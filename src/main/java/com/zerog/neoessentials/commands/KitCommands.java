@@ -47,6 +47,7 @@ public class KitCommands {
             Commands.literal("kit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit"))
                 .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(TabCompletionUtil.KIT_SUGGESTIONS)
                     .executes(this::executeKit)
                 )
                 .executes(this::executeKitList)
@@ -65,6 +66,7 @@ public class KitCommands {
                 .then(Commands.argument("name", StringArgumentType.word())
                     .then(Commands.argument("cooldown", LongArgumentType.longArg(0))
                         .then(Commands.argument("price", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0))
+                            .suggests(TabCompletionUtil.PRICE_SUGGESTIONS)
                             .executes(context -> {
                                 long cooldown = LongArgumentType.getLong(context, "cooldown");
                                 double price = com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(context, "price");
@@ -82,6 +84,7 @@ public class KitCommands {
             Commands.literal("deletekit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.delete"))
                 .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(TabCompletionUtil.KIT_SUGGESTIONS)
                     .executes(this::executeDeleteKit)
                 )
         );
@@ -92,6 +95,7 @@ public class KitCommands {
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.give"))
                 .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                     .then(Commands.argument("kit", StringArgumentType.word())
+                        .suggests(TabCompletionUtil.KIT_SUGGESTIONS)
                         .executes(this::executeGiveKit)
                     )
                 )
@@ -102,6 +106,7 @@ public class KitCommands {
             Commands.literal("previewkit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.preview"))
                 .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(TabCompletionUtil.KIT_SUGGESTIONS)
                     .executes(this::executePreviewKit)
                 )
         );

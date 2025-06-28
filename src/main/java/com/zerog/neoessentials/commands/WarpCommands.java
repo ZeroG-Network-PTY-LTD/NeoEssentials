@@ -41,6 +41,7 @@ public class WarpCommands {
                     return hasPermission;
                 })
                 .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(TabCompletionUtil.WARP_SUGGESTIONS)
                     .executes(this::executeWarp)
                 )
                 .executes(this::executeWarpList)
@@ -74,6 +75,7 @@ public class WarpCommands {
             Commands.literal("delwarp")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.delete"))
                 .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(TabCompletionUtil.WARP_SUGGESTIONS)
                     .executes(this::executeDeleteWarp)
                 )
         );
@@ -84,6 +86,7 @@ public class WarpCommands {
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.player"))
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("warp", StringArgumentType.word())
+                        .suggests(TabCompletionUtil.WARP_SUGGESTIONS)
                         .executes(this::executeWarpPlayer)
                     )
                 )
