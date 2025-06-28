@@ -14,6 +14,7 @@ public class BankManager {
     private final Map<UUID, Loan> activeLoans; // Loan ID -> Loan
     private final InterestCalculator interestCalculator;
     private final LoanManager loanManager;
+    private com.zerog.neoessentials.economy.persistence.EconomyPersistenceManager persistenceManager;
     
     private BankManager() {
         this.playerAccounts = new ConcurrentHashMap<>();
@@ -21,6 +22,10 @@ public class BankManager {
         this.activeLoans = new ConcurrentHashMap<>();
         this.interestCalculator = new InterestCalculator();
         this.loanManager = new LoanManager();
+    }
+    
+    public void setPersistenceManager(com.zerog.neoessentials.economy.persistence.EconomyPersistenceManager persistenceManager) {
+        this.persistenceManager = persistenceManager;
     }
     
     public static BankManager getInstance() {
@@ -234,9 +239,46 @@ public class BankManager {
     }
     
     /**
+     * Get the loan manager for handling loan operations
+     */
+    public LoanManager getLoanManager() {
+        return loanManager;
+    }
+    
+    /**
+     * Get all loans for a specific player
+     */
+    public List<Loan> getPlayerLoans(UUID playerId) {
+        if (persistenceManager != null) {
+            return persistenceManager.loadPlayerLoans(playerId).join();
+        }
+        return new ArrayList<>();
+    }
+    
+    /**
+     * Get a specific loan by ID
+     */
+    public Loan getLoan(UUID loanId) {
+        if (persistenceManager != null) {
+            return persistenceManager.loadLoan(loanId).join();
+        }
+        return activeLoans.get(loanId);
+    }
+    
+    /**
+     * Get all active loans (admin function)
+     */
+    public List<Loan> getAllActiveLoans() {
+        if (persistenceManager != null) {
+            return persistenceManager.loadAllActiveLoans().join();
+        }
+        return new ArrayList<>(activeLoans.values());
+    }
+    
+    /**
      * Inner class for loan management
      */
-    private static class LoanManager {
+    public class LoanManager {
         
         /**
          * Apply for a loan
@@ -258,7 +300,143 @@ public class BankManager {
             double interestRate = getLoanInterestRate(loanType, termMonths);
             Loan loan = new Loan(playerId, amount, currency, loanType, termMonths, interestRate);
             
+            // Save the loan to persistence if available
+            if (persistenceManager != null) {
+                persistenceManager.saveLoan(loan);
+            }
+            
+            // Add to local cache
+            activeLoans.put(loan.getLoanId(), loan);
+            
             return loan;
+        }
+        
+        /**
+         * Make a payment on a loan
+         * @param playerId Player making the payment
+         * @param loanId Loan to pay (null for automatic selection)
+         * @param amount Payment amount
+         * @return true if payment successful
+         */
+        public boolean makePayment(UUID playerId, UUID loanId, double amount) {
+            Loan loan;
+            
+            if (loanId == null) {
+                // Find the player's most recent active loan
+                List<Loan> playerLoans = getPlayerLoans(playerId);
+                loan = playerLoans.stream()
+                    .filter(l -> l.getStatus() == Loan.LoanStatus.CURRENT || l.getStatus() == Loan.LoanStatus.LATE)
+                    .findFirst()
+                    .orElse(null);
+            } else {
+                loan = getLoan(loanId);
+            }
+            
+            if (loan == null || !loan.getBorrowerId().equals(playerId)) {
+                return false;
+            }
+            
+            // Check if player has sufficient funds in their primary account
+            BankAccount primaryAccount = getPrimaryAccount(playerId);
+            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+            
+            if (primaryAccount == null || primaryAccount.getBalance(defaultCurrency) < amount) {
+                return false;
+            }
+            
+            // Process the payment
+            boolean success = loan.makePayment(amount, primaryAccount.getAccountNumber());
+            if (success) {
+                // Deduct from player's account
+                primaryAccount.withdraw(defaultCurrency, amount, "Loan payment");
+                
+                // Save the updated loan and account
+                if (persistenceManager != null) {
+                    persistenceManager.saveLoan(loan);
+                    persistenceManager.saveBankAccount(primaryAccount);
+                }
+                
+                // Update local cache
+                activeLoans.put(loan.getLoanId(), loan);
+            }
+            
+            return success;
+        }
+        
+        /**
+         * Calculate credit score for a player
+         * @param playerId Player UUID
+         * @return Credit score (300-850)
+         */
+        public int calculateCreditScore(UUID playerId) {
+            int baseScore = 650; // Starting credit score
+            
+            // Get player's loan history
+            List<Loan> playerLoans = getPlayerLoans(playerId);
+            
+            // Calculate based on payment history
+            int onTimePayments = 0;
+            int totalPayments = 0;
+            
+            for (Loan loan : playerLoans) {
+                // Add logic based on payment history
+                totalPayments += loan.getTermMonths() - loan.getPaymentsRemaining();
+                onTimePayments += loan.getTermMonths() - loan.getPaymentsRemaining(); // Simplified
+            }
+            
+            // Calculate payment history score (35% of total)
+            if (totalPayments > 0) {
+                double paymentRatio = (double) onTimePayments / totalPayments;
+                baseScore += (int) ((paymentRatio - 0.5) * 200); // -100 to +100
+            }
+            
+            // Account balance factor (30% of total)
+            BankAccount primaryAccount = getPrimaryAccount(playerId);
+            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+            
+            if (primaryAccount != null) {
+                double balance = primaryAccount.getBalance(defaultCurrency);
+                if (balance > 10000) baseScore += 50;
+                else if (balance > 5000) baseScore += 25;
+                else if (balance < 1000) baseScore -= 25;
+            }
+            
+            // Number of active loans (10% of total)
+            long activeLoansCount = playerLoans.stream()
+                .filter(l -> l.getStatus() == Loan.LoanStatus.CURRENT || l.getStatus() == Loan.LoanStatus.LATE)
+                .count();
+            
+            if (activeLoansCount > 3) baseScore -= 30;
+            else if (activeLoansCount == 0) baseScore += 10;
+            
+            // Ensure score is within valid range
+            return Math.max(300, Math.min(850, baseScore));
+        }
+        
+        /**
+         * Get loan eligibility for a player
+         * @param playerId Player UUID
+         * @param loanType Type of loan
+         * @return Maximum loan amount the player is eligible for
+         */
+        public double getMaxLoanEligibility(UUID playerId, Loan.LoanType loanType) {
+            int creditScore = calculateCreditScore(playerId);
+            
+            // Base eligibility based on credit score
+            double baseAmount = switch (loanType) {
+                case PERSONAL -> creditScore < 600 ? 1000 : creditScore < 700 ? 5000 : 15000;
+                case BUSINESS -> creditScore < 600 ? 5000 : creditScore < 700 ? 25000 : 75000;
+                case MORTGAGE -> creditScore < 600 ? 10000 : creditScore < 700 ? 50000 : 200000;
+            };
+            
+            // Adjust based on existing loans
+            List<Loan> existingLoans = getPlayerLoans(playerId);
+            double existingDebt = existingLoans.stream()
+                .filter(l -> l.getStatus() == Loan.LoanStatus.CURRENT || l.getStatus() == Loan.LoanStatus.LATE)
+                .mapToDouble(Loan::getRemainingBalance)
+                .sum();
+            
+            return Math.max(0, baseAmount - existingDebt);
         }
         
         private boolean isEligibleForLoan(UUID playerId, double amount, Loan.LoanType loanType) {
