@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Supports player-owned shops, server shops, auctions, and dynamic pricing.
  */
 public class ShopManager {
+    private static ShopManager instance;
     private final Map<UUID, Shop> shops; // Shop ID -> Shop
     private final Map<UUID, List<UUID>> playerShops; // Player ID -> List of Shop IDs
     private final Map<String, List<UUID>> shopsByLocation; // Location -> List of Shop IDs
@@ -20,7 +21,7 @@ public class ShopManager {
     private final double shopRentalFee; // Per day
     private final double shopTaxRate; // Percentage of sales
     
-    public ShopManager() {
+    private ShopManager() {
         this.shops = new ConcurrentHashMap<>();
         this.playerShops = new ConcurrentHashMap<>();
         this.shopsByLocation = new ConcurrentHashMap<>();
@@ -30,6 +31,13 @@ public class ShopManager {
         this.shopCreationFee = 500.0;
         this.shopRentalFee = 50.0;
         this.shopTaxRate = 0.05; // 5% tax on sales
+    }
+    
+    public static ShopManager getInstance() {
+        if (instance == null) {
+            instance = new ShopManager();
+        }
+        return instance;
     }
     
     /**
@@ -64,6 +72,19 @@ public class ShopManager {
         shopsByLocation.computeIfAbsent(location, k -> new ArrayList<>()).add(shop.getShopId());
         
         return shop;
+    }
+    
+    /**
+     * Create a new shop (alternative signature for test compatibility)
+     * 
+     * @param ownerId The shop owner's UUID
+     * @param shopName The shop name
+     * @param shopType The type of shop
+     * @return The created shop, or null if creation failed
+     */
+    public Shop createShop(UUID ownerId, String shopName, Shop.ShopType shopType) {
+        String defaultLocation = "default"; // Use default location
+        return createShop(ownerId, shopName, defaultLocation, shopType);
     }
     
     /**
@@ -318,6 +339,14 @@ public class ShopManager {
             return data != null ? data.getAveragePrice() : 0.0;
         }
         
+        public boolean hasRecentSales(String itemId, long maxAgeMillis) {
+            ItemPriceData data = itemPrices.get(itemId);
+            if (data == null) return false;
+            
+            long timeSinceLastSale = System.currentTimeMillis() - data.getLastSaleTime();
+            return timeSinceLastSale <= maxAgeMillis;
+        }
+        
         private static class ItemPriceData {
             private double totalValue;
             private int totalQuantity;
@@ -331,6 +360,10 @@ public class ShopManager {
             
             public double getAveragePrice() {
                 return totalQuantity > 0 ? totalValue / totalQuantity : 0.0;
+            }
+            
+            public long getLastSaleTime() {
+                return lastSale;
             }
         }
     }

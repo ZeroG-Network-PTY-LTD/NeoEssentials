@@ -459,8 +459,4 @@ public class LoanCommands {
     private static void sendMessage(CommandSourceStack source, String message) {
         source.sendSuccess(() -> Component.literal("§8[§6NeoEssentials§8] §r" + message), false);
     }
-    
-    private static void sendErrorMessage(CommandSourceStack source, String message) {
-        source.sendFailure(Component.literal("§8[§6NeoEssentials§8] §c" + message));
-    }
 }

@@ -35,7 +35,8 @@ public class Transaction {
         PENALTY,        // Penalty charges
         REFUND,         // Refunds issued
         INVESTMENT,     // Investment transactions
-        DIVIDEND        // Dividend payments
+        DIVIDEND,       // Dividend payments
+        PLAYER_PAY      // Direct player-to-player payments
     }
     
     /**
