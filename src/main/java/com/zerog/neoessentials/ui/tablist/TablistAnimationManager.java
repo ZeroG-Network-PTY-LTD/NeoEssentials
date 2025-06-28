@@ -787,13 +787,12 @@ public class TablistAnimationManager {    /**
         
         String animationText = animation.texts.get(effectiveFrameIndex);
         
-        // Process the animation text for color codes
-        String processedText = TablistPlaceholderManager.formatColors(animationText);
+        // Return raw text - color processing will be done later by colorize() method
+        // This preserves hex color codes for proper native processing
+        NeoEssentials.LOGGER.debug("Animation '{}' frame {}: '{}'", 
+            animationName, effectiveFrameIndex, animationText);
         
-        NeoEssentials.LOGGER.debug("Animation '{}' frame {}: '{}' -> '{}'", 
-            animationName, effectiveFrameIndex, animationText, processedText);
-        
-        return processedText;
+        return animationText;
     }
     
     /**

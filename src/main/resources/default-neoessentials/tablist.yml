@@ -20,12 +20,12 @@ templates:
   headers:
     - "&6&l✦ &b&lNeoEssentials Server &6&l✦"
     - "&eWelcome, &#FF5722%player%&e!"
-    - "&eOnline players: &#4CAF50%online%/%max%"
-    - "&eServer time: &#2196F3%time%"
+    - "&eOnline: &#4CAF50%online%&e/&#2196F3%max%"
+    - "&#FF0000T&#FF4000e&#FF8000s&#FFC000t&#FFFF00i&#80FF00n&#40FF00g &#00FF00H&#0080FFe&#0000FFx"
   
   footers:
-    - "&eBalance: &#FFD700%balance% coins"
-    - "&eWebsite: &#9C27B0www.example.com"
+    - "&eBalance: &#FFD700%balance% &ecoins"
+    - "&#9C27B0www.example.com"
     - "&#FF6B35Thanks for playing!"
     - "&eServer TPS: &#4CAF50%tps% &7| &eMemory: &#FF9800%memory_percent%"
 
