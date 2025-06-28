@@ -681,7 +681,7 @@ public class EconomyPersistenceManager {
                     stmt.setDouble(5, loan.getCurrentBalance());
                     stmt.setDouble(6, loan.getInterestRate());
                     stmt.setInt(7, loan.getTermMonths());
-                    stmt.setInt(8, loan.getRemainingPayments());
+                    stmt.setInt(8, loan.getPaymentsRemaining());
                     stmt.setString(9, loan.getStatus().name());
                     stmt.setLong(10, loan.getCreatedDate().getTime());
                     stmt.setLong(11, loan.getLastPaymentDate() != null ? loan.getLastPaymentDate().getTime() : 0);
@@ -831,7 +831,7 @@ public class EconomyPersistenceManager {
         Loan.LoanStatus status = Loan.LoanStatus.valueOf(rs.getString("status"));
         
         // Create loan with basic parameters
-        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        com.zerog.neoessentials.economy.Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
         Loan loan = new Loan(borrowerId, principalAmount, defaultCurrency, type, termMonths, interestRate);
         
         // Set additional properties that aren't in constructor
@@ -875,7 +875,7 @@ public class EconomyPersistenceManager {
                 loanData.put("currentBalance", loan.getCurrentBalance());
                 loanData.put("interestRate", loan.getInterestRate());
                 loanData.put("termMonths", loan.getTermMonths());
-                loanData.put("remainingPayments", loan.getRemainingPayments());
+                loanData.put("remainingPayments", loan.getPaymentsRemaining());
                 loanData.put("status", loan.getStatus().name());
                 loanData.put("createdDate", loan.getCreatedDate().getTime());
                 
