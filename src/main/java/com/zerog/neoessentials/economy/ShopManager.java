@@ -238,6 +238,21 @@ public class ShopManager {
                 .toList();
     }
     
+    /**
+     * Reload configuration for shop manager
+     */
+    public void reloadConfiguration() {
+        // TODO: Implement configuration reload when needed
+        // This is a placeholder to fix compilation errors
+    }
+    
+    /**
+     * Get total shops count for statistics
+     */
+    public int getTotalShopsCount() {
+        return shops.size();
+    }
+    
     // Getters for shop settings
     public int getMaxShopsPerPlayer() { return maxShopsPerPlayer; }
     public double getShopCreationFee() { return shopCreationFee; }
