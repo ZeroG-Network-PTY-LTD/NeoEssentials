@@ -2,7 +2,6 @@ package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.HomeManager;
 import com.zerog.neoessentials.data.WarpManager;
@@ -15,11 +14,9 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.Item;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -64,10 +61,10 @@ public class TabCompletionUtil {
     public static final SuggestionProvider<CommandSourceStack> HOME_SUGGESTIONS = (context, builder) -> {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            HomeManager homeManager = NeoEssentials.getInstance().getHomeManager();
+            HomeManager homeManager = NeoEssentials.getInstance().getDataManager().getHomeManager();
             
             if (homeManager != null) {
-                Set<String> homeNames = homeManager.getPlayerHomes(player.getUUID()).keySet();
+                Set<String> homeNames = homeManager.getHomes(player.getUUID()).keySet();
                 return SharedSuggestionProvider.suggest(homeNames, builder);
             }
         } catch (Exception e) {
@@ -85,10 +82,10 @@ public class TabCompletionUtil {
      */
     public static final SuggestionProvider<CommandSourceStack> WARP_SUGGESTIONS = (context, builder) -> {
         try {
-            WarpManager warpManager = NeoEssentials.getInstance().getWarpManager();
+            WarpManager warpManager = NeoEssentials.getInstance().getDataManager().getWarpManager();
             
             if (warpManager != null) {
-                Set<String> warpNames = warpManager.getWarpNames();
+                Set<String> warpNames = warpManager.getAllWarps().keySet();
                 return SharedSuggestionProvider.suggest(warpNames, builder);
             }
         } catch (Exception e) {
@@ -106,10 +103,10 @@ public class TabCompletionUtil {
      */
     public static final SuggestionProvider<CommandSourceStack> KIT_SUGGESTIONS = (context, builder) -> {
         try {
-            KitManager kitManager = NeoEssentials.getInstance().getKitManager();
+            KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
             
             if (kitManager != null) {
-                Set<String> kitNames = kitManager.getKitNames();
+                Set<String> kitNames = kitManager.getAllKits().keySet();
                 return SharedSuggestionProvider.suggest(kitNames, builder);
             }
         } catch (Exception e) {
@@ -133,7 +130,7 @@ public class TabCompletionUtil {
             
             List<String> accountNames = bankManager.getPlayerAccounts(player.getUUID())
                 .stream()
-                .map(account -> account.getAccountName())
+                .map(account -> account.getAccountNumber())
                 .collect(Collectors.toList());
                 
             return SharedSuggestionProvider.suggest(accountNames, builder);
@@ -151,10 +148,11 @@ public class TabCompletionUtil {
      */
     public static final SuggestionProvider<CommandSourceStack> SHOP_SUGGESTIONS = (context, builder) -> {
         try {
+            // For now, use searchShops with empty search to get shops
             EconomyManager economyManager = EconomyManager.getInstance();
             ShopManager shopManager = economyManager.getShopManager();
             
-            List<String> shopNames = shopManager.getAllShops()
+            List<String> shopNames = shopManager.searchShops("", 50)
                 .stream()
                 .map(Shop::getName)
                 .collect(Collectors.toList());

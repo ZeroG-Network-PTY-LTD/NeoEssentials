@@ -93,6 +93,7 @@ public class KitCommands {
 =======
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
                 .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(TabCompletionUtil.KIT_SUGGESTIONS)
                     .executes(this::executeKit)
                 )
                 .executes(this::executeKitList)
@@ -131,6 +132,7 @@ public class KitCommands {
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
                         .then(Commands.argument("price", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0))
+                            .suggests(TabCompletionUtil.PRICE_SUGGESTIONS)
                             .executes(context -> {
                                 long cooldown = LongArgumentType.getLong(context, "cooldown");
                                 double price = com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(context, "price");
@@ -178,6 +180,7 @@ public class KitCommands {
 =======
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
                 .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(TabCompletionUtil.KIT_SUGGESTIONS)
                     .executes(this::executeDeleteKit)
                 )
         );
@@ -196,6 +199,7 @@ public class KitCommands {
 >>>>>>> e1ebb19 (refactor: Implement comprehensive kit command handling with creation, deletion, and listing functionalities)
                 .then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                     .then(Commands.argument("kit", StringArgumentType.word())
+                        .suggests(TabCompletionUtil.KIT_SUGGESTIONS)
                         .executes(this::executeGiveKit)
                     )
                 )
@@ -224,6 +228,7 @@ public class KitCommands {
             Commands.literal("previewkit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.preview"))
                 .then(Commands.argument("name", StringArgumentType.word())
+                    .suggests(TabCompletionUtil.KIT_SUGGESTIONS)
                     .executes(this::executePreviewKit)
                 )
         );
