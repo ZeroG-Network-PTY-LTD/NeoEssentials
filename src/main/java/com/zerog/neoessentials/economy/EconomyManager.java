@@ -48,6 +48,9 @@ public class EconomyManager {
         this.bankManager = BankManager.getInstance();
         this.transactionManager = new TransactionManager();
         this.shopManager = new ShopManager();
+        
+        // Set persistence manager for all components
+        this.bankManager.setPersistenceManager(this.persistenceManager);
         this.analytics = new EconomicAnalytics();
         this.playerData = new ConcurrentHashMap<>();
         this.scheduler = Executors.newScheduledThreadPool(config.getThreadPoolSize());
