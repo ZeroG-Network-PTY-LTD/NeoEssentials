@@ -616,4 +616,25 @@ public class BankManager {
     public void cacheLoan(Loan loan) {
         activeLoans.put(loan.getLoanId(), loan);
     }
+    
+    /**
+     * Initialize loan system and preload active loans from database
+     */
+    public void initializeLoans() {
+        if (persistenceManager != null) {
+            try {
+                // Preload all active loans into cache for better performance
+                List<Loan> allActiveLoans = persistenceManager.loadAllActiveLoans().join();
+                
+                // Cache all loans for quick access
+                for (Loan loan : allActiveLoans) {
+                    activeLoans.put(loan.getLoanId(), loan);
+                }
+                
+                com.zerog.neoessentials.NeoEssentials.LOGGER.info("Loaded {} active loans from database", allActiveLoans.size());
+            } catch (Exception e) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.error("Failed to initialize loans: " + e.getMessage(), e);
+            }
+        }
+    }
 }
