@@ -278,9 +278,29 @@ public class BankManager {
      * Get all loans for a specific player
      */
     public List<Loan> getPlayerLoans(UUID playerId) {
-        if (persistenceManager != null) {
-            return persistenceManager.loadPlayerLoans(playerId).join();
+        List<Loan> playerLoans = new ArrayList<>();
+        
+        // First, check active loans cache for any loans belonging to this player
+        for (Loan loan : activeLoans.values()) {
+            if (loan.getBorrowerId().equals(playerId)) {
+                playerLoans.add(loan);
+            }
         }
+        
+        // If we found loans in cache, return them
+        if (!playerLoans.isEmpty()) {
+            return playerLoans;
+        }
+        
+        // Otherwise, load from persistence and cache the results
+        if (persistenceManager != null) {
+            List<Loan> loadedLoans = persistenceManager.loadPlayerLoans(playerId).join();
+            for (Loan loan : loadedLoans) {
+                activeLoans.put(loan.getLoanId(), loan); // Cache for future use
+            }
+            return loadedLoans;
+        }
+        
         return new ArrayList<>();
     }
     
@@ -288,10 +308,22 @@ public class BankManager {
      * Get a specific loan by ID
      */
     public Loan getLoan(UUID loanId) {
-        if (persistenceManager != null) {
-            return persistenceManager.loadLoan(loanId).join();
+        // First check active loans cache
+        Loan cachedLoan = activeLoans.get(loanId);
+        if (cachedLoan != null) {
+            return cachedLoan;
         }
-        return activeLoans.get(loanId);
+        
+        // Load from persistence if not in cache
+        if (persistenceManager != null) {
+            Loan loadedLoan = persistenceManager.loadLoan(loanId).join();
+            if (loadedLoan != null) {
+                activeLoans.put(loanId, loadedLoan); // Cache for future use
+            }
+            return loadedLoan;
+        }
+        
+        return null;
     }
     
     /**
