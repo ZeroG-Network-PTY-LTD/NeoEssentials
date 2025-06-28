@@ -119,8 +119,13 @@ configurations {
 
 dependencies {    // Database dependencies
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
-    implementation 'com.mysql:mysql-connector-j:8.3.0'
-    implementation 'com.zaxxer:HikariCP:5.1.0'    // Permission system APIs (soft dependencies)
+    include 'org.xerial:sqlite-jdbc:3.44.1.0' // Include SQLite in JAR
+    implementation('com.mysql:mysql-connector-j:8.3.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from MySQL connector
+    }
+    implementation('com.zaxxer:HikariCP:5.1.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from HikariCP
+    }    // Permission system APIs (soft dependencies)
     compileOnly 'net.luckperms:api:5.4'
     
     // TOML parsing library for custom animations (legacy)
