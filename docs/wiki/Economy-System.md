@@ -53,7 +53,7 @@ The NeoEssentials Economy System is a comprehensive, multi-faceted economic fram
 
 ### System Requirements
 - NeoForge 1.21.1
-- Java 21+
+- Java 17+
 - Minimum 2GB RAM allocated to server
 - SQLite database support
 
