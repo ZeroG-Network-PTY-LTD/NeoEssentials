@@ -607,4 +607,13 @@ public class BankManager {
         }
         return null;
     }
+    
+    /**
+     * Cache a loan in the active loans map (used during initialization)
+     * 
+     * @param loan The loan to cache
+     */
+    public void cacheLoan(Loan loan) {
+        activeLoans.put(loan.getLoanId(), loan);
+    }
 }

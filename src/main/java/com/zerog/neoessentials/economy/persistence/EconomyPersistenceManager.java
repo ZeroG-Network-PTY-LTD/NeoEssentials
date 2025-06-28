@@ -180,8 +180,15 @@ public class EconomyPersistenceManager {
                 loan_id TEXT PRIMARY KEY,
                 borrower_uuid TEXT NOT NULL,
                 loan_type TEXT NOT NULL,
+                principal_amount REAL NOT NULL,
+                current_balance REAL NOT NULL,
+                interest_rate REAL NOT NULL,
+                term_months INTEGER NOT NULL,
+                remaining_payments INTEGER NOT NULL,
                 status TEXT NOT NULL,
-                data TEXT NOT NULL,
+                created_date INTEGER NOT NULL,
+                last_payment_date INTEGER DEFAULT 0,
+                next_payment_due INTEGER DEFAULT 0,
                 created_at INTEGER DEFAULT (strftime('%s', 'now')),
                 updated_at INTEGER DEFAULT (strftime('%s', 'now'))
             )
