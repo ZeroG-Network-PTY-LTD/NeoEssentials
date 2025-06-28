@@ -12,6 +12,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Handles all auction-related commands for the NeoEssentials economy system.
@@ -336,10 +337,34 @@ public class AuctionCommands {
     
     private int showAuctionInfo(ServerPlayer player, String auctionId) {
         try {
-            // This would need a getAuctionById method in AuctionHouse
-            MessageUtil.sendMessage(player, "§eAuction info system integration coming soon!");
-            MessageUtil.sendMessage(player, "§7Auction ID: §e" + auctionId);
-            MessageUtil.sendMessage(player, "§7This will show detailed auction information when fully integrated.");
+            EconomyManager economyManager = EconomyManager.getInstance();
+            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            
+            UUID auctionUUID;
+            try {
+                auctionUUID = UUID.fromString(auctionId);
+            } catch (IllegalArgumentException e) {
+                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
+                return 0;
+            }
+            
+            Auction auction = auctionHouse.getAuctionById(auctionUUID);
+            if (auction == null) {
+                MessageUtil.sendErrorMessage(player, "Auction not found.");
+                return 0;
+            }
+            
+            MessageUtil.sendMessage(player, "§6=== Auction Info ===");
+            MessageUtil.sendMessage(player, "§7ID: §e" + auction.getAuctionId());
+            MessageUtil.sendMessage(player, "§7Item: §e" + auction.getItemName() + " §7x" + auction.getQuantity());
+            MessageUtil.sendMessage(player, "§7Current Bid: §e" + auction.getCurrentBid());
+            MessageUtil.sendMessage(player, "§7Status: §e" + auction.getStatus());
+            MessageUtil.sendMessage(player, "§7Time Remaining: §e" + formatTimeRemaining(auction.getEndTime()));
+            
+            if (auction.getCurrentBidder() != null) {
+                MessageUtil.sendMessage(player, "§7Current Bidder: §e" + auction.getCurrentBidder());
+            }
+            
             return 1;
         } catch (Exception e) {
             MessageUtil.sendErrorMessage(player, "An error occurred while retrieving auction info: " + e.getMessage());
@@ -349,10 +374,48 @@ public class AuctionCommands {
     
     private int placeBid(ServerPlayer player, String auctionId, double amount) {
         try {
-            // This would need auction lookup and bidding integration
-            MessageUtil.sendMessage(player, "§eBid system integration coming soon!");
-            MessageUtil.sendMessage(player, "§7Placing bid of §e" + amount + "§7 on auction §e" + auctionId);
-            MessageUtil.sendMessage(player, "§7This will validate funds and place bids when fully integrated.");
+            EconomyManager economyManager = EconomyManager.getInstance();
+            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            
+            UUID auctionUUID;
+            try {
+                auctionUUID = UUID.fromString(auctionId);
+            } catch (IllegalArgumentException e) {
+                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
+                return 0;
+            }
+            
+            Auction auction = auctionHouse.getAuctionById(auctionUUID);
+            if (auction == null) {
+                MessageUtil.sendErrorMessage(player, "Auction not found.");
+                return 0;
+            }
+            
+            if (!auction.isActive()) {
+                MessageUtil.sendErrorMessage(player, "This auction has ended.");
+                return 0;
+            }
+            
+            if (auction.getSellerId().equals(player.getUUID())) {
+                MessageUtil.sendErrorMessage(player, "You cannot bid on your own auction.");
+                return 0;
+            }
+            
+            // Check if player has enough balance
+            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+            if (economyManager.getBalance(player.getUUID(), defaultCurrency) < amount) {
+                MessageUtil.sendErrorMessage(player, "You don't have enough money to place this bid.");
+                return 0;
+            }
+            
+            // Place the bid
+            if (auction.placeBid(player.getUUID(), amount)) {
+                MessageUtil.sendMessage(player, "§aBid placed successfully!");
+                MessageUtil.sendMessage(player, "§7Your bid of §e" + amount + "§7 is now the highest bid.");
+            } else {
+                MessageUtil.sendErrorMessage(player, "Failed to place bid. Your bid may be too low.");
+            }
+            
             return 1;
         } catch (Exception e) {
             MessageUtil.sendErrorMessage(player, "An error occurred while placing bid: " + e.getMessage());
@@ -375,10 +438,40 @@ public class AuctionCommands {
     
     private int cancelAuction(ServerPlayer player, String auctionId) {
         try {
-            // This would need auction lookup and cancellation integration
-            MessageUtil.sendMessage(player, "§eAuction cancellation integration coming soon!");
-            MessageUtil.sendMessage(player, "§7Cancelling auction §e" + auctionId);
-            MessageUtil.sendMessage(player, "§7This will cancel auctions and refund items when fully integrated.");
+            EconomyManager economyManager = EconomyManager.getInstance();
+            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            
+            UUID auctionUUID;
+            try {
+                auctionUUID = UUID.fromString(auctionId);
+            } catch (IllegalArgumentException e) {
+                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
+                return 0;
+            }
+            
+            Auction auction = auctionHouse.getAuctionById(auctionUUID);
+            if (auction == null) {
+                MessageUtil.sendErrorMessage(player, "Auction not found.");
+                return 0;
+            }
+            
+            if (!auction.getSellerId().equals(player.getUUID())) {
+                MessageUtil.sendErrorMessage(player, "You can only cancel your own auctions.");
+                return 0;
+            }
+            
+            if (!auction.isActive()) {
+                MessageUtil.sendErrorMessage(player, "This auction has already ended.");
+                return 0;
+            }
+            
+            if (auction.cancelAuction()) {
+                MessageUtil.sendMessage(player, "§aAuction cancelled successfully!");
+                MessageUtil.sendMessage(player, "§7Your item has been returned and any bids have been refunded.");
+            } else {
+                MessageUtil.sendErrorMessage(player, "Failed to cancel auction.");
+            }
+            
             return 1;
         } catch (Exception e) {
             MessageUtil.sendErrorMessage(player, "An error occurred while cancelling auction: " + e.getMessage());
@@ -405,12 +498,9 @@ public class AuctionCommands {
         try {
             EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
             ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
-            List<Auction> auctions = auctionHouse.getActiveAuctions();
             
-            // Filter auctions by item name
-            List<Auction> matchingAuctions = auctions.stream()
-                .filter(auction -> auction.getItemName().toLowerCase().contains(itemQuery.toLowerCase()))
-                .toList();
+            // Use the searchAuctions method from AuctionHouse
+            List<Auction> matchingAuctions = auctionHouse.searchAuctions(itemQuery);
             
             if (matchingAuctions.isEmpty()) {
                 MessageUtil.sendMessage(player, "§7No auctions found for '" + itemQuery + "'");
@@ -421,7 +511,7 @@ public class AuctionCommands {
             
             for (Auction auction : matchingAuctions.stream().limit(10).toList()) {
                 Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-                String timeLeft = formatDuration((int) auction.getTimeRemaining());
+                String timeLeft = formatTimeRemaining(auction.getEndTime());
                 String currentBid = auction.getCurrentBid() > 0 ? 
                     defaultCurrency.format(auction.getCurrentBid()) : 
                     defaultCurrency.format(auction.getStartingBid());
@@ -457,6 +547,18 @@ public class AuctionCommands {
     }
     
     // Helper methods
+    
+    private String formatTimeRemaining(long endTime) {
+        long currentTime = System.currentTimeMillis();
+        long timeRemaining = endTime - currentTime;
+        
+        if (timeRemaining <= 0) {
+            return "Ended";
+        }
+        
+        int seconds = (int) (timeRemaining / 1000);
+        return formatDuration(seconds);
+    }
     
     private String formatDuration(int seconds) {
         if (seconds <= 0) return "Ended";

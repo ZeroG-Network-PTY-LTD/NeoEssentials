@@ -40,6 +40,11 @@ public class TabCompletionUtil {
         "general", "food", "tools", "weapons", "armor", "blocks", "redstone", "magic"
     };
     
+    // Shop ownership types
+    public static final String[] SHOP_OWNERSHIP_TYPES = {
+        "player", "server", "auction"
+    };
+    
     // Time units for various commands
     public static final String[] TIME_UNITS = {
         "s", "seconds", "m", "minutes", "h", "hours", "d", "days", "w", "weeks"
@@ -252,5 +257,12 @@ public class TabCompletionUtil {
             new String[]{"1.0", "5.0", "10.0", "25.0", "50.0", "100.0", "250.0", "500.0"}, 
             builder
         );
+    };
+    
+    /**
+     * Provides shop ownership type suggestions.
+     */
+    public static final SuggestionProvider<CommandSourceStack> SHOP_OWNERSHIP_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(SHOP_OWNERSHIP_TYPES, builder);
     };
 }
