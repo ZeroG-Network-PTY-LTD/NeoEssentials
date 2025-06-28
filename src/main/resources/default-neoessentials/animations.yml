@@ -14,8 +14,17 @@ metadata:
 
 # Animation definitions
 animations:
-  default:
-    change_interval: 50  # Ticks between animation frames
+  # Simple test animation
+  test:
+    change_interval: 100  # Slower for easier testing
+    texts:
+      - "&#FF0000T&#00FF00E&#0000FFS&#FFFF00T"
+      - "&#FFFF00T&#FF0000E&#00FF00S&#0000FFT"
+      - "&#0000FFT&#FFFF00E&#FF0000S&#00FF00T"
+  
+  # Your gradient example
+  example:
+    change_interval: 50
     texts:
       - "&#54C5EAE&#54DAF4x&#54C5EAa&#54B1DFm&#549CD5p&#5487CBl&#5473C0e"
       - "&#54B1DFE&#54C5EAx&#54DAF4a&#54C5EAm&#54B1DFp&#549CD5l&#5487CBe"

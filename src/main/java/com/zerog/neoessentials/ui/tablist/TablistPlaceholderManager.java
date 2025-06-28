@@ -712,6 +712,11 @@ public class TablistPlaceholderManager {
             return Component.empty();
         }
         
+        // Debug logging for color processing
+        if (text.contains("&#")) {
+            NeoEssentials.LOGGER.debug("Processing hex colors in text: {}", text);
+        }
+        
         return parseTextWithColors(text);
     }
     
