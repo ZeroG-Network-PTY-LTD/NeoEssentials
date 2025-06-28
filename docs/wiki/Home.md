@@ -2,8 +2,13 @@
 
 Welcome to the official NeoEssentials wiki! NeoEssentials is a comprehensive server enhancement mod for NeoForge 1.21.1+ that provides essential features including advanced tablist customization, economy systems, teleportation, and much more.
 
-## 🚀 Latest Features (v1.0.1.89)
+## 🚀 Latest Features (v1.0.2)
 
+* **🏦 Advanced Economy System** - Complete multi-currency banking with loans, shops, and auctions
+* **💰 Multi-Currency Support** - Standard, resource-backed, and token currencies
+* **🏪 Dynamic Shop System** - Player shops with dynamic pricing and taxation
+* **📊 Economic Analytics** - Real-time monitoring with automated reporting
+* **🔄 YAML Configuration** - Modern YAML-based configuration system
 * **Ultra-Smooth Animations** - 25ms frame updates for professional tablist animations
 * **Multiple Animation Placeholders** - Use unlimited `<anim:name>` placeholders simultaneously  
 * **Three-Tier Update System** - Optimized performance architecture
@@ -20,7 +25,8 @@ Welcome to the official NeoEssentials wiki! NeoEssentials is a comprehensive ser
 
 * [**Tablist System**](Tablist-System) - Advanced tablist with animations and group templates
 * [**Animation System**](Animation-System) - Ultra-smooth 25ms animations with unlimited placeholders
-* [Economy System](Economy-System) - Complete economy management
+* [**🏦 Economy System**](Economy-System) - **NEW!** Complete multi-currency economy with banking, loans, shops & auctions
+  * [💡 Economy Quick Reference](Economy-Quick-Reference) - Commands, rates, and common operations
 * [Home System](Home-System) - Multiple home teleportation
 * [Warp System](Warp-System) - Public and private warp points
 * [Kit System](Kit-System) - Customizable item packages with cooldowns

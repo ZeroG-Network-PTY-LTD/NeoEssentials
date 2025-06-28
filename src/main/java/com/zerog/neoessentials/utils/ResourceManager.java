@@ -11,15 +11,19 @@ import java.util.List;
 /**
  * Manages resources for NeoEssentials, including copying default configs.
  */
-public class ResourceManager {    private static final List<String> CONFIG_FILES = Arrays.asList(
-        "general.toml",
-        "economy.yml",
-        "homes.toml",
-        "warps.toml",
-        "kits.toml",
-        "tablist.yml",
-        "database.toml",
-        "animations.yml"
+public class ResourceManager {
+    // TOML config files that go to config/neoessentials/ (disabled - using YAML instead)
+    private static final List<String> CONFIG_FILES = Arrays.asList(
+        // "general.toml",
+        // "homes.toml", 
+        // "warps.toml",
+        // "kits.toml",
+        // "database.toml"
+    );
+    
+    // YAML config files that go to config/neoessentials/
+    private static final List<String> YAML_CONFIG_FILES = Arrays.asList(
+        "economy.yml"
     );
     
     // Files to be placed in the main neoessentials directory (outside of config)
@@ -51,9 +55,14 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
                 NeoEssentials.LOGGER.info("Created config directory: {}", configDir);
             }
 
-            // Copy each default config file
+            // Copy TOML config files from /default_configs/
             for (String configFile : CONFIG_FILES) {
-                copyDefaultConfig(configDir, configFile);
+                copyDefaultConfig(configDir, configFile, "/default_configs/");
+            }
+            
+            // Copy YAML config files from /default-config/
+            for (String configFile : YAML_CONFIG_FILES) {
+                copyDefaultConfig(configDir, configFile, "/default-config/");
             }
             
             NeoEssentials.LOGGER.info("Default configuration files processed");
@@ -67,9 +76,10 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
      * 
      * @param configDir The config directory
      * @param fileName The config file name
+     * @param resourcePathPrefix The resource path prefix (e.g., "/default-config/")
      * @throws IOException If an I/O error occurs
      */
-    private static void copyDefaultConfig(Path configDir, String fileName) throws IOException {
+    private static void copyDefaultConfig(Path configDir, String fileName, String resourcePathPrefix) throws IOException {
         Path configPath = configDir.resolve(fileName);
         
         // Check if file already exists
@@ -79,12 +89,26 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
         }
 
         // Copy file from resources
-        try (InputStream in = ResourceManager.class.getResourceAsStream("/default-config/" + fileName)) {
+        String resourcePath = resourcePathPrefix + fileName;
+        NeoEssentials.LOGGER.debug("Attempting to load resource: {}", resourcePath);
+        
+        try (InputStream in = ResourceManager.class.getResourceAsStream(resourcePath)) {
             if (in != null) {
                 Files.copy(in, configPath, StandardCopyOption.REPLACE_EXISTING);
-                NeoEssentials.LOGGER.info("Copied default config: {}", fileName);
+                NeoEssentials.LOGGER.info("Copied default config: {} from {}", fileName, resourcePath);
             } else {
-                NeoEssentials.LOGGER.warn("Default config not found in resources: {}", fileName);
+                NeoEssentials.LOGGER.warn("Default config not found in resources: {} (path: {})", fileName, resourcePath);
+                // Try to debug the issue by listing available resources
+                try {
+                    java.net.URL resourceUrl = ResourceManager.class.getResource(resourcePathPrefix);
+                    if (resourceUrl != null) {
+                        NeoEssentials.LOGGER.debug("{} directory found at: {}", resourcePathPrefix, resourceUrl);
+                    } else {
+                        NeoEssentials.LOGGER.warn("{} directory not found in resources", resourcePathPrefix);
+                    }
+                } catch (Exception e) {
+                    NeoEssentials.LOGGER.warn("Error checking resource directory {}: {}", resourcePathPrefix, e.getMessage());
+                }
             }
         }
     }
@@ -92,10 +116,8 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
     /**
      * Updates a specific default example in a config file
      * 
-     * @param configDir The config directory
      * @param fileName The config file name
      * @param exampleSectionName The name of the example section to update
-     * @throws IOException If an I/O error occurs
      */
     public static void updateConfigExamples(String fileName, String exampleSectionName) {
         Path configDir = FMLPaths.CONFIGDIR.get().resolve("neoessentials");
@@ -113,25 +135,26 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
             // Create a backup of the original file
             Path backupPath = configDir.resolve(fileName + ".bak");
             Files.copy(configPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-
-            // Read the default example from resources
-            String exampleContent = readResourceFile("/default_configs/" + fileName);
             
-            if (exampleContent == null) {
-                NeoEssentials.LOGGER.warn("Default example not found for: {}", fileName);
+            // Read the example from resources
+            String resourcePath = "/default-config/" + fileName;
+            String example = readResourceFile(resourcePath);
+            
+            if (example == null) {
+                NeoEssentials.LOGGER.warn("Cannot read example from resources: {}", resourcePath);
                 return;
             }
-
-            // Extract the example section
-            int exampleStart = exampleContent.indexOf("# " + exampleSectionName + " EXAMPLE");
-            int exampleEnd = exampleContent.indexOf("# END " + exampleSectionName + " EXAMPLE");
+            
+            // Extract the specific example section
+            int exampleStart = example.indexOf("# " + exampleSectionName + " EXAMPLE");
+            int exampleEnd = example.indexOf("# END " + exampleSectionName + " EXAMPLE");
             
             if (exampleStart == -1 || exampleEnd == -1) {
-                NeoEssentials.LOGGER.warn("Example section '{}' not found in default config", exampleSectionName);
+                NeoEssentials.LOGGER.warn("Example section '{}' not found in resource file", exampleSectionName);
                 return;
             }
-
-            String example = exampleContent.substring(exampleStart, exampleEnd + ("# END " + exampleSectionName + " EXAMPLE").length());
+            
+            example = example.substring(exampleStart, exampleEnd + ("# END " + exampleSectionName + " EXAMPLE").length());
             
             // Update the example in the user's config file
             int userExampleStart = content.indexOf("# " + exampleSectionName + " EXAMPLE");
@@ -177,51 +200,80 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
             NeoEssentials.LOGGER.error("Failed to read resource file: {}", resourcePath, e);
             return null;
         }
-    }    /**
+    }
+
+    /**
      * Force extracts the tablist.yml file, creating a backup of the existing one if it exists.
      * This is useful when troubleshooting animation or placeholder issues.
      * 
      * @return True if the extraction was successful, false otherwise
      */
     public static boolean forceExtractTablistConfig() {
-        Path configDir = FMLPaths.CONFIGDIR.get().resolve("neoessentials");
-        String fileName = "tablist.yml";
-        Path configPath = configDir.resolve(fileName);
+        Path neoEssentialsDir = Paths.get("neoessentials");
+        Path tablistPath = neoEssentialsDir.resolve("tablist.yml");
         
         try {
-            // Create config directory if it doesn't exist
-            if (!Files.exists(configDir)) {
-                Files.createDirectories(configDir);
-                NeoEssentials.LOGGER.info("Created config directory: {}", configDir);
+            // Create backup if file exists
+            if (Files.exists(tablistPath)) {
+                Path backupPath = neoEssentialsDir.resolve("tablist.yml.backup");
+                Files.copy(tablistPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                NeoEssentials.LOGGER.info("Created backup of existing tablist.yml");
             }
             
-            // If file exists, make a backup
-            if (Files.exists(configPath)) {
-                Path backupPath = configDir.resolve(fileName + ".backup-" + System.currentTimeMillis() + ".yml");
-                Files.copy(configPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
-                NeoEssentials.LOGGER.info("Created backup of existing tablist.yml at: {}", backupPath);
+            // Force extract from resources
+            try (InputStream in = ResourceManager.class.getResourceAsStream("/default-neoessentials/tablist.yml")) {
+                if (in != null) {
+                    Files.copy(in, tablistPath, StandardCopyOption.REPLACE_EXISTING);
+                    NeoEssentials.LOGGER.info("Force extracted tablist.yml from resources");
+                    return true;
+                } else {
+                    NeoEssentials.LOGGER.error("tablist.yml not found in resources");
+                    return false;
+                }
             }
-            
-            // Extract the resource
-            String resourceContent = readResourceFile("/default_configs/" + fileName);
-            if (resourceContent == null) {
-                NeoEssentials.LOGGER.error("Could not find default tablist.yml in resources");
-                return false;
-            }
-            
-            // Write the content
-            Files.write(configPath, resourceContent.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            NeoEssentials.LOGGER.info("Successfully extracted fresh tablist.yml configuration to: {}", configPath);
-            
-            return true;
         } catch (IOException e) {
-            NeoEssentials.LOGGER.error("Failed to extract tablist.yml", e);
+            NeoEssentials.LOGGER.error("Failed to force extract tablist.yml", e);
             return false;
         }
     }
 
     /**
-     * Copies default files to the neoessentials directory (not in config)
+     * Force extracts the animations.yml file, creating a backup of the existing one if it exists.
+     * This is useful when troubleshooting animation issues.
+     * 
+     * @return True if the extraction was successful, false otherwise
+     */
+    public static boolean forceExtractAnimationsConfig() {
+        Path neoEssentialsDir = Paths.get("neoessentials");
+        Path animationsPath = neoEssentialsDir.resolve("animations.yml");
+        
+        try {
+            // Create backup if file exists
+            if (Files.exists(animationsPath)) {
+                Path backupPath = neoEssentialsDir.resolve("animations.yml.backup");
+                Files.copy(animationsPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+                NeoEssentials.LOGGER.info("Created backup of existing animations.yml");
+            }
+            
+            // Force extract from resources
+            try (InputStream in = ResourceManager.class.getResourceAsStream("/default-neoessentials/animations.yml")) {
+                if (in != null) {
+                    Files.copy(in, animationsPath, StandardCopyOption.REPLACE_EXISTING);
+                    NeoEssentials.LOGGER.info("Force extracted animations.yml from resources");
+                    return true;
+                } else {
+                    NeoEssentials.LOGGER.error("animations.yml not found in resources");
+                    return false;
+                }
+            }
+        } catch (IOException e) {
+            NeoEssentials.LOGGER.error("Failed to force extract animations.yml", e);
+            return false;
+        }
+    }
+
+    /**
+     * Copies files to the main neoessentials directory (outside of config)
      */
     public static void copyNeoEssentialsFiles() {
         Path neoEssentialsDir = Paths.get("neoessentials");
