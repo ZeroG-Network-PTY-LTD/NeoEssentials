@@ -785,21 +785,24 @@ public class EconomyCommands {
      */
     private void displayEconomyHelp(ServerPlayer player) {
         MessageUtil.sendMessage(player, "§6§l--- NeoEssentials Economy Commands ---");
-        MessageUtil.sendMessage(player, "§e/balance§r - Check your balance");
-        MessageUtil.sendMessage(player, "§e/balance <player>§r - Check another player's balance");
-        MessageUtil.sendMessage(player, "§e/pay <player> <amount>§r - Pay another player");
+        MessageUtil.sendMessage(player, "§e/balance§r - Check your bank account balance");
+        MessageUtil.sendMessage(player, "§e/balance <player>§r - Check another player's bank account balance");
+        MessageUtil.sendMessage(player, "§e/pay <player> <amount>§r - Pay another player (requires bank accounts)");
         MessageUtil.sendMessage(player, "§e/baltop§r - View the richest players");
         MessageUtil.sendMessage(player, "§e/baltop <page>§r - View a specific page of baltop");
         MessageUtil.sendMessage(player, "§e/ecotrans§r - View your transaction history");
         MessageUtil.sendMessage(player, "§e/ecotrans <page>§r - View a specific page of your transaction history");
+        MessageUtil.sendMessage(player, "");
+        MessageUtil.sendMessage(player, "§c§lNote:§r All economy commands require a bank account!");
+        MessageUtil.sendMessage(player, "§eCreate one with: /bank create checking");
         
         // Show admin commands if player has permission
         if (CommandManager.hasPermission(player.createCommandSourceStack(), "neoessentials.command.eco")) {
             MessageUtil.sendMessage(player, "");
             MessageUtil.sendMessage(player, "§6§l--- Admin Economy Commands ---");
-            MessageUtil.sendMessage(player, "§e/eco give <player> <amount> [reason]§r - Give money to a player");
-            MessageUtil.sendMessage(player, "§e/eco take <player> <amount> [reason]§r - Take money from a player");
-            MessageUtil.sendMessage(player, "§e/eco set <player> <amount> [reason]§r - Set a player's balance");
+            MessageUtil.sendMessage(player, "§e/eco give <player> <amount> [reason]§r - Give money to a player's bank account");
+            MessageUtil.sendMessage(player, "§e/eco take <player> <amount> [reason]§r - Take money from a player's bank account");
+            MessageUtil.sendMessage(player, "§e/eco set <player> <amount> [reason]§r - Set a player's bank account balance");
             MessageUtil.sendMessage(player, "§e/ecotrans view <player> [page]§r - View a player's transaction history");
         }
     }
@@ -811,10 +814,13 @@ public class EconomyCommands {
      */
     private void displayEconomyAdminHelp(ServerPlayer player) {
         MessageUtil.sendMessage(player, "§6§l--- NeoEssentials Admin Economy Commands ---");
-        MessageUtil.sendMessage(player, "§e/eco give <player> <amount> [reason]§r - Give money to a player");
-        MessageUtil.sendMessage(player, "§e/eco take <player> <amount> [reason]§r - Take money from a player");
-        MessageUtil.sendMessage(player, "§e/eco set <player> <amount> [reason]§r - Set a player's balance");
+        MessageUtil.sendMessage(player, "§e/eco give <player> <amount> [reason]§r - Give money to a player's bank account");
+        MessageUtil.sendMessage(player, "§e/eco take <player> <amount> [reason]§r - Take money from a player's bank account");
+        MessageUtil.sendMessage(player, "§e/eco set <player> <amount> [reason]§r - Set a player's bank account balance");
         MessageUtil.sendMessage(player, "§e/ecotrans view <player> [page]§r - View a player's transaction history");
+        MessageUtil.sendMessage(player, "");
+        MessageUtil.sendMessage(player, "§c§lNote:§r Players must have bank accounts to receive money!");
+        MessageUtil.sendMessage(player, "§eThey can create one with: /bank create checking");
     }
     
     /**
