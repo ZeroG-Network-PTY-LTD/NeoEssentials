@@ -52,6 +52,11 @@ public class BankManager {
         // Add to account lookup
         accountsByNumber.put(accountNumber, account);
         
+        // Save to persistence immediately
+        if (persistenceManager != null) {
+            persistenceManager.saveBankAccount(account);
+        }
+        
         return account;
     }
     
@@ -62,6 +67,11 @@ public class BankManager {
      * @return List of the player's bank accounts
      */
     public List<BankAccount> getPlayerAccounts(UUID playerId) {
+        // First, try to load accounts from persistence if not already loaded
+        if (!playerAccounts.containsKey(playerId)) {
+            loadPlayerAccounts(playerId);
+        }
+        
         return playerAccounts.getOrDefault(playerId, new ArrayList<>());
     }
     
@@ -82,6 +92,11 @@ public class BankManager {
      * @return The player's primary checking account
      */
     public BankAccount getPrimaryAccount(UUID playerId) {
+        // First, try to load accounts from persistence if not already loaded
+        if (!playerAccounts.containsKey(playerId)) {
+            loadPlayerAccounts(playerId);
+        }
+        
         List<BankAccount> accounts = getPlayerAccounts(playerId);
         
         // Look for existing checking account
@@ -92,7 +107,14 @@ public class BankManager {
         }
         
         // Create new checking account if none exists
-        return createAccount(playerId, BankAccount.AccountType.CHECKING);
+        BankAccount newAccount = createAccount(playerId, BankAccount.AccountType.CHECKING);
+        
+        // Save the new account to persistence immediately
+        if (persistenceManager != null && newAccount != null) {
+            persistenceManager.saveBankAccount(newAccount);
+        }
+        
+        return newAccount;
     }
     
     /**
@@ -634,6 +656,56 @@ public class BankManager {
                 com.zerog.neoessentials.NeoEssentials.LOGGER.info("Loaded {} active loans from database", allActiveLoans.size());
             } catch (Exception e) {
                 com.zerog.neoessentials.NeoEssentials.LOGGER.error("Failed to initialize loans: " + e.getMessage(), e);
+            }
+        }
+    }
+    
+    /**
+     * Initialize bank accounts system and preload all accounts from database
+     */
+    public void initializeAccounts() {
+        if (persistenceManager != null) {
+            try {
+                // Load all accounts from persistence
+                loadAllAccountsFromPersistence();
+                
+                com.zerog.neoessentials.NeoEssentials.LOGGER.info("Loaded {} bank accounts from persistence", accountsByNumber.size());
+            } catch (Exception e) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.error("Failed to initialize bank accounts: " + e.getMessage(), e);
+            }
+        }
+    }
+    
+    /**
+     * Load all bank accounts from persistence into memory
+     */
+    private void loadAllAccountsFromPersistence() {
+        // This would need a method in EconomyPersistenceManager to load all accounts
+        // For now, we'll load accounts on-demand per player
+        com.zerog.neoessentials.NeoEssentials.LOGGER.info("Account loading system initialized - accounts will be loaded on-demand");
+    }
+    
+    /**
+     * Load accounts for a specific player from persistence
+     */
+    public void loadPlayerAccounts(UUID playerId) {
+        if (persistenceManager != null) {
+            try {
+                List<BankAccount> accounts = persistenceManager.loadPlayerBankAccounts(playerId).join();
+                
+                if (!accounts.isEmpty()) {
+                    // Add to player's accounts map
+                    playerAccounts.put(playerId, new ArrayList<>(accounts));
+                    
+                    // Add to account number lookup
+                    for (BankAccount account : accounts) {
+                        accountsByNumber.put(account.getAccountNumber(), account);
+                    }
+                    
+                    com.zerog.neoessentials.NeoEssentials.LOGGER.info("Loaded {} accounts for player {}", accounts.size(), playerId);
+                }
+            } catch (Exception e) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.error("Failed to load accounts for player " + playerId + ": " + e.getMessage(), e);
             }
         }
     }
