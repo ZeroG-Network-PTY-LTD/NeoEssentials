@@ -102,6 +102,16 @@ public class CurrencyManager {
     }
     
     /**
+     * Add a currency to the system
+     * 
+     * @param currency The currency to add
+     * @return true if successfully added
+     */
+    public boolean addCurrency(Currency currency) {
+        return registerCurrency(currency);
+    }
+    
+    /**
      * Get a currency by ID
      * 
      * @param currencyId The currency ID
@@ -180,6 +190,24 @@ public class CurrencyManager {
     }
     
     /**
+     * Get exchange rate between two currencies
+     * 
+     * @param fromCurrency Source currency
+     * @param toCurrency Target currency
+     * @return Exchange rate from source to target
+     */
+    public double getExchangeRate(Currency fromCurrency, Currency toCurrency) {
+        if (fromCurrency.equals(toCurrency)) {
+            return 1.0;
+        }
+        
+        double fromRate = exchangeRates.getOrDefault(fromCurrency.getId(), 1.0);
+        double toRate = exchangeRates.getOrDefault(toCurrency.getId(), 1.0);
+        
+        return fromRate / toRate;
+    }
+    
+    /**
      * Convert an amount from one currency to another
      * 
      * @param amount The amount to convert
@@ -250,6 +278,19 @@ public class CurrencyManager {
         }
         
         return history;
+    }
+    
+    /**
+     * Get statistics for the currency manager
+     * 
+     * @return Map of statistics
+     */
+    public Map<String, Object> getStatistics() {
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalCurrencies", currencies.size());
+        stats.put("defaultCurrency", defaultCurrency != null ? defaultCurrency.getId() : "none");
+        stats.put("exchangeRates", new HashMap<>(exchangeRates));
+        return stats;
     }
     
     /**
