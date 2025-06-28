@@ -530,8 +530,15 @@ public class BankManager {
      * @return true if successful
      */
     public boolean transfer(UUID fromAccountId, UUID toAccountId, double amount) {
+        BankAccount fromAccount = getAccountById(fromAccountId);
+        BankAccount toAccount = getAccountById(toAccountId);
+        
+        if (fromAccount == null || toAccount == null) {
+            return false;
+        }
+        
         Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-        return transfer(fromAccountId, toAccountId, defaultCurrency, amount, "Transfer");
+        return transferBetweenAccounts(fromAccount, toAccount, amount, defaultCurrency, "Transfer");
     }
     
     /**
@@ -544,7 +551,9 @@ public class BankManager {
      * @return Loan ID as string if successful, null otherwise
      */
     public String applyForLoan(UUID playerId, double amount, Loan.LoanType loanType, int termMonths) {
-        return loanManager.applyForLoan(playerId, amount, loanType, termMonths);
+        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        Loan loan = loanManager.applyForLoan(playerId, amount, defaultCurrency, loanType, termMonths);
+        return loan != null ? loan.getLoanId().toString() : null;
     }
     
     /**
@@ -554,7 +563,20 @@ public class BankManager {
      * @return true if successful
      */
     public boolean approveLoan(UUID loanId) {
-        return loanManager.approveLoan(loanId);
+        Loan loan = activeLoans.get(loanId);
+        if (loan == null || loan.getStatus() != Loan.LoanStatus.PENDING) {
+            return false;
+        }
+        
+        // Approve the loan
+        loan.setStatus(Loan.LoanStatus.APPROVED);
+        
+        // Save to persistence if available
+        if (persistenceManager != null) {
+            persistenceManager.saveLoan(loan);
+        }
+        
+        return true;
     }
     
     /**
