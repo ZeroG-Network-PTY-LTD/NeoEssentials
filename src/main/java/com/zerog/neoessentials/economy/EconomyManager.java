@@ -478,27 +478,37 @@ public class EconomyManager {
     }
     
     /**
-     * Initialize the economy system - load essential data at startup
+     * Initialize the economy system and load all persistent data
      */
     public void initialize() {
-        NeoEssentials.LOGGER.info("Initializing NeoEssentials Economy System...");
-        
         try {
-            // Preload all active loans for better performance
-            List<Loan> activeLoans = persistenceManager.loadAllActiveLoans().join();
-            NeoEssentials.LOGGER.info("Loaded {} active loans from database", activeLoans.size());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Initializing NeoEssentials Economy System...");
             
-            // Cache them in the bank manager by calling a public method
-            for (Loan loan : activeLoans) {
-                bankManager.cacheLoan(loan);
+            // Initialize loan persistence and preload active loans
+            bankManager.initializeLoans();
+            
+            // Load summary statistics
+            List<Loan> allActiveLoans = bankManager.getAllActiveLoans();
+            int totalLoans = allActiveLoans.size();
+            
+            Currency defaultCurrency = currencyManager.getDefaultCurrency();
+            double totalOutstanding = allActiveLoans.stream()
+                .mapToDouble(Loan::getCurrentBalance)
+                .sum();
+            
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Economy system initialized successfully!");
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - {} active loans loaded from database", totalLoans);
+            if (totalLoans > 0) {
+                com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - Total outstanding loan balance: {}", 
+                    defaultCurrency != null ? defaultCurrency.format(totalOutstanding) : String.format("$%.2f", totalOutstanding));
             }
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - Loan applications will persist across server restarts");
             
-            NeoEssentials.LOGGER.info("Economy system initialization complete");
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Failed to initialize economy system", e);
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Failed to initialize economy system: " + e.getMessage(), e);
         }
     }
-    
+
     // Getters for managers and configuration
     public CurrencyManager getCurrencyManager() { return currencyManager; }
     public BankManager getBankManager() { return bankManager; }
