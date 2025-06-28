@@ -9,6 +9,7 @@ import com.zerog.neoessentials.NeoEssentials;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
@@ -525,11 +526,26 @@ public class EconomyPersistenceManager {
     }
     
     private void saveBankAccountToFile(BankAccount account) throws IOException {
-        Map<String, BankAccount> accounts = loadAllBankAccountsFromFile();
-        accounts.put(account.getAccountId().toString(), account);
-        
-        try (FileWriter writer = new FileWriter(dataFolder + accountsFile)) {
-            gson.toJson(accounts, writer);
+        synchronized (this) { // Prevent race conditions during file operations
+            Map<String, BankAccount> accounts = loadAllBankAccountsFromFile();
+            accounts.put(account.getAccountId().toString(), account);
+            
+            // Create temporary file first, then atomic move
+            File tempFile = new File(dataFolder + accountsFile + ".tmp");
+            File finalFile = new File(dataFolder + accountsFile);
+            
+            try (FileWriter writer = new FileWriter(tempFile)) {
+                gson.toJson(accounts, writer);
+                writer.flush();
+            }
+            
+            // Atomic move to prevent corruption during writing
+            if (finalFile.exists()) {
+                finalFile.delete();
+            }
+            if (!tempFile.renameTo(finalFile)) {
+                throw new IOException("Failed to rename temporary file to final file");
+            }
         }
     }
     
@@ -552,10 +568,40 @@ public class EconomyPersistenceManager {
             return new HashMap<>();
         }
         
-        try (FileReader reader = new FileReader(file)) {
+        try {
+            // Read file content first to validate
+            String jsonContent = Files.readString(file.toPath());
+            if (jsonContent.trim().isEmpty()) {
+                NeoEssentials.LOGGER.warn("Bank accounts file is empty, returning empty map");
+                return new HashMap<>();
+            }
+            
+            // Check for obvious corruption patterns
+            if (jsonContent.contains("\"\"") && jsonContent.matches(".*\\d+[a-fA-F]+\"\".*")) {
+                NeoEssentials.LOGGER.error("Detected corrupted JSON data in bank accounts file, backing up and creating new file");
+                backupCorruptedFile(file);
+                return new HashMap<>();
+            }
+            
             Type type = new TypeToken<Map<String, BankAccount>>(){}.getType();
-            Map<String, BankAccount> result = gson.fromJson(reader, type);
+            Map<String, BankAccount> result = gson.fromJson(jsonContent, type);
             return result != null ? result : new HashMap<>();
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to load bank accounts, backing up corrupted file", e);
+            backupCorruptedFile(file);
+            return new HashMap<>();
+        }
+    }
+    
+    private void backupCorruptedFile(File corruptedFile) {
+        try {
+            if (corruptedFile.exists()) {
+                File backupFile = new File(corruptedFile.getAbsolutePath() + ".corrupted." + System.currentTimeMillis());
+                Files.copy(corruptedFile.toPath(), backupFile.toPath());
+                NeoEssentials.LOGGER.info("Backed up corrupted file to: " + backupFile.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to backup corrupted file", e);
         }
     }
     
