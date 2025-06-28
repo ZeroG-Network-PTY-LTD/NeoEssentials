@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.config;
 
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
+import com.zerog.neoessentials.util.YamlUtil;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -92,7 +91,7 @@ public class EnhancedEconomyConfig {
      */
     public void loadFromFile(String filePath) {
         try {
-            Yaml yaml = new Yaml();
+            YamlUtil yaml = new YamlUtil();
             try (InputStream inputStream = new FileInputStream(filePath)) {
                 config = yaml.load(inputStream);
                 parseConfig();

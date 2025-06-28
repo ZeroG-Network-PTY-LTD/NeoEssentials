@@ -59,13 +59,14 @@ public class TablistYamlConfig {
     private static int bossBarLimitPerPlayer = DEFAULT_BOSSBAR_LIMIT;
     
     // YAML instance for serialization/deserialization
-    private static final Yaml yaml;
+    private static final YamlUtil yaml;
     
     static {
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setPrettyFlow(true);
-        yaml = new Yaml(options);
+        YamlUtil yamlUtil = new YamlUtil();
+        Object options = yamlUtil.createDumperOptions();
+        yamlUtil.setDefaultFlowStyle(options, "BLOCK");
+        yamlUtil.setPrettyFlow(options, true);
+        yaml = new YamlUtil(options);
     }
     
     /**

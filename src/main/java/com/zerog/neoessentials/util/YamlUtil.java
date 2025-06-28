@@ -183,6 +183,22 @@ public class YamlUtil {
     }
     
     /**
+     * Set pretty flow for dumper options
+     * 
+     * @param dumperOptions The dumper options instance
+     * @param prettyFlow Whether to use pretty flow
+     */
+    public void setPrettyFlow(Object dumperOptions, boolean prettyFlow) {
+        try {
+            Method setMethod = dumperOptionsClass.getMethod("setPrettyFlow", boolean.class);
+            setMethod.invoke(dumperOptions, prettyFlow);
+        } catch (Exception e) {
+            // Not all versions of SnakeYAML have this method, ignore if not available
+            NeoEssentials.LOGGER.debug("setPrettyFlow method not available in this SnakeYAML version");
+        }
+    }
+    
+    /**
      * Get whether server SnakeYAML is being used
      * 
      * @return true if using server SnakeYAML, false if using shaded version

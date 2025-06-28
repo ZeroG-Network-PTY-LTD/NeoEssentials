@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.ui.tablist.enhanced;
 
 import com.zerog.neoessentials.NeoEssentials;
-import org.yaml.snakeyaml.Yaml;
+import com.zerog.neoessentials.util.YamlUtil;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -20,7 +20,7 @@ import java.util.Map;
 public class TABConfigManager {
     
     private TABConfig currentConfig;
-    private final Yaml yaml = new Yaml();
+    private final YamlUtil yaml = new YamlUtil();
     
     // Configuration file paths - load from neoessentials/ directory in server root
     private static final Path TABLIST_CONFIG_PATH = Paths.get("neoessentials", "tablist.yml");
