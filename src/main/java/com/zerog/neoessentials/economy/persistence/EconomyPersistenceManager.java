@@ -108,13 +108,15 @@ public class EconomyPersistenceManager {
                 Files.createDirectories(dbDir);
             }
             
-            // Load SQLite driver explicitly
+            // Try to load SQLite driver (may not be available if not included)
             try {
                 Class.forName("org.sqlite.JDBC");
                 NeoEssentials.LOGGER.info("SQLite JDBC driver loaded successfully");
             } catch (ClassNotFoundException e) {
-                NeoEssentials.LOGGER.error("SQLite JDBC driver not found: " + e.getMessage());
-                throw new RuntimeException("SQLite driver not available", e);
+                NeoEssentials.LOGGER.warn("SQLite JDBC driver not available - using file storage only");
+                NeoEssentials.LOGGER.warn("To enable database features, ensure SQLite JDBC is available in classpath");
+                useDatabase = false;
+                return;
             }
             
             // Connect to database with connection string
@@ -138,12 +140,9 @@ public class EconomyPersistenceManager {
             
             NeoEssentials.LOGGER.info("Economy database initialized successfully at " + databasePath);
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Failed to initialize economy database: " + e.getMessage(), e);
+            NeoEssentials.LOGGER.warn("Database initialization failed, using file storage: " + e.getMessage());
             useDatabase = false; // Fall back to file storage
             dbConnection = null;
-            
-            // Notify about fallback
-            NeoEssentials.LOGGER.warn("Economy system falling back to file-based storage");
         }
     }
     
