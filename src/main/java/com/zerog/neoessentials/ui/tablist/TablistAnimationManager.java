@@ -8,11 +8,11 @@ import com.google.gson.JsonParser;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.config.TablistYamlConfig;
 import com.zerog.neoessentials.ui.tablist.enhanced.TABConfig;
+import com.zerog.neoessentials.util.YamlUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.loading.FMLPaths;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -761,7 +761,7 @@ public class TablistAnimationManager {    /**
         private void loadFromToml(Path path) {
             try {
                 String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-                Map<String, Object> yamlData = new Yaml().load(content);
+                Map<String, Object> yamlData = new YamlUtil().load(content);
                 
                 // Process each animation section
                 for (Map.Entry<String, Object> entry : yamlData.entrySet()) {
