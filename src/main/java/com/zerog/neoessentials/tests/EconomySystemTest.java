@@ -16,6 +16,10 @@ public class EconomySystemTest {
     private static final UUID TEST_PLAYER_1 = UUID.randomUUID();
     private static final UUID TEST_PLAYER_2 = UUID.randomUUID();
     
+    public static void main(String[] args) {
+        runAllTests();
+    }
+    
     public static void runAllTests() {
         System.out.println("=== NeoEssentials Economy System Tests v1.0.2 ===");
         
