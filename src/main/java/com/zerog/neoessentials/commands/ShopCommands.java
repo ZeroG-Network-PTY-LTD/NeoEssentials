@@ -167,29 +167,53 @@ public class ShopCommands {
         }
     }
     
-    private int createShop(CommandSourceStack source, String shopName, String shopType) {
+    private int createShop(CommandSourceStack source, String shopName, String category, String ownership) {
         try {
             ServerPlayer player = source.getPlayerOrException();
             com.zerog.neoessentials.economy.EconomyManager economyManager = 
                 NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
             ShopManager shopManager = economyManager.getShopManager();
             
-            // Parse shop type
-            Shop.ShopType type;
-            try {
-                type = Shop.ShopType.valueOf(shopType.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                MessageUtil.sendErrorMessage(player, "Invalid shop type. Valid types: player, admin, auction");
+            // Validate category
+            boolean validCategory = false;
+            for (String validCat : TabCompletionUtil.SHOP_TYPES) {
+                if (validCat.equalsIgnoreCase(category)) {
+                    validCategory = true;
+                    break;
+                }
+            }
+            if (!validCategory) {
+                MessageUtil.sendErrorMessage(player, "Invalid shop category. Valid categories: " + 
+                    String.join(", ", TabCompletionUtil.SHOP_TYPES));
                 return 0;
             }
             
-            // Admin shops require permission
-            if (type == Shop.ShopType.ADMIN && !player.hasPermissions(4)) {
-                MessageUtil.sendErrorMessage(player, "You don't have permission to create admin shops.");
-                return 0;
+            // Parse shop ownership type to ShopType enum
+            Shop.ShopType type;
+            switch (ownership.toLowerCase()) {
+                case "player":
+                    type = Shop.ShopType.PLAYER;
+                    break;
+                case "server":
+                case "admin":
+                    type = Shop.ShopType.SERVER_SHOP;
+                    // Admin shops require permission
+                    if (!player.hasPermissions(4)) {
+                        MessageUtil.sendErrorMessage(player, "You don't have permission to create server shops.");
+                        return 0;
+                    }
+                    break;
+                case "auction":
+                    type = Shop.ShopType.AUCTION_HOUSE;
+                    break;
+                default:
+                    MessageUtil.sendErrorMessage(player, "Invalid ownership type. Valid types: player, server, auction");
+                    return 0;
             }
             
             MessageUtil.sendMessage(player, "§6Creating shop: §e" + shopName);
+            MessageUtil.sendMessage(player, "§7Category: §e" + category);
+            MessageUtil.sendMessage(player, "§7Ownership: §e" + ownership);
             MessageUtil.sendMessage(player, "§7Type: §e" + type.name());
             MessageUtil.sendMessage(player, "§7Location: §e" + player.position());
             MessageUtil.sendMessage(player, "§7Owner: §e" + player.getDisplayName().getString());
