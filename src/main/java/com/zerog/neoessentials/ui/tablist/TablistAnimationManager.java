@@ -129,10 +129,10 @@ public class TablistAnimationManager {    /**
      * @param playerId The UUID of the disconnected player
      */
     // Animation timing state
-    private long lastHeaderAnimationTime = 0;
-    private long lastFooterAnimationTime = 0;
+    private long lastAnimationCheck = 0;
     private int lastHeaderFrame = -1;
     private int lastFooterFrame = -1;
+    private Map<String, Integer> lastPlaceholderFrames = new ConcurrentHashMap<>();
     
     // Config reference
     private TABConfig config;
@@ -146,25 +146,55 @@ public class TablistAnimationManager {    /**
     
     /**
      * Checks if any animation frame has changed since last check
-     * This prevents unnecessary packet sending when animations haven't changed
+     * This includes both template animations AND placeholder animations
      */
     public boolean hasAnimationFrameChanged() {
         long currentTime = System.currentTimeMillis();
         
-        // Check header animation timing
+        // Check template header/footer animation timing
         int currentHeaderFrame = getCurrentHeaderFrame();
         int currentFooterFrame = getCurrentFooterFrame();
         
-        boolean changed = (currentHeaderFrame != lastHeaderFrame || currentFooterFrame != lastFooterFrame);
+        boolean templateChanged = (currentHeaderFrame != lastHeaderFrame || currentFooterFrame != lastFooterFrame);
         
-        if (changed) {
-            lastHeaderFrame = currentHeaderFrame;
-            lastFooterFrame = currentFooterFrame;
-            lastHeaderAnimationTime = currentTime;
-            lastFooterAnimationTime = currentTime;
+        // Check placeholder animations for changes
+        boolean placeholderChanged = false;
+        for (String animationName : animationCache.keySet()) {
+            int currentFrame = getCurrentPlaceholderFrame(animationName);
+            Integer lastFrame = lastPlaceholderFrames.get(animationName);
+            
+            if (lastFrame == null || lastFrame != currentFrame) {
+                lastPlaceholderFrames.put(animationName, currentFrame);
+                placeholderChanged = true;
+            }
         }
         
-        return changed;
+        // Update state if anything changed
+        if (templateChanged || placeholderChanged) {
+            lastHeaderFrame = currentHeaderFrame;
+            lastFooterFrame = currentFooterFrame;
+            lastAnimationCheck = currentTime;
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Gets the current frame for a placeholder animation
+     */
+    private int getCurrentPlaceholderFrame(String animationName) {
+        AnimationData animation = animationCache.get(animationName);
+        if (animation == null || animation.changeInterval <= 0 || animation.texts.isEmpty()) {
+            return 0;
+        }
+        
+        long currentTime = System.currentTimeMillis();
+        long tickTime = currentTime / 50; // Convert to ticks
+        long framePosition = tickTime / animation.changeInterval;
+        int frameIndex = (int) (framePosition % animation.texts.size());
+        
+        return Math.max(0, frameIndex); // Ensure non-negative
     }
     
     /**
