@@ -243,6 +243,13 @@ public class Loan {
     public void setLastPaymentDate(Date date) { /* For persistence - payment history handles this */ }
     public void setNextPaymentDue(Date date) { this.nextPaymentDue = date.getTime(); }
     
+    /**
+     * Set the next payment due time
+     */
+    public void setNextPaymentDueTime(long nextPaymentDue) {
+        this.nextPaymentDue = nextPaymentDue;
+    }
+    
     // Additional getters for persistence
     public double getCurrentBalance() { return remainingBalance; }
     public LoanType getType() { return loanType; }

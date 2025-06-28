@@ -458,22 +458,37 @@ public class EconomyManager {
     }
     
     /**
-     * Shutdown the economy manager
+     * Shutdown the economy system properly
      */
     public void shutdown() {
         try {
-            // Save all player data
-            saveAllPlayerData();
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Shutting down NeoEssentials Economy System...");
             
-            // Shutdown scheduler
-            scheduler.shutdown();
+            // Stop the loan processor
+            LoanProcessor.getInstance().stop();
             
-            // Shutdown persistence manager
-            persistenceManager.shutdown();
+            // Shutdown the main scheduler
+            if (scheduler != null && !scheduler.isShutdown()) {
+                scheduler.shutdown();
+                try {
+                    if (!scheduler.awaitTermination(10, TimeUnit.SECONDS)) {
+                        scheduler.shutdownNow();
+                    }
+                } catch (InterruptedException e) {
+                    scheduler.shutdownNow();
+                    Thread.currentThread().interrupt();
+                }
+            }
             
-            System.out.println("Economy manager shutdown complete");
+            // Close persistence manager
+            if (persistenceManager != null) {
+                persistenceManager.shutdown();
+            }
+            
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("Economy system shutdown complete.");
+            
         } catch (Exception e) {
-            System.err.println("Error during economy manager shutdown: " + e.getMessage());
+            com.zerog.neoessentials.NeoEssentials.LOGGER.error("Error during economy system shutdown: " + e.getMessage(), e);
         }
     }
     
@@ -489,6 +504,9 @@ public class EconomyManager {
             
             // Initialize loan persistence and preload active loans
             bankManager.initializeLoans();
+            
+            // Start the loan processor for automated loan management
+            LoanProcessor.getInstance().start();
             
             // Load summary statistics
             List<Loan> allActiveLoans = bankManager.getAllActiveLoans();
@@ -506,6 +524,7 @@ public class EconomyManager {
                 com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - Total outstanding loan balance: {}", 
                     defaultCurrency != null ? defaultCurrency.format(totalOutstanding) : String.format("$%.2f", totalOutstanding));
             }
+            com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - Automated loan processing started (daily updates, hourly overdue checks)");
             com.zerog.neoessentials.NeoEssentials.LOGGER.info("  - All economic data will persist across server restarts");
             
         } catch (Exception e) {
