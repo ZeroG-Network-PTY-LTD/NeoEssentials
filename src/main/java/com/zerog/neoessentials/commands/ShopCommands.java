@@ -33,11 +33,14 @@ public class ShopCommands {
                 // Shop Management
                 .then(Commands.literal("create")
                     .then(Commands.argument("name", StringArgumentType.string())
-                        .then(Commands.argument("type", StringArgumentType.string())
-                            .suggests(TabCompletionUtil.SHOP_TYPE_SUGGESTIONS)
-                            .executes(context -> createShop(context.getSource(),
-                                StringArgumentType.getString(context, "name"),
-                                StringArgumentType.getString(context, "type"))))))
+                        .then(Commands.argument("category", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.SHOP_TYPE_SUGGESTIONS) // This gives categories like armor, blocks, etc.
+                            .then(Commands.argument("ownership", StringArgumentType.string())
+                                .suggests(TabCompletionUtil.SHOP_OWNERSHIP_SUGGESTIONS) // This will give player, server, auction
+                                .executes(context -> createShop(context.getSource(),
+                                    StringArgumentType.getString(context, "name"),
+                                    StringArgumentType.getString(context, "category"),
+                                    StringArgumentType.getString(context, "ownership")))))))
                 .then(Commands.literal("list")
                     .executes(context -> listShops(context.getSource(), null))
                     .then(Commands.argument("filter", StringArgumentType.string())
@@ -224,10 +227,32 @@ public class ShopCommands {
                 MessageUtil.sendMessage(player, "§7Showing shops of type: §e" + filter);
             }
             
-            // TODO: Implement actual shop listing when full Shop integration is ready
-            MessageUtil.sendMessage(player, "§8[Example] §eGeneral Store §7- §aPlayer Shop §7- §6Owner: Steve");
-            MessageUtil.sendMessage(player, "§8[Example] §eServer Mall §7- §cAdmin Shop §7- §6Owner: Server");
-            MessageUtil.sendMessage(player, "§7Note: Shop listing is in development");
+            // Get shops and display them
+            List<Shop> shops;
+            if (filter == null || filter.equals("all")) {
+                shops = shopManager.getAllShops();
+            } else if (filter.equals("mine")) {
+                shops = shopManager.getPlayerShops(player.getUUID());
+            } else {
+                shops = shopManager.searchShops(filter, 50);
+            }
+            
+            if (shops.isEmpty()) {
+                MessageUtil.sendMessage(player, "§7No shops found.");
+                return 1;
+            }
+            
+            // Limit to first 10 shops for readability
+            for (Shop shop : shops.stream().limit(10).toList()) {
+                String ownerType = shop.getShopType() == Shop.ShopType.SERVER_SHOP || 
+                                  shop.getShopType() == Shop.ShopType.ADMIN ? "§cServer" : "§aPlayer";
+                MessageUtil.sendMessage(player, String.format("§e%s §7- %s §7- §6ID: %s", 
+                    shop.getName(), ownerType, shop.getShopId().toString().substring(0, 8)));
+            }
+            
+            if (shops.size() > 10) {
+                MessageUtil.sendMessage(player, "§7... and " + (shops.size() - 10) + " more shops");
+            }
             
             return 1;
         } catch (CommandSyntaxException e) {
