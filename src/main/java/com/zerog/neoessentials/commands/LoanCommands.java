@@ -229,7 +229,11 @@ public class LoanCommands {
                 .then(Commands.literal("admin")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.admin"))
                     .then(Commands.literal("listall")
-                        .executes(context -> listAllLoans(context.getSource()))))
+                        .executes(context -> listAllLoans(context.getSource())))
+                    .then(Commands.literal("stats")
+                        .executes(context -> showLoanSystemStats(context.getSource())))
+                    .then(Commands.literal("process")
+                        .executes(context -> triggerLoanProcessing(context.getSource()))))
         );
     }
     
@@ -254,7 +258,9 @@ public class LoanCommands {
             
             if (CommandManager.hasPermission(source, "neoessentials.command.loan.admin")) {
                 MessageUtil.sendMessage(player, "§c§lAdmin Commands:");
-                MessageUtil.sendMessage(player, "§c/loan admin listall");
+                MessageUtil.sendMessage(player, "§c/loan admin listall §7- List all loans");
+                MessageUtil.sendMessage(player, "§c/loan admin stats §7- View loan system statistics");
+                MessageUtil.sendMessage(player, "§c/loan admin process §7- Manually trigger loan processing");
             }
             
             return 1;
@@ -818,5 +824,80 @@ public class LoanCommands {
     // Helper methods for sending messages to CommandSourceStack
     private static void sendMessage(CommandSourceStack source, String message) {
         source.sendSuccess(() -> Component.literal("§8[§6NeoEssentials§8] §r" + message), false);
+    }
+    
+    private int showLoanSystemStats(CommandSourceStack source) {
+        try {
+            LoanProcessor.LoanSystemStats stats = LoanProcessor.getInstance().getStats();
+            Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
+            
+            sendMessage(source, "§6=== Loan System Statistics ===");
+            sendMessage(source, "§7Total Loans: §e" + stats.totalLoans);
+            sendMessage(source, "§7Current (Good Standing): §a" + stats.currentLoans);
+            sendMessage(source, "§7Overdue/Late: §c" + stats.overdueLoans);
+            sendMessage(source, "§7In Default: §4" + stats.defaultLoans);
+            sendMessage(source, "§7Paid Off: §2" + stats.paidOffLoans);
+            sendMessage(source, "");
+            sendMessage(source, "§7Total Outstanding: §c" + currency.format(stats.totalOutstanding));
+            sendMessage(source, "§7Total Overdue Amount: §4" + currency.format(stats.totalOverdue));
+            
+            // Calculate loan performance metrics
+            if (stats.totalLoans > 0) {
+                double performanceRate = (double) stats.currentLoans / stats.totalLoans * 100;
+                double defaultRate = (double) stats.defaultLoans / stats.totalLoans * 100;
+                String performanceColor = performanceRate >= 80 ? "§a" : performanceRate >= 60 ? "§e" : "§c";
+                String defaultColor = defaultRate <= 5 ? "§a" : defaultRate <= 15 ? "§e" : "§c";
+                
+                sendMessage(source, "");
+                sendMessage(source, "§7§lPerformance Metrics:");
+                sendMessage(source, "§7Good Standing Rate: " + performanceColor + String.format("%.1f%%", performanceRate));
+                sendMessage(source, "§7Default Rate: " + defaultColor + String.format("%.1f%%", defaultRate));
+            }
+            
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("An error occurred while retrieving loan statistics: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private int triggerLoanProcessing(CommandSourceStack source) {
+        try {
+            sendMessage(source, "§e⚙ Triggering manual loan processing...");
+            
+            // Get stats before processing
+            LoanProcessor.LoanSystemStats beforeStats = LoanProcessor.getInstance().getStats();
+            
+            // Trigger processing
+            LoanProcessor.getInstance().processAllLoans();
+            
+            // Get stats after processing
+            LoanProcessor.LoanSystemStats afterStats = LoanProcessor.getInstance().getStats();
+            
+            sendMessage(source, "§a✓ Loan processing completed!");
+            
+            // Show what changed
+            int statusChanges = (afterStats.overdueLoans - beforeStats.overdueLoans) + 
+                               (afterStats.defaultLoans - beforeStats.defaultLoans);
+            
+            if (statusChanges > 0) {
+                sendMessage(source, "§7Status changes detected:");
+                if (afterStats.overdueLoans > beforeStats.overdueLoans) {
+                    int newOverdue = afterStats.overdueLoans - beforeStats.overdueLoans;
+                    sendMessage(source, "§c  • " + newOverdue + " loans marked as overdue");
+                }
+                if (afterStats.defaultLoans > beforeStats.defaultLoans) {
+                    int newDefaults = afterStats.defaultLoans - beforeStats.defaultLoans;
+                    sendMessage(source, "§4  • " + newDefaults + " loans moved to default status");
+                }
+            } else {
+                sendMessage(source, "§7No status changes detected - all loans are current.");
+            }
+            
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("An error occurred while processing loans: " + e.getMessage()));
+            return 0;
+        }
     }
 }

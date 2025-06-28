@@ -403,43 +403,150 @@ public class BankManager {
             // Get player's loan history
             List<Loan> playerLoans = getPlayerLoans(playerId);
             
-            // Calculate based on payment history
-            int onTimePayments = 0;
-            int totalPayments = 0;
-            
-            for (Loan loan : playerLoans) {
-                // Add logic based on payment history
-                totalPayments += loan.getTermMonths() - loan.getPaymentsRemaining();
-                onTimePayments += loan.getTermMonths() - loan.getPaymentsRemaining(); // Simplified
+            if (playerLoans.isEmpty()) {
+                // New player with no credit history gets a moderate score
+                return 650;
             }
             
-            // Calculate payment history score (35% of total)
-            if (totalPayments > 0) {
-                double paymentRatio = (double) onTimePayments / totalPayments;
-                baseScore += (int) ((paymentRatio - 0.5) * 200); // -100 to +100
-            }
+            // Payment History Factor (35% weight) - Most important factor
+            double paymentHistoryScore = calculatePaymentHistoryScore(playerLoans);
+            baseScore += (int) (paymentHistoryScore * 0.35 * 200); // Max +/-70 points
             
-            // Account balance factor (30% of total)
-            BankAccount primaryAccount = getPrimaryAccount(playerId);
-            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+            // Current Debt Load Factor (30% weight)
+            double debtLoadScore = calculateDebtLoadScore(playerId, playerLoans);
+            baseScore += (int) (debtLoadScore * 0.30 * 200); // Max +/-60 points
             
-            if (primaryAccount != null) {
-                double balance = primaryAccount.getBalance(defaultCurrency);
-                if (balance > 10000) baseScore += 50;
-                else if (balance > 5000) baseScore += 25;
-                else if (balance < 1000) baseScore -= 25;
-            }
+            // Account Balance Factor (20% weight)
+            double balanceScore = calculateBalanceScore(playerId);
+            baseScore += (int) (balanceScore * 0.20 * 200); // Max +/-40 points
             
-            // Number of active loans (10% of total)
-            long activeLoansCount = playerLoans.stream()
-                .filter(l -> l.getStatus() == Loan.LoanStatus.CURRENT || l.getStatus() == Loan.LoanStatus.LATE)
-                .count();
+            // Loan Diversity Factor (10% weight)
+            double diversityScore = calculateLoanDiversityScore(playerLoans);
+            baseScore += (int) (diversityScore * 0.10 * 200); // Max +/-20 points
             
-            if (activeLoansCount > 3) baseScore -= 30;
-            else if (activeLoansCount == 0) baseScore += 10;
+            // Time Factor (5% weight) - Account age and loan history length
+            double timeScore = calculateTimeScore(playerLoans);
+            baseScore += (int) (timeScore * 0.05 * 200); // Max +/-10 points
             
             // Ensure score is within valid range
             return Math.max(300, Math.min(850, baseScore));
+        }
+        
+        private double calculatePaymentHistoryScore(List<Loan> playerLoans) {
+            int totalLoans = playerLoans.size();
+            int paidOffLoans = 0;
+            int defaultedLoans = 0;
+            int currentGoodStanding = 0;
+            int currentLateLoans = 0;
+            
+            for (Loan loan : playerLoans) {
+                switch (loan.getStatus()) {
+                    case PAID_OFF -> paidOffLoans++;
+                    case DEFAULT, FORECLOSED -> defaultedLoans++;
+                    case CURRENT -> currentGoodStanding++;
+                    case LATE -> currentLateLoans++;
+                    case PENDING, APPROVED -> {
+                        // Pending and approved loans don't affect credit score yet
+                    }
+                }
+            }
+            
+            // Perfect payment history = +1.0, terrible history = -1.0
+            double score = 0.0;
+            
+            // Heavily penalize defaults
+            if (defaultedLoans > 0) {
+                score -= (double) defaultedLoans / totalLoans * 1.5;
+            }
+            
+            // Reward paid off loans
+            score += (double) paidOffLoans / totalLoans * 0.8;
+            
+            // Current good standing is positive
+            score += (double) currentGoodStanding / totalLoans * 0.5;
+            
+            // Late payments are negative but not as bad as defaults
+            score -= (double) currentLateLoans / totalLoans * 0.7;
+            
+            return Math.max(-1.0, Math.min(1.0, score));
+        }
+        
+        private double calculateDebtLoadScore(UUID playerId, List<Loan> playerLoans) {
+            double totalDebt = playerLoans.stream()
+                .filter(l -> l.getStatus() == Loan.LoanStatus.CURRENT || l.getStatus() == Loan.LoanStatus.LATE)
+                .mapToDouble(Loan::getCurrentBalance)
+                .sum();
+            
+            BankAccount primaryAccount = getPrimaryAccount(playerId);
+            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+            double balance = primaryAccount != null ? primaryAccount.getBalance(defaultCurrency) : 0.0;
+            
+            // Calculate debt-to-asset ratio
+            double debtToAssetRatio = balance > 0 ? totalDebt / balance : (totalDebt > 0 ? 2.0 : 0.0);
+            
+            // Low debt-to-asset ratio is good
+            if (debtToAssetRatio < 0.2) return 1.0;      // Excellent
+            if (debtToAssetRatio < 0.5) return 0.5;      // Good
+            if (debtToAssetRatio < 1.0) return 0.0;      // Fair
+            if (debtToAssetRatio < 2.0) return -0.5;     // Poor
+            return -1.0;                                  // Very poor
+        }
+        
+        private double calculateBalanceScore(UUID playerId) {
+            BankAccount primaryAccount = getPrimaryAccount(playerId);
+            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+            
+            if (primaryAccount == null) return -0.5;
+            
+            double balance = primaryAccount.getBalance(defaultCurrency);
+            
+            // Higher balances indicate financial stability
+            if (balance > 50000) return 1.0;    // Excellent
+            if (balance > 25000) return 0.7;    // Very good
+            if (balance > 10000) return 0.4;    // Good
+            if (balance > 5000) return 0.1;     // Fair
+            if (balance > 1000) return -0.2;    // Poor
+            return -0.5;                        // Very poor
+        }
+        
+        private double calculateLoanDiversityScore(List<Loan> playerLoans) {
+            if (playerLoans.isEmpty()) return 0.0;
+            
+            // Count different types of loans
+            Set<Loan.LoanType> loanTypes = playerLoans.stream()
+                .map(Loan::getLoanType)
+                .collect(java.util.stream.Collectors.toSet());
+            
+            // Having multiple types of loans can be positive (shows experience)
+            // but too many active loans is negative
+            long activeLoans = playerLoans.stream()
+                .filter(l -> l.getStatus() == Loan.LoanStatus.CURRENT || l.getStatus() == Loan.LoanStatus.LATE)
+                .count();
+            
+            double diversityBonus = Math.min(loanTypes.size() * 0.3, 0.5);
+            double activePenalty = activeLoans > 3 ? (activeLoans - 3) * -0.2 : 0.0;
+            
+            return Math.max(-1.0, Math.min(1.0, diversityBonus + activePenalty));
+        }
+        
+        private double calculateTimeScore(List<Loan> playerLoans) {
+            if (playerLoans.isEmpty()) return 0.0;
+            
+            // Find oldest loan
+            long oldestLoanTime = playerLoans.stream()
+                .mapToLong(Loan::getCreatedTime)
+                .min()
+                .orElse(System.currentTimeMillis());
+            
+            // Calculate months since first loan
+            long monthsSinceFirst = (System.currentTimeMillis() - oldestLoanTime) / (30L * 24L * 60L * 60L * 1000L);
+            
+            // Longer credit history is better
+            if (monthsSinceFirst > 60) return 1.0;      // 5+ years
+            if (monthsSinceFirst > 36) return 0.7;      // 3-5 years
+            if (monthsSinceFirst > 12) return 0.4;      // 1-3 years
+            if (monthsSinceFirst > 6) return 0.1;       // 6-12 months
+            return -0.2;                                // Less than 6 months
         }
         
         /**
@@ -728,5 +835,9 @@ public class BankManager {
                 com.zerog.neoessentials.NeoEssentials.LOGGER.error("Failed to load accounts for player " + playerId + ": " + e.getMessage(), e);
             }
         }
+    }
+    
+    public com.zerog.neoessentials.economy.persistence.EconomyPersistenceManager getPersistenceManager() {
+        return persistenceManager;
     }
 }
