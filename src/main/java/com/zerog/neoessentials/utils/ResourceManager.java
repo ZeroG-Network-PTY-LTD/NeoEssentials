@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class ResourceManager {    private static final List<String> CONFIG_FILES = Arrays.asList(
         "general.toml",
-        "economy.toml",
+        "economy.yml",
         "homes.toml",
         "warps.toml",
         "kits.toml",
