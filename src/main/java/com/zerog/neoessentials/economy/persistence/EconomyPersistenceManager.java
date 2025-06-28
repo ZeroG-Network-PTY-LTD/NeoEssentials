@@ -651,4 +651,249 @@ public class EconomyPersistenceManager {
     public boolean isUsingFileBackup() {
         return useFileBackup;
     }
+    
+    // ========== LOAN PERSISTENCE METHODS ==========
+    
+    /**
+     * Save a loan to database and file
+     */
+    public CompletableFuture<Boolean> saveLoan(Loan loan) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                // Update cache first
+                loanCache.put(loan.getLoanId(), loan);
+                
+                // Save to database
+                String sql = """
+                    INSERT OR REPLACE INTO loans (
+                        loan_id, borrower_uuid, loan_type, principal_amount, 
+                        current_balance, interest_rate, term_months, 
+                        remaining_payments, status, created_date, 
+                        last_payment_date, next_payment_due
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """;
+                
+                try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+                    stmt.setString(1, loan.getLoanId().toString());
+                    stmt.setString(2, loan.getBorrowerId().toString());
+                    stmt.setString(3, loan.getType().name());
+                    stmt.setDouble(4, loan.getPrincipalAmount());
+                    stmt.setDouble(5, loan.getCurrentBalance());
+                    stmt.setDouble(6, loan.getInterestRate());
+                    stmt.setInt(7, loan.getTermMonths());
+                    stmt.setInt(8, loan.getRemainingPayments());
+                    stmt.setString(9, loan.getStatus().name());
+                    stmt.setLong(10, loan.getCreatedDate().getTime());
+                    stmt.setLong(11, loan.getLastPaymentDate() != null ? loan.getLastPaymentDate().getTime() : 0);
+                    stmt.setLong(12, loan.getNextPaymentDue() != null ? loan.getNextPaymentDue().getTime() : 0);
+                    
+                    stmt.executeUpdate();
+                }
+                
+                // Save to file if enabled
+                if (useFileBackup) {
+                    saveLoansToFile();
+                }
+                
+                return true;
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to save loan: " + loan.getLoanId(), e);
+                return false;
+            }
+        });
+    }
+    
+    /**
+     * Load a specific loan from database
+     */
+    public CompletableFuture<Loan> loadLoan(UUID loanId) {
+        return CompletableFuture.supplyAsync(() -> {
+            // Check cache first
+            if (loanCache.containsKey(loanId)) {
+                return loanCache.get(loanId);
+            }
+            
+            try {
+                String sql = "SELECT * FROM loans WHERE loan_id = ?";
+                try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+                    stmt.setString(1, loanId.toString());
+                    
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        if (rs.next()) {
+                            Loan loan = createLoanFromResultSet(rs);
+                            loanCache.put(loanId, loan);
+                            return loan;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to load loan: " + loanId, e);
+            }
+            
+            return null;
+        });
+    }
+    
+    /**
+     * Load all loans for a specific player
+     */
+    public CompletableFuture<List<Loan>> loadPlayerLoans(UUID playerId) {
+        return CompletableFuture.supplyAsync(() -> {
+            List<Loan> playerLoans = new ArrayList<>();
+            
+            try {
+                String sql = "SELECT * FROM loans WHERE borrower_uuid = ? ORDER BY created_date DESC";
+                try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+                    stmt.setString(1, playerId.toString());
+                    
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        while (rs.next()) {
+                            Loan loan = createLoanFromResultSet(rs);
+                            loanCache.put(loan.getLoanId(), loan);
+                            playerLoans.add(loan);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to load player loans: " + playerId, e);
+            }
+            
+            return playerLoans;
+        });
+    }
+    
+    /**
+     * Load all active loans
+     */
+    public CompletableFuture<List<Loan>> loadAllActiveLoans() {
+        return CompletableFuture.supplyAsync(() -> {
+            List<Loan> activeLoans = new ArrayList<>();
+            
+            try {
+                String sql = "SELECT * FROM loans WHERE status IN ('ACTIVE', 'APPROVED') ORDER BY created_date DESC";
+                try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        while (rs.next()) {
+                            Loan loan = createLoanFromResultSet(rs);
+                            loanCache.put(loan.getLoanId(), loan);
+                            activeLoans.add(loan);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to load active loans", e);
+            }
+            
+            return activeLoans;
+        });
+    }
+    
+    /**
+     * Delete a loan from database and cache
+     */
+    public CompletableFuture<Boolean> deleteLoan(UUID loanId) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                // Remove from cache
+                loanCache.remove(loanId);
+                
+                // Delete from database
+                String sql = "DELETE FROM loans WHERE loan_id = ?";
+                try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
+                    stmt.setString(1, loanId.toString());
+                    int affected = stmt.executeUpdate();
+                    
+                    if (useFileBackup) {
+                        saveLoansToFile();
+                    }
+                    
+                    return affected > 0;
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to delete loan: " + loanId, e);
+                return false;
+            }
+        });
+    }
+    
+    /**
+     * Create a Loan object from ResultSet
+     */
+    private Loan createLoanFromResultSet(ResultSet rs) throws Exception {
+        UUID loanId = UUID.fromString(rs.getString("loan_id"));
+        UUID borrowerId = UUID.fromString(rs.getString("borrower_uuid"));
+        Loan.LoanType type = Loan.LoanType.valueOf(rs.getString("loan_type"));
+        double principalAmount = rs.getDouble("principal_amount");
+        double currentBalance = rs.getDouble("current_balance");
+        double interestRate = rs.getDouble("interest_rate");
+        int termMonths = rs.getInt("term_months");
+        int remainingPayments = rs.getInt("remaining_payments");
+        Loan.LoanStatus status = Loan.LoanStatus.valueOf(rs.getString("status"));
+        
+        // Create loan with basic parameters
+        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        Loan loan = new Loan(borrowerId, principalAmount, defaultCurrency, type, termMonths, interestRate);
+        
+        // Set additional properties that aren't in constructor
+        loan.setCurrentBalance(currentBalance);
+        loan.setRemainingPayments(remainingPayments);
+        loan.setStatus(status);
+        
+        // Set dates if available
+        long createdDate = rs.getLong("created_date");
+        if (createdDate > 0) {
+            loan.setCreatedDate(new java.util.Date(createdDate));
+        }
+        
+        long lastPaymentDate = rs.getLong("last_payment_date");
+        if (lastPaymentDate > 0) {
+            loan.setLastPaymentDate(new java.util.Date(lastPaymentDate));
+        }
+        
+        long nextPaymentDue = rs.getLong("next_payment_due");
+        if (nextPaymentDue > 0) {
+            loan.setNextPaymentDue(new java.util.Date(nextPaymentDue));
+        }
+        
+        return loan;
+    }
+    
+    /**
+     * Save all loans to JSON file
+     */
+    private void saveLoansToFile() {
+        if (!useFileBackup) return;
+        
+        try {
+            Map<String, Object> loansData = new HashMap<>();
+            
+            for (Loan loan : loanCache.values()) {
+                Map<String, Object> loanData = new HashMap<>();
+                loanData.put("borrowerId", loan.getBorrowerId().toString());
+                loanData.put("type", loan.getType().name());
+                loanData.put("principalAmount", loan.getPrincipalAmount());
+                loanData.put("currentBalance", loan.getCurrentBalance());
+                loanData.put("interestRate", loan.getInterestRate());
+                loanData.put("termMonths", loan.getTermMonths());
+                loanData.put("remainingPayments", loan.getRemainingPayments());
+                loanData.put("status", loan.getStatus().name());
+                loanData.put("createdDate", loan.getCreatedDate().getTime());
+                
+                if (loan.getLastPaymentDate() != null) {
+                    loanData.put("lastPaymentDate", loan.getLastPaymentDate().getTime());
+                }
+                if (loan.getNextPaymentDue() != null) {
+                    loanData.put("nextPaymentDue", loan.getNextPaymentDue().getTime());
+                }
+                
+                loansData.put(loan.getLoanId().toString(), loanData);
+            }
+            
+            String json = new com.google.gson.Gson().toJson(loansData);
+            Files.write(Paths.get(dataFolder + loansFile), json.getBytes());
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to save loans to file", e);
+        }
+    }
 }

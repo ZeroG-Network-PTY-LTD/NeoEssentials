@@ -5,7 +5,6 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.*;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -177,15 +176,45 @@ public class LoanCommands {
     private int showLoanInfo(CommandSourceStack source, String loanId) {
         try {
             ServerPlayer player = source.getPlayerOrException();
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            
+            UUID loanUUID;
+            try {
+                loanUUID = UUID.fromString(loanId);
+            } catch (IllegalArgumentException e) {
+                // Try to find loan by partial ID
+                List<Loan> playerLoans = bankManager.getPlayerLoans(player.getUUID());
+                Loan loan = playerLoans.stream()
+                    .filter(l -> l.getLoanId().toString().startsWith(loanId))
+                    .findFirst()
+                    .orElse(null);
+                
+                if (loan == null) {
+                    MessageUtil.sendErrorMessage(player, "Loan not found with ID: " + loanId);
+                    return 0;
+                }
+                loanUUID = loan.getLoanId();
+            }
+            
+            Loan loan = bankManager.getLoan(loanUUID);
+            if (loan == null || !loan.getBorrowerId().equals(player.getUUID())) {
+                MessageUtil.sendErrorMessage(player, "Loan not found or you don't have permission to view it.");
+                return 0;
+            }
+            
+            Currency currency = loan.getCurrency();
             
             MessageUtil.sendMessage(player, "§6=== Loan Information ===");
-            MessageUtil.sendMessage(player, "§7Loan ID: §e" + loanId.substring(0, Math.min(8, loanId.length())));
-            MessageUtil.sendMessage(player, "§eLoan information system coming soon!");
-            MessageUtil.sendMessage(player, "§7This will show detailed loan information including:");
-            MessageUtil.sendMessage(player, "§7• Principal amount and outstanding balance");
-            MessageUtil.sendMessage(player, "§7• Interest rate and payment schedule");
-            MessageUtil.sendMessage(player, "§7• Payment history and remaining payments");
-            MessageUtil.sendMessage(player, "§7• Loan status and next payment due");
+            MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+            MessageUtil.sendMessage(player, "§7Type: §e" + loan.getType().getDisplayName());
+            MessageUtil.sendMessage(player, "§7Status: §a" + loan.getStatus().name());
+            MessageUtil.sendMessage(player, "§7Principal Amount: §a" + currency.format(loan.getPrincipalAmount()));
+            MessageUtil.sendMessage(player, "§7Current Balance: §c" + currency.format(loan.getCurrentBalance()));
+            MessageUtil.sendMessage(player, "§7Monthly Payment: §e" + currency.format(loan.getMonthlyPayment()));
+            MessageUtil.sendMessage(player, "§7Interest Rate: §e" + String.format("%.2f%%", loan.getInterestRate() * 100));
+            MessageUtil.sendMessage(player, "§7Payments Remaining: §e" + loan.getPaymentsRemaining());
+            MessageUtil.sendMessage(player, "§7Next Payment Due: §e" + new java.text.SimpleDateFormat("MMM dd, yyyy").format(loan.getNextPaymentDue()));
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -210,17 +239,37 @@ public class LoanCommands {
     private int listPlayerLoans(CommandSourceStack source, ServerPlayer targetPlayer) {
         try {
             ServerPlayer player = source.getPlayerOrException();
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            
+            List<Loan> playerLoans = bankManager.getPlayerLoans(targetPlayer.getUUID());
             
             String title = targetPlayer.equals(player) ? "Your Loans" : 
                 targetPlayer.getDisplayName().getString() + "'s Loans";
             MessageUtil.sendMessage(player, "§6=== " + title + " ===");
             
-            MessageUtil.sendMessage(player, "§eLoan listing system coming soon!");
-            MessageUtil.sendMessage(player, "§7This will show all loans for " + 
-                (targetPlayer.equals(player) ? "you" : targetPlayer.getDisplayName().getString()));
-            MessageUtil.sendMessage(player, "§7• Active loans with balances");
-            MessageUtil.sendMessage(player, "§7• Payment schedules and due dates");
-            MessageUtil.sendMessage(player, "§7• Completed loan history");
+            if (playerLoans.isEmpty()) {
+                MessageUtil.sendMessage(player, "§7No loans found.");
+                return 1;
+            }
+            
+            for (Loan loan : playerLoans) {
+                Currency currency = loan.getCurrency();
+                String statusColor = switch (loan.getStatus()) {
+                    case CURRENT -> "§a";
+                    case LATE -> "§c";
+                    case PAID_OFF -> "§2";
+                    case DEFAULT -> "§4";
+                    default -> "§e";
+                };
+                
+                MessageUtil.sendMessage(player, "§7• ID: §e" + loan.getLoanId().toString().substring(0, 8) + 
+                    " §7| Type: §e" + loan.getType().getDisplayName() + 
+                    " §7| Balance: §c" + currency.format(loan.getCurrentBalance()) + 
+                    " §7| Status: " + statusColor + loan.getStatus().name());
+            }
+            
+            MessageUtil.sendMessage(player, "§7Use §e/loan info <loan-id>§7 for detailed information.");
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -235,17 +284,43 @@ public class LoanCommands {
     private int makeLoanPayment(CommandSourceStack source, double amount, String loanId) {
         try {
             ServerPlayer player = source.getPlayerOrException();
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            BankManager.LoanManager loanManager = bankManager.getLoanManager();
             Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
             
-            MessageUtil.sendMessage(player, "§aLoan payment processing...");
-            MessageUtil.sendMessage(player, "§7Payment amount: §a" + currency.format(amount));
+            UUID loanUUID = null;
             if (loanId != null) {
-                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loanId.substring(0, Math.min(8, loanId.length())));
+                try {
+                    loanUUID = UUID.fromString(loanId);
+                } catch (IllegalArgumentException e) {
+                    // Try to find loan by partial ID
+                    List<Loan> playerLoans = bankManager.getPlayerLoans(player.getUUID());
+                    Loan loan = playerLoans.stream()
+                        .filter(l -> l.getLoanId().toString().startsWith(loanId))
+                        .findFirst()
+                        .orElse(null);
+                    
+                    if (loan != null) {
+                        loanUUID = loan.getLoanId();
+                    }
+                }
             }
-            MessageUtil.sendMessage(player, "§eLoan payment system coming soon!");
-            MessageUtil.sendMessage(player, "§7This will process loan payments and update balances.");
             
-            return 1;
+            boolean success = loanManager.makePayment(player.getUUID(), loanUUID, amount);
+            
+            if (success) {
+                MessageUtil.sendMessage(player, "§aLoan payment successful!");
+                MessageUtil.sendMessage(player, "§7Payment amount: §a" + currency.format(amount));
+                if (loanUUID != null) {
+                    MessageUtil.sendMessage(player, "§7Loan ID: §e" + loanUUID.toString().substring(0, 8));
+                }
+                MessageUtil.sendMessage(player, "§7Your loan balance has been updated.");
+            } else {
+                MessageUtil.sendErrorMessage(player, "Loan payment failed. Check that you have sufficient funds and a valid loan.");
+            }
+            
+            return success ? 1 : 0;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("This command can only be used by players."));
             return 0;
@@ -268,24 +343,39 @@ public class LoanCommands {
     private int showCreditScore(CommandSourceStack source, ServerPlayer targetPlayer) {
         try {
             ServerPlayer player = source.getPlayerOrException();
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            BankManager.LoanManager loanManager = bankManager.getLoanManager();
+            
+            int creditScore = loanManager.calculateCreditScore(targetPlayer.getUUID());
+            String creditRating = getCreditRating(creditScore);
+            String creditColor = getCreditColor(creditScore);
             
             String title = targetPlayer.equals(player) ? "Your Credit Information" : 
                 targetPlayer.getDisplayName().getString() + "'s Credit Information";
             
             MessageUtil.sendMessage(player, "§6=== " + title + " ===");
-            MessageUtil.sendMessage(player, "§7Credit Score: §e750 §7(Default)");
-            MessageUtil.sendMessage(player, "§7Credit Rating: §aGood");
+            MessageUtil.sendMessage(player, "§7Credit Score: " + creditColor + creditScore + " §7(" + creditRating + ")");
             
             MessageUtil.sendMessage(player, "§e§lLoan Eligibility:");
-            MessageUtil.sendMessage(player, "§7• Personal Loan: §aEligible");
-            MessageUtil.sendMessage(player, "§7• Business Loan: §aEligible");
-            MessageUtil.sendMessage(player, "§7• Mortgage: §aEligible");
+            double personalEligibility = loanManager.getMaxLoanEligibility(targetPlayer.getUUID(), Loan.LoanType.PERSONAL);
+            double businessEligibility = loanManager.getMaxLoanEligibility(targetPlayer.getUUID(), Loan.LoanType.BUSINESS);
+            double mortgageEligibility = loanManager.getMaxLoanEligibility(targetPlayer.getUUID(), Loan.LoanType.MORTGAGE);
             
-            MessageUtil.sendMessage(player, "§eCredit scoring system coming soon!");
-            MessageUtil.sendMessage(player, "§7This will show real credit scores based on:");
-            MessageUtil.sendMessage(player, "§7• Payment history and loan performance");
-            MessageUtil.sendMessage(player, "§7• Account balances and financial activity");
-            MessageUtil.sendMessage(player, "§7• Economic behavior and transaction patterns");
+            Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
+            MessageUtil.sendMessage(player, "§7• Personal Loan: §a" + currency.format(personalEligibility));
+            MessageUtil.sendMessage(player, "§7• Business Loan: §a" + currency.format(businessEligibility));
+            MessageUtil.sendMessage(player, "§7• Mortgage: §a" + currency.format(mortgageEligibility));
+            
+            // Show factors affecting credit score
+            List<Loan> playerLoans = bankManager.getPlayerLoans(targetPlayer.getUUID());
+            long activeLoans = playerLoans.stream()
+                .filter(l -> l.getStatus() == Loan.LoanStatus.CURRENT || l.getStatus() == Loan.LoanStatus.LATE)
+                .count();
+            
+            MessageUtil.sendMessage(player, "§7§lCredit Factors:");
+            MessageUtil.sendMessage(player, "§7• Active Loans: §e" + activeLoans);
+            MessageUtil.sendMessage(player, "§7• Total Loan History: §e" + playerLoans.size());
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -297,15 +387,66 @@ public class LoanCommands {
         }
     }
     
+    private String getCreditRating(int creditScore) {
+        if (creditScore >= 800) return "Excellent";
+        if (creditScore >= 740) return "Very Good";
+        if (creditScore >= 670) return "Good";
+        if (creditScore >= 580) return "Fair";
+        return "Poor";
+    }
+    
+    private String getCreditColor(int creditScore) {
+        if (creditScore >= 740) return "§a"; // Green
+        if (creditScore >= 670) return "§e"; // Yellow
+        if (creditScore >= 580) return "§6"; // Orange
+        return "§c"; // Red
+    }
+    
     private int listAllLoans(CommandSourceStack source) {
         try {
-            MessageUtil.sendMessage(source, "§6=== All Loans (Admin View) ===");
-            MessageUtil.sendMessage(source, "§eAdmin loan management coming soon!");
-            MessageUtil.sendMessage(source, "§7This will show all loans in the system with:");
-            MessageUtil.sendMessage(source, "§7• Loan details and current status");
-            MessageUtil.sendMessage(source, "§7• Borrower information and payment history");
-            MessageUtil.sendMessage(source, "§7• Risk analysis and default warnings");
-            MessageUtil.sendMessage(source, "§7• Batch approval and management tools");
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            
+            List<Loan> allLoans = bankManager.getAllActiveLoans();
+            
+            sendMessage(source, "§6=== All Loans (Admin View) ===");
+            
+            if (allLoans.isEmpty()) {
+                sendMessage(source, "§7No active loans found.");
+                return 1;
+            }
+            
+            Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
+            
+            sendMessage(source, "§7Found §e" + allLoans.size() + "§7 active loans:");
+            
+            for (Loan loan : allLoans) {
+                String statusColor = switch (loan.getStatus()) {
+                    case CURRENT -> "§a";
+                    case LATE -> "§c";
+                    case DEFAULT -> "§4";
+                    default -> "§e";
+                };
+                
+                sendMessage(source, "§7• ID: §e" + loan.getLoanId().toString().substring(0, 8) + 
+                    " §7| Borrower: §e" + loan.getBorrowerId().toString().substring(0, 8) +
+                    " §7| Type: §e" + loan.getType().getDisplayName() + 
+                    " §7| Balance: §c" + currency.format(loan.getCurrentBalance()) + 
+                    " §7| Status: " + statusColor + loan.getStatus().name());
+            }
+            
+            // Summary statistics
+            double totalOutstanding = allLoans.stream()
+                .mapToDouble(Loan::getCurrentBalance)
+                .sum();
+            
+            long overdueLoans = allLoans.stream()
+                .filter(l -> l.getStatus() == Loan.LoanStatus.LATE || l.getStatus() == Loan.LoanStatus.DEFAULT)
+                .count();
+            
+            sendMessage(source, "§7§lSummary:");
+            sendMessage(source, "§7Total Outstanding: §c" + currency.format(totalOutstanding));
+            sendMessage(source, "§7Overdue Loans: §c" + overdueLoans);
             
             return 1;
         } catch (Exception e) {

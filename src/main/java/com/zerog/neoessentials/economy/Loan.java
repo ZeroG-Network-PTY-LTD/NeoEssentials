@@ -231,9 +231,31 @@ public class Loan {
     public double getMonthlyPayment() { return monthlyPayment; }
     public double getRemainingBalance() { return remainingBalance; }
     public LoanStatus getStatus() { return status; }
-    public long getNextPaymentDue() { return nextPaymentDue; }
+    public long getNextPaymentDueTime() { return nextPaymentDue; }
     public int getPaymentsRemaining() { return paymentsRemaining; }
     public double getTotalInterestPaid() { return totalInterestPaid; }
+    
+    // Setter methods for persistence layer
+    public void setCurrentBalance(double balance) { this.remainingBalance = balance; }
+    public void setRemainingPayments(int payments) { this.paymentsRemaining = payments; }
+    public void setStatus(LoanStatus status) { this.status = status; }
+    public void setCreatedDate(Date date) { /* Created time is final, handle in constructor */ }
+    public void setLastPaymentDate(Date date) { /* Add lastPaymentDate field if needed */ }
+    public void setNextPaymentDue(Date date) { this.nextPaymentDue = date.getTime(); }
+    
+    // Additional getters for persistence
+    public double getCurrentBalance() { return remainingBalance; }
+    public LoanType getType() { return loanType; }
+    public Date getCreatedDate() { return new Date(createdTime); }
+    public Date getLastPaymentDate() { 
+        // Return date of last payment if available
+        if (!payments.isEmpty()) {
+            LoanPayment lastPayment = payments.get(payments.size() - 1);
+            return new Date(lastPayment.getPaymentTime());
+        }
+        return null;
+    }
+    public Date getNextPaymentDue() { return new Date(nextPaymentDue); }
     
     @Override
     public String toString() {
