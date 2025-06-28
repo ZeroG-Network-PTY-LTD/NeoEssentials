@@ -40,6 +40,7 @@ public class TABLikeTablistManager {
     private final AtomicReference<MinecraftServer> serverRef = new AtomicReference<>(null);
     private final ScheduledExecutorService scheduler;
     private ScheduledFuture<?> updateTask;
+    private ScheduledFuture<?> animationTask;
     
     // Core managers
     private final TablistAnimationManager animationManager;
@@ -115,11 +116,23 @@ public class TABLikeTablistManager {
         if (updateTask != null) {
             updateTask.cancel(false);
         }
+        if (animationTask != null) {
+            animationTask.cancel(false);
+        }
         
+        // Main tablist update task (for player data, placeholders, etc.)
         updateTask = scheduler.scheduleAtFixedRate(
             this::updateTablist,
             0,
             config.getUpdateInterval(),
+            TimeUnit.MILLISECONDS
+        );
+        
+        // Separate animation update task (runs more frequently for smooth animations)
+        animationTask = scheduler.scheduleAtFixedRate(
+            this::updateAnimationsOnly,
+            0,
+            50, // Update animations every 50ms (1 tick)
             TimeUnit.MILLISECONDS
         );
     }
@@ -129,9 +142,6 @@ public class TABLikeTablistManager {
         if (server == null || server.getPlayerList() == null) return;
         
         try {
-            // Update animations
-            animationManager.updateAnimationFrames();
-            
             Collection<ServerPlayer> players = server.getPlayerList().getPlayers();
             if (players.isEmpty()) return;
             
@@ -452,6 +462,10 @@ public class TABLikeTablistManager {
             updateTask.cancel(false);
             updateTask = null;
         }
+        if (animationTask != null) {
+            animationTask.cancel(false);
+            animationTask = null;
+        }
         
         // Clear player data
         playerData.clear();
@@ -484,5 +498,39 @@ public class TABLikeTablistManager {
     
     public int getPlayerCount() {
         return playerData.size();
+    }
+    
+    /**
+     * Updates only animations without full tablist refresh
+     * This runs more frequently to provide smooth animations independent of tablist update interval
+     */
+    private void updateAnimationsOnly() {
+        MinecraftServer server = serverRef.get();
+        if (server == null || server.getPlayerList() == null) return;
+        
+        try {
+            Collection<ServerPlayer> players = server.getPlayerList().getPlayers();
+            if (players.isEmpty()) return;
+            
+            // Only update header/footer animations, not full player data
+            for (ServerPlayer player : players) {
+                PlayerTabData data = playerData.get(player.getUUID());
+                if (data == null) continue;
+                
+                try {
+                    Component header = getHeaderForPlayer(player, data);
+                    Component footer = getFooterForPlayer(player, data);
+                    
+                    // Send only header/footer update
+                    ClientboundTabListPacket packet = new ClientboundTabListPacket(header, footer);
+                    player.connection.send(packet);
+                } catch (Exception e) {
+                    NeoEssentials.LOGGER.error("Error updating animations for player {}: {}", 
+                        player.getName().getString(), e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error in animation update task", e);
+        }
     }
 }

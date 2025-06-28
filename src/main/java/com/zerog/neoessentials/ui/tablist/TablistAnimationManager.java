@@ -781,16 +781,18 @@ public class TablistAnimationManager {    /**
         }
         
         // Get current frame based on system time and animation interval
+        // changeInterval is in ticks (1 tick = 50ms)
         long currentTime = System.currentTimeMillis();
-        int frame = (int) (currentTime / 50); // Convert to ticks (50ms per tick)
-        int effectiveFrameIndex = (frame / animation.changeInterval) % animation.texts.size();
+        long tickTime = currentTime / 50; // Convert to ticks
         
-        String animationText = animation.texts.get(effectiveFrameIndex);
+        // Calculate frame index based on the animation's change interval
+        int frameIndex = (int) (tickTime / animation.changeInterval) % animation.texts.size();
+        
+        String animationText = animation.texts.get(frameIndex);
         
         // Return raw text - color processing will be done later by colorize() method
-        // This preserves hex color codes for proper native processing
-        NeoEssentials.LOGGER.debug("Animation '{}' frame {}: '{}'", 
-            animationName, effectiveFrameIndex, animationText);
+        NeoEssentials.LOGGER.debug("Animation '{}' interval:{} tick:{} frame:{} text:'{}'", 
+            animationName, animation.changeInterval, tickTime, frameIndex, animationText);
         
         return animationText;
     }
