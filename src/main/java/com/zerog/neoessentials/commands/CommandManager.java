@@ -27,6 +27,9 @@ public class CommandManager {    // Command classes
     private final TeleportCommands teleportCommands;
     private final HomeCommands homeCommands;
     private final EconomyCommands economyCommands;
+    // private final BankCommands bankCommands;
+    // private final ShopCommands shopCommands;
+    // private final AuctionCommands auctionCommands;
     private final UserCommands userCommands;
     private final WarpCommands warpCommands;
     private final KitCommands kitCommands;
@@ -53,6 +56,9 @@ public class CommandManager {    // Command classes
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
+        // bankCommands = new BankCommands();
+        // shopCommands = new ShopCommands();
+        // auctionCommands = new AuctionCommands();
         userCommands = new UserCommands();
         warpCommands = new WarpCommands();
         kitCommands = new KitCommands();
@@ -122,6 +128,9 @@ public class CommandManager {    // Command classes
         // Register economy commands
         economyCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered economy commands");
+        
+        // Register new economy command classes separately to avoid compilation issues
+        registerEconomyCommands(dispatcher);
         
         // Register user commands
         userCommands.register(dispatcher);
@@ -199,6 +208,37 @@ public class CommandManager {    // Command classes
         // For now, we'll skip registering ItemCommands until we can find a proper way
         // to get the CommandBuildContext
         NeoEssentials.LOGGER.info("Skipping ItemCommands registration due to CommandBuildContext requirements");
+    }
+    
+    /**
+     * Registers economy-related commands separately to avoid compilation issues.
+     * This is a temporary workaround while the command system is being integrated.
+     */
+    private void registerEconomyCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        try {
+            // Use reflection to avoid compilation dependency issues
+            Class<?> bankCommandsClass = Class.forName("com.zerog.neoessentials.commands.BankCommands");
+            Object bankCommands = bankCommandsClass.getDeclaredConstructor().newInstance();
+            java.lang.reflect.Method bankRegister = bankCommandsClass.getMethod("register", CommandDispatcher.class);
+            bankRegister.invoke(bankCommands, dispatcher);
+            NeoEssentials.LOGGER.info("Registered bank commands");
+            
+            Class<?> shopCommandsClass = Class.forName("com.zerog.neoessentials.commands.ShopCommands");
+            Object shopCommands = shopCommandsClass.getDeclaredConstructor().newInstance();
+            java.lang.reflect.Method shopRegister = shopCommandsClass.getMethod("register", CommandDispatcher.class);
+            shopRegister.invoke(shopCommands, dispatcher);
+            NeoEssentials.LOGGER.info("Registered shop commands");
+            
+            Class<?> auctionCommandsClass = Class.forName("com.zerog.neoessentials.commands.AuctionCommands");
+            Object auctionCommands = auctionCommandsClass.getDeclaredConstructor().newInstance();
+            java.lang.reflect.Method auctionRegister = auctionCommandsClass.getMethod("register", CommandDispatcher.class);
+            auctionRegister.invoke(auctionCommands, dispatcher);
+            NeoEssentials.LOGGER.info("Registered auction commands");
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to register economy commands: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     /**

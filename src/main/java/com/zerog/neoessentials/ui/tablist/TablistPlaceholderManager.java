@@ -31,7 +31,7 @@ public class TablistPlaceholderManager {
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("(%|\\{)(\\w+)(}|%)");
     
     // Regex pattern for animation placeholders like {animation:name}, <anim:name>
-    private static final Pattern ANIMATION_PATTERN = Pattern.compile("(\\{animation:|<anim:)([^}]+)(}|>)");
+    private static final Pattern ANIMATION_PATTERN = Pattern.compile("(\\{animation:|<anim:)([^}>]+)(}|>)");
     
     // Cache for expensive placeholder values
     private final Map<String, CachedPlaceholderValue> placeholderCache = new ConcurrentHashMap<>();
@@ -981,9 +981,8 @@ public class TablistPlaceholderManager {
         StringBuffer result = new StringBuffer();
         Matcher matcher = ANIMATION_PATTERN.matcher(text);
         
-        boolean foundAnimations = false;
         while (matcher.find()) {
-            foundAnimations = true;
+            String fullMatch = matcher.group(0);
             String animationName = matcher.group(2);
             
             try {
@@ -991,11 +990,9 @@ public class TablistPlaceholderManager {
                 String animatedText = animationManager.getAnimationFrame(animationName, player);
                 if (animatedText != null) {
                     matcher.appendReplacement(result, Matcher.quoteReplacement(animatedText));
-                    NeoEssentials.LOGGER.debug("Replaced animation placeholder '{}' with '{}'", 
-                        matcher.group(0), animatedText);
                 } else {
                     // Animation not found, leave placeholder as is
-                    matcher.appendReplacement(result, Matcher.quoteReplacement(matcher.group(0)));
+                    matcher.appendReplacement(result, Matcher.quoteReplacement(fullMatch));
                     NeoEssentials.LOGGER.warn("Animation '{}' not found, leaving placeholder as-is", animationName);
                 }
             } catch (Exception e) {
@@ -1003,11 +1000,6 @@ public class TablistPlaceholderManager {
                     animationName, e.getMessage());
                 matcher.appendReplacement(result, Matcher.quoteReplacement("[Anim Error]"));
             }
-        }
-        
-        if (foundAnimations) {
-            NeoEssentials.LOGGER.debug("Processed animation placeholders in text: '{}' -> '{}'", 
-                text, result.toString());
         }
         
         matcher.appendTail(result);
