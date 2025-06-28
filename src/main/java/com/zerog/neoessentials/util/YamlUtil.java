@@ -3,11 +3,9 @@ package com.zerog.neoessentials.util;
 import com.zerog.neoessentials.NeoEssentials;
 
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.Map;
 
 /**
  * YAML utility class that handles SnakeYAML conflicts by preferring server-provided
@@ -172,6 +170,7 @@ public class YamlUtil {
             Class<?> flowStyleEnum = Class.forName(enumClassName);
             
             // Get the enum value
+            @SuppressWarnings({"unchecked", "rawtypes"})
             Object flowStyleValue = Enum.valueOf((Class<Enum>) flowStyleEnum, flowStyle);
             
             // Set the default flow style
