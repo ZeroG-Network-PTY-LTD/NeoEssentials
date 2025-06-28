@@ -8,17 +8,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 /**
- * YAML utility class that handles SnakeYAML conflicts by preferring server-provided
- * SnakeYAML over bundled version to avoid module conflicts with other mods.
+ * YAML utility class that provides a simplified interface to SnakeYAML.
+ * Uses the bundled SnakeYAML directly without complex relocation.
  */
 public class YamlUtil {
-    private static final String SERVER_YAML_CLASS = "org.yaml.snakeyaml.Yaml";
-    private static final String SHADED_YAML_CLASS = "com.zerog.neoessentials.lib.yaml.snakeyaml.Yaml";
-    private static final String SERVER_DUMPER_OPTIONS_CLASS = "org.yaml.snakeyaml.DumperOptions";
-    private static final String SHADED_DUMPER_OPTIONS_CLASS = "com.zerog.neoessentials.lib.yaml.snakeyaml.DumperOptions";
-    
-    private static boolean serverYamlAvailable = false;
-    private static boolean checkedServerYaml = false;
+    private static final String YAML_CLASS = "org.yaml.snakeyaml.Yaml";
+    private static final String DUMPER_OPTIONS_CLASS = "org.yaml.snakeyaml.DumperOptions";
     
     private final Object yamlInstance;
     private final Class<?> yamlClass;
@@ -37,18 +32,10 @@ public class YamlUtil {
      * @param dumperOptions Dumper options (can be null)
      */
     public YamlUtil(Object dumperOptions) {
-        checkServerYamlAvailability();
-        
         try {
-            if (serverYamlAvailable) {
-                yamlClass = Class.forName(SERVER_YAML_CLASS);
-                dumperOptionsClass = Class.forName(SERVER_DUMPER_OPTIONS_CLASS);
-                NeoEssentials.LOGGER.info("Using server-provided SnakeYAML to avoid conflicts");
-            } else {
-                yamlClass = Class.forName(SHADED_YAML_CLASS);
-                dumperOptionsClass = Class.forName(SHADED_DUMPER_OPTIONS_CLASS);
-                NeoEssentials.LOGGER.info("Using shaded SnakeYAML (server version not available)");
-            }
+            yamlClass = Class.forName(YAML_CLASS);
+            dumperOptionsClass = Class.forName(DUMPER_OPTIONS_CLASS);
+            NeoEssentials.LOGGER.info("Using bundled SnakeYAML");
             
             if (dumperOptions != null) {
                 Constructor<?> constructor = yamlClass.getConstructor(dumperOptionsClass);
@@ -59,27 +46,6 @@ public class YamlUtil {
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize YAML utility", e);
         }
-    }
-    
-    /**
-     * Check if server-provided SnakeYAML is available
-     */
-    private static void checkServerYamlAvailability() {
-        if (checkedServerYaml) {
-            return;
-        }
-        
-        try {
-            Class.forName(SERVER_YAML_CLASS);
-            Class.forName(SERVER_DUMPER_OPTIONS_CLASS);
-            serverYamlAvailable = true;
-            NeoEssentials.LOGGER.info("Server SnakeYAML detected and available");
-        } catch (ClassNotFoundException e) {
-            serverYamlAvailable = false;
-            NeoEssentials.LOGGER.info("Server SnakeYAML not available, will use shaded version");
-        }
-        
-        checkedServerYaml = true;
     }
     
     /**
@@ -195,15 +161,5 @@ public class YamlUtil {
             // Not all versions of SnakeYAML have this method, ignore if not available
             NeoEssentials.LOGGER.debug("setPrettyFlow method not available in this SnakeYAML version");
         }
-    }
-    
-    /**
-     * Get whether server SnakeYAML is being used
-     * 
-     * @return true if using server SnakeYAML, false if using shaded version
-     */
-    public static boolean isUsingServerYaml() {
-        checkServerYamlAvailability();
-        return serverYamlAvailable;
     }
 }
