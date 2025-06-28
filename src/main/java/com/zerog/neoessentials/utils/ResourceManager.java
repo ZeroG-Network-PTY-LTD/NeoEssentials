@@ -79,7 +79,7 @@ public class ResourceManager {    private static final List<String> CONFIG_FILES
         }
 
         // Copy file from resources
-        try (InputStream in = ResourceManager.class.getResourceAsStream("/default_configs/" + fileName)) {
+        try (InputStream in = ResourceManager.class.getResourceAsStream("/default-config/" + fileName)) {
             if (in != null) {
                 Files.copy(in, configPath, StandardCopyOption.REPLACE_EXISTING);
                 NeoEssentials.LOGGER.info("Copied default config: {}", fileName);

@@ -117,13 +117,12 @@ configurations {
     implementation.extendsFrom include
 }
 
-dependencies {    // Database dependencies
-    implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
-    include 'org.xerial:sqlite-jdbc:3.44.1.0' // Include SQLite in JAR
-    implementation('com.mysql:mysql-connector-j:8.3.0') {
+dependencies {    // Database dependencies - use compileOnly to avoid bundling
+    compileOnly 'org.xerial:sqlite-jdbc:3.44.1.0' // Don't bundle SQLite
+    compileOnly('com.mysql:mysql-connector-j:8.3.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from MySQL connector
     }
-    implementation('com.zaxxer:HikariCP:5.1.0') {
+    compileOnly('com.zaxxer:HikariCP:5.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from HikariCP
     }    // Permission system APIs (soft dependencies)
     compileOnly 'net.luckperms:api:5.4'
