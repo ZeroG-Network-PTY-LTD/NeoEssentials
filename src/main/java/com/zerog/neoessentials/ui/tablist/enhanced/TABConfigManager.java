@@ -190,6 +190,16 @@ public class TABConfigManager {
             }
         }
         
+        // Placeholder update interval
+        if (settings.containsKey("placeholder_update_interval")) {
+            Object interval = settings.get("placeholder_update_interval");
+            if (interval instanceof Number) {
+                long intervalMs = ((Number) interval).longValue();
+                currentConfig.setPlaceholderUpdateInterval(intervalMs);
+                NeoEssentials.LOGGER.info("Set placeholder update interval to: {}ms", intervalMs);
+            }
+        }
+        
         // Enable/disable headers and footers
         boolean enableHeaders = getBooleanOrDefault(settings, "enable_headers", true);
         boolean enableFooters = getBooleanOrDefault(settings, "enable_footers", true);

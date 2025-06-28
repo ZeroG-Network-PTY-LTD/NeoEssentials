@@ -164,17 +164,63 @@ public class TABLikeTablistManager {
             Collection<ServerPlayer> players = server.getPlayerList().getPlayers();
             if (players.isEmpty()) return;
             
-            // Update player data
+            // Only update player data and team management (template switching)
             updatePlayerData(players);
-            
-            // Update each component
-            updateHeaderFooter(players);
             updatePlayerNames(players);
             updateObjectives(players);
             updateBossBars(players);
             
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Error updating TAB-like tablist", e);
+            NeoEssentials.LOGGER.error("Error updating tablist templates", e);
+        }
+    }
+    
+    /**
+     * Updates only placeholder data (like %memory%, %tps%, %online%) 
+     * Runs at placeholder_update_interval
+     */
+    private void updatePlaceholdersOnly() {
+        MinecraftServer server = serverRef.get();
+        if (server == null || server.getPlayerList() == null) return;
+        
+        try {
+            Collection<ServerPlayer> players = server.getPlayerList().getPlayers();
+            if (players.isEmpty()) return;
+            
+            // Only update headers/footers with fresh placeholder data
+            updateHeaderFooterWithPlaceholders(players);
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error updating placeholders", e);
+        }
+    }
+    
+    private void updateHeaderFooterWithPlaceholders(Collection<ServerPlayer> players) {
+        if (!config.isHeaderFooterEnabled()) return;
+        
+        for (ServerPlayer player : players) {
+            PlayerTabData data = playerData.get(player.getUUID());
+            if (data == null) continue;
+            
+            // Check disable condition
+            if (checkDisableCondition(player, config.getHeaderFooterDisableCondition())) {
+                continue;
+            }
+            
+            // Get header and footer for this player based on current template
+            Component header = Component.empty();
+            Component footer = Component.empty();
+            
+            if (config.isEnableHeaders()) {
+                header = getHeaderForPlayer(player, data);
+            }
+            
+            if (config.isEnableFooters()) {
+                footer = getFooterForPlayer(player, data);
+            }
+            
+            // Send packet
+            player.connection.send(new ClientboundTabListPacket(header, footer));
         }
     }
     
@@ -484,6 +530,10 @@ public class TABLikeTablistManager {
         if (animationTask != null) {
             animationTask.cancel(false);
             animationTask = null;
+        }
+        if (placeholderTask != null) {
+            placeholderTask.cancel(false);
+            placeholderTask = null;
         }
         
         // Clear player data
