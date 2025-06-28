@@ -65,7 +65,7 @@ public class EconomySystemTest {
         
         // Test currency creation
         Currency testCurrency = new Currency("TEST", "Test Coin", "Test Coins", "T$", 
-            Currency.CurrencyType.STANDARD, false, 1.0);
+            false, false, 1.0, Currency.CurrencyType.STANDARD);
         currencyManager.addCurrency(testCurrency);
         
         Currency retrieved = currencyManager.getCurrency("TEST");

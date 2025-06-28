@@ -486,4 +486,103 @@ public class BankManager {
             .filter(loan -> loan.getStatus() == Loan.LoanStatus.CURRENT || loan.getStatus() == Loan.LoanStatus.LATE)
             .count();
     }
+    
+    /**
+     * Deposit money into an account
+     * 
+     * @param accountId The account ID
+     * @param amount The amount to deposit
+     * @return true if successful
+     */
+    public boolean deposit(UUID accountId, double amount) {
+        BankAccount account = getAccountById(accountId);
+        if (account == null) {
+            return false;
+        }
+        
+        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        return account.deposit(defaultCurrency, amount);
+    }
+    
+    /**
+     * Withdraw money from an account
+     * 
+     * @param accountId The account ID
+     * @param amount The amount to withdraw
+     * @return true if successful
+     */
+    public boolean withdraw(UUID accountId, double amount) {
+        BankAccount account = getAccountById(accountId);
+        if (account == null) {
+            return false;
+        }
+        
+        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        return account.withdraw(defaultCurrency, amount);
+    }
+    
+    /**
+     * Transfer money between accounts
+     * 
+     * @param fromAccountId Source account ID
+     * @param toAccountId Target account ID
+     * @param amount Amount to transfer
+     * @return true if successful
+     */
+    public boolean transfer(UUID fromAccountId, UUID toAccountId, double amount) {
+        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        return transfer(fromAccountId, toAccountId, defaultCurrency, amount, "Transfer");
+    }
+    
+    /**
+     * Apply for a loan
+     * 
+     * @param playerId Player ID
+     * @param amount Loan amount
+     * @param loanType Type of loan
+     * @param termMonths Term in months
+     * @return Loan ID as string if successful, null otherwise
+     */
+    public String applyForLoan(UUID playerId, double amount, Loan.LoanType loanType, int termMonths) {
+        return loanManager.applyForLoan(playerId, amount, loanType, termMonths);
+    }
+    
+    /**
+     * Approve a loan
+     * 
+     * @param loanId Loan ID
+     * @return true if successful
+     */
+    public boolean approveLoan(UUID loanId) {
+        return loanManager.approveLoan(loanId);
+    }
+    
+    /**
+     * Make a loan payment
+     * 
+     * @param playerId Player ID
+     * @param loanId Loan ID
+     * @param amount Payment amount
+     * @return true if successful
+     */
+    public boolean makeLoanPayment(UUID playerId, UUID loanId, double amount) {
+        return loanManager.makePayment(playerId, loanId, amount);
+    }
+    
+    /**
+     * Get account by ID
+     * 
+     * @param accountId Account ID
+     * @return BankAccount or null if not found
+     */
+    private BankAccount getAccountById(UUID accountId) {
+        for (List<BankAccount> accounts : playerAccounts.values()) {
+            for (BankAccount account : accounts) {
+                if (account.getAccountId().equals(accountId)) {
+                    return account;
+                }
+            }
+        }
+        return null;
+    }
 }
