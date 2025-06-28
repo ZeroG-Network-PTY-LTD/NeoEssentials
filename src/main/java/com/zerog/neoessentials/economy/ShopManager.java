@@ -162,7 +162,7 @@ public class ShopManager {
     }
     
     /**
-     * Search for shops by name or item
+     * Search for shops by name, category, or item
      * 
      * @param searchTerm The search term
      * @param limit Maximum number of results
@@ -174,11 +174,27 @@ public class ShopManager {
         return shops.values().stream()
                 .filter(Shop::isActive)
                 .filter(shop -> shop.getShopName().toLowerCase().contains(lowerSearch) ||
+                               shop.getCategory().toLowerCase().contains(lowerSearch) ||
                                shop.hasItemForSale(searchTerm))
                 .limit(limit)
                 .toList();
     }
     
+    /**
+     * Get shops by category
+     * 
+     * @param category The category to search for
+     * @return List of shops in the specified category
+     */
+    public List<Shop> getShopsByCategory(String category) {
+        String lowerCategory = category.toLowerCase();
+        
+        return shops.values().stream()
+                .filter(Shop::isActive)
+                .filter(shop -> shop.getCategory().toLowerCase().equals(lowerCategory))
+                .toList();
+    }
+
     /**
      * Process a shop purchase
      * 
