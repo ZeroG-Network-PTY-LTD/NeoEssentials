@@ -462,4 +462,28 @@ public class BankManager {
             };
         }
     }
+    
+    /**
+     * Reload configuration for bank manager
+     */
+    public void reloadConfiguration() {
+        // TODO: Implement configuration reload when needed
+        // This is a placeholder to fix compilation errors
+    }
+    
+    /**
+     * Get total account count for statistics
+     */
+    public int getTotalAccountCount() {
+        return accountsByNumber.size();
+    }
+    
+    /**
+     * Get active loans count for statistics
+     */
+    public int getActiveLoansCount() {
+        return (int) activeLoans.values().stream()
+            .filter(loan -> loan.getStatus() == Loan.LoanStatus.CURRENT || loan.getStatus() == Loan.LoanStatus.LATE)
+            .count();
+    }
 }
