@@ -274,6 +274,17 @@ public class ShopManager {
         return shops.size();
     }
     
+    /**
+     * Get all active shops
+     * 
+     * @return List of all active shops
+     */
+    public List<Shop> getAllShops() {
+        return shops.values().stream()
+                .filter(Shop::isActive)
+                .toList();
+    }
+    
     // Getters for shop settings
     public int getMaxShopsPerPlayer() { return maxShopsPerPlayer; }
     public double getShopCreationFee() { return shopCreationFee; }
@@ -308,6 +319,56 @@ public class ShopManager {
         }
         
         /**
+         * Get an auction by ID
+         * 
+         * @param auctionId The auction ID
+         * @return The auction, or null if not found
+         */
+        public Auction getAuctionById(UUID auctionId) {
+            return auctions.get(auctionId);
+        }
+        
+        /**
+         * Get auctions by seller
+         * 
+         * @param sellerId The seller's UUID
+         * @return List of auctions by the seller
+         */
+        public List<Auction> getAuctionsBySeller(UUID sellerId) {
+            return auctions.values().stream()
+                    .filter(auction -> auction.getSellerId().equals(sellerId))
+                    .toList();
+        }
+        
+        /**
+         * Search auctions by item name
+         * 
+         * @param itemName The item name to search for
+         * @return List of matching auctions
+         */
+        public List<Auction> searchAuctions(String itemName) {
+            return auctions.values().stream()
+                    .filter(auction -> auction.isActive() && 
+                            auction.getItemName().toLowerCase().contains(itemName.toLowerCase()))
+                    .toList();
+        }
+        
+        /**
+         * Remove expired auctions
+         * 
+         * @return Number of auctions removed
+         */
+        public int cleanupExpiredAuctions() {
+            List<UUID> expiredIds = auctions.values().stream()
+                    .filter(auction -> !auction.isActive() && auction.getEndTime() < System.currentTimeMillis())
+                    .map(Auction::getAuctionId)
+                    .toList();
+            
+            expiredIds.forEach(auctions::remove);
+            return expiredIds.size();
+        }
+        
+        /**
          * Get count of active auctions for statistics
          */
         public int getActiveAuctionsCount() {
@@ -316,7 +377,12 @@ public class ShopManager {
                     .count();
         }
         
-        // Additional auction methods would go here
+        /**
+         * Get all auctions (for admin purposes)
+         */
+        public Collection<Auction> getAllAuctions() {
+            return auctions.values();
+        }
     }
     
     /**
