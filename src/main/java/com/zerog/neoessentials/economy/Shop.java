@@ -34,9 +34,11 @@ public class Shop {
     private int bulkThreshold; // Minimum quantity for bulk discount
     
     public enum ShopType {
+        PLAYER("Player Shop", true, true, -1),
         PLAYER_OWNED("Player Owned", true, true, -1),
         PLAYER_RENTAL("Player Rental", true, true, 30), // 30 day max rental
         SERVER_SHOP("Server Shop", false, false, -1),
+        ADMIN("Admin Shop", false, false, -1),
         AUCTION_HOUSE("Auction House", true, false, 7), // 7 day max auctions
         DYNAMIC_SHOP("Dynamic Shop", false, true, -1); // Prices change based on supply/demand
         
@@ -298,6 +300,7 @@ public class Shop {
     // Getters and setters
     public UUID getShopId() { return shopId; }
     public UUID getOwnerId() { return ownerId; }
+    public String getName() { return shopName; }
     public String getShopName() { return shopName; }
     public void setShopName(String shopName) { this.shopName = shopName; }
     public String getLocation() { return location; }
