@@ -523,8 +523,8 @@ public class EconomyPersistenceManager {
         
         try (PreparedStatement stmt = dbConnection.prepareStatement(sql)) {
             stmt.setString(1, transaction.getTransactionId().toString());
-            stmt.setString(2, transaction.getFromPlayerId() != null ? transaction.getFromPlayerId().toString() : null);
-            stmt.setString(3, transaction.getToPlayerId() != null ? transaction.getToPlayerId().toString() : null);
+            stmt.setString(2, transaction.getFromPlayer() != null ? transaction.getFromPlayer().toString() : null);
+            stmt.setString(3, transaction.getToPlayer() != null ? transaction.getToPlayer().toString() : null);
             stmt.setString(4, transaction.getType().name());
             stmt.setDouble(5, transaction.getAmount());
             stmt.setString(6, transaction.getCurrency().getCode());
