@@ -1,6 +1,6 @@
 # Configuration Guide
 
-Complete guide to configuring NeoEssentials v1.0.1.89+ with the latest features including ultra-smooth animations and advanced tablist customization.
+Complete guide to configuring NeoEssentials v1.0.2+ with the latest features including the comprehensive economy system, ultra-smooth animations, and advanced tablist customization.
 
 ## 📁 Configuration Structure
 
@@ -9,15 +9,19 @@ NeoEssentials uses a modern hybrid configuration system:
 ### TOML Configs (`config/neoessentials/`)
 Basic settings and system toggles:
 - `general.toml` - Core mod settings
-- `tablist.toml` - Tablist system configuration
-- `economy.toml` - Economy system settings
-- `permissions.toml` - Permission system configuration
+- `homes.toml` - Home system configuration
+- `warps.toml` - Warp system settings
+- `kits.toml` - Kit system configuration
+- `database.toml` - Database connection settings
+
+### YAML Configs (`config/neoessentials/`)
+Advanced system configurations:
+- **`economy.yml`** - **NEW!** Complete economy system configuration
 
 ### YAML Templates (`neoessentials/`)  
 Advanced template and animation configurations:
 - `tablist.yml` - Headers, footers, and group templates
 - `animations.yml` - Custom animation definitions
-- `templates.yml` - Additional template configurations
 
 ## ⚙️ Essential Configuration Files
 
@@ -45,6 +49,45 @@ enable_animations = true
 enable_headers = true
 enable_footers = true
 enable_group_specific = true
+```
+
+### `economy.yml` - Economy System (NEW!)
+```yaml
+economy:
+  enabled: true
+  starting_balance: 100.0
+  max_balance: 1000000.0
+  allow_negative_balances: false
+
+currencies:
+  coins:
+    display_name: "Coin"
+    symbol: "$"
+    is_default: true
+    exchange_rate: 1.0
+
+banking:
+  enabled: true
+  account_creation:
+    creation_fee: 100.0
+    auto_create_checking: true
+  account_types:
+    checking:
+      base_interest_rate: 0.01
+    savings:
+      base_interest_rate: 0.05
+
+shops:
+  enabled: true
+  creation:
+    creation_fee: 500.0
+    max_shops_per_player: 5
+
+auctions:
+  enabled: true
+  settings:
+    min_duration: 1
+    max_duration: 168
 ```
 
 ### `tablist.yml` - Templates & Animations
