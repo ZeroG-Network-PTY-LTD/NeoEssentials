@@ -12,6 +12,7 @@ public class Shop {
     private final UUID ownerId;
     private String shopName;
     private String location;
+    private String category; // Shop category (armor, blocks, food, etc.)
     private final ShopType shopType;
     private final long createdTime;
     private boolean isActive;
@@ -68,11 +69,12 @@ public class Shop {
      * @param location The shop location
      * @param shopType The type of shop
      */
-    public Shop(UUID ownerId, String shopName, String location, ShopType shopType) {
+    public Shop(UUID ownerId, String shopName, String location, String category, ShopType shopType) {
         this.shopId = UUID.randomUUID();
         this.ownerId = ownerId;
         this.shopName = shopName;
         this.location = location;
+        this.category = category;
         this.shopType = shopType;
         this.createdTime = System.currentTimeMillis();
         this.isActive = true;
@@ -305,6 +307,8 @@ public class Shop {
     public void setShopName(String shopName) { this.shopName = shopName; }
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public ShopType getShopType() { return shopType; }
     public long getCreatedTime() { return createdTime; }
     public boolean isActive() { return isActive; }
