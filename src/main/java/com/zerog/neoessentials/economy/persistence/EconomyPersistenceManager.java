@@ -102,20 +102,48 @@ public class EconomyPersistenceManager {
      */
     private void initializeDatabase() {
         try {
-            // Load SQLite driver
-            Class.forName("org.sqlite.JDBC");
+            // Ensure directory exists
+            Path dbDir = Paths.get(databasePath).getParent();
+            if (!Files.exists(dbDir)) {
+                Files.createDirectories(dbDir);
+            }
             
-            // Connect to database
-            dbConnection = DriverManager.getConnection("jdbc:sqlite:" + databasePath);
+            // Load SQLite driver explicitly
+            try {
+                Class.forName("org.sqlite.JDBC");
+                NeoEssentials.LOGGER.info("SQLite JDBC driver loaded successfully");
+            } catch (ClassNotFoundException e) {
+                NeoEssentials.LOGGER.error("SQLite JDBC driver not found: " + e.getMessage());
+                throw new RuntimeException("SQLite driver not available", e);
+            }
+            
+            // Connect to database with connection string
+            String connectionUrl = "jdbc:sqlite:" + databasePath;
+            NeoEssentials.LOGGER.info("Connecting to database: " + connectionUrl);
+            
+            dbConnection = DriverManager.getConnection(connectionUrl);
+            if (dbConnection == null) {
+                throw new RuntimeException("Failed to create database connection");
+            }
+            
             dbConnection.setAutoCommit(false);
+            
+            // Test connection
+            if (!dbConnection.isValid(5)) {
+                throw new RuntimeException("Database connection validation failed");
+            }
             
             // Create tables
             createDatabaseTables();
             
-            NeoEssentials.LOGGER.info("Economy database initialized at " + databasePath);
+            NeoEssentials.LOGGER.info("Economy database initialized successfully at " + databasePath);
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Failed to initialize economy database: " + e.getMessage());
+            NeoEssentials.LOGGER.error("Failed to initialize economy database: " + e.getMessage(), e);
             useDatabase = false; // Fall back to file storage
+            dbConnection = null;
+            
+            // Notify about fallback
+            NeoEssentials.LOGGER.warn("Economy system falling back to file-based storage");
         }
     }
     
@@ -739,6 +767,10 @@ public class EconomyPersistenceManager {
      */
     public CompletableFuture<List<Loan>> loadPlayerLoans(UUID playerId) {
         return CompletableFuture.supplyAsync(() -> {
+            if (!isUsingDatabase()) {
+                return new ArrayList<>(); // Return empty list if no database
+            }
+            
             List<Loan> playerLoans = new ArrayList<>();
             
             try {
@@ -767,6 +799,10 @@ public class EconomyPersistenceManager {
      */
     public CompletableFuture<List<Loan>> loadAllActiveLoans() {
         return CompletableFuture.supplyAsync(() -> {
+            if (!isUsingDatabase()) {
+                return new ArrayList<>(); // Return empty list if no database
+            }
+            
             List<Loan> activeLoans = new ArrayList<>();
             
             try {
