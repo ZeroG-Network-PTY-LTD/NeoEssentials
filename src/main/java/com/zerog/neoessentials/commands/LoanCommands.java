@@ -5,10 +5,14 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.zerog.neoessentials.economy.*;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,6 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Comprehensive loan commands for the NeoEssentials economy system.
@@ -24,6 +29,126 @@ import java.util.UUID;
 public class LoanCommands {
     
     private static final DecimalFormat CURRENCY_FORMAT = new DecimalFormat("#,##0.00");
+    
+    // Suggestion providers for tab completion
+    private static final SuggestionProvider<CommandSourceStack> LOAN_TYPE_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(
+            new String[]{"personal", "business", "mortgage"}, 
+            builder
+        );
+    };
+    
+    private static final SuggestionProvider<CommandSourceStack> LOAN_ID_SUGGESTIONS = (context, builder) -> {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            
+            List<Loan> playerLoans = bankManager.getPlayerLoans(player.getUUID());
+            String[] loanIds = playerLoans.stream()
+                .map(loan -> loan.getLoanId().toString().substring(0, 8))
+                .toArray(String[]::new);
+                
+            return SharedSuggestionProvider.suggest(loanIds, builder);
+        } catch (Exception e) {
+            return Suggestions.empty();
+        }
+    };
+    
+    private static final SuggestionProvider<CommandSourceStack> LOAN_AMOUNT_SUGGESTIONS = (context, builder) -> {
+        // Get the loan type from context if available
+        try {
+            String loanType = context.getArgument("type", String.class).toLowerCase();
+            String[] suggestions;
+            
+            switch (loanType) {
+                case "personal":
+                    suggestions = new String[]{"500", "1000", "2500", "5000", "10000", "25000", "50000"};
+                    break;
+                case "business":
+                    suggestions = new String[]{"1000", "5000", "10000", "25000", "50000", "100000", "250000", "500000"};
+                    break;
+                case "mortgage":
+                    suggestions = new String[]{"10000", "25000", "50000", "100000", "250000", "500000", "750000", "1000000"};
+                    break;
+                default:
+                    suggestions = new String[]{"1000", "5000", "10000", "25000", "50000"};
+            }
+            return SharedSuggestionProvider.suggest(suggestions, builder);
+        } catch (Exception e) {
+            // Fallback suggestions if type not available
+            return SharedSuggestionProvider.suggest(
+                new String[]{"1000", "5000", "10000", "25000", "50000"}, 
+                builder
+            );
+        }
+    };
+    
+    private static final SuggestionProvider<CommandSourceStack> LOAN_TERM_SUGGESTIONS = (context, builder) -> {
+        try {
+            String loanType = context.getArgument("type", String.class).toLowerCase();
+            String[] suggestions;
+            
+            switch (loanType) {
+                case "personal":
+                    suggestions = new String[]{"6", "12", "18", "24", "36", "48", "60"};
+                    break;
+                case "business":
+                    suggestions = new String[]{"12", "24", "36", "48", "60", "84", "96", "120"};
+                    break;
+                case "mortgage":
+                    suggestions = new String[]{"120", "180", "240", "300", "360"};
+                    break;
+                default:
+                    suggestions = new String[]{"12", "24", "36", "48", "60"};
+            }
+            return SharedSuggestionProvider.suggest(suggestions, builder);
+        } catch (Exception e) {
+            return SharedSuggestionProvider.suggest(
+                new String[]{"12", "24", "36", "48", "60"}, 
+                builder
+            );
+        }
+    };
+    
+    private static final SuggestionProvider<CommandSourceStack> PAYMENT_AMOUNT_SUGGESTIONS = (context, builder) -> {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            BankManager bankManager = economyManager.getBankManager();
+            
+            List<Loan> activeLoans = bankManager.getPlayerLoans(player.getUUID()).stream()
+                .filter(l -> l.getStatus() == Loan.LoanStatus.CURRENT || l.getStatus() == Loan.LoanStatus.LATE)
+                .toList();
+            
+            if (!activeLoans.isEmpty()) {
+                Loan mostRecentLoan = activeLoans.get(0);
+                double monthlyPayment = mostRecentLoan.getMonthlyPayment();
+                double currentBalance = mostRecentLoan.getCurrentBalance();
+                
+                String[] suggestions = {
+                    String.format("%.2f", monthlyPayment),                    // Monthly payment
+                    String.format("%.0f", monthlyPayment),                   // Rounded monthly payment
+                    String.format("%.2f", monthlyPayment * 2),               // Double payment
+                    String.format("%.2f", Math.min(currentBalance, monthlyPayment * 3)), // Triple payment (max balance)
+                    String.format("%.2f", currentBalance)                    // Full payoff
+                };
+                
+                return SharedSuggestionProvider.suggest(suggestions, builder);
+            } else {
+                // Default suggestions if no active loans
+                return SharedSuggestionProvider.suggest(
+                    new String[]{"50", "100", "250", "500", "1000"}, 
+                    builder
+                );
+            }
+        } catch (Exception e) {
+            return SharedSuggestionProvider.suggest(
+                new String[]{"50", "100", "250", "500", "1000"}, 
+                builder
+            );
+        }
+    };
     
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
@@ -37,8 +162,11 @@ public class LoanCommands {
                 .then(Commands.literal("apply")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.apply"))
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(1.0))
+                        .suggests(LOAN_AMOUNT_SUGGESTIONS)
                         .then(Commands.argument("type", StringArgumentType.string())
+                            .suggests(LOAN_TYPE_SUGGESTIONS)
                             .then(Commands.argument("term-months", IntegerArgumentType.integer(1, 360))
+                                .suggests(LOAN_TERM_SUGGESTIONS)
                                 .executes(context -> applyForLoan(context.getSource(),
                                     DoubleArgumentType.getDouble(context, "amount"),
                                     StringArgumentType.getString(context, "type"),
@@ -48,6 +176,7 @@ public class LoanCommands {
                 .then(Commands.literal("info")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.info"))
                     .then(Commands.argument("loan-id", StringArgumentType.string())
+                        .suggests(LOAN_ID_SUGGESTIONS)
                         .executes(context -> showLoanInfo(context.getSource(),
                             StringArgumentType.getString(context, "loan-id")))))
                 
@@ -78,9 +207,11 @@ public class LoanCommands {
                 .then(Commands.literal("pay")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.pay"))
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
+                        .suggests(PAYMENT_AMOUNT_SUGGESTIONS)
                         .executes(context -> makeLoanPayment(context.getSource(),
                             DoubleArgumentType.getDouble(context, "amount"), null))
                         .then(Commands.argument("loan-id", StringArgumentType.string())
+                            .suggests(LOAN_ID_SUGGESTIONS)
                             .executes(context -> makeLoanPayment(context.getSource(),
                                 DoubleArgumentType.getDouble(context, "amount"),
                                 StringArgumentType.getString(context, "loan-id"))))))
