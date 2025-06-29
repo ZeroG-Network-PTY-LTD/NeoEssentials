@@ -285,6 +285,17 @@ public class ShopEmployeeManager {
     }
     
     /**
+     * Get all employees (active and inactive)
+     * 
+     * @return List of all employees
+     */
+    public List<ShopEmployee> getAllEmployees() {
+        return employees.values().stream()
+                .sorted((e1, e2) -> Integer.compare(e2.getRole().getPriority(), e1.getRole().getPriority()))
+                .toList();
+    }
+    
+    /**
      * Get employees with a specific role
      * 
      * @param role The role to filter by
