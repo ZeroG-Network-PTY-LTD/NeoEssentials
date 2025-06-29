@@ -184,6 +184,14 @@ neoessentials.tablist.<tablist_command>
 | `/eco set` **<player>** **<amount>** | Set player balance | `neoessentials.admin.eco.set` |
 | `/eco reset` **<player>** | Reset player balance | `neoessentials.admin.eco.reset` |
 
+### Shop & Auction Management  
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/shop admin` **<action>** | Manage server shops | `neoessentials.admin.shop` |
+| `/auction admin` **<action>** | Manage all auctions | `neoessentials.admin.auction` |
+| `/bank admin` **<action>** | Manage player bank accounts | `neoessentials.admin.bank` |
+| `/loan admin` **<action>** | Manage player loans | `neoessentials.admin.loan` |
+
 ## Command Aliases
 
 Many commands have shorter aliases for convenience:
