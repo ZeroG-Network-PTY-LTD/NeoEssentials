@@ -1064,10 +1064,59 @@ public class ShopCommands {
     private int manageShop(CommandSourceStack source, String shopName) {
         try {
             ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
             
-            MessageUtil.sendMessage(player, "§6=== Shop Management: §e" + shopName + " §6===");
-            MessageUtil.sendMessage(player, "§7Opening management interface...");
-            MessageUtil.sendMessage(player, "§7Note: Shop management interface is in development");
+            // Find the shop by name
+            List<Shop> foundShops = shopManager.searchShops(shopName, 10);
+            Shop targetShop = null;
+            
+            // First try exact match
+            for (Shop shop : foundShops) {
+                if (shop.getShopName().equalsIgnoreCase(shopName)) {
+                    targetShop = shop;
+                    break;
+                }
+            }
+            
+            // If no exact match, try partial match but only if player owns it or has permissions
+            if (targetShop == null && !foundShops.isEmpty()) {
+                for (Shop shop : foundShops) {
+                    if (shop.getOwnerId().equals(player.getUUID()) || 
+                        shop.getEmployeeManager().hasPermission(player.getUUID(), 
+                            com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.MANAGE_INVENTORY)) {
+                        targetShop = shop;
+                        break;
+                    }
+                }
+            }
+            
+            if (targetShop == null) {
+                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found or you don't have permission to manage it.");
+                return 0;
+            }
+            
+            // Check permissions
+            if (!targetShop.getOwnerId().equals(player.getUUID()) && 
+                !targetShop.getEmployeeManager().hasPermission(player.getUUID(), 
+                    com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.MANAGE_INVENTORY)) {
+                MessageUtil.sendErrorMessage(player, "You don't have permission to manage this shop!");
+                return 0;
+            }
+            
+            // Open the shop management GUI
+            try {
+                com.zerog.neoessentials.ui.shop.ShopManagementGUI gui = 
+                    new com.zerog.neoessentials.ui.shop.ShopManagementGUI(targetShop, shopManager);
+                gui.openMainMenu(player);
+                
+                MessageUtil.sendSuccessMessage(player, "Opening shop management interface for: " + targetShop.getShopName());
+            } catch (Exception e) {
+                MessageUtil.sendErrorMessage(player, "Failed to open shop management interface: " + e.getMessage());
+                NeoEssentials.LOGGER.error("Failed to open shop management GUI for shop: " + targetShop.getShopName(), e);
+                return 0;
+            }
             
             return 1;
         } catch (CommandSyntaxException e) {
