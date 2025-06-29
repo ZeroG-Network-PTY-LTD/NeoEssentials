@@ -48,6 +48,7 @@ public class CommandManager {    // Command classes
     private final MailCommands mailCommands;
     private final AdminPanelCommand adminPanelCommand;
     private final TablistCommand tablistCommand;
+    private final ItemSearchCommands itemSearchCommands;
     
     // Debug command disabled while developing TablistFix
       // NeoEssentials main reference - disabled while developing TablistFix
@@ -79,6 +80,7 @@ public class CommandManager {    // Command classes
         mailCommands = new MailCommands();
         adminPanelCommand = new AdminPanelCommand();
         tablistCommand = new TablistCommand();
+        itemSearchCommands = new ItemSearchCommands();
         
         // Debug commands will be initialized later when TABLikeTablistManager is available
         // ItemCommands needs CommandBuildContext which is only available during register event
@@ -213,6 +215,10 @@ public class CommandManager {    // Command classes
             // Register tablist commands
         tablistCommand.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered tablist commands");
+        
+        // Register item search commands
+        ItemSearchCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered item search commands");
         
         // Register permission commands
         PermissionCommands.register(dispatcher);
