@@ -83,7 +83,7 @@ public class ShopManagementGUI {
             // Check if player has permission to manage this shop
             if (!shop.getOwnerId().equals(player.getUUID()) && 
                 !shop.hasPermission(player.getUUID(), 
-                    com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.MANAGE_SHOP)) {
+                    com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.MANAGE_INVENTORY)) {
                 MessageUtil.sendErrorMessage(player, "You don't have permission to manage this shop.");
                 return;
             }
