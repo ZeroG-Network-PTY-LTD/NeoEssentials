@@ -422,13 +422,13 @@ public class ShopManager {
             }
             
             // Remove from location mapping
-            String location = shop.getLocation();
-            if (location != null) {
-                List<UUID> locationShops = shopsByLocation.get(location);
+            String locationName = shop.getLocationName();
+            if (locationName != null) {
+                List<UUID> locationShops = shopsByLocation.get(locationName);
                 if (locationShops != null) {
                     locationShops.remove(shopId);
                     if (locationShops.isEmpty()) {
-                        shopsByLocation.remove(location);
+                        shopsByLocation.remove(locationName);
                     }
                 }
             }
@@ -461,8 +461,8 @@ public class ShopManager {
                     
                     // Add to indexes
                     playerShops.computeIfAbsent(shop.getOwnerId(), k -> new ArrayList<>()).add(shop.getShopId());
-                    if (shop.getLocation() != null) {
-                        shopsByLocation.computeIfAbsent(shop.getLocation(), k -> new ArrayList<>()).add(shop.getShopId());
+                    if (shop.getLocationName() != null) {
+                        shopsByLocation.computeIfAbsent(shop.getLocationName(), k -> new ArrayList<>()).add(shop.getShopId());
                     }
                 }
             }
