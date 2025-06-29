@@ -770,15 +770,22 @@ public class EconomyPersistenceManager {
     public CompletableFuture<Void> saveShop(Shop shop) {
         return CompletableFuture.runAsync(() -> {
             try {
-                shopCache.put(shop.getShopId(), shop);
+                NeoEssentials.LOGGER.info("Saving shop to persistence: {} ({})", shop.getShopName(), shop.getShopId());
                 
-                if (useDatabase) {
+                shopCache.put(shop.getShopId(), shop);
+                NeoEssentials.LOGGER.debug("Shop added to cache. Cache size: {}", shopCache.size());
+                
+                if (useDatabase && isUsingDatabase()) {
                     saveShopToDatabase(shop);
+                    NeoEssentials.LOGGER.debug("Shop saved to database successfully");
                 }
                 
                 if (useFileBackup) {
                     saveShopToFile(shop);
+                    NeoEssentials.LOGGER.debug("Shop saved to file successfully");
                 }
+                
+                NeoEssentials.LOGGER.info("Shop saved successfully: {}", shop.getShopName());
             } catch (Exception e) {
                 NeoEssentials.LOGGER.error("Failed to save shop " + shop.getShopId(), e);
             }
@@ -1290,12 +1297,23 @@ public class EconomyPersistenceManager {
         try {
             // Load shops
             if (useDatabase && isUsingDatabase()) {
+                NeoEssentials.LOGGER.info("Loading shops from database...");
                 loadAllShopsFromDatabase();
             } else if (useFileBackup) {
-                loadAllShopsFromFile();
+                NeoEssentials.LOGGER.info("Loading shops from file backup...");
+                try {
+                    Map<String, Shop> fileShops = loadAllShopsFromFile();
+                    for (Map.Entry<String, Shop> entry : fileShops.entrySet()) {
+                        UUID shopId = UUID.fromString(entry.getKey());
+                        shopCache.put(shopId, entry.getValue());
+                    }
+                    NeoEssentials.LOGGER.info("Loaded {} shops from file into cache", fileShops.size());
+                } catch (IOException ex) {
+                    NeoEssentials.LOGGER.error("Failed to load shops from file", ex);
+                }
             }
             
-            NeoEssentials.LOGGER.info("Loaded {} shops into cache", shopCache.size());
+            NeoEssentials.LOGGER.info("Total shops loaded into cache: {}", shopCache.size());
             
             // You can add loading of other data types here if needed
             // loadAllAccountsFromStorage();
