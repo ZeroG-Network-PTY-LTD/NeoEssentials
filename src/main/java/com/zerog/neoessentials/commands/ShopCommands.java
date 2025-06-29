@@ -940,12 +940,10 @@ public class ShopCommands {
                 return 0;
             }
             
-            // Check ownership (only shop owners can stock their shops)
-            boolean isOwner = shop.getOwnerId() != null && shop.getOwnerId().equals(player.getUUID());
-            boolean isAdmin = player.hasPermissions(2); // Admins can stock any shop
-            
-            if (!isOwner && !isAdmin) {
-                MessageUtil.sendErrorMessage(player, "You can only stock shops you own.");
+            // Check permissions
+            if (!hasShopPermission(player, shop, 
+                    com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.MANAGE_INVENTORY)) {
+                MessageUtil.sendErrorMessage(player, "You don't have permission to manage inventory for this shop.");
                 return 0;
             }
             
@@ -968,6 +966,8 @@ public class ShopCommands {
             }
             
             // Check if player has enough items in inventory (for player shops)
+            boolean isOwner = shop.getOwnerId() != null && shop.getOwnerId().equals(player.getUUID());
+            boolean isAdmin = player.hasPermissions(4);
             if (isOwner && !isAdmin && !ItemHandler.hasEnoughItems(player, itemName, quantity)) {
                 MessageUtil.sendErrorMessage(player, "You don't have enough " + ItemHandler.formatItemName(itemName) + " to stock. " +
                     "You have " + ItemHandler.getItemCount(player, itemName) + ", but need " + quantity + ".");
@@ -1042,12 +1042,10 @@ public class ShopCommands {
             
             Shop shop = foundShops.get(0);
             
-            // Check ownership
-            boolean isOwner = shop.getOwnerId() != null && shop.getOwnerId().equals(player.getUUID());
-            boolean isAdmin = player.hasPermissions(2);
-            
-            if (!isOwner && !isAdmin) {
-                MessageUtil.sendErrorMessage(player, "You can only set prices for shops you own.");
+            // Check permissions
+            if (!hasShopPermission(player, shop, 
+                    com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.SET_PRICES)) {
+                MessageUtil.sendErrorMessage(player, "You don't have permission to set prices for this shop.");
                 return 0;
             }
             
