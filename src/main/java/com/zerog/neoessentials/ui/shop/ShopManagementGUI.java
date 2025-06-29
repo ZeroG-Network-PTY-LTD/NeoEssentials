@@ -3,7 +3,10 @@ package com.zerog.neoessentials.ui.shop;
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
 import com.zerog.neoessentials.economy.EconomyManager;
+import com.zerog.neoessentials.economy.ItemHandler;
 import com.zerog.neoessentials.utils.MessageUtil;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -14,6 +17,8 @@ import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.SimpleContainer;
 
 import java.util.List;
@@ -213,12 +218,18 @@ public class ShopManagementGUI {
             if (slot >= 45) break;
             
             var shopItem = entry.getValue();
-            ItemStack displayItem = shopItem.toItemStack();
+            // Create ItemStack from item ID using ItemHandler
+            ItemStack displayItem = ItemHandler.createItemStack(shopItem.getItemId(), 1);
+            if (displayItem.isEmpty()) {
+                displayItem = new ItemStack(net.minecraft.world.item.Items.BARRIER); // Fallback
+            }
             
-            // Add custom lore with pricing and stock info
-            var meta = displayItem.getOrCreateTag();
-            meta.putBoolean("IsShopItem", true);
-            meta.putString("ShopItemId", entry.getKey());
+            // Add custom metadata using component data system
+            displayItem.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, 
+                net.minecraft.nbt.CompoundTag.of(
+                    "IsShopItem", net.minecraft.nbt.ByteTag.valueOf(true),
+                    "ShopItemId", net.minecraft.nbt.StringTag.valueOf(entry.getKey())
+                ));
             
             container.setItem(slot, displayItem);
             slot++;
