@@ -180,7 +180,7 @@ public class TabCompletionUtil {
     public static final SuggestionProvider<CommandSourceStack> MANAGEABLE_SHOP_SUGGESTIONS = (context, builder) -> {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            EconomyManager economyManager = EconomyManager.getInstance();
             ShopManager shopManager = economyManager.getShopManager();
             
             List<String> shopNames = shopManager.getAllShops()
@@ -199,7 +199,7 @@ public class TabCompletionUtil {
         } catch (Exception e) {
             // Fallback to basic shop names
             try {
-                EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+                EconomyManager economyManager = EconomyManager.getInstance();
                 ShopManager shopManager = economyManager.getShopManager();
                 
                 List<String> allShopNames = shopManager.getAllShops()
