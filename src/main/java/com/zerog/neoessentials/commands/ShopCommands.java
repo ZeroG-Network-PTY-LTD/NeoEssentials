@@ -687,40 +687,31 @@ public class ShopCommands {
             MessageUtil.sendMessage(player, "§7Price per item: §e" + defaultCurrency.format(pricePerItem));
             MessageUtil.sendMessage(player, "§7Total cost: §e" + defaultCurrency.format(totalPrice));
             
-            // Check player balance
-            double playerBalance = economyManager.getBalance(player.getUUID(), defaultCurrency);
-            if (playerBalance < totalPrice) {
+            // Check player's total available funds (wallet + bank)
+            double totalAvailable = economyManager.getTotalAvailableFunds(player.getUUID(), defaultCurrency);
+            if (totalAvailable < totalPrice) {
                 MessageUtil.sendErrorMessage(player, "Insufficient funds. You need " + 
-                    defaultCurrency.format(totalPrice - playerBalance) + " more.");
+                    defaultCurrency.format(totalPrice - totalAvailable) + " more.");
+                MessageUtil.sendMessage(player, "§7Your available funds: §e" + defaultCurrency.format(totalAvailable));
+                MessageUtil.sendMessage(player, "§7(Includes wallet and bank balance)");
                 return 0;
             }
             
             // Perform the actual transaction through the economy system
             try {
-                // For server shops, money goes to void (just deduct from player)
-                boolean success;
+                boolean success = false;
                 
                 if (shop.getOwnerId() == null) {
-                    // Server shop - just deduct money from player
-                    double currentBalance = economyManager.getBalance(player.getUUID(), defaultCurrency);
-                    success = economyManager.setBalance(player.getUUID(), defaultCurrency, currentBalance - totalPrice);
-                    
-                    // Record transaction
-                    Transaction transaction = new Transaction(
-                        UUID.randomUUID(),       // transaction ID
-                        player.getUUID(),        // from player
-                        null,                    // to server (null)
-                        totalPrice,              // amount
-                        defaultCurrency,         // currency
-                        "Shop purchase: " + quantity + "x " + itemName + " from " + shopName, // description
-                        Transaction.TransactionType.PURCHASE, // type
-                        System.currentTimeMillis() // timestamp
+                    // Server shop - use smart payment (wallet + bank)
+                    success = economyManager.makeSmartPayment(
+                        player.getUUID(), 
+                        totalPrice, 
+                        defaultCurrency, 
+                        "Shop purchase: " + quantity + "x " + itemName + " from " + shopName
                     );
-                    economyManager.getTransactionManager().recordTransaction(transaction);
-                    
                 } else {
-                    // Player shop - transfer money to shop owner
-                    success = economyManager.transferMoney(
+                    // Player shop - use smart payment to player
+                    success = economyManager.makeSmartPaymentToPlayer(
                         player.getUUID(), 
                         shop.getOwnerId(), 
                         totalPrice, 
@@ -739,8 +730,10 @@ public class ShopCommands {
                     if (itemsDelivered) {
                         MessageUtil.sendSuccessMessage(player, "Purchase completed! You bought " + quantity + 
                             " " + ItemHandler.formatItemName(itemName) + " for " + defaultCurrency.format(totalPrice));
-                        MessageUtil.sendMessage(player, "§7New balance: §e" + 
-                            defaultCurrency.format(economyManager.getBalance(player.getUUID(), defaultCurrency)));
+                        
+                        // Show updated available funds
+                        double newAvailableFunds = economyManager.getTotalAvailableFunds(player.getUUID(), defaultCurrency);
+                        MessageUtil.sendMessage(player, "§7Available funds: §e" + defaultCurrency.format(newAvailableFunds) + " §7(wallet + bank)");
                         
                         // Remove items from shop inventory
                         shop.removeItem(itemName, quantity);
@@ -818,6 +811,16 @@ public class ShopCommands {
                 return 0;
             }
             
+            // For player shops, check if the shop owner has enough funds to buy the items
+            if (shop.getOwnerId() != null) {
+                double ownerAvailableFunds = economyManager.getTotalAvailableFunds(shop.getOwnerId(), defaultCurrency);
+                if (ownerAvailableFunds < totalPrice) {
+                    MessageUtil.sendErrorMessage(player, "Shop owner doesn't have enough funds to purchase these items.");
+                    MessageUtil.sendMessage(player, "§7Shop owner needs §e" + defaultCurrency.format(totalPrice - ownerAvailableFunds) + " §7more.");
+                    return 0;
+                }
+            }
+            
             MessageUtil.sendMessage(player, "§6Sale Summary:");
             MessageUtil.sendMessage(player, "§7Shop: §e" + shopName);
             MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.formatItemName(itemName));
@@ -827,34 +830,36 @@ public class ShopCommands {
             
             // Process the sale transaction
             try {
-                boolean success;
+                boolean success = false;
                 
                 if (shop.getOwnerId() == null) {
-                    // Server shop - money comes from void
-                    double currentBalance = economyManager.getBalance(player.getUUID(), defaultCurrency);
-                    success = economyManager.setBalance(player.getUUID(), defaultCurrency, currentBalance + totalPrice);
-                    
-                    // Record transaction
-                    Transaction transaction = new Transaction(
-                        UUID.randomUUID(),       // transaction ID
-                        null,                    // from server (null)
-                        player.getUUID(),        // to player
-                        totalPrice,              // amount
-                        defaultCurrency,         // currency
-                        "Shop sale: " + quantity + "x " + itemName + " to " + shopName, // description
-                        Transaction.TransactionType.SALE, // type
-                        System.currentTimeMillis() // timestamp
-                    );
-                    economyManager.getTransactionManager().recordTransaction(transaction);
-                    
+                    // Server shop - money comes from void, add to player's wallet
+                    WalletManager walletManager = economyManager.getWalletManager();
+                    if (walletManager != null) {
+                        success = walletManager.depositCash(player.getUUID(), totalPrice, defaultCurrency, 
+                            "Shop sale: " + quantity + "x " + itemName + " to " + shopName);
+                        
+                        // Record transaction
+                        Transaction transaction = new Transaction(
+                            UUID.randomUUID(),       // transaction ID
+                            null,                    // from server (null)
+                            player.getUUID(),        // to player
+                            totalPrice,              // amount
+                            defaultCurrency,         // currency
+                            "Shop sale: " + quantity + "x " + itemName + " to " + shopName, // description
+                            Transaction.TransactionType.SALE, // type
+                            System.currentTimeMillis() // timestamp
+                        );
+                        economyManager.getTransactionManager().recordTransaction(transaction);
+                    }
                 } else {
-                    // Player shop - money comes from shop owner
-                    success = economyManager.transferMoney(
-                        shop.getOwnerId(),
-                        player.getUUID(), 
+                    // Player shop - money comes from shop owner using smart payment
+                    success = economyManager.makeSmartPaymentToPlayer(
+                        shop.getOwnerId(), // from shop owner
+                        player.getUUID(), // to seller (player)
                         totalPrice, 
                         defaultCurrency, 
-                        "Shop sale: " + quantity + "x " + itemName + " to " + shopName
+                        "Shop purchase: " + quantity + "x " + itemName + " from " + player.getScoreboardName()
                     );
                 }
                 
@@ -871,8 +876,10 @@ public class ShopCommands {
                         
                         MessageUtil.sendSuccessMessage(player, "Sale completed! You sold " + quantity + 
                             " " + ItemHandler.formatItemName(itemName) + " for " + defaultCurrency.format(totalPrice));
-                        MessageUtil.sendMessage(player, "§7New balance: §e" + 
-                            defaultCurrency.format(economyManager.getBalance(player.getUUID(), defaultCurrency)));
+                        
+                        // Show updated available funds  
+                        double newAvailableFunds = economyManager.getTotalAvailableFunds(player.getUUID(), defaultCurrency);
+                        MessageUtil.sendMessage(player, "§7Available funds: §e" + defaultCurrency.format(newAvailableFunds) + " §7(wallet + bank)");
                     } else {
                         MessageUtil.sendErrorMessage(player, "Failed to remove items from inventory. Contact an administrator.");
                         // Refund the transaction
