@@ -759,6 +759,228 @@ public class EconomyPersistenceManager {
         return useFileBackup;
     }
     
+    // ========== SHOP PERSISTENCE METHODS ==========
+    
+    /**
+     * Save a shop to database and file
+     */
+    public CompletableFuture<Void> saveShop(Shop shop) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                shopCache.put(shop.getShopId(), shop);
+                
+                if (useDatabase) {
+                    saveShopToDatabase(shop);
+                }
+                
+                if (useFileBackup) {
+                    saveShopToFile(shop);
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to save shop " + shop.getShopId(), e);
+            }
+        });
+    }
+    
+    /**
+     * Load a shop from database or file
+     */
+    public CompletableFuture<Shop> loadShop(UUID shopId) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                // Check cache first
+                Shop cached = shopCache.get(shopId);
+                if (cached != null) {
+                    return cached;
+                }
+                
+                Shop shop = null;
+                
+                // Try database first
+                if (useDatabase) {
+                    shop = loadShopFromDatabase(shopId);
+                }
+                
+                // Fallback to file
+                if (shop == null && useFileBackup) {
+                    shop = loadShopFromFile(shopId);
+                }
+                
+                // Cache if found
+                if (shop != null) {
+                    shopCache.put(shopId, shop);
+                }
+                
+                return shop;
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to load shop " + shopId, e);
+                return null;
+            }
+        });
+    }
+    
+    /**
+     * Load all shops for a player
+     */
+    public List<Shop> getPlayerShops(UUID playerId) {
+        return shopCache.values().stream()
+            .filter(shop -> shop.getOwnerId().equals(playerId) || shop.isEmployee(playerId))
+            .toList();
+    }
+    
+    /**
+     * Load all shops
+     */
+    public Map<UUID, Shop> getAllShops() {
+        return new HashMap<>(shopCache);
+    }
+    
+    /**
+     * Delete a shop from database and file
+     */
+    public CompletableFuture<Boolean> deleteShop(UUID shopId) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                // Remove from cache
+                shopCache.remove(shopId);
+                
+                boolean dbSuccess = true;
+                boolean fileSuccess = true;
+                
+                // Delete from database
+                if (useDatabase) {
+                    try {
+                        String sql = "DELETE FROM shops WHERE shop_id = ?";
+                        try (PreparedStatement pstmt = dbConnection.prepareStatement(sql)) {
+                            pstmt.setString(1, shopId.toString());
+                            pstmt.executeUpdate();
+                        }
+                    } catch (SQLException e) {
+                        NeoEssentials.LOGGER.error("Failed to delete shop from database: " + shopId, e);
+                        dbSuccess = false;
+                    }
+                }
+                
+                // Delete from file (reload file, remove shop, save back)
+                if (useFileBackup) {
+                    try {
+                        Map<String, Shop> allShops = loadAllShopsFromFile();
+                        allShops.remove(shopId.toString());
+                        saveAllShopsToFile(allShops);
+                    } catch (IOException e) {
+                        NeoEssentials.LOGGER.error("Failed to delete shop from file: " + shopId, e);
+                        fileSuccess = false;
+                    }
+                }
+                
+                return dbSuccess && fileSuccess;
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to delete shop " + shopId, e);
+                return false;
+            }
+        });
+    }
+    
+    private void saveShopToDatabase(Shop shop) throws SQLException {
+        String sql = """
+            INSERT OR REPLACE INTO shops (
+                shop_id, owner_uuid, shop_type, data, updated_at
+            ) VALUES (?, ?, ?, ?, strftime('%s', 'now'))
+        """;
+        
+        try (PreparedStatement pstmt = dbConnection.prepareStatement(sql)) {
+            pstmt.setString(1, shop.getShopId().toString());
+            pstmt.setString(2, shop.getOwnerId().toString());
+            pstmt.setString(3, shop.getShopType().name());
+            pstmt.setString(4, gson.toJson(shop));
+            pstmt.executeUpdate();
+        }
+    }
+    
+    private Shop loadShopFromDatabase(UUID shopId) throws SQLException {
+        String sql = "SELECT data FROM shops WHERE shop_id = ?";
+        
+        try (PreparedStatement pstmt = dbConnection.prepareStatement(sql)) {
+            pstmt.setString(1, shopId.toString());
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String jsonData = rs.getString("data");
+                    return gson.fromJson(jsonData, Shop.class);
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    private void saveShopToFile(Shop shop) throws IOException {
+        // Load all shops, update this one, save back
+        Map<String, Shop> allShops = loadAllShopsFromFile();
+        allShops.put(shop.getShopId().toString(), shop);
+        saveAllShopsToFile(allShops);
+    }
+    
+    private Shop loadShopFromFile(UUID shopId) throws IOException {
+        Map<String, Shop> allShops = loadAllShopsFromFile();
+        return allShops.get(shopId.toString());
+    }
+    
+    @SuppressWarnings("unchecked")
+    private Map<String, Shop> loadAllShopsFromFile() throws IOException {
+        File file = new File(dataFolder + shopsFile);
+        if (!file.exists()) {
+            return new HashMap<>();
+        }
+        
+        try {
+            String jsonContent = Files.readString(file.toPath());
+            if (jsonContent.trim().isEmpty()) {
+                NeoEssentials.LOGGER.warn("Shops file is empty, returning empty map");
+                return new HashMap<>();
+            }
+            
+            Type type = new TypeToken<Map<String, Shop>>(){}.getType();
+            Map<String, Shop> shops = gson.fromJson(jsonContent, type);
+            return shops != null ? shops : new HashMap<>();
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to load shops from file, corrupted data detected", e);
+            
+            // Create backup of corrupted file
+            try {
+                Files.copy(file.toPath(), 
+                    Paths.get(dataFolder + "shops_corrupted_" + System.currentTimeMillis() + ".json"));
+                NeoEssentials.LOGGER.info("Created backup of corrupted shops file");
+            } catch (Exception backupE) {
+                NeoEssentials.LOGGER.error("Failed to create backup of corrupted shops file", backupE);
+            }
+            
+            return new HashMap<>();
+        }
+    }
+    
+    private void saveAllShopsToFile(Map<String, Shop> shops) throws IOException {
+        File file = new File(dataFolder + shopsFile);
+        
+        // Ensure directory exists
+        File parentDir = file.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+        
+        // Create atomic write - write to temp file first, then rename
+        File tempFile = new File(file.getAbsolutePath() + ".tmp");
+        
+        try (FileWriter writer = new FileWriter(tempFile)) {
+            gson.toJson(shops, writer);
+        }
+        
+        // Atomic move
+        Files.move(tempFile.toPath(), file.toPath(), 
+            java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+            java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+    }
+    
     // ========== LOAN PERSISTENCE METHODS ==========
     
     /**

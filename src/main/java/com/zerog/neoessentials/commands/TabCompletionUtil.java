@@ -241,10 +241,22 @@ public class TabCompletionUtil {
                 }
             }
             
-            // Fallback to general item suggestions
-            return ITEM_SUGGESTIONS.getSuggestions(context, builder);
+            // Fallback to general item registry
+            List<String> itemNames = BuiltInRegistries.ITEM.stream()
+                .map(item -> BuiltInRegistries.ITEM.getKey(item).toString())
+                .filter(name -> name.contains(builder.getRemaining().toLowerCase()))
+                .limit(20)
+                .collect(Collectors.toList());
+            return SharedSuggestionProvider.suggest(itemNames, builder);
         } catch (Exception e) {
-            return ITEM_SUGGESTIONS.getSuggestions(context, builder);
+            // Final fallback to common items
+            return SharedSuggestionProvider.suggest(
+                new String[]{
+                    "minecraft:diamond", "minecraft:iron_ingot", "minecraft:gold_ingot",
+                    "minecraft:coal", "minecraft:emerald", "minecraft:stone"
+                }, 
+                builder
+            );
         }
     };
     
