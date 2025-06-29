@@ -53,6 +53,7 @@ public class BankCommands {
                                     StringArgumentType.getString(context, "to-account"),
                                     StringArgumentType.getString(context, "from-account")))))))
                 .then(Commands.literal("withdraw")
+                    .executes(context -> showWithdrawHelp(context.getSource()))
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                         .suggests(TabCompletionUtil.AMOUNT_SUGGESTIONS)
                         .then(Commands.argument("account", StringArgumentType.string())
@@ -183,9 +184,11 @@ public class BankCommands {
             MessageUtil.sendMessage(player, "§6§l--- Bank Deposit Help ---");
             MessageUtil.sendMessage(player, "§eUsage: /bank deposit <amount> <to-account> [from-account]");
             MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§eExample: /bank deposit 100 CHK001 SAV002");
-            MessageUtil.sendMessage(player, "§7This would transfer $100 from savings account SAV002 to checking account CHK001");
+            MessageUtil.sendMessage(player, "§eExamples:");
+            MessageUtil.sendMessage(player, "§7• /bank deposit 100 CHK001 §f- Deposit $100 cash to checking account");
+            MessageUtil.sendMessage(player, "§7• /bank deposit 100 CHK001 SAV002 §f- Transfer $100 from savings to checking");
             MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§7If no from-account is specified, cash from your wallet is used.");
             MessageUtil.sendMessage(player, "§eTo see your accounts: /bank list");
             return 1;
         } catch (CommandSyntaxException e) {
@@ -448,7 +451,12 @@ public class BankCommands {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
             return 0;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(source, "Error processing withdrawal: " + e.getMessage());
+            try {
+                ServerPlayer player = source.getPlayerOrException();
+                MessageUtil.sendErrorMessage(player, "Error processing withdrawal: " + e.getMessage());
+            } catch (CommandSyntaxException ex) {
+                source.sendFailure(Component.literal("§cError processing withdrawal: " + e.getMessage()));
+            }
             return 0;
         }
     }
