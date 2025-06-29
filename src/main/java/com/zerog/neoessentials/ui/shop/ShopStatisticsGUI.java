@@ -2,7 +2,8 @@ package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
-import com.zerog.neoessentials.economy.ShopItem;
+import com.zerog.neoessentials.economy.Shop.ShopItem;
+import com.zerog.neoessentials.economy.ShopEmployeeManager;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
