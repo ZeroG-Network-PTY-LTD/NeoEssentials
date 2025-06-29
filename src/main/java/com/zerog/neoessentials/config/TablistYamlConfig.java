@@ -60,19 +60,41 @@ public class TablistYamlConfig {
     
     // YAML instance for serialization/deserialization
     private static final YamlUtil yaml;
+    private static final boolean yamlEnabled;
     
     static {
-        YamlUtil yamlUtil = new YamlUtil();
-        Object options = yamlUtil.createDumperOptions();
-        yamlUtil.setDefaultFlowStyle(options, "BLOCK");
-        yamlUtil.setPrettyFlow(options, true);
-        yaml = new YamlUtil(options);
+        YamlUtil tempYaml = null;
+        boolean tempYamlEnabled = false;
+        
+        if (YamlUtil.isYamlAvailable()) {
+            try {
+                YamlUtil yamlUtil = new YamlUtil();
+                Object options = yamlUtil.createDumperOptions();
+                yamlUtil.setDefaultFlowStyle(options, "BLOCK");
+                yamlUtil.setPrettyFlow(options, true);
+                tempYaml = new YamlUtil(options);
+                tempYamlEnabled = true;
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.warn("Failed to initialize YAML utility: " + e.getMessage());
+                tempYamlEnabled = false;
+            }
+        } else {
+            NeoEssentials.LOGGER.warn("SnakeYAML not available - YAML tablist features will be disabled");
+        }
+        
+        yaml = tempYaml;
+        yamlEnabled = tempYamlEnabled;
     }
     
     /**
      * Initialize the tablist YAML configuration
      */
     public static void initialize() {
+        if (!yamlEnabled) {
+            NeoEssentials.LOGGER.info("YAML tablist configuration is disabled (SnakeYAML not available)");
+            return;
+        }
+        
         // Create config directory if it doesn't exist
         try {
             if (!Files.exists(CONFIG_DIR)) {
@@ -115,6 +137,11 @@ public class TablistYamlConfig {
      */
     @SuppressWarnings("unchecked")
     public static void loadConfig() {
+        if (!yamlEnabled) {
+            NeoEssentials.LOGGER.debug("Skipping YAML config loading (SnakeYAML not available)");
+            return;
+        }
+        
         try {
             NeoEssentials.LOGGER.info("Loading tablist configuration from {}", YAML_CONFIG_PATH);
             

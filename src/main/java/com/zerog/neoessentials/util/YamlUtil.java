@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 
 /**
  * YAML utility class that provides a simplified interface to SnakeYAML.
- * Uses the bundled SnakeYAML directly without complex relocation.
+ * Relies on the server environment to provide SnakeYAML instead of bundling it.
  */
 public class YamlUtil {
     private static final String YAML_CLASS = "org.yaml.snakeyaml.Yaml";
@@ -18,9 +18,34 @@ public class YamlUtil {
     private final Object yamlInstance;
     private final Class<?> yamlClass;
     private final Class<?> dumperOptionsClass;
+    private static boolean yamlAvailable = true;
+    private static boolean yamlChecked = false;
+    
+    /**
+     * Check if SnakeYAML is available in the runtime environment
+     * 
+     * @return true if SnakeYAML is available, false otherwise
+     */
+    public static boolean isYamlAvailable() {
+        if (!yamlChecked) {
+            try {
+                Class.forName(YAML_CLASS);
+                yamlAvailable = true;
+                NeoEssentials.LOGGER.info("SnakeYAML is available from server environment");
+            } catch (ClassNotFoundException e) {
+                yamlAvailable = false;
+                NeoEssentials.LOGGER.warn("SnakeYAML is not available in the server environment. YAML features will be disabled.");
+                NeoEssentials.LOGGER.warn("To enable YAML features, ensure your server provides SnakeYAML (most servers do).");
+            }
+            yamlChecked = true;
+        }
+        return yamlAvailable;
+    }
     
     /**
      * Create a new YAML utility instance
+     * 
+     * @throws RuntimeException if SnakeYAML is not available
      */
     public YamlUtil() {
         this(null);
@@ -30,12 +55,16 @@ public class YamlUtil {
      * Create a new YAML utility instance with dumper options
      * 
      * @param dumperOptions Dumper options (can be null)
+     * @throws RuntimeException if SnakeYAML is not available
      */
     public YamlUtil(Object dumperOptions) {
+        if (!isYamlAvailable()) {
+            throw new RuntimeException("SnakeYAML is not available in the server environment. Cannot create YamlUtil instance.");
+        }
+        
         try {
             yamlClass = Class.forName(YAML_CLASS);
             dumperOptionsClass = Class.forName(DUMPER_OPTIONS_CLASS);
-            NeoEssentials.LOGGER.info("Using bundled SnakeYAML");
             
             if (dumperOptions != null) {
                 Constructor<?> constructor = yamlClass.getConstructor(dumperOptionsClass);

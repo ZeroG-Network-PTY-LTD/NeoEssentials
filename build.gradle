@@ -142,9 +142,8 @@ dependencies {
     // TOML parsing library for custom animations (legacy)
     implementation 'com.moandjiezana.toml:toml4j:0.7.2'
     
-    // YAML parsing library for configuration - will be shaded to avoid conflicts
-    implementation 'org.yaml:snakeyaml:2.2'
-    compileOnly 'org.yaml:snakeyaml:2.2' // For compilation, but will use server version if available
+    // YAML parsing library for configuration - rely on server environment
+    compileOnly 'org.yaml:snakeyaml:2.2' // For compilation only, use server-provided version
     
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
@@ -241,7 +240,7 @@ idea {
     }
 }
 
-// Jar configuration - includes SnakeYAML directly instead of using Shadow plugin
+// Jar configuration - relies on server environment for SnakeYAML
 jar {
     manifest {
         attributes(
@@ -255,22 +254,16 @@ jar {
         )
     }
     
-    // Include all dependencies from the 'include' configuration
+    // Include all dependencies from the 'include' configuration (SQLite, etc.)
     from {
         configurations.include.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-    
-    // Include SnakeYAML directly in the JAR without relocation
-    // This allows fallback when server SnakeYAML is not available
-    from {
-        configurations.runtimeClasspath.filter { it.name.contains('snakeyaml') }.collect { zipTree(it) }
     }
     
     // Avoid duplicate entries when including dependencies
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     
     doFirst {
-        println "Building JAR with included SnakeYAML (no relocation)..."
+        println "Building JAR without bundled SnakeYAML (relying on server environment)..."
     }
 }
 

@@ -90,6 +90,11 @@ public class EnhancedEconomyConfig {
      * Load configuration from YAML file
      */
     public void loadFromFile(String filePath) {
+        if (!YamlUtil.isYamlAvailable()) {
+            System.err.println("Cannot load economy config from " + filePath + ": SnakeYAML not available");
+            return;
+        }
+        
         try {
             YamlUtil yaml = new YamlUtil();
             try (InputStream inputStream = new FileInputStream(filePath)) {
