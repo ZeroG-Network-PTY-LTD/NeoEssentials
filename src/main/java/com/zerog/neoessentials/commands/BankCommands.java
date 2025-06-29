@@ -362,18 +362,18 @@ public class BankCommands {
     private int showWithdrawHelp(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6§l--- Bank Withdrawal Notice ---");
-            MessageUtil.sendMessage(player, "§cWithdrawals are no longer needed!");
+            MessageUtil.sendMessage(player, "§6§l--- Bank Withdrawal Help ---");
+            MessageUtil.sendMessage(player, "§eUsage: /bank withdraw <amount> <account>");
             MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7In the new bank-only economy system, all your money is safely");
-            MessageUtil.sendMessage(player, "§7stored in bank accounts. You can:");
+            MessageUtil.sendMessage(player, "§eExample: /bank withdraw 100 CHK001");
+            MessageUtil.sendMessage(player, "§7This withdraws $100 from checking account CHK001 to your cash wallet");
             MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§e• Check balances: §f/bank balance [account]");
-            MessageUtil.sendMessage(player, "§e• Transfer between accounts: §f/bank deposit <amount> <to> <from>");
-            MessageUtil.sendMessage(player, "§e• Pay other players: §f/pay <player> <amount>");
-            MessageUtil.sendMessage(player, "§e• View all accounts: §f/bank list");
+            MessageUtil.sendMessage(player, "§7Cash on hand is used for:");
+            MessageUtil.sendMessage(player, "§7• Paying other players with /pay");
+            MessageUtil.sendMessage(player, "§7• Shopping at player stores");
+            MessageUtil.sendMessage(player, "§7• Auction house bidding");
             MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§aYour money is always available directly from your bank accounts!");
+            MessageUtil.sendMessage(player, "§eTo see your accounts: /bank list");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
