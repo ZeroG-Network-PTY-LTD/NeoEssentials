@@ -226,7 +226,7 @@ public class ItemHandler {
     }
     
     /**
-     * Give ItemStack to player inventory (main inventory and hotbar only)
+     * Give ItemStack to player inventory
      */
     public static boolean giveItemStackToPlayer(ServerPlayer player, ItemStack itemStack) {
         if (itemStack.isEmpty()) return false;
@@ -235,9 +235,8 @@ public class ItemHandler {
         int remainingCount = itemStack.getCount();
         ItemStack workingStack = itemStack.copy();
         
-        // First pass: try to add to existing stacks in main inventory + hotbar (slots 0-35)
-        // Hotbar: 0-8, Main inventory: 9-35
-        for (int i = 0; i < 36 && remainingCount > 0; i++) {
+        // First pass: try to add to existing stacks
+        for (int i = 0; i < player.getInventory().getContainerSize() && remainingCount > 0; i++) {
             ItemStack existingStack = player.getInventory().getItem(i);
             if (!existingStack.isEmpty() && existingStack.getItem() == itemStack.getItem() && 
                 ItemStack.isSameItemSameComponents(existingStack, workingStack)) {
@@ -253,8 +252,8 @@ public class ItemHandler {
             }
         }
         
-        // Second pass: add to empty slots in main inventory + hotbar (slots 0-35)
-        for (int i = 0; i < 36 && remainingCount > 0; i++) {
+        // Second pass: add to empty slots
+        for (int i = 0; i < player.getInventory().getContainerSize() && remainingCount > 0; i++) {
             ItemStack slot = player.getInventory().getItem(i);
             if (slot.isEmpty()) {
                 int toAdd = Math.min(remainingCount, workingStack.getMaxStackSize());
@@ -265,70 +264,16 @@ public class ItemHandler {
             }
         }
         
-        // If there are still items remaining, drop them at player location
+        // If there are still items remaining, drop them
         if (remainingCount > 0) {
             ItemStack dropStack = workingStack.copy();
             dropStack.setCount(remainingCount);
             player.drop(dropStack, false);
-            NeoEssentials.LOGGER.info("Dropped {} items for player {} (inventory full)", remainingCount, player.getName().getString());
-            
-            // Also notify the player their inventory was full
-            com.zerog.neoessentials.utils.MessageUtil.sendMessage(player, 
-                "§6⚠ Your inventory was full! §e" + remainingCount + " §6items were dropped on the ground.");
+            NeoEssentials.LOGGER.debug("Dropped {} items for player {} (inventory full)", remainingCount, player.getName().getString());
         }
         
         player.inventoryMenu.broadcastChanges();
         return true;
-    }
-    
-    /**
-     * Check if player has enough space in main inventory for the given items
-     * @param player The player to check
-     * @param itemId The item ID to check
-     * @param quantity The quantity needed
-     * @return true if player has enough space, false otherwise
-     */
-    public static boolean hasInventorySpace(ServerPlayer player, String itemId, int quantity) {
-        Item item = getItemFromId(itemId);
-        if (item == null || quantity <= 0) return false;
-        
-        int remainingToCheck = quantity;
-        int maxStackSize = new ItemStack(item).getMaxStackSize();
-        
-        // Check existing stacks that can be added to (slots 0-35: hotbar + main inventory)
-        for (int i = 0; i < 36 && remainingToCheck > 0; i++) {
-            ItemStack existingStack = player.getInventory().getItem(i);
-            if (!existingStack.isEmpty() && existingStack.getItem() == item) {
-                int existingCount = existingStack.getCount();
-                int canAdd = maxStackSize - existingCount;
-                if (canAdd > 0) {
-                    remainingToCheck -= Math.min(remainingToCheck, canAdd);
-                }
-            }
-        }
-        
-        // Check empty slots
-        for (int i = 0; i < 36 && remainingToCheck > 0; i++) {
-            ItemStack slot = player.getInventory().getItem(i);
-            if (slot.isEmpty()) {
-                remainingToCheck -= Math.min(remainingToCheck, maxStackSize);
-            }
-        }
-        
-        return remainingToCheck <= 0;
-    }
-    
-    /**
-     * Get the number of free inventory slots (main inventory + hotbar only)
-     */
-    public static int getFreeInventorySlots(ServerPlayer player) {
-        int freeSlots = 0;
-        for (int i = 0; i < 36; i++) { // Slots 0-35: hotbar + main inventory
-            if (player.getInventory().getItem(i).isEmpty()) {
-                freeSlots++;
-            }
-        }
-        return freeSlots;
     }
     
     /**
