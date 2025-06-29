@@ -383,7 +383,74 @@ public class BankCommands {
     
     // Legacy method - no longer used but kept for compatibility
     private int withdrawMoney(CommandSourceStack source, double amount, String accountNumber) {
-        return showWithdrawHelp(source);
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            BankManager bankManager = economyManager.getBankManager();
+            com.zerog.neoessentials.economy.WalletManager walletManager = economyManager.getWalletManager();
+            com.zerog.neoessentials.economy.Currency defaultCurrency = 
+                economyManager.getCurrencyManager().getDefaultCurrency();
+            
+            if (defaultCurrency == null) {
+                MessageUtil.sendErrorMessage(player, "No default currency configured");
+                return 0;
+            }
+            
+            // Find the bank account
+            List<BankAccount> accounts = bankManager.getPlayerAccounts(player.getUUID());
+            BankAccount targetAccount = null;
+            
+            for (BankAccount account : accounts) {
+                if (account.getAccountNumber().equalsIgnoreCase(accountNumber) || 
+                    account.getAccountId().toString().startsWith(accountNumber.toLowerCase())) {
+                    targetAccount = account;
+                    break;
+                }
+            }
+            
+            if (targetAccount == null) {
+                MessageUtil.sendErrorMessage(player, "Bank account not found: " + accountNumber);
+                MessageUtil.sendMessage(player, "§7Use /bank list to see your accounts");
+                return 0;
+            }
+            
+            // Check if account has sufficient balance
+            double accountBalance = targetAccount.getBalance(defaultCurrency);
+            if (accountBalance < amount) {
+                String formattedBalance = String.format("$%.2f", accountBalance);
+                MessageUtil.sendErrorMessage(player, "Insufficient bank account balance. Account balance: " + formattedBalance);
+                return 0;
+            }
+            
+            // Perform the withdrawal (bank to wallet)
+            if (walletManager.withdrawFromBank(player.getUUID(), targetAccount, defaultCurrency, amount)) {
+                String formattedAmount = String.format("$%.2f", amount);
+                MessageUtil.sendSuccessMessage(player, "Successfully withdrew " + formattedAmount + 
+                    " from account " + targetAccount.getAccountNumber());
+                
+                // Show updated balances
+                double newAccountBalance = targetAccount.getBalance(defaultCurrency);
+                double cashBalance = walletManager.getCashBalance(player.getUUID(), defaultCurrency);
+                String formattedAccountBalance = String.format("$%.2f", newAccountBalance);
+                String formattedCashBalance = String.format("$%.2f", cashBalance);
+                
+                MessageUtil.sendMessage(player, "§7Account Balance: §e" + formattedAccountBalance);
+                MessageUtil.sendMessage(player, "§7Cash on Hand: §e" + formattedCashBalance);
+                
+                return 1;
+            } else {
+                MessageUtil.sendErrorMessage(player, "Withdrawal failed. Account may have restrictions or you may have reached cash limits.");
+                return 0;
+            }
+            
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use banking commands"));
+            return 0;
+        } catch (Exception e) {
+            MessageUtil.sendErrorMessage(source, "Error processing withdrawal: " + e.getMessage());
+            return 0;
+        }
     }
     
     private int transferMoney(CommandSourceStack source, double amount, String toAccountNumber, String fromAccountNumber) {
