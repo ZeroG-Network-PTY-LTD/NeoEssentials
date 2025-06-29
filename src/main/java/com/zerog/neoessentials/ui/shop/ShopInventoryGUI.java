@@ -115,16 +115,19 @@ public class ShopInventoryGUI {
             if (slot >= 45) break; // Don't fill bottom row
             
             Shop.ShopItem shopItem = entry.getValue();
-            ItemStack displayStack = shopItem.getItemStack().copy();
+            
+            // Create display stack using ItemHandler
+            String itemId = shopItem.getItemId();
+            net.minecraft.world.item.Item item = com.zerog.neoessentials.economy.ItemHandler.getItemFromId(itemId);
+            ItemStack displayStack = item != null ? new ItemStack(item) : new ItemStack(Items.BARRIER);
             
             // Update display name and lore
             displayStack.set(DataComponents.CUSTOM_NAME, 
-                Component.literal("§e" + shopItem.getDisplayName()));
+                Component.literal("§e" + com.zerog.neoessentials.economy.ItemHandler.formatItemName(itemId)));
             
             displayStack.set(DataComponents.LORE, new ItemLore(List.of(
-                Component.literal("§7Stock: §a" + shopItem.getStock()),
-                Component.literal("§7Buy Price: §6$" + String.format("%.2f", shopItem.getBuyPrice())),
-                Component.literal("§7Sell Price: §6$" + String.format("%.2f", shopItem.getSellPrice())),
+                Component.literal("§7Stock: §a" + shopItem.getQuantity()),
+                Component.literal("§7Price: §6$" + String.format("%.2f", shop.getItemPrice(itemId))),
                 Component.literal(""),
                 Component.literal("§8Left Click: Remove 1"),
                 Component.literal("§8Right Click: Remove Stack"),
