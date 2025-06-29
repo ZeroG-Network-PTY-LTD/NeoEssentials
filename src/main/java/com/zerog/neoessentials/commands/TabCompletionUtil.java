@@ -450,4 +450,23 @@ public class TabCompletionUtil {
     public static final SuggestionProvider<CommandSourceStack> SHOP_OWNERSHIP_SUGGESTIONS = (context, builder) -> {
         return SharedSuggestionProvider.suggest(SHOP_OWNERSHIP_TYPES, builder);
     };
+    
+    /**
+     * Provides mod ID suggestions for modded item commands.
+     */
+    public static final SuggestionProvider<CommandSourceStack> MOD_ID_SUGGESTIONS = (context, builder) -> {
+        try {
+            List<String> modIds = com.zerog.neoessentials.economy.ItemHandler.getLoadedModIds();
+            String remaining = builder.getRemaining().toLowerCase();
+            
+            List<String> filtered = modIds.stream()
+                .filter(modId -> modId.toLowerCase().contains(remaining))
+                .limit(15)
+                .collect(Collectors.toList());
+            
+            return SharedSuggestionProvider.suggest(filtered, builder);
+        } catch (Exception e) {
+            return SharedSuggestionProvider.suggest(new String[]{"minecraft"}, builder);
+        }
+    };
 }
