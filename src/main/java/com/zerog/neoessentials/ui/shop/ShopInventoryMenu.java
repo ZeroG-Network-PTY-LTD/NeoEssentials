@@ -2,7 +2,6 @@ package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
-import com.zerog.neoessentials.economy.ShopItem;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -140,24 +139,24 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
     private void removeAllItems(ServerPlayer player) {
         try {
             int itemsRemoved = 0;
-            var shopItems = shop.getInventory().getItems();
+            var shopItems = shop.getInventory();
             
             for (String itemId : shopItems.keySet()) {
-                ShopItem shopItem = shopItems.get(itemId);
-                if (shopItem != null && shopItem.getStock() > 0) {
+                Shop.ShopItem shopItem = shopItems.get(itemId);
+                if (shopItem != null && shopItem.getQuantity() > 0) {
                     // Create item stack for the full stock
                     ItemStack itemStack = shopItem.getItemStack().copy();
-                    itemStack.setCount(shopItem.getStock());
+                    itemStack.setCount(shopItem.getQuantity());
                     
                     // Try to add to player inventory
                     if (player.getInventory().add(itemStack)) {
                         // Successfully added, remove from shop
-                        shop.getInventory().removeItem(itemId, shopItem.getStock());
+                        shop.removeItem(itemId, shopItem.getQuantity());
                         itemsRemoved++;
                     } else {
                         // Inventory full, drop items
                         player.drop(itemStack, false);
-                        shop.getInventory().removeItem(itemId, shopItem.getStock());
+                        shop.removeItem(itemId, shopItem.getQuantity());
                         itemsRemoved++;
                     }
                 }

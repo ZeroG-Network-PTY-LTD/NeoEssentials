@@ -2,7 +2,6 @@ package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
-import com.zerog.neoessentials.economy.ShopItem;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -109,13 +108,13 @@ public class ShopInventoryGUI {
         container.setItem(8, removeAllItem);
         
         // Display current shop items
-        Map<String, ShopItem> shopItems = shop.getInventory().getItems();
+        Map<String, Shop.ShopItem> shopItems = shop.getInventory();
         int slot = 18; // Start from second row
         
-        for (Map.Entry<String, ShopItem> entry : shopItems.entrySet()) {
+        for (Map.Entry<String, Shop.ShopItem> entry : shopItems.entrySet()) {
             if (slot >= 45) break; // Don't fill bottom row
             
-            ShopItem shopItem = entry.getValue();
+            Shop.ShopItem shopItem = entry.getValue();
             ItemStack displayStack = shopItem.getItemStack().copy();
             
             // Update display name and lore
