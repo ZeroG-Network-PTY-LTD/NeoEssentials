@@ -13,7 +13,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 import java.util.UUID;
@@ -648,7 +647,6 @@ public class ShopCommands {
                 NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
             ShopManager shopManager = economyManager.getShopManager();
             CurrencyManager currencyManager = economyManager.getCurrencyManager();
-            BankManager bankManager = economyManager.getBankManager();
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             
             if (defaultCurrency == null) {
