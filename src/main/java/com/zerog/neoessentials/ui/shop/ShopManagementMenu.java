@@ -144,7 +144,7 @@ public class ShopManagementMenu extends AbstractContainerMenu {
                 break;
                 
             case "employee_management":
-                MessageUtil.sendMessage(player, "§eEmployee management interface coming soon!");
+                new ShopEmployeeGUI(shop, shopManager).openEmployeeMenu(player);
                 break;
                 
             case "view_statistics":
