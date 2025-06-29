@@ -4,7 +4,6 @@ import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.ui.tablist.TablistAnimationManager;
 import com.zerog.neoessentials.ui.tablist.TablistPlaceholderManager;
 import com.zerog.neoessentials.utils.PermissionUtil;
-import com.zerog.neoessentials.utils.PermissionUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
 import net.minecraft.server.MinecraftServer;
