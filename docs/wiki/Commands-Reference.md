@@ -83,7 +83,46 @@ neoessentials.tablist.<tablist_command>
 | `/balance` or `/bal` | Check your balance | `neoessentials.command.balance` |
 | `/balancetop` or `/baltop` | View richest players | `neoessentials.command.balancetop` |
 | `/pay` **<player>** **<amount>** | Transfer money | `neoessentials.command.pay` |
-| `/trade` **<player>** | Start trade session | `neoessentials.command.trade` |
+| `/eco` *[action]* | Economy management commands | `neoessentials.command.eco` |
+
+### Banking System
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/bank` | Show bank account information | `neoessentials.command.bank` |
+| `/bank create` **<type>** | Create a new bank account | `neoessentials.command.bank.create` |
+| `/bank list` | List all your bank accounts | `neoessentials.command.bank.list` |
+| `/bank deposit` **<amount>** *[account]* | Deposit money to account | `neoessentials.command.bank.deposit` |
+| `/bank withdraw` **<amount>** *[account]* | Withdraw money from account | `neoessentials.command.bank.withdraw` |
+| `/bank transfer` **<from>** **<to>** **<amount>** | Transfer between accounts | `neoessentials.command.bank.transfer` |
+
+### Shop System
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/shop` | Show shop help and status | `neoessentials.command.shop` |
+| `/shop create` **<name>** **<category>** **<ownership>** | Create a new shop | `neoessentials.command.shop.create` |
+| `/shop list` *[category]* | List available shops | `neoessentials.command.shop.list` |
+| `/shop buy` **<shop>** **<item>** **<quantity>** | Buy items from shop | `neoessentials.command.shop.buy` |
+| `/shop sell` **<shop>** **<item>** **<quantity>** | Sell items to shop | `neoessentials.command.shop.sell` |
+| `/shop manage` **<shop>** | Manage your shop | `neoessentials.command.shop.manage` |
+
+### Auction System
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/auction` | Show auction help | `neoessentials.command.auction` |
+| `/auction create` **<type>** **<starting-price>** *[duration]* | Create new auction | `neoessentials.command.auction.create` |
+| `/auction list` *[type]* | List active auctions | `neoessentials.command.auction.list` |
+| `/auction bid` **<auction-id>** **<amount>** | Place bid on auction | `neoessentials.command.auction.bid` |
+| `/auction buyout` **<auction-id>** | Buy auction immediately | `neoessentials.command.auction.buyout` |
+| `/auction cancel` **<auction-id>** | Cancel your auction | `neoessentials.command.auction.cancel` |
+
+### Loan System
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/loan` | Show loan information | `neoessentials.command.loan` |
+| `/loan apply` **<amount>** **<type>** *[term]* | Apply for a loan | `neoessentials.command.loan.apply` |
+| `/loan list` | List your active loans | `neoessentials.command.loan.list` |
+| `/loan pay` **<loan-id>** **<amount>** | Make loan payment | `neoessentials.command.loan.pay` |
+| `/loan info` **<loan-id>** | Get loan information | `neoessentials.command.loan.info` |
 
 ## 🏠 Home & Warp Commands
 
