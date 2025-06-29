@@ -836,8 +836,7 @@ public class ShopCommands {
                     // Server shop - money comes from void, add to player's wallet
                     WalletManager walletManager = economyManager.getWalletManager();
                     if (walletManager != null) {
-                        success = walletManager.depositCash(player.getUUID(), totalPrice, defaultCurrency, 
-                            "Shop sale: " + quantity + "x " + itemName + " to " + shopName);
+                        success = walletManager.addCash(player.getUUID(), defaultCurrency, totalPrice);
                         
                         // Record transaction
                         Transaction transaction = new Transaction(
