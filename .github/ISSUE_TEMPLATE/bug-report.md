@@ -4,7 +4,7 @@ about: Create a report to help us improve
 labels: Bug
 ---
 
-**Modpack version**
+**Mod version**
 
 **Describe the bug**
 A clear and concise description of what the bug is.
