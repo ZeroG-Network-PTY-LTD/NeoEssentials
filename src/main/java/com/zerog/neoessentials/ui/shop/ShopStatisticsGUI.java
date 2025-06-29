@@ -1,6 +1,11 @@
 package com.zerog.neoessentials.ui.shop;
-
-import com.zerog.neoessentials.economy.Shop;
+        // Check permissions
+        if (!shop.getOwnerId().equals(player.getUUID()) && 
+            !shop.getEmployeeManager().hasPermission(player.getUUID(), 
+                ShopEmployeeManager.ShopPermission.VIEW_STATS)) {
+            MessageUtil.sendMessage(player, "§cYou don't have permission to view shop statistics!");
+            return;
+        }t com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
 import com.zerog.neoessentials.economy.Shop.ShopItem;
 import com.zerog.neoessentials.economy.ShopEmployeeManager;
