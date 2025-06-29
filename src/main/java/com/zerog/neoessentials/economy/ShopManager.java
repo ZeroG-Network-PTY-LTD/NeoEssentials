@@ -32,6 +32,9 @@ public class ShopManager {
         this.shopCreationFee = 500.0;
         this.shopRentalFee = 50.0;
         this.shopTaxRate = 0.05; // 5% tax on sales
+        
+        // Load existing shops from persistence
+        loadAllShops();
     }
     
     public static ShopManager getInstance() {

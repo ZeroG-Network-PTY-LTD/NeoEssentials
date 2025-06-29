@@ -131,6 +131,10 @@ public class Shop {
         }
         
         itemPrices.put(itemId, price);
+        
+        // Save shop changes to persistence
+        saveToStorage();
+        
         return true;
     }
     
@@ -154,6 +158,9 @@ public class Shop {
             inventory.remove(itemId);
             itemPrices.remove(itemId);
         }
+        
+        // Save shop changes to persistence
+        saveToStorage();
         
         return true;
     }
@@ -246,6 +253,9 @@ public class Shop {
         totalRevenue += totalPrice;
         totalSales++;
         customers.add(buyerId);
+        
+        // Save shop changes to persistence
+        saveToStorage();
     }
     
     /**
@@ -372,7 +382,11 @@ public class Shop {
             return false;
         }
         
-        return employeeManager.addEmployee(employeeId, employeeName, role, managerId);
+        boolean result = employeeManager.addEmployee(employeeId, employeeName, role, managerId);
+        if (result) {
+            saveToStorage();
+        }
+        return result;
     }
     
     /**
@@ -387,7 +401,11 @@ public class Shop {
             return false;
         }
         
-        return employeeManager.removeEmployee(employeeId, managerId);
+        boolean result = employeeManager.removeEmployee(employeeId, managerId);
+        if (result) {
+            saveToStorage();
+        }
+        return result;
     }
     
     /**
@@ -403,7 +421,11 @@ public class Shop {
             return false;
         }
         
-        return employeeManager.changeEmployeeRole(employeeId, newRole, managerId);
+        boolean result = employeeManager.changeEmployeeRole(employeeId, newRole, managerId);
+        if (result) {
+            saveToStorage();
+        }
+        return result;
     }
     
     /**
@@ -511,5 +533,17 @@ public class Shop {
         public int getQuantity() { return quantity; }
         public double getTotalPrice() { return totalPrice; }
         public long getTimestamp() { return timestamp; }
+    }
+    
+    /**
+     * Save this shop to persistent storage
+     */
+    private void saveToStorage() {
+        try {
+            com.zerog.neoessentials.economy.persistence.EconomyPersistenceManager.getInstance().saveShop(this);
+        } catch (Exception e) {
+            // Log error but don't fail the operation
+            System.err.println("Failed to save shop " + shopName + " to storage: " + e.getMessage());
+        }
     }
 }
