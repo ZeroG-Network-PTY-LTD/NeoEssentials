@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.economy;
 
 import com.zerog.neoessentials.NeoEssentials;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -8,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,7 +51,7 @@ public class ItemHandler {
             
             ItemStack stack = new ItemStack(item, quantity);
             if (nbt != null) {
-                stack.setTag(nbt.copy());
+                stack.set(DataComponents.CUSTOM_DATA, CustomData.of(nbt.copy()));
             }
             return stack;
         }
@@ -57,9 +59,10 @@ public class ItemHandler {
         public static ShopItem fromItemStack(ItemStack stack) {
             if (stack.isEmpty()) return null;
             
-            String itemId = getItemId(stack.getItem());
-            CompoundTag nbt = stack.hasTag() ? stack.getTag().copy() : null;
-            String displayName = stack.hasCustomHoverName() ? stack.getHoverName().getString() : null;
+            String itemId = ItemHandler.getItemId(stack.getItem());
+            CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+            CompoundTag nbt = customData != null ? customData.copyTag() : null;
+            String displayName = stack.has(DataComponents.CUSTOM_NAME) ? stack.getHoverName().getString() : null;
             
             return new ShopItem(itemId, stack.getCount(), nbt, displayName);
         }
@@ -70,7 +73,7 @@ public class ItemHandler {
      */
     public static Item getItemFromId(String itemId) {
         try {
-            ResourceLocation resourceLocation = new ResourceLocation(itemId);
+            ResourceLocation resourceLocation = ResourceLocation.parse(itemId);
             return BuiltInRegistries.ITEM.get(resourceLocation);
         } catch (Exception e) {
             NeoEssentials.LOGGER.warn("Invalid item ID: {}", itemId);
@@ -192,7 +195,7 @@ public class ItemHandler {
         for (int i = 0; i < player.getInventory().getContainerSize() && remainingCount > 0; i++) {
             ItemStack existingStack = player.getInventory().getItem(i);
             if (!existingStack.isEmpty() && existingStack.getItem() == itemStack.getItem() && 
-                ItemStack.isSameItemSameTags(existingStack, workingStack)) {
+                ItemStack.isSameItemSameComponents(existingStack, workingStack)) {
                 
                 int maxStackSize = existingStack.getMaxStackSize();
                 int existingCount = existingStack.getCount();
