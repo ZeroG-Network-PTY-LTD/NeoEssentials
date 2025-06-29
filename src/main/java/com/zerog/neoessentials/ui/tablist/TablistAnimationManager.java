@@ -759,6 +759,11 @@ public class TablistAnimationManager {    /**
          * Load animations from a YAML file
          */
         private void loadFromToml(Path path) {
+            if (!YamlUtil.isYamlAvailable()) {
+                NeoEssentials.LOGGER.warn("Cannot load animation config from {} - SnakeYAML not available", path);
+                return;
+            }
+            
             try {
                 String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
                 Map<String, Object> yamlData = new YamlUtil().load(content);

@@ -20,17 +20,34 @@ import java.util.Map;
 public class TABConfigManager {
     
     private TABConfig currentConfig;
-    private final YamlUtil yaml = new YamlUtil();
+    private final YamlUtil yaml;
+    private final boolean yamlEnabled;
     
     // Configuration file paths - load from neoessentials/ directory in server root
     private static final Path TABLIST_CONFIG_PATH = Paths.get("neoessentials", "tablist.yml");
     private static final Path ANIMATIONS_CONFIG_PATH = Paths.get("neoessentials", "animations.yml");
+    
+    public TABConfigManager() {
+        if (YamlUtil.isYamlAvailable()) {
+            yaml = new YamlUtil();
+            yamlEnabled = true;
+        } else {
+            yaml = null;
+            yamlEnabled = false;
+        }
+    }
     
     /**
      * Load configuration from YAML files in neoessentials/ directory
      * @return The loaded configuration
      */
     public TABConfig loadConfig() {
+        if (!yamlEnabled) {
+            NeoEssentials.LOGGER.warn("TAB configuration disabled - SnakeYAML not available");
+            currentConfig = new TABConfig(); // Use default config
+            return currentConfig;
+        }
+        
         try {
             currentConfig = new TABConfig();
             
