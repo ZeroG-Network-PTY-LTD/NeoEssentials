@@ -1499,11 +1499,15 @@ public class ShopCommands {
                 String ownerName = "Server";
                 
                 if (shop.getOwnerId() != null) {
-                    ServerPlayer owner = player.getServer().getPlayerList().getPlayer(shop.getOwnerId());
-                    if (owner != null) {
-                        ownerName = owner.getName().getString();
+                    if (player.getServer() != null) {
+                        ServerPlayer owner = player.getServer().getPlayerList().getPlayer(shop.getOwnerId());
+                        if (owner != null) {
+                            ownerName = owner.getName().getString();
+                        } else {
+                            ownerName = "Offline Player";
+                        }
                     } else {
-                        ownerName = "Offline Player";
+                        ownerName = "Unknown";
                     }
                 }
                 
