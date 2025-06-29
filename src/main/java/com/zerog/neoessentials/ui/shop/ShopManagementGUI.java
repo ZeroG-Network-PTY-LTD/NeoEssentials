@@ -58,7 +58,7 @@ public class ShopManagementGUI {
             
             @Override
             public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
-                return new ShopManagementMenu(containerId, playerInventory, container, shop, shopManager);
+                return new ShopManagementMenu(containerId, playerInventory, container, shop);
             }
         });
     }
