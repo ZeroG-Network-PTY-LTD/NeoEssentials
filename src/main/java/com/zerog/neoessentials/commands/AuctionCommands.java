@@ -35,9 +35,6 @@ import java.util.Set;
  */
 public class AuctionCommands {
     
-    // Simple watch list: player UUID -> set of auction IDs they're watching
-    private static final Map<UUID, Set<UUID>> watchLists = new HashMap<>();
-    
     /**
      * Registers all auction commands with the command dispatcher.
      *
