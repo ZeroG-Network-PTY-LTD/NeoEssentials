@@ -200,7 +200,15 @@ public class ShopCommands {
             MessageUtil.sendMessage(player, "§e/shop stats <shop> §7- View shop statistics");
             MessageUtil.sendMessage(player, "§e/shop visit <shop> §7- Teleport to shop");
             MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7Shop Types: §ePlayer§7 (player-owned), §eAdmin§7 (server), §eAuction§7 (auction house)");
+            MessageUtil.sendMessage(player, "§e§lEmployee Management:");
+            MessageUtil.sendMessage(player, "§e/shop employee add <shop> <player> <role> §7- Hire employee");
+            MessageUtil.sendMessage(player, "§e/shop employee remove <shop> <player> §7- Fire employee");
+            MessageUtil.sendMessage(player, "§e/shop employee role <shop> <player> <role> §7- Change role");
+            MessageUtil.sendMessage(player, "§e/shop employee list <shop> §7- List employees");
+            MessageUtil.sendMessage(player, "");
+            MessageUtil.sendMessage(player, "§7Categories: §earmor, blocks, food, tools, weapons, magic, redstone, general");
+            MessageUtil.sendMessage(player, "§7Shop Types: §ePlayer§7 (player-owned), §eServer§7 (admin), §eAuction§7 (auction house)");
+            MessageUtil.sendMessage(player, "§7Employee Roles: §eOwner, Manager, Cashier, Stocker, Sales_Associate, Viewer");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use shop commands"));

@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.economy;
 
+import com.zerog.neoessentials.economy.persistence.EconomyPersistenceManager;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -118,6 +119,9 @@ public class ShopManager {
         // Add to indexes
         playerShops.computeIfAbsent(ownerId, k -> new ArrayList<>()).add(shop.getShopId());
         shopsByLocation.computeIfAbsent(location, k -> new ArrayList<>()).add(shop.getShopId());
+        
+        // Save to persistence
+        EconomyPersistenceManager.getInstance().saveShop(shop);
         
         return shop;
     }
@@ -428,7 +432,9 @@ public class ShopManager {
             
             // TODO: Handle shop inventory - could return items to owner or void them
             // TODO: Handle pending transactions/orders
-            // TODO: Persist deletion to database/file
+            
+            // Persist deletion to database/file
+            EconomyPersistenceManager.getInstance().deleteShop(shopId);
             
             return true;
         } catch (Exception e) {
@@ -438,6 +444,42 @@ public class ShopManager {
         }
     }
 
+    /**
+     * Load all shops from persistence on server startup
+     */
+    public void loadAllShops() {
+        try {
+            Map<UUID, Shop> persistedShops = EconomyPersistenceManager.getInstance().getAllShops();
+            
+            for (Shop shop : persistedShops.values()) {
+                if (shop != null) {
+                    // Add to main shops map
+                    shops.put(shop.getShopId(), shop);
+                    
+                    // Add to indexes
+                    playerShops.computeIfAbsent(shop.getOwnerId(), k -> new ArrayList<>()).add(shop.getShopId());
+                    if (shop.getLocation() != null) {
+                        shopsByLocation.computeIfAbsent(shop.getLocation(), k -> new ArrayList<>()).add(shop.getShopId());
+                    }
+                }
+            }
+            
+            System.out.println("Loaded " + persistedShops.size() + " shops from persistence");
+        } catch (Exception e) {
+            System.err.println("Failed to load shops from persistence: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Save a shop to persistence (for external calls)
+     */
+    public void saveShop(Shop shop) {
+        if (shop != null) {
+            EconomyPersistenceManager.getInstance().saveShop(shop);
+        }
+    }
+    
     // Getters for shop settings
     public int getMaxShopsPerPlayer() { return maxShopsPerPlayer; }
     public double getShopCreationFee() { return shopCreationFee; }
