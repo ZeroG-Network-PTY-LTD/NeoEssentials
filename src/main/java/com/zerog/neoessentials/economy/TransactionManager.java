@@ -326,4 +326,75 @@ public class TransactionManager {
         stats.put("currencies", transactionsByCurrency.size());
         return stats;
     }
+
+    /**
+     * Get total transaction count
+     * 
+     * @return Total number of transactions
+     */
+    public long getTotalTransactionCount() {
+        return allTransactions.size();
+    }
+
+    /**
+     * Get total transaction volume across all currencies
+     * 
+     * @return Total transaction volume
+     */
+    public double getTotalTransactionVolume() {
+        return allTransactions.values().stream()
+                .mapToDouble(transaction -> Math.abs(transaction.getAmount()))
+                .sum();
+    }
+
+    /**
+     * Get daily transaction volume (last 24 hours)
+     * 
+     * @return Daily transaction volume
+     */
+    public double getDailyTransactionVolume() {
+        long cutoffTime = System.currentTimeMillis() - (24L * 60L * 60L * 1000L);
+        return allTransactions.values().stream()
+                .filter(transaction -> transaction.getTimestamp() >= cutoffTime)
+                .mapToDouble(transaction -> Math.abs(transaction.getAmount()))
+                .sum();
+    }
+
+    /**
+     * Get hourly transaction count (last hour)
+     * 
+     * @return Hourly transaction count
+     */
+    public int getHourlyTransactionCount() {
+        long cutoffTime = System.currentTimeMillis() - (60L * 60L * 1000L);
+        return (int) allTransactions.values().stream()
+                .filter(transaction -> transaction.getTimestamp() >= cutoffTime)
+                .count();
+    }
+
+    /**
+     * Get hourly transaction volume (last hour)
+     * 
+     * @return Hourly transaction volume
+     */
+    public double getHourlyTransactionVolume() {
+        long cutoffTime = System.currentTimeMillis() - (60L * 60L * 1000L);
+        return allTransactions.values().stream()
+                .filter(transaction -> transaction.getTimestamp() >= cutoffTime)
+                .mapToDouble(transaction -> Math.abs(transaction.getAmount()))
+                .sum();
+    }
+
+    /**
+     * Get recent transactions
+     * 
+     * @param limit Maximum number of transactions to return
+     * @return List of recent transactions
+     */
+    public List<Transaction> getRecentTransactions(int limit) {
+        return allTransactions.values().stream()
+                .sorted((t1, t2) -> Long.compare(t2.getTimestamp(), t1.getTimestamp()))
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
 }
