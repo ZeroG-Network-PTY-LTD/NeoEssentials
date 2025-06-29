@@ -65,6 +65,18 @@ currencies:
     symbol: "$"
     is_default: true
     exchange_rate: 1.0
+  gold_ingots:
+    display_name: "Gold Ingot"
+    symbol: "⚆"
+    is_default: false
+    exchange_rate: 10.0
+    type: "RESOURCE"
+  diamonds:
+    display_name: "Diamond"
+    symbol: "♦"
+    is_default: false
+    exchange_rate: 50.0
+    type: "RESOURCE"
 
 banking:
   enabled: true
@@ -74,20 +86,67 @@ banking:
   account_types:
     checking:
       base_interest_rate: 0.01
+      withdrawal_limit: -1  # No limit
+      minimum_balance: 0.0
     savings:
       base_interest_rate: 0.05
+      withdrawal_limit: 5000.0
+      minimum_balance: 100.0
+    business:
+      base_interest_rate: 0.02
+      withdrawal_limit: -1
+      minimum_balance: 500.0
+    investment:
+      base_interest_rate: 0.08
+      withdrawal_limit: 0.0  # Cannot withdraw during term
+      minimum_balance: 10000.0
+
+loans:
+  enabled: true
+  types:
+    personal:
+      min_amount: 500.0
+      max_amount: 50000.0
+      max_term_months: 60
+      base_interest_rate: 0.08
+      requires_collateral: true
+    business:
+      min_amount: 1000.0
+      max_amount: 500000.0
+      max_term_months: 120
+      base_interest_rate: 0.06
+      requires_collateral: true
+    mortgage:
+      min_amount: 10000.0
+      max_amount: 1000000.0
+      max_term_months: 360
+      base_interest_rate: 0.05
+      requires_collateral: false
 
 shops:
   enabled: true
   creation:
     creation_fee: 500.0
     max_shops_per_player: 5
+    rental_cost_per_day: 50.0
+  taxation:
+    sales_tax_rate: 0.05
+    income_tax_rate: 0.10
 
 auctions:
   enabled: true
   settings:
-    min_duration: 1
-    max_duration: 168
+    min_duration: 1      # hours
+    max_duration: 168    # hours (7 days)
+    listing_fee_rate: 0.02
+    success_fee_rate: 0.05
+    min_bid_increment: 0.05
+
+analytics:
+  enabled: true
+  track_inflation: true
+  wealth_distribution_analysis: true
+  economic_health_monitoring: true
 ```
 
 ### `tablist.yml` - Templates & Animations
