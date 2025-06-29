@@ -2,6 +2,7 @@ package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
+import com.zerog.neoessentials.economy.ShopItem;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -17,19 +18,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
 /**
- * Container menu for shop management interface
+ * Container menu for shop statistics interface
  */
-public class ShopManagementMenu extends AbstractContainerMenu {
+public class ShopStatisticsMenu extends AbstractContainerMenu {
     
     private final Container container;
     private final Shop shop;
     private final ShopManager shopManager;
     
-    public ShopManagementMenu(int containerId, Inventory playerInventory, Container container, Shop shop) {
-        this(containerId, playerInventory, container, shop, null);
-    }
-    
-    public ShopManagementMenu(int containerId, Inventory playerInventory, Container container, Shop shop, ShopManager shopManager) {
+    public ShopStatisticsMenu(int containerId, Inventory playerInventory, Container container, 
+                            Shop shop, ShopManager shopManager) {
         super(MenuType.GENERIC_9x6, containerId);
         this.container = container;
         this.shop = shop;
@@ -81,7 +79,7 @@ public class ShopManagementMenu extends AbstractContainerMenu {
                 if (customData != null) {
                     CompoundTag tag = customData.copyTag();
                     if (tag.contains("Action")) {
-                        handleActionClick(tag.getString("Action"), (ServerPlayer) player);
+                        handleActionClick(tag.getString("Action"), tag, (ServerPlayer) player);
                         return;
                     }
                 }
@@ -94,61 +92,17 @@ public class ShopManagementMenu extends AbstractContainerMenu {
         }
     }
     
-    @Override
-    public boolean clickMenuButton(Player player, int button) {
-        ItemStack stackInSlot = container.getItem(button);
-        
-        // Check if the item has an action
-        if (stackInSlot.has(DataComponents.CUSTOM_DATA)) {
-            CustomData customData = stackInSlot.get(DataComponents.CUSTOM_DATA);
-            if (customData != null) {
-                CompoundTag tag = customData.copyTag();
-                if (tag.contains("Action")) {
-                    handleActionClick(tag.getString("Action"), (ServerPlayer) player);
-                    return true;
-                }
-            }
-        }
-        
-        return false;
-    }
-    
     /**
      * Handles action clicks from GUI items
      */
-    private void handleActionClick(String action, ServerPlayer player) {
+    private void handleActionClick(String action, CompoundTag actionData, ServerPlayer player) {
         switch (action) {
-            case "toggle_status":
-                if (shop.getOwnerId().equals(player.getUUID())) {
-                    if (shop.isActive()) {
-                        shop.setActive(false);
-                        MessageUtil.sendMessage(player, "§cShop has been deactivated.");
-                    } else {
-                        shop.setActive(true);
-                        MessageUtil.sendMessage(player, "§aShop has been activated.");
-                    }
-                    
-                    // Refresh the GUI
-                    new ShopManagementGUI(shop, shopManager).openMainMenu(player);
-                } else {
-                    MessageUtil.sendMessage(player, "§cOnly the shop owner can change the shop status!");
-                }
+            case "back_to_main":
+                new ShopManagementGUI(shop, shopManager).openMainMenu(player);
                 break;
                 
-            case "inventory_management":
-                new ShopInventoryGUI(shop, shopManager).openInventoryMenu(player);
-                break;
-                
-            case "pricing_management":
-                new ShopPricingGUI(shop, shopManager).openPricingMenu(player);
-                break;
-                
-            case "employee_management":
-                MessageUtil.sendMessage(player, "§eEmployee management interface coming soon!");
-                break;
-                
-            case "view_statistics":
-                new ShopStatisticsGUI(shop, shopManager).openStatisticsMenu(player);
+            case "show_inventory_breakdown":
+                showInventoryBreakdown(player);
                 break;
                 
             default:
@@ -158,21 +112,27 @@ public class ShopManagementMenu extends AbstractContainerMenu {
     }
     
     /**
-     * Custom slot that prevents placing items
+     * Shows detailed inventory value breakdown
      */
-    private static class GUISlot extends Slot {
-        public GUISlot(Container container, int slot, int x, int y) {
-            super(container, slot, x, y);
+    private void showInventoryBreakdown(ServerPlayer player) {
+        MessageUtil.sendMessage(player, "§6§l=== Inventory Value Breakdown ===");
+        
+        double totalValue = 0.0;
+        int totalItems = 0;
+        
+        for (ShopItem item : shop.getInventory().getItems().values()) {
+            double itemValue = item.getStock() * item.getBuyPrice();
+            totalValue += itemValue;
+            totalItems += item.getStock();
+            
+            MessageUtil.sendMessage(player, "§7" + item.getDisplayName() + ": §a" + item.getStock() + 
+                " §7× §6$" + String.format("%.2f", item.getBuyPrice()) + " §7= §6$" + String.format("%.2f", itemValue));
         }
         
-        @Override
-        public boolean mayPlace(ItemStack stack) {
-            return false; // GUI items cannot be moved
-        }
-        
-        @Override
-        public boolean mayPickup(Player player) {
-            return false; // GUI items cannot be picked up
-        }
+        MessageUtil.sendMessage(player, "");
+        MessageUtil.sendMessage(player, "§7Total Items: §a" + totalItems);
+        MessageUtil.sendMessage(player, "§7Total Value: §6$" + String.format("%.2f", totalValue));
+        MessageUtil.sendMessage(player, "§7Average Value per Item: §6$" + 
+            String.format("%.2f", totalItems > 0 ? totalValue / totalItems : 0));
     }
 }
