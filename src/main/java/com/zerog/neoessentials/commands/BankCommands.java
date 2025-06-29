@@ -53,13 +53,13 @@ public class BankCommands {
                                     StringArgumentType.getString(context, "to-account"),
                                     StringArgumentType.getString(context, "from-account")))))))
                 .then(Commands.literal("withdraw")
-                    .executes(context -> showWithdrawHelp(context.getSource()))
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                         .suggests(TabCompletionUtil.AMOUNT_SUGGESTIONS)
-                        .executes(context -> showWithdrawHelp(context.getSource()))
                         .then(Commands.argument("account", StringArgumentType.string())
                             .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
-                            .executes(context -> showWithdrawHelp(context.getSource())))))
+                            .executes(context -> withdrawMoney(context.getSource(),
+                                DoubleArgumentType.getDouble(context, "amount"),
+                                StringArgumentType.getString(context, "account"))))))
                 .then(Commands.literal("transfer")
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                         .suggests(TabCompletionUtil.AMOUNT_SUGGESTIONS)
