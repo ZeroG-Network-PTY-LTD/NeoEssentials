@@ -166,7 +166,7 @@ public class ShopStatisticsGUI {
         // Tips and recommendations
         ItemStack tipsItem = new ItemStack(Items.KNOWLEDGE_BOOK);
         tipsItem.set(DataComponents.CUSTOM_NAME, Component.literal("§b§lBusiness Tips"));
-        tipsItem.set(DataComponents.LORE, getBusinessTips()));
+        tipsItem.set(DataComponents.LORE, new ItemLore(getBusinessTips()));
         container.setItem(49, tipsItem);
         
         // Add border items
