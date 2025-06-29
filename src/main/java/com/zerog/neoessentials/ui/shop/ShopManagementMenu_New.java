@@ -112,7 +112,7 @@ public class ShopManagementMenu extends AbstractContainerMenu {
     private void handleActionClick(String action, ServerPlayer player) {
         switch (action) {
             case "toggle_status":
-                if (shop.getOwner().equals(player.getUUID())) {
+                if (shop.getOwnerId().equals(player.getUUID())) {
                     if (shop.isActive()) {
                         shop.setActive(false);
                         MessageUtil.sendMessage(player, "§cShop has been deactivated.");
