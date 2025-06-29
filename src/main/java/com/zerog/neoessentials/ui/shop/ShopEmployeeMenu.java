@@ -157,14 +157,14 @@ public class ShopEmployeeMenu extends AbstractContainerMenu {
         }
         
         switch (clickType) {
-            case LEFT: // Edit role
+            case PICKUP: // Edit role
                 MessageUtil.sendMessage(player, "§eTo change " + employeeName + "'s role, use:");
                 MessageUtil.sendMessage(player, "§f/shop employee setrole " + employeeName + " <role>");
                 MessageUtil.sendMessage(player, "§7Available roles: Manager, Cashier, Stocker, Sales_Associate, Viewer");
                 player.closeContainer();
                 break;
                 
-            case RIGHT: // Toggle active status
+            case PICKUP_ALL: // Toggle active status
                 if (employee.isActive()) {
                     employee.setActive(false);
                     MessageUtil.sendMessage(player, "§6" + employeeName + " has been suspended.");
@@ -176,7 +176,7 @@ public class ShopEmployeeMenu extends AbstractContainerMenu {
                 new ShopEmployeeGUI(shop, shopManager).openEmployeeMenu(player);
                 break;
                 
-            case SHIFT_LEFT: // Remove employee
+            case QUICK_MOVE: // Remove employee
                 if (shop.getEmployeeManager().removeEmployee(employeeId, player.getUUID())) {
                     MessageUtil.sendMessage(player, "§6" + employeeName + " has been removed from the shop.");
                     // Refresh the GUI
