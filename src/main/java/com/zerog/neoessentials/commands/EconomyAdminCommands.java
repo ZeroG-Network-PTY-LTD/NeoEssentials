@@ -1,10 +1,8 @@
 package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.economy.*;
-import com.zerog.neoessentials.economy.persistence.EconomyPersistenceManager;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -15,7 +13,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Administrative commands for managing the economy system.
@@ -288,7 +285,6 @@ public class EconomyAdminCommands {
     private int createEconomyBackup(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            EconomyPersistenceManager persistenceManager = EconomyPersistenceManager.getInstance();
             
             MessageUtil.sendMessage(player, "§eCreating economy backup...");
             
