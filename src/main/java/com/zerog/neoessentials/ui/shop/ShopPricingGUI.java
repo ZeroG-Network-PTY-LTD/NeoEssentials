@@ -131,9 +131,8 @@ public class ShopPricingGUI {
             CompoundTag itemData = new CompoundTag();
             itemData.putString("Action", "show_pricing_command");
             itemData.putString("ItemId", entry.getKey());
-            itemData.putString("ItemName", shopItem.getDisplayName());
-            itemData.putDouble("BuyPrice", shopItem.getBuyPrice());
-            itemData.putDouble("SellPrice", shopItem.getSellPrice());
+            itemData.putString("ItemName", shopItem.getItemName());
+            itemData.putDouble("Price", price);
             displayStack.set(DataComponents.CUSTOM_DATA, CustomData.of(itemData));
             
             container.setItem(slot, displayStack);
