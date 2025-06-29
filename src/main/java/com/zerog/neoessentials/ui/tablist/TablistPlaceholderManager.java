@@ -725,18 +725,19 @@ public class TablistPlaceholderManager {
                             currentText.setLength(0);
                         }
                         
-                        // Apply hex color to the next character
-                        if (i + 8 < input.length()) {
-                            char coloredChar = input.charAt(i + 8);
+                        // Apply hex color to all following text until next color code
+                        String restOfText = input.substring(i + 8);
+                        String textUntilNextColor = getTextUntilNextColor(restOfText);
+                        
+                        if (!textUntilNextColor.isEmpty()) {
                             int rgb = Integer.parseInt(hexPart, 16);
                             finalComponent = finalComponent.append(
-                                Component.literal(String.valueOf(coloredChar))
+                                Component.literal(textUntilNextColor)
                                     .withStyle(style -> style.withColor(rgb))
                             );
-                            i += 9; // Skip &#RRGGBB + the colored character
-                        } else {
-                            i += 8; // Skip &#RRGGBB if no character follows
                         }
+                        
+                        i += 8 + textUntilNextColor.length(); // Skip &#RRGGBB + the colored text
                         continue;
                     }
                 }
