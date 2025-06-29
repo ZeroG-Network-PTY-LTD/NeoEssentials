@@ -122,7 +122,7 @@ public class BankCommands {
             MessageUtil.sendMessage(player, "§e§lAccount Management:");
             MessageUtil.sendMessage(player, "§e/bank create <type> §7- Create new account (checking, savings, business, investment)");
             MessageUtil.sendMessage(player, "§e/bank deposit <amount> <to-account> <from-account> §7- Transfer between your accounts");
-            MessageUtil.sendMessage(player, "§e/bank withdraw §7- Shows info (withdrawals no longer needed!)");
+            MessageUtil.sendMessage(player, "§e/bank withdraw <amount> <account> §7- Withdraw to cash");
             MessageUtil.sendMessage(player, "§e/bank transfer <amount> <to-account> [from-account] §7- Transfer money");
             MessageUtil.sendMessage(player, "§e/bank balance [account] §7- Check account balance");
             MessageUtil.sendMessage(player, "§e/bank list §7- List all your accounts");
@@ -134,10 +134,10 @@ public class BankCommands {
             MessageUtil.sendMessage(player, "§e/bank loan list §7- List your loans");
             MessageUtil.sendMessage(player, "§e/bank loan info <loan-id> §7- Loan details");
             MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§c§lNew System: §7All money is stored in bank accounts!");
-            MessageUtil.sendMessage(player, "§7Use §e/pay <player> <amount> §7to pay others directly from your bank.");
-            MessageUtil.sendMessage(player, "§7Account Types: §eChecking§7, §eSavings§7, §eBusiness§7, §eInvestment");
-            MessageUtil.sendMessage(player, "§7Loan Types: §ePersonal§7, §eMortgage§7, §eBusiness");
+            MessageUtil.sendMessage(player, "§c§lWallet + Banking System: §7Two types of money!");
+            MessageUtil.sendMessage(player, "§7Use §e/balance §7to see both cash on hand and bank balance.");
+            MessageUtil.sendMessage(player, "§7Use §e/pay <player> <amount> §7to pay others with cash.");
+            MessageUtil.sendMessage(player, "§7Use §e/bank withdraw §7to get cash from your account.");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
