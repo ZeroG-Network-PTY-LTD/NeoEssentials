@@ -3,12 +3,13 @@ package com.zerog.neoessentials.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.ItemHandler;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
@@ -81,7 +82,13 @@ public class ItemSearchCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(context.getSource(), "Error searching items: " + e.getMessage());
+            try {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                MessageUtil.sendErrorMessage(player, "Error searching items: " + e.getMessage());
+            } catch (Exception ex) {
+                // Command source is not a player, log error instead
+                NeoEssentials.LOGGER.error("Error in item search command: " + e.getMessage());
+            }
             return 0;
         }
     }
@@ -113,7 +120,12 @@ public class ItemSearchCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(context.getSource(), "Error listing mod items: " + e.getMessage());
+            try {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                MessageUtil.sendErrorMessage(player, "Error listing mod items: " + e.getMessage());
+            } catch (Exception ex) {
+                NeoEssentials.LOGGER.error("Error in mod items command: " + e.getMessage());
+            }
             return 0;
         }
     }
@@ -148,7 +160,12 @@ public class ItemSearchCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(context.getSource(), "Error listing mods: " + e.getMessage());
+            try {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                MessageUtil.sendErrorMessage(player, "Error listing mods: " + e.getMessage());
+            } catch (Exception ex) {
+                NeoEssentials.LOGGER.error("Error in list mods command: " + e.getMessage());
+            }
             return 0;
         }
     }
@@ -165,7 +182,8 @@ public class ItemSearchCommands {
             
             String displayName = item.getDescription().getString();
             String namespace = itemId.split(":")[0];
-            int maxStackSize = item.getMaxStackSize();
+            ItemStack dummyStack = new ItemStack(item, 1);
+            int maxStackSize = dummyStack.getMaxStackSize();
             
             MessageUtil.sendMessage(player, "§e§l=== Item Information ===");
             MessageUtil.sendMessage(player, "§7Item ID: §e" + itemId);
@@ -184,7 +202,12 @@ public class ItemSearchCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(context.getSource(), "Error getting item info: " + e.getMessage());
+            try {
+                ServerPlayer player = context.getSource().getPlayerOrException();
+                MessageUtil.sendErrorMessage(player, "Error getting item info: " + e.getMessage());
+            } catch (Exception ex) {
+                NeoEssentials.LOGGER.error("Error in item info command: " + e.getMessage());
+            }
             return 0;
         }
     }
