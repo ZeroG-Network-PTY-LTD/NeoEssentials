@@ -1,6 +1,10 @@
 package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
+import com.zerog.neoessentials.utils.MessageUtil;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -9,210 +13,159 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 
 /**
- * Custom menu for shop management interface that handles click events
- * and provides enhanced functionality for shop owners.
+ * Container menu for shop management interface
  */
 public class ShopManagementMenu extends AbstractContainerMenu {
     
     private final Container container;
     private final Shop shop;
-    private final int containerRows;
-
+    
     public ShopManagementMenu(int containerId, Inventory playerInventory, Container container, Shop shop) {
         super(MenuType.GENERIC_9x6, containerId);
         this.container = container;
         this.shop = shop;
-        this.containerRows = 6;
-
+        
         // Add container slots
-        for (int row = 0; row < this.containerRows; ++row) {
+        for (int row = 0; row < 6; ++row) {
             for (int col = 0; col < 9; ++col) {
-                this.addSlot(new ShopManagementSlot(container, row * 9 + col, 8 + col * 18, 18 + row * 18));
+                this.addSlot(new Slot(container, col + row * 9, 8 + col * 18, 18 + row * 18) {
+                    @Override
+                    public boolean mayPlace(ItemStack stack) {
+                        return false; // GUI items cannot be moved
+                    }
+                });
             }
         }
-
+        
         // Add player inventory slots
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
-                this.addSlot(new Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, 103 + row * 18 + this.containerRows * 18 - 108));
-            }
-        }
-
-        // Add player hotbar slots
-        for (int col = 0; col < 9; ++col) {
-            this.addSlot(new Slot(playerInventory, col, 8 + col * 18, 161 + this.containerRows * 18 - 108));
-        }
-    }
-
-    @Override
-    public boolean stillValid(Player player) {
-        return this.container.stillValid(player);
-    }
-
-    @Override
-    public void clicked(int slotId, int button, ClickType clickType, Player player) {
-        if (slotId >= 0 && slotId < this.container.getContainerSize()) {
-            ItemStack clickedItem = this.container.getItem(slotId);
-            
-            if (clickedItem.hasTag() && clickedItem.getTag().contains("Action")) {
-                handleActionClick(clickedItem.getTag().getString("Action"), player);
-                return; // Don't allow item to be moved
+                this.addSlot(new Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, 84 + row * 18 + 36));
             }
         }
         
-        // Only allow normal inventory interactions for non-action items
-        if (slotId >= this.container.getContainerSize()) {
+        // Add player hotbar slots
+        for (int col = 0; col < 9; ++col) {
+            this.addSlot(new Slot(playerInventory, col, 8 + col * 18, 142 + 36));
+        }
+    }
+    
+    @Override
+    public ItemStack quickMoveStack(Player player, int index) {
+        return ItemStack.EMPTY; // Disable shift-clicking
+    }
+    
+    @Override
+    public boolean stillValid(Player player) {
+        return container.stillValid(player);
+    }
+    
+    @Override
+    public void clicked(int slotId, int button, ClickType clickType, Player player) {
+        if (slotId >= 0 && slotId < container.getContainerSize()) {
+            ItemStack clickedItem = container.getItem(slotId);
+            
+            // Check if the item has an action
+            if (clickedItem.has(DataComponents.CUSTOM_DATA)) {
+                CustomData customData = clickedItem.get(DataComponents.CUSTOM_DATA);
+                if (customData != null) {
+                    CompoundTag tag = customData.copyTag();
+                    if (tag.contains("Action")) {
+                        handleActionClick(tag.getString("Action"), (ServerPlayer) player);
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // For other slots (like player inventory), allow normal behavior
+        if (slotId >= container.getContainerSize()) {
             super.clicked(slotId, button, clickType, player);
         }
     }
-
+    
     @Override
-    public ItemStack quickMoveStack(Player player, int index) {
-        ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(index);
+    public boolean clickMenuButton(Player player, int button) {
+        ItemStack stackInSlot = container.getItem(button);
         
-        if (slot != null && slot.hasItem()) {
-            ItemStack stackInSlot = slot.getItem();
-            
-            // Don't allow moving action items
-            if (stackInSlot.hasTag() && stackInSlot.getTag().contains("Action")) {
-                return ItemStack.EMPTY;
-            }
-            
-            itemstack = stackInSlot.copy();
-            
-            if (index < this.containerRows * 9) {
-                if (!this.moveItemStackTo(stackInSlot, this.containerRows * 9, this.slots.size(), true)) {
-                    return ItemStack.EMPTY;
+        // Check if the item has an action
+        if (stackInSlot.has(DataComponents.CUSTOM_DATA)) {
+            CustomData customData = stackInSlot.get(DataComponents.CUSTOM_DATA);
+            if (customData != null) {
+                CompoundTag tag = customData.copyTag();
+                if (tag.contains("Action")) {
+                    handleActionClick(tag.getString("Action"), (ServerPlayer) player);
+                    return true;
                 }
-            } else if (!this.moveItemStackTo(stackInSlot, 0, this.containerRows * 9, false)) {
-                return ItemStack.EMPTY;
-            }
-
-            if (stackInSlot.isEmpty()) {
-                slot.set(ItemStack.EMPTY);
-            } else {
-                slot.setChanged();
             }
         }
-
-        return itemstack;
-    }
-
-    /**
-     * Handles action button clicks in the shop management interface.
-     */
-    private void handleActionClick(String action, Player player) {
-        // Get the shop management GUI instance to handle actions
-        var economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
-        var gui = new ShopManagementGUI(economyManager);
         
+        return false;
+    }
+    
+    /**
+     * Handles action clicks from GUI items
+     */
+    private void handleActionClick(String action, ServerPlayer player) {
         switch (action) {
+            case "toggle_status":
+                if (shop.getOwnerId().equals(player.getUUID())) {
+                    if (shop.isActive()) {
+                        shop.setActive(false);
+                        MessageUtil.sendMessage(player, "§cShop has been deactivated.");
+                    } else {
+                        shop.setActive(true);
+                        MessageUtil.sendMessage(player, "§aShop has been activated.");
+                    }
+                    
+                    // Refresh the GUI
+                    new ShopManagementGUI(shop, null).openMainMenu(player);
+                } else {
+                    MessageUtil.sendMessage(player, "§cOnly the shop owner can change the shop status!");
+                }
+                break;
+                
             case "inventory_management":
-                player.closeContainer();
-                gui.openShopInventoryGUI((net.minecraft.server.level.ServerPlayer) player, shop.getName());
+                MessageUtil.sendMessage(player, "§eInventory management interface coming soon!");
                 break;
                 
             case "pricing_management":
-                player.closeContainer();
-                // TODO: Open pricing management interface
-                com.zerog.neoessentials.utils.MessageUtil.sendMessage(
-                    (net.minecraft.server.level.ServerPlayer) player, 
-                    "§6Pricing management coming soon! Use §e/shop price §6commands for now."
-                );
+                MessageUtil.sendMessage(player, "§ePricing management interface coming soon!");
                 break;
                 
             case "employee_management":
-                player.closeContainer();
-                // TODO: Open employee management interface
-                com.zerog.neoessentials.utils.MessageUtil.sendMessage(
-                    (net.minecraft.server.level.ServerPlayer) player, 
-                    "§6Employee management coming soon! Use §e/shop employee §6commands for now."
-                );
+                MessageUtil.sendMessage(player, "§eEmployee management interface coming soon!");
                 break;
                 
-            case "toggle_shop":
-                try {
-                    if (shop.isOpen()) {
-                        shop.closeShop();
-                        com.zerog.neoessentials.utils.MessageUtil.sendMessage(
-                            (net.minecraft.server.level.ServerPlayer) player, 
-                            "§cShop §e" + shop.getName() + " §chas been closed."
-                        );
-                    } else {
-                        shop.openShop();
-                        com.zerog.neoessentials.utils.MessageUtil.sendMessage(
-                            (net.minecraft.server.level.ServerPlayer) player, 
-                            "§aShop §e" + shop.getName() + " §ais now open for business!"
-                        );
-                    }
-                    // Refresh the GUI
-                    player.closeContainer();
-                    gui.openShopManagementGUI((net.minecraft.server.level.ServerPlayer) player, shop.getName());
-                } catch (Exception e) {
-                    com.zerog.neoessentials.utils.MessageUtil.sendErrorMessage(
-                        (net.minecraft.server.level.ServerPlayer) player, 
-                        "Failed to toggle shop status: " + e.getMessage()
-                    );
-                }
-                break;
-                
-            case "restock_all":
-                // TODO: Implement restock all functionality
-                com.zerog.neoessentials.utils.MessageUtil.sendMessage(
-                    (net.minecraft.server.level.ServerPlayer) player, 
-                    "§6Restock functionality coming soon!"
-                );
-                break;
-                
-            case "clear_sold_out":
-                // TODO: Implement clear sold out functionality
-                com.zerog.neoessentials.utils.MessageUtil.sendMessage(
-                    (net.minecraft.server.level.ServerPlayer) player, 
-                    "§6Clear sold out functionality coming soon!"
-                );
-                break;
-                
-            case "back":
-                player.closeContainer();
-                gui.openShopListGUI((net.minecraft.server.level.ServerPlayer) player);
-                break;
-                
-            case "close":
-                player.closeContainer();
+            case "view_statistics":
+                MessageUtil.sendMessage(player, "§eStatistics interface coming soon!");
                 break;
                 
             default:
-                com.zerog.neoessentials.utils.MessageUtil.sendMessage(
-                    (net.minecraft.server.level.ServerPlayer) player, 
-                    "§cUnknown action: " + action
-                );
+                MessageUtil.sendMessage(player, "§cUnknown action: " + action);
                 break;
         }
     }
-
+    
     /**
-     * Custom slot class for shop management items that prevents moving action items.
+     * Custom slot that prevents placing items
      */
-    private static class ShopManagementSlot extends Slot {
-        public ShopManagementSlot(Container container, int slot, int x, int y) {
+    private static class GUISlot extends Slot {
+        public GUISlot(Container container, int slot, int x, int y) {
             super(container, slot, x, y);
         }
-
-        @Override
-        public boolean mayPickup(Player player) {
-            ItemStack stack = this.getItem();
-            // Don't allow picking up action items (UI elements)
-            return !(stack.hasTag() && stack.getTag().contains("Action"));
-        }
-
+        
         @Override
         public boolean mayPlace(ItemStack stack) {
-            // Don't allow placing items in action slots
-            ItemStack currentStack = this.getItem();
-            return !(currentStack.hasTag() && currentStack.getTag().contains("Action"));
+            return false; // GUI items cannot be moved
+        }
+        
+        @Override
+        public boolean mayPickup(Player player) {
+            return false; // GUI items cannot be picked up
         }
     }
 }
