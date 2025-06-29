@@ -654,6 +654,7 @@ public class AuctionCommands {
         try {
             EconomyManager economyManager = EconomyManager.getInstance();
             ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            AuctionNotificationManager notificationManager = AuctionNotificationManager.getInstance();
             
             UUID auctionUUID;
             try {
@@ -674,9 +675,16 @@ public class AuctionCommands {
                 return 0;
             }
             
-            // Add to watch list
             UUID playerId = player.getUUID();
-            watchLists.computeIfAbsent(playerId, k -> new HashSet<>()).add(auctionUUID);
+            
+            // Check if already watching
+            if (notificationManager.isWatching(playerId, auctionUUID)) {
+                MessageUtil.sendErrorMessage(player, "You are already watching this auction.");
+                return 0;
+            }
+            
+            // Add to watch list using notification manager
+            notificationManager.addWatcher(playerId, auctionUUID);
             
             MessageUtil.sendMessage(player, "§aYou are now watching auction §e" + auctionId);
             MessageUtil.sendMessage(player, "§7Item: §e" + auction.getItemName());
