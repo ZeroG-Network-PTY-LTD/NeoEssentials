@@ -97,24 +97,68 @@ public class ItemHandler {
     }
     
     /**
-     * Get all available item IDs for tab completion
+     * Get all available item IDs for tab completion, including modded items
      */
     public static List<String> getAllItemIds() {
         return BuiltInRegistries.ITEM.keySet().stream()
             .map(ResourceLocation::toString)
+            .filter(id -> !id.equals("minecraft:air"))
+            .sorted((a, b) -> {
+                // Prioritize minecraft items, then sort alphabetically
+                if (a.startsWith("minecraft:") && !b.startsWith("minecraft:")) return -1;
+                if (!a.startsWith("minecraft:") && b.startsWith("minecraft:")) return 1;
+                return a.compareTo(b);
+            })
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * Search for items by name (partial matching) - enhanced for modded items
+     */
+    public static List<String> searchItems(String query) {
+        String lowerQuery = query.toLowerCase();
+        return getAllItemIds().stream()
+            .filter(id -> {
+                // Check if the item ID contains the query
+                if (id.toLowerCase().contains(lowerQuery)) return true;
+                
+                // Also check if the display name contains the query (for better UX with modded items)
+                try {
+                    Item item = getItemFromId(id);
+                    if (item != null) {
+                        String displayName = item.getDescription().getString().toLowerCase();
+                        return displayName.contains(lowerQuery);
+                    }
+                } catch (Exception e) {
+                    // Skip items that cause issues
+                }
+                return false;
+            })
+            .limit(50)
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * Get items from a specific mod namespace
+     */
+    public static List<String> getItemsFromMod(String modId) {
+        return BuiltInRegistries.ITEM.keySet().stream()
+            .map(ResourceLocation::toString)
+            .filter(id -> id.startsWith(modId + ":"))
             .filter(id -> !id.equals("minecraft:air"))
             .sorted()
             .collect(Collectors.toList());
     }
     
     /**
-     * Search for items by name (partial matching)
+     * Get all loaded mod IDs that have items
      */
-    public static List<String> searchItems(String query) {
-        String lowerQuery = query.toLowerCase();
-        return getAllItemIds().stream()
-            .filter(id -> id.toLowerCase().contains(lowerQuery))
-            .limit(50)
+    public static List<String> getLoadedModIds() {
+        return BuiltInRegistries.ITEM.keySet().stream()
+            .map(ResourceLocation::getNamespace)
+            .distinct()
+            .filter(namespace -> !namespace.equals("minecraft"))
+            .sorted()
             .collect(Collectors.toList());
     }
     
