@@ -22,7 +22,9 @@ public class Auction {
     private AuctionStatus status;
     private String description;
     private final Currency currency;
-    
+    private double buyoutPrice; // For BUY_IT_NOW type auctions
+    private UUID winnerId; // The final winner of the auction
+
     public enum AuctionType {
         STANDARD,       // Regular auction with bidding
         BUY_IT_NOW,     // Fixed price, immediate purchase
@@ -63,6 +65,8 @@ public class Auction {
         this.status = AuctionStatus.ACTIVE;
         this.description = "";
         this.currency = CurrencyManager.getInstance().getDefaultCurrency();
+        this.buyoutPrice = 0; // Default to 0 for non BUY_IT_NOW auctions
+        this.winnerId = null;
     }
     
     /**
@@ -207,6 +211,51 @@ public class Auction {
         } else {
             return minutes + "m";
         }
+    }
+    
+    /**
+     * Get the buyout price for immediate purchase
+     * 
+     * @return The buyout price, or 0 if not available
+     */
+    public double getBuyoutPrice() {
+        return buyoutPrice;
+    }
+
+    /**
+     * Set the buyout price
+     * 
+     * @param buyoutPrice The new buyout price
+     */
+    public void setBuyoutPrice(double buyoutPrice) {
+        this.buyoutPrice = buyoutPrice;
+    }
+
+    /**
+     * Get the winner of the auction
+     * 
+     * @return The winner's UUID, or null if no winner yet
+     */
+    public UUID getWinnerId() {
+        return winnerId;
+    }
+
+    /**
+     * Set the winner of the auction
+     * 
+     * @param winnerId The winner's UUID
+     */
+    public void setWinnerId(UUID winnerId) {
+        this.winnerId = winnerId;
+    }
+
+    /**
+     * Set the current bid amount
+     * 
+     * @param currentBid The new current bid
+     */
+    public void setCurrentBid(double currentBid) {
+        this.currentBid = currentBid;
     }
     
     // Getters
