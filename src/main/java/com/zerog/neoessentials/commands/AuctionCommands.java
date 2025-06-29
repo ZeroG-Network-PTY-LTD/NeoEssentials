@@ -13,10 +13,6 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Handles all auction-related commands for the NeoEssentials economy system.
@@ -701,6 +697,8 @@ public class AuctionCommands {
     
     private int unwatchAuction(ServerPlayer player, String auctionId) {
         try {
+            AuctionNotificationManager notificationManager = AuctionNotificationManager.getInstance();
+            
             UUID auctionUUID;
             try {
                 auctionUUID = UUID.fromString(auctionId);
@@ -710,17 +708,13 @@ public class AuctionCommands {
             }
             
             UUID playerId = player.getUUID();
-            Set<UUID> playerWatchList = watchLists.get(playerId);
             
-            if (playerWatchList == null || !playerWatchList.contains(auctionUUID)) {
+            if (!notificationManager.isWatching(playerId, auctionUUID)) {
                 MessageUtil.sendErrorMessage(player, "You are not watching this auction.");
                 return 0;
             }
             
-            playerWatchList.remove(auctionUUID);
-            if (playerWatchList.isEmpty()) {
-                watchLists.remove(playerId);
-            }
+            notificationManager.removeWatcher(playerId, auctionUUID);
             
             MessageUtil.sendMessage(player, "§aYou are no longer watching auction §e" + auctionId);
             return 1;
