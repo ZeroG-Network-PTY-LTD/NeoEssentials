@@ -425,11 +425,82 @@ public class AuctionCommands {
     
     private int buyoutAuction(ServerPlayer player, String auctionId) {
         try {
-            // This would need auction lookup and buy-it-now integration
-            MessageUtil.sendMessage(player, "§eBuy-it-now system integration coming soon!");
-            MessageUtil.sendMessage(player, "§7Attempting to buy auction §e" + auctionId + "§7 immediately");
-            MessageUtil.sendMessage(player, "§7This will process immediate purchases when fully integrated.");
-            return 1;
+            EconomyManager economyManager = EconomyManager.getInstance();
+            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            WalletManager walletManager = economyManager.getWalletManager();
+            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+            
+            UUID auctionUUID;
+            try {
+                auctionUUID = UUID.fromString(auctionId);
+            } catch (IllegalArgumentException e) {
+                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
+                return 0;
+            }
+            
+            Auction auction = auctionHouse.getAuctionById(auctionUUID);
+            if (auction == null) {
+                MessageUtil.sendErrorMessage(player, "Auction not found.");
+                return 0;
+            }
+            
+            if (!auction.isActive()) {
+                MessageUtil.sendErrorMessage(player, "This auction has ended.");
+                return 0;
+            }
+            
+            if (auction.getSellerId().equals(player.getUUID())) {
+                MessageUtil.sendErrorMessage(player, "You cannot buy your own auction.");
+                return 0;
+            }
+            
+            // Check if auction supports buyout (buy-it-now type)
+            if (auction.getAuctionType() != Auction.AuctionType.BUY_IT_NOW) {
+                MessageUtil.sendErrorMessage(player, "This auction does not support immediate purchase. Use /auction bid instead.");
+                return 0;
+            }
+            
+            double buyoutPrice = auction.getBuyoutPrice();
+            if (buyoutPrice <= 0) {
+                MessageUtil.sendErrorMessage(player, "This auction does not have a buyout price set.");
+                return 0;
+            }
+            
+            // Check if player has enough money
+            if (!walletManager.hasCash(player.getUUID(), defaultCurrency, buyoutPrice)) {
+                MessageUtil.sendErrorMessage(player, "You don't have enough money. Required: " + 
+                    defaultCurrency.format(buyoutPrice));
+                return 0;
+            }
+            
+            // Process the buyout
+            if (walletManager.subtractCash(player.getUUID(), defaultCurrency, buyoutPrice)) {
+                // Pay the seller
+                walletManager.addCash(auction.getSellerId(), defaultCurrency, buyoutPrice);
+                
+                // Complete the auction
+                auction.setWinnerId(player.getUUID());
+                auction.setCurrentBid(buyoutPrice);
+                auction.completeAuction();
+                
+                MessageUtil.sendMessage(player, "§aSuccessfully purchased §e" + auction.getItemName() + 
+                    "§a for §e" + defaultCurrency.format(buyoutPrice));
+                MessageUtil.sendMessage(player, "§7Auction ID: §e" + auctionId);
+                MessageUtil.sendMessage(player, "§7The item has been delivered to your inventory.");
+                
+                // Notify seller if online
+                ServerPlayer seller = player.getServer().getPlayerList().getPlayer(auction.getSellerId());
+                if (seller != null) {
+                    MessageUtil.sendMessage(seller, "§aYour auction for §e" + auction.getItemName() + 
+                        "§a was purchased by §e" + player.getScoreboardName());
+                    MessageUtil.sendMessage(seller, "§aYou received §e" + defaultCurrency.format(buyoutPrice));
+                }
+                
+                return 1;
+            } else {
+                MessageUtil.sendErrorMessage(player, "Payment failed. Please try again.");
+                return 0;
+            }
         } catch (Exception e) {
             MessageUtil.sendErrorMessage(player, "An error occurred during buyout: " + e.getMessage());
             return 0;
