@@ -49,6 +49,7 @@ public class CommandManager {    // Command classes
     private final WalletCommands walletCommands;
     private final ShopCommands shopCommands;
     private final AuctionCommands auctionCommands;
+    private final EconomyAdminCommands economyAdminCommands;
     private final UserCommands userCommands;
     private final WarpCommands warpCommands;
     private final KitCommands kitCommands;
@@ -112,6 +113,7 @@ public class CommandManager {    // Command classes
         walletCommands = new WalletCommands();
         shopCommands = new ShopCommands();
         auctionCommands = new AuctionCommands();
+        economyAdminCommands = new EconomyAdminCommands();
         userCommands = new UserCommands();
         warpCommands = new WarpCommands();
         kitCommands = new KitCommands();
@@ -247,6 +249,10 @@ public class CommandManager {    // Command classes
         // Register auction commands
         auctionCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered auction commands");
+        
+        // Register economy admin commands
+        economyAdminCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered economy admin commands");
         
         // Register new economy command classes separately to avoid compilation issues
         registerEconomyCommands(dispatcher);
@@ -756,5 +762,14 @@ public class CommandManager {    // Command classes
      */
     public WalletCommands getWalletCommands() {
         return walletCommands;
+    }
+    
+    /**
+     * Gets the economy admin commands instance
+     * 
+     * @return The economy admin commands
+     */
+    public EconomyAdminCommands getEconomyAdminCommands() {
+        return economyAdminCommands;
     }
 }
