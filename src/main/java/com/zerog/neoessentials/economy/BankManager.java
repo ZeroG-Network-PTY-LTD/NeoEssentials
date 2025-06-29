@@ -872,4 +872,17 @@ public class BankManager {
     public com.zerog.neoessentials.economy.persistence.EconomyPersistenceManager getPersistenceManager() {
         return persistenceManager;
     }
+
+    /**
+     * Get all bank accounts across all players (for admin purposes)
+     * 
+     * @return List of all bank accounts
+     */
+    public List<BankAccount> getAllAccounts() {
+        List<BankAccount> allAccounts = new ArrayList<>();
+        for (List<BankAccount> accounts : playerAccounts.values()) {
+            allAccounts.addAll(accounts);
+        }
+        return allAccounts;
+    }
 }
