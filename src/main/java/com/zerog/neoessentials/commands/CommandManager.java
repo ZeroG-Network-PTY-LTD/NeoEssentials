@@ -44,7 +44,8 @@ public class CommandManager {    // Command classes
     private final TeleportCommands teleportCommands;
     private final HomeCommands homeCommands;
     private final EconomyCommands economyCommands;
-    // private final BankCommands bankCommands;
+    private final BankCommands bankCommands;
+    private final LoanCommands loanCommands;
     private final ShopCommands shopCommands;
     private final AuctionCommands auctionCommands;
     private final UserCommands userCommands;
@@ -105,7 +106,8 @@ public class CommandManager {    // Command classes
         teleportCommands = new TeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
-        // bankCommands = new BankCommands();
+        bankCommands = new BankCommands();
+        loanCommands = new LoanCommands();
         shopCommands = new ShopCommands();
         auctionCommands = new AuctionCommands();
         userCommands = new UserCommands();
@@ -223,6 +225,14 @@ public class CommandManager {    // Command classes
         // Register economy commands
         economyCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered economy commands");
+        
+        // Register bank commands
+        bankCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered bank commands");
+        
+        // Register loan commands
+        loanCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered loan commands");
         
         // Register shop commands
         shopCommands.register(dispatcher);
@@ -713,5 +723,23 @@ public class CommandManager {    // Command classes
      */
     public MailCommands getMailCommands() {
         return mailCommands;
+    }
+    
+    /**
+     * Gets the bank commands instance
+     * 
+     * @return The bank commands
+     */
+    public BankCommands getBankCommands() {
+        return bankCommands;
+    }
+    
+    /**
+     * Gets the loan commands instance
+     * 
+     * @return The loan commands
+     */
+    public LoanCommands getLoanCommands() {
+        return loanCommands;
     }
 }
