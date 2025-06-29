@@ -284,47 +284,36 @@ public class EconomyCommands {
                                     }
                                     
                                     try {
-                                        // Use the bank-based economy system
+                                        // Use the wallet cash system for payments
                                         com.zerog.neoessentials.economy.EconomyManager economyManager = 
                                             com.zerog.neoessentials.economy.EconomyManager.getInstance();
-                                        com.zerog.neoessentials.economy.BankManager bankManager = economyManager.getBankManager();
-                                        
-                                        // Get both players' primary bank accounts
-                                        com.zerog.neoessentials.economy.BankAccount sourceAccount = 
-                                            bankManager.getPrimaryAccount(source.getUUID());
-                                        com.zerog.neoessentials.economy.BankAccount targetAccount = 
-                                            bankManager.getPrimaryAccount(target.getUUID());
-                                        
-                                        if (sourceAccount == null) {
-                                            MessageUtil.sendErrorMessage(source, "You don't have a bank account. Create one with: /bank create checking");
-                                            return 0;
-                                        }
-                                        
-                                        if (targetAccount == null) {
-                                            MessageUtil.sendErrorMessage(source, target.getScoreboardName() + 
-                                                " doesn't have a bank account to receive payments.");
-                                            return 0;
-                                        }
-                                        
+                                        com.zerog.neoessentials.economy.WalletManager walletManager = economyManager.getWalletManager();
                                         com.zerog.neoessentials.economy.Currency defaultCurrency = 
                                             economyManager.getCurrencyManager().getDefaultCurrency();
                                         
-                                        // Check if source has enough funds
-                                        if (sourceAccount.getBalance(defaultCurrency) < amount) {
-                                            String formattedBalance = String.format("$%.2f", sourceAccount.getBalance(defaultCurrency));
-                                            MessageUtil.sendErrorMessage(source, "You don't have enough funds. Your balance: " + formattedBalance);
+                                        if (defaultCurrency == null) {
+                                            MessageUtil.sendErrorMessage(source, "No default currency configured");
+                                            return 0;
+                                        }
+                                        
+                                        // Check if source has enough cash
+                                        if (!walletManager.hasCash(source.getUUID(), defaultCurrency, amount)) {
+                                            double currentCash = walletManager.getCashBalance(source.getUUID(), defaultCurrency);
+                                            String formattedCash = String.format("$%.2f", currentCash);
+                                            MessageUtil.sendErrorMessage(source, "You don't have enough cash. Your cash on hand: " + formattedCash);
                                             return 0;
                                         }
                                         
                                         // Perform the transfer
-                                        sourceAccount.withdraw(defaultCurrency, amount, "Payment to " + target.getScoreboardName());
-                                        targetAccount.deposit(defaultCurrency, amount, "Payment from " + source.getScoreboardName());
-                                        
-                                        String formattedAmount = String.format("$%.2f", amount);
-                                        MessageUtil.sendMessage(source, "You paid " + formattedAmount + " to " + target.getScoreboardName());
-                                        MessageUtil.sendMessage(target, source.getScoreboardName() + " paid you " + formattedAmount);
-                                        
-                                        return 1;
+                                        if (walletManager.transferCash(source.getUUID(), target.getUUID(), defaultCurrency, amount)) {
+                                            String formattedAmount = String.format("$%.2f", amount);
+                                            MessageUtil.sendMessage(source, "You paid " + formattedAmount + " cash to " + target.getScoreboardName());
+                                            MessageUtil.sendMessage(target, source.getScoreboardName() + " paid you " + formattedAmount + " cash");
+                                            return 1;
+                                        } else {
+                                            MessageUtil.sendErrorMessage(source, "Payment failed. Check if the target player can receive this amount.");
+                                            return 0;
+                                        }
                                     } catch (Exception e) {
                                         MessageUtil.sendErrorMessage(source, "Payment failed: " + e.getMessage());
                                         return 0;
