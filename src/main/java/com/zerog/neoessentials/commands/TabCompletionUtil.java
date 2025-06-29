@@ -295,15 +295,31 @@ public class TabCompletionUtil {
     }
     
     /**
-     * Provides item name suggestions (Minecraft items).
+     * Provides item name suggestions (Minecraft + Modded items) with enhanced filtering.
      */
     public static final SuggestionProvider<CommandSourceStack> ITEM_SUGGESTIONS = (context, builder) -> {
         try {
-            List<String> itemNames = BuiltInRegistries.ITEM.stream()
-                .map(item -> BuiltInRegistries.ITEM.getKey(item).toString())
-                .filter(name -> name.contains(builder.getRemaining().toLowerCase()))
-                .limit(20) // Limit suggestions to prevent overwhelming
-                .collect(Collectors.toList());
+            String remaining = builder.getRemaining().toLowerCase();
+            
+            // Use the enhanced search from ItemHandler
+            List<String> itemNames = com.zerog.neoessentials.economy.ItemHandler.searchItems(remaining);
+            
+            // If no matches found with search, fall back to basic filtering
+            if (itemNames.isEmpty() && !remaining.isEmpty()) {
+                itemNames = BuiltInRegistries.ITEM.stream()
+                    .map(item -> BuiltInRegistries.ITEM.getKey(item).toString())
+                    .filter(name -> name.toLowerCase().contains(remaining))
+                    .limit(20)
+                    .collect(Collectors.toList());
+            }
+            
+            // If still no matches, provide some common items
+            if (itemNames.isEmpty()) {
+                itemNames = List.of(
+                    "minecraft:diamond", "minecraft:iron_ingot", "minecraft:gold_ingot",
+                    "minecraft:coal", "minecraft:emerald", "minecraft:stone"
+                );
+            }
                 
             return SharedSuggestionProvider.suggest(itemNames, builder);
         } catch (Exception e) {
@@ -312,10 +328,57 @@ public class TabCompletionUtil {
                 new String[]{
                     "minecraft:diamond", "minecraft:iron_ingot", "minecraft:gold_ingot",
                     "minecraft:coal", "minecraft:emerald", "minecraft:stone",
-                    "minecraft:dirt", "minecraft:wood", "minecraft:food"
+                    "minecraft:dirt", "minecraft:wood", "minecraft:bread"
                 }, 
                 builder
             );
+        }
+    };
+    
+    /**
+     * Provides mod-specific item suggestions for advanced users.
+     */
+    public static final SuggestionProvider<CommandSourceStack> MODDED_ITEM_SUGGESTIONS = (context, builder) -> {
+        try {
+            String remaining = builder.getRemaining().toLowerCase();
+            
+            // If user typed a mod namespace (e.g., "thermal:"), suggest items from that mod
+            if (remaining.contains(":")) {
+                String[] parts = remaining.split(":", 2);
+                String modId = parts[0];
+                String itemPart = parts.length > 1 ? parts[1] : "";
+                
+                List<String> modItems = com.zerog.neoessentials.economy.ItemHandler.getItemsFromMod(modId)
+                    .stream()
+                    .filter(item -> item.toLowerCase().contains(itemPart))
+                    .limit(20)
+                    .collect(Collectors.toList());
+                
+                if (!modItems.isEmpty()) {
+                    return SharedSuggestionProvider.suggest(modItems, builder);
+                }
+            }
+            
+            // Otherwise, suggest loaded mod namespaces
+            List<String> modIds = com.zerog.neoessentials.economy.ItemHandler.getLoadedModIds();
+            List<String> suggestions = modIds.stream()
+                .filter(modId -> modId.toLowerCase().contains(remaining))
+                .map(modId -> modId + ":")
+                .limit(10)
+                .collect(Collectors.toList());
+            
+            // Also include some items that match the query
+            suggestions.addAll(
+                com.zerog.neoessentials.economy.ItemHandler.searchItems(remaining)
+                    .stream()
+                    .filter(item -> !item.startsWith("minecraft:"))
+                    .limit(10)
+                    .collect(Collectors.toList())
+            );
+            
+            return SharedSuggestionProvider.suggest(suggestions, builder);
+        } catch (Exception e) {
+            return ITEM_SUGGESTIONS.getSuggestions(context, builder);
         }
     };
     
