@@ -412,6 +412,11 @@ public class AuctionCommands {
             if (auction.placeBid(player.getUUID(), amount)) {
                 MessageUtil.sendMessage(player, "§aBid placed successfully!");
                 MessageUtil.sendMessage(player, "§7Your bid of §e" + amount + "§7 is now the highest bid.");
+                
+                // Send notifications to watchers
+                if (player.getServer() != null) {
+                    AuctionNotificationManager.getInstance().notifyNewBid(auction, player, amount, player.getServer());
+                }
             } else {
                 MessageUtil.sendErrorMessage(player, "Failed to place bid. Your bid may be too low.");
             }
@@ -483,6 +488,11 @@ public class AuctionCommands {
                 auction.setCurrentBid(buyoutPrice);
                 auction.completeAuction();
                 
+                // Send notifications to watchers
+                if (player.getServer() != null) {
+                    AuctionNotificationManager.getInstance().notifyAuctionBuyout(auction, player, player.getServer());
+                }
+                
                 MessageUtil.sendMessage(player, "§aSuccessfully purchased §e" + auction.getItemName() + 
                     "§a for §e" + defaultCurrency.format(buyoutPrice));
                 MessageUtil.sendMessage(player, "§7Auction ID: §e" + auctionId);
@@ -539,6 +549,11 @@ public class AuctionCommands {
             }
             
             if (auction.cancelAuction()) {
+                // Send notifications to watchers
+                if (player.getServer() != null) {
+                    AuctionNotificationManager.getInstance().notifyAuctionCancelled(auction, player.getServer());
+                }
+                
                 MessageUtil.sendMessage(player, "§aAuction cancelled successfully!");
                 MessageUtil.sendMessage(player, "§7Your item has been returned and any bids have been refunded.");
             } else {
