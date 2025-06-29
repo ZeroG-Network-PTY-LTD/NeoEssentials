@@ -126,6 +126,19 @@ public class ShopCommands {
                                         StringArgumentType.getString(context, "item"),
                                         DoubleArgumentType.getDouble(context, "buy-price"),
                                         DoubleArgumentType.getDouble(context, "sell-price"))))))))
+                
+                // Inventory Management - Add Item from Hand
+                .then(Commands.literal("additem")
+                    .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.MANAGEABLE_SHOP_SUGGESTIONS)
+                        .executes(context -> addItemFromHand(context.getSource(),
+                            StringArgumentType.getString(context, "shop"), 1))
+                        .then(Commands.argument("quantity", IntegerArgumentType.integer(1))
+                            .suggests(TabCompletionUtil.QUANTITY_SUGGESTIONS)
+                            .executes(context -> addItemFromHand(context.getSource(),
+                                StringArgumentType.getString(context, "shop"),
+                                IntegerArgumentType.getInteger(context, "quantity"))))))
+                
                 .then(Commands.literal("manage")
                     .then(Commands.argument("shop", StringArgumentType.string())
                         .suggests(TabCompletionUtil.MANAGEABLE_SHOP_SUGGESTIONS)
@@ -608,11 +621,9 @@ public class ShopCommands {
             }
             
             // Check ownership (players can only delete their own shops, admins can delete any)
-            boolean isOwner = shop.getOwnerId() != null && shop.getOwnerId().equals(player.getUUID());
-            boolean isAdmin = player.hasPermissions(2); // Op level 2 = admin
-            
-            if (!isOwner && !isAdmin) {
-                MessageUtil.sendErrorMessage(player, "You can only delete shops you own.");
+            if (!hasShopPermission(player, shop, 
+                    com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.DELETE_SHOP)) {
+                MessageUtil.sendErrorMessage(player, "You don't have permission to delete this shop.");
                 return 0;
             }
             
@@ -628,7 +639,7 @@ public class ShopCommands {
                 MessageUtil.sendSuccessMessage(player, "Shop '" + shopName + "' deleted successfully!");
                 
                 // If it was a player shop, could potentially refund part of creation fee
-                if (shop.getOwnerId() != null && isOwner) {
+                if (shop.getOwnerId() != null && shop.getOwnerId().equals(player.getUUID())) {
                     MessageUtil.sendMessage(player, "§7Shop deletion completed. Items and currency remain with owner.");
                 }
             } else {
@@ -1713,5 +1724,125 @@ public class ShopCommands {
             source.sendFailure(Component.literal("§cOnly players can use shop commands"));
             return 0;
         }
+    }
+    
+    /**
+     * Add item from player's hand to shop inventory
+     */
+    private int addItemFromHand(CommandSourceStack source, String shopName, int quantity) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            // Check if player is holding an item
+            net.minecraft.world.item.ItemStack heldItem = player.getMainHandItem();
+            if (heldItem.isEmpty()) {
+                MessageUtil.sendErrorMessage(player, "You must be holding an item to add it to the shop.");
+                return 0;
+            }
+            
+            // Get item information
+            String itemName = heldItem.getItem().toString();
+            String displayName = ItemHandler.formatItemName(itemName);
+            
+            // Validate quantity
+            if (quantity <= 0) {
+                MessageUtil.sendErrorMessage(player, "Quantity must be greater than 0.");
+                return 0;
+            }
+            
+            if (quantity > heldItem.getCount()) {
+                MessageUtil.sendErrorMessage(player, "You only have " + heldItem.getCount() + " of this item.");
+                return 0;
+            }
+            
+            // Find shop
+            List<Shop> foundShops = shopManager.searchShops(shopName, 10);
+            Shop targetShop = null;
+            
+            for (Shop shop : foundShops) {
+                if (shop.getShopName().equalsIgnoreCase(shopName)) {
+                    targetShop = shop;
+                    break;
+                }
+            }
+            
+            if (targetShop == null) {
+                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                return 0;
+            }
+            
+            // Check permissions - use proper shop permission system
+            boolean hasPermission = targetShop.getOwnerId().equals(player.getUUID()) ||
+                targetShop.getEmployeeManager().hasPermission(player.getUUID(), 
+                    com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.MANAGE_INVENTORY) ||
+                player.hasPermissions(4); // Admin override
+            
+            if (!hasPermission) {
+                MessageUtil.sendErrorMessage(player, "You don't have permission to manage inventory for this shop.");
+                return 0;
+            }
+            
+            // Check if shop is active
+            if (!targetShop.isActive()) {
+                MessageUtil.sendErrorMessage(player, "Cannot add items to an inactive shop.");
+                return 0;
+            }
+            
+            // Check if item already exists in shop
+            ShopItem existingItem = targetShop.getItem(itemName);
+            if (existingItem != null) {
+                // Add to existing stock
+                targetShop.addStock(itemName, quantity);
+                MessageUtil.sendSuccessMessage(player, "Added " + quantity + " " + displayName + 
+                    " to existing stock in shop '" + shopName + "'");
+                MessageUtil.sendMessage(player, "§7New stock: §e" + targetShop.getItem(itemName).getStock());
+            } else {
+                // Add as new item with default pricing
+                double defaultPrice = 10.0; // Default price, can be changed later
+                boolean success = targetShop.addItem(itemName, quantity, defaultPrice, displayName);
+                
+                if (success) {
+                    MessageUtil.sendSuccessMessage(player, "Added " + quantity + " " + displayName + 
+                        " to shop '" + shopName + "' with default price $" + String.format("%.2f", defaultPrice));
+                    MessageUtil.sendMessage(player, "§7Use §e/shop price " + shopName + " " + itemName + " <buy-price>§7 to set a custom price");
+                } else {
+                    MessageUtil.sendErrorMessage(player, "Failed to add item to shop. Shop may be full or item may be invalid.");
+                    return 0;
+                }
+            }
+            
+            // Remove items from player's inventory
+            heldItem.shrink(quantity);
+            if (heldItem.getCount() <= 0) {
+                player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY);
+            }
+            
+            return 1;
+            
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use shop commands"));
+            return 0;
+        }
+    }
+    
+    /**
+     * Helper method to check if a player has permission to perform an action on a shop
+     */
+    private boolean hasShopPermission(ServerPlayer player, Shop shop, 
+                                    com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission permission) {
+        if (player.hasPermissions(4)) return true; // Server admin override
+        if (shop.getOwnerId().equals(player.getUUID())) return true; // Owner has all permissions
+        return shop.getEmployeeManager().hasPermission(player.getUUID(), permission);
+    }
+    
+    /**
+     * Helper method to check if a player can manage a shop (owner, manager, or admin)
+     */
+    private boolean canManageShop(ServerPlayer player, Shop shop) {
+        return hasShopPermission(player, shop, 
+            com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.MANAGE_INVENTORY);
     }
 }
