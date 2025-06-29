@@ -22,6 +22,7 @@ public class EconomyManager {
     private final BankManager bankManager;
     private final TransactionManager transactionManager;
     private final ShopManager shopManager;
+    private final WalletManager walletManager;
     private final EconomicAnalytics analytics;
     
     // Configuration and persistence
@@ -49,6 +50,7 @@ public class EconomyManager {
         this.bankManager = BankManager.getInstance();
         this.transactionManager = new TransactionManager();
         this.shopManager = ShopManager.getInstance();
+        this.walletManager = WalletManager.getInstance();
         
         // Set persistence manager for all components
         this.bankManager.setPersistenceManager(this.persistenceManager);
@@ -537,6 +539,7 @@ public class EconomyManager {
     public BankManager getBankManager() { return bankManager; }
     public TransactionManager getTransactionManager() { return transactionManager; }
     public ShopManager getShopManager() { return shopManager; }
+    public WalletManager getWalletManager() { return walletManager; }
     public EconomicAnalytics getAnalytics() { return analytics; }
     public EnhancedEconomyConfig getConfig() { return config; }
     public EconomyPersistenceManager getPersistenceManager() { return persistenceManager; }
