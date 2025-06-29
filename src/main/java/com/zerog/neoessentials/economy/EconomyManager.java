@@ -636,7 +636,7 @@ public class EconomyManager {
         double walletBalance = walletManager.getCashBalance(playerId, currency);
         if (walletBalance > 0) {
             double walletPayment = Math.min(walletBalance, remainingAmount);
-            if (walletManager.withdrawCash(playerId, walletPayment, currency, description + " (wallet portion)")) {
+            if (walletManager.subtractCash(playerId, currency, walletPayment)) {
                 remainingAmount -= walletPayment;
             }
         }
@@ -647,7 +647,7 @@ public class EconomyManager {
             if (primaryAccount != null) {
                 double bankBalance = primaryAccount.getBalance(currency);
                 if (bankBalance >= remainingAmount) {
-                    if (primaryAccount.withdraw(remainingAmount, currency, description + " (bank portion)")) {
+                    if (primaryAccount.withdraw(currency, remainingAmount, description + " (bank portion)")) {
                         remainingAmount = 0;
                     }
                 }
@@ -704,9 +704,9 @@ public class EconomyManager {
         double walletBalance = walletManager.getCashBalance(fromPlayerId, currency);
         if (walletBalance > 0) {
             double walletPayment = Math.min(walletBalance, remainingAmount);
-            if (walletManager.withdrawCash(fromPlayerId, walletPayment, currency, description + " (wallet portion)")) {
+            if (walletManager.subtractCash(fromPlayerId, currency, walletPayment)) {
                 // Add to recipient's wallet
-                walletManager.depositCash(toPlayerId, walletPayment, currency, description + " (received)");
+                walletManager.addCash(toPlayerId, currency, walletPayment);
                 remainingAmount -= walletPayment;
             }
         }
@@ -719,8 +719,8 @@ public class EconomyManager {
             if (fromAccount != null && toAccount != null) {
                 double bankBalance = fromAccount.getBalance(currency);
                 if (bankBalance >= remainingAmount) {
-                    if (fromAccount.withdraw(remainingAmount, currency, description + " (bank portion)") &&
-                        toAccount.deposit(remainingAmount, currency, description + " (received)")) {
+                    if (fromAccount.withdraw(currency, remainingAmount, description + " (bank portion)") &&
+                        toAccount.deposit(currency, remainingAmount, description + " (received)")) {
                         remainingAmount = 0;
                     }
                 }
@@ -737,7 +737,7 @@ public class EconomyManager {
                 amount,
                 currency,
                 description,
-                Transaction.TransactionType.TRANSFER,
+                Transaction.TransactionType.TRANSFER_OUT,
                 System.currentTimeMillis()
             );
             transactionManager.recordTransaction(transaction);

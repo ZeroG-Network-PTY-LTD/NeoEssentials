@@ -496,6 +496,9 @@ public class AuctionCommands {
             double buyoutPrice = auction.getBuyoutPrice();
             if (buyoutPrice <= 0) {
                 MessageUtil.sendErrorMessage(player, "This auction does not have a buyout price set.");
+                return 0;
+            }
+            
             // Check if player has enough total available funds
             double totalAvailable = economyManager.getTotalAvailableFunds(player.getUUID(), defaultCurrency);
             if (totalAvailable < buyoutPrice) {
@@ -519,9 +522,6 @@ public class AuctionCommands {
                 auction.completeAuction();
                 
                 // Send notifications to watchers
-                if (player.getServer() != null) {
-                    AuctionNotificationManager.getInstance().notifyAuctionBuyout(auction, player, player.getServer());
-                }/ Send notifications to watchers
                 if (player.getServer() != null) {
                     AuctionNotificationManager.getInstance().notifyAuctionBuyout(auction, player, player.getServer());
                 }
