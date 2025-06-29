@@ -14,7 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Comprehensive banking commands for the NeoEssentials economy system.
