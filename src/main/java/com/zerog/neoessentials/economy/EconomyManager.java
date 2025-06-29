@@ -578,4 +578,172 @@ public class EconomyManager {
         
         return stats;
     }
+    
+    /**
+     * Get total available funds for a player (wallet + bank combined)
+     * 
+     * @param playerId The player's UUID
+     * @param currency The currency
+     * @return Total available funds across wallet and bank
+     */
+    public double getTotalAvailableFunds(UUID playerId, Currency currency) {
+        double totalFunds = 0.0;
+        
+        // Get wallet balance
+        WalletManager walletManager = getWalletManager();
+        if (walletManager != null) {
+            totalFunds += walletManager.getCashBalance(playerId, currency);
+        }
+        
+        // Get bank balance
+        BankManager bankManager = getBankManager();
+        if (bankManager != null) {
+            BankAccount primaryAccount = bankManager.getPrimaryAccount(playerId);
+            if (primaryAccount != null) {
+                totalFunds += primaryAccount.getBalance(currency);
+            }
+        }
+        
+        return totalFunds;
+    }
+    
+    /**
+     * Make a smart payment that draws from wallet first, then bank as needed
+     * 
+     * @param playerId The player's UUID
+     * @param amount The amount to pay
+     * @param currency The currency
+     * @param description Transaction description
+     * @return true if payment was successful
+     */
+    public boolean makeSmartPayment(UUID playerId, double amount, Currency currency, String description) {
+        if (!economyEnabled || amount <= 0) return false;
+        
+        // Check total available funds first
+        double totalAvailable = getTotalAvailableFunds(playerId, currency);
+        if (totalAvailable < amount) {
+            return false; // Insufficient total funds
+        }
+        
+        WalletManager walletManager = getWalletManager();
+        BankManager bankManager = getBankManager();
+        
+        if (walletManager == null) return false;
+        
+        double remainingAmount = amount;
+        
+        // First, try to pay from wallet
+        double walletBalance = walletManager.getCashBalance(playerId, currency);
+        if (walletBalance > 0) {
+            double walletPayment = Math.min(walletBalance, remainingAmount);
+            if (walletManager.withdrawCash(playerId, walletPayment, currency, description + " (wallet portion)")) {
+                remainingAmount -= walletPayment;
+            }
+        }
+        
+        // If still have remaining amount, pay from bank
+        if (remainingAmount > 0 && bankManager != null) {
+            BankAccount primaryAccount = bankManager.getPrimaryAccount(playerId);
+            if (primaryAccount != null) {
+                double bankBalance = primaryAccount.getBalance(currency);
+                if (bankBalance >= remainingAmount) {
+                    if (primaryAccount.withdraw(remainingAmount, currency, description + " (bank portion)")) {
+                        remainingAmount = 0;
+                    }
+                }
+            }
+        }
+        
+        // If we successfully paid the full amount
+        if (remainingAmount == 0) {
+            // Record the transaction
+            Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                playerId,
+                null, // To system/shop
+                amount,
+                currency,
+                description,
+                Transaction.TransactionType.PURCHASE,
+                System.currentTimeMillis()
+            );
+            transactionManager.recordTransaction(transaction);
+            return true;
+        }
+        
+        return false; // Something went wrong with the payment
+    }
+    
+    /**
+     * Make a smart payment to another player that draws from wallet first, then bank as needed
+     * 
+     * @param fromPlayerId The payer's UUID
+     * @param toPlayerId The recipient's UUID  
+     * @param amount The amount to transfer
+     * @param currency The currency
+     * @param description Transaction description
+     * @return true if payment was successful
+     */
+    public boolean makeSmartPaymentToPlayer(UUID fromPlayerId, UUID toPlayerId, double amount, Currency currency, String description) {
+        if (!economyEnabled || amount <= 0) return false;
+        
+        // Check total available funds first
+        double totalAvailable = getTotalAvailableFunds(fromPlayerId, currency);
+        if (totalAvailable < amount) {
+            return false; // Insufficient total funds
+        }
+        
+        WalletManager walletManager = getWalletManager();
+        BankManager bankManager = getBankManager();
+        
+        if (walletManager == null) return false;
+        
+        double remainingAmount = amount;
+        
+        // First, try to pay from wallet
+        double walletBalance = walletManager.getCashBalance(fromPlayerId, currency);
+        if (walletBalance > 0) {
+            double walletPayment = Math.min(walletBalance, remainingAmount);
+            if (walletManager.withdrawCash(fromPlayerId, walletPayment, currency, description + " (wallet portion)")) {
+                // Add to recipient's wallet
+                walletManager.depositCash(toPlayerId, walletPayment, currency, description + " (received)");
+                remainingAmount -= walletPayment;
+            }
+        }
+        
+        // If still have remaining amount, pay from bank
+        if (remainingAmount > 0 && bankManager != null) {
+            BankAccount fromAccount = bankManager.getPrimaryAccount(fromPlayerId);
+            BankAccount toAccount = bankManager.getPrimaryAccount(toPlayerId);
+            
+            if (fromAccount != null && toAccount != null) {
+                double bankBalance = fromAccount.getBalance(currency);
+                if (bankBalance >= remainingAmount) {
+                    if (fromAccount.withdraw(remainingAmount, currency, description + " (bank portion)") &&
+                        toAccount.deposit(remainingAmount, currency, description + " (received)")) {
+                        remainingAmount = 0;
+                    }
+                }
+            }
+        }
+        
+        // If we successfully paid the full amount
+        if (remainingAmount == 0) {
+            // Record the transaction
+            Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                fromPlayerId,
+                toPlayerId,
+                amount,
+                currency,
+                description,
+                Transaction.TransactionType.TRANSFER,
+                System.currentTimeMillis()
+            );
+            transactionManager.recordTransaction(transaction);
+            return true;
+        }
+        
+        return false; // Something went wrong with the payment
+    }
 }
