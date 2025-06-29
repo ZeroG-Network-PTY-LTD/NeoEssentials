@@ -33,11 +33,13 @@ economy:
 
 ### Banking Commands
 ```
-/bank account create <type> - Create account
-/bank deposit <account> <amount> - Deposit money
-/bank withdraw <account> <amount> - Withdraw money
-/bank transfer <from> <to> <amount> - Transfer funds
+/bank create <type> - Create account
+/bank deposit <amount> <to-account> <from-account> - Deposit money
+/bank withdraw <amount> <account> - Withdraw money
+/bank transfer <amount> <to-account> <from-account> - Transfer funds
 /bank balance <account> - Check account balance
+/bank list - List all your accounts
+/bank info <account> - Get detailed account information
 ```
 
 ## 💰 Currency System
@@ -97,7 +99,13 @@ economy:
 
 ### Loan Commands
 ```
-/loan apply <type> <amount> <term> - Apply for loan
+/loan apply <type> <amount> <term-months> - Apply for loan
+/loan list - List your active loans
+/loan info <loan-id> - Get loan details
+/loan pay <loan-id> <amount> - Make payment
+/loan history - View payment history
+/loan calculate <amount> <type> <term> - Calculate loan terms
+```
 /loan list - View your loans
 /loan payment <loan> - Make payment
 /loan balance <loan> - Check remaining balance
