@@ -128,10 +128,12 @@ public class ShopCommands {
                                         DoubleArgumentType.getDouble(context, "sell-price"))))))))
                 .then(Commands.literal("manage")
                     .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.MANAGEABLE_SHOP_SUGGESTIONS)
                         .executes(context -> manageShop(context.getSource(),
                             StringArgumentType.getString(context, "shop")))))
                 .then(Commands.literal("stats")
                     .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.SHOP_SUGGESTIONS)
                         .executes(context -> shopStats(context.getSource(),
                             StringArgumentType.getString(context, "shop")))))
                 
