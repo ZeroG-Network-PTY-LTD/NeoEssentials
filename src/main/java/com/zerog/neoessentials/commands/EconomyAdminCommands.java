@@ -490,44 +490,6 @@ public class EconomyAdminCommands {
         }
     }
     
-    private int showAuctionStats(CommandSourceStack source) {
-        try {
-            ServerPlayer player = source.getPlayerOrException();
-            AuctionManager auctionManager = EconomyManager.getInstance().getAuctionManager();
-            
-            MessageUtil.sendMessage(player, "§6§l=== Auction Watch Statistics ===");
-            MessageUtil.sendMessage(player, "");
-            
-            // Recent auctions
-            List<Auction> recentAuctions = auctionManager.getRecentAuctions(10);
-            
-            if (recentAuctions.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No recent auctions found.");
-                return 1;
-            }
-            
-            SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-            Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
-            
-            for (Auction auction : recentAuctions) {
-                String time = dateFormat.format(new Date(auction.getStartTime()));
-                String item = auction.getItemName();
-                String startingBid = currency.format(auction.getStartingBid());
-                String highestBid = currency.format(auction.getHighestBid());
-                String status = auction.isActive() ? "§aActive" : "§cEnded";
-                
-                MessageUtil.sendMessage(player, "§7[" + time + "] §e" + item + " §7- Starting Bid: " + startingBid + 
-                    " §7- Highest Bid: " + highestBid + " §7- Status: " + status);
-            }
-            
-            return 1;
-        } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
-                "An error occurred while retrieving auction statistics: " + e.getMessage());
-            return 0;
-        }
-    }
-    
     // Helper methods for calculations and status checks
     
     private double calculateTotalMoney() {
