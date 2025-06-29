@@ -166,7 +166,7 @@ public class PlayerWallet {
             } else {
                 // Convert to default currency
                 double convertedAmount = currencyManager.convertCurrency(
-                    currency, defaultCurrency, amount
+                    amount, currency, defaultCurrency
                 );
                 totalWorth += convertedAmount;
             }
