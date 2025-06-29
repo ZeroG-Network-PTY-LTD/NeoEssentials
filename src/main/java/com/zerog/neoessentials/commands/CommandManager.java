@@ -46,6 +46,7 @@ public class CommandManager {    // Command classes
     private final EconomyCommands economyCommands;
     private final BankCommands bankCommands;
     private final LoanCommands loanCommands;
+    private final WalletCommands walletCommands;
     private final ShopCommands shopCommands;
     private final AuctionCommands auctionCommands;
     private final UserCommands userCommands;
@@ -108,6 +109,7 @@ public class CommandManager {    // Command classes
         economyCommands = new EconomyCommands();
         bankCommands = new BankCommands();
         loanCommands = new LoanCommands();
+        walletCommands = new WalletCommands();
         shopCommands = new ShopCommands();
         auctionCommands = new AuctionCommands();
         userCommands = new UserCommands();
@@ -233,6 +235,10 @@ public class CommandManager {    // Command classes
         // Register loan commands
         loanCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered loan commands");
+        
+        // Register wallet commands
+        walletCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered wallet commands");
         
         // Register shop commands
         shopCommands.register(dispatcher);
@@ -741,5 +747,14 @@ public class CommandManager {    // Command classes
      */
     public LoanCommands getLoanCommands() {
         return loanCommands;
+    }
+    
+    /**
+     * Gets the wallet commands instance
+     * 
+     * @return The wallet commands
+     */
+    public WalletCommands getWalletCommands() {
+        return walletCommands;
     }
 }
