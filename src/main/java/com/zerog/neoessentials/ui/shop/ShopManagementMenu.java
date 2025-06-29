@@ -140,7 +140,7 @@ public class ShopManagementMenu extends AbstractContainerMenu {
                 break;
                 
             case "pricing_management":
-                MessageUtil.sendMessage(player, "§ePricing management interface coming soon!");
+                new ShopPricingGUI(shop, shopManager).openPricingMenu(player);
                 break;
                 
             case "employee_management":
