@@ -86,28 +86,43 @@ public class EconomyCommands {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
-                            // Check another player's balance using bank account system
+                            // Check another player's balance - show wallet, bank, and total (same as self-check)
                             try {
                                 com.zerog.neoessentials.economy.EconomyManager economyManager = 
                                     com.zerog.neoessentials.economy.EconomyManager.getInstance();
+                                com.zerog.neoessentials.economy.WalletManager walletManager = economyManager.getWalletManager();
                                 com.zerog.neoessentials.economy.BankManager bankManager = economyManager.getBankManager();
+                                com.zerog.neoessentials.economy.Currency defaultCurrency = 
+                                    economyManager.getCurrencyManager().getDefaultCurrency();
                                 
-                                // Get target player's primary bank account
+                                if (defaultCurrency == null) {
+                                    MessageUtil.sendErrorMessage(source, "No default currency configured");
+                                    return 0;
+                                }
+                                
+                                // Get wallet cash balance
+                                double cashBalance = walletManager.getCashBalance(target.getUUID(), defaultCurrency);
+                                String formattedCash = String.format("$%.2f", cashBalance);
+                                
+                                // Get bank account balance
                                 com.zerog.neoessentials.economy.BankAccount primaryAccount = 
                                     bankManager.getPrimaryAccount(target.getUUID());
                                 
-                                if (primaryAccount == null) {
-                                    MessageUtil.sendMessage(source, target.getScoreboardName() + " doesn't have a bank account.");
-                                    return 1;
+                                MessageUtil.sendMessage(source, "§6§l--- " + target.getScoreboardName() + "'s Financial Status ---");
+                                MessageUtil.sendMessage(source, "§eCash on Hand: §a" + formattedCash);
+                                
+                                if (primaryAccount != null) {
+                                    double bankBalance = primaryAccount.getBalance(defaultCurrency);
+                                    String formattedBank = String.format("$%.2f", bankBalance);
+                                    MessageUtil.sendMessage(source, "§eBank Account: §a" + formattedBank + 
+                                        " §7(Account: " + primaryAccount.getAccountNumber() + ")");
+                                    
+                                    double totalWealth = cashBalance + bankBalance;
+                                    String formattedTotal = String.format("$%.2f", totalWealth);
+                                    MessageUtil.sendMessage(source, "§eTotal Wealth: §a" + formattedTotal);
+                                } else {
+                                    MessageUtil.sendMessage(source, "§eBank Account: §7None");
                                 }
-                                
-                                com.zerog.neoessentials.economy.Currency defaultCurrency = 
-                                    economyManager.getCurrencyManager().getDefaultCurrency();
-                                double balance = primaryAccount.getBalance(defaultCurrency);
-                                String formattedBalance = String.format("$%.2f", balance);
-                                
-                                MessageUtil.sendMessage(source, target.getScoreboardName() + "'s bank account balance: " + 
-                                    formattedBalance + " (Account: " + primaryAccount.getAccountNumber() + ")");
                                 
                                 return 1;
                             } catch (Exception e) {
@@ -123,28 +138,43 @@ public class EconomyCommands {
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
-                    // Check own balance using bank account system
+                    // Show both wallet cash and bank account balance (same as /balance)
                     try {
                         com.zerog.neoessentials.economy.EconomyManager economyManager = 
                             com.zerog.neoessentials.economy.EconomyManager.getInstance();
+                        com.zerog.neoessentials.economy.WalletManager walletManager = economyManager.getWalletManager();
                         com.zerog.neoessentials.economy.BankManager bankManager = economyManager.getBankManager();
+                        com.zerog.neoessentials.economy.Currency defaultCurrency = 
+                            economyManager.getCurrencyManager().getDefaultCurrency();
                         
-                        // Get player's primary bank account
-                        com.zerog.neoessentials.economy.BankAccount primaryAccount = 
-                            bankManager.getPrimaryAccount(player.getUUID());
-                        
-                        if (primaryAccount == null) {
-                            MessageUtil.sendErrorMessage(player, "You don't have a bank account. Create one with: /bank create checking");
+                        if (defaultCurrency == null) {
+                            MessageUtil.sendErrorMessage(player, "No default currency configured");
                             return 0;
                         }
                         
-                        com.zerog.neoessentials.economy.Currency defaultCurrency = 
-                            economyManager.getCurrencyManager().getDefaultCurrency();
-                        double balance = primaryAccount.getBalance(defaultCurrency);
-                        String formattedBalance = String.format("$%.2f", balance);
+                        // Get wallet cash balance
+                        double cashBalance = walletManager.getCashBalance(player.getUUID(), defaultCurrency);
+                        String formattedCash = String.format("$%.2f", cashBalance);
                         
-                        MessageUtil.sendMessage(player, "Your bank account balance: " + formattedBalance + 
-                            " (Account: " + primaryAccount.getAccountNumber() + ")");
+                        // Get bank account balance
+                        com.zerog.neoessentials.economy.BankAccount primaryAccount = 
+                            bankManager.getPrimaryAccount(player.getUUID());
+                        
+                        MessageUtil.sendMessage(player, "§6§l--- Your Financial Status ---");
+                        MessageUtil.sendMessage(player, "§eCash on Hand: §a" + formattedCash);
+                        
+                        if (primaryAccount != null) {
+                            double bankBalance = primaryAccount.getBalance(defaultCurrency);
+                            String formattedBank = String.format("$%.2f", bankBalance);
+                            MessageUtil.sendMessage(player, "§eBank Account: §a" + formattedBank + 
+                                " §7(Account: " + primaryAccount.getAccountNumber() + ")");
+                            
+                            double totalWealth = cashBalance + bankBalance;
+                            String formattedTotal = String.format("$%.2f", totalWealth);
+                            MessageUtil.sendMessage(player, "§eTotal Wealth: §a" + formattedTotal);
+                        } else {
+                            MessageUtil.sendMessage(player, "§eBank Account: §7None - Create one with: /bank create checking");
+                        }
                         
                         return 1;
                     } catch (Exception e) {
@@ -159,28 +189,43 @@ public class EconomyCommands {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
-                            // Check another player's balance using bank account system
+                            // Check another player's balance - show wallet, bank, and total (same as self-check)
                             try {
                                 com.zerog.neoessentials.economy.EconomyManager economyManager = 
                                     com.zerog.neoessentials.economy.EconomyManager.getInstance();
+                                com.zerog.neoessentials.economy.WalletManager walletManager = economyManager.getWalletManager();
                                 com.zerog.neoessentials.economy.BankManager bankManager = economyManager.getBankManager();
+                                com.zerog.neoessentials.economy.Currency defaultCurrency = 
+                                    economyManager.getCurrencyManager().getDefaultCurrency();
                                 
-                                // Get target player's primary bank account
+                                if (defaultCurrency == null) {
+                                    MessageUtil.sendErrorMessage(source, "No default currency configured");
+                                    return 0;
+                                }
+                                
+                                // Get wallet cash balance
+                                double cashBalance = walletManager.getCashBalance(target.getUUID(), defaultCurrency);
+                                String formattedCash = String.format("$%.2f", cashBalance);
+                                
+                                // Get bank account balance
                                 com.zerog.neoessentials.economy.BankAccount primaryAccount = 
                                     bankManager.getPrimaryAccount(target.getUUID());
                                 
-                                if (primaryAccount == null) {
-                                    MessageUtil.sendMessage(source, target.getScoreboardName() + " doesn't have a bank account.");
-                                    return 1;
+                                MessageUtil.sendMessage(source, "§6§l--- " + target.getScoreboardName() + "'s Financial Status ---");
+                                MessageUtil.sendMessage(source, "§eCash on Hand: §a" + formattedCash);
+                                
+                                if (primaryAccount != null) {
+                                    double bankBalance = primaryAccount.getBalance(defaultCurrency);
+                                    String formattedBank = String.format("$%.2f", bankBalance);
+                                    MessageUtil.sendMessage(source, "§eBank Account: §a" + formattedBank + 
+                                        " §7(Account: " + primaryAccount.getAccountNumber() + ")");
+                                    
+                                    double totalWealth = cashBalance + bankBalance;
+                                    String formattedTotal = String.format("$%.2f", totalWealth);
+                                    MessageUtil.sendMessage(source, "§eTotal Wealth: §a" + formattedTotal);
+                                } else {
+                                    MessageUtil.sendMessage(source, "§eBank Account: §7None");
                                 }
-                                
-                                com.zerog.neoessentials.economy.Currency defaultCurrency = 
-                                    economyManager.getCurrencyManager().getDefaultCurrency();
-                                double balance = primaryAccount.getBalance(defaultCurrency);
-                                String formattedBalance = String.format("$%.2f", balance);
-                                
-                                MessageUtil.sendMessage(source, target.getScoreboardName() + "'s bank account balance: " + 
-                                    formattedBalance + " (Account: " + primaryAccount.getAccountNumber() + ")");
                                 
                                 return 1;
                             } catch (Exception e) {
@@ -198,28 +243,43 @@ public class EconomyCommands {
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
-                    // Check own balance using bank account system
+                    // Show both wallet cash and bank account balance (same as /balance)
                     try {
                         com.zerog.neoessentials.economy.EconomyManager economyManager = 
                             com.zerog.neoessentials.economy.EconomyManager.getInstance();
+                        com.zerog.neoessentials.economy.WalletManager walletManager = economyManager.getWalletManager();
                         com.zerog.neoessentials.economy.BankManager bankManager = economyManager.getBankManager();
+                        com.zerog.neoessentials.economy.Currency defaultCurrency = 
+                            economyManager.getCurrencyManager().getDefaultCurrency();
                         
-                        // Get player's primary bank account
-                        com.zerog.neoessentials.economy.BankAccount primaryAccount = 
-                            bankManager.getPrimaryAccount(player.getUUID());
-                        
-                        if (primaryAccount == null) {
-                            MessageUtil.sendErrorMessage(player, "You don't have a bank account. Create one with: /bank create checking");
+                        if (defaultCurrency == null) {
+                            MessageUtil.sendErrorMessage(player, "No default currency configured");
                             return 0;
                         }
                         
-                        com.zerog.neoessentials.economy.Currency defaultCurrency = 
-                            economyManager.getCurrencyManager().getDefaultCurrency();
-                        double balance = primaryAccount.getBalance(defaultCurrency);
-                        String formattedBalance = String.format("$%.2f", balance);
+                        // Get wallet cash balance
+                        double cashBalance = walletManager.getCashBalance(player.getUUID(), defaultCurrency);
+                        String formattedCash = String.format("$%.2f", cashBalance);
                         
-                        MessageUtil.sendMessage(player, "Your bank account balance: " + formattedBalance + 
-                            " (Account: " + primaryAccount.getAccountNumber() + ")");
+                        // Get bank account balance
+                        com.zerog.neoessentials.economy.BankAccount primaryAccount = 
+                            bankManager.getPrimaryAccount(player.getUUID());
+                        
+                        MessageUtil.sendMessage(player, "§6§l--- Your Financial Status ---");
+                        MessageUtil.sendMessage(player, "§eCash on Hand: §a" + formattedCash);
+                        
+                        if (primaryAccount != null) {
+                            double bankBalance = primaryAccount.getBalance(defaultCurrency);
+                            String formattedBank = String.format("$%.2f", bankBalance);
+                            MessageUtil.sendMessage(player, "§eBank Account: §a" + formattedBank + 
+                                " §7(Account: " + primaryAccount.getAccountNumber() + ")");
+                            
+                            double totalWealth = cashBalance + bankBalance;
+                            String formattedTotal = String.format("$%.2f", totalWealth);
+                            MessageUtil.sendMessage(player, "§eTotal Wealth: §a" + formattedTotal);
+                        } else {
+                            MessageUtil.sendMessage(player, "§eBank Account: §7None - Create one with: /bank create checking");
+                        }
                         
                         return 1;
                     } catch (Exception e) {
@@ -234,28 +294,43 @@ public class EconomyCommands {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
-                            // Check another player's balance using bank account system
+                            // Check another player's balance - show wallet, bank, and total (same as self-check)
                             try {
                                 com.zerog.neoessentials.economy.EconomyManager economyManager = 
                                     com.zerog.neoessentials.economy.EconomyManager.getInstance();
+                                com.zerog.neoessentials.economy.WalletManager walletManager = economyManager.getWalletManager();
                                 com.zerog.neoessentials.economy.BankManager bankManager = economyManager.getBankManager();
+                                com.zerog.neoessentials.economy.Currency defaultCurrency = 
+                                    economyManager.getCurrencyManager().getDefaultCurrency();
                                 
-                                // Get target player's primary bank account
+                                if (defaultCurrency == null) {
+                                    MessageUtil.sendErrorMessage(source, "No default currency configured");
+                                    return 0;
+                                }
+                                
+                                // Get wallet cash balance
+                                double cashBalance = walletManager.getCashBalance(target.getUUID(), defaultCurrency);
+                                String formattedCash = String.format("$%.2f", cashBalance);
+                                
+                                // Get bank account balance
                                 com.zerog.neoessentials.economy.BankAccount primaryAccount = 
                                     bankManager.getPrimaryAccount(target.getUUID());
                                 
-                                if (primaryAccount == null) {
-                                    MessageUtil.sendMessage(source, target.getScoreboardName() + " doesn't have a bank account.");
-                                    return 1;
+                                MessageUtil.sendMessage(source, "§6§l--- " + target.getScoreboardName() + "'s Financial Status ---");
+                                MessageUtil.sendMessage(source, "§eCash on Hand: §a" + formattedCash);
+                                
+                                if (primaryAccount != null) {
+                                    double bankBalance = primaryAccount.getBalance(defaultCurrency);
+                                    String formattedBank = String.format("$%.2f", bankBalance);
+                                    MessageUtil.sendMessage(source, "§eBank Account: §a" + formattedBank + 
+                                        " §7(Account: " + primaryAccount.getAccountNumber() + ")");
+                                    
+                                    double totalWealth = cashBalance + bankBalance;
+                                    String formattedTotal = String.format("$%.2f", totalWealth);
+                                    MessageUtil.sendMessage(source, "§eTotal Wealth: §a" + formattedTotal);
+                                } else {
+                                    MessageUtil.sendMessage(source, "§eBank Account: §7None");
                                 }
-                                
-                                com.zerog.neoessentials.economy.Currency defaultCurrency = 
-                                    economyManager.getCurrencyManager().getDefaultCurrency();
-                                double balance = primaryAccount.getBalance(defaultCurrency);
-                                String formattedBalance = String.format("$%.2f", balance);
-                                
-                                MessageUtil.sendMessage(source, target.getScoreboardName() + "'s bank account balance: " + 
-                                    formattedBalance + " (Account: " + primaryAccount.getAccountNumber() + ")");
                                 
                                 return 1;
                             } catch (Exception e) {
