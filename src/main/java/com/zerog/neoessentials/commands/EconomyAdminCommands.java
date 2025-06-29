@@ -463,7 +463,7 @@ public class EconomyAdminCommands {
             MessageUtil.sendMessage(player, "§6§l=== Recent Transactions (Last " + limit + ") ===");
             MessageUtil.sendMessage(player, "");
             
-            List<EconomyTransaction> recentTransactions = transactionManager.getRecentTransactions(limit);
+            List<Transaction> recentTransactions = transactionManager.getRecentTransactions(limit);
             
             if (recentTransactions.isEmpty()) {
                 MessageUtil.sendMessage(player, "§7No recent transactions found.");
@@ -473,10 +473,10 @@ public class EconomyAdminCommands {
             SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
             Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
             
-            for (EconomyTransaction transaction : recentTransactions) {
+            for (Transaction transaction : recentTransactions) {
                 String time = dateFormat.format(new Date(transaction.getTimestamp()));
                 String amount = currency.format(Math.abs(transaction.getAmount()));
-                String type = transaction.getTransactionType().toString();
+                String type = transaction.getType().toString();
                 
                 MessageUtil.sendMessage(player, "§7[" + time + "] §e" + type + " §7- §a" + amount + 
                     " §7- §e" + transaction.getDescription());
