@@ -2,7 +2,6 @@ package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
-import com.zerog.neoessentials.economy.ShopItem;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -102,30 +101,28 @@ public class ShopPricingGUI {
         container.setItem(8, autoPrice);
         
         // Display current shop items with pricing info
-        Map<String, ShopItem> shopItems = shop.getInventory().getItems();
+        Map<String, Shop.ShopItem> shopItems = shop.getInventory();
         int slot = 18; // Start from second row
         
-        for (Map.Entry<String, ShopItem> entry : shopItems.entrySet()) {
+        for (Map.Entry<String, Shop.ShopItem> entry : shopItems.entrySet()) {
             if (slot >= 45) break; // Don't fill bottom row
             
-            ShopItem shopItem = entry.getValue();
-            ItemStack displayStack = shopItem.getItemStack().copy();
+            Shop.ShopItem shopItem = entry.getValue();
+            String itemId = shopItem.getItemId();
+            double price = shop.getItemPrice(itemId);
             
-            // Calculate profit margin
-            double margin = shopItem.getSellPrice() > 0 ? 
-                ((shopItem.getBuyPrice() - shopItem.getSellPrice()) / shopItem.getBuyPrice()) * 100 : 0;
+            // Create display stack using ItemHandler
+            net.minecraft.world.item.Item item = com.zerog.neoessentials.economy.ItemHandler.getItemFromId(itemId);
+            ItemStack displayStack = item != null ? new ItemStack(item) : new ItemStack(Items.BARRIER);
             
             // Update display name and lore
             displayStack.set(DataComponents.CUSTOM_NAME, 
-                Component.literal("§e" + shopItem.getDisplayName()));
+                Component.literal("§e" + com.zerog.neoessentials.economy.ItemHandler.formatItemName(itemId)));
             
             displayStack.set(DataComponents.LORE, new ItemLore(List.of(
-                Component.literal("§7Stock: §a" + shopItem.getStock()),
-                Component.literal("§7Buy Price: §6$" + String.format("%.2f", shopItem.getBuyPrice())),
-                Component.literal("§7Sell Price: §6$" + String.format("%.2f", shopItem.getSellPrice())),
-                Component.literal("§7Profit Margin: " + 
-                    (margin > 0 ? "§a" : margin < 0 ? "§c" : "§7") + 
-                    String.format("%.1f%%", margin)),
+                Component.literal("§7Stock: §a" + shopItem.getQuantity()),
+                Component.literal("§7Price: §6$" + String.format("%.2f", price)),
+                Component.literal("§7Total Value: §6$" + String.format("%.2f", price * shopItem.getQuantity())),
                 Component.literal(""),
                 Component.literal("§8Click to get pricing command")
             )));

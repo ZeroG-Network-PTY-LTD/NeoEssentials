@@ -145,19 +145,21 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
                 Shop.ShopItem shopItem = shopItems.get(itemId);
                 if (shopItem != null && shopItem.getQuantity() > 0) {
                     // Create item stack for the full stock
-                    ItemStack itemStack = shopItem.getItemStack().copy();
-                    itemStack.setCount(shopItem.getQuantity());
-                    
-                    // Try to add to player inventory
-                    if (player.getInventory().add(itemStack)) {
-                        // Successfully added, remove from shop
-                        shop.removeItem(itemId, shopItem.getQuantity());
-                        itemsRemoved++;
-                    } else {
-                        // Inventory full, drop items
-                        player.drop(itemStack, false);
-                        shop.removeItem(itemId, shopItem.getQuantity());
-                        itemsRemoved++;
+                    net.minecraft.world.item.Item item = com.zerog.neoessentials.economy.ItemHandler.getItemFromId(shopItem.getItemId());
+                    if (item != null) {
+                        ItemStack itemStack = new ItemStack(item, shopItem.getQuantity());
+                        
+                        // Try to add to player inventory
+                        if (player.getInventory().add(itemStack)) {
+                            // Successfully added, remove from shop
+                            shop.removeItem(itemId, shopItem.getQuantity());
+                            itemsRemoved++;
+                        } else {
+                            // Inventory full, drop items
+                            player.drop(itemStack, false);
+                            shop.removeItem(itemId, shopItem.getQuantity());
+                            itemsRemoved++;
+                        }
                     }
                 }
             }
@@ -186,7 +188,7 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
      */
     private void modifyShopItem(ServerPlayer player, String itemId, ClickType clickType) {
         try {
-            ShopItem shopItem = shop.getInventory().getItems().get(itemId);
+            Shop.ShopItem shopItem = shop.getInventory().get(itemId);
             if (shopItem == null) {
                 MessageUtil.sendMessage(player, "§cItem not found in shop!");
                 return;
@@ -199,18 +201,18 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
                     removeAmount = 1;
                     break;
                 case QUICK_MOVE: // Shift click
-                    removeAmount = shopItem.getStock(); // Remove all
+                    removeAmount = shopItem.getQuantity(); // Remove all
                     break;
                 case PICKUP_ALL: // Right click
-                    removeAmount = Math.min(shopItem.getStock(), shopItem.getItemStack().getMaxStackSize());
+                    removeAmount = Math.min(shopItem.getQuantity(), 64); // Remove stack
                     break;
                 default:
                     removeAmount = 1;
                     break;
             }
             
-            if (removeAmount > shopItem.getStock()) {
-                removeAmount = shopItem.getStock();
+            if (removeAmount > shopItem.getQuantity()) {
+                removeAmount = shopItem.getQuantity();
             }
             
             if (removeAmount <= 0) {
@@ -219,30 +221,32 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
             }
             
             // Create item stack to return to player
-            ItemStack returnStack = shopItem.getItemStack().copy();
-            returnStack.setCount(removeAmount);
-            
-            // Try to add to player inventory
-            if (player.getInventory().add(returnStack)) {
-                // Successfully added, remove from shop
-                shop.getInventory().removeItem(itemId, removeAmount);
-                MessageUtil.sendMessage(player, "§aRemoved §f" + removeAmount + "x " + 
-                    shopItem.getDisplayName() + " §afrom shop.");
-            } else {
-                // Inventory full, drop items
-                player.drop(returnStack, false);
-                shop.getInventory().removeItem(itemId, removeAmount);
-                MessageUtil.sendMessage(player, "§eInventory full! Dropped §f" + removeAmount + "x " + 
-                    shopItem.getDisplayName() + " §eon the ground.");
+            net.minecraft.world.item.Item item = com.zerog.neoessentials.economy.ItemHandler.getItemFromId(shopItem.getItemId());
+            if (item != null) {
+                ItemStack returnStack = new ItemStack(item, removeAmount);
+                
+                // Try to add to player inventory
+                if (player.getInventory().add(returnStack)) {
+                    // Successfully added, remove from shop
+                    shop.removeItem(itemId, removeAmount);
+                    MessageUtil.sendMessage(player, "§aRemoved §f" + removeAmount + "x " + 
+                        com.zerog.neoessentials.economy.ItemHandler.formatItemName(itemId) + " §afrom shop.");
+                } else {
+                    // Inventory full, drop items
+                    player.drop(returnStack, false);
+                    shop.removeItem(itemId, removeAmount);
+                    MessageUtil.sendMessage(player, "§eInventory full! Dropped §f" + removeAmount + "x " + 
+                        com.zerog.neoessentials.economy.ItemHandler.formatItemName(itemId) + " §eon the ground.");
+                }
+                
+                // Save shop changes
+                if (shopManager != null) {
+                    shopManager.saveShop(shop);
+                }
+                
+                // Refresh the GUI
+                new ShopInventoryGUI(shop, shopManager).openInventoryMenu(player);
             }
-            
-            // Save shop changes
-            if (shopManager != null) {
-                shopManager.saveShop(shop);
-            }
-            
-            // Refresh the GUI
-            new ShopInventoryGUI(shop, shopManager).openInventoryMenu(player);
             
         } catch (Exception e) {
             MessageUtil.sendErrorMessage(player, "Failed to modify item: " + e.getMessage());
