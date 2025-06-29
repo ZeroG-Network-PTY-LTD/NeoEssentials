@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.economy.*;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -13,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Handles all auction-related commands for the NeoEssentials economy system.
@@ -30,6 +32,23 @@ import java.util.UUID;
  * - /auction unwatch <auction-id> - Stop watching an auction
  */
 public class AuctionCommands {
+    
+    // Suggestion provider for auction IDs
+    private static final SuggestionProvider<CommandSourceStack> AUCTION_ID_SUGGESTIONS = (context, builder) -> {
+        try {
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                com.zerog.neoessentials.NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            
+            // Get active auctions and suggest their IDs
+            List<Auction> activeAuctions = economyManager.getShopManager().getAuctionHouse().getActiveAuctions();
+            for (Auction auction : activeAuctions) {
+                builder.suggest(auction.getAuctionId().toString());
+            }
+        } catch (Exception e) {
+            // If there's an error, don't suggest anything
+        }
+        return builder.buildFuture();
+    };
     
     /**
      * Registers all auction commands with the command dispatcher.
@@ -111,6 +130,7 @@ public class AuctionCommands {
                 .then(Commands.literal("info")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.info"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .suggests(AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String auctionId = StringArgumentType.getString(context, "auction_id");
@@ -123,6 +143,7 @@ public class AuctionCommands {
                 .then(Commands.literal("bid")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.bid"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .suggests(AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
                         .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                             .executes(context -> {
                                 ServerPlayer player = context.getSource().getPlayerOrException();
@@ -138,6 +159,7 @@ public class AuctionCommands {
                 .then(Commands.literal("buyout")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.buyout"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .suggests(AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String auctionId = StringArgumentType.getString(context, "auction_id");
@@ -150,6 +172,7 @@ public class AuctionCommands {
                 .then(Commands.literal("cancel")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.cancel"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .suggests(AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String auctionId = StringArgumentType.getString(context, "auction_id");
@@ -191,6 +214,7 @@ public class AuctionCommands {
                 .then(Commands.literal("watch")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.watch"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .suggests(AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String auctionId = StringArgumentType.getString(context, "auction_id");
@@ -203,6 +227,7 @@ public class AuctionCommands {
                 .then(Commands.literal("unwatch")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.watch"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
+                        .suggests(AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String auctionId = StringArgumentType.getString(context, "auction_id");
@@ -401,10 +426,13 @@ public class AuctionCommands {
                 return 0;
             }
             
-            // Check if player has enough balance
+            // Check if player has enough total available funds
             Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-            if (economyManager.getBalance(player.getUUID(), defaultCurrency) < amount) {
+            double totalAvailable = economyManager.getTotalAvailableFunds(player.getUUID(), defaultCurrency);
+            if (totalAvailable < amount) {
                 MessageUtil.sendErrorMessage(player, "You don't have enough money to place this bid.");
+                MessageUtil.sendMessage(player, "§7Required: §e" + defaultCurrency.format(amount));
+                MessageUtil.sendMessage(player, "§7Available: §e" + defaultCurrency.format(totalAvailable) + " §7(wallet + bank)");
                 return 0;
             }
             
@@ -468,20 +496,22 @@ public class AuctionCommands {
             double buyoutPrice = auction.getBuyoutPrice();
             if (buyoutPrice <= 0) {
                 MessageUtil.sendErrorMessage(player, "This auction does not have a buyout price set.");
-                return 0;
-            }
-            
-            // Check if player has enough money
-            if (!walletManager.hasCash(player.getUUID(), defaultCurrency, buyoutPrice)) {
+            // Check if player has enough total available funds
+            double totalAvailable = economyManager.getTotalAvailableFunds(player.getUUID(), defaultCurrency);
+            if (totalAvailable < buyoutPrice) {
                 MessageUtil.sendErrorMessage(player, "You don't have enough money. Required: " + 
                     defaultCurrency.format(buyoutPrice));
+                MessageUtil.sendMessage(player, "§7Available: §e" + defaultCurrency.format(totalAvailable) + " §7(wallet + bank)");
                 return 0;
             }
             
-            // Process the buyout
-            if (walletManager.subtractCash(player.getUUID(), defaultCurrency, buyoutPrice)) {
-                // Pay the seller
-                walletManager.addCash(auction.getSellerId(), defaultCurrency, buyoutPrice);
+            // Process the buyout using smart payment
+            if (economyManager.makeSmartPaymentToPlayer(
+                    player.getUUID(), 
+                    auction.getSellerId(), 
+                    buyoutPrice, 
+                    defaultCurrency, 
+                    "Auction buyout: " + auction.getItemName())) {
                 
                 // Complete the auction
                 auction.setWinnerId(player.getUUID());
@@ -489,6 +519,9 @@ public class AuctionCommands {
                 auction.completeAuction();
                 
                 // Send notifications to watchers
+                if (player.getServer() != null) {
+                    AuctionNotificationManager.getInstance().notifyAuctionBuyout(auction, player, player.getServer());
+                }/ Send notifications to watchers
                 if (player.getServer() != null) {
                     AuctionNotificationManager.getInstance().notifyAuctionBuyout(auction, player, player.getServer());
                 }
