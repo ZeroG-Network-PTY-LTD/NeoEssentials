@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.ui.tablist;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.data.EconomyManager;
 import com.zerog.neoessentials.ui.tablist.placeholders.CustomPlaceholder;
 import com.zerog.neoessentials.ui.tablist.placeholders.CustomPlaceholderRegistry;
 import net.minecraft.ChatFormatting;
@@ -641,28 +640,9 @@ public class TablistPlaceholderManager {
             return "";
         }
         
-        // First, handle hex color codes (&#RRGGBB format)
-        text = text.replaceAll("&#([A-Fa-f0-9]{6})", "§x§$1");
-        
-        // Convert hex string to individual character format that Minecraft expects
-        // Minecraft expects hex colors as §x§R§R§G§G§B§B
-        Pattern hexPattern = Pattern.compile("§x§([A-Fa-f0-9]{6})");
-        Matcher hexMatcher = hexPattern.matcher(text);
-        StringBuffer hexResult = new StringBuffer();
-        
-        while (hexMatcher.find()) {
-            String hexCode = hexMatcher.group(1);
-            StringBuilder mcHexFormat = new StringBuilder("§x");
-            
-            // Convert RRGGBB to §R§R§G§G§B§B format
-            for (char c : hexCode.toCharArray()) {
-                mcHexFormat.append("§").append(Character.toLowerCase(c));
-            }
-            
-            hexMatcher.appendReplacement(hexResult, Matcher.quoteReplacement(mcHexFormat.toString()));
-        }
-        hexMatcher.appendTail(hexResult);
-        text = hexResult.toString();
+        // First, handle hex color codes (&#RRGGBB format) properly
+        // This ensures the hex color applies to all following text until the next color code
+        text = processHexColors(text);
         
         // Then handle standard color codes (&a, &c, etc.)
         char colorChar = '&';
@@ -909,6 +889,35 @@ public class TablistPlaceholderManager {
                 return "Error";
             }
         }
+    }
+    
+    /**
+     * Processes hex color codes (&#RRGGBB format) to ensure they apply to all following text
+     * until the next color code is encountered.
+     */
+    private static String processHexColors(String text) {
+        if (text == null || !text.contains("&#")) {
+            return text;
+        }
+        
+        Pattern hexPattern = Pattern.compile("&#([A-Fa-f0-9]{6})");
+        Matcher matcher = hexPattern.matcher(text);
+        StringBuffer result = new StringBuffer();
+        
+        while (matcher.find()) {
+            String hexCode = matcher.group(1);
+            
+            // Convert RRGGBB to Minecraft's §x§R§R§G§G§B§B format
+            StringBuilder mcHexFormat = new StringBuilder("§x");
+            for (char c : hexCode.toCharArray()) {
+                mcHexFormat.append("§").append(Character.toLowerCase(c));
+            }
+            
+            matcher.appendReplacement(result, Matcher.quoteReplacement(mcHexFormat.toString()));
+        }
+        matcher.appendTail(result);
+        
+        return result.toString();
     }
     
     /**
