@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
+import com.zerog.neoessentials.economy.ShopManager;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -22,11 +23,17 @@ public class ShopManagementMenu extends AbstractContainerMenu {
     
     private final Container container;
     private final Shop shop;
+    private final ShopManager shopManager;
     
     public ShopManagementMenu(int containerId, Inventory playerInventory, Container container, Shop shop) {
+        this(containerId, playerInventory, container, shop, null);
+    }
+    
+    public ShopManagementMenu(int containerId, Inventory playerInventory, Container container, Shop shop, ShopManager shopManager) {
         super(MenuType.GENERIC_9x6, containerId);
         this.container = container;
         this.shop = shop;
+        this.shopManager = shopManager;
         
         // Add container slots
         for (int row = 0; row < 6; ++row) {
@@ -122,14 +129,14 @@ public class ShopManagementMenu extends AbstractContainerMenu {
                     }
                     
                     // Refresh the GUI
-                    new ShopManagementGUI(shop, null).openMainMenu(player);
+                    new ShopManagementGUI(shop, shopManager).openMainMenu(player);
                 } else {
                     MessageUtil.sendMessage(player, "§cOnly the shop owner can change the shop status!");
                 }
                 break;
                 
             case "inventory_management":
-                MessageUtil.sendMessage(player, "§eInventory management interface coming soon!");
+                new ShopInventoryGUI(shop, shopManager).openInventoryMenu(player);
                 break;
                 
             case "pricing_management":
