@@ -15,6 +15,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -159,7 +160,8 @@ public class TabCompletionUtil {
             
             List<String> shopNames = shopManager.searchShops("", 50)
                 .stream()
-                .map(Shop::getName)
+                .map(Shop::getShopName)
+                .sorted()
                 .collect(Collectors.toList());
                 
             return SharedSuggestionProvider.suggest(shopNames, builder);
@@ -178,20 +180,38 @@ public class TabCompletionUtil {
     public static final SuggestionProvider<CommandSourceStack> MANAGEABLE_SHOP_SUGGESTIONS = (context, builder) -> {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            EconomyManager economyManager = EconomyManager.getInstance();
+            EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
             ShopManager shopManager = economyManager.getShopManager();
             
             List<String> shopNames = shopManager.getAllShops()
                 .stream()
-                .filter(shop -> shop.hasPermission(player.getUUID(), 
-                    com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.VIEW_BASIC_INFO))
-                .map(Shop::getName)
+                .filter(shop -> {
+                    // Player can manage if they own the shop or have management permissions
+                    return shop.getOwnerId().equals(player.getUUID()) || 
+                           shop.getEmployeeManager().hasPermission(player.getUUID(), 
+                               com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.MANAGE_INVENTORY);
+                })
+                .map(Shop::getShopName)
+                .sorted()
                 .collect(Collectors.toList());
                 
             return SharedSuggestionProvider.suggest(shopNames, builder);
         } catch (Exception e) {
-            // Fallback to SHOP_SUGGESTIONS
-            return SHOP_SUGGESTIONS.getSuggestions(context, builder);
+            // Fallback to basic shop names
+            try {
+                EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+                ShopManager shopManager = economyManager.getShopManager();
+                
+                List<String> allShopNames = shopManager.getAllShops()
+                    .stream()
+                    .map(Shop::getShopName)
+                    .sorted()
+                    .collect(Collectors.toList());
+                    
+                return SharedSuggestionProvider.suggest(allShopNames, builder);
+            } catch (Exception ex) {
+                return SharedSuggestionProvider.suggest(Collections.emptyList(), builder);
+            }
         }
     };
     
