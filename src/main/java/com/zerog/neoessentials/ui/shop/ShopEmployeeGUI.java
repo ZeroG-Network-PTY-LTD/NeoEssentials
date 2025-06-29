@@ -14,6 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.SimpleContainer;
@@ -271,7 +272,7 @@ public class ShopEmployeeGUI {
     /**
      * Gets the appropriate icon for a role
      */
-    private Items getRoleIcon(ShopEmployeeManager.EmployeeRole role) {
+    private Item getRoleIcon(ShopEmployeeManager.EmployeeRole role) {
         return switch (role) {
             case MANAGER -> Items.DIAMOND;
             case CASHIER -> Items.GOLD_INGOT;
