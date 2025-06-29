@@ -106,6 +106,9 @@ public class EconomyPersistenceManager {
             NeoEssentials.LOGGER.info("Economy persistence manager initialized (Database: {}, File Backup: {})", 
                 isUsingDatabase() ? "ENABLED" : "DISABLED", 
                 isUsingFileBackup() ? "ENABLED" : "DISABLED");
+                
+            // Load existing data into cache
+            loadExistingDataIntoCache();
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to initialize economy persistence: " + e.getMessage());
             e.printStackTrace();
@@ -1275,6 +1278,71 @@ public class EconomyPersistenceManager {
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to save loans to file", e);
+        }
+    }
+    
+    /**
+     * Load existing data into cache during initialization
+     */
+    private void loadExistingDataIntoCache() {
+        NeoEssentials.LOGGER.info("Loading existing economy data into cache...");
+        
+        try {
+            // Load shops
+            if (useDatabase && isUsingDatabase()) {
+                loadAllShopsFromDatabase();
+            } else if (useFileBackup) {
+                loadAllShopsFromFile();
+            }
+            
+            NeoEssentials.LOGGER.info("Loaded {} shops into cache", shopCache.size());
+            
+            // You can add loading of other data types here if needed
+            // loadAllAccountsFromStorage();
+            // loadAllLoansFromStorage();
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to load existing data into cache", e);
+        }
+    }
+    
+    /**
+     * Load all shops from database into cache
+     */
+    private void loadAllShopsFromDatabase() {
+        try {
+            String sql = "SELECT shop_id, owner_uuid, shop_type, data FROM shops";
+            try (PreparedStatement pstmt = dbConnection.prepareStatement(sql);
+                 ResultSet rs = pstmt.executeQuery()) {
+                
+                while (rs.next()) {
+                    UUID shopId = UUID.fromString(rs.getString("shop_id"));
+                    String data = rs.getString("data");
+                    
+                    try {
+                        Shop shop = gson.fromJson(data, Shop.class);
+                        if (shop != null) {
+                            shopCache.put(shopId, shop);
+                        }
+                    } catch (Exception e) {
+                        NeoEssentials.LOGGER.warn("Failed to deserialize shop {}: {}", shopId, e.getMessage());
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            NeoEssentials.LOGGER.error("Failed to load shops from database", e);
+            // Fallback to file loading if database fails
+            if (useFileBackup) {
+                try {
+                    Map<String, Shop> fileShops = loadAllShopsFromFile();
+                    for (Map.Entry<String, Shop> entry : fileShops.entrySet()) {
+                        UUID shopId = UUID.fromString(entry.getKey());
+                        shopCache.put(shopId, entry.getValue());
+                    }
+                } catch (IOException ex) {
+                    NeoEssentials.LOGGER.error("Failed to load shops from file as fallback", ex);
+                }
+            }
         }
     }
 }
