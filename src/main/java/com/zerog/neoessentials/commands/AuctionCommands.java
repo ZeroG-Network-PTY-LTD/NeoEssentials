@@ -13,6 +13,10 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Handles all auction-related commands for the NeoEssentials economy system.
@@ -30,6 +34,9 @@ import java.util.UUID;
  * - /auction unwatch <auction-id> - Stop watching an auction
  */
 public class AuctionCommands {
+    
+    // Simple watch list: player UUID -> set of auction IDs they're watching
+    private static final Map<UUID, Set<UUID>> watchLists = new HashMap<>();
     
     /**
      * Registers all auction commands with the command dispatcher.
@@ -489,11 +496,13 @@ public class AuctionCommands {
                 MessageUtil.sendMessage(player, "§7The item has been delivered to your inventory.");
                 
                 // Notify seller if online
-                ServerPlayer seller = player.getServer().getPlayerList().getPlayer(auction.getSellerId());
-                if (seller != null) {
-                    MessageUtil.sendMessage(seller, "§aYour auction for §e" + auction.getItemName() + 
-                        "§a was purchased by §e" + player.getScoreboardName());
-                    MessageUtil.sendMessage(seller, "§aYou received §e" + defaultCurrency.format(buyoutPrice));
+                if (player.getServer() != null) {
+                    ServerPlayer seller = player.getServer().getPlayerList().getPlayer(auction.getSellerId());
+                    if (seller != null) {
+                        MessageUtil.sendMessage(seller, "§aYour auction for §e" + auction.getItemName() + 
+                            "§a was purchased by §e" + player.getScoreboardName());
+                        MessageUtil.sendMessage(seller, "§aYou received §e" + defaultCurrency.format(buyoutPrice));
+                    }
                 }
                 
                 return 1;
@@ -552,12 +561,53 @@ public class AuctionCommands {
     
     private int showAuctionHistory(ServerPlayer player, ServerPlayer target) {
         try {
+            EconomyManager economyManager = EconomyManager.getInstance();
+            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            
+            UUID targetId = target != null ? target.getUUID() : player.getUUID();
             String targetName = target != null ? target.getScoreboardName() : "Your";
             
-            MessageUtil.sendMessage(player, "§6=== " + targetName + " Auction History ===");
-            MessageUtil.sendMessage(player, "§eAuction history system integration coming soon!");
-            MessageUtil.sendMessage(player, "§7This will show completed auctions, bids won/lost, and statistics.");
+            // Get all auctions by the target player (both active and completed)
+            List<Auction> playerAuctions = auctionHouse.getAuctionsBySeller(targetId);
             
+            MessageUtil.sendMessage(player, "§6=== " + targetName + " Auction History ===");
+            
+            if (playerAuctions.isEmpty()) {
+                MessageUtil.sendMessage(player, "§7No auction history found.");
+                return 1;
+            }
+            
+            // Sort by start time (newest first)
+            playerAuctions.sort((a1, a2) -> Long.compare(a2.getStartTime(), a1.getStartTime()));
+            
+            // Show up to 10 most recent auctions
+            int count = 0;
+            for (Auction auction : playerAuctions) {
+                if (count >= 10) break;
+                
+                String statusColor = switch (auction.getStatus()) {
+                    case ACTIVE -> "§a";
+                    case COMPLETED -> "§e";
+                    case CANCELLED -> "§c";
+                    case EXPIRED -> "§7";
+                };
+                
+                String auctionId = auction.getAuctionId().toString().substring(0, 8);
+                String price = auction.getStatus() == Auction.AuctionStatus.COMPLETED ? 
+                    auction.getCurrency().format(auction.getCurrentBid()) : 
+                    auction.getCurrency().format(auction.getStartingBid());
+                
+                MessageUtil.sendMessage(player, statusColor + auctionId + " §7- §e" + auction.getItemName() + 
+                    " §7- " + statusColor + price + " §7- " + statusColor + auction.getStatus().name());
+                
+                count++;
+            }
+            
+            if (playerAuctions.size() > 10) {
+                MessageUtil.sendMessage(player, "§7Showing 10 of " + playerAuctions.size() + " auctions");
+            }
+            
+            MessageUtil.sendMessage(player, "§7Use §e/auction info <id>§7 for detailed information");
             return 1;
         } catch (Exception e) {
             MessageUtil.sendErrorMessage(player, "An error occurred while retrieving auction history: " + e.getMessage());
@@ -604,17 +654,75 @@ public class AuctionCommands {
     }
     
     private int watchAuction(ServerPlayer player, String auctionId) {
-        // This would be implemented when auction watching system is added
-        MessageUtil.sendMessage(player, "§eAuction watching system coming soon!");
-        MessageUtil.sendMessage(player, "§7You will receive notifications when auction §e" + auctionId + "§7 updates.");
-        return 1;
+        try {
+            EconomyManager economyManager = EconomyManager.getInstance();
+            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            
+            UUID auctionUUID;
+            try {
+                auctionUUID = UUID.fromString(auctionId);
+            } catch (IllegalArgumentException e) {
+                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
+                return 0;
+            }
+            
+            Auction auction = auctionHouse.getAuctionById(auctionUUID);
+            if (auction == null) {
+                MessageUtil.sendErrorMessage(player, "Auction not found.");
+                return 0;
+            }
+            
+            if (!auction.isActive()) {
+                MessageUtil.sendErrorMessage(player, "This auction has already ended.");
+                return 0;
+            }
+            
+            // Add to watch list
+            UUID playerId = player.getUUID();
+            watchLists.computeIfAbsent(playerId, k -> new HashSet<>()).add(auctionUUID);
+            
+            MessageUtil.sendMessage(player, "§aYou are now watching auction §e" + auctionId);
+            MessageUtil.sendMessage(player, "§7Item: §e" + auction.getItemName());
+            MessageUtil.sendMessage(player, "§7Current bid: §e" + auction.getCurrency().format(auction.getCurrentBid()));
+            MessageUtil.sendMessage(player, "§7Time remaining: §e" + auction.getFormattedTimeRemaining());
+            MessageUtil.sendMessage(player, "§7You'll receive notifications when this auction ends or is outbid.");
+            
+            return 1;
+        } catch (Exception e) {
+            MessageUtil.sendErrorMessage(player, "An error occurred while adding auction to watch list: " + e.getMessage());
+            return 0;
+        }
     }
     
     private int unwatchAuction(ServerPlayer player, String auctionId) {
-        // This would be implemented when auction watching system is added
-        MessageUtil.sendMessage(player, "§eAuction watching system coming soon!");
-        MessageUtil.sendMessage(player, "§7Stopped watching auction §e" + auctionId);
-        return 1;
+        try {
+            UUID auctionUUID;
+            try {
+                auctionUUID = UUID.fromString(auctionId);
+            } catch (IllegalArgumentException e) {
+                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
+                return 0;
+            }
+            
+            UUID playerId = player.getUUID();
+            Set<UUID> playerWatchList = watchLists.get(playerId);
+            
+            if (playerWatchList == null || !playerWatchList.contains(auctionUUID)) {
+                MessageUtil.sendErrorMessage(player, "You are not watching this auction.");
+                return 0;
+            }
+            
+            playerWatchList.remove(auctionUUID);
+            if (playerWatchList.isEmpty()) {
+                watchLists.remove(playerId);
+            }
+            
+            MessageUtil.sendMessage(player, "§aYou are no longer watching auction §e" + auctionId);
+            return 1;
+        } catch (Exception e) {
+            MessageUtil.sendErrorMessage(player, "An error occurred while removing auction from watch list: " + e.getMessage());
+            return 0;
+        }
     }
     
     // Helper methods
