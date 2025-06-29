@@ -2,6 +2,7 @@ package com.zerog.neoessentials.economy;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Represents a shop in the NeoEssentials economy system.
@@ -11,7 +12,8 @@ public class Shop {
     private final UUID shopId;
     private final UUID ownerId;
     private String shopName;
-    private String location;
+    private ShopLocation shopLocation; // Physical location for teleportation
+    private String locationName; // Display name for the location
     private String category; // Shop category (armor, blocks, food, etc.)
     private final ShopType shopType;
     private final long createdTime;
@@ -69,14 +71,15 @@ public class Shop {
      * 
      * @param ownerId The owner's UUID
      * @param shopName The shop name
-     * @param location The shop location
+     * @param locationName The shop location name
      * @param shopType The type of shop
      */
-    public Shop(UUID ownerId, String shopName, String location, String category, ShopType shopType) {
+    public Shop(UUID ownerId, String shopName, String locationName, String category, ShopType shopType) {
         this.shopId = UUID.randomUUID();
         this.ownerId = ownerId;
         this.shopName = shopName;
-        this.location = location;
+        this.shopLocation = null; // Will be set when player uses /shop setlocation
+        this.locationName = locationName;
         this.category = category;
         this.shopType = shopType;
         this.createdTime = System.currentTimeMillis();
@@ -112,6 +115,16 @@ public class Shop {
     public boolean addItem(String itemId, int quantity, double price, String itemName) {
         if (!isActive || quantity <= 0 || price < 0) {
             return false;
+        }
+        
+        // Validate item exists in Minecraft
+        if (!ItemHandler.isValidItem(itemId)) {
+            return false;
+        }
+        
+        // Generate display name if not provided
+        if (itemName == null || itemName.trim().isEmpty()) {
+            itemName = ItemHandler.formatItemName(itemId);
         }
         
         // Check if shop type allows price changes
@@ -333,8 +346,12 @@ public class Shop {
     public String getName() { return shopName; }
     public String getShopName() { return shopName; }
     public void setShopName(String shopName) { this.shopName = shopName; }
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
+    public ShopLocation getShopLocation() { return shopLocation; }
+    public void setShopLocation(ShopLocation shopLocation) { this.shopLocation = shopLocation; }
+    public String getLocation() { return locationName; } // For backwards compatibility
+    public String getLocationName() { return locationName; }
+    public void setLocation(String locationName) { this.locationName = locationName; } // For backwards compatibility
+    public void setLocationName(String locationName) { this.locationName = locationName; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
     public ShopType getShopType() { return shopType; }
@@ -469,12 +486,49 @@ public class Shop {
         return setItemPrice(itemId, price);
     }
     
+    /**
+     * Check if this shop has a teleportation location set
+     * 
+     * @return True if shop has a valid location for teleportation
+     */
+    public boolean hasLocation() {
+        return shopLocation != null && shopLocation.isValid();
+    }
+    
+    /**
+     * Get formatted location string for display
+     * 
+     * @return Formatted location string or "No location set"
+     */
+    public String getFormattedLocation() {
+        if (!hasLocation()) {
+            return "No location set";
+        }
+        return shopLocation.getFormattedLocation();
+    }
+    
+    /**
+     * Set the shop's physical location from a player's current position
+     * 
+     * @param player The player to get location from
+     * @return True if location was set successfully
+     */
+    public boolean setLocationFromPlayer(ServerPlayer player) {
+        try {
+            this.shopLocation = new ShopLocation(player);
+            saveToStorage();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     @Override
     public String toString() {
         return "Shop{" +
                 "shopId=" + shopId +
                 ", shopName='" + shopName + '\'' +
-                ", location='" + location + '\'' +
+                ", locationName='" + locationName + '\'' +
                 ", type=" + shopType +
                 ", isActive=" + isActive +
                 '}';

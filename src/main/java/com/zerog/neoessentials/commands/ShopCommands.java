@@ -7,6 +7,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.*;
+import com.zerog.neoessentials.economy.Shop.ShopItem;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -16,6 +17,9 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * Comprehensive shop commands for the NeoEssentials economy system.
@@ -138,6 +142,11 @@ public class ShopCommands {
                         .suggests(TabCompletionUtil.SHOP_SUGGESTIONS)
                         .executes(context -> visitShop(context.getSource(),
                             StringArgumentType.getString(context, "shop")))))
+                .then(Commands.literal("setlocation")
+                    .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.MANAGEABLE_SHOP_SUGGESTIONS)
+                        .executes(context -> setShopLocation(context.getSource(),
+                            StringArgumentType.getString(context, "shop")))))
                 
                 // Employee Management
                 .then(Commands.literal("employee")
@@ -176,6 +185,28 @@ public class ShopCommands {
                             .suggests(TabCompletionUtil.MANAGEABLE_SHOP_SUGGESTIONS)
                             .executes(context -> listEmployees(context.getSource(),
                                 StringArgumentType.getString(context, "shop"))))))
+                .then(Commands.literal("search")
+                    .then(Commands.literal("item")
+                        .then(Commands.argument("item", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.ITEM_SUGGESTIONS)
+                            .executes(context -> searchShopsByItem(context.getSource(),
+                                StringArgumentType.getString(context, "item")))))
+                    .then(Commands.literal("price")
+                        .then(Commands.argument("minPrice", DoubleArgumentType.doubleArg(0))
+                            .then(Commands.argument("maxPrice", DoubleArgumentType.doubleArg(0))
+                                .executes(context -> searchShopsByPrice(context.getSource(),
+                                    DoubleArgumentType.getDouble(context, "minPrice"),
+                                    DoubleArgumentType.getDouble(context, "maxPrice"))))))
+                    .then(Commands.literal("owner")
+                        .then(Commands.argument("playerName", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.ONLINE_PLAYER_SUGGESTIONS)
+                            .executes(context -> searchShopsByOwner(context.getSource(),
+                                StringArgumentType.getString(context, "playerName")))))
+                    .then(Commands.literal("category")
+                        .then(Commands.argument("category", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.SHOP_TYPE_SUGGESTIONS)
+                            .executes(context -> searchShopsByCategory(context.getSource(),
+                                StringArgumentType.getString(context, "category"))))))
         );
     }
     
@@ -199,6 +230,7 @@ public class ShopCommands {
             MessageUtil.sendMessage(player, "§e/shop manage <shop> §7- Open management interface");
             MessageUtil.sendMessage(player, "§e/shop stats <shop> §7- View shop statistics");
             MessageUtil.sendMessage(player, "§e/shop visit <shop> §7- Teleport to shop");
+            MessageUtil.sendMessage(player, "§e/shop setlocation <shop> §7- Set shop teleport location");
             MessageUtil.sendMessage(player, "");
             MessageUtil.sendMessage(player, "§e§lEmployee Management:");
             MessageUtil.sendMessage(player, "§e/shop employee add <shop> <player> <role> §7- Hire employee");
@@ -701,12 +733,26 @@ public class ShopCommands {
                     // Record the sale in the shop
                     shop.recordSale(player.getUUID(), itemName, quantity, totalPrice, System.currentTimeMillis());
                     
-                    // TODO: Give items to player (requires item registry integration)
-                    MessageUtil.sendSuccessMessage(player, "Purchase completed! You bought " + quantity + 
-                        " " + itemName + " for " + defaultCurrency.format(totalPrice));
-                    MessageUtil.sendMessage(player, "§7New balance: §e" + 
-                        defaultCurrency.format(economyManager.getBalance(player.getUUID(), defaultCurrency)));
-                    MessageUtil.sendMessage(player, "§c§lNote: §7Item delivery system is in development");
+                    // Give items to player using ItemHandler
+                    boolean itemsDelivered = ItemHandler.giveItemsToPlayer(player, itemName, quantity);
+                    
+                    if (itemsDelivered) {
+                        MessageUtil.sendSuccessMessage(player, "Purchase completed! You bought " + quantity + 
+                            " " + ItemHandler.formatItemName(itemName) + " for " + defaultCurrency.format(totalPrice));
+                        MessageUtil.sendMessage(player, "§7New balance: §e" + 
+                            defaultCurrency.format(economyManager.getBalance(player.getUUID(), defaultCurrency)));
+                        
+                        // Remove items from shop inventory
+                        shop.removeItem(itemName, quantity);
+                    } else {
+                        MessageUtil.sendErrorMessage(player, "Items could not be delivered. Contact an administrator.");
+                        // Refund the transaction
+                        if (shop.getShopType() == Shop.ShopType.SERVER_SHOP || shop.getShopType() == Shop.ShopType.ADMIN) {
+                            economyManager.addBalance(player.getUUID(), defaultCurrency, totalPrice, "Refund: Item delivery failed");
+                        } else {
+                            economyManager.transferMoney(shop.getOwnerId(), player.getUUID(), totalPrice, defaultCurrency, "Refund: Item delivery failed");
+                        }
+                    }
                 } else {
                     MessageUtil.sendErrorMessage(player, "Transaction failed. Please try again.");
                 }
@@ -765,14 +811,21 @@ public class ShopCommands {
             double pricePerItem = buyPrice * sellPriceRatio;
             double totalPrice = pricePerItem * quantity;
             
+            // Check if player has enough items to sell
+            if (!ItemHandler.hasEnoughItems(player, itemName, quantity)) {
+                MessageUtil.sendErrorMessage(player, "You don't have enough " + ItemHandler.formatItemName(itemName) + " to sell. " +
+                    "You have " + ItemHandler.getItemCount(player, itemName) + ", but need " + quantity + ".");
+                return 0;
+            }
+            
             MessageUtil.sendMessage(player, "§6Sale Summary:");
             MessageUtil.sendMessage(player, "§7Shop: §e" + shopName);
-            MessageUtil.sendMessage(player, "§7Item: §e" + itemName);
+            MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.formatItemName(itemName));
             MessageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
             MessageUtil.sendMessage(player, "§7Price per item: §e" + defaultCurrency.format(pricePerItem));
             MessageUtil.sendMessage(player, "§7Total payment: §e" + defaultCurrency.format(totalPrice));
             
-            // Simplified transaction (in real implementation, would check player inventory)
+            // Process the sale transaction
             try {
                 boolean success;
                 
@@ -806,14 +859,30 @@ public class ShopCommands {
                 }
                 
                 if (success) {
-                    // Record the sale in the shop (this is a purchase from the shop's perspective)
-                    shop.recordSale(shop.getOwnerId(), itemName, quantity, totalPrice, System.currentTimeMillis());
+                    // Remove items from player's inventory
+                    boolean itemsRemoved = ItemHandler.removeItemsFromPlayer(player, itemName, quantity);
                     
-                    MessageUtil.sendSuccessMessage(player, "Sale completed! You sold " + quantity + 
-                        " " + itemName + " for " + defaultCurrency.format(totalPrice));
-                    MessageUtil.sendMessage(player, "§7New balance: §e" + 
-                        defaultCurrency.format(economyManager.getBalance(player.getUUID(), defaultCurrency)));
-                    MessageUtil.sendMessage(player, "§c§lNote: §7Item inventory checking is simplified for development");
+                    if (itemsRemoved) {
+                        // Record the sale in the shop (this is a purchase from the shop's perspective)
+                        shop.recordSale(shop.getOwnerId(), itemName, quantity, totalPrice, System.currentTimeMillis());
+                        
+                        // Add items to shop inventory
+                        shop.addItem(itemName, quantity, buyPrice, ItemHandler.formatItemName(itemName));
+                        
+                        MessageUtil.sendSuccessMessage(player, "Sale completed! You sold " + quantity + 
+                            " " + ItemHandler.formatItemName(itemName) + " for " + defaultCurrency.format(totalPrice));
+                        MessageUtil.sendMessage(player, "§7New balance: §e" + 
+                            defaultCurrency.format(economyManager.getBalance(player.getUUID(), defaultCurrency)));
+                    } else {
+                        MessageUtil.sendErrorMessage(player, "Failed to remove items from inventory. Contact an administrator.");
+                        // Refund the transaction
+                        if (shop.getOwnerId() == null) {
+                            double currentBalance = economyManager.getBalance(player.getUUID(), defaultCurrency);
+                            economyManager.setBalance(player.getUUID(), defaultCurrency, currentBalance - totalPrice);
+                        } else {
+                            economyManager.transferMoney(player.getUUID(), shop.getOwnerId(), totalPrice, defaultCurrency, "Refund: Item removal failed");
+                        }
+                    }
                 } else {
                     MessageUtil.sendErrorMessage(player, "Transaction failed. Shop owner may not have sufficient funds.");
                 }
@@ -874,22 +943,46 @@ public class ShopCommands {
                 return 0;
             }
             
-            // For now, we'll use a simplified item system (just item names)
-            // In a full implementation, this would check the player's actual inventory
+            // Validate that item exists
+            if (!ItemHandler.isValidItem(itemName)) {
+                MessageUtil.sendErrorMessage(player, "Invalid item: " + itemName);
+                MessageUtil.sendMessage(player, "§7Use tab completion or valid Minecraft item IDs (e.g., minecraft:diamond_sword)");
+                return 0;
+            }
+            
+            // Check if player has enough items in inventory (for player shops)
+            if (isOwner && !isAdmin && !ItemHandler.hasEnoughItems(player, itemName, quantity)) {
+                MessageUtil.sendErrorMessage(player, "You don't have enough " + ItemHandler.formatItemName(itemName) + " to stock. " +
+                    "You have " + ItemHandler.getItemCount(player, itemName) + ", but need " + quantity + ".");
+                return 0;
+            }
+            
             MessageUtil.sendMessage(player, "§6Stocking Shop: §e" + shopName);
-            MessageUtil.sendMessage(player, "§7Item: §e" + itemName);
+            MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.formatItemName(itemName));
             MessageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
             MessageUtil.sendMessage(player, "§7Price per item: §e$" + String.format("%.2f", price));
             
             // Add item to shop inventory
-            boolean success = shop.addItem(itemName, quantity, price, itemName);
+            boolean success = shop.addItem(itemName, quantity, price, ItemHandler.formatItemName(itemName));
             
             if (success) {
-                MessageUtil.sendSuccessMessage(player, "Successfully stocked " + quantity + "x " + itemName + 
-                    " in shop '" + shopName + "' for $" + String.format("%.2f", price) + " each");
-                MessageUtil.sendMessage(player, "§c§lNote: §7Item inventory checking is simplified for development");
+                // Remove items from player inventory (for player shops)
+                boolean itemsRemoved = true;
+                if (isOwner && !isAdmin) {
+                    itemsRemoved = ItemHandler.removeItemsFromPlayer(player, itemName, quantity);
+                }
+                
+                if (itemsRemoved) {
+                    MessageUtil.sendSuccessMessage(player, "Successfully stocked " + quantity + "x " + ItemHandler.formatItemName(itemName) + 
+                        " in shop '" + shopName + "' for $" + String.format("%.2f", price) + " each");
+                } else {
+                    MessageUtil.sendErrorMessage(player, "Failed to remove items from your inventory. Contact an administrator.");
+                    // Remove the items from shop since we couldn't take them from player
+                    shop.removeItem(itemName, quantity);
+                    success = false;
+                }
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to stock item. Shop may be inactive or price conflicts with shop type.");
+                MessageUtil.sendErrorMessage(player, "Failed to stock item. Shop may be inactive or item may be invalid.");
             }
             
             return success ? 1 : 0;
@@ -902,16 +995,68 @@ public class ShopCommands {
     private int setItemPrice(CommandSourceStack source, String shopName, String itemName, double buyPrice, double sellPrice) {
         try {
             ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
             
-            MessageUtil.sendMessage(player, "§6Setting Prices for: §e" + itemName);
-            MessageUtil.sendMessage(player, "§7Shop: §e" + shopName);
-            MessageUtil.sendMessage(player, "§7Buy Price: §e$" + String.format("%.2f", buyPrice));
-            if (sellPrice >= 0) {
-                MessageUtil.sendMessage(player, "§7Sell Price: §e$" + String.format("%.2f", sellPrice));
+            // Validate prices
+            if (buyPrice <= 0) {
+                MessageUtil.sendErrorMessage(player, "Buy price must be greater than 0.");
+                return 0;
             }
-            MessageUtil.sendMessage(player, "§7Note: Price setting is in development");
             
-            return 1;
+            if (sellPrice >= 0 && sellPrice > buyPrice) {
+                MessageUtil.sendErrorMessage(player, "Sell price cannot be higher than buy price.");
+                return 0;
+            }
+            
+            // Validate item exists
+            if (!ItemHandler.isValidItem(itemName)) {
+                MessageUtil.sendErrorMessage(player, "Invalid item: " + itemName);
+                return 0;
+            }
+            
+            // Get shop by searching for it by name
+            List<Shop> foundShops = shopManager.searchShops(shopName, 1);
+            if (foundShops.isEmpty()) {
+                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                return 0;
+            }
+            
+            Shop shop = foundShops.get(0);
+            
+            // Check ownership
+            boolean isOwner = shop.getOwnerId() != null && shop.getOwnerId().equals(player.getUUID());
+            boolean isAdmin = player.hasPermissions(2);
+            
+            if (!isOwner && !isAdmin) {
+                MessageUtil.sendErrorMessage(player, "You can only set prices for shops you own.");
+                return 0;
+            }
+            
+            // Check if shop type allows price changes
+            if (!shop.getShopType().allowsPriceChanges()) {
+                MessageUtil.sendErrorMessage(player, "This shop type doesn't allow price changes.");
+                return 0;
+            }
+            
+            // Set the price
+            boolean success = shop.setItemPrice(itemName, buyPrice);
+            
+            if (success) {
+                MessageUtil.sendSuccessMessage(player, "Price updated for " + ItemHandler.formatItemName(itemName) + " in shop '" + shopName + "'");
+                MessageUtil.sendMessage(player, "§7Buy Price: §e$" + String.format("%.2f", buyPrice));
+                if (sellPrice >= 0) {
+                    MessageUtil.sendMessage(player, "§7Sell Price: §e$" + String.format("%.2f", sellPrice));
+                } else {
+                    double autoSellPrice = buyPrice * 0.7; // 70% of buy price
+                    MessageUtil.sendMessage(player, "§7Auto Sell Price: §e$" + String.format("%.2f", autoSellPrice) + " §7(70% of buy price)");
+                }
+            } else {
+                MessageUtil.sendErrorMessage(player, "Failed to update price. Item may not exist in shop inventory.");
+            }
+            
+            return success ? 1 : 0;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use shop commands"));
             return 0;
@@ -936,15 +1081,80 @@ public class ShopCommands {
     private int shopStats(CommandSourceStack source, String shopName) {
         try {
             ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
+            CurrencyManager currencyManager = economyManager.getCurrencyManager();
+            Currency defaultCurrency = currencyManager.getDefaultCurrency();
+            
+            if (defaultCurrency == null) {
+                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                return 0;
+            }
+            
+            // Get shop by searching for it by name
+            List<Shop> foundShops = shopManager.searchShops(shopName, 1);
+            if (foundShops.isEmpty()) {
+                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                return 0;
+            }
+            
+            Shop shop = foundShops.get(0);
+            
+            // Check ownership for detailed stats
+            boolean isOwner = shop.getOwnerId() != null && shop.getOwnerId().equals(player.getUUID());
+            boolean isAdmin = player.hasPermissions(2);
+            boolean canViewDetailedStats = isOwner || isAdmin;
             
             MessageUtil.sendMessage(player, "§6=== Shop Statistics: §e" + shopName + " §6===");
-            MessageUtil.sendMessage(player, "§7Total Sales: §e$2,450.75");
-            MessageUtil.sendMessage(player, "§7Items Sold: §e156");
-            MessageUtil.sendMessage(player, "§7Customers: §e23");
-            MessageUtil.sendMessage(player, "§7Average Sale: §e$15.71");
-            MessageUtil.sendMessage(player, "§7Profit Margin: §e15.2%");
-            MessageUtil.sendMessage(player, "§7Shop Rating: §e★★★★☆");
-            MessageUtil.sendMessage(player, "§7Note: Shop statistics are in development");
+            MessageUtil.sendMessage(player, "§7Shop Type: §e" + shop.getShopType().getDisplayName());
+            MessageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
+            MessageUtil.sendMessage(player, "§7Status: " + (shop.isActive() ? "§aActive" : "§cInactive"));
+            
+            if (canViewDetailedStats) {
+                // Detailed statistics for owners/admins
+                double totalRevenue = shop.getTotalRevenue();
+                int totalSales = shop.getTotalSales();
+                int uniqueCustomers = shop.getCustomerCount();
+                double averageSale = totalSales > 0 ? totalRevenue / totalSales : 0.0;
+                
+                MessageUtil.sendMessage(player, "§7Total Revenue: §e" + defaultCurrency.format(totalRevenue));
+                MessageUtil.sendMessage(player, "§7Total Sales: §e" + totalSales);
+                MessageUtil.sendMessage(player, "§7Unique Customers: §e" + uniqueCustomers);
+                MessageUtil.sendMessage(player, "§7Average Sale: §e" + defaultCurrency.format(averageSale));
+                
+                // Inventory summary
+                int totalItems = shop.getInventory().values().stream()
+                    .mapToInt(item -> item.getQuantity())
+                    .sum();
+                int uniqueItems = shop.getInventory().size();
+                
+                MessageUtil.sendMessage(player, "§7Inventory Items: §e" + totalItems + " §7(§e" + uniqueItems + " §7types)");
+                
+                // Recent activity
+                long daysSinceCreation = (System.currentTimeMillis() - shop.getCreatedTime()) / (1000 * 60 * 60 * 24);
+                MessageUtil.sendMessage(player, "§7Shop Age: §e" + daysSinceCreation + " days");
+                
+                if (totalSales > 0) {
+                    List<Shop.Sale> recentSales = shop.getSalesHistory(7).stream()
+                        .sorted((a, b) -> Long.compare(b.getTimestamp(), a.getTimestamp()))
+                        .limit(3)
+                        .toList();
+                    
+                    MessageUtil.sendMessage(player, "§7Recent Sales:");
+                    for (Shop.Sale sale : recentSales) {
+                        long hoursAgo = (System.currentTimeMillis() - sale.getTimestamp()) / (1000 * 60 * 60);
+                        MessageUtil.sendMessage(player, "  §8- §e" + sale.getQuantity() + "x " + 
+                            ItemHandler.formatItemName(sale.getItemId()) + " §7(§e" + 
+                            defaultCurrency.format(sale.getTotalPrice()) + "§7, " + hoursAgo + "h ago)");
+                    }
+                }
+            } else {
+                // Public statistics
+                MessageUtil.sendMessage(player, "§7Total Sales: §e" + shop.getTotalSales());
+                MessageUtil.sendMessage(player, "§7Shop Rating: §e★★★★☆ §7(Coming Soon)");
+                MessageUtil.sendMessage(player, "§7§oUse §e/shop info " + shopName + " §7§ofor inventory details");
+            }
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -956,9 +1166,30 @@ public class ShopCommands {
     private int visitShop(CommandSourceStack source, String shopName) {
         try {
             ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
             
-            MessageUtil.sendMessage(player, "§6Teleporting to shop: §e" + shopName);
-            MessageUtil.sendMessage(player, "§7Note: Shop teleportation is in development");
+            Shop shop = shopManager.getShopByName(shopName);
+            if (shop == null) {
+                MessageUtil.sendMessage(player, "§cShop '" + shopName + "' does not exist");
+                return 0;
+            }
+            
+            if (!shop.hasLocation()) {
+                MessageUtil.sendMessage(player, "§cShop '" + shopName + "' has no teleport location set");
+                MessageUtil.sendMessage(player, "§7The shop owner can use §e/shop setlocation " + shopName + " §7to set one");
+                return 0;
+            }
+            
+            ShopLocation location = shop.getShopLocation();
+            if (!location.teleportPlayer(player)) {
+                MessageUtil.sendMessage(player, "§cFailed to teleport to shop location");
+                return 0;
+            }
+            
+            MessageUtil.sendMessage(player, "§6Successfully teleported to shop: §e" + shopName);
+            MessageUtil.sendMessage(player, "§7Location: " + shop.getFormattedLocation());
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -1008,44 +1239,6 @@ public class ShopCommands {
                 MessageUtil.sendMessage(targetPlayer, "§aYou have been hired as §e" + role.getDisplayName() + " §aat shop §e" + shopName);
             } else {
                 MessageUtil.sendMessage(manager, "§cFailed to add employee. Check permissions and employee status.");
-            }
-            
-            return 1;
-        } catch (CommandSyntaxException e) {
-            source.sendFailure(Component.literal("§cOnly players can use shop commands"));
-            return 0;
-        }
-    }
-    
-    private int removeEmployee(CommandSourceStack source, String shopName, String playerName) {
-        try {
-            ServerPlayer manager = source.getPlayerOrException();
-            
-            com.zerog.neoessentials.economy.EconomyManager economyManager = 
-                com.zerog.neoessentials.economy.EconomyManager.getInstance();
-            ShopManager shopManager = economyManager.getShopManager();
-            
-            Shop shop = shopManager.getShopByName(shopName);
-            if (shop == null) {
-                MessageUtil.sendMessage(manager, "§cShop not found: " + shopName);
-                return 0;
-            }
-            
-            // Find player by name
-            ServerPlayer targetPlayer = source.getServer().getPlayerList().getPlayerByName(playerName);
-            if (targetPlayer == null) {
-                MessageUtil.sendMessage(manager, "§cPlayer not found: " + playerName);
-                return 0;
-            }
-            
-            // Remove employee
-            if (shop.removeEmployee(manager.getUUID(), targetPlayer.getUUID())) {
-                MessageUtil.sendMessage(manager, "§aSuccessfully removed §e" + playerName + " §afrom shop §e" + shopName);
-                
-                // Notify the removed employee
-                MessageUtil.sendMessage(targetPlayer, "§cYou have been removed from shop §e" + shopName);
-            } else {
-                MessageUtil.sendMessage(manager, "§cFailed to remove employee. Check permissions or employee status.");
             }
             
             return 1;
@@ -1138,6 +1331,323 @@ public class ShopCommands {
                 }
             }
             MessageUtil.sendMessage(player, "§7Total employees: §e" + employees.size());
+            
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use shop commands"));
+            return 0;
+        }
+    }
+    
+    // Search Methods
+    
+    private int searchShopsByItem(CommandSourceStack source, String itemName) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
+            CurrencyManager currencyManager = economyManager.getCurrencyManager();
+            Currency defaultCurrency = currencyManager.getDefaultCurrency();
+            
+            if (defaultCurrency == null) {
+                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                return 0;
+            }
+            
+            // Validate item exists
+            if (!ItemHandler.isValidItem(itemName)) {
+                MessageUtil.sendErrorMessage(player, "Invalid item: " + itemName);
+                MessageUtil.sendMessage(player, "§7Use tab completion or valid Minecraft item IDs");
+                return 0;
+            }
+            
+            String formattedItemName = ItemHandler.formatItemName(itemName);
+            MessageUtil.sendMessage(player, "§6=== Shops Selling: §e" + formattedItemName + " §6===");
+            
+            List<Shop> allShops = shopManager.getAllShops();
+            List<Shop> shopsWithItem = allShops.stream()
+                .filter(shop -> shop.isActive() && shop.hasItemForSale(itemName))
+                .sorted((a, b) -> Double.compare(a.getItemPrice(itemName), b.getItemPrice(itemName)))
+                .toList();
+            
+            if (shopsWithItem.isEmpty()) {
+                MessageUtil.sendMessage(player, "§7No shops currently sell " + formattedItemName);
+                return 0;
+            }
+            
+            for (Shop shop : shopsWithItem.stream().limit(10).toList()) {
+                double price = shop.getItemPrice(itemName);
+                ShopItem item = shop.getInventory().get(itemName);
+                int quantity = item != null ? item.getQuantity() : 0;
+                
+                MessageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7- §e" + 
+                    defaultCurrency.format(price) + " §7each (§e" + quantity + " §7available)");
+            }
+            
+            if (shopsWithItem.size() > 10) {
+                MessageUtil.sendMessage(player, "§7... and " + (shopsWithItem.size() - 10) + " more shops");
+            }
+            
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use shop commands"));
+            return 0;
+        }
+    }
+    
+    private int searchShopsByPrice(CommandSourceStack source, double minPrice, double maxPrice) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
+            CurrencyManager currencyManager = economyManager.getCurrencyManager();
+            Currency defaultCurrency = currencyManager.getDefaultCurrency();
+            
+            if (defaultCurrency == null) {
+                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                return 0;
+            }
+            
+            if (minPrice > maxPrice) {
+                MessageUtil.sendErrorMessage(player, "Minimum price cannot be higher than maximum price.");
+                return 0;
+            }
+            
+            MessageUtil.sendMessage(player, "§6=== Shops with Items Priced §e" + 
+                defaultCurrency.format(minPrice) + " §6- §e" + defaultCurrency.format(maxPrice) + " §6===");
+            
+            List<Shop> allShops = shopManager.getAllShops();
+            Map<Shop, List<String>> matchingShops = new HashMap<>();
+            
+            for (Shop shop : allShops) {
+                if (!shop.isActive()) continue;
+                
+                List<String> matchingItems = new ArrayList<>();
+                for (String itemId : shop.getInventory().keySet()) {
+                    double price = shop.getItemPrice(itemId);
+                    if (price >= minPrice && price <= maxPrice) {
+                        matchingItems.add(itemId);
+                    }
+                }
+                
+                if (!matchingItems.isEmpty()) {
+                    matchingShops.put(shop, matchingItems);
+                }
+            }
+            
+            if (matchingShops.isEmpty()) {
+                MessageUtil.sendMessage(player, "§7No shops have items in that price range");
+                return 0;
+            }
+            
+            int count = 0;
+            for (Map.Entry<Shop, List<String>> entry : matchingShops.entrySet()) {
+                if (count >= 10) break;
+                
+                Shop shop = entry.getKey();
+                List<String> items = entry.getValue();
+                
+                MessageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7(§e" + items.size() + " §7items):");
+                
+                for (String itemId : items.stream().limit(3).toList()) {
+                    double price = shop.getItemPrice(itemId);
+                    MessageUtil.sendMessage(player, "  §8- §e" + ItemHandler.formatItemName(itemId) + 
+                        " §7at §e" + defaultCurrency.format(price));
+                }
+                
+                if (items.size() > 3) {
+                    MessageUtil.sendMessage(player, "  §8... and " + (items.size() - 3) + " more items");
+                }
+                
+                count++;
+            }
+            
+            if (matchingShops.size() > 10) {
+                MessageUtil.sendMessage(player, "§7... and " + (matchingShops.size() - 10) + " more shops");
+            }
+            
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use shop commands"));
+            return 0;
+        }
+    }
+    
+    private int searchShopsByCategory(CommandSourceStack source, String category) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            MessageUtil.sendMessage(player, "§6=== Shops in Category: §e" + category + " §6===");
+            
+            List<Shop> allShops = shopManager.getAllShops();
+            List<Shop> categoryShops = allShops.stream()
+                .filter(shop -> shop.isActive() && 
+                    shop.getCategory().equalsIgnoreCase(category))
+                .sorted((a, b) -> a.getShopName().compareToIgnoreCase(b.getShopName()))
+                .toList();
+            
+            if (categoryShops.isEmpty()) {
+                MessageUtil.sendMessage(player, "§7No active shops in category '" + category + "'");
+                return 0;
+            }
+            
+            for (Shop shop : categoryShops.stream().limit(15).toList()) {
+                int itemTypes = shop.getInventory().size();
+                String ownerName = "Server";
+                
+                if (shop.getOwnerId() != null) {
+                    ServerPlayer owner = player.getServer().getPlayerList().getPlayer(shop.getOwnerId());
+                    if (owner != null) {
+                        ownerName = owner.getName().getString();
+                    } else {
+                        ownerName = "Offline Player";
+                    }
+                }
+                
+                MessageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7by §e" + ownerName + 
+                    " §7(§e" + itemTypes + " §7item types)");
+            }
+            
+            if ( categoryShops.size() > 15) {
+                MessageUtil.sendMessage(player, "§7... and " + (categoryShops.size() - 15) + " more shops");
+            }
+            
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use shop commands"));
+            return 0;
+        }
+    }
+    
+    private int setShopLocation(CommandSourceStack source, String shopName) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            Shop shop = shopManager.getShopByName(shopName);
+            if (shop == null) {
+                MessageUtil.sendMessage(player, "§cShop '" + shopName + "' does not exist");
+                return 0;
+            }
+            
+            // Check if player owns the shop or is an admin
+            if (!shop.getOwnerId().equals(player.getUUID()) && !player.hasPermissions(4)) {
+               
+                MessageUtil.sendMessage(player, "§cYou don't have permission to set the location for this shop");
+                return 0;
+            }
+            
+            // Set the shop location to the player's current position
+            shop.setLocationFromPlayer(player);
+            shopManager.saveShop(shop); // Save the updated shop data
+            
+            MessageUtil.sendMessage(player, "§6Shop location set successfully!");
+            MessageUtil.sendMessage(player, "§7Shop: §e" + shopName);
+            MessageUtil.sendMessage(player, "§7Location: " + shop.getFormattedLocation());
+            MessageUtil.sendMessage(player, "§7Players can now use §e/shop visit " + shopName + " §7to teleport here");
+            
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use shop commands"));
+            return 0;
+        }
+    }
+    
+    private int removeEmployee(CommandSourceStack source, String shopName, String playerName) {
+        try {
+            ServerPlayer manager = source.getPlayerOrException();
+            
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            Shop shop = shopManager.getShopByName(shopName);
+            if (shop == null) {
+                MessageUtil.sendMessage(manager, "§cShop not found: " + shopName);
+                return 0;
+            }
+            
+            // Find player by name
+            ServerPlayer targetPlayer = source.getServer().getPlayerList().getPlayerByName(playerName);
+            UUID targetUUID;
+            if (targetPlayer != null) {
+                targetUUID = targetPlayer.getUUID();
+            } else {
+                // Try to find offline player UUID (simplified approach)
+                MessageUtil.sendMessage(manager, "§cPlayer not found or offline: " + playerName);
+                return 0;
+            }
+            
+            // Remove employee
+            if (shop.removeEmployee(manager.getUUID(), targetUUID)) {
+                MessageUtil.sendMessage(manager, "§aSuccessfully removed §e" + playerName + " §afrom shop §e" + shopName);
+                
+                // Notify the removed employee if online
+                if (targetPlayer != null) {
+                    MessageUtil.sendMessage(targetPlayer, "§cYou have been removed from shop §e" + shopName);
+                }
+            } else {
+                MessageUtil.sendMessage(manager, "§cFailed to remove employee. Check permissions and employee status.");
+            }
+            
+            return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use shop commands"));
+            return 0;
+        }
+    }
+    
+    private int searchShopsByOwner(CommandSourceStack source, String ownerName) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            MessageUtil.sendMessage(player, "§6=== Shops owned by: §e" + ownerName + " §6===");
+            
+            // Find player UUID by name
+            ServerPlayer targetPlayer = source.getServer().getPlayerList().getPlayerByName(ownerName);
+            final UUID ownerUUID;
+            if (targetPlayer != null) {
+                ownerUUID = targetPlayer.getUUID();
+            } else {
+                // For offline players, we'd need a different approach
+                // For now, just search by name in shop data
+                MessageUtil.sendMessage(player, "§cPlayer not found online: " + ownerName);
+                return 0;
+            }
+            
+            List<Shop> allShops = shopManager.getAllShops();
+            List<Shop> ownerShops = allShops.stream()
+                .filter(shop -> shop.isActive() && shop.getOwnerId().equals(ownerUUID))
+                .toList();
+            
+            if (ownerShops.isEmpty()) {
+                MessageUtil.sendMessage(player, "§7No active shops found for " + ownerName);
+                return 0;
+            }
+            
+            for (Shop shop : ownerShops.stream().limit(15).toList()) {
+                int itemTypes = shop.getInventory().size();
+                int totalItems = shop.getInventory().values().stream()
+                    .mapToInt(item -> item.getQuantity())
+                    .sum();
+                
+                MessageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7(§e" + shop.getCategory() + 
+                    "§7) - §e" + itemTypes + " §7types, §e" + totalItems + " §7total items");
+            }
+            
+            if (ownerShops.size() > 15) {
+                MessageUtil.sendMessage(player, "§7... and " + (ownerShops.size() - 15) + " more shops");
+            }
             
             return 1;
         } catch (CommandSyntaxException e) {
