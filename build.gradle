@@ -344,18 +344,23 @@ abstract class IncrementBuildNumberTask extends DefaultTask {
                 propsFile.getParentFile().mkdirs()
             }
             
-            // Initialize with default value if no file exists
+            // Initialize with default values if no file exists
+            props.setProperty("lastBuildNumber", "0")
             props.setProperty("buildNumber", "0")
         }
         
-        int currentBuildNumber = (props.getProperty("buildNumber", "0") as String).toInteger() + 1
+        int lastBuildNumber = (props.getProperty("buildNumber", "0") as String).toInteger()
+        int currentBuildNumber = lastBuildNumber + 1
+        
+        // Store both current and last build numbers
+        props.setProperty("lastBuildNumber", lastBuildNumber.toString())
         props.setProperty("buildNumber", currentBuildNumber.toString())
         
         propsFile.withOutputStream { stream ->
             props.store(stream, "Build number updated") 
         }
         
-        println "Build number incremented to: ${currentBuildNumber}"
+        println "Build number incremented from: ${lastBuildNumber} to: ${currentBuildNumber}"
     }
 }
 
