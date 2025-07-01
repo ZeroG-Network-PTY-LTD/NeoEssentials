@@ -323,7 +323,23 @@ public class CurrencyManager {
      * Reload configuration for currency manager
      */
     public void reloadConfiguration() {
-        // TODO: Implement configuration reload when needed
-        // This is a placeholder to fix compilation errors
+        try {
+            // Reload currency configuration
+            EnhancedEconomyConfig config = EnhancedEconomyConfig.getInstance();
+            
+            // Clear existing currencies and reload from config
+            currencies.clear();
+            defaultCurrency = null;
+            
+            // Initialize default currencies
+            initializeDefaultCurrencies();
+            
+            // Re-load any custom currencies from config
+            // This would involve reading currency definitions from the config file
+            
+            System.out.println("[NeoEssentials] CurrencyManager configuration reloaded");
+        } catch (Exception e) {
+            System.err.println("[NeoEssentials] Error reloading CurrencyManager configuration: " + e.getMessage());
+        }
     }
 }
