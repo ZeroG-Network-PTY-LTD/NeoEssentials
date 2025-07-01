@@ -21,6 +21,10 @@ public class BankAccount {
     private long lastInterestCalculation;
     private final Map<UUID, Permission> sharedUsers; // For joint accounts
     
+    // Monthly withdrawal tracking
+    private double monthlyWithdrawalAmount;
+    private long currentWithdrawalMonth; // Month/year tracking
+    
     public enum AccountType {
         CHECKING("Checking Account", 0.01, 0.0, -1, 0.005),     // Low interest, no withdrawal limit, small transaction fee
         SAVINGS("Savings Account", 0.05, 500.0, 6, 0.0),       // Higher interest, withdrawal limits, no transaction fee
@@ -76,6 +80,10 @@ public class BankAccount {
         this.interestRate = type.getBaseInterestRate();
         this.lastInterestCalculation = System.currentTimeMillis();
         this.sharedUsers = new HashMap<>();
+        
+        // Initialize monthly withdrawal tracking
+        this.monthlyWithdrawalAmount = 0.0;
+        this.currentWithdrawalMonth = getCurrentMonthKey();
     }
     
     /**
@@ -159,6 +167,7 @@ public class BankAccount {
         }
         
         setBalance(currency, currentBalance - amount);
+        trackWithdrawal(amount); // Track withdrawal for monthly limits
         return true;
     }
     
@@ -209,8 +218,13 @@ public class BankAccount {
         
         // Check monthly withdrawal limits
         if (type.getMonthlyWithdrawalLimit() > 0) {
-            // TODO: Implement monthly withdrawal tracking
-            // For now, assume it's allowed
+            // Update monthly tracking if needed
+            updateMonthlyWithdrawalTracking();
+            
+            // Check if withdrawal would exceed monthly limit
+            if (monthlyWithdrawalAmount + amount > type.getMonthlyWithdrawalLimit()) {
+                return false;
+            }
         }
         
         return true;
@@ -363,4 +377,33 @@ public class BankAccount {
     public double getInterestRate() { return interestRate; }
     public void setInterestRate(double interestRate) { this.interestRate = interestRate; }
     public Map<UUID, Permission> getSharedUsers() { return new HashMap<>(sharedUsers); }
+    
+    /**
+     * Get the current month key for tracking withdrawals
+     * Format: YYYYMM (e.g., 202507 for July 2025)
+     */
+    private long getCurrentMonthKey() {
+        java.time.LocalDate now = java.time.LocalDate.now();
+        return now.getYear() * 100L + now.getMonthValue();
+    }
+    
+    /**
+     * Update monthly withdrawal tracking if we've moved to a new month
+     */
+    private void updateMonthlyWithdrawalTracking() {
+        long currentMonth = getCurrentMonthKey();
+        if (currentMonth != currentWithdrawalMonth) {
+            // New month - reset withdrawal tracking
+            monthlyWithdrawalAmount = 0.0;
+            currentWithdrawalMonth = currentMonth;
+        }
+    }
+    
+    /**
+     * Track a withdrawal for monthly limits
+     */
+    private void trackWithdrawal(double amount) {
+        updateMonthlyWithdrawalTracking();
+        monthlyWithdrawalAmount += amount;
+    }
 }
