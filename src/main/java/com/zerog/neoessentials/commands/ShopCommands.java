@@ -199,6 +199,14 @@ public class ShopCommands {
                             .suggests(TabCompletionUtil.MANAGEABLE_SHOP_SUGGESTIONS)
                             .executes(context -> listEmployees(context.getSource(),
                                 StringArgumentType.getString(context, "shop"))))))
+                
+                // GUI Interface
+                .then(Commands.literal("gui")
+                    .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.SHOP_SUGGESTIONS)
+                        .executes(context -> openShopGUI(context.getSource(),
+                            StringArgumentType.getString(context, "shop")))))
+                
                 .then(Commands.literal("search")
                     .then(Commands.literal("item")
                         .then(Commands.argument("item", StringArgumentType.string())
@@ -240,8 +248,10 @@ public class ShopCommands {
             MessageUtil.sendMessage(player, "");
             MessageUtil.sendMessage(player, "§e§lShop Management (Owners):");
             MessageUtil.sendMessage(player, "§e/shop stock <shop> <item> <qty> <price> §7- Stock shop with items");
+            MessageUtil.sendMessage(player, "§e/shop additem <shop> [qty] §7- Add held item to shop");
             MessageUtil.sendMessage(player, "§e/shop price <shop> <item> <buy> [sell] §7- Set item prices");
             MessageUtil.sendMessage(player, "§e/shop manage <shop> §7- Open management interface");
+            MessageUtil.sendMessage(player, "§e/shop gui <shop> §7- Open buy/sell interface");
             MessageUtil.sendMessage(player, "§e/shop stats <shop> §7- View shop statistics");
             MessageUtil.sendMessage(player, "§e/shop visit <shop> §7- Teleport to shop");
             MessageUtil.sendMessage(player, "§e/shop setlocation <shop> §7- Set shop teleport location");
@@ -1790,13 +1800,12 @@ public class ShopCommands {
             }
             
             // Check if item already exists in shop
-            ShopItem existingItem = targetShop.getItem(itemName);
-            if (existingItem != null) {
+            if (targetShop.getInventory().containsKey(itemName)) {
                 // Add to existing stock
-                targetShop.addStock(itemName, quantity);
+                targetShop.addItem(itemName, quantity, 10.0, displayName); // This will add to existing
                 MessageUtil.sendSuccessMessage(player, "Added " + quantity + " " + displayName + 
                     " to existing stock in shop '" + shopName + "'");
-                MessageUtil.sendMessage(player, "§7New stock: §e" + targetShop.getItem(itemName).getStock());
+                MessageUtil.sendMessage(player, "§7New stock: §e" + targetShop.getInventory().get(itemName).getQuantity());
             } else {
                 // Add as new item with default pricing
                 double defaultPrice = 10.0; // Default price, can be changed later
@@ -1818,6 +1827,58 @@ public class ShopCommands {
                 player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY);
             }
             
+            return 1;
+            
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use shop commands"));
+            return 0;
+        }
+    }
+    
+    /**
+     * Opens the shop GUI interface for buying/selling
+     */
+    private int openShopGUI(CommandSourceStack source, String shopName) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            // Find shop
+            List<Shop> foundShops = shopManager.searchShops(shopName, 10);
+            Shop targetShop = null;
+            
+            for (Shop shop : foundShops) {
+                if (shop.getShopName().equalsIgnoreCase(shopName)) {
+                    targetShop = shop;
+                    break;
+                }
+            }
+            
+            if (targetShop == null) {
+                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                return 0;
+            }
+            
+            // Check if shop is active
+            if (!targetShop.isActive()) {
+                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' is currently inactive.");
+                return 0;
+            }
+            
+            // Check if shop has any items
+            if (targetShop.getInventory().isEmpty()) {
+                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' has no items for sale.");
+                return 0;
+            }
+            
+            // Open the GUI
+            com.zerog.neoessentials.ui.shop.ShopInterfaceGUI gui = 
+                new com.zerog.neoessentials.ui.shop.ShopInterfaceGUI(targetShop, economyManager);
+            gui.openShopInterface(player);
+            
+            MessageUtil.sendMessage(player, "§7Opening shop interface for §e" + targetShop.getShopName());
             return 1;
             
         } catch (CommandSyntaxException e) {
