@@ -7,6 +7,9 @@ import net.minecraft.server.players.PlayerList;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * Handles notifications for the loan system including overdue payments,
@@ -14,6 +17,9 @@ import java.util.UUID;
  */
 public class LoanNotificationManager {
     private static LoanNotificationManager instance;
+    
+    // Store pending notifications for offline players
+    private final Map<UUID, List<PendingNotification>> pendingNotifications = new ConcurrentHashMap<>();
     
     private LoanNotificationManager() {
     }
@@ -42,10 +48,10 @@ public class LoanNotificationManager {
             MessageUtil.sendMessage(player, "§7Use §a/loan pay <amount> §7to make a payment");
             MessageUtil.sendMessage(player, "§c※ Late fees may apply for extended overdue periods");
         } else {
-            // Player is offline - log for future notification
+            // Player is offline - store notification for when player logs in
+            storePendingNotification(playerId, PendingNotificationType.LOAN_OVERDUE, loan);
             System.out.println("[NeoEssentials] Loan overdue notification queued for player " + 
                 playerId.toString().substring(0, 8) + " (offline)");
-            // TODO: Store notification for when player logs in
         }
     }
     
@@ -63,6 +69,9 @@ public class LoanNotificationManager {
             MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
             MessageUtil.sendMessage(player, "§7New Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
             MessageUtil.sendMessage(player, "§7Make a payment soon to avoid further penalties");
+        } else {
+            // Player is offline - store notification
+            storePendingNotification(playerId, PendingNotificationType.LATE_FEE_APPLIED, loan, lateFee, null);
         }
     }
     
@@ -80,6 +89,9 @@ public class LoanNotificationManager {
             MessageUtil.sendMessage(player, "§7Outstanding Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
             MessageUtil.sendMessage(player, "§c※ This will negatively impact your credit score");
             MessageUtil.sendMessage(player, "§c※ Contact an administrator immediately");
+        } else {
+            // Player is offline - store notification
+            storePendingNotification(playerId, PendingNotificationType.LOAN_DEFAULT, loan);
         }
     }
     
@@ -98,6 +110,9 @@ public class LoanNotificationManager {
             MessageUtil.sendMessage(player, "§7Monthly Payment: §e" + loan.getCurrency().format(loan.getMonthlyPayment()));
             MessageUtil.sendMessage(player, "§7Funds have been deposited to your primary account");
             MessageUtil.sendMessage(player, "§a§lFirst payment due in 30 days!");
+        } else {
+            // Player is offline - store notification
+            storePendingNotification(playerId, PendingNotificationType.LOAN_APPROVED, loan);
         }
     }
     
@@ -114,6 +129,9 @@ public class LoanNotificationManager {
             MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
             MessageUtil.sendMessage(player, "§7Reason: §c" + reason);
             MessageUtil.sendMessage(player, "§7You may apply for a different loan type or amount");
+        } else {
+            // Player is offline - store notification
+            storePendingNotification(playerId, PendingNotificationType.LOAN_DENIED, loan, null, reason);
         }
     }
     
@@ -182,6 +200,10 @@ public class LoanNotificationManager {
     public void onPlayerJoin(ServerPlayer player) {
         try {
             UUID playerId = player.getUUID();
+            
+            // First, send any pending notifications
+            sendPendingNotifications(player);
+            
             BankManager bankManager = EconomyManager.getInstance().getBankManager();
             List<Loan> playerLoans = bankManager.getPlayerLoans(playerId);
             
@@ -203,5 +225,138 @@ public class LoanNotificationManager {
         } catch (Exception e) {
             // Silently fail - not critical
         }
+    }
+    
+    /**
+     * Store a pending notification for offline player
+     */
+    private void storePendingNotification(UUID playerId, PendingNotificationType type, Loan loan) {
+        storePendingNotification(playerId, type, loan, null, null);
+    }
+    
+    private void storePendingNotification(UUID playerId, PendingNotificationType type, Loan loan, Double amount, String reason) {
+        PendingNotification notification = new PendingNotification(type, loan, amount, reason);
+        pendingNotifications.computeIfAbsent(playerId, k -> new ArrayList<>()).add(notification);
+    }
+    
+    /**
+     * Send all pending notifications to a player who just joined
+     */
+    private void sendPendingNotifications(ServerPlayer player) {
+        UUID playerId = player.getUUID();
+        List<PendingNotification> notifications = pendingNotifications.remove(playerId);
+        
+        if (notifications == null || notifications.isEmpty()) {
+            return;
+        }
+        
+        // Send a summary first if there are many notifications
+        if (notifications.size() > 3) {
+            MessageUtil.sendMessage(player, "§e⚠ You have " + notifications.size() + " loan notifications:");
+        }
+        
+        for (PendingNotification notification : notifications) {
+            sendNotificationToPlayer(player, notification);
+        }
+        
+        if (notifications.size() > 1) {
+            MessageUtil.sendMessage(player, "§7Use §e/loan list §7to view all your loans");
+        }
+    }
+    
+    /**
+     * Send a specific notification to a player
+     */
+    private void sendNotificationToPlayer(ServerPlayer player, PendingNotification notification) {
+        Loan loan = notification.getLoan();
+        
+        switch (notification.getType()) {
+            case LOAN_OVERDUE:
+                MessageUtil.sendMessage(player, "§c⚠ LOAN OVERDUE NOTICE ⚠");
+                MessageUtil.sendMessage(player, "§7Your loan payment was overdue while you were offline!");
+                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+                MessageUtil.sendMessage(player, "§7Amount Due: §c" + loan.getCurrency().format(loan.getMonthlyPayment()));
+                MessageUtil.sendMessage(player, "§7Current Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
+                break;
+                
+            case LATE_FEE_APPLIED:
+                MessageUtil.sendMessage(player, "§c💰 LATE FEE APPLIED (while offline)");
+                MessageUtil.sendMessage(player, "§7A late fee of §c" + loan.getCurrency().format(notification.getAmount()) + 
+                    "§7 was added to your loan");
+                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+                break;
+                
+            case LOAN_DEFAULT:
+                MessageUtil.sendMessage(player, "§4⚠ LOAN DEFAULT NOTICE ⚠");
+                MessageUtil.sendMessage(player, "§cYour loan was moved to DEFAULT status while you were offline");
+                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+                MessageUtil.sendMessage(player, "§c※ This negatively impacts your credit score");
+                break;
+                
+            case LOAN_APPROVED:
+                MessageUtil.sendMessage(player, "§a✓ LOAN APPROVED! (while offline)");
+                MessageUtil.sendMessage(player, "§7Your loan application was approved");
+                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+                MessageUtil.sendMessage(player, "§7Amount: §a" + loan.getCurrency().format(loan.getPrincipalAmount()));
+                break;
+                
+            case LOAN_DENIED:
+                MessageUtil.sendMessage(player, "§c✗ LOAN APPLICATION DENIED (while offline)");
+                MessageUtil.sendMessage(player, "§7Your loan application was denied");
+                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+                if (notification.getReason() != null) {
+                    MessageUtil.sendMessage(player, "§7Reason: §c" + notification.getReason());
+                }
+                break;
+        }
+    }
+    
+    /**
+     * Clear old pending notifications (called periodically)
+     */
+    public void clearOldNotifications() {
+        long cutoffTime = System.currentTimeMillis() - (7L * 24L * 60L * 60L * 1000L); // 7 days
+        
+        pendingNotifications.entrySet().removeIf(entry -> {
+            List<PendingNotification> notifications = entry.getValue();
+            notifications.removeIf(notification -> notification.getTimestamp() < cutoffTime);
+            return notifications.isEmpty();
+        });
+    }
+    
+    /**
+     * Enum for different types of pending notifications
+     */
+    private enum PendingNotificationType {
+        LOAN_OVERDUE,
+        LATE_FEE_APPLIED,
+        LOAN_DEFAULT,
+        LOAN_APPROVED,
+        LOAN_DENIED
+    }
+    
+    /**
+     * Class to store pending notifications for offline players
+     */
+    private static class PendingNotification {
+        private final PendingNotificationType type;
+        private final Loan loan;
+        private final Double amount; // For late fees
+        private final String reason; // For denials
+        private final long timestamp;
+        
+        public PendingNotification(PendingNotificationType type, Loan loan, Double amount, String reason) {
+            this.type = type;
+            this.loan = loan;
+            this.amount = amount;
+            this.reason = reason;
+            this.timestamp = System.currentTimeMillis();
+        }
+        
+        public PendingNotificationType getType() { return type; }
+        public Loan getLoan() { return loan; }
+        public Double getAmount() { return amount; }
+        public String getReason() { return reason; }
+        public long getTimestamp() { return timestamp; }
     }
 }

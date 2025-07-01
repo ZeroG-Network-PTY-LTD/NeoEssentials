@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.economy;
 
+import com.zerog.neoessentials.config.EnhancedEconomyConfig;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
