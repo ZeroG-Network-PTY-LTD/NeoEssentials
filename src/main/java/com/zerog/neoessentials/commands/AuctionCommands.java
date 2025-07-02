@@ -294,8 +294,9 @@ public class AuctionCommands {
                     defaultCurrency.format(auction.getStartingBid());
                 
                 String auctionId = auction.getAuctionId().toString().substring(0, 8);
+                String auctionTypeDisplay = getAuctionTypeDisplayName(auction.getAuctionType());
                 MessageUtil.sendMessage(player, "§e" + auctionId + " §7- §e" + auction.getItemName() + 
-                    " §7- §a" + currentBid + " §7- §e" + timeLeft + " §8[" + auction.getAuctionType().name() + "]");
+                    " §7- §a" + currentBid + " §7- §e" + timeLeft + " §8[" + auctionTypeDisplay + "]");
             }
             
             if (auctions.size() > 10) {
@@ -639,16 +640,15 @@ public class AuctionCommands {
     }
     
     /**
-     * Gets a human-readable time remaining string for an auction
+     * Get user-friendly display name for auction type
      */
-    private String getTimeRemaining(Auction auction) {
-        long timeRemaining = auction.getEndTime() - System.currentTimeMillis();
-        
-        if (timeRemaining <= 0) {
-            return "Ended";
-        }
-        
-        int seconds = (int) (timeRemaining / 1000);
-        return formatDuration(seconds);
+    private String getAuctionTypeDisplayName(Auction.AuctionType type) {
+        return switch (type) {
+            case STANDARD -> "Standard";
+            case BUY_IT_NOW -> "Buy It Now";
+            case RESERVE -> "Reserve";
+            case DUTCH -> "Dutch";
+            default -> type.name(); // Fallback to enum name
+        };
     }
 }
