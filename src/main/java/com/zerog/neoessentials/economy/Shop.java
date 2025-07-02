@@ -224,12 +224,16 @@ public class Shop {
             return false;
         }
         
-        if (inventory.containsKey(itemId)) {
-            itemPrices.put(itemId, price);
-            return true;
+        // Set the price regardless of whether item is in inventory
+        itemPrices.put(itemId, price);
+        
+        // If item isn't in inventory yet, add it with 0 stock
+        if (!inventory.containsKey(itemId)) {
+            ShopItem newItem = new ShopItem(itemId, 0, price);
+            inventory.put(itemId, newItem);
         }
         
-        return false;
+        return true;
     }
     
     /**
