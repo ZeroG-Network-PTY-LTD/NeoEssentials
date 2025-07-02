@@ -90,17 +90,52 @@ public class EconomyManager {
      * Reload configuration from file
      */
     public void reloadConfiguration() {
-        loadConfiguration();
+        // Store current configuration as backup
+        boolean oldEconomyEnabled = this.economyEnabled;
+        double oldStartingBalance = this.startingBalance;
+        boolean oldNegativeBalancesAllowed = this.negativeBalancesAllowed;
+        double oldMaxBalance = this.maxBalance;
+        double oldInflationRate = this.inflationRate;
         
-        // Update components with new configuration
-        currencyManager.reloadConfiguration();
-        bankManager.reloadConfiguration();
-        shopManager.reloadConfiguration();
-        
-        // Restart scheduled tasks with new intervals
-        scheduler.shutdown();
-        // New scheduler will be created with updated thread pool size
-        startScheduledTasks();
+        try {
+            // Attempt to load new configuration
+            loadConfiguration();
+            
+            // Validate the configuration using the enhanced config system
+            if (!config.validateConfiguration()) {
+                // Restore old configuration if validation fails
+                this.economyEnabled = oldEconomyEnabled;
+                this.startingBalance = oldStartingBalance;
+                this.negativeBalancesAllowed = oldNegativeBalancesAllowed;
+                this.maxBalance = oldMaxBalance;
+                this.inflationRate = oldInflationRate;
+                
+                System.err.println("Configuration validation failed. Keeping previous configuration.");
+                return;
+            }
+            
+            // Update components with new configuration
+            currencyManager.reloadConfiguration();
+            bankManager.reloadConfiguration();
+            shopManager.reloadConfiguration();
+            
+            // Restart scheduled tasks with new intervals
+            scheduler.shutdown();
+            // New scheduler will be created with updated thread pool size
+            startScheduledTasks();
+            
+            System.out.println("Economy configuration reloaded successfully.");
+            
+        } catch (Exception e) {
+            // Restore old configuration if any error occurs
+            this.economyEnabled = oldEconomyEnabled;
+            this.startingBalance = oldStartingBalance;
+            this.negativeBalancesAllowed = oldNegativeBalancesAllowed;
+            this.maxBalance = oldMaxBalance;
+            this.inflationRate = oldInflationRate;
+            
+            System.err.println("Failed to reload economy configuration: " + e.getMessage());
+        }
     }
     
     /**
