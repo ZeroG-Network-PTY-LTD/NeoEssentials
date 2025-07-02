@@ -126,6 +126,25 @@ public class ShopCommands {
                                         StringArgumentType.getString(context, "item"),
                                         DoubleArgumentType.getDouble(context, "buy-price"),
                                         DoubleArgumentType.getDouble(context, "sell-price"))))))))
+                // Add setprice alias for backwards compatibility and discoverability
+                .then(Commands.literal("setprice")
+                    .then(Commands.argument("shop", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.SHOP_SUGGESTIONS)
+                        .then(Commands.argument("item", StringArgumentType.string())
+                            .suggests(TabCompletionUtil.ITEM_SUGGESTIONS)
+                            .then(Commands.argument("buy-price", DoubleArgumentType.doubleArg(0.01))
+                                .suggests(TabCompletionUtil.PRICE_SUGGESTIONS)
+                                .executes(context -> setItemPrice(context.getSource(),
+                                    StringArgumentType.getString(context, "shop"),
+                                    StringArgumentType.getString(context, "item"),
+                                    DoubleArgumentType.getDouble(context, "buy-price"), -1))
+                                .then(Commands.argument("sell-price", DoubleArgumentType.doubleArg(0.01))
+                                    .suggests(TabCompletionUtil.PRICE_SUGGESTIONS)
+                                    .executes(context -> setItemPrice(context.getSource(),
+                                        StringArgumentType.getString(context, "shop"),
+                                        StringArgumentType.getString(context, "item"),
+                                        DoubleArgumentType.getDouble(context, "buy-price"),
+                                        DoubleArgumentType.getDouble(context, "sell-price"))))))))
                 
                 // Inventory Management - Add Item from Hand
                 .then(Commands.literal("additem")
@@ -250,6 +269,7 @@ public class ShopCommands {
             MessageUtil.sendMessage(player, "§e/shop stock <shop> <item> <qty> <price> §7- Stock shop with items");
             MessageUtil.sendMessage(player, "§e/shop additem <shop> [qty] §7- Add held item to shop");
             MessageUtil.sendMessage(player, "§e/shop price <shop> <item> <buy> [sell] §7- Set item prices");
+            MessageUtil.sendMessage(player, "§e/shop setprice <shop> <item> <buy> [sell] §7- Set item prices (alias)");
             MessageUtil.sendMessage(player, "§e/shop manage <shop> §7- Open management interface");
             MessageUtil.sendMessage(player, "§e/shop gui <shop> §7- Open buy/sell interface");
             MessageUtil.sendMessage(player, "§e/shop stats <shop> §7- View shop statistics");
