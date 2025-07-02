@@ -229,7 +229,7 @@ public class Shop {
         
         // If item isn't in inventory yet, add it with 0 stock
         if (!inventory.containsKey(itemId)) {
-            ShopItem newItem = new ShopItem(itemId, 0, price);
+            ShopItem newItem = new ShopItem(itemId, itemId, 0); // itemId as both ID and name, 0 quantity
             inventory.put(itemId, newItem);
         }
         

@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.economy.*;
+import com.zerog.neoessentials.economy.ShopManager.AuctionHouse;
 import com.zerog.neoessentials.utils.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -431,7 +432,7 @@ public class AuctionCommands {
             }
             
             // Find the auction
-            Auction auction = auctionHouse.getAuction(auctionUUID);
+            Auction auction = auctionHouse.getAuctionById(auctionUUID);
             if (auction == null) {
                 MessageUtil.sendErrorMessage(player, "Auction not found.");
                 return 0;
@@ -459,8 +460,8 @@ public class AuctionCommands {
             // Check if player has sufficient funds for maximum bid
             WalletManager walletManager = economyManager.getWalletManager();
             Currency defaultCurrency = economyManager.getCurrencyManager().getDefaultCurrency();
-            double totalAvailable = walletManager.getBalance(player.getUUID(), defaultCurrency) + 
-                                    economyManager.getBankManager().getTotalBalanceForPlayer(player.getUUID());
+            double totalAvailable = walletManager.getCashBalance(player.getUUID(), defaultCurrency) + 
+                                    economyManager.getBankManager().getTotalPlayerBalance(player.getUUID(), defaultCurrency);
             
             if (totalAvailable < maxAmount) {
                 MessageUtil.sendErrorMessage(player, "Insufficient funds for maximum bid amount.");
@@ -470,7 +471,9 @@ public class AuctionCommands {
             }
             
             // Set up auto-bidding (this would need to be implemented in the AuctionHouse class)
-            boolean success = auctionHouse.setAutoBid(auctionUUID, player.getUUID(), maxAmount, increment);
+            // TODO: Implement auto-bidding in AuctionHouse class
+            // boolean success = auctionHouse.setAutoBid(auctionUUID, player.getUUID(), maxAmount, increment);
+            boolean success = false; // Temporarily disabled until AuctionHouse supports auto-bidding
             
             if (success) {
                 MessageUtil.sendSuccessMessage(player, "Auto-bidding set up successfully!");
@@ -480,7 +483,7 @@ public class AuctionCommands {
                 MessageUtil.sendMessage(player, "§7The system will automatically bid for you when outbid, up to your maximum.");
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to set up auto-bidding. You may already have auto-bidding enabled for this auction.");
+                MessageUtil.sendErrorMessage(player, "Auto-bidding feature is not yet implemented. Please check back in a future update.");
                 return 0;
             }
             
@@ -509,14 +512,16 @@ public class AuctionCommands {
             }
             
             // Cancel auto-bidding (this would need to be implemented in the AuctionHouse class)
-            boolean success = auctionHouse.cancelAutoBid(auctionUUID, player.getUUID());
+            // TODO: Implement auto-bidding in AuctionHouse class
+            // boolean success = auctionHouse.cancelAutoBid(auctionUUID, player.getUUID());
+            boolean success = false; // Temporarily disabled until AuctionHouse supports auto-bidding
             
             if (success) {
                 MessageUtil.sendSuccessMessage(player, "Auto-bidding cancelled successfully!");
                 MessageUtil.sendMessage(player, "§7You will no longer automatically bid on this auction.");
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "No auto-bidding found for this auction, or auction not found.");
+                MessageUtil.sendErrorMessage(player, "Auto-bidding feature is not yet implemented. Please check back in a future update.");
                 return 0;
             }
             
@@ -536,8 +541,15 @@ public class AuctionCommands {
             AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
             
             // Get player's auto-bids (this would need to be implemented in the AuctionHouse class)
-            List<AutoBid> autoBids = auctionHouse.getAutoBidsForPlayer(player.getUUID());
+            // TODO: Implement auto-bidding in AuctionHouse class
+            // List<AutoBid> autoBids = auctionHouse.getAutoBidsForPlayer(player.getUUID());
+            List<AutoBid> autoBids = java.util.Collections.emptyList(); // Temporarily empty until auto-bidding is implemented
             
+            MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
+            MessageUtil.sendMessage(player, "§7Auto-bidding feature is not yet implemented. Please check back in a future update.");
+            return 1;
+            
+            /* TODO: Uncomment when auto-bidding is implemented
             if (autoBids.isEmpty()) {
                 MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
                 MessageUtil.sendMessage(player, "§7You have no active auto-bids.");
@@ -562,6 +574,7 @@ public class AuctionCommands {
             
             MessageUtil.sendMessage(player, "§7Use §e/auction autocancel <id> §7to cancel auto-bidding.");
             return 1;
+            */
             
         } catch (Exception e) {
             MessageUtil.sendErrorMessage(player, "An error occurred while listing auto-bids: " + e.getMessage());
@@ -590,5 +603,52 @@ public class AuctionCommands {
         public UUID getPlayerId() { return playerId; }
         public double getMaxAmount() { return maxAmount; }
         public double getIncrement() { return increment; }
+    }
+    
+    /**
+     * Formats the time remaining for an auction
+     */
+    private String formatTimeRemaining(long endTime) {
+        long timeRemaining = endTime - System.currentTimeMillis();
+        
+        if (timeRemaining <= 0) {
+            return "Ended";
+        }
+        
+        int seconds = (int) (timeRemaining / 1000);
+        return formatDuration(seconds);
+    }
+    
+    /**
+     * Formats a duration in seconds to a human-readable string
+     */
+    private String formatDuration(int seconds) {
+        if (seconds <= 0) return "Ended";
+        
+        int days = seconds / 86400;
+        int hours = (seconds % 86400) / 3600;
+        int minutes = (seconds % 3600) / 60;
+        
+        if (days > 0) {
+            return days + "d " + hours + "h " + minutes + "m";
+        } else if (hours > 0) {
+            return hours + "h " + minutes + "m";
+        } else {
+            return minutes + "m " + (seconds % 60) + "s";
+        }
+    }
+    
+    /**
+     * Gets a human-readable time remaining string for an auction
+     */
+    private String getTimeRemaining(Auction auction) {
+        long timeRemaining = auction.getEndTime() - System.currentTimeMillis();
+        
+        if (timeRemaining <= 0) {
+            return "Ended";
+        }
+        
+        int seconds = (int) (timeRemaining / 1000);
+        return formatDuration(seconds);
     }
 }
