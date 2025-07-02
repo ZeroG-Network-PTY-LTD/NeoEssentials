@@ -4,6 +4,7 @@ import com.zerog.neoessentials.config.EnhancedEconomyConfig;
 import com.zerog.neoessentials.economy.persistence.EconomyPersistenceManager;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Manages all shops in the NeoEssentials economy system.
@@ -509,9 +510,13 @@ public class ShopManager {
      */
     public static class AuctionHouse {
         private final Map<UUID, Auction> auctions;
+        private final Map<UUID, AutoBid> autoBids; // Auto-bid ID -> AutoBid
+        private final Map<UUID, List<UUID>> playerAutoBids; // Player ID -> List of AutoBid IDs
         
         public AuctionHouse() {
             this.auctions = new ConcurrentHashMap<>();
+            this.autoBids = new ConcurrentHashMap<>();
+            this.playerAutoBids = new ConcurrentHashMap<>();
         }
         
         public Auction createAuction(UUID sellerId, String itemId, String itemName, int quantity, 
@@ -591,6 +596,179 @@ public class ShopManager {
          */
         public Collection<Auction> getAllAuctions() {
             return auctions.values();
+        }
+        
+        // Auto-bidding functionality
+        
+        /**
+         * Set up an auto-bid on an auction
+         * 
+         * @param auctionId The auction to bid on
+         * @param playerId The player setting up auto-bidding
+         * @param maxAmount Maximum amount to bid
+         * @param increment Amount to increment bids by
+         * @return true if auto-bid was set up successfully
+         */
+        public boolean setAutoBid(UUID auctionId, UUID playerId, double maxAmount, double increment) {
+            Auction auction = auctions.get(auctionId);
+            if (auction == null || !auction.isActive()) {
+                return false;
+            }
+            
+            // Check if player is not the seller
+            if (auction.getSellerId().equals(playerId)) {
+                return false; // Cannot auto-bid on own auction
+            }
+            
+            // Remove any existing auto-bid for this player on this auction
+            cancelAutoBid(auctionId, playerId);
+            
+            // Create new auto-bid
+            AutoBid autoBid = new AutoBid(auctionId, playerId, maxAmount, increment);
+            autoBids.put(generateAutoBidId(auctionId, playerId), autoBid);
+            
+            // Add to player's auto-bid list
+            playerAutoBids.computeIfAbsent(playerId, k -> new ArrayList<>())
+                         .add(generateAutoBidId(auctionId, playerId));
+            
+            return true;
+        }
+        
+        /**
+         * Cancel an auto-bid
+         * 
+         * @param auctionId The auction ID
+         * @param playerId The player canceling auto-bidding
+         * @return true if auto-bid was canceled
+         */
+        public boolean cancelAutoBid(UUID auctionId, UUID playerId) {
+            UUID autoBidId = generateAutoBidId(auctionId, playerId);
+            AutoBid autoBid = autoBids.remove(autoBidId);
+            
+            if (autoBid != null) {
+                // Remove from player's auto-bid list
+                List<UUID> playerBids = playerAutoBids.get(playerId);
+                if (playerBids != null) {
+                    playerBids.remove(autoBidId);
+                    if (playerBids.isEmpty()) {
+                        playerAutoBids.remove(playerId);
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+        
+        /**
+         * Get all auto-bids for a player
+         * 
+         * @param playerId The player ID
+         * @return List of active auto-bids
+         */
+        public List<AutoBid> getAutoBidsForPlayer(UUID playerId) {
+            List<UUID> bidIds = playerAutoBids.get(playerId);
+            if (bidIds == null) {
+                return new ArrayList<>();
+            }
+            
+            return bidIds.stream()
+                    .map(autoBids::get)
+                    .filter(Objects::nonNull)
+                    .filter(AutoBid::isActive)
+                    .toList();
+        }
+        
+        /**
+         * Process auto-bids when a new bid is placed on an auction
+         * This should be called whenever a manual bid is placed
+         * 
+         * @param auctionId The auction that received a bid
+         * @param currentHighestBid The current highest bid amount
+         */
+        public void processAutoBids(UUID auctionId, double currentHighestBid) {
+            Auction auction = auctions.get(auctionId);
+            if (auction == null || !auction.isActive()) {
+                return;
+            }
+            
+            // Get all auto-bids for this auction
+            List<AutoBid> auctionAutoBids = autoBids.values().stream()
+                    .filter(autoBid -> autoBid.getAuctionId().equals(auctionId))
+                    .filter(AutoBid::isActive)
+                    .sorted((a, b) -> Double.compare(b.getMaxAmount(), a.getMaxAmount())) // Highest max first
+                    .toList();
+            
+            for (AutoBid autoBid : auctionAutoBids) {
+                // Skip if this auto-bid belongs to current highest bidder
+                if (auction.getHighestBidderId() != null && 
+                    auction.getHighestBidderId().equals(autoBid.getPlayerId())) {
+                    continue;
+                }
+                
+                double nextBid = autoBid.calculateNextBid(currentHighestBid);
+                if (nextBid > 0) {
+                    // Try to place the auto-bid
+                    UUID bidderId = autoBid.getPlayerId();
+                    EconomyManager economyManager = EconomyManager.getInstance();
+                    
+                    // Check if player has enough funds (wallet + bank)
+                    double walletBalance = economyManager.getBalance(bidderId);
+                    double bankBalance = 0; // TODO: Get bank balance when available
+                    double totalAvailable = walletBalance + bankBalance;
+                    
+                    if (totalAvailable >= nextBid) {
+                        // Place the auto-bid
+                        boolean bidSuccess = auction.placeBid(bidderId, nextBid);
+                        if (bidSuccess) {
+                            // Charge the player (prefer wallet first, then bank)
+                            double walletCharge = Math.min(nextBid, walletBalance);
+                            double bankCharge = nextBid - walletCharge;
+                            
+                            if (walletCharge > 0) {
+                                economyManager.subtractMoney(bidderId, walletCharge);
+                            }
+                            // TODO: Charge bank when available
+                            
+                            currentHighestBid = nextBid;
+                            break; // Stop processing auto-bids for this round
+                        }
+                    } else {
+                        // Not enough funds, deactivate auto-bid
+                        autoBid.setActive(false);
+                    }
+                }
+            }
+        }
+        
+        /**
+         * Clean up auto-bids for ended auctions
+         */
+        public void cleanupAutoBids() {
+            Set<UUID> endedAuctions = auctions.values().stream()
+                    .filter(auction -> !auction.isActive())
+                    .map(Auction::getAuctionId)
+                    .collect(Collectors.toSet());
+            
+            // Remove auto-bids for ended auctions
+            autoBids.entrySet().removeIf(entry -> 
+                    endedAuctions.contains(entry.getValue().getAuctionId()));
+            
+            // Clean up player auto-bid lists
+            playerAutoBids.values().forEach(bidList -> 
+                    bidList.removeIf(bidId -> {
+                        AutoBid autoBid = autoBids.get(bidId);
+                        return autoBid == null || endedAuctions.contains(autoBid.getAuctionId());
+                    }));
+            
+            // Remove empty player lists
+            playerAutoBids.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+        }
+        
+        /**
+         * Generate a unique ID for an auto-bid
+         */
+        private UUID generateAutoBidId(UUID auctionId, UUID playerId) {
+            return UUID.nameUUIDFromBytes((auctionId.toString() + playerId.toString()).getBytes());
         }
     }
     
