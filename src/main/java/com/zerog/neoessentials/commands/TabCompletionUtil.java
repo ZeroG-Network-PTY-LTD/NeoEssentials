@@ -489,4 +489,36 @@ public class TabCompletionUtil {
             return SharedSuggestionProvider.suggest(new String[]{"minecraft"}, builder);
         }
     };
+    
+    /**
+     * Provides auction ID suggestions for auction commands.
+     */
+    public static final SuggestionProvider<CommandSourceStack> AUCTION_ID_SUGGESTIONS = (context, builder) -> {
+        try {
+            EconomyManager economyManager = EconomyManager.getInstance();
+            if (economyManager != null) {
+                ShopManager shopManager = economyManager.getShopManager();
+                if (shopManager != null && shopManager.getAuctionHouse() != null) {
+                    List<String> auctionIds = shopManager.getAuctionHouse().getActiveAuctions()
+                        .stream()
+                        .map(auction -> auction.getAuctionId().toString())
+                        .limit(20)
+                        .collect(Collectors.toList());
+                    
+                    // Also provide shortened versions (first 8 characters)
+                    List<String> shortIds = shopManager.getAuctionHouse().getActiveAuctions()
+                        .stream()
+                        .map(auction -> auction.getAuctionId().toString().substring(0, 8))
+                        .limit(20)
+                        .collect(Collectors.toList());
+                    
+                    auctionIds.addAll(shortIds);
+                    return SharedSuggestionProvider.suggest(auctionIds, builder);
+                }
+            }
+            return SharedSuggestionProvider.suggest(Collections.emptyList(), builder);
+        } catch (Exception e) {
+            return SharedSuggestionProvider.suggest(Collections.emptyList(), builder);
+        }
+    };
 }
