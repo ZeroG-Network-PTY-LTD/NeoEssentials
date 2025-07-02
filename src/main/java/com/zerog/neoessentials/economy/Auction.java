@@ -89,20 +89,36 @@ public class Auction {
             return false; // Bid must be higher than current bid
         }
         
-        // Check if bidder has sufficient funds
+        // Check if bidder has sufficient funds using new economy system (wallet + bank)
         EconomyManager economyManager = EconomyManager.getInstance();
-        if (economyManager.getBalance(bidderId, currency) < bidAmount) {
+        double totalAvailable = economyManager.getTotalAvailableFunds(bidderId, currency);
+        if (totalAvailable < bidAmount) {
             return false;
         }
         
-        // Refund previous bidder if exists
+        // Refund previous bidder if exists (add to wallet)
         if (currentBidder != null) {
-            economyManager.addBalance(currentBidder, currency, currentBid, 
-                "Auction refund: Outbid on " + itemName);
+            WalletManager walletManager = economyManager.getWalletManager();
+            if (walletManager != null) {
+                walletManager.addCash(currentBidder, currency, currentBid);
+                
+                // Record transaction
+                Transaction transaction = new Transaction(
+                    UUID.randomUUID(),
+                    null, // from system
+                    currentBidder, // to previous bidder
+                    currentBid,
+                    currency,
+                    "Auction refund: Outbid on " + itemName,
+                    Transaction.TransactionType.REFUND,
+                    System.currentTimeMillis()
+                );
+                economyManager.getTransactionManager().recordTransaction(transaction);
+            }
         }
         
-        // Hold the new bid amount
-        if (!economyManager.removeBalance(bidderId, currency, bidAmount, 
+        // Hold the new bid amount using smart payment (wallet + bank)
+        if (!economyManager.makeSmartPayment(bidderId, bidAmount, currency, 
             "Auction bid: " + itemName)) {
             return false;
         }
