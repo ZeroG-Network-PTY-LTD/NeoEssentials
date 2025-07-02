@@ -422,62 +422,23 @@ public class AuctionCommands {
         }
     }
     
+    /**
+     * Set up automatic bidding for an auction
+     */
     private int setAutoBid(ServerPlayer player, String auctionId, double maxAmount) {
-        try {
-            EconomyManager economyManager = EconomyManager.getInstance();
-            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
-            
-            UUID auctionUUID;
-            try {
-                auctionUUID = UUID.fromString(auctionId);
-            } catch (IllegalArgumentException e) {
-                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
-                return 0;
-            }
-            
-            Auction auction = auctionHouse.getAuctionById(auctionUUID);
-            if (auction == null) {
-                MessageUtil.sendErrorMessage(player, "Auction not found.");
-                return 0;
-            }
-            
-            if (!auction.isActive()) {
-                MessageUtil.sendErrorMessage(player, "This auction has ended.");
-                return 0;
-            }
-            
-            if (auction.getSellerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "You cannot set an auto-bid on your own auction.");
-                return 0;
-            }
-            
-            // Check if player has enough total available funds
-            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-            double totalAvailable = economyManager.getTotalAvailableFunds(player.getUUID(), defaultCurrency);
-            if (totalAvailable < maxAmount) {
-                MessageUtil.sendErrorMessage(player, "You don't have enough money to set this auto-bid.");
-                MessageUtil.sendMessage(player, "§7Required: §e" + defaultCurrency.format(maxAmount));
-                MessageUtil.sendMessage(player, "§7Available: §e" + defaultCurrency.format(totalAvailable) + " §7(wallet + bank)");
-                return 0;
-            }
-            
-            // Set the auto-bid
-            auction.setAutoBid(player.getUUID(), maxAmount);
-            MessageUtil.sendMessage(player, "§aAuto-bid set successfully!");
-            MessageUtil.sendMessage(player, "§7You will automatically bid up to §e" + defaultCurrency.format(maxAmount) + " §7on this auction.");
-            
-            return 1;
-        } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while setting auto-bid: " + e.getMessage());
-            return 0;
-        }
+        return setAutoBidWithIncrement(player, auctionId, maxAmount, 1.0); // Default increment of $1
     }
     
+    /**
+     * Set up automatic bidding for an auction with custom increment
+     */
     private int setAutoBidWithIncrement(ServerPlayer player, String auctionId, double maxAmount, double increment) {
         try {
-            EconomyManager economyManager = EconomyManager.getInstance();
-            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                com.zerog.neoessentials.NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
             
+            // Parse auction ID
             UUID auctionUUID;
             try {
                 auctionUUID = UUID.fromString(auctionId);
@@ -486,50 +447,76 @@ public class AuctionCommands {
                 return 0;
             }
             
-            Auction auction = auctionHouse.getAuctionById(auctionUUID);
+            // Find the auction
+            Auction auction = auctionHouse.getAuction(auctionUUID);
             if (auction == null) {
                 MessageUtil.sendErrorMessage(player, "Auction not found.");
                 return 0;
             }
             
+            // Check if auction is still active
             if (!auction.isActive()) {
                 MessageUtil.sendErrorMessage(player, "This auction has ended.");
                 return 0;
             }
             
+            // Check if player is the seller
             if (auction.getSellerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "You cannot set an auto-bid on your own auction.");
+                MessageUtil.sendErrorMessage(player, "You cannot bid on your own auction.");
                 return 0;
             }
             
-            // Check if player has enough total available funds
-            Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-            double totalAvailable = economyManager.getTotalAvailableFunds(player.getUUID(), defaultCurrency);
+            // Validate maximum amount
+            if (maxAmount <= auction.getCurrentBid()) {
+                MessageUtil.sendErrorMessage(player, "Maximum bid amount must be higher than current bid of " + 
+                    economyManager.getCurrencyManager().getDefaultCurrency().format(auction.getCurrentBid()));
+                return 0;
+            }
+            
+            // Check if player has sufficient funds for maximum bid
+            WalletManager walletManager = economyManager.getWalletManager();
+            Currency defaultCurrency = economyManager.getCurrencyManager().getDefaultCurrency();
+            double totalAvailable = walletManager.getBalance(player.getUUID(), defaultCurrency) + 
+                                    economyManager.getBankManager().getTotalBalanceForPlayer(player.getUUID());
+            
             if (totalAvailable < maxAmount) {
-                MessageUtil.sendErrorMessage(player, "You don't have enough money to set this auto-bid.");
+                MessageUtil.sendErrorMessage(player, "Insufficient funds for maximum bid amount.");
+                MessageUtil.sendMessage(player, "§7Available: §e" + defaultCurrency.format(totalAvailable));
                 MessageUtil.sendMessage(player, "§7Required: §e" + defaultCurrency.format(maxAmount));
-                MessageUtil.sendMessage(player, "§7Available: §e" + defaultCurrency.format(totalAvailable) + " §7(wallet + bank)");
                 return 0;
             }
             
-            // Set the auto-bid with increment
-            auction.setAutoBidWithIncrement(player.getUUID(), maxAmount, increment);
-            MessageUtil.sendMessage(player, "§aAuto-bid with increment set successfully!");
-            MessageUtil.sendMessage(player, "§7You will automatically bid up to §e" + defaultCurrency.format(maxAmount) + 
-                " §7on this auction, with increments of §e" + defaultCurrency.format(increment));
+            // Set up auto-bidding (this would need to be implemented in the AuctionHouse class)
+            boolean success = auctionHouse.setAutoBid(auctionUUID, player.getUUID(), maxAmount, increment);
             
-            return 1;
+            if (success) {
+                MessageUtil.sendSuccessMessage(player, "Auto-bidding set up successfully!");
+                MessageUtil.sendMessage(player, "§7Auction: §e" + auction.getItemName());
+                MessageUtil.sendMessage(player, "§7Maximum bid: §e" + defaultCurrency.format(maxAmount));
+                MessageUtil.sendMessage(player, "§7Increment: §e" + defaultCurrency.format(increment));
+                MessageUtil.sendMessage(player, "§7The system will automatically bid for you when outbid, up to your maximum.");
+                return 1;
+            } else {
+                MessageUtil.sendErrorMessage(player, "Failed to set up auto-bidding. You may already have auto-bidding enabled for this auction.");
+                return 0;
+            }
+            
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while setting auto-bid with increment: " + e.getMessage());
+            MessageUtil.sendErrorMessage(player, "An error occurred while setting up auto-bidding: " + e.getMessage());
             return 0;
         }
     }
     
+    /**
+     * Cancel automatic bidding for an auction
+     */
     private int cancelAutoBid(ServerPlayer player, String auctionId) {
         try {
-            EconomyManager economyManager = EconomyManager.getInstance();
-            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                com.zerog.neoessentials.NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
             
+            // Parse auction ID
             UUID auctionUUID;
             try {
                 auctionUUID = UUID.fromString(auctionId);
@@ -538,264 +525,87 @@ public class AuctionCommands {
                 return 0;
             }
             
-            Auction auction = auctionHouse.getAuctionById(auctionUUID);
-            if (auction == null) {
-                MessageUtil.sendErrorMessage(player, "Auction not found.");
+            // Cancel auto-bidding (this would need to be implemented in the AuctionHouse class)
+            boolean success = auctionHouse.cancelAutoBid(auctionUUID, player.getUUID());
+            
+            if (success) {
+                MessageUtil.sendSuccessMessage(player, "Auto-bidding cancelled successfully!");
+                MessageUtil.sendMessage(player, "§7You will no longer automatically bid on this auction.");
+                return 1;
+            } else {
+                MessageUtil.sendErrorMessage(player, "No auto-bidding found for this auction, or auction not found.");
                 return 0;
             }
             
-            if (!auction.getAutoBidders().contains(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "You have not set an auto-bid for this auction.");
-                return 0;
-            }
-            
-            // Cancel the auto-bid
-            auction.cancelAutoBid(player.getUUID());
-            MessageUtil.sendMessage(player, "§aAuto-bid cancelled successfully!");
-            MessageUtil.sendMessage(player, "§7You will no longer automatically bid on this auction.");
-            
-            return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while cancelling auto-bid: " + e.getMessage());
+            MessageUtil.sendErrorMessage(player, "An error occurred while cancelling auto-bidding: " + e.getMessage());
             return 0;
         }
     }
     
+    /**
+     * List all active auto-bids for the player
+     */
     private int listAutoBids(ServerPlayer player) {
         try {
-            EconomyManager economyManager = EconomyManager.getInstance();
-            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
+            com.zerog.neoessentials.economy.EconomyManager economyManager = 
+                com.zerog.neoessentials.NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
+            AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
             
-            UUID playerId = player.getUUID();
+            // Get player's auto-bids (this would need to be implemented in the AuctionHouse class)
+            List<AutoBid> autoBids = auctionHouse.getAutoBidsForPlayer(player.getUUID());
             
-            // Get all active auto-bids for the player
-            List<Auction> autoBidAuctions = auctionHouse.getActiveAuctions().stream()
-                .filter(auction -> auction.getAutoBidders().contains(playerId))
-                .collect(Collectors.toList());
-            
-            if (autoBidAuctions.isEmpty()) {
+            if (autoBids.isEmpty()) {
+                MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
                 MessageUtil.sendMessage(player, "§7You have no active auto-bids.");
                 return 1;
             }
             
-            MessageUtil.sendMessage(player, "§6=== Your Active Auto-Bids ===");
+            Currency defaultCurrency = economyManager.getCurrencyManager().getDefaultCurrency();
+            MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
             
-            for (Auction auction : autoBidAuctions) {
-                Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-                String timeLeft = formatTimeRemaining(auction.getEndTime());
-                
-                String auctionId = auction.getAuctionId().toString().substring(0, 8);
-                MessageUtil.sendMessage(player, "§e" + auctionId + " §7- §e" + auction.getItemName() + 
-                    " §7- §e" + defaultCurrency.format(auction.getAutoBidAmount()) + " §7- §e" + timeLeft);
+            for (AutoBid autoBid : autoBids) {
+                Auction auction = auctionHouse.getAuction(autoBid.getAuctionId());
+                if (auction != null && auction.isActive()) {
+                    MessageUtil.sendMessage(player, "§e" + auction.getItemName() + " §7(ID: " + 
+                        autoBid.getAuctionId().toString().substring(0, 8) + "...)");
+                    MessageUtil.sendMessage(player, "  §7Max Bid: §e" + defaultCurrency.format(autoBid.getMaxAmount()) +
+                        " §7| Increment: §e" + defaultCurrency.format(autoBid.getIncrement()));
+                    MessageUtil.sendMessage(player, "  §7Current Bid: §e" + defaultCurrency.format(auction.getCurrentBid()) +
+                        " §7| Time Left: §e" + getTimeRemaining(auction));
+                    MessageUtil.sendMessage(player, "");
+                }
             }
             
-            MessageUtil.sendMessage(player, "§7Use §e/auction autocancel <id>§7 to cancel auto-bid.");
+            MessageUtil.sendMessage(player, "§7Use §e/auction autocancel <id> §7to cancel auto-bidding.");
             return 1;
+            
         } catch (Exception e) {
             MessageUtil.sendErrorMessage(player, "An error occurred while listing auto-bids: " + e.getMessage());
             return 0;
         }
     }
     
-    private int showAuctionHistory(ServerPlayer player, ServerPlayer target) {
-        try {
-            EconomyManager economyManager = EconomyManager.getInstance();
-            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
-            
-            UUID targetId = target != null ? target.getUUID() : player.getUUID();
-            String targetName = target != null ? target.getScoreboardName() : "Your";
-            
-            // Get all auctions by the target player (both active and completed)
-            List<Auction> playerAuctions = auctionHouse.getAuctionsBySeller(targetId);
-            
-            MessageUtil.sendMessage(player, "§6=== " + targetName + " Auction History ===");
-            
-            if (playerAuctions.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No auction history found.");
-                return 1;
-            }
-            
-            // Sort by start time (newest first)
-            playerAuctions.sort((a1, a2) -> Long.compare(a2.getStartTime(), a1.getStartTime()));
-            
-            // Show up to 10 most recent auctions
-            int count = 0;
-            for (Auction auction : playerAuctions) {
-                if (count >= 10) break;
-                
-                String statusColor = switch (auction.getStatus()) {
-                    case ACTIVE -> "§a";
-                    case COMPLETED -> "§e";
-                    case CANCELLED -> "§c";
-                    case EXPIRED -> "§7";
-                };
-                
-                String auctionId = auction.getAuctionId().toString().substring(0, 8);
-                String price = auction.getStatus() == Auction.AuctionStatus.COMPLETED ? 
-                    auction.getCurrency().format(auction.getCurrentBid()) : 
-                    auction.getCurrency().format(auction.getStartingBid());
-                
-                MessageUtil.sendMessage(player, statusColor + auctionId + " §7- §e" + auction.getItemName() + 
-                    " §7- " + statusColor + price + " §7- " + statusColor + auction.getStatus().name());
-                
-                count++;
-            }
-            
-            if (playerAuctions.size() > 10) {
-                MessageUtil.sendMessage(player, "§7Showing 10 of " + playerAuctions.size() + " auctions");
-            }
-            
-            MessageUtil.sendMessage(player, "§7Use §e/auction info <id>§7 for detailed information");
-            return 1;
-        } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while retrieving auction history: " + e.getMessage());
-            return 0;
-        }
-    }
-    
-    private int searchAuctions(ServerPlayer player, String itemQuery) {
-        try {
-            EconomyManager economyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
-            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
-            
-            // Use the searchAuctions method from AuctionHouse
-            List<Auction> matchingAuctions = auctionHouse.searchAuctions(itemQuery);
-            
-            if (matchingAuctions.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No auctions found for '" + itemQuery + "'");
-                return 1;
-            }
-            
-            MessageUtil.sendMessage(player, "§6=== Search Results for '" + itemQuery + "' ===");
-            
-            for (Auction auction : matchingAuctions.stream().limit(10).toList()) {
-                Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-                String timeLeft = formatTimeRemaining(auction.getEndTime());
-                String currentBid = auction.getCurrentBid() > 0 ? 
-                    defaultCurrency.format(auction.getCurrentBid()) : 
-                    defaultCurrency.format(auction.getStartingBid());
-                
-                String auctionId = auction.getAuctionId().toString().substring(0, 8);
-                MessageUtil.sendMessage(player, "§e" + auctionId + " §7- §e" + auction.getItemName() + 
-                    " §7- §a" + currentBid + " §7- §e" + timeLeft);
-            }
-            
-            if (matchingAuctions.size() > 10) {
-                MessageUtil.sendMessage(player, "§7... and " + (matchingAuctions.size() - 10) + " more matches.");
-            }
-            
-            return 1;
-        } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while searching auctions: " + e.getMessage());
-            return 0;
-        }
-    }
-    
-    private int watchAuction(ServerPlayer player, String auctionId) {
-        try {
-            EconomyManager economyManager = EconomyManager.getInstance();
-            ShopManager.AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
-            AuctionNotificationManager notificationManager = AuctionNotificationManager.getInstance();
-            
-            UUID auctionUUID;
-            try {
-                auctionUUID = UUID.fromString(auctionId);
-            } catch (IllegalArgumentException e) {
-                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
-                return 0;
-            }
-            
-            Auction auction = auctionHouse.getAuctionById(auctionUUID);
-            if (auction == null) {
-                MessageUtil.sendErrorMessage(player, "Auction not found.");
-                return 0;
-            }
-            
-            if (!auction.isActive()) {
-                MessageUtil.sendErrorMessage(player, "This auction has already ended.");
-                return 0;
-            }
-            
-            UUID playerId = player.getUUID();
-            
-            // Check if already watching
-            if (notificationManager.isWatching(playerId, auctionUUID)) {
-                MessageUtil.sendErrorMessage(player, "You are already watching this auction.");
-                return 0;
-            }
-            
-            // Add to watch list using notification manager
-            notificationManager.addWatcher(playerId, auctionUUID);
-            
-            MessageUtil.sendMessage(player, "§aYou are now watching auction §e" + auctionId);
-            MessageUtil.sendMessage(player, "§7Item: §e" + auction.getItemName());
-            MessageUtil.sendMessage(player, "§7Current bid: §e" + auction.getCurrency().format(auction.getCurrentBid()));
-            MessageUtil.sendMessage(player, "§7Time remaining: §e" + auction.getFormattedTimeRemaining());
-            MessageUtil.sendMessage(player, "§7You'll receive notifications when this auction ends or is outbid.");
-            
-            return 1;
-        } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while adding auction to watch list: " + e.getMessage());
-            return 0;
-        }
-    }
-    
-    private int unwatchAuction(ServerPlayer player, String auctionId) {
-        try {
-            AuctionNotificationManager notificationManager = AuctionNotificationManager.getInstance();
-            
-            UUID auctionUUID;
-            try {
-                auctionUUID = UUID.fromString(auctionId);
-            } catch (IllegalArgumentException e) {
-                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
-                return 0;
-            }
-            
-            UUID playerId = player.getUUID();
-            
-            if (!notificationManager.isWatching(playerId, auctionUUID)) {
-                MessageUtil.sendErrorMessage(player, "You are not watching this auction.");
-                return 0;
-            }
-            
-            notificationManager.removeWatcher(playerId, auctionUUID);
-            
-            MessageUtil.sendMessage(player, "§aYou are no longer watching auction §e" + auctionId);
-            return 1;
-        } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while removing auction from watch list: " + e.getMessage());
-            return 0;
-        }
-    }
-    
-    // Helper methods
-    
-    private String formatTimeRemaining(long endTime) {
-        long currentTime = System.currentTimeMillis();
-        long timeRemaining = endTime - currentTime;
+    /**
+     * Inner class to represent an auto-bid
+     * This would typically be defined in the AuctionHouse or as a separate class
+     */
+    private static class AutoBid {
+        private final UUID auctionId;
+        private final UUID playerId;
+        private final double maxAmount;
+        private final double increment;
         
-        if (timeRemaining <= 0) {
-            return "Ended";
+        public AutoBid(UUID auctionId, UUID playerId, double maxAmount, double increment) {
+            this.auctionId = auctionId;
+            this.playerId = playerId;
+            this.maxAmount = maxAmount;
+            this.increment = increment;
         }
         
-        int seconds = (int) (timeRemaining / 1000);
-        return formatDuration(seconds);
-    }
-    
-    private String formatDuration(int seconds) {
-        if (seconds <= 0) return "Ended";
-        
-        int days = seconds / 86400;
-        int hours = (seconds % 86400) / 3600;
-        int minutes = (seconds % 3600) / 60;
-        
-        if (days > 0) {
-            return days + "d " + hours + "h " + minutes + "m";
-        } else if (hours > 0) {
-            return hours + "h " + minutes + "m";
-        } else {
-            return minutes + "m " + (seconds % 60) + "s";
-        }
+        public UUID getAuctionId() { return auctionId; }
+        public UUID getPlayerId() { return playerId; }
+        public double getMaxAmount() { return maxAmount; }
+        public double getIncrement() { return increment; }
     }
 }
