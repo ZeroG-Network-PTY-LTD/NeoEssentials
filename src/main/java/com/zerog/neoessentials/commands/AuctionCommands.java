@@ -113,7 +113,7 @@ public class AuctionCommands {
                 .then(Commands.literal("info")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.info"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
-                        .suggests(AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
+                        .suggests(TabCompletionUtil.AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String auctionId = StringArgumentType.getString(context, "auction_id");
@@ -126,7 +126,7 @@ public class AuctionCommands {
                 .then(Commands.literal("bid")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.bid"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
-                        .suggests(AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
+                        .suggests(TabCompletionUtil.AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
                         .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                             .executes(context -> {
                                 ServerPlayer player = context.getSource().getPlayerOrException();
@@ -142,7 +142,7 @@ public class AuctionCommands {
                 .then(Commands.literal("autobid")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.autobid"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
-                        .suggests(AUCTION_ID_SUGGESTIONS)
+                        .suggests(TabCompletionUtil.AUCTION_ID_SUGGESTIONS)
                         .then(Commands.argument("max_amount", DoubleArgumentType.doubleArg(0.01))
                             .executes(context -> {
                                 ServerPlayer player = context.getSource().getPlayerOrException();
@@ -167,7 +167,7 @@ public class AuctionCommands {
                 .then(Commands.literal("autocancel")
                     .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.autobid"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
-                        .suggests(AUCTION_ID_SUGGESTIONS)
+                        .suggests(TabCompletionUtil.AUCTION_ID_SUGGESTIONS)
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String auctionId = StringArgumentType.getString(context, "auction_id");
