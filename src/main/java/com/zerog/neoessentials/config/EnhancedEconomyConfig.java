@@ -433,4 +433,96 @@ public class EnhancedEconomyConfig {
         Map<String, Object> currencyConfig = (Map<String, Object>) currencies.get(currencyName);
         return currencyConfig != null ? currencyConfig : new HashMap<>();
     }
+    
+    /**
+     * Validates the current configuration for consistency and correctness
+     * @return true if configuration is valid, false otherwise
+     */
+    public boolean validateConfiguration() {
+        try {
+            // Basic value validation
+            if (startingBalance < 0) {
+                System.err.println("Configuration error: Starting balance cannot be negative");
+                return false;
+            }
+            
+            if (maxBalance <= 0) {
+                System.err.println("Configuration error: Maximum balance must be positive");
+                return false;
+            }
+            
+            if (startingBalance > maxBalance) {
+                System.err.println("Configuration error: Starting balance cannot exceed maximum balance");
+                return false;
+            }
+            
+            if (inflationRate < -1.0 || inflationRate > 1.0) {
+                System.err.println("Configuration error: Inflation rate must be between -1.0 and 1.0");
+                return false;
+            }
+            
+            // Banking validation
+            if (bankingEnabled) {
+                if (accountCreationFee < 0) {
+                    System.err.println("Configuration error: Account creation fee cannot be negative");
+                    return false;
+                }
+                
+                if (maxAccountsPerPlayer <= 0) {
+                    System.err.println("Configuration error: Max accounts per player must be positive");
+                    return false;
+                }
+            }
+            
+            // Loan validation
+            if (loansEnabled) {
+                if (startingCreditScore < minCreditScore || startingCreditScore > maxCreditScore) {
+                    System.err.println("Configuration error: Starting credit score must be within min/max range");
+                    return false;
+                }
+                
+                if (minCreditScore >= maxCreditScore) {
+                    System.err.println("Configuration error: Min credit score must be less than max credit score");
+                    return false;
+                }
+            }
+            
+            // Shop validation
+            if (shopsEnabled) {
+                if (shopCreationFee < 0) {
+                    System.err.println("Configuration error: Shop creation fee cannot be negative");
+                    return false;
+                }
+                
+                if (maxShopsPerPlayer <= 0) {
+                    System.err.println("Configuration error: Max shops per player must be positive");
+                    return false;
+                }
+                
+                if (salesTaxRate < 0 || salesTaxRate > 1.0) {
+                    System.err.println("Configuration error: Sales tax rate must be between 0 and 1.0");
+                    return false;
+                }
+            }
+            
+            // Auction validation
+            if (auctionsEnabled) {
+                if (minAuctionDuration <= 0 || maxAuctionDuration <= 0) {
+                    System.err.println("Configuration error: Auction durations must be positive");
+                    return false;
+                }
+                
+                if (minAuctionDuration >= maxAuctionDuration) {
+                    System.err.println("Configuration error: Min auction duration must be less than max duration");
+                    return false;
+                }
+            }
+            
+            return true;
+            
+        } catch (Exception e) {
+            System.err.println("Configuration validation error: " + e.getMessage());
+            return false;
+        }
+    }
 }
