@@ -33,23 +33,6 @@ import java.util.stream.Collectors;
  */
 public class AuctionCommands {
     
-    // Suggestion provider for auction IDs
-    private static final SuggestionProvider<CommandSourceStack> AUCTION_ID_SUGGESTIONS = (context, builder) -> {
-        try {
-            com.zerog.neoessentials.economy.EconomyManager economyManager = 
-                com.zerog.neoessentials.NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
-            
-            // Get active auctions and suggest their IDs
-            List<Auction> activeAuctions = economyManager.getShopManager().getAuctionHouse().getActiveAuctions();
-            for (Auction auction : activeAuctions) {
-                builder.suggest(auction.getAuctionId().toString());
-            }
-        } catch (Exception e) {
-            // If there's an error, don't suggest anything
-        }
-        return builder.buildFuture();
-    };
-    
     /**
      * Registers all auction commands with the command dispatcher.
      *
