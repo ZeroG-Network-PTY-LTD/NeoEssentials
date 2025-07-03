@@ -63,34 +63,34 @@ public class InventoryManagementCommands {
      *
      * @param dispatcher The command dispatcher
      */
-    private void registerClearInventoryCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+    private static void registerClearInventoryCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> clearInventoryCommand = Commands.literal("clearinventory")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.clearinventory"))
                 // Clear own inventory
-                .executes(this::executeClearOwnInventory)
+                .executes(InventoryManagementCommands::executeClearOwnInventory)
                 // Clear own inventory with confirmation override
                 .then(Commands.argument("confirm", BoolArgumentType.bool())
-                        .executes(this::executeClearOwnInventoryWithConfirm))
+                        .executes(InventoryManagementCommands::executeClearOwnInventoryWithConfirm))
                 // Clear other player's inventory
                 .then(Commands.argument("player", EntityArgument.player())
                         .requires(source -> CommandManager.hasPermission(source, "neoessentials.clearinventory.others"))
-                        .executes(this::executeClearOtherInventory)
+                        .executes(InventoryManagementCommands::executeClearOtherInventory)
                         .then(Commands.argument("confirm", BoolArgumentType.bool())
-                                .executes(this::executeClearOtherInventoryWithConfirm)));
+                                .executes(InventoryManagementCommands::executeClearOtherInventoryWithConfirm)));
 
         dispatcher.register(clearInventoryCommand);
         
         // Register alias
         dispatcher.register(Commands.literal("ci")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.clearinventory"))
-                .executes(this::executeClearOwnInventory)
+                .executes(InventoryManagementCommands::executeClearOwnInventory)
                 .then(Commands.argument("confirm", BoolArgumentType.bool())
-                        .executes(this::executeClearOwnInventoryWithConfirm))
+                        .executes(InventoryManagementCommands::executeClearOwnInventoryWithConfirm))
                 .then(Commands.argument("player", EntityArgument.player())
                         .requires(source -> CommandManager.hasPermission(source, "neoessentials.clearinventory.others"))
-                        .executes(this::executeClearOtherInventory)
+                        .executes(InventoryManagementCommands::executeClearOtherInventory)
                         .then(Commands.argument("confirm", BoolArgumentType.bool())
-                                .executes(this::executeClearOtherInventoryWithConfirm))));
+                                .executes(InventoryManagementCommands::executeClearOtherInventoryWithConfirm))));
     }
 
     /**
@@ -99,10 +99,10 @@ public class InventoryManagementCommands {
      *
      * @param dispatcher The command dispatcher
      */
-    private void registerClearInventoryConfirmToggleCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+    private static void registerClearInventoryConfirmToggleCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> toggleCommand = Commands.literal("clearinventoryconfirmtoggle")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.clearinventory"))
-                .executes(this::executeToggleConfirmation);
+                .executes(InventoryManagementCommands::executeToggleConfirmation);
 
         dispatcher.register(toggleCommand);
     }
@@ -113,11 +113,11 @@ public class InventoryManagementCommands {
      *
      * @param dispatcher The command dispatcher
      */
-    private void registerInvSeeCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+    private static void registerInvSeeCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> invSeeCommand = Commands.literal("invsee")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.invsee"))
                 .then(Commands.argument("player", EntityArgument.player())
-                        .executes(this::executeInvSee));
+                        .executes(InventoryManagementCommands::executeInvSee));
 
         dispatcher.register(invSeeCommand);
     }
@@ -128,17 +128,17 @@ public class InventoryManagementCommands {
      *
      * @param dispatcher The command dispatcher
      */
-    private void registerDisposalCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+    private static void registerDisposalCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> disposalCommand = Commands.literal("disposal")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.disposal"))
-                .executes(this::executeDisposal);
+                .executes(InventoryManagementCommands::executeDisposal);
 
         dispatcher.register(disposalCommand);
         
         // Register alias
         dispatcher.register(Commands.literal("trash")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.disposal"))
-                .executes(this::executeDisposal));
+                .executes(InventoryManagementCommands::executeDisposal));
     }
 
     /**
@@ -147,7 +147,7 @@ public class InventoryManagementCommands {
      * @param context The command context
      * @return 1 if successful, 0 otherwise
      */
-    private int executeClearOwnInventory(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int executeClearOwnInventory(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         return executeClearInventory(context, context.getSource().getPlayerOrException(), false);
     }
 
@@ -157,7 +157,7 @@ public class InventoryManagementCommands {
      * @param context The command context
      * @return 1 if successful, 0 otherwise
      */
-    private int executeClearOwnInventoryWithConfirm(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int executeClearOwnInventoryWithConfirm(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         boolean confirm = BoolArgumentType.getBool(context, "confirm");
         return executeClearInventory(context, context.getSource().getPlayerOrException(), confirm);
     }
@@ -168,7 +168,7 @@ public class InventoryManagementCommands {
      * @param context The command context
      * @return 1 if successful, 0 otherwise
      */
-    private int executeClearOtherInventory(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int executeClearOtherInventory(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer target = EntityArgument.getPlayer(context, "player");
         return executeClearInventory(context, target, false);
     }
@@ -179,7 +179,7 @@ public class InventoryManagementCommands {
      * @param context The command context
      * @return 1 if successful, 0 otherwise
      */
-    private int executeClearOtherInventoryWithConfirm(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int executeClearOtherInventoryWithConfirm(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer target = EntityArgument.getPlayer(context, "player");
         boolean confirm = BoolArgumentType.getBool(context, "confirm");
         return executeClearInventory(context, target, confirm);
@@ -193,7 +193,7 @@ public class InventoryManagementCommands {
      * @param confirmOverride Whether to override confirmation requirement
      * @return 1 if successful, 0 otherwise
      */
-    private int executeClearInventory(CommandContext<CommandSourceStack> context, ServerPlayer target, boolean confirmOverride) {
+    private static int executeClearInventory(CommandContext<CommandSourceStack> context, ServerPlayer target, boolean confirmOverride) {
         CommandSourceStack source = context.getSource();
         ServerPlayer executor;
         
@@ -239,7 +239,7 @@ public class InventoryManagementCommands {
      * @param context The command context
      * @return 1 if successful, 0 otherwise
      */
-    private int executeToggleConfirmation(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int executeToggleConfirmation(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = source.getPlayerOrException();
         
@@ -265,7 +265,7 @@ public class InventoryManagementCommands {
      * @param context The command context
      * @return 1 if successful, 0 otherwise
      */
-    private int executeInvSee(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int executeInvSee(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
         ServerPlayer viewer = source.getPlayerOrException();
         ServerPlayer target = EntityArgument.getPlayer(context, "player");
@@ -288,7 +288,7 @@ public class InventoryManagementCommands {
      * @param context The command context
      * @return 1 if successful, 0 otherwise
      */
-    private int executeDisposal(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int executeDisposal(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = source.getPlayerOrException();
         
@@ -324,7 +324,7 @@ public class InventoryManagementCommands {
      * @param player The player whose inventory to clear
      * @return The number of items removed
      */
-    private int clearPlayerInventory(ServerPlayer player) {
+    private static int clearPlayerInventory(ServerPlayer player) {
         Inventory inventory = player.getInventory();
         int itemsCleared = 0;
         
@@ -366,7 +366,7 @@ public class InventoryManagementCommands {
      * @param viewer The player who will view the inventory
      * @param target The player whose inventory will be viewed
      */
-    private void openPlayerInventory(ServerPlayer viewer, ServerPlayer target) {
+    private static void openPlayerInventory(ServerPlayer viewer, ServerPlayer target) {
         // Create a container that mirrors the target's inventory
         SimpleContainer viewContainer = new SimpleContainer(45); // 36 main + 9 hotbar
         Inventory targetInventory = target.getInventory();
@@ -405,7 +405,7 @@ public class InventoryManagementCommands {
      * @param viewContainer The container that was being viewed
      * @param targetInventory The target player's actual inventory
      */
-    private void syncInventoryChanges(Container viewContainer, Inventory targetInventory) {
+    private static void syncInventoryChanges(Container viewContainer, Inventory targetInventory) {
         for (int i = 0; i < Math.min(viewContainer.getContainerSize(), targetInventory.getContainerSize()); i++) {
             targetInventory.setItem(i, viewContainer.getItem(i).copy());
         }
