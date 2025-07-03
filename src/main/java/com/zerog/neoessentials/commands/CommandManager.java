@@ -54,6 +54,8 @@ public class CommandManager {    // Command classes
     private final TablistCommand tablistCommand;
     private final ItemSearchCommands itemSearchCommands;
     private final SignEditCommands signEditCommands;
+    private final InventoryManagementCommands inventoryManagementCommands;
+    private final ItemEnhancementCommands itemEnhancementCommands;
     
     // Debug command disabled while developing TablistFix
       // NeoEssentials main reference - disabled while developing TablistFix
@@ -90,6 +92,8 @@ public class CommandManager {    // Command classes
         tablistCommand = new TablistCommand();
         itemSearchCommands = new ItemSearchCommands();
         signEditCommands = new SignEditCommands();
+        inventoryManagementCommands = new InventoryManagementCommands();
+        itemEnhancementCommands = new ItemEnhancementCommands();
         
         // Debug commands will be initialized later when TABLikeTablistManager is available
         // ItemCommands needs CommandBuildContext which is only available during register event
@@ -244,6 +248,10 @@ public class CommandManager {    // Command classes
         // Register sign edit commands
         signEditCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered sign edit commands");
+        
+        // Register inventory management commands
+        inventoryManagementCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered inventory management commands");
         
         // Register permission commands
         PermissionCommands.register(dispatcher);
