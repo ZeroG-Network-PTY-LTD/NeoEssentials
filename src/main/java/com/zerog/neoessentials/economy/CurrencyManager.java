@@ -164,6 +164,16 @@ public class CurrencyManager {
     }
     
     /**
+     * Set exchange rate for a currency (alias for updateExchangeRate)
+     * 
+     * @param currencyId The currency ID
+     * @param newRate The new exchange rate
+     */
+    public void setExchangeRate(String currencyId, double newRate) {
+        updateExchangeRate(currencyId, newRate);
+    }
+
+    /**
      * Update exchange rate for a currency
      * 
      * @param currencyId The currency ID
