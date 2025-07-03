@@ -13,7 +13,6 @@ import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.utils.TextUtil;
 import com.zerog.neoessentials.utils.VanillaBooleanParser;
-import com.zerog.neoessentials.utils.PermissionUtil;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -286,7 +285,7 @@ public class AdminPanelCommand {
         
         // Check if player has permission
         if (!CommandManager.hasPermission(context.getSource(), "neoessentials.adminpanel")) {
-            MessageUtil.sendErrorMessage(player, "You don't have permission to use the admin panel.");
+            LanguageUtil.sendErrorMessage(player, "You don't have permission to use the admin panel.");
             return 0;
         }
         
@@ -345,7 +344,7 @@ public class AdminPanelCommand {
                 displaySettingsSection(player);
                 break;
             default:
-                MessageUtil.sendErrorMessage(player, "Unknown section: " + sectionName);
+                LanguageUtil.sendErrorMessage(player, "Unknown section: " + sectionName);
                 displayMainAdminPanel(player);
                 return 0;
         }
@@ -358,7 +357,7 @@ public class AdminPanelCommand {
      */
     private int executeAdminPanelReload(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        MessageUtil.sendMessage(player, "Reloading admin panel components...");
+        LanguageUtil.sendMessage(player, "Reloading admin panel components...");
         context.getSource().sendSuccess(() -> Component.literal(
                 TextUtil.colorize("&aAdmin panel components reloaded successfully!")), true);
         return 1;
