@@ -499,7 +499,7 @@ public class ShopCommands {
             // Create the shop (skip payment since we already handled it above)
             Shop shop = shopManager.createShop(player.getUUID(), shopName, shopName, category, type, true);
             if (shop != null) {
-                MessageUtil.sendSuccessMessage(player, "Shop created successfully! ID: " + shop.getShopId());
+                LanguageUtil.sendMessage(player, "Shop created successfully! ID: " + shop.getShopId());
                 LanguageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
                 LanguageUtil.sendMessage(player, "§7Use §e/shop manage " + shopName + " §7to configure your shop");
             } else {
@@ -667,7 +667,7 @@ public class ShopCommands {
             boolean success = shopManager.deleteShop(shop.getShopId());
             
             if (success) {
-                MessageUtil.sendSuccessMessage(player, "Shop '" + shopName + "' deleted successfully!");
+                LanguageUtil.sendMessage(player, "Shop '" + shopName + "' deleted successfully!");
                 
                 // If it was a player shop, could potentially refund part of creation fee
                 if (shop.getOwnerId() != null && shop.getOwnerId().equals(player.getUUID())) {
@@ -768,7 +768,7 @@ public class ShopCommands {
                 }
                 
                 if (itemsRemoved) {
-                    MessageUtil.sendSuccessMessage(player, "Successfully stocked " + quantity + "x " + ItemHandler.formatItemName(itemName) + 
+                    LanguageUtil.sendMessage(player, "Successfully stocked " + quantity + "x " + ItemHandler.formatItemName(itemName) + 
                         " in shop '" + shopName + "' for $" + String.format("%.2f", price) + " each");
                 } else {
                     LanguageUtil.sendErrorMessage(player, "Failed to remove items from your inventory. Contact an administrator.");
@@ -837,7 +837,7 @@ public class ShopCommands {
             boolean success = shop.setItemPrice(itemName, buyPrice);
             
             if (success) {
-                MessageUtil.sendSuccessMessage(player, "Price updated for " + ItemHandler.formatItemName(itemName) + " in shop '" + shopName + "'");
+                LanguageUtil.sendMessage(player, "Price updated for " + ItemHandler.formatItemName(itemName) + " in shop '" + shopName + "'");
                 LanguageUtil.sendMessage(player, "§7Buy Price: §e$" + String.format("%.2f", buyPrice));
                 if (sellPrice >= 0) {
                     LanguageUtil.sendMessage(player, "§7Sell Price: §e$" + String.format("%.2f", sellPrice));
@@ -906,7 +906,7 @@ public class ShopCommands {
                     new com.zerog.neoessentials.ui.shop.ShopManagementGUI(targetShop, shopManager);
                 gui.openMainMenu(player);
                 
-                MessageUtil.sendSuccessMessage(player, "Opening shop management interface for: " + targetShop.getShopName());
+                LanguageUtil.sendMessage(player, "Opening shop management interface for: " + targetShop.getShopName());
             } catch (Exception e) {
                 LanguageUtil.sendErrorMessage(player, "Failed to open shop management interface: " + e.getMessage());
                 NeoEssentials.LOGGER.error("Failed to open shop management GUI for shop: " + targetShop.getShopName(), e);
@@ -1571,7 +1571,7 @@ public class ShopCommands {
             if (targetShop.getInventory().containsKey(itemName)) {
                 // Add to existing stock
                 targetShop.addItem(itemName, quantity, 10.0, displayName); // This will add to existing
-                MessageUtil.sendSuccessMessage(player, "Added " + quantity + " " + displayName + 
+                LanguageUtil.sendMessage(player, "Added " + quantity + " " + displayName + 
                     " to existing stock in shop '" + shopName + "'");
                 LanguageUtil.sendMessage(player, "§7New stock: §e" + targetShop.getInventory().get(itemName).getQuantity());
             } else {
@@ -1580,7 +1580,7 @@ public class ShopCommands {
                 boolean success = targetShop.addItem(itemName, quantity, defaultPrice, displayName);
                 
                 if (success) {
-                    MessageUtil.sendSuccessMessage(player, "Added " + quantity + " " + displayName + 
+                    LanguageUtil.sendMessage(player, "Added " + quantity + " " + displayName + 
                         " to shop '" + shopName + "' with default price $" + String.format("%.2f", defaultPrice));
                     LanguageUtil.sendMessage(player, "§7Use §e/shop price " + shopName + " " + itemName + " <buy-price>§7 to set a custom price");
                 } else {
