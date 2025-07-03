@@ -3,7 +3,7 @@ package com.zerog.neoessentials.ui.shop;
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
 import com.zerog.neoessentials.economy.ShopEmployeeManager;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -47,7 +47,7 @@ public class ShopEmployeeGUI {
         if (!shop.getOwnerId().equals(player.getUUID()) && 
             !shop.getEmployeeManager().hasPermission(player.getUUID(), 
                 ShopEmployeeManager.ShopPermission.HIRE_EMPLOYEES)) {
-            MessageUtil.sendMessage(player, "§cYou don't have permission to manage shop employees!");
+            LanguageUtil.sendMessage(player, "§cYou don't have permission to manage shop employees!");
             return;
         }
         

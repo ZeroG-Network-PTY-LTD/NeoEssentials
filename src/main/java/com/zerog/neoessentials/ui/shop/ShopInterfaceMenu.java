@@ -3,7 +3,7 @@ package com.zerog.neoessentials.ui.shop;
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.EconomyManager;
 import com.zerog.neoessentials.economy.Currency;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;

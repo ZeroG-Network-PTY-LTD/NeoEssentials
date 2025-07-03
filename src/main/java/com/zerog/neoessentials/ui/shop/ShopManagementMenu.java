@@ -2,7 +2,7 @@ package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -122,16 +122,16 @@ public class ShopManagementMenu extends AbstractContainerMenu {
                 if (shop.getOwnerId().equals(player.getUUID())) {
                     if (shop.isActive()) {
                         shop.setActive(false);
-                        MessageUtil.sendMessage(player, "§cShop has been deactivated.");
+                        LanguageUtil.sendMessage(player, "§cShop has been deactivated.");
                     } else {
                         shop.setActive(true);
-                        MessageUtil.sendMessage(player, "§aShop has been activated.");
+                        LanguageUtil.sendMessage(player, "§aShop has been activated.");
                     }
                     
                     // Refresh the GUI
                     new ShopManagementGUI(shop, shopManager).openMainMenu(player);
                 } else {
-                    MessageUtil.sendMessage(player, "§cOnly the shop owner can change the shop status!");
+                    LanguageUtil.sendMessage(player, "§cOnly the shop owner can change the shop status!");
                 }
                 break;
                 
@@ -152,7 +152,7 @@ public class ShopManagementMenu extends AbstractContainerMenu {
                 break;
                 
             default:
-                MessageUtil.sendMessage(player, "§cUnknown action: " + action);
+                LanguageUtil.sendMessage(player, "§cUnknown action: " + action);
                 break;
         }
     }
