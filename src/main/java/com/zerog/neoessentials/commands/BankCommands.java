@@ -14,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Comprehensive banking commands for the NeoEssentials economy system.
@@ -87,6 +88,15 @@ public class BankCommands {
                         .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
                         .executes(context -> accountInfo(context.getSource(),
                             StringArgumentType.getString(context, "account")))))
+                .then(Commands.literal("close")
+                    .then(Commands.argument("account", StringArgumentType.string())
+                        .suggests(TabCompletionUtil.BANK_ACCOUNT_SUGGESTIONS)
+                        .executes(context -> closeAccount(context.getSource(),
+                            StringArgumentType.getString(context, "account")))
+                        .then(Commands.argument("reason", StringArgumentType.greedyString())
+                            .executes(context -> closeAccount(context.getSource(),
+                                StringArgumentType.getString(context, "account"),
+                                StringArgumentType.getString(context, "reason"))))))
                 
                 // Loan System
                 .then(Commands.literal("loan")
@@ -679,6 +689,60 @@ public class BankCommands {
             MessageUtil.sendMessage(player, "§7Loan ID: §e" + loanId);
             MessageUtil.sendMessage(player, "§7Note: Loan system is in development");
             return 1;
+        } catch (CommandSyntaxException e) {
+            source.sendFailure(Component.literal("§cOnly players can use banking commands"));
+            return 0;
+        }
+    }
+
+    private int closeAccount(CommandSourceStack source, String accountNumber) {
+        return closeAccount(source, accountNumber, "Player requested closure");
+    }
+    
+    private int closeAccount(CommandSourceStack source, String accountNumber, String reason) {
+        try {
+            ServerPlayer player = source.getPlayerOrException();
+            UUID playerId = player.getUUID();
+            
+            BankManager bankManager = BankManager.getInstance();
+            
+            // Get the account
+            BankAccount account = bankManager.getAccountByNumber(accountNumber);
+            if (account == null) {
+                MessageUtil.sendMessage(player, "§cAccount not found: " + accountNumber);
+                return 0;
+            }
+            
+            // Check if player owns the account or has permission
+            if (!account.getOwnerId().equals(playerId) && !account.isSharedUser(playerId)) {
+                MessageUtil.sendMessage(player, "§cYou don't have permission to close this account");
+                return 0;
+            }
+            
+            // Check if account has remaining balance
+            if (account.getBalance() > 0) {
+                MessageUtil.sendMessage(player, "§cCannot close account with remaining balance: $" + 
+                    String.format("%.2f", account.getBalance()));
+                MessageUtil.sendMessage(player, "§7Please withdraw all funds before closing the account");
+                return 0;
+            }
+            
+            // Attempt to close the account
+            boolean success = bankManager.closeAccount(accountNumber, reason);
+            
+            if (success) {
+                MessageUtil.sendMessage(player, "§aAccount successfully closed: " + accountNumber);
+                MessageUtil.sendMessage(player, "§7Reason: " + reason);
+                
+                // Log the closure for admin purposes
+                MessageUtil.sendMessage(player, "§7Account closure has been logged for security purposes");
+                
+                return 1;
+            } else {
+                MessageUtil.sendMessage(player, "§cFailed to close account. Please contact an administrator");
+                return 0;
+            }
+            
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
             return 0;

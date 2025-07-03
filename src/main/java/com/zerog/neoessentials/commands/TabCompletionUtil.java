@@ -62,6 +62,30 @@ public class TabCompletionUtil {
     };
     
     /**
+     * Provides currency suggestions.
+     */
+    public static final SuggestionProvider<CommandSourceStack> CURRENCY_SUGGESTIONS = (context, builder) -> {
+        try {
+            com.zerog.neoessentials.economy.CurrencyManager currencyManager = 
+                com.zerog.neoessentials.economy.CurrencyManager.getInstance();
+            
+            if (currencyManager != null) {
+                List<String> currencyIds = currencyManager.getAllCurrencies().stream()
+                    .map(com.zerog.neoessentials.economy.Currency::getId)
+                    .collect(Collectors.toList());
+                return SharedSuggestionProvider.suggest(currencyIds, builder);
+            }
+        } catch (Exception e) {
+            // Fallback to common currency names
+            return SharedSuggestionProvider.suggest(
+                new String[]{"coins", "gold", "emeralds", "gems", "credits"}, 
+                builder
+            );
+        }
+        return Suggestions.empty();
+    };
+    
+    /**
      * Provides home name suggestions for the current player.
      */
     public static final SuggestionProvider<CommandSourceStack> HOME_SUGGESTIONS = (context, builder) -> {
