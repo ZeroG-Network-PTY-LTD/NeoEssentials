@@ -253,6 +253,10 @@ public class CommandManager {    // Command classes
         inventoryManagementCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered inventory management commands");
         
+        // Register item enhancement commands
+        ItemEnhancementCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered item enhancement commands");
+        
         // Register permission commands
         PermissionCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered permission commands");
