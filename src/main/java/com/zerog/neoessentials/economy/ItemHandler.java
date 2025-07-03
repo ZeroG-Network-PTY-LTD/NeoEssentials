@@ -433,4 +433,18 @@ public class ItemHandler {
         // Default category
         return "misc";
     }
+    
+    /**
+     * Get display name for an item ID
+     */
+    public static String getItemDisplayName(String itemId) {
+        Item item = getItemFromId(itemId);
+        if (item == null) {
+            return itemId; // Return the ID if item not found
+        }
+        
+        // Get the item's display name
+        ItemStack stack = new ItemStack(item);
+        return stack.getHoverName().getString();
+    }
 }
