@@ -454,5 +454,28 @@
   "neoessentials.economyadmin.wealth_top10": "Top 10%: %s",
   "neoessentials.economyadmin.wealth_median": "Median (50%): %s",
   "neoessentials.economyadmin.wealth_bottom10": "Bottom 10%: %s",
-  "neoessentials.economyadmin.wealth_error": "Error calculating wealth distribution: %s"
+  "neoessentials.economyadmin.wealth_error": "Error calculating wealth distribution: %s",
+  
+  "commands.world.list.header": "§6=== Available Worlds ===",
+  "commands.world.tp.success": "Teleported to world: %s",
+  "commands.world.tp.success.other": "Teleported %s to world: %s",
+  "commands.world.tp.invalid": "Invalid world specified!",
+  "commands.world.info.header": "§6=== World Information: %s ===",
+  "commands.world.info.invalid": "Invalid world specified!",
+  "commands.world.spawn.success": "Teleported to spawn of world: %s",
+  "commands.world.spawn.invalid": "Invalid world specified!",
+  
+  "commands.tphistory.header": "§6=== Teleport History ===",
+  "commands.tpbookmark.added": "Bookmark '%s' added at your current location!",
+  "commands.tpbookmark.removed": "Bookmark '%s' removed!",
+  "commands.tpbookmark.not_found": "Bookmark '%s' not found!",
+  "commands.tpbookmark.teleported": "Teleported to bookmark '%s'!",
+  "commands.tpbookmark.teleport_failed": "Failed to teleport to bookmark '%s'!",
+  "commands.tpbookmark.name_too_long": "Bookmark name is too long! Maximum 32 characters.",
+  "commands.tpbookmark.invalid_name": "Invalid bookmark name! Use only letters, numbers, underscores, and hyphens.",
+  "commands.tpbookmark.too_many": "You have too many bookmarks! Maximum allowed: %s",
+  "commands.tpbookmark.no_bookmarks": "You don't have any bookmarks yet!",
+  "commands.tpbookmark.list.header": "§6=== Your Bookmarks ===",
+  "commands.tpbookmark.list.footer": "§7Total: %s/%s bookmarks",
+  "commands.tpbookmark.dimension_not_found": "Dimension '%s' not found!"
 }

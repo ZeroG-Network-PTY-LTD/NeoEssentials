@@ -26,6 +26,8 @@ import net.neoforged.bus.api.SubscribeEvent;
 public class CommandManager {    // Command classes
     private final TeleportCommands teleportCommands;
     private final DirectTeleportCommands directTeleportCommands;
+    private final TeleportBookmarkCommands teleportBookmarkCommands;
+    private final WorldCommands worldCommands;
     private final HomeCommands homeCommands;
     private final EconomyCommands economyCommands;
     private final BankCommands bankCommands;
@@ -64,6 +66,8 @@ public class CommandManager {    // Command classes
         
         teleportCommands = new TeleportCommands();
         directTeleportCommands = new DirectTeleportCommands();
+        teleportBookmarkCommands = new TeleportBookmarkCommands();
+        worldCommands = new WorldCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
         bankCommands = new BankCommands();
@@ -142,6 +146,14 @@ public class CommandManager {    // Command classes
         // Register direct teleport commands
         directTeleportCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered direct teleport commands");
+        
+        // Register teleport bookmark commands
+        teleportBookmarkCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered teleport bookmark commands");
+        
+        // Register world management commands
+        worldCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered world management commands");
         
         // Register home commands
         homeCommands.register(dispatcher);
