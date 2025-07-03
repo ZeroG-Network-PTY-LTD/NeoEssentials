@@ -3,7 +3,7 @@ package com.zerog.neoessentials.ui;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.EconomyManager;
 import com.zerog.neoessentials.data.KitManager;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.utils.PermissionUtil;
 
 import net.minecraft.ChatFormatting;
