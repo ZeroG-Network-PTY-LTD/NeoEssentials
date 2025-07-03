@@ -5,7 +5,8 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.EconomyTransaction;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -31,7 +32,7 @@ public class EconomyCommands {
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {        // Register /balance command
         dispatcher.register(
             Commands.literal("balance")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.balance"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
@@ -45,7 +46,7 @@ public class EconomyCommands {
                             economyManager.getCurrencyManager().getDefaultCurrency();
                         
                         if (defaultCurrency == null) {
-                            MessageUtil.sendErrorMessage(player, "No default currency configured");
+                            LanguageUtil.sendErrorMessage(player, "neoessentials.economy.no_default_currency");
                             return 0;
                         }
                         
