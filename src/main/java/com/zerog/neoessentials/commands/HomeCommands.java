@@ -101,17 +101,7 @@ public class HomeCommands {
                 })
         );
         
-        // Register /homehelp command
-        dispatcher.register(
-            Commands.literal("homehelp")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.homehelp"))
-                .executes(context -> {
-                    ServerPlayer player = context.getSource().getPlayerOrException();
-                    
-                    // Show home command help
-                    return showHomeHelp(player);
-                })
-        );
+        // Register /homehelp command (removed for now)
         
         NeoEssentials.LOGGER.info("Registered home commands");
     }
@@ -243,68 +233,5 @@ public class HomeCommands {
             
             return 1;
         }
-                
-                // Add hover text
-                MutableComponent hoverText = Component.literal("§eClick to teleport to §b" + homeName);
-                hoverText.append(Component.literal("\n§7Dimension: §f" + location.getDimension()));
-                hoverText.append(Component.literal("\n§7Location: §f" + 
-                    (int)location.getX() + ", " + 
-                    (int)location.getY() + ", " + 
-                    (int)location.getZ()));
-                
-                homeComponent = MessageUtil.addHoverText(homeComponent, hoverText);
-                
-                // Add click event to teleport to the home
-                homeComponent = MessageUtil.makeClickableCommand(homeComponent, "/home " + homeName);
-                
-                message.append(homeComponent);
-                first = false;
-            }
-            
-            MessageUtil.sendInfo(player, message);
-            
-            // Add clickable help button
-            MutableComponent helpMessage = Component.literal("§7Type ");
-            MutableComponent helpButton = Component.literal("§e/homehelp");
-            helpButton = MessageUtil.makeClickableCommand(helpButton, "/homehelp");
-            helpButton = MessageUtil.addHoverText(helpButton, Component.literal("§7Click to view home command help"));
-            helpMessage.append(helpButton);
-            helpMessage.append(Component.literal(" §7for more information."));
-            
-            MessageUtil.sendInfo(player, helpMessage);
-        }
-        
-        return 1;
-    }
-    
-    /**
-     * Shows help for home commands
-     * 
-     * @param player The player to show help to
-     * @return Command result code
-     */
-    private int showHomeHelp(ServerPlayer player) {
-        // Header
-        MessageUtil.sendInfo(player, Component.literal("§2§l====== §r§6Home Commands §2§l======"));
-        
-        // Commands list with clickable examples
-        MutableComponent homeCmd = Component.literal("§b/home [name]");
-        homeCmd = MessageUtil.addHoverText(homeCmd, Component.literal("§7Teleport to your home\n§7If no name is specified, teleports to your default home"));
-        MessageUtil.sendInfo(player, homeCmd.append(Component.literal(" §7- Teleport to your home")));
-        
-        MutableComponent setHomeCmd = Component.literal("§b/sethome [name]");
-        setHomeCmd = MessageUtil.addHoverText(setHomeCmd, Component.literal("§7Set a home at your current location\n§7If no name is specified, sets your default home"));
-        MessageUtil.sendInfo(player, setHomeCmd.append(Component.literal(" §7- Set a home at your current location")));
-        
-        MutableComponent delHomeCmd = Component.literal("§b/delhome <name>");
-        delHomeCmd = MessageUtil.addHoverText(delHomeCmd, Component.literal("§7Delete one of your homes"));
-        MessageUtil.sendInfo(player, delHomeCmd.append(Component.literal(" §7- Delete a home")));
-        
-        MutableComponent homesCmd = Component.literal("§b/homes");
-        homesCmd = MessageUtil.makeClickableCommand(homesCmd, "/homes");
-        homesCmd = MessageUtil.addHoverText(homesCmd, Component.literal("§7List all of your homes\n§eClick to execute"));
-        MessageUtil.sendInfo(player, homesCmd.append(Component.literal(" §7- List all of your homes")));
-        
-        return 1;
     }
 }
