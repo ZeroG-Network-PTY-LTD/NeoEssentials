@@ -250,4 +250,74 @@ public class PermissionUtil {
             source.sendFailure(LanguageUtil.noPermission());
         }
     }
+
+    /**
+     * Checks if a command source has admin permission for the specified permission.
+     * This enforces admin-only access for sensitive commands.
+     * 
+     * @param source The command source
+     * @param permission The permission node
+     * @return true if has admin permission
+     */
+    public static boolean hasAdminPermission(CommandSourceStack source, String permission) {
+        try {
+            // Console always has admin permission
+            if (!source.isPlayer()) {
+                return true;
+            }
+
+            ServerPlayer player = source.getPlayer();
+            if (player == null) {
+                return false;
+            }
+
+            // Must be admin level to use admin commands
+            if (!isAdmin(player)) {
+                return false;
+            }
+
+            // Check the specific permission
+            return hasPermission(player, permission);
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error checking admin permission {} for source: {}", 
+                permission, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Checks if a command source has moderator permission for the specified permission.
+     * This enforces moderator-only access for moderation commands.
+     * 
+     * @param source The command source
+     * @param permission The permission node
+     * @return true if has moderator permission
+     */
+    public static boolean hasModeratorPermission(CommandSourceStack source, String permission) {
+        try {
+            // Console always has moderator permission
+            if (!source.isPlayer()) {
+                return true;
+            }
+
+            ServerPlayer player = source.getPlayer();
+            if (player == null) {
+                return false;
+            }
+
+            // Must be at least moderator level
+            if (!player.hasPermissions(LEVEL_MODERATOR)) {
+                return false;
+            }
+
+            // Check the specific permission
+            return hasPermission(player, permission);
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error checking moderator permission {} for source: {}", 
+                permission, e.getMessage());
+            return false;
+        }
+    }
 }

@@ -67,6 +67,41 @@ public class LanguageUtil {
         player.sendSystemMessage(getTranslatedColored(key, args));
     }
 
+    /**
+     * Sends an error message to a command source.
+     * 
+     * @param source The command source
+     * @param key The translation key
+     * @param args Optional arguments for string formatting
+     */
+    public static void sendErrorMessage(CommandSourceStack source, String key, Object... args) {
+        try {
+            MutableComponent message = getTranslatedColored(key, args);
+            source.sendFailure(message);
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.warn("Failed to send error message to source with key '{}': {}", key, e.getMessage());
+            source.sendFailure(Component.literal("[ERROR: " + key + "]"));
+        }
+    }
+
+    /**
+     * Sends an error message to a player.
+     * 
+     * @param player The player
+     * @param key The translation key
+     * @param args Optional arguments for string formatting
+     */
+    public static void sendErrorMessage(ServerPlayer player, String key, Object... args) {
+        try {
+            MutableComponent message = getTranslatedColored(key, args);
+            player.sendSystemMessage(message);
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.warn("Failed to send error message to player '{}' with key '{}': {}", 
+                player.getDisplayName().getString(), key, e.getMessage());
+            player.sendSystemMessage(Component.literal("[ERROR: " + key + "]"));
+        }
+    }
+
     // Common error messages
     public static MutableComponent noPermission() {
         return getTranslated("neoessentials.commands.error.no_permission");
