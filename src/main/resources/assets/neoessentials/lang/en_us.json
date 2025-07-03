@@ -477,5 +477,16 @@
   "commands.tpbookmark.no_bookmarks": "You don't have any bookmarks yet!",
   "commands.tpbookmark.list.header": "§6=== Your Bookmarks ===",
   "commands.tpbookmark.list.footer": "§7Total: %s/%s bookmarks",
-  "commands.tpbookmark.dimension_not_found": "Dimension '%s' not found!"
+  "commands.tpbookmark.dimension_not_found": "Dimension '%s' not found!",
+  
+  "commands.serverinfo.header": "§6=== Server Information ===",
+  "commands.ping.self": "Your ping: %sms",
+  "commands.ping.other": "%s's ping: %sms",
+  "commands.playerlist.header": "§6=== Online Players ===",
+  "commands.motd.header": "§6=== Message of the Day ===",
+  "commands.motd.set": "MOTD set to: %s",
+  "commands.sudo.executed": "Executed '%s' as %s",
+  "commands.workbench.opened": "Opened crafting table!",
+  "commands.enderchest.opened": "Opened your ender chest!",
+  "commands.enderchest.opened.other": "Opened %s's ender chest!"
 }

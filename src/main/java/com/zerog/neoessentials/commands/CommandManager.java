@@ -27,6 +27,7 @@ public class CommandManager {    // Command classes
     private final TeleportCommands teleportCommands;
     private final DirectTeleportCommands directTeleportCommands;
     private final TeleportBookmarkCommands teleportBookmarkCommands;
+    private final AdvancedUtilityCommands advancedUtilityCommands;
     private final WorldCommands worldCommands;
     private final HomeCommands homeCommands;
     private final EconomyCommands economyCommands;
@@ -67,6 +68,7 @@ public class CommandManager {    // Command classes
         teleportCommands = new TeleportCommands();
         directTeleportCommands = new DirectTeleportCommands();
         teleportBookmarkCommands = new TeleportBookmarkCommands();
+        advancedUtilityCommands = new AdvancedUtilityCommands();
         worldCommands = new WorldCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
@@ -150,6 +152,10 @@ public class CommandManager {    // Command classes
         // Register teleport bookmark commands
         teleportBookmarkCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered teleport bookmark commands");
+        
+        // Register advanced utility commands
+        advancedUtilityCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered advanced utility commands");
         
         // Register world management commands
         worldCommands.register(dispatcher);
