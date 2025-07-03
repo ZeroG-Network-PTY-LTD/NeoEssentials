@@ -11,7 +11,6 @@ import com.zerog.neoessentials.data.KitManager;
 import com.zerog.neoessentials.data.EconomyTransaction;
 import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
-import com.zerog.neoessentials.utils.PermissionUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
