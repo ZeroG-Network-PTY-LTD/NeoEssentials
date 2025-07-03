@@ -137,11 +137,11 @@ public class GamemodeCommands {
             )
         );
         dispatcher.register(Commands.literal("gmsp")
-            .requires(source -> CommandManager.hasPermission(source, "neoessentials.gamemode.spectator"))
+            .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.gamemode.spectator"))
             .executes(context -> executeGamemodeShortcut(context, GameType.SPECTATOR, null))
             .then(Commands.argument("player", EntityArgument.player())
                 .suggests(TabCompletionUtil.ONLINE_PLAYER_SUGGESTIONS)
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.gamemode.others"))
+                .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.gamemode.others"))
                 .executes(context -> executeGamemodeShortcut(context, GameType.SPECTATOR, EntityArgument.getPlayer(context, "player")))
             )
         );

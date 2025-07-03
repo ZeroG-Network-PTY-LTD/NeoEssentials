@@ -7,7 +7,8 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.economy.*;
 import com.zerog.neoessentials.economy.ShopManager.AuctionHouse;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -44,7 +45,7 @@ public class AuctionCommands {
         // Main /auction command with subcommands
         dispatcher.register(
             Commands.literal("auction")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.auction"))
                 .executes(context -> {
                     // Show auction help when no subcommand is provided
                     return showAuctionHelp(context.getSource());
@@ -52,7 +53,7 @@ public class AuctionCommands {
                 
                 // /auction create <type> <item> <starting-price> [duration]
                 .then(Commands.literal("create")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.create"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.auction.create"))
                     .then(Commands.argument("type", StringArgumentType.string())
                         .suggests((context, builder) -> {
                             builder.suggest("standard");
@@ -87,7 +88,7 @@ public class AuctionCommands {
                 
                 // /auction list [type]
                 .then(Commands.literal("list")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.list"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.auction.list"))
                     .executes(context -> {
                         ServerPlayer player = context.getSource().getPlayerOrException();
                         return listAuctions(player, null);
@@ -112,7 +113,7 @@ public class AuctionCommands {
                 
                 // /auction info <auction-id>
                 .then(Commands.literal("info")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.info"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.auction.info"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
                         .suggests(TabCompletionUtil.AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
                         .executes(context -> {
@@ -125,7 +126,7 @@ public class AuctionCommands {
                 
                 // /auction bid <auction-id> <amount>
                 .then(Commands.literal("bid")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.bid"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.auction.bid"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
                         .suggests(TabCompletionUtil.AUCTION_ID_SUGGESTIONS) // Add suggestion provider here
                         .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
@@ -141,7 +142,7 @@ public class AuctionCommands {
                 
                 // /auction autobid <auction-id> <max-amount> - Set up automatic bidding
                 .then(Commands.literal("autobid")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.autobid"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.auction.autobid"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
                         .suggests(TabCompletionUtil.AUCTION_ID_SUGGESTIONS)
                         .then(Commands.argument("max_amount", DoubleArgumentType.doubleArg(0.01))
@@ -166,7 +167,7 @@ public class AuctionCommands {
                 
                 // /auction autocancel <auction-id> - Cancel automatic bidding
                 .then(Commands.literal("autocancel")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.autobid"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.auction.autobid"))
                     .then(Commands.argument("auction_id", StringArgumentType.string())
                         .suggests(TabCompletionUtil.AUCTION_ID_SUGGESTIONS)
                         .executes(context -> {
@@ -179,7 +180,7 @@ public class AuctionCommands {
                 
                 // /auction autolist - List your active auto-bids
                 .then(Commands.literal("autolist")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction.autobid"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.auction.autobid"))
                     .executes(context -> {
                         ServerPlayer player = context.getSource().getPlayerOrException();
                         return listAutoBids(player);
@@ -190,7 +191,7 @@ public class AuctionCommands {
         // Add alias commands
         dispatcher.register(
             Commands.literal("auc")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.auction"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.auction"))
                 .redirect(dispatcher.getRoot().getChild("auction"))
         );
     }
@@ -200,19 +201,19 @@ public class AuctionCommands {
     private int showAuctionHelp(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6=== NeoEssentials Auction House ===");
-            MessageUtil.sendMessage(player, "§e/auction create <type> <item> <price> [duration] §7- Create auction");
-            MessageUtil.sendMessage(player, "§e/auction list [type] §7- List active auctions");
-            MessageUtil.sendMessage(player, "§e/auction info <id> §7- Get auction information");
-            MessageUtil.sendMessage(player, "§e/auction bid <id> <amount> §7- Place a bid");
-            MessageUtil.sendMessage(player, "§e/auction buyout <id> §7- Buy immediately");
-            MessageUtil.sendMessage(player, "§e/auction cancel <id> §7- Cancel your auction");
-            MessageUtil.sendMessage(player, "§e/auction history [player] §7- View auction history");
-            MessageUtil.sendMessage(player, "§e/auction search <item> §7- Search for items");
-            MessageUtil.sendMessage(player, "§e/auction watch <id> §7- Watch auction for updates");
-            MessageUtil.sendMessage(player, "§e/auction unwatch <id> §7- Stop watching auction");
-            MessageUtil.sendMessage(player, "§7Auction Types: standard, buyitnow, reserve, dutch");
-            MessageUtil.sendMessage(player, "§7Alias: §e/auc§7 can be used instead of §e/auction");
+            LanguageUtil.sendMessage(player, "§6=== NeoEssentials Auction House ===");
+            LanguageUtil.sendMessage(player, "§e/auction create <type> <item> <price> [duration] §7- Create auction");
+            LanguageUtil.sendMessage(player, "§e/auction list [type] §7- List active auctions");
+            LanguageUtil.sendMessage(player, "§e/auction info <id> §7- Get auction information");
+            LanguageUtil.sendMessage(player, "§e/auction bid <id> <amount> §7- Place a bid");
+            LanguageUtil.sendMessage(player, "§e/auction buyout <id> §7- Buy immediately");
+            LanguageUtil.sendMessage(player, "§e/auction cancel <id> §7- Cancel your auction");
+            LanguageUtil.sendMessage(player, "§e/auction history [player] §7- View auction history");
+            LanguageUtil.sendMessage(player, "§e/auction search <item> §7- Search for items");
+            LanguageUtil.sendMessage(player, "§e/auction watch <id> §7- Watch auction for updates");
+            LanguageUtil.sendMessage(player, "§e/auction unwatch <id> §7- Stop watching auction");
+            LanguageUtil.sendMessage(player, "§7Auction Types: standard, buyitnow, reserve, dutch");
+            LanguageUtil.sendMessage(player, "§7Alias: §e/auc§7 can be used instead of §e/auction");
             return 1;
         } catch (Exception e) {
             source.sendFailure(net.minecraft.network.chat.Component.literal("Command can only be used by players."));
@@ -233,19 +234,19 @@ public class AuctionCommands {
             
             if (auction != null) {
                 String auctionId = auction.getAuctionId().toString().substring(0, 8);
-                MessageUtil.sendMessage(player, "§aSuccessfully created " + type.name().toLowerCase().replace("_", "-") + 
+                LanguageUtil.sendMessage(player, "§aSuccessfully created " + type.name().toLowerCase().replace("_", "-") + 
                     " auction for §e" + itemName);
-                MessageUtil.sendMessage(player, "§7Auction ID: §e" + auctionId);
-                MessageUtil.sendMessage(player, "§7Starting Price: §e" + defaultCurrency.format(startingPrice));
-                MessageUtil.sendMessage(player, "§7Duration: §e" + formatDuration(duration));
-                MessageUtil.sendMessage(player, "§7Players can now bid using: §e/auction bid " + auctionId + " <amount>");
+                LanguageUtil.sendMessage(player, "§7Auction ID: §e" + auctionId);
+                LanguageUtil.sendMessage(player, "§7Starting Price: §e" + defaultCurrency.format(startingPrice));
+                LanguageUtil.sendMessage(player, "§7Duration: §e" + formatDuration(duration));
+                LanguageUtil.sendMessage(player, "§7Players can now bid using: §e/auction bid " + auctionId + " <amount>");
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to create auction. Please try again.");
+                LanguageUtil.sendErrorMessage(player, "Failed to create auction. Please try again.");
                 return 0;
             }
         } catch (IllegalArgumentException e) {
-            MessageUtil.sendErrorMessage(player, "Invalid auction type. Valid types: standard, buyitnow, reserve, dutch");
+            LanguageUtil.sendErrorMessage(player, "Invalid auction type. Valid types: standard, buyitnow, reserve, dutch");
             return 0;
         }
     }
@@ -272,19 +273,19 @@ public class AuctionCommands {
                             .filter(auction -> auction.getAuctionType() == type)
                             .toList();
                     } catch (IllegalArgumentException e) {
-                        MessageUtil.sendErrorMessage(player, "Invalid auction type filter.");
+                        LanguageUtil.sendErrorMessage(player, "Invalid auction type filter.");
                         return 0;
                     }
                 }
             }
             
             if (auctions.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No active auctions found.");
+                LanguageUtil.sendMessage(player, "§7No active auctions found.");
                 return 1;
             }
             
             String title = typeFilter != null ? "=== " + typeFilter.toUpperCase() + " Auctions ===" : "=== Active Auctions ===";
-            MessageUtil.sendMessage(player, "§6" + title);
+            LanguageUtil.sendMessage(player, "§6" + title);
             
             for (Auction auction : auctions.stream().limit(10).toList()) {
                 Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
@@ -295,18 +296,18 @@ public class AuctionCommands {
                 
                 String auctionId = auction.getAuctionId().toString().substring(0, 8);
                 String auctionTypeDisplay = getAuctionTypeDisplayName(auction.getAuctionType());
-                MessageUtil.sendMessage(player, "§e" + auctionId + " §7- §e" + auction.getItemName() + 
+                LanguageUtil.sendMessage(player, "§e" + auctionId + " §7- §e" + auction.getItemName() + 
                     " §7- §a" + currentBid + " §7- §e" + timeLeft + " §8[" + auctionTypeDisplay + "]");
             }
             
             if (auctions.size() > 10) {
-                MessageUtil.sendMessage(player, "§7... and " + (auctions.size() - 10) + " more auctions.");
+                LanguageUtil.sendMessage(player, "§7... and " + (auctions.size() - 10) + " more auctions.");
             }
             
-            MessageUtil.sendMessage(player, "§7Use §e/auction info <id>§7 for detailed information.");
+            LanguageUtil.sendMessage(player, "§7Use §e/auction info <id>§7 for detailed information.");
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while listing auctions: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(player, "An error occurred while listing auctions: " + e.getMessage());
             return 0;
         }
     }
@@ -320,30 +321,30 @@ public class AuctionCommands {
             try {
                 auctionUUID = UUID.fromString(auctionId);
             } catch (IllegalArgumentException e) {
-                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
+                LanguageUtil.sendErrorMessage(player, "Invalid auction ID format.");
                 return 0;
             }
             
             Auction auction = auctionHouse.getAuctionById(auctionUUID);
             if (auction == null) {
-                MessageUtil.sendErrorMessage(player, "Auction not found.");
+                LanguageUtil.sendErrorMessage(player, "Auction not found.");
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§6=== Auction Info ===");
-            MessageUtil.sendMessage(player, "§7ID: §e" + auction.getAuctionId());
-            MessageUtil.sendMessage(player, "§7Item: §e" + auction.getItemName() + " §7x" + auction.getQuantity());
-            MessageUtil.sendMessage(player, "§7Current Bid: §e" + auction.getCurrentBid());
-            MessageUtil.sendMessage(player, "§7Status: §e" + auction.getStatus());
-            MessageUtil.sendMessage(player, "§7Time Remaining: §e" + formatTimeRemaining(auction.getEndTime()));
+            LanguageUtil.sendMessage(player, "§6=== Auction Info ===");
+            LanguageUtil.sendMessage(player, "§7ID: §e" + auction.getAuctionId());
+            LanguageUtil.sendMessage(player, "§7Item: §e" + auction.getItemName() + " §7x" + auction.getQuantity());
+            LanguageUtil.sendMessage(player, "§7Current Bid: §e" + auction.getCurrentBid());
+            LanguageUtil.sendMessage(player, "§7Status: §e" + auction.getStatus());
+            LanguageUtil.sendMessage(player, "§7Time Remaining: §e" + formatTimeRemaining(auction.getEndTime()));
             
             if (auction.getCurrentBidder() != null) {
-                MessageUtil.sendMessage(player, "§7Current Bidder: §e" + auction.getCurrentBidder());
+                LanguageUtil.sendMessage(player, "§7Current Bidder: §e" + auction.getCurrentBidder());
             }
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while retrieving auction info: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(player, "An error occurred while retrieving auction info: " + e.getMessage());
             return 0;
         }
     }
@@ -357,23 +358,23 @@ public class AuctionCommands {
             try {
                 auctionUUID = UUID.fromString(auctionId);
             } catch (IllegalArgumentException e) {
-                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
+                LanguageUtil.sendErrorMessage(player, "Invalid auction ID format.");
                 return 0;
             }
             
             Auction auction = auctionHouse.getAuctionById(auctionUUID);
             if (auction == null) {
-                MessageUtil.sendErrorMessage(player, "Auction not found.");
+                LanguageUtil.sendErrorMessage(player, "Auction not found.");
                 return 0;
             }
             
             if (!auction.isActive()) {
-                MessageUtil.sendErrorMessage(player, "This auction has ended.");
+                LanguageUtil.sendErrorMessage(player, "This auction has ended.");
                 return 0;
             }
             
             if (auction.getSellerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "You cannot bid on your own auction.");
+                LanguageUtil.sendErrorMessage(player, "You cannot bid on your own auction.");
                 return 0;
             }
             
@@ -381,28 +382,28 @@ public class AuctionCommands {
             Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
             double totalAvailable = economyManager.getTotalAvailableFunds(player.getUUID(), defaultCurrency);
             if (totalAvailable < amount) {
-                MessageUtil.sendErrorMessage(player, "You don't have enough money to place this bid.");
-                MessageUtil.sendMessage(player, "§7Required: §e" + defaultCurrency.format(amount));
-                MessageUtil.sendMessage(player, "§7Available: §e" + defaultCurrency.format(totalAvailable) + " §7(wallet + bank)");
+                LanguageUtil.sendErrorMessage(player, "You don't have enough money to place this bid.");
+                LanguageUtil.sendMessage(player, "§7Required: §e" + defaultCurrency.format(amount));
+                LanguageUtil.sendMessage(player, "§7Available: §e" + defaultCurrency.format(totalAvailable) + " §7(wallet + bank)");
                 return 0;
             }
             
             // Place the bid
             if (auction.placeBid(player.getUUID(), amount)) {
-                MessageUtil.sendMessage(player, "§aBid placed successfully!");
-                MessageUtil.sendMessage(player, "§7Your bid of §e" + amount + "§7 is now the highest bid.");
+                LanguageUtil.sendMessage(player, "§aBid placed successfully!");
+                LanguageUtil.sendMessage(player, "§7Your bid of §e" + amount + "§7 is now the highest bid.");
                 
                 // Send notifications to watchers
                 if (player.getServer() != null) {
                     AuctionNotificationManager.getInstance().notifyNewBid(auction, player, amount, player.getServer());
                 }
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to place bid. Your bid may be too low.");
+                LanguageUtil.sendErrorMessage(player, "Failed to place bid. Your bid may be too low.");
             }
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while placing bid: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(player, "An error occurred while placing bid: " + e.getMessage());
             return 0;
         }
     }
@@ -428,32 +429,32 @@ public class AuctionCommands {
             try {
                 auctionUUID = UUID.fromString(auctionId);
             } catch (IllegalArgumentException e) {
-                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
+                LanguageUtil.sendErrorMessage(player, "Invalid auction ID format.");
                 return 0;
             }
             
             // Find the auction
             Auction auction = auctionHouse.getAuctionById(auctionUUID);
             if (auction == null) {
-                MessageUtil.sendErrorMessage(player, "Auction not found.");
+                LanguageUtil.sendErrorMessage(player, "Auction not found.");
                 return 0;
             }
             
             // Check if auction is still active
             if (!auction.isActive()) {
-                MessageUtil.sendErrorMessage(player, "This auction has ended.");
+                LanguageUtil.sendErrorMessage(player, "This auction has ended.");
                 return 0;
             }
             
             // Check if player is the seller
             if (auction.getSellerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "You cannot bid on your own auction.");
+                LanguageUtil.sendErrorMessage(player, "You cannot bid on your own auction.");
                 return 0;
             }
             
             // Validate maximum amount
             if (maxAmount <= auction.getCurrentBid()) {
-                MessageUtil.sendErrorMessage(player, "Maximum bid amount must be higher than current bid of " + 
+                LanguageUtil.sendErrorMessage(player, "Maximum bid amount must be higher than current bid of " + 
                     economyManager.getCurrencyManager().getDefaultCurrency().format(auction.getCurrentBid()));
                 return 0;
             }
@@ -465,9 +466,9 @@ public class AuctionCommands {
                                     economyManager.getBankManager().getTotalPlayerBalance(player.getUUID(), defaultCurrency);
             
             if (totalAvailable < maxAmount) {
-                MessageUtil.sendErrorMessage(player, "Insufficient funds for maximum bid amount.");
-                MessageUtil.sendMessage(player, "§7Available: §e" + defaultCurrency.format(totalAvailable));
-                MessageUtil.sendMessage(player, "§7Required: §e" + defaultCurrency.format(maxAmount));
+                LanguageUtil.sendErrorMessage(player, "Insufficient funds for maximum bid amount.");
+                LanguageUtil.sendMessage(player, "§7Available: §e" + defaultCurrency.format(totalAvailable));
+                LanguageUtil.sendMessage(player, "§7Required: §e" + defaultCurrency.format(maxAmount));
                 return 0;
             }
             
@@ -475,19 +476,19 @@ public class AuctionCommands {
             boolean success = auctionHouse.setAutoBid(auctionUUID, player.getUUID(), maxAmount, increment);
             
             if (success) {
-                MessageUtil.sendSuccessMessage(player, "Auto-bidding set up successfully!");
-                MessageUtil.sendMessage(player, "§7Auction: §e" + auction.getItemName());
-                MessageUtil.sendMessage(player, "§7Maximum bid: §e" + defaultCurrency.format(maxAmount));
-                MessageUtil.sendMessage(player, "§7Increment: §e" + defaultCurrency.format(increment));
-                MessageUtil.sendMessage(player, "§7The system will automatically bid for you when outbid, up to your maximum.");
+                LanguageUtil.sendMessage(player, "Auto-bidding set up successfully!");
+                LanguageUtil.sendMessage(player, "§7Auction: §e" + auction.getItemName());
+                LanguageUtil.sendMessage(player, "§7Maximum bid: §e" + defaultCurrency.format(maxAmount));
+                LanguageUtil.sendMessage(player, "§7Increment: §e" + defaultCurrency.format(increment));
+                LanguageUtil.sendMessage(player, "§7The system will automatically bid for you when outbid, up to your maximum.");
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "Auto-bidding feature is not yet implemented. Please check back in a future update.");
+                LanguageUtil.sendErrorMessage(player, "Auto-bidding feature is not yet implemented. Please check back in a future update.");
                 return 0;
             }
             
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while setting up auto-bidding: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(player, "An error occurred while setting up auto-bidding: " + e.getMessage());
             return 0;
         }
     }
@@ -506,7 +507,7 @@ public class AuctionCommands {
             try {
                 auctionUUID = UUID.fromString(auctionId);
             } catch (IllegalArgumentException e) {
-                MessageUtil.sendErrorMessage(player, "Invalid auction ID format.");
+                LanguageUtil.sendErrorMessage(player, "Invalid auction ID format.");
                 return 0;
             }
             
@@ -514,16 +515,16 @@ public class AuctionCommands {
             boolean success = auctionHouse.cancelAutoBid(auctionUUID, player.getUUID());
             
             if (success) {
-                MessageUtil.sendSuccessMessage(player, "Auto-bidding cancelled successfully!");
-                MessageUtil.sendMessage(player, "§7You will no longer automatically bid on this auction.");
+                LanguageUtil.sendMessage(player, "Auto-bidding cancelled successfully!");
+                LanguageUtil.sendMessage(player, "§7You will no longer automatically bid on this auction.");
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "Auto-bidding feature is not yet implemented. Please check back in a future update.");
+                LanguageUtil.sendErrorMessage(player, "Auto-bidding feature is not yet implemented. Please check back in a future update.");
                 return 0;
             }
             
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while cancelling auto-bidding: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(player, "An error occurred while cancelling auto-bidding: " + e.getMessage());
             return 0;
         }
     }
@@ -541,32 +542,32 @@ public class AuctionCommands {
             List<com.zerog.neoessentials.economy.AutoBid> autoBids = auctionHouse.getAutoBidsForPlayer(player.getUUID());
             
             if (autoBids.isEmpty()) {
-                MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
-                MessageUtil.sendMessage(player, "§7You have no active auto-bids.");
+                LanguageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
+                LanguageUtil.sendMessage(player, "§7You have no active auto-bids.");
                 return 1;
             }
             
             Currency defaultCurrency = economyManager.getCurrencyManager().getDefaultCurrency();
-            MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
+            LanguageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
             
             for (com.zerog.neoessentials.economy.AutoBid autoBid : autoBids) {
                 Auction auction = auctionHouse.getAuctionById(autoBid.getAuctionId());
                 if (auction != null && auction.isActive()) {
-                    MessageUtil.sendMessage(player, "§e" + auction.getItemName() + " §7(ID: " + 
+                    LanguageUtil.sendMessage(player, "§e" + auction.getItemName() + " §7(ID: " + 
                         autoBid.getAuctionId().toString().substring(0, 8) + "...)");
-                    MessageUtil.sendMessage(player, "  §7Max Bid: §e" + defaultCurrency.format(autoBid.getMaxAmount()) +
+                    LanguageUtil.sendMessage(player, "  §7Max Bid: §e" + defaultCurrency.format(autoBid.getMaxAmount()) +
                         " §7| Increment: §e" + defaultCurrency.format(autoBid.getIncrement()));
-                    MessageUtil.sendMessage(player, "  §7Current Bid: §e" + defaultCurrency.format(auction.getCurrentBid()) +
+                    LanguageUtil.sendMessage(player, "  §7Current Bid: §e" + defaultCurrency.format(auction.getCurrentBid()) +
                         " §7| Time Left: §e" + auction.getFormattedTimeRemaining());
-                    MessageUtil.sendMessage(player, "");
+                    LanguageUtil.sendMessage(player, "");
                 }
             }
             
-            MessageUtil.sendMessage(player, "§7Use §e/auction autocancel <id> §7to cancel auto-bidding.");
+            LanguageUtil.sendMessage(player, "§7Use §e/auction autocancel <id> §7to cancel auto-bidding.");
             return 1;
             
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "An error occurred while listing auto-bids: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(player, "An error occurred while listing auto-bids: " + e.getMessage());
             return 0;
         }
     }

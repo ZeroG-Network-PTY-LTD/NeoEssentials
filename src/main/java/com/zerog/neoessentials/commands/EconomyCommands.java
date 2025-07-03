@@ -58,31 +58,31 @@ public class EconomyCommands {
                         com.zerog.neoessentials.economy.BankAccount primaryAccount = 
                             bankManager.getPrimaryAccount(player.getUUID());
                         
-                        MessageUtil.sendMessage(player, "§6§l--- Your Financial Status ---");
-                        MessageUtil.sendMessage(player, "§eCash on Hand: §a" + formattedCash);
+                        LanguageUtil.sendMessage(player, "neoessentials.economy.financial_status_header");
+                        LanguageUtil.sendMessage(player, "neoessentials.economy.cash_on_hand", formattedCash);
                         
                         if (primaryAccount != null) {
                             double bankBalance = primaryAccount.getBalance(defaultCurrency);
                             String formattedBank = String.format("$%.2f", bankBalance);
-                            MessageUtil.sendMessage(player, "§eBank Account: §a" + formattedBank + 
-                                " §7(Account: " + primaryAccount.getAccountNumber() + ")");
+                            LanguageUtil.sendMessage(player, "neoessentials.economy.bank_account_balance", 
+                                formattedBank, primaryAccount.getAccountNumber());
                             
                             double totalWealth = cashBalance + bankBalance;
                             String formattedTotal = String.format("$%.2f", totalWealth);
-                            MessageUtil.sendMessage(player, "§eTotal Wealth: §a" + formattedTotal);
+                            LanguageUtil.sendMessage(player, "neoessentials.economy.total_wealth", formattedTotal);
                         } else {
-                            MessageUtil.sendMessage(player, "§eBank Account: §7None - Create one with: /bank create checking");
+                            LanguageUtil.sendMessage(player, "neoessentials.economy.no_bank_account");
                         }
                         
                         return 1;
                     } catch (Exception e) {
-                        MessageUtil.sendErrorMessage(player, "Error checking balance: " + e.getMessage());
+                        LanguageUtil.sendErrorMessage(player, "neoessentials.economy.balance_check_error", e.getMessage());
                         return 0;
                     }
                 })
                 .then(
                     Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance.others"))
+                        .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.command.balance.others"))
                         .executes(context -> {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
@@ -97,7 +97,7 @@ public class EconomyCommands {
                                     economyManager.getCurrencyManager().getDefaultCurrency();
                                 
                                 if (defaultCurrency == null) {
-                                    MessageUtil.sendErrorMessage(source, "No default currency configured");
+                                    LanguageUtil.sendErrorMessage(source, "neoessentials.economy.no_default_currency");
                                     return 0;
                                 }
                                 
@@ -109,33 +109,35 @@ public class EconomyCommands {
                                 com.zerog.neoessentials.economy.BankAccount primaryAccount = 
                                     bankManager.getPrimaryAccount(target.getUUID());
                                 
-                                MessageUtil.sendMessage(source, "§6§l--- " + target.getScoreboardName() + "'s Financial Status ---");
-                                MessageUtil.sendMessage(source, "§eCash on Hand: §a" + formattedCash);
+                                LanguageUtil.sendMessage(source, "neoessentials.economy.financial_status_header_other", target.getScoreboardName());
+                                LanguageUtil.sendMessage(source, "neoessentials.economy.cash_on_hand", formattedCash);
                                 
                                 if (primaryAccount != null) {
                                     double bankBalance = primaryAccount.getBalance(defaultCurrency);
                                     String formattedBank = String.format("$%.2f", bankBalance);
-                                    MessageUtil.sendMessage(source, "§eBank Account: §a" + formattedBank + 
-                                        " §7(Account: " + primaryAccount.getAccountNumber() + ")");
+                                    LanguageUtil.sendMessage(source, "neoessentials.economy.bank_account_balance", 
+                                        formattedBank, primaryAccount.getAccountNumber());
                                     
                                     double totalWealth = cashBalance + bankBalance;
                                     String formattedTotal = String.format("$%.2f", totalWealth);
-                                    MessageUtil.sendMessage(source, "§eTotal Wealth: §a" + formattedTotal);
+                                    LanguageUtil.sendMessage(source, "neoessentials.economy.total_wealth", formattedTotal);
                                 } else {
-                                    MessageUtil.sendMessage(source, "§eBank Account: §7None");
+                                    LanguageUtil.sendMessage(source, "neoessentials.economy.no_bank_account_other");
                                 }
                                 
                                 return 1;
                             } catch (Exception e) {
-                                MessageUtil.sendErrorMessage(source, "Error checking balance: " + e.getMessage());
+                                LanguageUtil.sendErrorMessage(source, "neoessentials.economy.balance_check_error", e.getMessage());
                                 return 0;
                             }
                         })
                 )
-        );        // Register /bal alias for /balance
+        );
+
+        // Register /bal alias for /balance
         dispatcher.register(
             Commands.literal("bal")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.balance"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
@@ -149,7 +151,7 @@ public class EconomyCommands {
                             economyManager.getCurrencyManager().getDefaultCurrency();
                         
                         if (defaultCurrency == null) {
-                            MessageUtil.sendErrorMessage(player, "No default currency configured");
+                            LanguageUtil.sendErrorMessage(player, "No default currency configured");
                             return 0;
                         }
                         
@@ -161,31 +163,31 @@ public class EconomyCommands {
                         com.zerog.neoessentials.economy.BankAccount primaryAccount = 
                             bankManager.getPrimaryAccount(player.getUUID());
                         
-                        MessageUtil.sendMessage(player, "§6§l--- Your Financial Status ---");
-                        MessageUtil.sendMessage(player, "§eCash on Hand: §a" + formattedCash);
+                        LanguageUtil.sendMessage(player, "§6§l--- Your Financial Status ---");
+                        LanguageUtil.sendMessage(player, "§eCash on Hand: §a" + formattedCash);
                         
                         if (primaryAccount != null) {
                             double bankBalance = primaryAccount.getBalance(defaultCurrency);
                             String formattedBank = String.format("$%.2f", bankBalance);
-                            MessageUtil.sendMessage(player, "§eBank Account: §a" + formattedBank + 
+                            LanguageUtil.sendMessage(player, "§eBank Account: §a" + formattedBank + 
                                 " §7(Account: " + primaryAccount.getAccountNumber() + ")");
                             
                             double totalWealth = cashBalance + bankBalance;
                             String formattedTotal = String.format("$%.2f", totalWealth);
-                            MessageUtil.sendMessage(player, "§eTotal Wealth: §a" + formattedTotal);
+                            LanguageUtil.sendMessage(player, "§eTotal Wealth: §a" + formattedTotal);
                         } else {
-                            MessageUtil.sendMessage(player, "§eBank Account: §7None - Create one with: /bank create checking");
+                            LanguageUtil.sendMessage(player, "§eBank Account: §7None - Create one with: /bank create checking");
                         }
                         
                         return 1;
                     } catch (Exception e) {
-                        MessageUtil.sendErrorMessage(player, "Error checking balance: " + e.getMessage());
+                        LanguageUtil.sendErrorMessage(player, "Error checking balance: " + e.getMessage());
                         return 0;
                     }
                 })
                 .then(
                     Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance.others"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.balance.others"))
                         .executes(context -> {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
@@ -200,7 +202,7 @@ public class EconomyCommands {
                                     economyManager.getCurrencyManager().getDefaultCurrency();
                                 
                                 if (defaultCurrency == null) {
-                                    MessageUtil.sendErrorMessage(source, "No default currency configured");
+                                    LanguageUtil.sendErrorMessage(source, "No default currency configured");
                                     return 0;
                                 }
                                 
@@ -212,25 +214,25 @@ public class EconomyCommands {
                                 com.zerog.neoessentials.economy.BankAccount primaryAccount = 
                                     bankManager.getPrimaryAccount(target.getUUID());
                                 
-                                MessageUtil.sendMessage(source, "§6§l--- " + target.getScoreboardName() + "'s Financial Status ---");
-                                MessageUtil.sendMessage(source, "§eCash on Hand: §a" + formattedCash);
+                                LanguageUtil.sendMessage(source, "§6§l--- " + target.getScoreboardName() + "'s Financial Status ---");
+                                LanguageUtil.sendMessage(source, "§eCash on Hand: §a" + formattedCash);
                                 
                                 if (primaryAccount != null) {
                                     double bankBalance = primaryAccount.getBalance(defaultCurrency);
                                     String formattedBank = String.format("$%.2f", bankBalance);
-                                    MessageUtil.sendMessage(source, "§eBank Account: §a" + formattedBank + 
+                                    LanguageUtil.sendMessage(source, "§eBank Account: §a" + formattedBank + 
                                         " §7(Account: " + primaryAccount.getAccountNumber() + ")");
                                     
                                     double totalWealth = cashBalance + bankBalance;
                                     String formattedTotal = String.format("$%.2f", totalWealth);
-                                    MessageUtil.sendMessage(source, "§eTotal Wealth: §a" + formattedTotal);
+                                    LanguageUtil.sendMessage(source, "§eTotal Wealth: §a" + formattedTotal);
                                 } else {
-                                    MessageUtil.sendMessage(source, "§eBank Account: §7None");
+                                    LanguageUtil.sendMessage(source, "§eBank Account: §7None");
                                 }
                                 
                                 return 1;
                             } catch (Exception e) {
-                                MessageUtil.sendErrorMessage(source, "Error checking balance: " + e.getMessage());
+                                LanguageUtil.sendErrorMessage(source, "Error checking balance: " + e.getMessage());
                                 return 0;
                             }
                         })
@@ -240,7 +242,7 @@ public class EconomyCommands {
         // Register /money alias for /balance
         dispatcher.register(
             Commands.literal("money")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.balance"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
@@ -254,7 +256,7 @@ public class EconomyCommands {
                             economyManager.getCurrencyManager().getDefaultCurrency();
                         
                         if (defaultCurrency == null) {
-                            MessageUtil.sendErrorMessage(player, "No default currency configured");
+                            LanguageUtil.sendErrorMessage(player, "No default currency configured");
                             return 0;
                         }
                         
@@ -266,31 +268,31 @@ public class EconomyCommands {
                         com.zerog.neoessentials.economy.BankAccount primaryAccount = 
                             bankManager.getPrimaryAccount(player.getUUID());
                         
-                        MessageUtil.sendMessage(player, "§6§l--- Your Financial Status ---");
-                        MessageUtil.sendMessage(player, "§eCash on Hand: §a" + formattedCash);
+                        LanguageUtil.sendMessage(player, "§6§l--- Your Financial Status ---");
+                        LanguageUtil.sendMessage(player, "§eCash on Hand: §a" + formattedCash);
                         
                         if (primaryAccount != null) {
                             double bankBalance = primaryAccount.getBalance(defaultCurrency);
                             String formattedBank = String.format("$%.2f", bankBalance);
-                            MessageUtil.sendMessage(player, "§eBank Account: §a" + formattedBank + 
+                            LanguageUtil.sendMessage(player, "§eBank Account: §a" + formattedBank + 
                                 " §7(Account: " + primaryAccount.getAccountNumber() + ")");
                             
                             double totalWealth = cashBalance + bankBalance;
                             String formattedTotal = String.format("$%.2f", totalWealth);
-                            MessageUtil.sendMessage(player, "§eTotal Wealth: §a" + formattedTotal);
+                            LanguageUtil.sendMessage(player, "§eTotal Wealth: §a" + formattedTotal);
                         } else {
-                            MessageUtil.sendMessage(player, "§eBank Account: §7None - Create one with: /bank create checking");
+                            LanguageUtil.sendMessage(player, "§eBank Account: §7None - Create one with: /bank create checking");
                         }
                         
                         return 1;
                     } catch (Exception e) {
-                        MessageUtil.sendErrorMessage(player, "Error checking balance: " + e.getMessage());
+                        LanguageUtil.sendErrorMessage(player, "Error checking balance: " + e.getMessage());
                         return 0;
                     }
                 })
                 .then(
                     Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.balance.others"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.balance.others"))
                         .executes(context -> {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
@@ -305,7 +307,7 @@ public class EconomyCommands {
                                     economyManager.getCurrencyManager().getDefaultCurrency();
                                 
                                 if (defaultCurrency == null) {
-                                    MessageUtil.sendErrorMessage(source, "No default currency configured");
+                                    LanguageUtil.sendErrorMessage(source, "No default currency configured");
                                     return 0;
                                 }
                                 
@@ -317,25 +319,25 @@ public class EconomyCommands {
                                 com.zerog.neoessentials.economy.BankAccount primaryAccount = 
                                     bankManager.getPrimaryAccount(target.getUUID());
                                 
-                                MessageUtil.sendMessage(source, "§6§l--- " + target.getScoreboardName() + "'s Financial Status ---");
-                                MessageUtil.sendMessage(source, "§eCash on Hand: §a" + formattedCash);
+                                LanguageUtil.sendMessage(source, "§6§l--- " + target.getScoreboardName() + "'s Financial Status ---");
+                                LanguageUtil.sendMessage(source, "§eCash on Hand: §a" + formattedCash);
                                 
                                 if (primaryAccount != null) {
                                     double bankBalance = primaryAccount.getBalance(defaultCurrency);
                                     String formattedBank = String.format("$%.2f", bankBalance);
-                                    MessageUtil.sendMessage(source, "§eBank Account: §a" + formattedBank + 
+                                    LanguageUtil.sendMessage(source, "§eBank Account: §a" + formattedBank + 
                                         " §7(Account: " + primaryAccount.getAccountNumber() + ")");
                                     
                                     double totalWealth = cashBalance + bankBalance;
                                     String formattedTotal = String.format("$%.2f", totalWealth);
-                                    MessageUtil.sendMessage(source, "§eTotal Wealth: §a" + formattedTotal);
+                                    LanguageUtil.sendMessage(source, "§eTotal Wealth: §a" + formattedTotal);
                                 } else {
-                                    MessageUtil.sendMessage(source, "§eBank Account: §7None");
+                                    LanguageUtil.sendMessage(source, "§eBank Account: §7None");
                                 }
                                 
                                 return 1;
                             } catch (Exception e) {
-                                MessageUtil.sendErrorMessage(source, "Error checking balance: " + e.getMessage());
+                                LanguageUtil.sendErrorMessage(source, "Error checking balance: " + e.getMessage());
                                 return 0;
                             }
                         })
@@ -343,7 +345,7 @@ public class EconomyCommands {
         );        // Register /pay command
         dispatcher.register(
             Commands.literal("pay")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.pay"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.pay"))
                 .then(
                     Commands.argument("player", EntityArgument.player())
                         .then(
@@ -355,7 +357,7 @@ public class EconomyCommands {
                                     
                                     // Prevent paying yourself
                                     if (source.getUUID().equals(target.getUUID())) {
-                                        MessageUtil.sendErrorMessage(source, "You cannot pay yourself.");
+                                        LanguageUtil.sendErrorMessage(source, "You cannot pay yourself.");
                                         return 0;
                                     }
                                     
@@ -368,7 +370,7 @@ public class EconomyCommands {
                                             economyManager.getCurrencyManager().getDefaultCurrency();
                                         
                                         if (defaultCurrency == null) {
-                                            MessageUtil.sendErrorMessage(source, "No default currency configured");
+                                            LanguageUtil.sendErrorMessage(source, "No default currency configured");
                                             return 0;
                                         }
                                         
@@ -376,22 +378,22 @@ public class EconomyCommands {
                                         if (!walletManager.hasCash(source.getUUID(), defaultCurrency, amount)) {
                                             double currentCash = walletManager.getCashBalance(source.getUUID(), defaultCurrency);
                                             String formattedCash = String.format("$%.2f", currentCash);
-                                            MessageUtil.sendErrorMessage(source, "You don't have enough cash. Your cash on hand: " + formattedCash);
+                                            LanguageUtil.sendErrorMessage(source, "You don't have enough cash. Your cash on hand: " + formattedCash);
                                             return 0;
                                         }
                                         
                                         // Perform the transfer
                                         if (walletManager.transferCash(source.getUUID(), target.getUUID(), defaultCurrency, amount)) {
                                             String formattedAmount = String.format("$%.2f", amount);
-                                            MessageUtil.sendMessage(source, "You paid " + formattedAmount + " cash to " + target.getScoreboardName());
-                                            MessageUtil.sendMessage(target, source.getScoreboardName() + " paid you " + formattedAmount + " cash");
+                                            LanguageUtil.sendMessage(source, "You paid " + formattedAmount + " cash to " + target.getScoreboardName());
+                                            LanguageUtil.sendMessage(target, source.getScoreboardName() + " paid you " + formattedAmount + " cash");
                                             return 1;
                                         } else {
-                                            MessageUtil.sendErrorMessage(source, "Payment failed. Check if the target player can receive this amount.");
+                                            LanguageUtil.sendErrorMessage(source, "Payment failed. Check if the target player can receive this amount.");
                                             return 0;
                                         }
                                     } catch (Exception e) {
-                                        MessageUtil.sendErrorMessage(source, "Payment failed: " + e.getMessage());
+                                        LanguageUtil.sendErrorMessage(source, "Payment failed: " + e.getMessage());
                                         return 0;
                                     }
                                 })
@@ -402,7 +404,7 @@ public class EconomyCommands {
         // Register /baltop command
         dispatcher.register(
             Commands.literal("baltop")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.baltop"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.baltop"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
@@ -427,7 +429,7 @@ public class EconomyCommands {
                                 displayBaltop(player, page);
                                 
                             } catch (NumberFormatException e) {
-                                MessageUtil.sendErrorMessage(player, "Invalid page number: " + pageStr);
+                                LanguageUtil.sendErrorMessage(player, "Invalid page number: " + pageStr);
                             }
                             
                             return 1;
@@ -438,10 +440,10 @@ public class EconomyCommands {
         // Register /eco command for admin economy management
         dispatcher.register(
             Commands.literal("eco")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.eco"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.eco"))
                 .then(
                     Commands.literal("give")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.eco.give"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.eco.give"))
                         .then(
                             Commands.argument("player", EntityArgument.player())
                                 .then(
@@ -470,7 +472,7 @@ public class EconomyCommands {
                 )
                 .then(
                     Commands.literal("take")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.eco.take"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.eco.take"))
                         .then(
                             Commands.argument("player", EntityArgument.player())
                                 .then(
@@ -499,7 +501,7 @@ public class EconomyCommands {
                 )
                 .then(
                     Commands.literal("set")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.eco.set"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.eco.set"))
                         .then(
                             Commands.argument("player", EntityArgument.player())
                                 .then(
@@ -531,7 +533,7 @@ public class EconomyCommands {
         // Register transaction history command
         dispatcher.register(
             Commands.literal("ecotrans")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.ecotrans"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.ecotrans"))
                 .executes(context -> {
                     // Show own transaction history
                     ServerPlayer player = context.getSource().getPlayerOrException();
@@ -552,14 +554,14 @@ public class EconomyCommands {
                                 displayTransactionHistory(player, player.getUUID(), page, 10);
                                 return 1;
                             } catch (NumberFormatException e) {
-                                MessageUtil.sendErrorMessage(player, "Invalid page number: " + pageStr);
+                                LanguageUtil.sendErrorMessage(player, "Invalid page number: " + pageStr);
                                 return 0;
                             }
                         })
                 )
                 .then(
                     Commands.literal("view")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.ecotrans.admin"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.ecotrans.admin"))
                         .then(
                             Commands.argument("player", EntityArgument.player())
                                 .executes(context -> {
@@ -585,7 +587,7 @@ public class EconomyCommands {
                                                 displayTransactionHistory(source, target.getUUID(), page, 10);
                                                 return 1;
                                             } catch (NumberFormatException e) {
-                                                MessageUtil.sendErrorMessage(source, "Invalid page number: " + pageStr);
+                                                LanguageUtil.sendErrorMessage(source, "Invalid page number: " + pageStr);
                                                 return 0;
                                             }
                                         })
@@ -597,7 +599,7 @@ public class EconomyCommands {
         // Register /ecohelp command for help with economy commands
         dispatcher.register(
             Commands.literal("ecohelp")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.ecohelp"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.ecohelp"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     displayEconomyHelp(player);
@@ -608,7 +610,7 @@ public class EconomyCommands {
         // Add help subcommand to /eco
         dispatcher.register(
             Commands.literal("eco")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.eco"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.eco"))
                 .then(
                     Commands.literal("help")
                         .executes(context -> {
@@ -622,7 +624,7 @@ public class EconomyCommands {
         // Register /economy command with history subcommand
         dispatcher.register(
             Commands.literal("economy")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.economy"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.economy"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     displayEconomyHelp(player);
@@ -630,7 +632,7 @@ public class EconomyCommands {
                 })
                 .then(
                     Commands.literal("history")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.economy.history"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.economy.history"))
                         .executes(context -> {
                             // Show own transaction history
                             ServerPlayer player = context.getSource().getPlayerOrException();
@@ -651,7 +653,7 @@ public class EconomyCommands {
                                         displayTransactionHistory(player, player.getUUID(), page, 10);
                                         return 1;
                                     } catch (NumberFormatException e) {
-                                        MessageUtil.sendErrorMessage(player, "Invalid page number: " + pageStr);
+                                        LanguageUtil.sendErrorMessage(player, "Invalid page number: " + pageStr);
                                         return 0;
                                     }
                                 })
@@ -684,7 +686,7 @@ public class EconomyCommands {
         int totalPages = (int) Math.ceil((double) totalPlayers / playersPerPage);
         
         if (totalPlayers == 0) {
-            MessageUtil.sendMessage(player, "No players have any money yet.");
+            LanguageUtil.sendMessage(player, "No players have any money yet.");
             return;
         }
         
@@ -697,7 +699,7 @@ public class EconomyCommands {
         int endIndex = Math.min(startIndex + playersPerPage, totalPlayers);
         
         // Display header
-        MessageUtil.sendMessage(player, "§6§l--- Top Balances (Page " + page + "/" + totalPages + ") ---");
+        LanguageUtil.sendMessage(player, "§6§l--- Top Balances (Page " + page + "/" + totalPages + ") ---");
         
         // Display players
         for (int i = startIndex; i < endIndex; i++) {
@@ -709,12 +711,12 @@ public class EconomyCommands {
                 playerName = "Unknown Player";
             }
             
-            MessageUtil.sendMessage(player, "§e" + (i + 1) + ". §r" + playerName + ": §a" + formattedBalance);
+            LanguageUtil.sendMessage(player, "§e" + (i + 1) + ". §r" + playerName + ": §a" + formattedBalance);
         }
         
         // Show navigation hint if there are more pages
         if (page < totalPages) {
-            MessageUtil.sendMessage(player, "§6§l--- Use /baltop " + (page + 1) + " for next page ---");
+            LanguageUtil.sendMessage(player, "§6§l--- Use /baltop " + (page + 1) + " for next page ---");
         }
     }
     
@@ -724,26 +726,26 @@ public class EconomyCommands {
      * @param player The player to display help to
      */
     private void displayEconomyHelp(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "§6§l--- NeoEssentials Economy Commands ---");
-        MessageUtil.sendMessage(player, "§e/balance§r - Check your bank account balance");
-        MessageUtil.sendMessage(player, "§e/balance <player>§r - Check another player's bank account balance");
-        MessageUtil.sendMessage(player, "§e/pay <player> <amount>§r - Pay another player (requires bank accounts)");
-        MessageUtil.sendMessage(player, "§e/baltop§r - View the richest players");
-        MessageUtil.sendMessage(player, "§e/baltop <page>§r - View a specific page of baltop");
-        MessageUtil.sendMessage(player, "§e/ecotrans§r - View your transaction history");
-        MessageUtil.sendMessage(player, "§e/ecotrans <page>§r - View a specific page of your transaction history");
-        MessageUtil.sendMessage(player, "");
-        MessageUtil.sendMessage(player, "§c§lNote:§r All economy commands require a bank account!");
-        MessageUtil.sendMessage(player, "§eCreate one with: /bank create checking");
+        LanguageUtil.sendMessage(player, "§6§l--- NeoEssentials Economy Commands ---");
+        LanguageUtil.sendMessage(player, "§e/balance§r - Check your bank account balance");
+        LanguageUtil.sendMessage(player, "§e/balance <player>§r - Check another player's bank account balance");
+        LanguageUtil.sendMessage(player, "§e/pay <player> <amount>§r - Pay another player (requires bank accounts)");
+        LanguageUtil.sendMessage(player, "§e/baltop§r - View the richest players");
+        LanguageUtil.sendMessage(player, "§e/baltop <page>§r - View a specific page of baltop");
+        LanguageUtil.sendMessage(player, "§e/ecotrans§r - View your transaction history");
+        LanguageUtil.sendMessage(player, "§e/ecotrans <page>§r - View a specific page of your transaction history");
+        LanguageUtil.sendMessage(player, "");
+        LanguageUtil.sendMessage(player, "§c§lNote:§r All economy commands require a bank account!");
+        LanguageUtil.sendMessage(player, "§eCreate one with: /bank create checking");
         
         // Show admin commands if player has permission
-        if (CommandManager.hasPermission(player.createCommandSourceStack(), "neoessentials.command.eco")) {
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§6§l--- Admin Economy Commands ---");
-            MessageUtil.sendMessage(player, "§e/eco give <player> <amount> [reason]§r - Give money to a player's bank account");
-            MessageUtil.sendMessage(player, "§e/eco take <player> <amount> [reason]§r - Take money from a player's bank account");
-            MessageUtil.sendMessage(player, "§e/eco set <player> <amount> [reason]§r - Set a player's bank account balance");
-            MessageUtil.sendMessage(player, "§e/ecotrans view <player> [page]§r - View a player's transaction history");
+        if (PermissionUtil.hasPermission(player.createCommandSourceStack(), "neoessentials.command.eco")) {
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6§l--- Admin Economy Commands ---");
+            LanguageUtil.sendMessage(player, "§e/eco give <player> <amount> [reason]§r - Give money to a player's bank account");
+            LanguageUtil.sendMessage(player, "§e/eco take <player> <amount> [reason]§r - Take money from a player's bank account");
+            LanguageUtil.sendMessage(player, "§e/eco set <player> <amount> [reason]§r - Set a player's bank account balance");
+            LanguageUtil.sendMessage(player, "§e/ecotrans view <player> [page]§r - View a player's transaction history");
         }
     }
     
@@ -753,14 +755,14 @@ public class EconomyCommands {
      * @param player The admin player to display help to
      */
     private void displayEconomyAdminHelp(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "§6§l--- NeoEssentials Admin Economy Commands ---");
-        MessageUtil.sendMessage(player, "§e/eco give <player> <amount> [reason]§r - Give money to a player's bank account");
-        MessageUtil.sendMessage(player, "§e/eco take <player> <amount> [reason]§r - Take money from a player's bank account");
-        MessageUtil.sendMessage(player, "§e/eco set <player> <amount> [reason]§r - Set a player's bank account balance");
-        MessageUtil.sendMessage(player, "§e/ecotrans view <player> [page]§r - View a player's transaction history");
-        MessageUtil.sendMessage(player, "");
-        MessageUtil.sendMessage(player, "§c§lNote:§r Players must have bank accounts to receive money!");
-        MessageUtil.sendMessage(player, "§eThey can create one with: /bank create checking");
+        LanguageUtil.sendMessage(player, "§6§l--- NeoEssentials Admin Economy Commands ---");
+        LanguageUtil.sendMessage(player, "§e/eco give <player> <amount> [reason]§r - Give money to a player's bank account");
+        LanguageUtil.sendMessage(player, "§e/eco take <player> <amount> [reason]§r - Take money from a player's bank account");
+        LanguageUtil.sendMessage(player, "§e/eco set <player> <amount> [reason]§r - Set a player's bank account balance");
+        LanguageUtil.sendMessage(player, "§e/ecotrans view <player> [page]§r - View a player's transaction history");
+        LanguageUtil.sendMessage(player, "");
+        LanguageUtil.sendMessage(player, "§c§lNote:§r Players must have bank accounts to receive money!");
+        LanguageUtil.sendMessage(player, "§eThey can create one with: /bank create checking");
     }
     
     /**
@@ -780,9 +782,9 @@ public class EconomyCommands {
             
         if (transactions.isEmpty()) {
             if (player.getUUID().equals(targetUUID)) {
-                MessageUtil.sendMessage(player, "You don't have any transactions yet.");
+                LanguageUtil.sendMessage(player, "You don't have any transactions yet.");
             } else {
-                MessageUtil.sendMessage(player, targetName + " doesn't have any transactions yet.");
+                LanguageUtil.sendMessage(player, targetName + " doesn't have any transactions yet.");
             }
             return;
         }
@@ -803,24 +805,24 @@ public class EconomyCommands {
         
         // Display header
         if (player.getUUID().equals(targetUUID)) {
-            MessageUtil.sendMessage(player, "§6§l--- Your Transaction History (Page " + page + "/" + totalPages + ") ---");
+            LanguageUtil.sendMessage(player, "§6§l--- Your Transaction History (Page " + page + "/" + totalPages + ") ---");
         } else {
-            MessageUtil.sendMessage(player, "§6§l--- " + targetName + "'s Transaction History (Page " + page + "/" + totalPages + ") ---");
+            LanguageUtil.sendMessage(player, "§6§l--- " + targetName + "'s Transaction History (Page " + page + "/" + totalPages + ") ---");
         }
         
         // Display transactions
         for (EconomyTransaction transaction : pageTransactions) {
             // Format the transaction for display
             String message = formatTransaction(transaction);
-            MessageUtil.sendMessage(player, message);
+            LanguageUtil.sendMessage(player, message);
         }
         
         // Display footer with navigation hints
         if (page < totalPages) {
             if (player.getUUID().equals(targetUUID)) {
-                MessageUtil.sendMessage(player, "§6§l--- Use /ecotrans " + (page + 1) + " for next page ---");
+                LanguageUtil.sendMessage(player, "§6§l--- Use /ecotrans " + (page + 1) + " for next page ---");
             } else {
-                MessageUtil.sendMessage(player, "§6§l--- Use /ecotrans view " + targetName + " " + (page + 1) + " for next page ---");
+                LanguageUtil.sendMessage(player, "§6§l--- Use /ecotrans view " + targetName + " " + (page + 1) + " for next page ---");
             }
         }
     }
@@ -871,7 +873,7 @@ public class EconomyCommands {
             com.zerog.neoessentials.economy.BankAccount primaryAccount = bankManager.getPrimaryAccount(target.getUUID());
             
             if (primaryAccount == null) {
-                MessageUtil.sendErrorMessage(source, target.getScoreboardName() + 
+                LanguageUtil.sendErrorMessage(source, target.getScoreboardName() + 
                     " must create a bank account first. Tell them to run: /bank create checking");
                 return 0;
             }
@@ -888,15 +890,15 @@ public class EconomyCommands {
             String formattedBalance = String.format("$%.2f", primaryAccount.getBalance(defaultCurrency));
             
             // Send messages
-            MessageUtil.sendSuccessMessage(source, "Added " + formattedAmount + " to " + 
+            LanguageUtil.sendMessage(source, "Added " + formattedAmount + " to " + 
                     target.getScoreboardName() + "'s bank account (" + primaryAccount.getAccountNumber() + 
                     "). New balance: " + formattedBalance);
-            MessageUtil.sendMessage(target, "You received " + formattedAmount + " from an admin in your bank account. " +
+            LanguageUtil.sendMessage(target, "You received " + formattedAmount + " from an admin in your bank account. " +
                     "Account balance: " + formattedBalance);
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(source, "Failed to give money: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(source, "Failed to give money: " + e.getMessage());
             return 0;
         }
     }
@@ -921,7 +923,7 @@ public class EconomyCommands {
             com.zerog.neoessentials.economy.BankAccount primaryAccount = bankManager.getPrimaryAccount(target.getUUID());
             
             if (primaryAccount == null) {
-                MessageUtil.sendErrorMessage(source, target.getScoreboardName() + 
+                LanguageUtil.sendErrorMessage(source, target.getScoreboardName() + 
                     " does not have a bank account.");
                 return 0;
             }
@@ -934,7 +936,7 @@ public class EconomyCommands {
             double currentBalance = primaryAccount.getBalance(defaultCurrency);
             if (currentBalance < amount) {
                 String formattedBalance = String.format("$%.2f", currentBalance);
-                MessageUtil.sendErrorMessage(source, target.getScoreboardName() + " does not have enough funds. " +
+                LanguageUtil.sendErrorMessage(source, target.getScoreboardName() + " does not have enough funds. " +
                         "Current balance: " + formattedBalance);
                 return 0;
             }
@@ -947,15 +949,15 @@ public class EconomyCommands {
             String formattedBalance = String.format("$%.2f", primaryAccount.getBalance(defaultCurrency));
             
             // Send messages
-            MessageUtil.sendSuccessMessage(source, "Removed " + formattedAmount + " from " + 
+            LanguageUtil.sendMessage(source, "Removed " + formattedAmount + " from " + 
                     target.getScoreboardName() + "'s bank account (" + primaryAccount.getAccountNumber() + 
                     "). New balance: " + formattedBalance);
-            MessageUtil.sendMessage(target, "An admin removed " + formattedAmount + " from your bank account. " +
+            LanguageUtil.sendMessage(target, "An admin removed " + formattedAmount + " from your bank account. " +
                     "Account balance: " + formattedBalance);
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(source, "Failed to take money: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(source, "Failed to take money: " + e.getMessage());
             return 0;
         }
     }
@@ -980,7 +982,7 @@ public class EconomyCommands {
             com.zerog.neoessentials.economy.BankAccount primaryAccount = bankManager.getPrimaryAccount(target.getUUID());
             
             if (primaryAccount == null) {
-                MessageUtil.sendErrorMessage(source, target.getScoreboardName() + 
+                LanguageUtil.sendErrorMessage(source, target.getScoreboardName() + 
                     " does not have a bank account.");
                 return 0;
             }
@@ -1006,13 +1008,13 @@ public class EconomyCommands {
             String formattedAmount = String.format("$%.2f", amount);
             
             // Send messages
-            MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + 
+            LanguageUtil.sendMessage(source, "Set " + target.getScoreboardName() + 
                 "'s bank account balance (" + primaryAccount.getAccountNumber() + ") to " + formattedAmount);
-            MessageUtil.sendMessage(target, "Your bank account balance was set to " + formattedAmount + " by an admin");
+            LanguageUtil.sendMessage(target, "Your bank account balance was set to " + formattedAmount + " by an admin");
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(source, "Failed to set balance: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(source, "Failed to set balance: " + e.getMessage());
             return 0;
         }
     }

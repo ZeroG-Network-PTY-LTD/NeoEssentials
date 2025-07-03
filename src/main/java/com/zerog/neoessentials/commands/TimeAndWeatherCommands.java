@@ -4,8 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.zerog.neoessentials.utils.MessageUtil;
-import com.zerog.neoessentials.utils.PermissionUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -163,7 +163,7 @@ public class TimeAndWeatherCommands {
             MutableComponent message = Component.literal("Time set to " + timeDescription);
             
             if (context.getSource().getEntity() instanceof ServerPlayer player) {
-                MessageUtil.sendSuccess(player, message);
+                LanguageUtil.sendComponent(player, message);
             } else {
                 context.getSource().sendSuccess(() -> message, true);
             }
@@ -196,7 +196,7 @@ public class TimeAndWeatherCommands {
         MutableComponent message = Component.literal("Added " + time + " to the time");
         
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
-            MessageUtil.sendSuccess(player, message);
+            LanguageUtil.sendComponent(player, message);
         } else {
             context.getSource().sendSuccess(() -> message, true);
         }
@@ -253,7 +253,7 @@ public class TimeAndWeatherCommands {
             MutableComponent message = Component.literal("Weather set to " + weatherType + " for " + durationStr);
             
             if (context.getSource().getEntity() instanceof ServerPlayer player) {
-                MessageUtil.sendSuccess(player, message);
+                LanguageUtil.sendComponent(player, message);
             } else {
                 context.getSource().sendSuccess(() -> message, true);
             }

@@ -5,6 +5,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.SpawnManager;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -49,10 +51,10 @@ public class SpawnCommands {
      */
     private static void registerSpawnCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("spawn")
-            .requires(source -> hasPermission(source, "neoessentials.spawn"))
+            .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.spawn"))
             .executes(context -> executeSpawn(context))
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> hasPermission(source, "neoessentials.spawn.others"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.spawn.others"))
                 .suggests(TabCompletionUtil.ONLINE_PLAYER_SUGGESTIONS)
                 .executes(context -> executeSpawnForPlayer(context, EntityArgument.getPlayer(context, "player")))
             )
@@ -66,7 +68,7 @@ public class SpawnCommands {
      */
     private static void registerSetSpawnCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("setspawn")
-            .requires(source -> hasPermission(source, "neoessentials.setspawn"))
+            .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.setspawn"))
             .executes(context -> executeSetSpawn(context))
         );
     }
@@ -98,7 +100,7 @@ public class SpawnCommands {
             }
             
             if (spawnManager == null) {
-                context.getSource().sendFailure(Component.literal("§cSpawn manager is not available!"));
+                LanguageUtil.sendErrorMessage(context.getSource(), "spawn.manager.unavailable");
                 return 0;
             }
             
@@ -110,9 +112,9 @@ public class SpawnCommands {
                 target.teleportTo(world, worldSpawn.getX() + 0.5, worldSpawn.getY(), worldSpawn.getZ() + 0.5, 
                                 target.getYRot(), target.getXRot());
                 
-                target.sendSystemMessage(Component.literal("§aTeleported to world spawn!"));
+                LanguageUtil.sendMessage(target, "spawn.teleported_world");
                 if (context.getSource().getEntity() instanceof ServerPlayer executor && !executor.equals(target)) {
-                    executor.sendSystemMessage(Component.literal("§aTeleported §e" + target.getDisplayName().getString() + "§a to world spawn."));
+                    LanguageUtil.sendMessage(executor, "spawn.teleported_other_world", target.getDisplayName().getString());
                 }
                 return 1;
             }
@@ -120,7 +122,7 @@ public class SpawnCommands {
             // Get the spawn world
             ServerLevel spawnWorld = spawnManager.getSpawnLevel(target.getServer());
             if (spawnWorld == null) {
-                context.getSource().sendFailure(Component.literal("§cSpawn world is not available!"));
+                LanguageUtil.sendErrorMessage(context.getSource(), "spawn.world.unavailable");
                 return 0;
             }
             
@@ -130,7 +132,7 @@ public class SpawnCommands {
             // Find safe spawn location
             BlockPos safeSpawn = findSafeSpawnLocation(spawnWorld, spawnPos);
             if (safeSpawn == null) {
-                context.getSource().sendFailure(Component.literal("§cSpawn location is not safe! Please set a new spawn point."));
+                LanguageUtil.sendErrorMessage(context.getSource(), "spawn.location.unsafe");
                 return 0;
             }
             
@@ -140,10 +142,10 @@ public class SpawnCommands {
             
             // Send success messages
             if (context.getSource().getEntity() instanceof ServerPlayer executor && !executor.equals(target)) {
-                executor.sendSystemMessage(Component.literal("§aTeleported §e" + target.getDisplayName().getString() + "§a to spawn."));
+                LanguageUtil.sendMessage(executor, "spawn.teleported_other", target.getDisplayName().getString());
             }
             
-            target.sendSystemMessage(Component.literal("§aTeleported to spawn!"));
+            LanguageUtil.sendMessage(target, "spawn.teleported");
             
             // Log the teleport
             NeoEssentials.LOGGER.info("Player {} teleported {} to spawn at {}", 
@@ -152,7 +154,7 @@ public class SpawnCommands {
             return 1;
             
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("§cError teleporting to spawn: " + e.getMessage()));
+            LanguageUtil.sendErrorMessage(context.getSource(), "spawn.teleport.error", e.getMessage());
             NeoEssentials.LOGGER.error("Error in /spawn command", e);
             return 0;
         }
@@ -175,7 +177,7 @@ public class SpawnCommands {
             }
             
             if (spawnManager == null) {
-                context.getSource().sendFailure(Component.literal("§cSpawn manager is not available!"));
+                LanguageUtil.sendErrorMessage(context.getSource(), "spawn.manager.unavailable");
                 return 0;
             }
             
@@ -184,7 +186,7 @@ public class SpawnCommands {
             
             // Validate spawn location
             if (!isValidSpawnLocation(world, playerPos)) {
-                context.getSource().sendFailure(Component.literal("§cThis location is not safe for a spawn point!"));
+                LanguageUtil.sendErrorMessage(context.getSource(), "spawn.location.invalid");
                 return 0;
             }
             
@@ -196,11 +198,10 @@ public class SpawnCommands {
                 world.setDefaultSpawnPos(playerPos, player.getYRot());
                 
                 // Send success message
-                context.getSource().sendSuccess(
-                    () -> Component.literal("§aSpawn point set at §e" + playerPos.getX() + 
-                                          "§a, §e" + playerPos.getY() + "§a, §e" + playerPos.getZ() + "§a."),
-                    true
-                );
+                LanguageUtil.sendMessage(player, "spawn.set.success", 
+                    String.valueOf(playerPos.getX()), 
+                    String.valueOf(playerPos.getY()), 
+                    String.valueOf(playerPos.getZ()));
                 
                 // Log the change
                 NeoEssentials.LOGGER.info("Player {} set spawn point at {} in world {}", 
@@ -208,12 +209,12 @@ public class SpawnCommands {
                 
                 return 1;
             } else {
-                context.getSource().sendFailure(Component.literal("§cFailed to set spawn point!"));
+                LanguageUtil.sendErrorMessage(context.getSource(), "spawn.set.failed");
                 return 0;
             }
             
         } catch (Exception e) {
-            context.getSource().sendFailure(Component.literal("§cError setting spawn point: " + e.getMessage()));
+            LanguageUtil.sendErrorMessage(context.getSource(), "spawn.set.error", e.getMessage());
             NeoEssentials.LOGGER.error("Error in /setspawn command", e);
             return 0;
         }
@@ -283,28 +284,6 @@ public class SpawnCommands {
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error checking spawn location validity", e);
-            return false;
-        }
-    }
-    
-    /**
-     * Checks if a command source has the specified permission.
-     * 
-     * @param source The command source
-     * @param permission The permission node to check
-     * @return true if the source has permission, false otherwise
-     */
-    private static boolean hasPermission(CommandSourceStack source, String permission) {
-        try {
-            if (source.hasPermission(4)) { // OP level 4
-                return true;
-            }
-            
-            // Check with CommandManager permission system
-            return CommandManager.hasPermission(source, permission);
-            
-        } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Error checking permission {}: {}", permission, e.getMessage());
             return false;
         }
     }
