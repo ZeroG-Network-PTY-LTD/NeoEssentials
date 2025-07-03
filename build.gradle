@@ -3,7 +3,8 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.93'
     id 'idea'
-    // Removing Shadow plugin - will use server-provided SQLite instead
+    // Using new GradleUp Shadow plugin with latest version
+    id 'com.gradleup.shadow' version '9.0.0'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -114,12 +115,14 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 // "optional", meaning it will not be pulled by dependents of this mod.
 configurations {
     runtimeClasspath.extendsFrom localRuntime
-    // No longer need 'include' configuration since we're using Shadow
 }
 
 dependencies {    
-    // Database dependencies - SQLite will rely on server environment to avoid conflicts
-    compileOnly('org.xerial:sqlite-jdbc:3.44.1.0') {
+    // Database dependencies - SQLite will be relocated using Shadow to avoid conflicts
+    shadow('org.xerial:sqlite-jdbc:3.44.1.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
+    }
+    implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
     }
     
@@ -247,8 +250,18 @@ idea {
     }
 }
 
-// Jar configuration - relies on server environment for both SnakeYAML and SQLite
-jar {
+// Shadow configuration for relocating SQLite to avoid conflicts
+shadowJar {
+    configurations = [project.configurations.shadow]
+    
+    // Relocate SQLite to avoid conflicts with other mods like GriefLogger
+    relocate 'org.sqlite', 'com.zerog.neoessentials.libs.sqlite'
+    
+    // Merge service files
+    mergeServiceFiles()
+    
+    archiveClassifier = '' // Use this as the main JAR
+    
     manifest {
         attributes(
             'Specification-Title': 'NeoEssentials',
@@ -262,9 +275,38 @@ jar {
     }
     
     doFirst {
-        println "Building JAR without bundled dependencies (relying on server environment for SnakeYAML and SQLite)..."
+        println "Building Shadow JAR with relocated SQLite to avoid conflicts with GriefLogger..."
     }
 }
+
+// Configure regular jar to be lightweight (no dependencies)
+jar {
+    manifest {
+        attributes(
+            'Specification-Title': 'NeoEssentials',
+            'Specification-Vendor': 'ZeroG',
+            'Specification-Version': '1',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'ZeroG',
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        )
+    }
+    
+    archiveClassifier = 'slim' // Mark this as the slim version
+    
+    doFirst {
+        println "Building slim JAR without dependencies..."
+    }
+}
+
+// Use shadowJar as the main artifact
+artifacts {
+    archives shadowJar
+}
+
+// Make build depend on shadowJar instead of jar
+build.dependsOn shadowJar
 
 // Configuration adjustments if needed go here
 
