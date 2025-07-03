@@ -4,13 +4,12 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.NeoEssentials;
+import com.zerog.neoessentials.data.BookmarkManager;
 import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
-import com.zerog.neoessentials.utils.TeleportHistory;
 import com.zerog.neoessentials.utils.TeleportUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.*;
@@ -20,12 +19,6 @@ import java.util.*;
  * Provides advanced teleportation features beyond basic teleport commands.
  */
 public class TeleportBookmarkCommands {
-
-    // Storage for player bookmarks
-    private static final Map<UUID, Map<String, BookmarkLocation>> playerBookmarks = new HashMap<>();
-    
-    // Maximum bookmarks per player
-    private static final int MAX_BOOKMARKS = 20;
 
     /**
      * Registers all enhanced teleportation commands.
@@ -114,17 +107,10 @@ public class TeleportBookmarkCommands {
                 return 0;
             }
             
-            UUID playerId = player.getUUID();
-            Map<String, BookmarkLocation> bookmarks = playerBookmarks.computeIfAbsent(playerId, k -> new HashMap<>());
-            
-            // Check if player has too many bookmarks
-            if (bookmarks.size() >= MAX_BOOKMARKS && !bookmarks.containsKey(bookmarkName)) {
-                LanguageUtil.sendErrorMessage(player, "commands.tpbookmark.too_many", String.valueOf(MAX_BOOKMARKS));
-                return 0;
-            }
+            BookmarkManager bookmarkManager = NeoEssentials.getInstance().getDataManager().getBookmarkManager();
             
             // Create the bookmark
-            BookmarkLocation bookmark = new BookmarkLocation(
+            BookmarkManager.BookmarkData bookmark = new BookmarkManager.BookmarkData(
                 player.serverLevel().dimension().location().toString(),
                 player.getX(),
                 player.getY(),
@@ -134,11 +120,16 @@ public class TeleportBookmarkCommands {
                 System.currentTimeMillis()
             );
             
-            bookmarks.put(bookmarkName, bookmark);
+            boolean success = bookmarkManager.addBookmark(player, bookmarkName, bookmark);
             
-            LanguageUtil.sendMessage(player, "commands.tpbookmark.added", bookmarkName);
+            if (success) {
+                LanguageUtil.sendMessage(player, "commands.tpbookmark.added", bookmarkName);
+            } else {
+                LanguageUtil.sendErrorMessage(player, "commands.tpbookmark.too_many", 
+                    String.valueOf(bookmarkManager.getMaxBookmarks()));
+            }
             
-            return 1;
+            return success ? 1 : 0;
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error adding bookmark: {}", e.getMessage());
             return 0;
@@ -153,19 +144,16 @@ public class TeleportBookmarkCommands {
             ServerPlayer player = context.getSource().getPlayerOrException();
             String bookmarkName = StringArgumentType.getString(context, "name");
             
-            UUID playerId = player.getUUID();
-            Map<String, BookmarkLocation> bookmarks = playerBookmarks.get(playerId);
+            BookmarkManager bookmarkManager = NeoEssentials.getInstance().getDataManager().getBookmarkManager();
+            boolean success = bookmarkManager.removeBookmark(player.getUUID(), bookmarkName);
             
-            if (bookmarks == null || !bookmarks.containsKey(bookmarkName)) {
+            if (success) {
+                LanguageUtil.sendMessage(player, "commands.tpbookmark.removed", bookmarkName);
+            } else {
                 LanguageUtil.sendErrorMessage(player, "commands.tpbookmark.not_found", bookmarkName);
-                return 0;
             }
             
-            bookmarks.remove(bookmarkName);
-            
-            LanguageUtil.sendMessage(player, "commands.tpbookmark.removed", bookmarkName);
-            
-            return 1;
+            return success ? 1 : 0;
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error removing bookmark: {}", e.getMessage());
             return 0;
@@ -179,10 +167,10 @@ public class TeleportBookmarkCommands {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
             
-            UUID playerId = player.getUUID();
-            Map<String, BookmarkLocation> bookmarks = playerBookmarks.get(playerId);
+            BookmarkManager bookmarkManager = NeoEssentials.getInstance().getDataManager().getBookmarkManager();
+            Map<String, BookmarkManager.BookmarkData> bookmarks = bookmarkManager.getPlayerBookmarks(player.getUUID());
             
-            if (bookmarks == null || bookmarks.isEmpty()) {
+            if (bookmarks.isEmpty()) {
                 LanguageUtil.sendMessage(player, "commands.tpbookmark.no_bookmarks");
                 return 0;
             }
@@ -191,12 +179,12 @@ public class TeleportBookmarkCommands {
             
             // Sort bookmarks by creation time (newest first)
             bookmarks.entrySet().stream()
-                .sorted(Map.Entry.<String, BookmarkLocation>comparingByValue(
+                .sorted(Map.Entry.<String, BookmarkManager.BookmarkData>comparingByValue(
                     (b1, b2) -> Long.compare(b2.timestamp, b1.timestamp)
                 ))
                 .forEach(entry -> {
                     String name = entry.getKey();
-                    BookmarkLocation bookmark = entry.getValue();
+                    BookmarkManager.BookmarkData bookmark = entry.getValue();
                     
                     String coords = String.format("%.1f, %.1f, %.1f", 
                         bookmark.x, bookmark.y, bookmark.z);
@@ -206,7 +194,7 @@ public class TeleportBookmarkCommands {
                 });
             
             LanguageUtil.sendMessage(player, "commands.tpbookmark.list.footer", 
-                String.valueOf(bookmarks.size()), String.valueOf(MAX_BOOKMARKS));
+                String.valueOf(bookmarks.size()), String.valueOf(bookmarkManager.getMaxBookmarks()));
             
             return 1;
         } catch (Exception e) {
@@ -223,22 +211,22 @@ public class TeleportBookmarkCommands {
             ServerPlayer player = context.getSource().getPlayerOrException();
             String bookmarkName = StringArgumentType.getString(context, "name");
             
-            UUID playerId = player.getUUID();
-            Map<String, BookmarkLocation> bookmarks = playerBookmarks.get(playerId);
+            BookmarkManager bookmarkManager = NeoEssentials.getInstance().getDataManager().getBookmarkManager();
+            BookmarkManager.BookmarkData bookmark = bookmarkManager.getBookmark(player.getUUID(), bookmarkName);
             
-            if (bookmarks == null || !bookmarks.containsKey(bookmarkName)) {
+            if (bookmark == null) {
                 LanguageUtil.sendErrorMessage(player, "commands.tpbookmark.not_found", bookmarkName);
                 return 0;
             }
             
-            BookmarkLocation bookmark = bookmarks.get(bookmarkName);
-            
             // Find the target dimension
             net.minecraft.server.level.ServerLevel targetLevel = null;
-            for (net.minecraft.server.level.ServerLevel level : player.getServer().getAllLevels()) {
-                if (level.dimension().location().toString().equals(bookmark.dimension)) {
-                    targetLevel = level;
-                    break;
+            if (player.getServer() != null) {
+                for (net.minecraft.server.level.ServerLevel level : player.getServer().getAllLevels()) {
+                    if (level.dimension().location().toString().equals(bookmark.dimension)) {
+                        targetLevel = level;
+                        break;
+                    }
                 }
             }
             
@@ -261,26 +249,6 @@ public class TeleportBookmarkCommands {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error teleporting to bookmark: {}", e.getMessage());
             return 0;
-        }
-    }
-
-    /**
-     * Class to store bookmark location data.
-     */
-    private static class BookmarkLocation {
-        public final String dimension;
-        public final double x, y, z;
-        public final float yaw, pitch;
-        public final long timestamp;
-
-        public BookmarkLocation(String dimension, double x, double y, double z, float yaw, float pitch, long timestamp) {
-            this.dimension = dimension;
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.yaw = yaw;
-            this.pitch = pitch;
-            this.timestamp = timestamp;
         }
     }
 }
