@@ -2,7 +2,7 @@ package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -105,7 +105,7 @@ public class ShopPricingMenu extends AbstractContainerMenu {
                 break;
                 
             default:
-                MessageUtil.sendMessage(player, "§cUnknown action: " + action);
+                LanguageUtil.sendMessage(player, "§cUnknown action: " + action);
                 break;
         }
     }
@@ -118,16 +118,16 @@ public class ShopPricingMenu extends AbstractContainerMenu {
         double buyPrice = actionData.getDouble("BuyPrice");
         double sellPrice = actionData.getDouble("SellPrice");
         
-        MessageUtil.sendMessage(player, "§6§l=== Pricing for " + itemName + " ===");
-        MessageUtil.sendMessage(player, "§7Current Buy Price: §6$" + String.format("%.2f", buyPrice));
-        MessageUtil.sendMessage(player, "§7Current Sell Price: §6$" + String.format("%.2f", sellPrice));
-        MessageUtil.sendMessage(player, "");
-        MessageUtil.sendMessage(player, "§eCommands to modify pricing:");
-        MessageUtil.sendMessage(player, "§f/shop setprice \"" + shop.getShopName() + "\" \"" + itemName + "\" <buy-price> [sell-price]");
-        MessageUtil.sendMessage(player, "");
-        MessageUtil.sendMessage(player, "§7Example:");
-        MessageUtil.sendMessage(player, "§f/shop setprice \"" + shop.getShopName() + "\" \"" + itemName + "\" " + 
+        LanguageUtil.sendMessage(player, "§6§l=== Pricing for " + itemName + " ===");
+        LanguageUtil.sendMessage(player, "§7Current Buy Price: §6$" + String.format("%.2f", buyPrice));
+        LanguageUtil.sendMessage(player, "§7Current Sell Price: §6$" + String.format("%.2f", sellPrice));
+        LanguageUtil.sendMessage(player, "");
+        LanguageUtil.sendMessage(player, "§eCommands to modify pricing:");
+        LanguageUtil.sendMessage(player, "§f/shop setprice \"" + shop.getShopName() + "\" \"" + itemName + "\" <buy-price> [sell-price]");
+        LanguageUtil.sendMessage(player, "");
+        LanguageUtil.sendMessage(player, "§7Example:");
+        LanguageUtil.sendMessage(player, "§f/shop setprice \"" + shop.getShopName() + "\" \"" + itemName + "\" " + 
             String.format("%.2f", buyPrice * 1.1) + " " + String.format("%.2f", sellPrice * 0.9));
-        MessageUtil.sendMessage(player, "§8(Sets buy price 10% higher, sell price 10% lower)");
+        LanguageUtil.sendMessage(player, "§8(Sets buy price 10% higher, sell price 10% lower)");
     }
 }

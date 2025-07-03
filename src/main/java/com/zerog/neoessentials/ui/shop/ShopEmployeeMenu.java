@@ -3,7 +3,7 @@ package com.zerog.neoessentials.ui.shop;
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
 import com.zerog.neoessentials.economy.ShopEmployeeManager;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -100,8 +100,8 @@ public class ShopEmployeeMenu extends AbstractContainerMenu {
     private void handleAction(String action, CompoundTag actionData, ServerPlayer player, ClickType clickType) {
         switch (action) {
             case "hire_employee":
-                MessageUtil.sendMessage(player, "§eTo hire an employee, use: §f/shop employee hire <playername> <role>");
-                MessageUtil.sendMessage(player, "§7Available roles: Manager, Cashier, Stocker, Sales_Associate, Viewer");
+                LanguageUtil.sendMessage(player, "§eTo hire an employee, use: §f/shop employee hire <playername> <role>");
+                LanguageUtil.sendMessage(player, "§7Available roles: Manager, Cashier, Stocker, Sales_Associate, Viewer");
                 player.closeContainer();
                 break;
                 
@@ -117,7 +117,7 @@ public class ShopEmployeeMenu extends AbstractContainerMenu {
                     UUID employeeId = UUID.fromString(employeeIdStr);
                     handleEmployeeAction(employeeId, employeeName, player, clickType);
                 } catch (IllegalArgumentException e) {
-                    MessageUtil.sendMessage(player, "§cInvalid employee ID!");
+                    LanguageUtil.sendMessage(player, "§cInvalid employee ID!");
                 }
                 break;
                 
@@ -130,7 +130,7 @@ public class ShopEmployeeMenu extends AbstractContainerMenu {
                 break;
                 
             default:
-                MessageUtil.sendMessage(player, "§cUnknown action: " + action);
+                LanguageUtil.sendMessage(player, "§cUnknown action: " + action);
                 break;
         }
     }
@@ -141,7 +141,7 @@ public class ShopEmployeeMenu extends AbstractContainerMenu {
     private void handleEmployeeAction(UUID employeeId, String employeeName, ServerPlayer player, ClickType clickType) {
         ShopEmployeeManager.ShopEmployee employee = shop.getEmployeeManager().getEmployee(employeeId);
         if (employee == null) {
-            MessageUtil.sendMessage(player, "§cEmployee not found!");
+            LanguageUtil.sendMessage(player, "§cEmployee not found!");
             return;
         }
         
@@ -152,25 +152,25 @@ public class ShopEmployeeMenu extends AbstractContainerMenu {
              !employee.getPlayerId().equals(shop.getOwnerId()));
         
         if (!canManage) {
-            MessageUtil.sendMessage(player, "§cYou don't have permission to manage this employee!");
+            LanguageUtil.sendMessage(player, "§cYou don't have permission to manage this employee!");
             return;
         }
         
         switch (clickType) {
             case PICKUP: // Edit role
-                MessageUtil.sendMessage(player, "§eTo change " + employeeName + "'s role, use:");
-                MessageUtil.sendMessage(player, "§f/shop employee setrole " + employeeName + " <role>");
-                MessageUtil.sendMessage(player, "§7Available roles: Manager, Cashier, Stocker, Sales_Associate, Viewer");
+                LanguageUtil.sendMessage(player, "§eTo change " + employeeName + "'s role, use:");
+                LanguageUtil.sendMessage(player, "§f/shop employee setrole " + employeeName + " <role>");
+                LanguageUtil.sendMessage(player, "§7Available roles: Manager, Cashier, Stocker, Sales_Associate, Viewer");
                 player.closeContainer();
                 break;
                 
             case PICKUP_ALL: // Toggle active status
                 if (employee.isActive()) {
                     employee.setActive(false);
-                    MessageUtil.sendMessage(player, "§6" + employeeName + " has been suspended.");
+                    LanguageUtil.sendMessage(player, "§6" + employeeName + " has been suspended.");
                 } else {
                     employee.setActive(true);
-                    MessageUtil.sendMessage(player, "§6" + employeeName + " has been reactivated.");
+                    LanguageUtil.sendMessage(player, "§6" + employeeName + " has been reactivated.");
                 }
                 // Refresh the GUI
                 new ShopEmployeeGUI(shop, shopManager).openEmployeeMenu(player);
@@ -178,20 +178,20 @@ public class ShopEmployeeMenu extends AbstractContainerMenu {
                 
             case QUICK_MOVE: // Remove employee
                 if (shop.getEmployeeManager().removeEmployee(employeeId, player.getUUID())) {
-                    MessageUtil.sendMessage(player, "§6" + employeeName + " has been removed from the shop.");
+                    LanguageUtil.sendMessage(player, "§6" + employeeName + " has been removed from the shop.");
                     // Refresh the GUI
                     new ShopEmployeeGUI(shop, shopManager).openEmployeeMenu(player);
                 } else {
-                    MessageUtil.sendMessage(player, "§cFailed to remove employee!");
+                    LanguageUtil.sendMessage(player, "§cFailed to remove employee!");
                 }
                 break;
                 
             default:
                 // Show employee details
-                MessageUtil.sendMessage(player, "§6=== " + employeeName + " ===");
-                MessageUtil.sendMessage(player, "§7Role: §f" + employee.getRole().getDisplayName());
-                MessageUtil.sendMessage(player, "§7Status: " + (employee.isActive() ? "§aActive" : "§cInactive"));
-                MessageUtil.sendMessage(player, "§7Use left-click to edit, right-click to toggle status");
+                LanguageUtil.sendMessage(player, "§6=== " + employeeName + " ===");
+                LanguageUtil.sendMessage(player, "§7Role: §f" + employee.getRole().getDisplayName());
+                LanguageUtil.sendMessage(player, "§7Status: " + (employee.isActive() ? "§aActive" : "§cInactive"));
+                LanguageUtil.sendMessage(player, "§7Use left-click to edit, right-click to toggle status");
                 break;
         }
     }

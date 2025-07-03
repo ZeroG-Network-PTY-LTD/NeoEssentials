@@ -2,7 +2,7 @@ package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -108,7 +108,7 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
                 if (shop.getOwnerId().equals(player.getUUID())) {
                     removeAllItems(player);
                 } else {
-                    MessageUtil.sendMessage(player, "§cOnly the shop owner can remove all items!");
+                    LanguageUtil.sendMessage(player, "§cOnly the shop owner can remove all items!");
                 }
                 break;
                 
@@ -118,7 +118,7 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
                 break;
                 
             default:
-                MessageUtil.sendMessage(player, "§cUnknown action: " + action);
+                LanguageUtil.sendMessage(player, "§cUnknown action: " + action);
                 break;
         }
     }
@@ -128,8 +128,8 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
      */
     private void openAddItemsInterface(ServerPlayer player) {
         // For now, we'll use a simple message. Later we can implement a more sophisticated interface
-        MessageUtil.sendMessage(player, "§ePlace items in your hotbar, then use §6/shop additem <shopname> <amount> <buy-price> <sell-price>");
-        MessageUtil.sendMessage(player, "§7Example: §f/shop additem " + shop.getShopName() + " 64 10.0 8.0");
+        LanguageUtil.sendMessage(player, "§ePlace items in your hotbar, then use §6/shop additem <shopname> <amount> <buy-price> <sell-price>");
+        LanguageUtil.sendMessage(player, "§7Example: §f/shop additem " + shop.getShopName() + " 64 10.0 8.0");
         player.closeContainer();
     }
     
@@ -175,7 +175,7 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
                 // Refresh the GUI
                 new ShopInventoryGUI(shop, shopManager).openInventoryMenu(player);
             } else {
-                MessageUtil.sendMessage(player, "§7No items to remove from shop.");
+                LanguageUtil.sendMessage(player, "§7No items to remove from shop.");
             }
             
         } catch (Exception e) {
@@ -190,7 +190,7 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
         try {
             Shop.ShopItem shopItem = shop.getInventory().get(itemId);
             if (shopItem == null) {
-                MessageUtil.sendMessage(player, "§cItem not found in shop!");
+                LanguageUtil.sendMessage(player, "§cItem not found in shop!");
                 return;
             }
             
@@ -216,7 +216,7 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
             }
             
             if (removeAmount <= 0) {
-                MessageUtil.sendMessage(player, "§7No stock to remove.");
+                LanguageUtil.sendMessage(player, "§7No stock to remove.");
                 return;
             }
             
@@ -229,13 +229,13 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
                 if (player.getInventory().add(returnStack)) {
                     // Successfully added, remove from shop
                     shop.removeItem(itemId, removeAmount);
-                    MessageUtil.sendMessage(player, "§aRemoved §f" + removeAmount + "x " + 
+                    LanguageUtil.sendMessage(player, "§aRemoved §f" + removeAmount + "x " + 
                         com.zerog.neoessentials.economy.ItemHandler.formatItemName(itemId) + " §afrom shop.");
                 } else {
                     // Inventory full, drop items
                     player.drop(returnStack, false);
                     shop.removeItem(itemId, removeAmount);
-                    MessageUtil.sendMessage(player, "§eInventory full! Dropped §f" + removeAmount + "x " + 
+                    LanguageUtil.sendMessage(player, "§eInventory full! Dropped §f" + removeAmount + "x " + 
                         com.zerog.neoessentials.economy.ItemHandler.formatItemName(itemId) + " §eon the ground.");
                 }
                 
