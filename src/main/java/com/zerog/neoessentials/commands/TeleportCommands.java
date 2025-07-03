@@ -5,7 +5,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.SpawnManager;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.utils.TeleportUtil;
 import com.zerog.neoessentials.utils.TeleportHistory;
 import net.minecraft.commands.CommandSourceStack;
@@ -28,8 +29,9 @@ public class TeleportCommands {
      */
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Register /tpa command
-        dispatcher.register(            Commands.literal("tpa")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.tpa"))
+        dispatcher.register(
+            Commands.literal("tpa")
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.tpa"))
                 .then(
                     Commands.argument("player", EntityArgument.player())
                         .executes(context -> {
@@ -40,10 +42,10 @@ public class TeleportCommands {
                             boolean success = TeleportUtil.createTeleportRequest(source, target, true);
                             
                             if (success) {
-                                MessageUtil.sendMessage(source, "Teleport request sent to " + target.getScoreboardName());
-                                MessageUtil.sendMessage(target, source.getScoreboardName() + " has requested to teleport to you. Type /tpaccept to accept or /tpdeny to deny.");
+                                LanguageUtil.sendMessage(source, "neoessentials.teleport.request_sent", target.getScoreboardName());
+                                LanguageUtil.sendMessage(target, "neoessentials.teleport.request_received", source.getScoreboardName());
                             } else {
-                                MessageUtil.sendErrorMessage(source, "You already have a pending teleport request with this player.");
+                                LanguageUtil.sendErrorMessage(source, "neoessentials.teleport.already_pending");
                             }
                             
                             return 1;
