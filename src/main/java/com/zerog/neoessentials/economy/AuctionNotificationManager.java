@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.economy;
 
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -125,11 +125,11 @@ public class AuctionNotificationManager {
             
             ServerPlayer watcher = server.getPlayerList().getPlayer(watcherId);
             if (watcher != null) {
-                MessageUtil.sendMessage(watcher, message);
+                LanguageUtil.sendMessage(watcher, message);
                 
                 // Send additional info if they were the previous highest bidder
                 if (watcherId.equals(auction.getCurrentBidder())) {
-                    MessageUtil.sendMessage(watcher, "§c⚠ You have been outbid! Consider placing a higher bid.");
+                    LanguageUtil.sendMessage(watcher, "§c⚠ You have been outbid! Consider placing a higher bid.");
                 }
             }
         }
@@ -164,13 +164,13 @@ public class AuctionNotificationManager {
         for (UUID watcherId : watchers) {
             ServerPlayer watcher = server.getPlayerList().getPlayer(watcherId);
             if (watcher != null) {
-                MessageUtil.sendMessage(watcher, baseMessage);
-                MessageUtil.sendMessage(watcher, winnerMessage);
+                LanguageUtil.sendMessage(watcher, baseMessage);
+                LanguageUtil.sendMessage(watcher, winnerMessage);
                 
                 // Special message for winner
                 if (watcherId.equals(winner)) {
-                    MessageUtil.sendMessage(watcher, "§a🎉 Congratulations! You won the auction!");
-                    MessageUtil.sendMessage(watcher, "§7Use §e/auction collect §7to claim your item.");
+                    LanguageUtil.sendMessage(watcher, "§a🎉 Congratulations! You won the auction!");
+                    LanguageUtil.sendMessage(watcher, "§7Use §e/auction collect §7to claim your item.");
                 }
             }
         }
@@ -202,8 +202,8 @@ public class AuctionNotificationManager {
             
             ServerPlayer watcher = server.getPlayerList().getPlayer(watcherId);
             if (watcher != null) {
-                MessageUtil.sendMessage(watcher, message);
-                MessageUtil.sendMessage(watcher, "§7This auction is no longer available.");
+                LanguageUtil.sendMessage(watcher, message);
+                LanguageUtil.sendMessage(watcher, "§7This auction is no longer available.");
             }
         }
         
@@ -228,10 +228,10 @@ public class AuctionNotificationManager {
         for (UUID watcherId : watchers) {
             ServerPlayer watcher = server.getPlayerList().getPlayer(watcherId);
             if (watcher != null) {
-                MessageUtil.sendMessage(watcher, message);
+                LanguageUtil.sendMessage(watcher, message);
                 
                 if (watcherId.equals(auction.getCurrentBidder())) {
-                    MessageUtil.sendMessage(watcher, "§7Your bid has been refunded.");
+                    LanguageUtil.sendMessage(watcher, "§7Your bid has been refunded.");
                 }
             }
         }
@@ -263,8 +263,8 @@ public class AuctionNotificationManager {
         for (UUID watcherId : watchers) {
             ServerPlayer watcher = server.getPlayerList().getPlayer(watcherId);
             if (watcher != null) {
-                MessageUtil.sendMessage(watcher, message);
-                MessageUtil.sendMessage(watcher, currentBidMessage);
+                LanguageUtil.sendMessage(watcher, message);
+                LanguageUtil.sendMessage(watcher, currentBidMessage);
             }
         }
     }

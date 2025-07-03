@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.economy;
 
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
@@ -40,13 +40,13 @@ public class LoanNotificationManager {
         
         if (player != null) {
             // Player is online - send immediate notification
-            MessageUtil.sendMessage(player, "§c⚠ LOAN OVERDUE NOTICE ⚠");
-            MessageUtil.sendMessage(player, "§7Your loan payment is overdue!");
-            MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
-            MessageUtil.sendMessage(player, "§7Amount Due: §c" + loan.getCurrency().format(loan.getMonthlyPayment()));
-            MessageUtil.sendMessage(player, "§7Current Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
-            MessageUtil.sendMessage(player, "§7Use §a/loan pay <amount> §7to make a payment");
-            MessageUtil.sendMessage(player, "§c※ Late fees may apply for extended overdue periods");
+            LanguageUtil.sendMessage(player, "§c⚠ LOAN OVERDUE NOTICE ⚠");
+            LanguageUtil.sendMessage(player, "§7Your loan payment is overdue!");
+            LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+            LanguageUtil.sendMessage(player, "§7Amount Due: §c" + loan.getCurrency().format(loan.getMonthlyPayment()));
+            LanguageUtil.sendMessage(player, "§7Current Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
+            LanguageUtil.sendMessage(player, "§7Use §a/loan pay <amount> §7to make a payment");
+            LanguageUtil.sendMessage(player, "§c※ Late fees may apply for extended overdue periods");
         } else {
             // Player is offline - store notification for when player logs in
             storePendingNotification(playerId, PendingNotificationType.LOAN_OVERDUE, loan);
@@ -63,12 +63,12 @@ public class LoanNotificationManager {
         ServerPlayer player = getOnlinePlayer(playerId);
         
         if (player != null) {
-            MessageUtil.sendMessage(player, "§c💰 LATE FEE APPLIED");
-            MessageUtil.sendMessage(player, "§7A late fee of §c" + loan.getCurrency().format(lateFee) + 
+            LanguageUtil.sendMessage(player, "§c💰 LATE FEE APPLIED");
+            LanguageUtil.sendMessage(player, "§7A late fee of §c" + loan.getCurrency().format(lateFee) + 
                 "§7 has been added to your loan");
-            MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
-            MessageUtil.sendMessage(player, "§7New Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
-            MessageUtil.sendMessage(player, "§7Make a payment soon to avoid further penalties");
+            LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+            LanguageUtil.sendMessage(player, "§7New Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
+            LanguageUtil.sendMessage(player, "§7Make a payment soon to avoid further penalties");
         } else {
             // Player is offline - store notification
             storePendingNotification(playerId, PendingNotificationType.LATE_FEE_APPLIED, loan, lateFee, null);
@@ -83,12 +83,12 @@ public class LoanNotificationManager {
         ServerPlayer player = getOnlinePlayer(playerId);
         
         if (player != null) {
-            MessageUtil.sendMessage(player, "§4⚠ LOAN DEFAULT NOTICE ⚠");
-            MessageUtil.sendMessage(player, "§cYour loan has been moved to DEFAULT status");
-            MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
-            MessageUtil.sendMessage(player, "§7Outstanding Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
-            MessageUtil.sendMessage(player, "§c※ This will negatively impact your credit score");
-            MessageUtil.sendMessage(player, "§c※ Contact an administrator immediately");
+            LanguageUtil.sendMessage(player, "§4⚠ LOAN DEFAULT NOTICE ⚠");
+            LanguageUtil.sendMessage(player, "§cYour loan has been moved to DEFAULT status");
+            LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+            LanguageUtil.sendMessage(player, "§7Outstanding Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
+            LanguageUtil.sendMessage(player, "§c※ This will negatively impact your credit score");
+            LanguageUtil.sendMessage(player, "§c※ Contact an administrator immediately");
         } else {
             // Player is offline - store notification
             storePendingNotification(playerId, PendingNotificationType.LOAN_DEFAULT, loan);
@@ -103,13 +103,13 @@ public class LoanNotificationManager {
         ServerPlayer player = getOnlinePlayer(playerId);
         
         if (player != null) {
-            MessageUtil.sendMessage(player, "§a✓ LOAN APPROVED!");
-            MessageUtil.sendMessage(player, "§7Your loan application has been approved");
-            MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
-            MessageUtil.sendMessage(player, "§7Amount: §a" + loan.getCurrency().format(loan.getPrincipalAmount()));
-            MessageUtil.sendMessage(player, "§7Monthly Payment: §e" + loan.getCurrency().format(loan.getMonthlyPayment()));
-            MessageUtil.sendMessage(player, "§7Funds have been deposited to your primary account");
-            MessageUtil.sendMessage(player, "§a§lFirst payment due in 30 days!");
+            LanguageUtil.sendMessage(player, "§a✓ LOAN APPROVED!");
+            LanguageUtil.sendMessage(player, "§7Your loan application has been approved");
+            LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+            LanguageUtil.sendMessage(player, "§7Amount: §a" + loan.getCurrency().format(loan.getPrincipalAmount()));
+            LanguageUtil.sendMessage(player, "§7Monthly Payment: §e" + loan.getCurrency().format(loan.getMonthlyPayment()));
+            LanguageUtil.sendMessage(player, "§7Funds have been deposited to your primary account");
+            LanguageUtil.sendMessage(player, "§a§lFirst payment due in 30 days!");
         } else {
             // Player is offline - store notification
             storePendingNotification(playerId, PendingNotificationType.LOAN_APPROVED, loan);
@@ -124,11 +124,11 @@ public class LoanNotificationManager {
         ServerPlayer player = getOnlinePlayer(playerId);
         
         if (player != null) {
-            MessageUtil.sendMessage(player, "§c✗ LOAN APPLICATION DENIED");
-            MessageUtil.sendMessage(player, "§7Your loan application has been denied");
-            MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
-            MessageUtil.sendMessage(player, "§7Reason: §c" + reason);
-            MessageUtil.sendMessage(player, "§7You may apply for a different loan type or amount");
+            LanguageUtil.sendMessage(player, "§c✗ LOAN APPLICATION DENIED");
+            LanguageUtil.sendMessage(player, "§7Your loan application has been denied");
+            LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+            LanguageUtil.sendMessage(player, "§7Reason: §c" + reason);
+            LanguageUtil.sendMessage(player, "§7You may apply for a different loan type or amount");
         } else {
             // Player is offline - store notification
             storePendingNotification(playerId, PendingNotificationType.LOAN_DENIED, loan, null, reason);
@@ -171,11 +171,11 @@ public class LoanNotificationManager {
                              daysUntilDue == 1 ? "tomorrow" : 
                              "in " + daysUntilDue + " days";
             
-            MessageUtil.sendMessage(player, "§e💰 PAYMENT REMINDER");
-            MessageUtil.sendMessage(player, "§7Your loan payment is due §e" + timeText);
-            MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
-            MessageUtil.sendMessage(player, "§7Payment Amount: §a" + loan.getCurrency().format(loan.getMonthlyPayment()));
-            MessageUtil.sendMessage(player, "§7Use §a/loan pay " + String.format("%.2f", loan.getMonthlyPayment()) + "§7 to pay");
+            LanguageUtil.sendMessage(player, "§e💰 PAYMENT REMINDER");
+            LanguageUtil.sendMessage(player, "§7Your loan payment is due §e" + timeText);
+            LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+            LanguageUtil.sendMessage(player, "§7Payment Amount: §a" + loan.getCurrency().format(loan.getMonthlyPayment()));
+            LanguageUtil.sendMessage(player, "§7Use §a/loan pay " + String.format("%.2f", loan.getMonthlyPayment()) + "§7 to pay");
         }
     }
     
@@ -216,11 +216,11 @@ public class LoanNotificationManager {
                 .count();
             
             if (overdueLoans > 0) {
-                MessageUtil.sendMessage(player, "§c⚠ You have " + overdueLoans + " overdue loan(s)!");
-                MessageUtil.sendMessage(player, "§7Use §e/loan list §7to view your loans");
+                LanguageUtil.sendMessage(player, "§c⚠ You have " + overdueLoans + " overdue loan(s)!");
+                LanguageUtil.sendMessage(player, "§7Use §e/loan list §7to view your loans");
             } else if (currentLoans > 0) {
-                MessageUtil.sendMessage(player, "§a💰 Welcome back! You have " + currentLoans + " active loan(s)");
-                MessageUtil.sendMessage(player, "§7Use §e/loan list §7to view payment schedules");
+                LanguageUtil.sendMessage(player, "§a💰 Welcome back! You have " + currentLoans + " active loan(s)");
+                LanguageUtil.sendMessage(player, "§7Use §e/loan list §7to view payment schedules");
             }
         } catch (Exception e) {
             // Silently fail - not critical
@@ -252,7 +252,7 @@ public class LoanNotificationManager {
         
         // Send a summary first if there are many notifications
         if (notifications.size() > 3) {
-            MessageUtil.sendMessage(player, "§e⚠ You have " + notifications.size() + " loan notifications:");
+            LanguageUtil.sendMessage(player, "§e⚠ You have " + notifications.size() + " loan notifications:");
         }
         
         for (PendingNotification notification : notifications) {
@@ -260,7 +260,7 @@ public class LoanNotificationManager {
         }
         
         if (notifications.size() > 1) {
-            MessageUtil.sendMessage(player, "§7Use §e/loan list §7to view all your loans");
+            LanguageUtil.sendMessage(player, "§7Use §e/loan list §7to view all your loans");
         }
     }
     
@@ -272,40 +272,40 @@ public class LoanNotificationManager {
         
         switch (notification.getType()) {
             case LOAN_OVERDUE:
-                MessageUtil.sendMessage(player, "§c⚠ LOAN OVERDUE NOTICE ⚠");
-                MessageUtil.sendMessage(player, "§7Your loan payment was overdue while you were offline!");
-                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
-                MessageUtil.sendMessage(player, "§7Amount Due: §c" + loan.getCurrency().format(loan.getMonthlyPayment()));
-                MessageUtil.sendMessage(player, "§7Current Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
+                LanguageUtil.sendMessage(player, "§c⚠ LOAN OVERDUE NOTICE ⚠");
+                LanguageUtil.sendMessage(player, "§7Your loan payment was overdue while you were offline!");
+                LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+                LanguageUtil.sendMessage(player, "§7Amount Due: §c" + loan.getCurrency().format(loan.getMonthlyPayment()));
+                LanguageUtil.sendMessage(player, "§7Current Balance: §c" + loan.getCurrency().format(loan.getCurrentBalance()));
                 break;
                 
             case LATE_FEE_APPLIED:
-                MessageUtil.sendMessage(player, "§c💰 LATE FEE APPLIED (while offline)");
-                MessageUtil.sendMessage(player, "§7A late fee of §c" + loan.getCurrency().format(notification.getAmount()) + 
+                LanguageUtil.sendMessage(player, "§c💰 LATE FEE APPLIED (while offline)");
+                LanguageUtil.sendMessage(player, "§7A late fee of §c" + loan.getCurrency().format(notification.getAmount()) + 
                     "§7 was added to your loan");
-                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+                LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
                 break;
                 
             case LOAN_DEFAULT:
-                MessageUtil.sendMessage(player, "§4⚠ LOAN DEFAULT NOTICE ⚠");
-                MessageUtil.sendMessage(player, "§cYour loan was moved to DEFAULT status while you were offline");
-                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
-                MessageUtil.sendMessage(player, "§c※ This negatively impacts your credit score");
+                LanguageUtil.sendMessage(player, "§4⚠ LOAN DEFAULT NOTICE ⚠");
+                LanguageUtil.sendMessage(player, "§cYour loan was moved to DEFAULT status while you were offline");
+                LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+                LanguageUtil.sendMessage(player, "§c※ This negatively impacts your credit score");
                 break;
                 
             case LOAN_APPROVED:
-                MessageUtil.sendMessage(player, "§a✓ LOAN APPROVED! (while offline)");
-                MessageUtil.sendMessage(player, "§7Your loan application was approved");
-                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
-                MessageUtil.sendMessage(player, "§7Amount: §a" + loan.getCurrency().format(loan.getPrincipalAmount()));
+                LanguageUtil.sendMessage(player, "§a✓ LOAN APPROVED! (while offline)");
+                LanguageUtil.sendMessage(player, "§7Your loan application was approved");
+                LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+                LanguageUtil.sendMessage(player, "§7Amount: §a" + loan.getCurrency().format(loan.getPrincipalAmount()));
                 break;
                 
             case LOAN_DENIED:
-                MessageUtil.sendMessage(player, "§c✗ LOAN APPLICATION DENIED (while offline)");
-                MessageUtil.sendMessage(player, "§7Your loan application was denied");
-                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
+                LanguageUtil.sendMessage(player, "§c✗ LOAN APPLICATION DENIED (while offline)");
+                LanguageUtil.sendMessage(player, "§7Your loan application was denied");
+                LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loan.getLoanId().toString().substring(0, 8));
                 if (notification.getReason() != null) {
-                    MessageUtil.sendMessage(player, "§7Reason: §c" + notification.getReason());
+                    LanguageUtil.sendMessage(player, "§7Reason: §c" + notification.getReason());
                 }
                 break;
         }
