@@ -92,7 +92,7 @@ public class ShopInterfaceMenu extends ChestMenu {
             if (sellPrice > 0) {
                 handleSellItem(player, economyManager, itemName, sellPrice, quantity);
             } else {
-                MessageUtil.sendErrorMessage(player, "This shop doesn't buy " + itemName);
+                LanguageUtil.sendErrorMessage(player, "This shop doesn't buy " + itemName);
             }
         }
     }
@@ -105,7 +105,7 @@ public class ShopInterfaceMenu extends ChestMenu {
         
         // Check stock
         if (stock < quantity) {
-            MessageUtil.sendErrorMessage(player, "Not enough stock! Available: " + stock);
+            LanguageUtil.sendErrorMessage(player, "Not enough stock! Available: " + stock);
             return;
         }
         
@@ -116,7 +116,7 @@ public class ShopInterfaceMenu extends ChestMenu {
         com.zerog.neoessentials.economy.Currency defaultCurrency = com.zerog.neoessentials.economy.CurrencyManager.getInstance().getDefaultCurrency();
         double availableFunds = economyManager.getTotalAvailableFunds(player.getUUID(), defaultCurrency);
         if (availableFunds < totalCost) {
-            MessageUtil.sendErrorMessage(player, 
+            LanguageUtil.sendErrorMessage(player, 
                 "Not enough money! Cost: $" + String.format("%.2f", totalCost) + 
                 ", Available: $" + String.format("%.2f", availableFunds));
             return;
@@ -124,7 +124,7 @@ public class ShopInterfaceMenu extends ChestMenu {
         
         // Check inventory space
         if (!hasInventorySpace(player, itemName, quantity)) {
-            MessageUtil.sendErrorMessage(player, "Not enough inventory space!");
+            LanguageUtil.sendErrorMessage(player, "Not enough inventory space!");
             return;
         }
         
@@ -132,7 +132,7 @@ public class ShopInterfaceMenu extends ChestMenu {
         try {
             boolean success = economyManager.makeSmartPayment(player.getUUID(), totalCost, defaultCurrency, "Shop purchase");
             if (!success) {
-                MessageUtil.sendErrorMessage(player, "Payment failed! Please try again.");
+                LanguageUtil.sendErrorMessage(player, "Payment failed! Please try again.");
                 return;
             }
             
@@ -156,7 +156,7 @@ public class ShopInterfaceMenu extends ChestMenu {
             refreshShopInterface(player);
             
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "Transaction failed: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(player, "Transaction failed: " + e.getMessage());
         }
     }
     
@@ -169,7 +169,7 @@ public class ShopInterfaceMenu extends ChestMenu {
         // Check if player has enough items
         int playerItemCount = getPlayerItemCount(player, itemName);
         if (playerItemCount < quantity) {
-            MessageUtil.sendErrorMessage(player, 
+            LanguageUtil.sendErrorMessage(player, 
                 "Not enough items! You have " + playerItemCount + ", need " + quantity);
             return;
         }
@@ -182,7 +182,7 @@ public class ShopInterfaceMenu extends ChestMenu {
             com.zerog.neoessentials.economy.Currency defaultCurrency = com.zerog.neoessentials.economy.CurrencyManager.getInstance().getDefaultCurrency();
             double shopOwnerBalance = economyManager.getTotalAvailableFunds(shop.getOwnerId(), defaultCurrency);
             if (shopOwnerBalance < totalPayment) {
-                MessageUtil.sendErrorMessage(player, "Shop owner cannot afford to buy your items!");
+                LanguageUtil.sendErrorMessage(player, "Shop owner cannot afford to buy your items!");
                 return;
             }
         }
@@ -190,7 +190,7 @@ public class ShopInterfaceMenu extends ChestMenu {
         try {
             // Remove items from player
             if (!removeItemFromPlayer(player, itemName, quantity)) {
-                MessageUtil.sendErrorMessage(player, "Failed to remove items from inventory!");
+                LanguageUtil.sendErrorMessage(player, "Failed to remove items from inventory!");
                 return;
             }
             
@@ -215,7 +215,7 @@ public class ShopInterfaceMenu extends ChestMenu {
             refreshShopInterface(player);
             
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "Transaction failed: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(player, "Transaction failed: " + e.getMessage());
         }
     }
     
