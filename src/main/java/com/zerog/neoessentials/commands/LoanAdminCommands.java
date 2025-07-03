@@ -91,7 +91,7 @@ public class LoanAdminCommands {
         if (isPlayer) {
             try {
                 ServerPlayer player = source.getPlayerOrException();
-                MessageUtil.sendSuccessMessage(player, message);
+                LanguageUtil.sendMessage(player, message);
             } catch (Exception e) {
                 source.sendFailure(Component.literal("Failed to send success message: " + e.getMessage()));
             }

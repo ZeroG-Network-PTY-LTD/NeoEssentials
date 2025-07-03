@@ -214,7 +214,7 @@ public class ShopCommandsNew {
                 player.getUUID(), name, category, shopType);
             
             if (result.isSuccess()) {
-                MessageUtil.sendSuccessMessage(player, "Shop created successfully!");
+                LanguageUtil.sendMessage(player, "Shop created successfully!");
                 MessageUtil.sendMessage(player, "§7Shop Name: §e" + name);
                 MessageUtil.sendMessage(player, "§7Category: §e" + category);
                 MessageUtil.sendMessage(player, "§7Type: §e" + shopType.getDisplayName());
@@ -249,7 +249,7 @@ public class ShopCommandsNew {
             
             boolean success = shopManager.deleteShop(shop.getShopId(), player.getUUID());
             if (success) {
-                MessageUtil.sendSuccessMessage(player, "Shop deleted successfully!");
+                LanguageUtil.sendMessage(player, "Shop deleted successfully!");
             } else {
                 MessageUtil.sendErrorMessage(player, "Failed to delete shop.");
             }
@@ -389,7 +389,7 @@ public class ShopCommandsNew {
             boolean success = shop.addItem(itemId, quantity, buyPrice, actualSellPrice);
             if (success) {
                 Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
-                MessageUtil.sendSuccessMessage(player, "Item stocked successfully!");
+                LanguageUtil.sendMessage(player, "Item stocked successfully!");
                 MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
                 MessageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
                 MessageUtil.sendMessage(player, "§7Buy Price: §e" + currency.format(buyPrice));
@@ -434,7 +434,7 @@ public class ShopCommandsNew {
             boolean success = shop.updateItemPricing(itemId, buyPrice, actualSellPrice);
             if (success) {
                 Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
-                MessageUtil.sendSuccessMessage(player, "Item price updated successfully!");
+                LanguageUtil.sendMessage(player, "Item price updated successfully!");
                 MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
                 MessageUtil.sendMessage(player, "§7Buy Price: §e" + currency.format(buyPrice));
                 if (actualSellPrice > 0) {
@@ -518,7 +518,7 @@ public class ShopCommandsNew {
             
             boolean success = shop.removeItem(itemId);
             if (success) {
-                MessageUtil.sendSuccessMessage(player, "Item removed from shop successfully!");
+                LanguageUtil.sendMessage(player, "Item removed from shop successfully!");
                 MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
             } else {
                 MessageUtil.sendErrorMessage(player, "Failed to remove item from shop.");
@@ -551,7 +551,7 @@ public class ShopCommandsNew {
             ShopNew.PurchaseResult result = shop.purchaseItem(player.getUUID(), itemId, quantity);
             
             if (result.isSuccess()) {
-                MessageUtil.sendSuccessMessage(player, "Purchase successful!");
+                LanguageUtil.sendMessage(player, "Purchase successful!");
                 MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
                 MessageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
                 MessageUtil.sendMessage(player, "§7Shop: §e" + shop.getShopName());
@@ -587,7 +587,7 @@ public class ShopCommandsNew {
             ShopNew.SaleResult result = shop.sellItem(player.getUUID(), itemId, quantity);
             
             if (result.isSuccess()) {
-                MessageUtil.sendSuccessMessage(player, "Sale successful!");
+                LanguageUtil.sendMessage(player, "Sale successful!");
                 MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
                 MessageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
                 MessageUtil.sendMessage(player, "§7Shop: §e" + shop.getShopName());

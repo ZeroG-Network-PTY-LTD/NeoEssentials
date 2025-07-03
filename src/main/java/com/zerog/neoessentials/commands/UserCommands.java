@@ -30,7 +30,7 @@ public class UserCommands {
                     
                     // Heal self
                     healPlayer(player);
-                    MessageUtil.sendSuccessMessage(player, "You have been healed.");
+                    LanguageUtil.sendMessage(player, "You have been healed.");
                     
                     return 1;
                 })
@@ -42,7 +42,7 @@ public class UserCommands {
                             
                             // Heal another player
                             healPlayer(target);
-                            MessageUtil.sendSuccessMessage(source, "You have healed " + target.getScoreboardName() + ".");
+                            LanguageUtil.sendMessage(source, "You have healed " + target.getScoreboardName() + ".");
                             LanguageUtil.sendMessage(target, "You have been healed by " + source.getScoreboardName() + ".");
                             
                             return 1;
@@ -58,7 +58,7 @@ public class UserCommands {
                     
                     // Feed self
                     feedPlayer(player);
-                    MessageUtil.sendSuccessMessage(player, "Your hunger has been satisfied.");
+                    LanguageUtil.sendMessage(player, "Your hunger has been satisfied.");
                     
                     return 1;
                 })
@@ -70,7 +70,7 @@ public class UserCommands {
                             
                             // Feed another player
                             feedPlayer(target);
-                            MessageUtil.sendSuccessMessage(source, "You have fed " + target.getScoreboardName() + ".");
+                            LanguageUtil.sendMessage(source, "You have fed " + target.getScoreboardName() + ".");
                             LanguageUtil.sendMessage(target, "You have been fed by " + source.getScoreboardName() + ".");
                             
                             return 1;
@@ -88,7 +88,7 @@ public class UserCommands {
                     boolean newFlyingState = !player.getAbilities().mayfly;
                     toggleFlight(player, newFlyingState);
                     
-                    MessageUtil.sendSuccessMessage(player, "Flight " + (newFlyingState ? "enabled" : "disabled") + ".");
+                    LanguageUtil.sendMessage(player, "Flight " + (newFlyingState ? "enabled" : "disabled") + ".");
                     
                     return 1;
                 })
@@ -102,7 +102,7 @@ public class UserCommands {
                             boolean newFlyingState = !target.getAbilities().mayfly;
                             toggleFlight(target, newFlyingState);
                             
-                            MessageUtil.sendSuccessMessage(source, target.getScoreboardName() + "'s flight " + (newFlyingState ? "enabled" : "disabled") + ".");
+                            LanguageUtil.sendMessage(source, target.getScoreboardName() + "'s flight " + (newFlyingState ? "enabled" : "disabled") + ".");
                             LanguageUtil.sendMessage(target, "Your flight has been " + (newFlyingState ? "enabled" : "disabled") + " by " + source.getScoreboardName() + ".");
                             
                             return 1;
@@ -133,7 +133,7 @@ public class UserCommands {
                     
                     // Set gamemode to creative
                     setGameMode(player, net.minecraft.world.level.GameType.CREATIVE);
-                    MessageUtil.sendSuccessMessage(player, "Your game mode has been set to Creative Mode.");
+                    LanguageUtil.sendMessage(player, "Your game mode has been set to Creative Mode.");
                     
                     return 1;
                 })
@@ -145,7 +145,7 @@ public class UserCommands {
                             
                             // Set gamemode to creative for another player
                             setGameMode(target, net.minecraft.world.level.GameType.CREATIVE);
-                            MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Creative Mode.");
+                            LanguageUtil.sendMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Creative Mode.");
                             LanguageUtil.sendMessage(target, "Your game mode has been set to Creative Mode by " + source.getScoreboardName() + ".");
                             
                             return 1;
@@ -161,7 +161,7 @@ public class UserCommands {
                     
                     // Set gamemode to survival
                     setGameMode(player, net.minecraft.world.level.GameType.SURVIVAL);
-                    MessageUtil.sendSuccessMessage(player, "Your game mode has been set to Survival Mode.");
+                    LanguageUtil.sendMessage(player, "Your game mode has been set to Survival Mode.");
                     
                     return 1;
                 })
@@ -173,7 +173,7 @@ public class UserCommands {
                             
                             // Set gamemode to survival for another player
                             setGameMode(target, net.minecraft.world.level.GameType.SURVIVAL);
-                            MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Survival Mode.");
+                            LanguageUtil.sendMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Survival Mode.");
                             LanguageUtil.sendMessage(target, "Your game mode has been set to Survival Mode by " + source.getScoreboardName() + ".");
                             
                             return 1;
@@ -189,7 +189,7 @@ public class UserCommands {
                     
                     // Set gamemode to spectator
                     setGameMode(player, net.minecraft.world.level.GameType.SPECTATOR);
-                    MessageUtil.sendSuccessMessage(player, "Your game mode has been set to Spectator Mode.");
+                    LanguageUtil.sendMessage(player, "Your game mode has been set to Spectator Mode.");
                     
                     return 1;
                 })
@@ -201,7 +201,7 @@ public class UserCommands {
                             
                             // Set gamemode to spectator for another player
                             setGameMode(target, net.minecraft.world.level.GameType.SPECTATOR);
-                            MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Spectator Mode.");
+                            LanguageUtil.sendMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Spectator Mode.");
                             LanguageUtil.sendMessage(target, "Your game mode has been set to Spectator Mode by " + source.getScoreboardName() + ".");
                             
                             return 1;
@@ -217,7 +217,7 @@ public class UserCommands {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                       // Set gamemode to adventure
                     setGameMode(player, net.minecraft.world.level.GameType.ADVENTURE);
-                    MessageUtil.sendSuccessMessage(player, "Your game mode has been set to Adventure Mode.");
+                    LanguageUtil.sendMessage(player, "Your game mode has been set to Adventure Mode.");
                     
                     return 1;
                 })
@@ -229,7 +229,7 @@ public class UserCommands {
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                               // Set gamemode to adventure for another player
                             setGameMode(target, net.minecraft.world.level.GameType.ADVENTURE);
-                            MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Adventure Mode.");
+                            LanguageUtil.sendMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Adventure Mode.");
                             LanguageUtil.sendMessage(target, "Your game mode has been set to Adventure Mode by " + source.getScoreboardName() + ".");
                             
                             return 1;
