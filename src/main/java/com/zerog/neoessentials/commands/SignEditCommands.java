@@ -1,6 +1,25 @@
-package com.zerog.neoessentials.commands;
-
-import com.mojang.brigadier.CommandDispatcher;
+package com.zerog.neoessentials.commands;    /**
+     * Registers all sign editing commands with the dispatcher.
+     * 
+     * @param dispatcher The command dispatcher to register with    /**
+     * Checks if a player can edit a specific sign.
+     * This can be extended to include plot protection, region protection, etc.
+     *
+     * @param player The player
+     * @param signEntity The sign block entity
+     * @return true if the player can edit the sign
+     */
+    private static boolean canEditSign(ServerPlayer player, SignBlockEntity signEntity) {
+        // Check if player has admin permission
+        if (CommandManager.hasPermission(player.createCommandSourceStack(), "neoessentials.editsign.admin")) {
+            return true;
+        }
+        
+        // Check if player has basic permission
+        if (!CommandManager.hasPermission(player.createCommandSourceStack(), "neoessentials.editsign")) {blic static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        registerEditSignCommand(dispatcher);
+        registerSignCommand(dispatcher);
+    }t com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -55,13 +74,13 @@ public class SignEditCommands {
      *
      * @param dispatcher The command dispatcher
      */
-    private void registerEditSignCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+    private static void registerEditSignCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> editSignCommand = Commands.literal("editsign")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.editsign"))
                 .then(Commands.argument("line", IntegerArgumentType.integer(1, 4))
                         .then(Commands.argument("text", StringArgumentType.greedyString())
-                                .executes(this::executeEditSignLine)))
-                .executes(this::executeEditSignInfo);
+                                .executes(SignEditCommands::executeEditSignLine)))
+                .executes(SignEditCommands::executeEditSignInfo);
 
         dispatcher.register(editSignCommand);
     }
@@ -72,13 +91,13 @@ public class SignEditCommands {
      *
      * @param dispatcher The command dispatcher
      */
-    private void registerSignCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+    private static void registerSignCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> signCommand = Commands.literal("sign")
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.sign"))
                 .then(Commands.argument("line", IntegerArgumentType.integer(1, 4))
                         .then(Commands.argument("text", StringArgumentType.greedyString())
-                                .executes(this::executeEditSignLine)))
-                .executes(this::executeEditSignInfo);
+                                .executes(SignEditCommands::executeEditSignLine)))
+                .executes(SignEditCommands::executeEditSignInfo);
 
         dispatcher.register(signCommand);
     }
@@ -89,7 +108,7 @@ public class SignEditCommands {
      * @param context The command context
      * @return 1 if successful, 0 otherwise
      */
-    private int executeEditSignLine(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int executeEditSignLine(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = source.getPlayerOrException();
         ServerLevel level = player.serverLevel();
@@ -127,7 +146,7 @@ public class SignEditCommands {
      * @param context The command context
      * @return 1 if successful, 0 otherwise
      */
-    private int executeEditSignInfo(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int executeEditSignInfo(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
         
         source.sendSuccess(() -> Component.literal("§6=== Sign Editing Commands ==="), false);

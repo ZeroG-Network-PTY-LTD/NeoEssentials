@@ -50,7 +50,7 @@ public class InventoryManagementCommands {
      *
      * @param dispatcher The command dispatcher
      */
-    public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         registerClearInventoryCommand(dispatcher);
         registerClearInventoryConfirmToggleCommand(dispatcher);
         registerInvSeeCommand(dispatcher);
@@ -390,7 +390,7 @@ public class InventoryManagementCommands {
                     public void removed(Player player) {
                         super.removed(player);
                         // Sync changes back to target player if viewer has edit permission
-                        if (CommandManager.hasPermission((ServerPlayer) player, "neoessentials.invsee.edit")) {
+                        if (CommandManager.hasPermission(((ServerPlayer) player).createCommandSourceStack(), "neoessentials.invsee.edit")) {
                             syncInventoryChanges(viewContainer, targetInventory);
                         }
                     }
