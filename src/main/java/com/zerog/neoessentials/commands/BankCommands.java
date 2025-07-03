@@ -714,7 +714,7 @@ public class BankCommands {
             }
             
             // Check if player owns the account or has permission
-            if (!account.getOwnerId().equals(playerId) && !account.isSharedUser(playerId)) {
+            if (!account.getOwnerId().equals(playerId) && !account.hasPermission(playerId, BankAccount.Permission.FULL_ACCESS)) {
                 MessageUtil.sendMessage(player, "§cYou don't have permission to close this account");
                 return 0;
             }
