@@ -8,7 +8,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.*;
 import com.zerog.neoessentials.economy.Shop.ShopItem;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -254,37 +255,37 @@ public class ShopCommands {
     private int showShopHelp(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6=== NeoEssentials Shop System ===");
-            MessageUtil.sendMessage(player, "§e§lShop Management:");
-            MessageUtil.sendMessage(player, "§e/shop create <name> <type> §7- Create new shop (player, admin, auction)");
-            MessageUtil.sendMessage(player, "§e/shop list [filter] §7- List shops (all, mine, type)");
-            MessageUtil.sendMessage(player, "§e/shop info <shop> §7- Show shop information");
-            MessageUtil.sendMessage(player, "§e/shop delete <shop> §7- Delete your shop");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§e§lTrading:");
-            MessageUtil.sendMessage(player, "§e/shop buy <shop> <item> [qty] §7- Buy items from shop");
-            MessageUtil.sendMessage(player, "§e/shop sell <shop> <item> [qty] §7- Sell items to shop");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§e§lShop Management (Owners):");
-            MessageUtil.sendMessage(player, "§e/shop stock <shop> <item> <qty> <price> §7- Stock shop with items");
-            MessageUtil.sendMessage(player, "§e/shop additem <shop> [qty] §7- Add held item to shop");
-            MessageUtil.sendMessage(player, "§e/shop price <shop> <item> <buy> [sell] §7- Set item prices");
-            MessageUtil.sendMessage(player, "§e/shop setprice <shop> <item> <buy> [sell] §7- Set item prices (alias)");
-            MessageUtil.sendMessage(player, "§e/shop manage <shop> §7- Open management interface");
-            MessageUtil.sendMessage(player, "§e/shop gui <shop> §7- Open buy/sell interface");
-            MessageUtil.sendMessage(player, "§e/shop stats <shop> §7- View shop statistics");
-            MessageUtil.sendMessage(player, "§e/shop visit <shop> §7- Teleport to shop");
-            MessageUtil.sendMessage(player, "§e/shop setlocation <shop> §7- Set shop teleport location");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§e§lEmployee Management:");
-            MessageUtil.sendMessage(player, "§e/shop employee add <shop> <player> <role> §7- Hire employee");
-            MessageUtil.sendMessage(player, "§e/shop employee remove <shop> <player> §7- Fire employee");
-            MessageUtil.sendMessage(player, "§e/shop employee role <shop> <player> <role> §7- Change role");
-            MessageUtil.sendMessage(player, "§e/shop employee list <shop> §7- List employees");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7Categories: §earmor, blocks, food, tools, weapons, magic, redstone, general");
-            MessageUtil.sendMessage(player, "§7Shop Types: §ePlayer§7 (player-owned), §eServer§7 (admin), §eAuction§7 (auction house)");
-            MessageUtil.sendMessage(player, "§7Employee Roles: §eOwner, Manager, Cashier, Stocker, Sales_Associate, Viewer");
+            LanguageUtil.sendMessage(player, "§6=== NeoEssentials Shop System ===");
+            LanguageUtil.sendMessage(player, "§e§lShop Management:");
+            LanguageUtil.sendMessage(player, "§e/shop create <name> <type> §7- Create new shop (player, admin, auction)");
+            LanguageUtil.sendMessage(player, "§e/shop list [filter] §7- List shops (all, mine, type)");
+            LanguageUtil.sendMessage(player, "§e/shop info <shop> §7- Show shop information");
+            LanguageUtil.sendMessage(player, "§e/shop delete <shop> §7- Delete your shop");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lTrading:");
+            LanguageUtil.sendMessage(player, "§e/shop buy <shop> <item> [qty] §7- Buy items from shop");
+            LanguageUtil.sendMessage(player, "§e/shop sell <shop> <item> [qty] §7- Sell items to shop");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lShop Management (Owners):");
+            LanguageUtil.sendMessage(player, "§e/shop stock <shop> <item> <qty> <price> §7- Stock shop with items");
+            LanguageUtil.sendMessage(player, "§e/shop additem <shop> [qty] §7- Add held item to shop");
+            LanguageUtil.sendMessage(player, "§e/shop price <shop> <item> <buy> [sell] §7- Set item prices");
+            LanguageUtil.sendMessage(player, "§e/shop setprice <shop> <item> <buy> [sell] §7- Set item prices (alias)");
+            LanguageUtil.sendMessage(player, "§e/shop manage <shop> §7- Open management interface");
+            LanguageUtil.sendMessage(player, "§e/shop gui <shop> §7- Open buy/sell interface");
+            LanguageUtil.sendMessage(player, "§e/shop stats <shop> §7- View shop statistics");
+            LanguageUtil.sendMessage(player, "§e/shop visit <shop> §7- Teleport to shop");
+            LanguageUtil.sendMessage(player, "§e/shop setlocation <shop> §7- Set shop teleport location");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lEmployee Management:");
+            LanguageUtil.sendMessage(player, "§e/shop employee add <shop> <player> <role> §7- Hire employee");
+            LanguageUtil.sendMessage(player, "§e/shop employee remove <shop> <player> §7- Fire employee");
+            LanguageUtil.sendMessage(player, "§e/shop employee role <shop> <player> <role> §7- Change role");
+            LanguageUtil.sendMessage(player, "§e/shop employee list <shop> §7- List employees");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§7Categories: §earmor, blocks, food, tools, weapons, magic, redstone, general");
+            LanguageUtil.sendMessage(player, "§7Shop Types: §ePlayer§7 (player-owned), §eServer§7 (admin), §eAuction§7 (auction house)");
+            LanguageUtil.sendMessage(player, "§7Employee Roles: §eOwner, Manager, Cashier, Stocker, Sales_Associate, Viewer");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use shop commands"));
@@ -311,33 +312,33 @@ public class ShopCommands {
             double creationFee = shopManager.getShopCreationFee();
             int totalShops = shopManager.getAllShops().size();
             
-            MessageUtil.sendMessage(player, "§6=== Your Shop Status ===");
-            MessageUtil.sendMessage(player, "§7Player: §e" + player.getDisplayName().getString());
-            MessageUtil.sendMessage(player, "§7UUID: §e" + player.getUUID());
-            MessageUtil.sendMessage(player, "§7Balance: §e$" + String.format("%.2f", playerBalance));
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7Your Shops: §e" + playerShops.size() + "§7/§e" + maxShops);
-            MessageUtil.sendMessage(player, "§7Creation Fee: §e$" + String.format("%.2f", creationFee));
-            MessageUtil.sendMessage(player, "§7Total System Shops: §e" + totalShops);
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6=== Your Shop Status ===");
+            LanguageUtil.sendMessage(player, "§7Player: §e" + player.getDisplayName().getString());
+            LanguageUtil.sendMessage(player, "§7UUID: §e" + player.getUUID());
+            LanguageUtil.sendMessage(player, "§7Balance: §e$" + String.format("%.2f", playerBalance));
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§7Your Shops: §e" + playerShops.size() + "§7/§e" + maxShops);
+            LanguageUtil.sendMessage(player, "§7Creation Fee: §e$" + String.format("%.2f", creationFee));
+            LanguageUtil.sendMessage(player, "§7Total System Shops: §e" + totalShops);
+            LanguageUtil.sendMessage(player, "");
             
             if (playerBalance < creationFee) {
-                MessageUtil.sendMessage(player, "§c⚠ Insufficient funds to create a shop!");
-                MessageUtil.sendMessage(player, "§7You need §e$" + String.format("%.2f", creationFee - playerBalance) + " §7more.");
+                LanguageUtil.sendMessage(player, "§c⚠ Insufficient funds to create a shop!");
+                LanguageUtil.sendMessage(player, "§7You need §e$" + String.format("%.2f", creationFee - playerBalance) + " §7more.");
             } else if (playerShops.size() >= maxShops) {
-                MessageUtil.sendMessage(player, "§c⚠ You have reached the shop limit!");
-                MessageUtil.sendMessage(player, "§7Delete a shop to create a new one.");
+                LanguageUtil.sendMessage(player, "§c⚠ You have reached the shop limit!");
+                LanguageUtil.sendMessage(player, "§7Delete a shop to create a new one.");
             } else {
-                MessageUtil.sendMessage(player, "§a✓ You can create a shop!");
-                MessageUtil.sendMessage(player, "§7Use: §e/shop create <name> <category> player");
+                LanguageUtil.sendMessage(player, "§a✓ You can create a shop!");
+                LanguageUtil.sendMessage(player, "§7Use: §e/shop create <name> <category> player");
             }
             
             if (!playerShops.isEmpty()) {
-                MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, "§7Your shops:");
+                LanguageUtil.sendMessage(player, "");
+                LanguageUtil.sendMessage(player, "§7Your shops:");
                 for (Shop shop : playerShops) {
                     String status = shop.isActive() ? "§aActive" : "§cInactive";
-                    MessageUtil.sendMessage(player, "  §e" + shop.getName() + " §7[" + shop.getCategory() + "] - " + status);
+                    LanguageUtil.sendMessage(player, "  §e" + shop.getName() + " §7[" + shop.getCategory() + "] - " + status);
                 }
             }
             
@@ -364,7 +365,7 @@ public class ShopCommands {
                 }
             }
             if (!validCategory) {
-                MessageUtil.sendErrorMessage(player, "Invalid shop category. Valid categories: " + 
+                LanguageUtil.sendErrorMessage(player, "Invalid shop category. Valid categories: " + 
                     String.join(", ", TabCompletionUtil.SHOP_TYPES));
                 return 0;
             }
@@ -380,7 +381,7 @@ public class ShopCommands {
                     type = Shop.ShopType.SERVER_SHOP;
                     // Admin shops require permission
                     if (!player.hasPermissions(4)) {
-                        MessageUtil.sendErrorMessage(player, "You don't have permission to create server shops.");
+                        LanguageUtil.sendErrorMessage(player, "You don't have permission to create server shops.");
                         return 0;
                     }
                     break;
@@ -388,27 +389,27 @@ public class ShopCommands {
                     type = Shop.ShopType.AUCTION_HOUSE;
                     break;
                 default:
-                    MessageUtil.sendErrorMessage(player, "Invalid ownership type. Valid types: player, server, auction");
+                    LanguageUtil.sendErrorMessage(player, "Invalid ownership type. Valid types: player, server, auction");
                     return 0;
             }
             
-            MessageUtil.sendMessage(player, "§6Creating shop: §e" + shopName);
-            MessageUtil.sendMessage(player, "§7Category: §e" + category);
-            MessageUtil.sendMessage(player, "§7Ownership: §e" + ownership);
-            MessageUtil.sendMessage(player, "§7Type: §e" + type.name());
-            MessageUtil.sendMessage(player, "§7Location: §e" + player.position());
-            MessageUtil.sendMessage(player, "§7Owner: §e" + player.getDisplayName().getString());
+            LanguageUtil.sendMessage(player, "§6Creating shop: §e" + shopName);
+            LanguageUtil.sendMessage(player, "§7Category: §e" + category);
+            LanguageUtil.sendMessage(player, "§7Ownership: §e" + ownership);
+            LanguageUtil.sendMessage(player, "§7Type: §e" + type.name());
+            LanguageUtil.sendMessage(player, "§7Location: §e" + player.position());
+            LanguageUtil.sendMessage(player, "§7Owner: §e" + player.getDisplayName().getString());
             
             // Check shop limits and fees before creation
             List<Shop> playerShops = shopManager.getPlayerShops(player.getUUID());
             int maxShops = shopManager.getMaxShopsPerPlayer();
             double creationFee = shopManager.getShopCreationFee();
             
-            MessageUtil.sendMessage(player, "§7Current shops: §e" + playerShops.size() + "§7/§e" + maxShops);
-            MessageUtil.sendMessage(player, "§7Creation fee: §e$" + String.format("%.2f", creationFee));
+            LanguageUtil.sendMessage(player, "§7Current shops: §e" + playerShops.size() + "§7/§e" + maxShops);
+            LanguageUtil.sendMessage(player, "§7Creation fee: §e$" + String.format("%.2f", creationFee));
             
             if (playerShops.size() >= maxShops) {
-                MessageUtil.sendErrorMessage(player, "You have reached the maximum number of shops (" + maxShops + ").");
+                LanguageUtil.sendErrorMessage(player, "You have reached the maximum number of shops (" + maxShops + ").");
                 return 0;
             }
             
@@ -420,7 +421,7 @@ public class ShopCommands {
             BankManager bankManager = economyManager.getBankManager();
             
             if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured. Please contact an administrator.");
+                LanguageUtil.sendErrorMessage(player, "No default currency configured. Please contact an administrator.");
                 return 0;
             }
             
@@ -431,21 +432,21 @@ public class ShopCommands {
             List<BankAccount> playerAccounts = bankManager.getPlayerAccounts(player.getUUID());
             double totalBankBalance = 0.0;
             
-            MessageUtil.sendMessage(player, "§6Balance Summary:");
-            MessageUtil.sendMessage(player, "§7Direct balance: §e$" + String.format("%.2f", directBalance));
+            LanguageUtil.sendMessage(player, "§6Balance Summary:");
+            LanguageUtil.sendMessage(player, "§7Direct balance: §e$" + String.format("%.2f", directBalance));
             
             for (BankAccount account : playerAccounts) {
                 double accountBalance = account.getBalance(defaultCurrency);
                 totalBankBalance += accountBalance;
-                MessageUtil.sendMessage(player, "§7Bank account " + account.getAccountNumber() + 
+                LanguageUtil.sendMessage(player, "§7Bank account " + account.getAccountNumber() + 
                     " (" + account.getAccountType().getDisplayName() + "): §e$" + String.format("%.2f", accountBalance));
             }
             
             double totalAvailable = directBalance + totalBankBalance;
-            MessageUtil.sendMessage(player, "§7Total available: §e$" + String.format("%.2f", totalAvailable));
+            LanguageUtil.sendMessage(player, "§7Total available: §e$" + String.format("%.2f", totalAvailable));
             
             if (totalAvailable < creationFee) {
-                MessageUtil.sendErrorMessage(player, "Insufficient funds! You need $" + 
+                LanguageUtil.sendErrorMessage(player, "Insufficient funds! You need $" + 
                     String.format("%.2f", creationFee) + " but only have $" + 
                     String.format("%.2f", totalAvailable) + " total (direct + bank accounts).");
                 return 0;
@@ -459,13 +460,13 @@ public class ShopCommands {
                 if (directBalance >= remainingFee) {
                     // Pay entirely from direct balance
                     economyManager2.setBalance(player.getUUID(), defaultCurrency, directBalance - remainingFee);
-                    MessageUtil.sendMessage(player, "§7Payment: §e$" + String.format("%.2f", remainingFee) + " deducted from direct balance");
+                    LanguageUtil.sendMessage(player, "§7Payment: §e$" + String.format("%.2f", remainingFee) + " deducted from direct balance");
                 } else {
                     // Use direct balance first, then bank accounts
                     if (directBalance > 0) {
                         economyManager2.setBalance(player.getUUID(), defaultCurrency, 0);
                         remainingFee -= directBalance;
-                        MessageUtil.sendMessage(player, "§7Payment: §e$" + String.format("%.2f", directBalance) + " deducted from direct balance");
+                        LanguageUtil.sendMessage(player, "§7Payment: §e$" + String.format("%.2f", directBalance) + " deducted from direct balance");
                     }
                     
                     // Deduct remaining from bank accounts (largest balance first)
@@ -479,7 +480,7 @@ public class ShopCommands {
                             double deduction = Math.min(accountBalance, remainingFee);
                             account.withdraw(defaultCurrency, deduction, "Shop creation fee");
                             remainingFee -= deduction;
-                            MessageUtil.sendMessage(player, "§7Payment: §e$" + String.format("%.2f", deduction) + 
+                            LanguageUtil.sendMessage(player, "§7Payment: §e$" + String.format("%.2f", deduction) + 
                                 " deducted from account " + account.getAccountNumber());
                         }
                     }
@@ -487,11 +488,11 @@ public class ShopCommands {
                     paymentSuccessful = (remainingFee <= 0.01); // Allow for small rounding errors
                 }
             } else {
-                MessageUtil.sendMessage(player, "§7No creation fee required.");
+                LanguageUtil.sendMessage(player, "§7No creation fee required.");
             }
             
             if (!paymentSuccessful) {
-                MessageUtil.sendErrorMessage(player, "Payment failed. Please try again.");
+                LanguageUtil.sendErrorMessage(player, "Payment failed. Please try again.");
                 return 0;
             }
             
@@ -499,10 +500,10 @@ public class ShopCommands {
             Shop shop = shopManager.createShop(player.getUUID(), shopName, shopName, category, type, true);
             if (shop != null) {
                 MessageUtil.sendSuccessMessage(player, "Shop created successfully! ID: " + shop.getShopId());
-                MessageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
-                MessageUtil.sendMessage(player, "§7Use §e/shop manage " + shopName + " §7to configure your shop");
+                LanguageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
+                LanguageUtil.sendMessage(player, "§7Use §e/shop manage " + shopName + " §7to configure your shop");
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to create shop. Please check server logs for details.");
+                LanguageUtil.sendErrorMessage(player, "Failed to create shop. Please check server logs for details.");
             }
             
             return 1;
@@ -519,34 +520,34 @@ public class ShopCommands {
                 NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
             ShopManager shopManager = economyManager.getShopManager();
             
-            MessageUtil.sendMessage(player, "§6=== Available Shops ===");
+            LanguageUtil.sendMessage(player, "§6=== Available Shops ===");
             
             if (filter == null || filter.equals("all")) {
-                MessageUtil.sendMessage(player, "§7Showing all shops:");
+                LanguageUtil.sendMessage(player, "§7Showing all shops:");
             } else if (filter.equals("mine")) {
-                MessageUtil.sendMessage(player, "§7Showing your shops:");
+                LanguageUtil.sendMessage(player, "§7Showing your shops:");
             } else {
-                MessageUtil.sendMessage(player, "§7Showing shops of type: §e" + filter);
+                LanguageUtil.sendMessage(player, "§7Showing shops of type: §e" + filter);
             }
             
             // Get shops and display them
             List<Shop> shops;
             if (filter == null || filter.equals("all")) {
                 shops = shopManager.getAllShops();
-                MessageUtil.sendMessage(player, "§8Debug: Total shops in system: " + shops.size());
+                LanguageUtil.sendMessage(player, "§8Debug: Total shops in system: " + shops.size());
             } else if (filter.equals("mine")) {
                 shops = shopManager.getPlayerShops(player.getUUID());
-                MessageUtil.sendMessage(player, "§8Debug: Your shops: " + shops.size());
+                LanguageUtil.sendMessage(player, "§8Debug: Your shops: " + shops.size());
             } else {
                 shops = shopManager.searchShops(filter, 50);
-                MessageUtil.sendMessage(player, "§8Debug: Shops matching '" + filter + "': " + shops.size());
+                LanguageUtil.sendMessage(player, "§8Debug: Shops matching '" + filter + "': " + shops.size());
             }
             
             if (shops.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No shops found.");
+                LanguageUtil.sendMessage(player, "§7No shops found.");
                 if (filter == null || filter.equals("mine")) {
-                    MessageUtil.sendMessage(player, "§8Debug: Player UUID: " + player.getUUID());
-                    MessageUtil.sendMessage(player, "§8Debug: Shop creation fee: $" + 
+                    LanguageUtil.sendMessage(player, "§8Debug: Player UUID: " + player.getUUID());
+                    LanguageUtil.sendMessage(player, "§8Debug: Shop creation fee: $" + 
                         String.format("%.2f", shopManager.getShopCreationFee()));
                 }
                 return 1;
@@ -557,12 +558,12 @@ public class ShopCommands {
                 String ownerType = shop.getShopType() == Shop.ShopType.SERVER_SHOP || 
                                   shop.getShopType() == Shop.ShopType.ADMIN ? "§cServer" : "§aPlayer";
                 String status = shop.isActive() ? "§aActive" : "§cInactive";
-                MessageUtil.sendMessage(player, String.format("§e%s §7[%s] §7- %s §7- %s §7- §6ID: %s", 
+                LanguageUtil.sendMessage(player, String.format("§e%s §7[%s] §7- %s §7- %s §7- §6ID: %s", 
                     shop.getName(), shop.getCategory(), ownerType, status, shop.getShopId().toString().substring(0, 8)));
             }
             
             if (shops.size() > 10) {
-                MessageUtil.sendMessage(player, "§7... and " + (shops.size() - 10) + " more shops");
+                LanguageUtil.sendMessage(player, "§7... and " + (shops.size() - 10) + " more shops");
             }
             
             return 1;
@@ -582,44 +583,44 @@ public class ShopCommands {
             // Search for shop by name
             List<Shop> shops = shopManager.searchShops(shopName, 1);
             if (shops.isEmpty()) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
                 return 0;
             }
             
             Shop shop = shops.get(0);
             
             // Display shop information
-            MessageUtil.sendMessage(player, "§6=== Shop Information: §e" + shop.getShopName() + " §6===");
-            MessageUtil.sendMessage(player, "§7Shop ID: §e" + shop.getShopId().toString().substring(0, 8) + "...");
-            MessageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
-            MessageUtil.sendMessage(player, "§7Type: §e" + shop.getShopType().getDisplayName());
-            MessageUtil.sendMessage(player, "§7Status: §" + (shop.isActive() ? "aActive" : "cInactive"));
-            MessageUtil.sendMessage(player, "§7Location: §e" + shop.getLocation());
-            MessageUtil.sendMessage(player, "§7Items for Sale: §e" + shop.getAvailableItems().size());
-            MessageUtil.sendMessage(player, "§7Total Revenue: §e$" + String.format("%.2f", shop.getTotalRevenue()));
-            MessageUtil.sendMessage(player, "§7Total Sales: §e" + shop.getTotalSales());
-            MessageUtil.sendMessage(player, "§7Customers: §e" + shop.getCustomerCount());
-            MessageUtil.sendMessage(player, "§7Created: §e" + new java.util.Date(shop.getCreatedTime()));
+            LanguageUtil.sendMessage(player, "§6=== Shop Information: §e" + shop.getShopName() + " §6===");
+            LanguageUtil.sendMessage(player, "§7Shop ID: §e" + shop.getShopId().toString().substring(0, 8) + "...");
+            LanguageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
+            LanguageUtil.sendMessage(player, "§7Type: §e" + shop.getShopType().getDisplayName());
+            LanguageUtil.sendMessage(player, "§7Status: §" + (shop.isActive() ? "aActive" : "cInactive"));
+            LanguageUtil.sendMessage(player, "§7Location: §e" + shop.getLocation());
+            LanguageUtil.sendMessage(player, "§7Items for Sale: §e" + shop.getAvailableItems().size());
+            LanguageUtil.sendMessage(player, "§7Total Revenue: §e$" + String.format("%.2f", shop.getTotalRevenue()));
+            LanguageUtil.sendMessage(player, "§7Total Sales: §e" + shop.getTotalSales());
+            LanguageUtil.sendMessage(player, "§7Customers: §e" + shop.getCustomerCount());
+            LanguageUtil.sendMessage(player, "§7Created: §e" + new java.util.Date(shop.getCreatedTime()));
             
             // Show available items and prices
             if (!shop.getAvailableItems().isEmpty()) {
-                MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, "§6Available Items:");
+                LanguageUtil.sendMessage(player, "");
+                LanguageUtil.sendMessage(player, "§6Available Items:");
                 for (Shop.ShopItem shopItem : shop.getAvailableItems()) {
                     String itemName = shopItem.getItemName();
                     double price = shop.getItemPrice(shopItem.getItemId());
                     double sellPrice = price * 0.7; // 70% sell price
                     int stock = shopItem.getQuantity();
-                    MessageUtil.sendMessage(player, String.format("§7  %s: §aBuy $%.2f §7| §eSell $%.2f §7(Stock: %d)", 
+                    LanguageUtil.sendMessage(player, String.format("§7  %s: §aBuy $%.2f §7| §eSell $%.2f §7(Stock: %d)", 
                         itemName, price, sellPrice, stock));
                 }
             } else {
-                MessageUtil.sendMessage(player, "§7No items currently in stock");
+                LanguageUtil.sendMessage(player, "§7No items currently in stock");
             }
             
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7Use §e/shop buy " + shopName + " <item> [qty] §7to purchase items");
-            MessageUtil.sendMessage(player, "§7Use §e/shop sell " + shopName + " <item> [qty] §7to sell items");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§7Use §e/shop buy " + shopName + " <item> [qty] §7to purchase items");
+            LanguageUtil.sendMessage(player, "§7Use §e/shop sell " + shopName + " <item> [qty] §7to sell items");
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -638,7 +639,7 @@ public class ShopCommands {
             // Get shop by searching for it by name
             List<Shop> foundShops = shopManager.searchShops(shopName, 1);
             if (foundShops.isEmpty()) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
                 return 0;
             }
             
@@ -646,21 +647,21 @@ public class ShopCommands {
             
             // Verify exact name match
             if (!shop.getShopName().equalsIgnoreCase(shopName)) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
                 return 0;
             }
             
             // Check ownership (players can only delete their own shops, admins can delete any)
             if (!hasShopPermission(player, shop, 
                     com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.DELETE_SHOP)) {
-                MessageUtil.sendErrorMessage(player, "You don't have permission to delete this shop.");
+                LanguageUtil.sendErrorMessage(player, "You don't have permission to delete this shop.");
                 return 0;
             }
             
             // Confirm deletion
-            MessageUtil.sendMessage(player, "§6Deleting shop: §e" + shopName);
-            MessageUtil.sendMessage(player, "§7Owner: §e" + (shop.getOwnerId() == null ? "Server" : "Player"));
-            MessageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
+            LanguageUtil.sendMessage(player, "§6Deleting shop: §e" + shopName);
+            LanguageUtil.sendMessage(player, "§7Owner: §e" + (shop.getOwnerId() == null ? "Server" : "Player"));
+            LanguageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
             
             // Delete the shop
             boolean success = shopManager.deleteShop(shop.getShopId());
@@ -670,10 +671,10 @@ public class ShopCommands {
                 
                 // If it was a player shop, could potentially refund part of creation fee
                 if (shop.getOwnerId() != null && shop.getOwnerId().equals(player.getUUID())) {
-                    MessageUtil.sendMessage(player, "§7Shop deletion completed. Items and currency remain with owner.");
+                    LanguageUtil.sendMessage(player, "§7Shop deletion completed. Items and currency remain with owner.");
                 }
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to delete shop. Please try again.");
+                LanguageUtil.sendErrorMessage(player, "Failed to delete shop. Please try again.");
             }
             
             return success ? 1 : 0;
@@ -705,7 +706,7 @@ public class ShopCommands {
             // Get shop by searching for it by name
             List<Shop> foundShops = shopManager.searchShops(shopName, 1);
             if (foundShops.isEmpty()) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
                 return 0;
             }
             
@@ -713,32 +714,32 @@ public class ShopCommands {
             
             // Verify exact name match
             if (!shop.getShopName().equalsIgnoreCase(shopName)) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
                 return 0;
             }
             
             // Check permissions
             if (!hasShopPermission(player, shop, 
                     com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.MANAGE_INVENTORY)) {
-                MessageUtil.sendErrorMessage(player, "You don't have permission to manage inventory for this shop.");
+                LanguageUtil.sendErrorMessage(player, "You don't have permission to manage inventory for this shop.");
                 return 0;
             }
             
             // Validate price
             if (price <= 0) {
-                MessageUtil.sendErrorMessage(player, "Price must be greater than 0.");
+                LanguageUtil.sendErrorMessage(player, "Price must be greater than 0.");
                 return 0;
             }
             
             if (quantity <= 0) {
-                MessageUtil.sendErrorMessage(player, "Quantity must be greater than 0.");
+                LanguageUtil.sendErrorMessage(player, "Quantity must be greater than 0.");
                 return 0;
             }
             
             // Validate that item exists
             if (!ItemHandler.isValidItem(itemName)) {
-                MessageUtil.sendErrorMessage(player, "Invalid item: " + itemName);
-                MessageUtil.sendMessage(player, "§7Use tab completion or valid Minecraft item IDs (e.g., minecraft:diamond_sword)");
+                LanguageUtil.sendErrorMessage(player, "Invalid item: " + itemName);
+                LanguageUtil.sendMessage(player, "§7Use tab completion or valid Minecraft item IDs (e.g., minecraft:diamond_sword)");
                 return 0;
             }
             
@@ -746,15 +747,15 @@ public class ShopCommands {
             boolean isOwner = shop.getOwnerId() != null && shop.getOwnerId().equals(player.getUUID());
             boolean isAdmin = player.hasPermissions(4);
             if (isOwner && !isAdmin && !ItemHandler.hasEnoughItems(player, itemName, quantity)) {
-                MessageUtil.sendErrorMessage(player, "You don't have enough " + ItemHandler.formatItemName(itemName) + " to stock. " +
+                LanguageUtil.sendErrorMessage(player, "You don't have enough " + ItemHandler.formatItemName(itemName) + " to stock. " +
                     "You have " + ItemHandler.getItemCount(player, itemName) + ", but need " + quantity + ".");
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§6Stocking Shop: §e" + shopName);
-            MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.formatItemName(itemName));
-            MessageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
-            MessageUtil.sendMessage(player, "§7Price per item: §e$" + String.format("%.2f", price));
+            LanguageUtil.sendMessage(player, "§6Stocking Shop: §e" + shopName);
+            LanguageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.formatItemName(itemName));
+            LanguageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
+            LanguageUtil.sendMessage(player, "§7Price per item: §e$" + String.format("%.2f", price));
             
             // Add item to shop inventory
             boolean success = shop.addItem(itemName, quantity, price, ItemHandler.formatItemName(itemName));
@@ -770,13 +771,13 @@ public class ShopCommands {
                     MessageUtil.sendSuccessMessage(player, "Successfully stocked " + quantity + "x " + ItemHandler.formatItemName(itemName) + 
                         " in shop '" + shopName + "' for $" + String.format("%.2f", price) + " each");
                 } else {
-                    MessageUtil.sendErrorMessage(player, "Failed to remove items from your inventory. Contact an administrator.");
+                    LanguageUtil.sendErrorMessage(player, "Failed to remove items from your inventory. Contact an administrator.");
                     // Remove the items from shop since we couldn't take them from player
                     shop.removeItem(itemName, quantity);
                     success = false;
                 }
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to stock item. Shop may be inactive or item may be invalid.");
+                LanguageUtil.sendErrorMessage(player, "Failed to stock item. Shop may be inactive or item may be invalid.");
             }
             
             return success ? 1 : 0;
@@ -795,25 +796,25 @@ public class ShopCommands {
             
             // Validate prices
             if (buyPrice <= 0) {
-                MessageUtil.sendErrorMessage(player, "Buy price must be greater than 0.");
+                LanguageUtil.sendErrorMessage(player, "Buy price must be greater than 0.");
                 return 0;
             }
             
             if (sellPrice >= 0 && sellPrice > buyPrice) {
-                MessageUtil.sendErrorMessage(player, "Sell price cannot be higher than buy price.");
+                LanguageUtil.sendErrorMessage(player, "Sell price cannot be higher than buy price.");
                 return 0;
             }
             
             // Validate item exists
             if (!ItemHandler.isValidItem(itemName)) {
-                MessageUtil.sendErrorMessage(player, "Invalid item: " + itemName);
+                LanguageUtil.sendErrorMessage(player, "Invalid item: " + itemName);
                 return 0;
             }
             
             // Get shop by searching for it by name
             List<Shop> foundShops = shopManager.searchShops(shopName, 1);
             if (foundShops.isEmpty()) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
                 return 0;
             }
             
@@ -822,13 +823,13 @@ public class ShopCommands {
             // Check permissions
             if (!hasShopPermission(player, shop, 
                     com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.SET_PRICES)) {
-                MessageUtil.sendErrorMessage(player, "You don't have permission to set prices for this shop.");
+                LanguageUtil.sendErrorMessage(player, "You don't have permission to set prices for this shop.");
                 return 0;
             }
             
             // Check if shop type allows price changes
             if (!shop.getShopType().allowsPriceChanges()) {
-                MessageUtil.sendErrorMessage(player, "This shop type doesn't allow price changes.");
+                LanguageUtil.sendErrorMessage(player, "This shop type doesn't allow price changes.");
                 return 0;
             }
             
@@ -837,15 +838,15 @@ public class ShopCommands {
             
             if (success) {
                 MessageUtil.sendSuccessMessage(player, "Price updated for " + ItemHandler.formatItemName(itemName) + " in shop '" + shopName + "'");
-                MessageUtil.sendMessage(player, "§7Buy Price: §e$" + String.format("%.2f", buyPrice));
+                LanguageUtil.sendMessage(player, "§7Buy Price: §e$" + String.format("%.2f", buyPrice));
                 if (sellPrice >= 0) {
-                    MessageUtil.sendMessage(player, "§7Sell Price: §e$" + String.format("%.2f", sellPrice));
+                    LanguageUtil.sendMessage(player, "§7Sell Price: §e$" + String.format("%.2f", sellPrice));
                 } else {
                     double autoSellPrice = buyPrice * 0.7; // 70% of buy price
-                    MessageUtil.sendMessage(player, "§7Auto Sell Price: §e$" + String.format("%.2f", autoSellPrice) + " §7(70% of buy price)");
+                    LanguageUtil.sendMessage(player, "§7Auto Sell Price: §e$" + String.format("%.2f", autoSellPrice) + " §7(70% of buy price)");
                 }
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to update price. Item may not exist in shop inventory.");
+                LanguageUtil.sendErrorMessage(player, "Failed to update price. Item may not exist in shop inventory.");
             }
             
             return success ? 1 : 0;
@@ -887,7 +888,7 @@ public class ShopCommands {
             }
             
             if (targetShop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found or you don't have permission to manage it.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found or you don't have permission to manage it.");
                 return 0;
             }
             
@@ -895,7 +896,7 @@ public class ShopCommands {
             if (!targetShop.getOwnerId().equals(player.getUUID()) && 
                 !targetShop.getEmployeeManager().hasPermission(player.getUUID(), 
                     com.zerog.neoessentials.economy.ShopEmployeeManager.ShopPermission.MANAGE_INVENTORY)) {
-                MessageUtil.sendErrorMessage(player, "You don't have permission to manage this shop!");
+                LanguageUtil.sendErrorMessage(player, "You don't have permission to manage this shop!");
                 return 0;
             }
             
@@ -907,7 +908,7 @@ public class ShopCommands {
                 
                 MessageUtil.sendSuccessMessage(player, "Opening shop management interface for: " + targetShop.getShopName());
             } catch (Exception e) {
-                MessageUtil.sendErrorMessage(player, "Failed to open shop management interface: " + e.getMessage());
+                LanguageUtil.sendErrorMessage(player, "Failed to open shop management interface: " + e.getMessage());
                 NeoEssentials.LOGGER.error("Failed to open shop management GUI for shop: " + targetShop.getShopName(), e);
                 return 0;
             }
@@ -929,14 +930,14 @@ public class ShopCommands {
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             
             if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                LanguageUtil.sendErrorMessage(player, "No default currency configured.");
                 return 0;
             }
             
             // Get shop by searching for it by name
             List<Shop> foundShops = shopManager.searchShops(shopName, 1);
             if (foundShops.isEmpty()) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
                 return 0;
             }
             
@@ -947,10 +948,10 @@ public class ShopCommands {
             boolean isAdmin = player.hasPermissions(2);
             boolean canViewDetailedStats = isOwner || isAdmin;
             
-            MessageUtil.sendMessage(player, "§6=== Shop Statistics: §e" + shopName + " §6===");
-            MessageUtil.sendMessage(player, "§7Shop Type: §e" + shop.getShopType().getDisplayName());
-            MessageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
-            MessageUtil.sendMessage(player, "§7Status: " + (shop.isActive() ? "§aActive" : "§cInactive"));
+            LanguageUtil.sendMessage(player, "§6=== Shop Statistics: §e" + shopName + " §6===");
+            LanguageUtil.sendMessage(player, "§7Shop Type: §e" + shop.getShopType().getDisplayName());
+            LanguageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
+            LanguageUtil.sendMessage(player, "§7Status: " + (shop.isActive() ? "§aActive" : "§cInactive"));
             
             if (canViewDetailedStats) {
                 // Detailed statistics for owners/admins
@@ -959,10 +960,10 @@ public class ShopCommands {
                 int uniqueCustomers = shop.getCustomerCount();
                 double averageSale = totalSales > 0 ? totalRevenue / totalSales : 0.0;
                 
-                MessageUtil.sendMessage(player, "§7Total Revenue: §e" + defaultCurrency.format(totalRevenue));
-                MessageUtil.sendMessage(player, "§7Total Sales: §e" + totalSales);
-                MessageUtil.sendMessage(player, "§7Unique Customers: §e" + uniqueCustomers);
-                MessageUtil.sendMessage(player, "§7Average Sale: §e" + defaultCurrency.format(averageSale));
+                LanguageUtil.sendMessage(player, "§7Total Revenue: §e" + defaultCurrency.format(totalRevenue));
+                LanguageUtil.sendMessage(player, "§7Total Sales: §e" + totalSales);
+                LanguageUtil.sendMessage(player, "§7Unique Customers: §e" + uniqueCustomers);
+                LanguageUtil.sendMessage(player, "§7Average Sale: §e" + defaultCurrency.format(averageSale));
                 
                 // Inventory summary
                 int totalItems = shop.getInventory().values().stream()
@@ -970,11 +971,11 @@ public class ShopCommands {
                     .sum();
                 int uniqueItems = shop.getInventory().size();
                 
-                MessageUtil.sendMessage(player, "§7Inventory Items: §e" + totalItems + " §7(§e" + uniqueItems + " §7types)");
+                LanguageUtil.sendMessage(player, "§7Inventory Items: §e" + totalItems + " §7(§e" + uniqueItems + " §7types)");
                 
                 // Recent activity
                 long daysSinceCreation = (System.currentTimeMillis() - shop.getCreatedTime()) / (1000 * 60 * 60 * 24);
-                MessageUtil.sendMessage(player, "§7Shop Age: §e" + daysSinceCreation + " days");
+                LanguageUtil.sendMessage(player, "§7Shop Age: §e" + daysSinceCreation + " days");
                 
                 if (totalSales > 0) {
                     List<Shop.Sale> recentSales = shop.getSalesHistory(7).stream()
@@ -982,19 +983,19 @@ public class ShopCommands {
                         .limit(3)
                         .toList();
                     
-                    MessageUtil.sendMessage(player, "§7Recent Sales:");
+                    LanguageUtil.sendMessage(player, "§7Recent Sales:");
                     for (Shop.Sale sale : recentSales) {
                         long hoursAgo = (System.currentTimeMillis() - sale.getTimestamp()) / (1000 * 60 * 60);
-                        MessageUtil.sendMessage(player, "  §8- §e" + sale.getQuantity() + "x " + 
+                        LanguageUtil.sendMessage(player, "  §8- §e" + sale.getQuantity() + "x " + 
                             ItemHandler.formatItemName(sale.getItemId()) + " §7(§e" + 
                             defaultCurrency.format(sale.getTotalPrice()) + "§7, " + hoursAgo + "h ago)");
                     }
                 }
             } else {
                 // Public statistics
-                MessageUtil.sendMessage(player, "§7Total Sales: §e" + shop.getTotalSales());
-                MessageUtil.sendMessage(player, "§7Shop Rating: §e★★★★☆ §7(Coming Soon)");
-                MessageUtil.sendMessage(player, "§7§oUse §e/shop info " + shopName + " §7§ofor inventory details");
+                LanguageUtil.sendMessage(player, "§7Total Sales: §e" + shop.getTotalSales());
+                LanguageUtil.sendMessage(player, "§7Shop Rating: §e★★★★☆ §7(Coming Soon)");
+                LanguageUtil.sendMessage(player, "§7§oUse §e/shop info " + shopName + " §7§ofor inventory details");
             }
             
             return 1;
@@ -1013,24 +1014,24 @@ public class ShopCommands {
             
             Shop shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendMessage(player, "§cShop '" + shopName + "' does not exist");
+                LanguageUtil.sendMessage(player, "§cShop '" + shopName + "' does not exist");
                 return 0;
             }
             
             if (!shop.hasLocation()) {
-                MessageUtil.sendMessage(player, "§cShop '" + shopName + "' has no teleport location set");
-                MessageUtil.sendMessage(player, "§7The shop owner can use §e/shop setlocation " + shopName + " §7to set one");
+                LanguageUtil.sendMessage(player, "§cShop '" + shopName + "' has no teleport location set");
+                LanguageUtil.sendMessage(player, "§7The shop owner can use §e/shop setlocation " + shopName + " §7to set one");
                 return 0;
             }
             
             ShopLocation location = shop.getShopLocation();
             if (!location.teleportPlayer(player)) {
-                MessageUtil.sendMessage(player, "§cFailed to teleport to shop location");
+                LanguageUtil.sendMessage(player, "§cFailed to teleport to shop location");
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§6Successfully teleported to shop: §e" + shopName);
-            MessageUtil.sendMessage(player, "§7Location: " + shop.getFormattedLocation());
+            LanguageUtil.sendMessage(player, "§6Successfully teleported to shop: §e" + shopName);
+            LanguageUtil.sendMessage(player, "§7Location: " + shop.getFormattedLocation());
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -1051,7 +1052,7 @@ public class ShopCommands {
             
             Shop shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendMessage(manager, "§cShop not found: " + shopName);
+                LanguageUtil.sendMessage(manager, "§cShop not found: " + shopName);
                 return 0;
             }
             
@@ -1060,26 +1061,26 @@ public class ShopCommands {
             try {
                 role = ShopEmployeeManager.EmployeeRole.valueOf(roleName.toUpperCase());
             } catch (IllegalArgumentException e) {
-                MessageUtil.sendMessage(manager, "§cInvalid role: " + roleName);
-                MessageUtil.sendMessage(manager, "§7Valid roles: manager, cashier, stocker, sales_associate, viewer");
+                LanguageUtil.sendMessage(manager, "§cInvalid role: " + roleName);
+                LanguageUtil.sendMessage(manager, "§7Valid roles: manager, cashier, stocker, sales_associate, viewer");
                 return 0;
             }
             
             // Find player by name
             ServerPlayer targetPlayer = source.getServer().getPlayerList().getPlayerByName(playerName);
             if (targetPlayer == null) {
-                MessageUtil.sendMessage(manager, "§cPlayer not found: " + playerName);
+                LanguageUtil.sendMessage(manager, "§cPlayer not found: " + playerName);
                 return 0;
             }
             
             // Add employee
             if (shop.addEmployee(manager.getUUID(), targetPlayer.getUUID(), targetPlayer.getDisplayName().getString(), role)) {
-                MessageUtil.sendMessage(manager, "§aSuccessfully added §e" + playerName + " §aas §e" + role.getDisplayName() + " §ato shop §e" + shopName);
+                LanguageUtil.sendMessage(manager, "§aSuccessfully added §e" + playerName + " §aas §e" + role.getDisplayName() + " §ato shop §e" + shopName);
                 
                 // Notify the new employee
-                MessageUtil.sendMessage(targetPlayer, "§aYou have been hired as §e" + role.getDisplayName() + " §aat shop §e" + shopName);
+                LanguageUtil.sendMessage(targetPlayer, "§aYou have been hired as §e" + role.getDisplayName() + " §aat shop §e" + shopName);
             } else {
-                MessageUtil.sendMessage(manager, "§cFailed to add employee. Check permissions and employee status.");
+                LanguageUtil.sendMessage(manager, "§cFailed to add employee. Check permissions and employee status.");
             }
             
             return 1;
@@ -1099,7 +1100,7 @@ public class ShopCommands {
             
             Shop shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendMessage(manager, "§cShop not found: " + shopName);
+                LanguageUtil.sendMessage(manager, "§cShop not found: " + shopName);
                 return 0;
             }
             
@@ -1108,26 +1109,26 @@ public class ShopCommands {
             try {
                 newRole = ShopEmployeeManager.EmployeeRole.valueOf(roleName.toUpperCase());
             } catch (IllegalArgumentException e) {
-                MessageUtil.sendMessage(manager, "§cInvalid role: " + roleName);
-                MessageUtil.sendMessage(manager, "§7Valid roles: manager, cashier, stocker, sales_associate, viewer");
+                LanguageUtil.sendMessage(manager, "§cInvalid role: " + roleName);
+                LanguageUtil.sendMessage(manager, "§7Valid roles: manager, cashier, stocker, sales_associate, viewer");
                 return 0;
             }
             
             // Find player by name
             ServerPlayer targetPlayer = source.getServer().getPlayerList().getPlayerByName(playerName);
             if (targetPlayer == null) {
-                MessageUtil.sendMessage(manager, "§cPlayer not found: " + playerName);
+                LanguageUtil.sendMessage(manager, "§cPlayer not found: " + playerName);
                 return 0;
             }
             
             // Change role
             if (shop.changeEmployeeRole(manager.getUUID(), targetPlayer.getUUID(), newRole)) {
-                MessageUtil.sendMessage(manager, "§aSuccessfully changed §e" + playerName + "§a's role to §e" + newRole.getDisplayName() + " §ain shop §e" + shopName);
+                LanguageUtil.sendMessage(manager, "§aSuccessfully changed §e" + playerName + "§a's role to §e" + newRole.getDisplayName() + " §ain shop §e" + shopName);
                 
                 // Notify the employee
-                MessageUtil.sendMessage(targetPlayer, "§aYour role in shop §e" + shopName + " §ahas been changed to §e" + newRole.getDisplayName());
+                LanguageUtil.sendMessage(targetPlayer, "§aYour role in shop §e" + shopName + " §ahas been changed to §e" + newRole.getDisplayName());
             } else {
-                MessageUtil.sendMessage(manager, "§cFailed to change employee role. Check permissions.");
+                LanguageUtil.sendMessage(manager, "§cFailed to change employee role. Check permissions.");
             }
             
             return 1;
@@ -1147,31 +1148,31 @@ public class ShopCommands {
             
             Shop shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendMessage(player, "§cShop not found: " + shopName);
+                LanguageUtil.sendMessage(player, "§cShop not found: " + shopName);
                 return 0;
             }
             
             // Check if player has permission to view employees
             if (!shop.hasPermission(player.getUUID(), ShopEmployeeManager.ShopPermission.VIEW_BASIC_INFO)) {
-                MessageUtil.sendMessage(player, "§cYou don't have permission to view employees for this shop");
+                LanguageUtil.sendMessage(player, "§cYou don't have permission to view employees for this shop");
                 return 0;
             }
             
             List<ShopEmployeeManager.ShopEmployee> employees = shop.getActiveEmployees();
             
-            MessageUtil.sendMessage(player, "§6=== Employees of §e" + shopName + " §6===");
+            LanguageUtil.sendMessage(player, "§6=== Employees of §e" + shopName + " §6===");
             if (employees.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No employees found");
+                LanguageUtil.sendMessage(player, "§7No employees found");
             } else {
                 for (ShopEmployeeManager.ShopEmployee employee : employees) {
                     String roleColor = employee.getRole() == ShopEmployeeManager.EmployeeRole.OWNER ? "§c" : 
                                      employee.getRole() == ShopEmployeeManager.EmployeeRole.MANAGER ? "§6" : "§e";
                     
-                    MessageUtil.sendMessage(player, "§7• " + roleColor + employee.getPlayerName() + " §7- " + 
+                    LanguageUtil.sendMessage(player, "§7• " + roleColor + employee.getPlayerName() + " §7- " + 
                                           roleColor + employee.getRole().getDisplayName());
                 }
             }
-            MessageUtil.sendMessage(player, "§7Total employees: §e" + employees.size());
+            LanguageUtil.sendMessage(player, "§7Total employees: §e" + employees.size());
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -1192,19 +1193,19 @@ public class ShopCommands {
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             
             if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                LanguageUtil.sendErrorMessage(player, "No default currency configured.");
                 return 0;
             }
             
             // Validate item exists
             if (!ItemHandler.isValidItem(itemName)) {
-                MessageUtil.sendErrorMessage(player, "Invalid item: " + itemName);
-                MessageUtil.sendMessage(player, "§7Use tab completion or valid Minecraft item IDs");
+                LanguageUtil.sendErrorMessage(player, "Invalid item: " + itemName);
+                LanguageUtil.sendMessage(player, "§7Use tab completion or valid Minecraft item IDs");
                 return 0;
             }
             
             String formattedItemName = ItemHandler.formatItemName(itemName);
-            MessageUtil.sendMessage(player, "§6=== Shops Selling: §e" + formattedItemName + " §6===");
+            LanguageUtil.sendMessage(player, "§6=== Shops Selling: §e" + formattedItemName + " §6===");
             
             List<Shop> allShops = shopManager.getAllShops();
             List<Shop> shopsWithItem = allShops.stream()
@@ -1213,7 +1214,7 @@ public class ShopCommands {
                 .toList();
             
             if (shopsWithItem.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No shops currently sell " + formattedItemName);
+                LanguageUtil.sendMessage(player, "§7No shops currently sell " + formattedItemName);
                 return 0;
             }
             
@@ -1222,12 +1223,12 @@ public class ShopCommands {
                 ShopItem item = shop.getInventory().get(itemName);
                 int quantity = item != null ? item.getQuantity() : 0;
                 
-                MessageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7- §e" + 
+                LanguageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7- §e" + 
                     defaultCurrency.format(price) + " §7each (§e" + quantity + " §7available)");
             }
             
             if (shopsWithItem.size() > 10) {
-                MessageUtil.sendMessage(player, "§7... and " + (shopsWithItem.size() - 10) + " more shops");
+                LanguageUtil.sendMessage(player, "§7... and " + (shopsWithItem.size() - 10) + " more shops");
             }
             
             return 1;
@@ -1247,16 +1248,16 @@ public class ShopCommands {
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             
             if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                LanguageUtil.sendErrorMessage(player, "No default currency configured.");
                 return 0;
             }
             
             if (minPrice > maxPrice) {
-                MessageUtil.sendErrorMessage(player, "Minimum price cannot be higher than maximum price.");
+                LanguageUtil.sendErrorMessage(player, "Minimum price cannot be higher than maximum price.");
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§6=== Shops with Items Priced §e" + 
+            LanguageUtil.sendMessage(player, "§6=== Shops with Items Priced §e" + 
                 defaultCurrency.format(minPrice) + " §6- §e" + defaultCurrency.format(maxPrice) + " §6===");
             
             List<Shop> allShops = shopManager.getAllShops();
@@ -1279,7 +1280,7 @@ public class ShopCommands {
             }
             
             if (matchingShops.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No shops have items in that price range");
+                LanguageUtil.sendMessage(player, "§7No shops have items in that price range");
                 return 0;
             }
             
@@ -1290,23 +1291,23 @@ public class ShopCommands {
                 Shop shop = entry.getKey();
                 List<String> items = entry.getValue();
                 
-                MessageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7(§e" + items.size() + " §7items):");
+                LanguageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7(§e" + items.size() + " §7items):");
                 
                 for (String itemId : items.stream().limit(3).toList()) {
                     double price = shop.getItemPrice(itemId);
-                    MessageUtil.sendMessage(player, "  §8- §e" + ItemHandler.formatItemName(itemId) + 
+                    LanguageUtil.sendMessage(player, "  §8- §e" + ItemHandler.formatItemName(itemId) + 
                         " §7at §e" + defaultCurrency.format(price));
                 }
                 
                 if (items.size() > 3) {
-                    MessageUtil.sendMessage(player, "  §8... and " + (items.size() - 3) + " more items");
+                    LanguageUtil.sendMessage(player, "  §8... and " + (items.size() - 3) + " more items");
                 }
                 
                 count++;
             }
             
             if (matchingShops.size() > 10) {
-                MessageUtil.sendMessage(player, "§7... and " + (matchingShops.size() - 10) + " more shops");
+                LanguageUtil.sendMessage(player, "§7... and " + (matchingShops.size() - 10) + " more shops");
             }
             
             return 1;
@@ -1323,7 +1324,7 @@ public class ShopCommands {
                 NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
             ShopManager shopManager = economyManager.getShopManager();
             
-            MessageUtil.sendMessage(player, "§6=== Shops in Category: §e" + category + " §6===");
+            LanguageUtil.sendMessage(player, "§6=== Shops in Category: §e" + category + " §6===");
             
             List<Shop> allShops = shopManager.getAllShops();
             List<Shop> categoryShops = allShops.stream()
@@ -1333,7 +1334,7 @@ public class ShopCommands {
                 .toList();
             
             if (categoryShops.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No active shops in category '" + category + "'");
+                LanguageUtil.sendMessage(player, "§7No active shops in category '" + category + "'");
                 return 0;
             }
             
@@ -1354,12 +1355,12 @@ public class ShopCommands {
                     }
                 }
                 
-                MessageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7by §e" + ownerName + 
+                LanguageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7by §e" + ownerName + 
                     " §7(§e" + itemTypes + " §7item types)");
             }
             
             if ( categoryShops.size() > 15) {
-                MessageUtil.sendMessage(player, "§7... and " + (categoryShops.size() - 15) + " more shops");
+                LanguageUtil.sendMessage(player, "§7... and " + (categoryShops.size() - 15) + " more shops");
             }
             
             return 1;
@@ -1378,14 +1379,14 @@ public class ShopCommands {
             
             Shop shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendMessage(player, "§cShop '" + shopName + "' does not exist");
+                LanguageUtil.sendMessage(player, "§cShop '" + shopName + "' does not exist");
                 return 0;
             }
             
             // Check if player owns the shop or is an admin
             if (!shop.getOwnerId().equals(player.getUUID()) && !player.hasPermissions(4)) {
                
-                MessageUtil.sendMessage(player, "§cYou don't have permission to set the location for this shop");
+                LanguageUtil.sendMessage(player, "§cYou don't have permission to set the location for this shop");
                 return 0;
             }
             
@@ -1393,10 +1394,10 @@ public class ShopCommands {
             shop.setLocationFromPlayer(player);
             shopManager.saveShop(shop); // Save the updated shop data
             
-            MessageUtil.sendMessage(player, "§6Shop location set successfully!");
-            MessageUtil.sendMessage(player, "§7Shop: §e" + shopName);
-            MessageUtil.sendMessage(player, "§7Location: " + shop.getFormattedLocation());
-            MessageUtil.sendMessage(player, "§7Players can now use §e/shop visit " + shopName + " §7to teleport here");
+            LanguageUtil.sendMessage(player, "§6Shop location set successfully!");
+            LanguageUtil.sendMessage(player, "§7Shop: §e" + shopName);
+            LanguageUtil.sendMessage(player, "§7Location: " + shop.getFormattedLocation());
+            LanguageUtil.sendMessage(player, "§7Players can now use §e/shop visit " + shopName + " §7to teleport here");
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -1415,7 +1416,7 @@ public class ShopCommands {
             
             Shop shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendMessage(manager, "§cShop not found: " + shopName);
+                LanguageUtil.sendMessage(manager, "§cShop not found: " + shopName);
                 return 0;
             }
             
@@ -1426,20 +1427,20 @@ public class ShopCommands {
                 targetUUID = targetPlayer.getUUID();
             } else {
                 // Try to find offline player UUID (simplified approach)
-                MessageUtil.sendMessage(manager, "§cPlayer not found or offline: " + playerName);
+                LanguageUtil.sendMessage(manager, "§cPlayer not found or offline: " + playerName);
                 return 0;
             }
             
             // Remove employee
             if (shop.removeEmployee(manager.getUUID(), targetUUID)) {
-                MessageUtil.sendMessage(manager, "§aSuccessfully removed §e" + playerName + " §afrom shop §e" + shopName);
+                LanguageUtil.sendMessage(manager, "§aSuccessfully removed §e" + playerName + " §afrom shop §e" + shopName);
                 
                 // Notify the removed employee if online
                 if (targetPlayer != null) {
-                    MessageUtil.sendMessage(targetPlayer, "§cYou have been removed from shop §e" + shopName);
+                    LanguageUtil.sendMessage(targetPlayer, "§cYou have been removed from shop §e" + shopName);
                 }
             } else {
-                MessageUtil.sendMessage(manager, "§cFailed to remove employee. Check permissions and employee status.");
+                LanguageUtil.sendMessage(manager, "§cFailed to remove employee. Check permissions and employee status.");
             }
             
             return 1;
@@ -1456,7 +1457,7 @@ public class ShopCommands {
                 NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
             ShopManager shopManager = economyManager.getShopManager();
             
-            MessageUtil.sendMessage(player, "§6=== Shops owned by: §e" + ownerName + " §6===");
+            LanguageUtil.sendMessage(player, "§6=== Shops owned by: §e" + ownerName + " §6===");
             
             // Find player UUID by name
             ServerPlayer targetPlayer = source.getServer().getPlayerList().getPlayerByName(ownerName);
@@ -1466,7 +1467,7 @@ public class ShopCommands {
             } else {
                 // For offline players, we'd need a different approach
                 // For now, just search by name in shop data
-                MessageUtil.sendMessage(player, "§cPlayer not found online: " + ownerName);
+                LanguageUtil.sendMessage(player, "§cPlayer not found online: " + ownerName);
                 return 0;
             }
             
@@ -1476,7 +1477,7 @@ public class ShopCommands {
                 .toList();
             
             if (ownerShops.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No active shops found for " + ownerName);
+                LanguageUtil.sendMessage(player, "§7No active shops found for " + ownerName);
                 return 0;
             }
             
@@ -1486,12 +1487,12 @@ public class ShopCommands {
                     .mapToInt(item -> item.getQuantity())
                     .sum();
                 
-                MessageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7(§e" + shop.getCategory() + 
+                LanguageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7(§e" + shop.getCategory() + 
                     "§7) - §e" + itemTypes + " §7types, §e" + totalItems + " §7total items");
             }
             
             if (ownerShops.size() > 15) {
-                MessageUtil.sendMessage(player, "§7... and " + (ownerShops.size() - 15) + " more shops");
+                LanguageUtil.sendMessage(player, "§7... and " + (ownerShops.size() - 15) + " more shops");
             }
             
             return 1;
@@ -1514,7 +1515,7 @@ public class ShopCommands {
             // Check if player is holding an item
             net.minecraft.world.item.ItemStack heldItem = player.getMainHandItem();
             if (heldItem.isEmpty()) {
-                MessageUtil.sendErrorMessage(player, "You must be holding an item to add it to the shop.");
+                LanguageUtil.sendErrorMessage(player, "You must be holding an item to add it to the shop.");
                 return 0;
             }
             
@@ -1524,12 +1525,12 @@ public class ShopCommands {
             
             // Validate quantity
             if (quantity <= 0) {
-                MessageUtil.sendErrorMessage(player, "Quantity must be greater than 0.");
+                LanguageUtil.sendErrorMessage(player, "Quantity must be greater than 0.");
                 return 0;
             }
             
             if (quantity > heldItem.getCount()) {
-                MessageUtil.sendErrorMessage(player, "You only have " + heldItem.getCount() + " of this item.");
+                LanguageUtil.sendErrorMessage(player, "You only have " + heldItem.getCount() + " of this item.");
                 return 0;
             }
             
@@ -1545,7 +1546,7 @@ public class ShopCommands {
             }
             
             if (targetShop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
                 return 0;
             }
             
@@ -1556,13 +1557,13 @@ public class ShopCommands {
                 player.hasPermissions(4); // Admin override
             
             if (!hasPermission) {
-                MessageUtil.sendErrorMessage(player, "You don't have permission to manage inventory for this shop.");
+                LanguageUtil.sendErrorMessage(player, "You don't have permission to manage inventory for this shop.");
                 return 0;
             }
             
             // Check if shop is active
             if (!targetShop.isActive()) {
-                MessageUtil.sendErrorMessage(player, "Cannot add items to an inactive shop.");
+                LanguageUtil.sendErrorMessage(player, "Cannot add items to an inactive shop.");
                 return 0;
             }
             
@@ -1572,7 +1573,7 @@ public class ShopCommands {
                 targetShop.addItem(itemName, quantity, 10.0, displayName); // This will add to existing
                 MessageUtil.sendSuccessMessage(player, "Added " + quantity + " " + displayName + 
                     " to existing stock in shop '" + shopName + "'");
-                MessageUtil.sendMessage(player, "§7New stock: §e" + targetShop.getInventory().get(itemName).getQuantity());
+                LanguageUtil.sendMessage(player, "§7New stock: §e" + targetShop.getInventory().get(itemName).getQuantity());
             } else {
                 // Add as new item with default pricing
                 double defaultPrice = 10.0; // Default price, can be changed later
@@ -1581,9 +1582,9 @@ public class ShopCommands {
                 if (success) {
                     MessageUtil.sendSuccessMessage(player, "Added " + quantity + " " + displayName + 
                         " to shop '" + shopName + "' with default price $" + String.format("%.2f", defaultPrice));
-                    MessageUtil.sendMessage(player, "§7Use §e/shop price " + shopName + " " + itemName + " <buy-price>§7 to set a custom price");
+                    LanguageUtil.sendMessage(player, "§7Use §e/shop price " + shopName + " " + itemName + " <buy-price>§7 to set a custom price");
                 } else {
-                    MessageUtil.sendErrorMessage(player, "Failed to add item to shop. Shop may be full or item may be invalid.");
+                    LanguageUtil.sendErrorMessage(player, "Failed to add item to shop. Shop may be full or item may be invalid.");
                     return 0;
                 }
             }
@@ -1624,19 +1625,19 @@ public class ShopCommands {
             }
             
             if (targetShop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' not found.");
                 return 0;
             }
             
             // Check if shop is active
             if (!targetShop.isActive()) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' is currently inactive.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' is currently inactive.");
                 return 0;
             }
             
             // Check if shop has any items
             if (targetShop.getInventory().isEmpty()) {
-                MessageUtil.sendErrorMessage(player, "Shop '" + shopName + "' has no items for sale.");
+                LanguageUtil.sendErrorMessage(player, "Shop '" + shopName + "' has no items for sale.");
                 return 0;
             }
             
@@ -1645,7 +1646,7 @@ public class ShopCommands {
                 new com.zerog.neoessentials.ui.shop.ShopInterfaceGUI(targetShop, economyManager);
             gui.openShopInterface(player);
             
-            MessageUtil.sendMessage(player, "§7Opening shop interface for §e" + targetShop.getShopName());
+            LanguageUtil.sendMessage(player, "§7Opening shop interface for §e" + targetShop.getShopName());
             return 1;
             
         } catch (CommandSyntaxException e) {
