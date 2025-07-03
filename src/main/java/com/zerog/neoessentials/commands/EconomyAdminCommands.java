@@ -3,7 +3,8 @@ package com.zerog.neoessentials.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.economy.*;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -100,20 +101,20 @@ public class EconomyAdminCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             
-            MessageUtil.sendMessage(player, "§6§l=== Economy Administration Commands ===");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§e/economyadmin stats§7 - View economy statistics");
-            MessageUtil.sendMessage(player, "§e/economyadmin dashboard§7 - Real-time economy dashboard");
-            MessageUtil.sendMessage(player, "§e/economyadmin health§7 - Economy health check");
-            MessageUtil.sendMessage(player, "§e/economyadmin backup§7 - Create economy backup");
-            MessageUtil.sendMessage(player, "§e/economyadmin reload§7 - Reload economy configuration");
-            MessageUtil.sendMessage(player, "§e/economyadmin reset <player>§7 - Reset player economy data");
-            MessageUtil.sendMessage(player, "§e/economyadmin inflation§7 - Show inflation statistics");
-            MessageUtil.sendMessage(player, "§e/economyadmin wealth§7 - Show wealth distribution");
-            MessageUtil.sendMessage(player, "§e/economyadmin performance§7 - Show performance metrics");
-            MessageUtil.sendMessage(player, "§e/economyadmin transactions [limit]§7 - Show recent transactions");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7Alias: §e/ecoadmin");
+            LanguageUtil.sendMessage(player, "§6§l=== Economy Administration Commands ===");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e/economyadmin stats§7 - View economy statistics");
+            LanguageUtil.sendMessage(player, "§e/economyadmin dashboard§7 - Real-time economy dashboard");
+            LanguageUtil.sendMessage(player, "§e/economyadmin health§7 - Economy health check");
+            LanguageUtil.sendMessage(player, "§e/economyadmin backup§7 - Create economy backup");
+            LanguageUtil.sendMessage(player, "§e/economyadmin reload§7 - Reload economy configuration");
+            LanguageUtil.sendMessage(player, "§e/economyadmin reset <player>§7 - Reset player economy data");
+            LanguageUtil.sendMessage(player, "§e/economyadmin inflation§7 - Show inflation statistics");
+            LanguageUtil.sendMessage(player, "§e/economyadmin wealth§7 - Show wealth distribution");
+            LanguageUtil.sendMessage(player, "§e/economyadmin performance§7 - Show performance metrics");
+            LanguageUtil.sendMessage(player, "§e/economyadmin transactions [limit]§7 - Show recent transactions");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§7Alias: §e/ecoadmin");
             
             return 1;
         } catch (Exception e) {
@@ -129,29 +130,29 @@ public class EconomyAdminCommands {
             BankManager bankManager = economyManager.getBankManager();
             ShopManager shopManager = economyManager.getShopManager();
             
-            MessageUtil.sendMessage(player, "§6§l=== Economy Statistics ===");
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6§l=== Economy Statistics ===");
+            LanguageUtil.sendMessage(player, "");
             
             // Basic economy stats
             Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
             double totalMoney = calculateTotalMoney();
             double averageBalance = calculateAverageBalance();
             
-            MessageUtil.sendMessage(player, "§e§lGeneral Statistics:");
-            MessageUtil.sendMessage(player, "§7Total Money in Circulation: §a" + defaultCurrency.format(totalMoney));
-            MessageUtil.sendMessage(player, "§7Average Player Balance: §a" + defaultCurrency.format(averageBalance));
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lGeneral Statistics:");
+            LanguageUtil.sendMessage(player, "§7Total Money in Circulation: §a" + defaultCurrency.format(totalMoney));
+            LanguageUtil.sendMessage(player, "§7Average Player Balance: §a" + defaultCurrency.format(averageBalance));
+            LanguageUtil.sendMessage(player, "");
             
             // Transaction stats
             long totalTransactions = transactionManager.getTotalTransactionCount();
             double totalVolume = transactionManager.getTotalTransactionVolume();
             double dailyVolume = transactionManager.getDailyTransactionVolume();
             
-            MessageUtil.sendMessage(player, "§e§lTransaction Statistics:");
-            MessageUtil.sendMessage(player, "§7Total Transactions: §e" + String.format("%,d", totalTransactions));
-            MessageUtil.sendMessage(player, "§7Total Volume: §a" + defaultCurrency.format(totalVolume));
-            MessageUtil.sendMessage(player, "§7Daily Volume: §a" + defaultCurrency.format(dailyVolume));
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lTransaction Statistics:");
+            LanguageUtil.sendMessage(player, "§7Total Transactions: §e" + String.format("%,d", totalTransactions));
+            LanguageUtil.sendMessage(player, "§7Total Volume: §a" + defaultCurrency.format(totalVolume));
+            LanguageUtil.sendMessage(player, "§7Daily Volume: §a" + defaultCurrency.format(dailyVolume));
+            LanguageUtil.sendMessage(player, "");
             
             // Banking stats
             List<BankAccount> allAccounts = bankManager.getAllAccounts();
@@ -160,22 +161,22 @@ public class EconomyAdminCommands {
                 .mapToDouble(account -> account.getBalance(defaultCurrency))
                 .sum();
             
-            MessageUtil.sendMessage(player, "§e§lBanking Statistics:");
-            MessageUtil.sendMessage(player, "§7Total Bank Accounts: §e" + String.format("%,d", totalAccounts));
-            MessageUtil.sendMessage(player, "§7Total Bank Deposits: §a" + defaultCurrency.format(totalBankDeposits));
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lBanking Statistics:");
+            LanguageUtil.sendMessage(player, "§7Total Bank Accounts: §e" + String.format("%,d", totalAccounts));
+            LanguageUtil.sendMessage(player, "§7Total Bank Deposits: §a" + defaultCurrency.format(totalBankDeposits));
+            LanguageUtil.sendMessage(player, "");
             
             // Shop stats
             List<Shop> allShops = shopManager.getAllShops();
             int totalShops = allShops.size();
             int activeShops = (int) allShops.stream().filter(Shop::isActive).count();
             
-            MessageUtil.sendMessage(player, "§e§lShop Statistics:");
-            MessageUtil.sendMessage(player, "§7Total Shops: §e" + String.format("%,d", totalShops));
-            MessageUtil.sendMessage(player, "§7Active Shops: §a" + String.format("%,d", activeShops));
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lShop Statistics:");
+            LanguageUtil.sendMessage(player, "§7Total Shops: §e" + String.format("%,d", totalShops));
+            LanguageUtil.sendMessage(player, "§7Active Shops: §a" + String.format("%,d", activeShops));
+            LanguageUtil.sendMessage(player, "");
             
-            MessageUtil.sendMessage(player, "§7Generated at: §e" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+            LanguageUtil.sendMessage(player, "§7Generated at: §e" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             
             return 1;
         } catch (Exception e) {
@@ -191,36 +192,36 @@ public class EconomyAdminCommands {
             EconomyManager economyManager = EconomyManager.getInstance();
             TransactionManager transactionManager = economyManager.getTransactionManager();
             
-            MessageUtil.sendMessage(player, "§6§l=== Real-Time Economy Dashboard ===");
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6§l=== Real-Time Economy Dashboard ===");
+            LanguageUtil.sendMessage(player, "");
             
             // Real-time metrics
             double currentInflationRate = calculateInflationRate();
             double economicVelocity = calculateEconomicVelocity();
             double wealthGini = calculateWealthGini();
             
-            MessageUtil.sendMessage(player, "§e§lHealth Indicators:");
-            MessageUtil.sendMessage(player, "§7Current Inflation Rate: " + formatInflationStatus(currentInflationRate));
-            MessageUtil.sendMessage(player, "§7Economic Velocity: " + formatVelocityStatus(economicVelocity));
-            MessageUtil.sendMessage(player, "§7Wealth Inequality (Gini): " + formatGiniStatus(wealthGini));
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lHealth Indicators:");
+            LanguageUtil.sendMessage(player, "§7Current Inflation Rate: " + formatInflationStatus(currentInflationRate));
+            LanguageUtil.sendMessage(player, "§7Economic Velocity: " + formatVelocityStatus(economicVelocity));
+            LanguageUtil.sendMessage(player, "§7Wealth Inequality (Gini): " + formatGiniStatus(wealthGini));
+            LanguageUtil.sendMessage(player, "");
             
             // Recent activity
             int hourlyTransactions = transactionManager.getHourlyTransactionCount();
             double hourlyVolume = transactionManager.getHourlyTransactionVolume();
             
-            MessageUtil.sendMessage(player, "§e§lRecent Activity (Last Hour):");
-            MessageUtil.sendMessage(player, "§7Transactions: §e" + String.format("%,d", hourlyTransactions));
-            MessageUtil.sendMessage(player, "§7Volume: §a" + CurrencyManager.getInstance().getDefaultCurrency().format(hourlyVolume));
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lRecent Activity (Last Hour):");
+            LanguageUtil.sendMessage(player, "§7Transactions: §e" + String.format("%,d", hourlyTransactions));
+            LanguageUtil.sendMessage(player, "§7Volume: §a" + CurrencyManager.getInstance().getDefaultCurrency().format(hourlyVolume));
+            LanguageUtil.sendMessage(player, "");
             
             // System status
             String systemStatus = getSystemHealthStatus();
-            MessageUtil.sendMessage(player, "§e§lSystem Status: " + systemStatus);
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lSystem Status: " + systemStatus);
+            LanguageUtil.sendMessage(player, "");
             
-            MessageUtil.sendMessage(player, "§7Dashboard updated: §e" + new SimpleDateFormat("HH:mm:ss").format(new Date()));
-            MessageUtil.sendMessage(player, "§7Use §e/economyadmin health§7 for detailed health check");
+            LanguageUtil.sendMessage(player, "§7Dashboard updated: §e" + new SimpleDateFormat("HH:mm:ss").format(new Date()));
+            LanguageUtil.sendMessage(player, "§7Use §e/economyadmin health§7 for detailed health check");
             
             return 1;
         } catch (Exception e) {
@@ -234,8 +235,8 @@ public class EconomyAdminCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             
-            MessageUtil.sendMessage(player, "§6§l=== Economy Health Check ===");
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6§l=== Economy Health Check ===");
+            LanguageUtil.sendMessage(player, "");
             
             // Check various health metrics
             boolean healthOverall = true;
@@ -243,39 +244,39 @@ public class EconomyAdminCommands {
             // Inflation check
             double inflationRate = calculateInflationRate();
             String inflationStatus = getInflationHealthStatus(inflationRate);
-            MessageUtil.sendMessage(player, "§7Inflation Rate: " + inflationStatus);
+            LanguageUtil.sendMessage(player, "§7Inflation Rate: " + inflationStatus);
             if (inflationRate > 0.10) healthOverall = false; // > 10% is concerning
             
             // Velocity check
             double velocity = calculateEconomicVelocity();
             String velocityStatus = getVelocityHealthStatus(velocity);
-            MessageUtil.sendMessage(player, "§7Economic Velocity: " + velocityStatus);
+            LanguageUtil.sendMessage(player, "§7Economic Velocity: " + velocityStatus);
             
             // Wealth distribution check
             double gini = calculateWealthGini();
             String wealthStatus = getWealthHealthStatus(gini);
-            MessageUtil.sendMessage(player, "§7Wealth Distribution: " + wealthStatus);
+            LanguageUtil.sendMessage(player, "§7Wealth Distribution: " + wealthStatus);
             if (gini > 0.80) healthOverall = false; // High inequality
             
             // Banking system check
             String bankingStatus = getBankingHealthStatus();
-            MessageUtil.sendMessage(player, "§7Banking System: " + bankingStatus);
+            LanguageUtil.sendMessage(player, "§7Banking System: " + bankingStatus);
             
             // Shop system check
             String shopStatus = getShopHealthStatus();
-            MessageUtil.sendMessage(player, "§7Shop System: " + shopStatus);
+            LanguageUtil.sendMessage(player, "§7Shop System: " + shopStatus);
             
             // Database health
             String dbStatus = getDatabaseHealthStatus();
-            MessageUtil.sendMessage(player, "§7Database: " + dbStatus);
+            LanguageUtil.sendMessage(player, "§7Database: " + dbStatus);
             
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "");
             
             // Overall health
             if (healthOverall) {
-                MessageUtil.sendMessage(player, "§a§l✓ Economy Status: HEALTHY");
+                LanguageUtil.sendMessage(player, "§a§l✓ Economy Status: HEALTHY");
             } else {
-                MessageUtil.sendMessage(player, "§c§l⚠ Economy Status: NEEDS ATTENTION");
+                LanguageUtil.sendMessage(player, "§c§l⚠ Economy Status: NEEDS ATTENTION");
             }
             
             return 1;
@@ -290,15 +291,15 @@ public class EconomyAdminCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             
-            MessageUtil.sendMessage(player, "§eCreating economy backup...");
+            LanguageUtil.sendMessage(player, "§eCreating economy backup...");
             
             // Create backup
             boolean success = createBackup();
             
             if (success) {
-                MessageUtil.sendMessage(player, "§a✓ Economy backup created successfully!");
-                MessageUtil.sendMessage(player, "§7Backup includes: accounts, transactions, shops, auctions, loans");
-                MessageUtil.sendMessage(player, "§7Timestamp: §e" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()));
+                LanguageUtil.sendMessage(player, "§a✓ Economy backup created successfully!");
+                LanguageUtil.sendMessage(player, "§7Backup includes: accounts, transactions, shops, auctions, loans");
+                LanguageUtil.sendMessage(player, "§7Timestamp: §e" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()));
             } else {
                 MessageUtil.sendErrorMessage(player, "Failed to create economy backup.");
             }
@@ -315,13 +316,13 @@ public class EconomyAdminCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             
-            MessageUtil.sendMessage(player, "§eReloading economy configuration...");
+            LanguageUtil.sendMessage(player, "§eReloading economy configuration...");
             
             // Reload configuration
             boolean success = reloadConfiguration();
             
             if (success) {
-                MessageUtil.sendMessage(player, "§a✓ Economy configuration reloaded successfully!");
+                LanguageUtil.sendMessage(player, "§a✓ Economy configuration reloaded successfully!");
             } else {
                 MessageUtil.sendErrorMessage(player, "Failed to reload economy configuration.");
             }
@@ -338,10 +339,10 @@ public class EconomyAdminCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             
-            MessageUtil.sendMessage(player, "§cWarning: This will reset ALL economy data for " + 
+            LanguageUtil.sendMessage(player, "§cWarning: This will reset ALL economy data for " + 
                 target.getScoreboardName() + "!");
-            MessageUtil.sendMessage(player, "§cThis includes: balances, accounts, transactions, shops, auctions, loans");
-            MessageUtil.sendMessage(player, "§eUse §c/economyadmin confirm-reset " + target.getScoreboardName() + 
+            LanguageUtil.sendMessage(player, "§cThis includes: balances, accounts, transactions, shops, auctions, loans");
+            LanguageUtil.sendMessage(player, "§eUse §c/economyadmin confirm-reset " + target.getScoreboardName() + 
                 "§e to confirm this action.");
             
             return 1;
@@ -356,24 +357,24 @@ public class EconomyAdminCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             
-            MessageUtil.sendMessage(player, "§6§l=== Inflation Statistics ===");
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6§l=== Inflation Statistics ===");
+            LanguageUtil.sendMessage(player, "");
             
             double currentRate = calculateInflationRate();
             double weeklyRate = calculateWeeklyInflationRate();
             double monthlyRate = calculateMonthlyInflationRate();
             
-            MessageUtil.sendMessage(player, "§e§lInflation Rates:");
-            MessageUtil.sendMessage(player, "§7Current Rate: " + formatPercentage(currentRate));
-            MessageUtil.sendMessage(player, "§7Weekly Rate: " + formatPercentage(weeklyRate));
-            MessageUtil.sendMessage(player, "§7Monthly Rate: " + formatPercentage(monthlyRate));
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lInflation Rates:");
+            LanguageUtil.sendMessage(player, "§7Current Rate: " + formatPercentage(currentRate));
+            LanguageUtil.sendMessage(player, "§7Weekly Rate: " + formatPercentage(weeklyRate));
+            LanguageUtil.sendMessage(player, "§7Monthly Rate: " + formatPercentage(monthlyRate));
+            LanguageUtil.sendMessage(player, "");
             
             // Inflation factors
-            MessageUtil.sendMessage(player, "§e§lKey Factors:");
-            MessageUtil.sendMessage(player, "§7Money Supply Growth: " + formatPercentage(calculateMoneySupplyGrowth()));
-            MessageUtil.sendMessage(player, "§7Transaction Volume: " + formatPercentage(calculateVolumeGrowth()));
-            MessageUtil.sendMessage(player, "§7Player Activity: " + getActivityLevel());
+            LanguageUtil.sendMessage(player, "§e§lKey Factors:");
+            LanguageUtil.sendMessage(player, "§7Money Supply Growth: " + formatPercentage(calculateMoneySupplyGrowth()));
+            LanguageUtil.sendMessage(player, "§7Transaction Volume: " + formatPercentage(calculateVolumeGrowth()));
+            LanguageUtil.sendMessage(player, "§7Player Activity: " + getActivityLevel());
             
             return 1;
         } catch (Exception e) {
@@ -387,23 +388,23 @@ public class EconomyAdminCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             
-            MessageUtil.sendMessage(player, "§6§l=== Wealth Distribution Analysis ===");
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6§l=== Wealth Distribution Analysis ===");
+            LanguageUtil.sendMessage(player, "");
             
             double giniCoefficient = calculateWealthGini();
-            MessageUtil.sendMessage(player, "§e§lGini Coefficient: " + formatGiniStatus(giniCoefficient));
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lGini Coefficient: " + formatGiniStatus(giniCoefficient));
+            LanguageUtil.sendMessage(player, "");
             
             // Wealth percentiles
-            MessageUtil.sendMessage(player, "§e§lWealth Percentiles:");
+            LanguageUtil.sendMessage(player, "§e§lWealth Percentiles:");
             Map<String, Double> percentiles = calculateWealthPercentiles();
             Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
             
-            MessageUtil.sendMessage(player, "§7Top 1%: §a" + currency.format(percentiles.get("p99")));
-            MessageUtil.sendMessage(player, "§7Top 5%: §a" + currency.format(percentiles.get("p95")));
-            MessageUtil.sendMessage(player, "§7Top 10%: §a" + currency.format(percentiles.get("p90")));
-            MessageUtil.sendMessage(player, "§7Median (50%): §a" + currency.format(percentiles.get("p50")));
-            MessageUtil.sendMessage(player, "§7Bottom 10%: §a" + currency.format(percentiles.get("p10")));
+            LanguageUtil.sendMessage(player, "§7Top 1%: §a" + currency.format(percentiles.get("p99")));
+            LanguageUtil.sendMessage(player, "§7Top 5%: §a" + currency.format(percentiles.get("p95")));
+            LanguageUtil.sendMessage(player, "§7Top 10%: §a" + currency.format(percentiles.get("p90")));
+            LanguageUtil.sendMessage(player, "§7Median (50%): §a" + currency.format(percentiles.get("p50")));
+            LanguageUtil.sendMessage(player, "§7Bottom 10%: §a" + currency.format(percentiles.get("p10")));
             
             return 1;
         } catch (Exception e) {
@@ -417,35 +418,35 @@ public class EconomyAdminCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             
-            MessageUtil.sendMessage(player, "§6§l=== Performance Metrics ===");
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6§l=== Performance Metrics ===");
+            LanguageUtil.sendMessage(player, "");
             
             // Database performance
-            MessageUtil.sendMessage(player, "§e§lDatabase Performance:");
-            MessageUtil.sendMessage(player, "§7Query Response Time: " + getAverageQueryTime() + "ms");
-            MessageUtil.sendMessage(player, "§7Cache Hit Rate: " + getCacheHitRate() + "%");
-            MessageUtil.sendMessage(player, "§7Active Connections: " + getActiveConnections());
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lDatabase Performance:");
+            LanguageUtil.sendMessage(player, "§7Query Response Time: " + getAverageQueryTime() + "ms");
+            LanguageUtil.sendMessage(player, "§7Cache Hit Rate: " + getCacheHitRate() + "%");
+            LanguageUtil.sendMessage(player, "§7Active Connections: " + getActiveConnections());
+            LanguageUtil.sendMessage(player, "");
             
             // Transaction processing
-            MessageUtil.sendMessage(player, "§e§lTransaction Processing:");
-            MessageUtil.sendMessage(player, "§7Transactions/Second: " + getTransactionsPerSecond());
-            MessageUtil.sendMessage(player, "§7Average Processing Time: " + getAverageProcessingTime() + "ms");
-            MessageUtil.sendMessage(player, "§7Failed Transactions: " + getFailedTransactionRate() + "%");
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lTransaction Processing:");
+            LanguageUtil.sendMessage(player, "§7Transactions/Second: " + getTransactionsPerSecond());
+            LanguageUtil.sendMessage(player, "§7Average Processing Time: " + getAverageProcessingTime() + "ms");
+            LanguageUtil.sendMessage(player, "§7Failed Transactions: " + getFailedTransactionRate() + "%");
+            LanguageUtil.sendMessage(player, "");
             
             // Memory usage
-            MessageUtil.sendMessage(player, "§e§lMemory Usage:");
+            LanguageUtil.sendMessage(player, "§e§lMemory Usage:");
             Runtime runtime = Runtime.getRuntime();
             long maxMemory = runtime.maxMemory() / 1024 / 1024;
             long totalMemory = runtime.totalMemory() / 1024 / 1024;
             long freeMemory = runtime.freeMemory() / 1024 / 1024;
             long usedMemory = totalMemory - freeMemory;
             
-            MessageUtil.sendMessage(player, "§7Used Memory: §e" + usedMemory + "MB");
-            MessageUtil.sendMessage(player, "§7Total Memory: §e" + totalMemory + "MB");
-            MessageUtil.sendMessage(player, "§7Max Memory: §e" + maxMemory + "MB");
-            MessageUtil.sendMessage(player, "§7Memory Usage: §e" + (usedMemory * 100 / maxMemory) + "%");
+            LanguageUtil.sendMessage(player, "§7Used Memory: §e" + usedMemory + "MB");
+            LanguageUtil.sendMessage(player, "§7Total Memory: §e" + totalMemory + "MB");
+            LanguageUtil.sendMessage(player, "§7Max Memory: §e" + maxMemory + "MB");
+            LanguageUtil.sendMessage(player, "§7Memory Usage: §e" + (usedMemory * 100 / maxMemory) + "%");
             
             return 1;
         } catch (Exception e) {
@@ -460,13 +461,13 @@ public class EconomyAdminCommands {
             ServerPlayer player = source.getPlayerOrException();
             TransactionManager transactionManager = EconomyManager.getInstance().getTransactionManager();
             
-            MessageUtil.sendMessage(player, "§6§l=== Recent Transactions (Last " + limit + ") ===");
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6§l=== Recent Transactions (Last " + limit + ") ===");
+            LanguageUtil.sendMessage(player, "");
             
             List<Transaction> recentTransactions = transactionManager.getRecentTransactions(limit);
             
             if (recentTransactions.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No recent transactions found.");
+                LanguageUtil.sendMessage(player, "§7No recent transactions found.");
                 return 1;
             }
             
@@ -478,7 +479,7 @@ public class EconomyAdminCommands {
                 String amount = currency.format(Math.abs(transaction.getAmount()));
                 String type = transaction.getType().toString();
                 
-                MessageUtil.sendMessage(player, "§7[" + time + "] §e" + type + " §7- §a" + amount + 
+                LanguageUtil.sendMessage(player, "§7[" + time + "] §e" + type + " §7- §a" + amount + 
                     " §7- §e" + transaction.getDescription());
             }
             
@@ -637,22 +638,22 @@ public class EconomyAdminCommands {
             ServerPlayer player = source.getPlayerOrException();
             AuctionNotificationManager notificationManager = AuctionNotificationManager.getInstance();
             
-            MessageUtil.sendMessage(player, "§6§l=== Auction Watch Statistics ===");
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6§l=== Auction Watch Statistics ===");
+            LanguageUtil.sendMessage(player, "");
             
             Map<String, Object> stats = notificationManager.getWatchStatistics();
             
-            MessageUtil.sendMessage(player, "§7Total watchers: §e" + stats.get("totalWatchers"));
-            MessageUtil.sendMessage(player, "§7Watched auctions: §e" + stats.get("totalWatchedAuctions"));
-            MessageUtil.sendMessage(player, "§7Watch relationships: §e" + stats.get("totalWatchRelationships"));
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§7Total watchers: §e" + stats.get("totalWatchers"));
+            LanguageUtil.sendMessage(player, "§7Watched auctions: §e" + stats.get("totalWatchedAuctions"));
+            LanguageUtil.sendMessage(player, "§7Watch relationships: §e" + stats.get("totalWatchRelationships"));
+            LanguageUtil.sendMessage(player, "");
             
             if (stats.get("mostWatchedAuction") != null) {
-                MessageUtil.sendMessage(player, "§7Most watched auction:");
-                MessageUtil.sendMessage(player, "§7  ID: §e" + stats.get("mostWatchedAuction"));
-                MessageUtil.sendMessage(player, "§7  Watchers: §e" + stats.get("mostWatchedAuctionWatchers"));
+                LanguageUtil.sendMessage(player, "§7Most watched auction:");
+                LanguageUtil.sendMessage(player, "§7  ID: §e" + stats.get("mostWatchedAuction"));
+                LanguageUtil.sendMessage(player, "§7  Watchers: §e" + stats.get("mostWatchedAuctionWatchers"));
             } else {
-                MessageUtil.sendMessage(player, "§7No auctions are currently being watched.");
+                LanguageUtil.sendMessage(player, "§7No auctions are currently being watched.");
             }
             
             return 1;
