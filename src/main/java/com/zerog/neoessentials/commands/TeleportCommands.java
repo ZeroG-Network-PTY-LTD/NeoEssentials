@@ -56,7 +56,7 @@ public class TeleportCommands {
         // Register /tpahere command
         dispatcher.register(
             Commands.literal("tpahere")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.tpahere"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.tpahere"))
                 .then(
                     Commands.argument("player", EntityArgument.player())
                         .executes(context -> {
@@ -66,10 +66,10 @@ public class TeleportCommands {
                             boolean success = TeleportUtil.createTeleportRequest(source, target, false);
                             
                             if (success) {
-                                MessageUtil.sendMessage(source, "Teleport request sent to " + target.getScoreboardName());
-                                MessageUtil.sendMessage(target, source.getScoreboardName() + " has requested you to teleport to them. Type /tpaccept to accept or /tpdeny to deny.");
+                                LanguageUtil.sendMessage(source, "neoessentials.teleport.request_sent", target.getScoreboardName());
+                                LanguageUtil.sendMessage(target, "neoessentials.teleport.request_received_here", source.getScoreboardName());
                             } else {
-                                MessageUtil.sendErrorMessage(source, "You already have a pending teleport request with this player.");
+                                LanguageUtil.sendErrorMessage(source, "neoessentials.teleport.already_pending");
                             }
                             
                             return 1;
@@ -80,14 +80,15 @@ public class TeleportCommands {
         // Register /tpaccept command
         dispatcher.register(
             Commands.literal("tpaccept")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.tpaccept"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.tpaccept"))
+                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Accept teleport request
                     boolean success = TeleportUtil.acceptTeleportRequest(player);
                     
                     if (!success) {
-                        MessageUtil.sendErrorMessage(player, "You have no pending teleport requests.");
+                        LanguageUtil.sendErrorMessage(player, "neoessentials.teleport.no_pending_request");
                     }
                     
                     return success ? 1 : 0;
@@ -97,24 +98,28 @@ public class TeleportCommands {
         // Register /tpdeny command
         dispatcher.register(
             Commands.literal("tpdeny")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.tpdeny"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.tpdeny"))
+                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Deny teleport request
                     boolean hadRequest = TeleportUtil.denyTeleportRequest(player);
                     
                     if (hadRequest) {
-                        MessageUtil.sendMessage(player, "Teleport request denied.");
+                        LanguageUtil.sendMessage(player, "neoessentials.teleport.request_denied");
                     } else {
-                        MessageUtil.sendErrorMessage(player, "You have no pending teleport requests.");
+                        LanguageUtil.sendErrorMessage(player, "neoessentials.teleport.no_pending_request");
                     }
                     
                     return 1;
                 })
-        );        // Register /back command
+        );
+
+        // Register /back command
         dispatcher.register(
             Commands.literal("back")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.back"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.back"))
+                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Try to teleport using the history stack first
@@ -126,9 +131,9 @@ public class TeleportCommands {
                     }
                     
                     if (success) {
-                        MessageUtil.sendSuccessMessage(player, "Teleported back to your previous location.");
+                        LanguageUtil.sendMessage(player, "neoessentials.teleport.back_success");
                     } else {
-                        MessageUtil.sendErrorMessage(player, "You have no previous location to return to.");
+                        LanguageUtil.sendErrorMessage(player, "neoessentials.teleport.back_no_location");
                     }
                     
                     return success ? 1 : 0;
@@ -138,7 +143,8 @@ public class TeleportCommands {
         // Register /spawn command
         dispatcher.register(
             Commands.literal("spawn")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.spawn"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.spawn"))
+                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Get the spawn manager
@@ -152,9 +158,9 @@ public class TeleportCommands {
                     boolean success = TeleportUtil.teleportPlayer(player, level, pos, true);
                     
                     if (success) {
-                        MessageUtil.sendSuccessMessage(player, "Teleported to spawn.");
+                        LanguageUtil.sendMessage(player, "neoessentials.spawn.teleported");
                     } else {
-                        MessageUtil.sendErrorMessage(player, "Failed to teleport to spawn.");
+                        LanguageUtil.sendErrorMessage(player, "neoessentials.spawn.teleport_failed");
                     }
                     
                     return success ? 1 : 0;
@@ -164,7 +170,8 @@ public class TeleportCommands {
         // Register /setspawn command
         dispatcher.register(
             Commands.literal("setspawn")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.setspawn"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.command.setspawn"))
+                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Get the spawn manager
@@ -174,9 +181,9 @@ public class TeleportCommands {
                     boolean success = spawnManager.setSpawn(player);
                     
                     if (success) {
-                        MessageUtil.sendSuccessMessage(player, "Spawn location set to your current position.");
+                        LanguageUtil.sendMessage(player, "neoessentials.spawn.set_success");
                     } else {
-                        MessageUtil.sendErrorMessage(player, "Failed to set spawn location.");
+                        LanguageUtil.sendErrorMessage(player, "neoessentials.spawn.set_failed");
                     }
                     
                     return success ? 1 : 0;
@@ -186,54 +193,7 @@ public class TeleportCommands {
         // Register /top command
         dispatcher.register(
             Commands.literal("top")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.top"))                .executes(context -> {
-                    ServerPlayer player = context.getSource().getPlayerOrException();
-                      // Get the player's current level
-                    ServerLevel level = player.serverLevel();
-                    
-                    // Find the highest block at the player's current x,z position
-                    int highestY = findHighestBlock(level, (int)player.getX(), (int)player.getZ());
-                    
-                    // Teleport the player to the highest block, with a slight offset to avoid suffocation
-                    boolean success = TeleportUtil.teleportPlayer(player, level, new Vec3(player.getX(), highestY, player.getZ()), true);
-                    
-                    if (success) {
-                        MessageUtil.sendSuccessMessage(player, "Teleported to the highest block above you.");
-                    } else {
-                        MessageUtil.sendErrorMessage(player, "Failed to teleport to the highest block.");
-                    }
-                    
-                    return success ? 1 : 0;
-                })
-        );
-
-        // Register /bottom command
-        dispatcher.register(
-            Commands.literal("bottom")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.bottom"))                .executes(context -> {
-                    ServerPlayer player = context.getSource().getPlayerOrException();
-                      // Get the player's current level
-                    ServerLevel level = player.serverLevel();
-                    
-                    // Find the lowest block at the player's current x,z position
-                    int lowestY = findLowestBlock(level, (int)player.getX(), (int)player.getZ());
-                    
-                    // Teleport the player to the lowest block, with a slight offset to avoid suffocation
-                    boolean success = TeleportUtil.teleportPlayer(player, level, new Vec3(player.getX(), lowestY, player.getZ()), true);
-                    
-                    if (success) {
-                        MessageUtil.sendSuccessMessage(player, "Teleported to the lowest block below you.");
-                    } else {
-                        MessageUtil.sendErrorMessage(player, "Failed to teleport to the lowest block.");
-                    }
-                    
-                    return success ? 1 : 0;
-                })        );
-        
-        // Register /top command
-        dispatcher.register(
-            Commands.literal("top")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.top"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.top"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     ServerLevel level = player.serverLevel();
@@ -249,9 +209,9 @@ public class TeleportCommands {
                     boolean success = TeleportUtil.teleport(player, level, x + 0.5, topY, z + 0.5, player.getYRot(), player.getXRot());
                     
                     if (success) {
-                        MessageUtil.sendSuccessMessage(player, "Teleported to the highest point.");
+                        LanguageUtil.sendMessage(player, "neoessentials.teleport.top_success");
                     } else {
-                        MessageUtil.sendErrorMessage(player, "Failed to teleport to the highest point.");
+                        LanguageUtil.sendErrorMessage(player, "neoessentials.teleport.top_failed");
                     }
                     
                     return success ? 1 : 0;
@@ -261,7 +221,7 @@ public class TeleportCommands {
         // Register /bottom command
         dispatcher.register(
             Commands.literal("bottom")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.bottom"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.bottom"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     ServerLevel level = player.serverLevel();
@@ -277,9 +237,9 @@ public class TeleportCommands {
                     boolean success = TeleportUtil.teleport(player, level, x + 0.5, bottomY, z + 0.5, player.getYRot(), player.getXRot());
                     
                     if (success) {
-                        MessageUtil.sendSuccessMessage(player, "Teleported to the lowest point.");
+                        LanguageUtil.sendMessage(player, "neoessentials.teleport.bottom_success");
                     } else {
-                        MessageUtil.sendErrorMessage(player, "Failed to teleport to the lowest point.");
+                        LanguageUtil.sendErrorMessage(player, "neoessentials.teleport.bottom_failed");
                     }
                     
                     return success ? 1 : 0;

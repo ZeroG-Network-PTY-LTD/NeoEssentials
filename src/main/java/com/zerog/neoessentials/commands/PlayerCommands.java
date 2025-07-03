@@ -241,11 +241,10 @@ public class PlayerCommands {
         
         // Send messages
         if (player == context.getSource().getEntity()) {
-            player.sendSystemMessage(Component.literal(TextUtil.colorize("&aYour hunger has been satisfied.")));
-            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize("&aYour hunger has been satisfied.")), false);
+            LanguageUtil.sendMessage(player, "neoessentials.player.fed");
         } else {
-            player.sendSystemMessage(Component.literal(TextUtil.colorize("&aYour hunger has been satisfied by " + context.getSource().getTextName() + ".")));
-            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize("&aYou satisfied the hunger of &e" + player.getScoreboardName() + "&a.")), true);
+            LanguageUtil.sendMessage(player, "neoessentials.player.fed");
+            LanguageUtil.sendMessage(context.getSource(), "neoessentials.player.fed_other", player.getScoreboardName());
         }
         
         return 1;
@@ -288,13 +287,13 @@ public class PlayerCommands {
         player.onUpdateAbilities();
         
         // Send messages
-        String statusText = enabled ? "&aenabled" : "&cdisabled";
+        String statusKey = enabled ? "neoessentials.player.fly_enabled" : "neoessentials.player.fly_disabled";
         
         if (player == context.getSource().getEntity()) {
-            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize("&7Flight mode " + statusText + "&7 for yourself.")), true);
+            LanguageUtil.sendMessage(context.getSource(), statusKey);
         } else {
-            player.sendSystemMessage(Component.literal(TextUtil.colorize("&7Your flight mode has been " + statusText + " &7by " + context.getSource().getTextName() + ".")));
-            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize("&7Flight mode " + statusText + " &7for &e" + player.getScoreboardName() + "&7.")), true);
+            LanguageUtil.sendMessage(player, statusKey + "_other", context.getSource().getTextName());
+            LanguageUtil.sendMessage(context.getSource(), statusKey + "_for", player.getScoreboardName());
         }
         
         return 1;
@@ -336,7 +335,7 @@ public class PlayerCommands {
         }
         
         if (!walkUpdated && !flyUpdated) {
-            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cInvalid speed type. Use 'walk', 'fly', or 'both'.")));
+            LanguageUtil.sendMessage(context.getSource(), "neoessentials.player.speed_invalid_type");
             return 0;
         }
         
@@ -344,23 +343,20 @@ public class PlayerCommands {
         player.onUpdateAbilities();
         
         // Send messages
-        StringBuilder speedMessage = new StringBuilder();
-        
+        String speedType = "";
         if (walkUpdated && flyUpdated) {
-            speedMessage.append("&7Both walking and flying speeds");
+            speedType = "both";
         } else if (walkUpdated) {
-            speedMessage.append("&7Walking speed");
+            speedType = "walk";
         } else {
-            speedMessage.append("&7Flying speed");
+            speedType = "fly";
         }
         
-        speedMessage.append(" set to &e").append(speedValue).append("&7.");
-        
         if (player == context.getSource().getEntity()) {
-            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(speedMessage.toString())), false);
+            LanguageUtil.sendMessage(context.getSource(), "neoessentials.player.speed_set", speedType, String.valueOf(speedValue));
         } else {
-            player.sendSystemMessage(Component.literal(TextUtil.colorize(speedMessage.toString() + " &7(set by " + context.getSource().getTextName() + ")")));
-            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(speedMessage + " &7(for &e" + player.getScoreboardName() + "&7)")), true);
+            LanguageUtil.sendMessage(player, "neoessentials.player.speed_set_other", speedType, String.valueOf(speedValue), context.getSource().getTextName());
+            LanguageUtil.sendMessage(context.getSource(), "neoessentials.player.speed_set_for", speedType, String.valueOf(speedValue), player.getScoreboardName());
         }
         
         return 1;
@@ -394,13 +390,13 @@ public class PlayerCommands {
         }
         
         // Send messages
-        String statusText = enabled ? "&aenabled" : "&cdisabled";
+        String statusKey = enabled ? "neoessentials.player.god_enabled" : "neoessentials.player.god_disabled";
         
         if (player == context.getSource().getEntity()) {
-            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize("&7God mode " + statusText + "&7 for yourself.")), false);
+            LanguageUtil.sendMessage(context.getSource(), statusKey);
         } else {
-            player.sendSystemMessage(Component.literal(TextUtil.colorize("&7Your god mode has been " + statusText + " &7by " + context.getSource().getTextName() + ".")));
-            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize("&7God mode " + statusText + " &7for &e" + player.getScoreboardName() + "&7.")), true);
+            LanguageUtil.sendMessage(player, statusKey + "_other", context.getSource().getTextName());
+            LanguageUtil.sendMessage(context.getSource(), statusKey + "_for", player.getScoreboardName());
         }
         
         return 1;
