@@ -5,7 +5,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.ItemHandler;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
@@ -53,16 +54,16 @@ public class ItemSearchCommands {
             List<String> results = ItemHandler.searchItems(query);
             
             if (results.isEmpty()) {
-                MessageUtil.sendMessage(player, "§cNo items found matching: §e" + query);
+                LanguageUtil.sendMessage(player, "§cNo items found matching: §e" + query);
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§aFound §e" + results.size() + "§a items matching §e'" + query + "'§a:");
+            LanguageUtil.sendMessage(player, "§aFound §e" + results.size() + "§a items matching §e'" + query + "'§a:");
             
             int shown = 0;
             for (String itemId : results) {
                 if (shown >= 20) {
-                    MessageUtil.sendMessage(player, "§7... and " + (results.size() - shown) + " more. Use a more specific search.");
+                    LanguageUtil.sendMessage(player, "§7... and " + (results.size() - shown) + " more. Use a more specific search.");
                     break;
                 }
                 
@@ -76,7 +77,7 @@ public class ItemSearchCommands {
                     // Use item ID as fallback
                 }
                 
-                MessageUtil.sendMessage(player, "§7- §e" + itemId + "§7 (§f" + displayName + "§7)");
+                LanguageUtil.sendMessage(player, "§7- §e" + itemId + "§7 (§f" + displayName + "§7)");
                 shown++;
             }
             
@@ -84,7 +85,7 @@ public class ItemSearchCommands {
         } catch (Exception e) {
             try {
                 ServerPlayer player = context.getSource().getPlayerOrException();
-                MessageUtil.sendErrorMessage(player, "Error searching items: " + e.getMessage());
+                LanguageUtil.sendErrorMessage(player, "Error searching items: " + e.getMessage());
             } catch (Exception ex) {
                 // Command source is not a player, log error instead
                 NeoEssentials.LOGGER.error("Error in item search command: " + e.getMessage());
@@ -100,21 +101,21 @@ public class ItemSearchCommands {
             List<String> items = ItemHandler.getItemsFromMod(modId);
             
             if (items.isEmpty()) {
-                MessageUtil.sendMessage(player, "§cNo items found for mod: §e" + modId);
-                MessageUtil.sendMessage(player, "§7Use §e/itemsearch mods §7to see available mods.");
+                LanguageUtil.sendMessage(player, "§cNo items found for mod: §e" + modId);
+                LanguageUtil.sendMessage(player, "§7Use §e/itemsearch mods §7to see available mods.");
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§aItems from mod §e" + modId + "§a (showing first 25):");
+            LanguageUtil.sendMessage(player, "§aItems from mod §e" + modId + "§a (showing first 25):");
             
             int shown = 0;
             for (String itemId : items) {
                 if (shown >= 25) {
-                    MessageUtil.sendMessage(player, "§7... and " + (items.size() - shown) + " more items from this mod.");
+                    LanguageUtil.sendMessage(player, "§7... and " + (items.size() - shown) + " more items from this mod.");
                     break;
                 }
                 
-                MessageUtil.sendMessage(player, "§7- §e" + itemId);
+                LanguageUtil.sendMessage(player, "§7- §e" + itemId);
                 shown++;
             }
             
@@ -122,7 +123,7 @@ public class ItemSearchCommands {
         } catch (Exception e) {
             try {
                 ServerPlayer player = context.getSource().getPlayerOrException();
-                MessageUtil.sendErrorMessage(player, "Error listing mod items: " + e.getMessage());
+                LanguageUtil.sendErrorMessage(player, "Error listing mod items: " + e.getMessage());
             } catch (Exception ex) {
                 NeoEssentials.LOGGER.error("Error in mod items command: " + e.getMessage());
             }
@@ -137,32 +138,32 @@ public class ItemSearchCommands {
             List<String> mods = ItemHandler.getLoadedModIds();
             
             if (mods.isEmpty()) {
-                MessageUtil.sendMessage(player, "§cNo modded items found. Only vanilla Minecraft items are available.");
+                LanguageUtil.sendMessage(player, "§cNo modded items found. Only vanilla Minecraft items are available.");
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§aLoaded mods with items (§e" + mods.size() + "§a):");
+            LanguageUtil.sendMessage(player, "§aLoaded mods with items (§e" + mods.size() + "§a):");
             
             int shown = 0;
             for (String modId : mods) {
                 if (shown >= 20) {
-                    MessageUtil.sendMessage(player, "§7... and " + (mods.size() - shown) + " more mods.");
+                    LanguageUtil.sendMessage(player, "§7... and " + (mods.size() - shown) + " more mods.");
                     break;
                 }
                 
                 int itemCount = ItemHandler.getItemsFromMod(modId).size();
-                MessageUtil.sendMessage(player, "§7- §e" + modId + "§7 (§f" + itemCount + " items§7)");
+                LanguageUtil.sendMessage(player, "§7- §e" + modId + "§7 (§f" + itemCount + " items§7)");
                 shown++;
             }
             
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7Use §e/itemsearch mod <modid> §7to see items from a specific mod.");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§7Use §e/itemsearch mod <modid> §7to see items from a specific mod.");
             
             return 1;
         } catch (Exception e) {
             try {
                 ServerPlayer player = context.getSource().getPlayerOrException();
-                MessageUtil.sendErrorMessage(player, "Error listing mods: " + e.getMessage());
+                LanguageUtil.sendErrorMessage(player, "Error listing mods: " + e.getMessage());
             } catch (Exception ex) {
                 NeoEssentials.LOGGER.error("Error in list mods command: " + e.getMessage());
             }
@@ -176,7 +177,7 @@ public class ItemSearchCommands {
             
             var item = ItemHandler.getItemFromId(itemId);
             if (item == null) {
-                MessageUtil.sendMessage(player, "§cItem not found: §e" + itemId);
+                LanguageUtil.sendMessage(player, "§cItem not found: §e" + itemId);
                 return 0;
             }
             
@@ -185,26 +186,26 @@ public class ItemSearchCommands {
             ItemStack dummyStack = new ItemStack(item, 1);
             int maxStackSize = dummyStack.getMaxStackSize();
             
-            MessageUtil.sendMessage(player, "§e§l=== Item Information ===");
-            MessageUtil.sendMessage(player, "§7Item ID: §e" + itemId);
-            MessageUtil.sendMessage(player, "§7Display Name: §f" + displayName);
-            MessageUtil.sendMessage(player, "§7Mod/Namespace: §e" + namespace);
-            MessageUtil.sendMessage(player, "§7Max Stack Size: §f" + maxStackSize);
+            LanguageUtil.sendMessage(player, "§e§l=== Item Information ===");
+            LanguageUtil.sendMessage(player, "§7Item ID: §e" + itemId);
+            LanguageUtil.sendMessage(player, "§7Display Name: §f" + displayName);
+            LanguageUtil.sendMessage(player, "§7Mod/Namespace: §e" + namespace);
+            LanguageUtil.sendMessage(player, "§7Max Stack Size: §f" + maxStackSize);
             
             // Check if item is valid for economy
             boolean validForEconomy = ItemHandler.isValidItem(itemId);
-            MessageUtil.sendMessage(player, "§7Economy Compatible: " + 
+            LanguageUtil.sendMessage(player, "§7Economy Compatible: " + 
                 (validForEconomy ? "§aYes" : "§cNo"));
             
             if (validForEconomy) {
-                MessageUtil.sendMessage(player, "§7You can use this item in shops, trading, and economy commands.");
+                LanguageUtil.sendMessage(player, "§7You can use this item in shops, trading, and economy commands.");
             }
             
             return 1;
         } catch (Exception e) {
             try {
                 ServerPlayer player = context.getSource().getPlayerOrException();
-                MessageUtil.sendErrorMessage(player, "Error getting item info: " + e.getMessage());
+                LanguageUtil.sendErrorMessage(player, "Error getting item info: " + e.getMessage());
             } catch (Exception ex) {
                 NeoEssentials.LOGGER.error("Error in item info command: " + e.getMessage());
             }
