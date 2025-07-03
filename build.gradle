@@ -3,8 +3,8 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.93'
     id 'idea'
-    // Temporarily removing Shadow plugin due to Java 17 ASM compatibility issues
-    // id 'com.github.johnrengelman.shadow' version '8.1.1'
+    // Shadow plugin temporarily disabled due to resolution issues
+    // id 'com.gradleup.shadow' version '8.1.8'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -118,8 +118,8 @@ configurations {
 }
 
 dependencies {    
-    // Database dependencies - SQLite will rely on server environment to avoid conflicts
-    compileOnly('org.xerial:sqlite-jdbc:3.44.1.0') {
+    // Database dependencies - SQLite embedded in the jar
+    implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
     }
     
@@ -247,7 +247,7 @@ idea {
     }
 }
 
-// Jar configuration - relies on server environment for SnakeYAML and SQLite
+// Jar task configuration
 jar {
     manifest {
         attributes(
@@ -262,7 +262,26 @@ jar {
     }
     
     doFirst {
-        println "Building JAR without bundled dependencies (relying on server environment for SnakeYAML and SQLite)..."
+        println "Building Shadow JAR with relocated SQLite to avoid conflicts with GriefLogger..."
+    }
+}
+
+// Configure regular jar to be lightweight (no dependencies)
+jar {
+    manifest {
+        attributes(
+            'Specification-Title': 'NeoEssentials',
+            'Specification-Vendor': 'ZeroG',
+            'Specification-Version': '1',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'ZeroG',
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        )
+    }
+    
+    doFirst {
+        println "Building JAR with dependencies..."
     }
 }
 
