@@ -7,8 +7,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.utils.MessageUtil;
-import com.zerog.neoessentials.utils.PermissionUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.utils.VanillaBooleanParser;
 import com.zerog.neoessentials.utils.TextUtil;
 
@@ -54,12 +54,12 @@ public class PlayerCommands {
      * @param dispatcher The command dispatcher
      */
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // /heal [player]
+        // /heal [player] - Admin command
         dispatcher.register(Commands.literal("heal")
-            .requires(source -> PermissionUtil.hasPermission(source, "essentials.heal"))
+            .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.command.heal"))
             .executes(context -> healCommand(context, context.getSource().getPlayerOrException()))
             .then(Commands.argument("player", EntityArgument.players())
-                .requires(source -> PermissionUtil.hasPermission(source, "essentials.heal.others"))
+                .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.command.heal.others"))
                 .executes(context -> {
                     Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "player");
                     int count = 0;
@@ -71,12 +71,12 @@ public class PlayerCommands {
             )
         );
         
-        // /feed [player]
+        // /feed [player] - Admin command
         dispatcher.register(Commands.literal("feed")
-            .requires(source -> PermissionUtil.hasPermission(source, "essentials.feed"))
+            .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.command.feed"))
             .executes(context -> feedCommand(context, context.getSource().getPlayerOrException()))
             .then(Commands.argument("player", EntityArgument.players())
-                .requires(source -> PermissionUtil.hasPermission(source, "essentials.feed.others"))
+                .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.command.feed.others"))
                 .executes(context -> {
                     Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "player");
                     int count = 0;
@@ -88,9 +88,9 @@ public class PlayerCommands {
             )
         );
         
-        // /fly [player] [on|off]
+        // /fly [player] [on|off] - Admin command
         dispatcher.register(Commands.literal("fly")
-            .requires(source -> PermissionUtil.hasPermission(source, "essentials.fly"))
+            .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.command.fly"))
             .executes(context -> flyCommand(context, context.getSource().getPlayerOrException(), null))
             .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                 .suggests(VanillaBooleanParser.booleanSuggestions())
@@ -214,11 +214,10 @@ public class PlayerCommands {
         
         // Send messages
         if (player == context.getSource().getEntity()) {
-            player.sendSystemMessage(Component.literal(TextUtil.colorize("&aYou have been healed to full health.")));
-            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize("&aYou have been healed to full health.")), false);
+            LanguageUtil.sendMessage(player, "neoessentials.player.healed");
         } else {
-            player.sendSystemMessage(Component.literal(TextUtil.colorize("&aYou have been healed by " + context.getSource().getTextName() + ".")));
-            context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize("&aYou healed &e" + player.getScoreboardName() + "&a to full health.")), true);
+            LanguageUtil.sendMessage(player, "neoessentials.player.healed");
+            LanguageUtil.sendMessage(context.getSource(), "neoessentials.player.healed_other", player.getScoreboardName());
         }
         
         return 1;

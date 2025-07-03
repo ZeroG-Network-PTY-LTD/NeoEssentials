@@ -275,5 +275,42 @@
   "neoessentials.general.config_reloaded": "Configuration reloaded!",
   "neoessentials.general.feature_coming_soon": "This feature is coming soon!",
   "neoessentials.general.operation_success": "Operation completed successfully!",
-  "neoessentials.general.operation_failed": "Operation failed: %s"
+  "neoessentials.general.operation_failed": "Operation failed: %s",
+  
+  "neoessentials.economy.no_default_currency": "No default currency configured!",
+  "neoessentials.economy.currency_not_found": "Currency not found: %s",
+  "neoessentials.economy.transaction_failed": "Transaction failed: %s",
+  "neoessentials.economy.wallet_balance": "Wallet Balance: %s",
+  "neoessentials.economy.bank_balance": "Bank Balance: %s",
+  "neoessentials.economy.total_balance": "Total Balance: %s",
+  "neoessentials.economy.balance_header": "=== Balance Information ===",
+  
+  "neoessentials.warp.no_permission_use": "You don't have permission to use this warp!",
+  "neoessentials.warp.no_permission_create": "You don't have permission to create warps!",
+  "neoessentials.warp.no_permission_delete": "You don't have permission to delete warps!",
+  
+  "neoessentials.currency.list_header": "=== Available Currencies ===",
+  "neoessentials.currency.list_empty": "No currencies configured.",
+  "neoessentials.currency.list_format": "- %s (%s) - %s",
+  "neoessentials.currency.info_header": "=== Currency Information ===",
+  "neoessentials.currency.info_id": "ID: %s",
+  "neoessentials.currency.info_name": "Name: %s",
+  "neoessentials.currency.info_symbol": "Symbol: %s",
+  "neoessentials.currency.info_type": "Type: %s",
+  "neoessentials.currency.info_physical": "Physical: %s",
+  "neoessentials.currency.not_found": "Currency not found: %s",
+  "neoessentials.currency.created": "Currency '%s' created successfully!",
+  "neoessentials.currency.deleted": "Currency '%s' deleted successfully!",
+  "neoessentials.currency.rate_set": "Exchange rate for '%s' set to %s",
+  "neoessentials.currency.default_set": "Default currency set to '%s'",
+  
+  "neoessentials.wallet.balance": "Wallet balance: %s",
+  "neoessentials.wallet.deposit_success": "Deposited %s to wallet!",
+  "neoessentials.wallet.withdraw_success": "Withdrew %s from wallet!",
+  "neoessentials.wallet.transfer_success": "Transferred %s to %s",
+  
+  "neoessentials.permission.admin_command": "This is an administrator command!",
+  "neoessentials.permission.op_command": "This command requires operator privileges!",
+  "neoessentials.permission.moderator_command": "This command requires moderator privileges!",
+  "neoessentials.permission.owner_command": "This command requires owner privileges!"
 }
