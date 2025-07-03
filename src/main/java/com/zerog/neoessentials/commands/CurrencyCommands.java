@@ -196,7 +196,7 @@ public class CurrencyCommands {
             MessageUtil.sendMessage(player, "");
             
             for (Currency currency : currencies) {
-                if (!currency.equals(defaultCurrency) && currency.isTradeable()) {
+                if (!currency.equals(defaultCurrency)) {
                     double rate = currencyManager.getExchangeRate(currency.getId());
                     MessageUtil.sendMessage(player, String.format("§e1 %s §7= §e%.4f %s", 
                         currency.getSymbol(), rate, defaultCurrency.getSymbol()));
@@ -225,11 +225,6 @@ public class CurrencyCommands {
             
             if (toCurrency == null) {
                 MessageUtil.sendMessage(player, "§cTo currency not found: " + toCurrencyId);
-                return 0;
-            }
-            
-            if (!fromCurrency.isTradeable() || !toCurrency.isTradeable()) {
-                MessageUtil.sendMessage(player, "§cOne or both currencies are not tradeable");
                 return 0;
             }
             
