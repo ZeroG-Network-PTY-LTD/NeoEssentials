@@ -72,11 +72,37 @@ public class ItemHandler {
      * Get item from string ID (e.g., "minecraft:diamond_sword")
      */
     public static Item getItemFromId(String itemId) {
+        if (itemId == null || itemId.trim().isEmpty()) {
+            return null;
+        }
+        
         try {
-            ResourceLocation resourceLocation = ResourceLocation.parse(itemId);
-            return BuiltInRegistries.ITEM.get(resourceLocation);
+            // Clean up the item ID
+            String cleanId = itemId.trim().toLowerCase();
+            
+            // If it doesn't contain a namespace, assume minecraft
+            if (!cleanId.contains(":")) {
+                cleanId = "minecraft:" + cleanId;
+            }
+            
+            // Try to parse as ResourceLocation
+            ResourceLocation resourceLocation = ResourceLocation.tryParse(cleanId);
+            if (resourceLocation == null) {
+                NeoEssentials.LOGGER.warn("Failed to parse item ID as ResourceLocation: {}", itemId);
+                return null;
+            }
+            
+            Item item = BuiltInRegistries.ITEM.get(resourceLocation);
+            
+            // Check if the item exists and is not AIR
+            if (item == null || item == Items.AIR) {
+                NeoEssentials.LOGGER.debug("Item ID does not exist or is AIR: {}", itemId);
+                return null;
+            }
+            
+            return item;
         } catch (Exception e) {
-            NeoEssentials.LOGGER.warn("Invalid item ID: {}", itemId);
+            NeoEssentials.LOGGER.warn("Error getting item from ID '{}': {}", itemId, e.getMessage());
             return null;
         }
     }
@@ -93,7 +119,18 @@ public class ItemHandler {
      * Validate if an item ID exists in the game
      */
     public static boolean isValidItem(String itemId) {
-        return getItemFromId(itemId) != null && !getItemFromId(itemId).equals(Items.AIR);
+        if (itemId == null || itemId.trim().isEmpty()) {
+            return false;
+        }
+        
+        Item item = getItemFromId(itemId);
+        boolean isValid = item != null && !item.equals(Items.AIR);
+        
+        if (!isValid) {
+            NeoEssentials.LOGGER.debug("Item validation failed for ID: {}", itemId);
+        }
+        
+        return isValid;
     }
     
     /**
