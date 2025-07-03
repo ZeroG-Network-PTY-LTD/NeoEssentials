@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.ui;
 
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -45,7 +45,7 @@ public class MenuSystem {
          * @param clickAction The click action to perform
          */
         public MenuItem(String text, String command, String hoverText, ClickEvent.Action clickAction) {
-            this.text = Component.literal(MessageUtil.formatText(text));
+            this.text = Component.literal(LanguageUtil.formatText(text));
             this.command = command;
             this.hoverText = hoverText;
             this.clickAction = clickAction;
@@ -58,7 +58,7 @@ public class MenuSystem {
          */
         public Component getFormattedComponent() {
             // Add hover text
-            Component hoverComponent = Component.literal(MessageUtil.formatText(hoverText));
+            Component hoverComponent = Component.literal(LanguageUtil.formatText(hoverText));
             
             // Create the clickable component
             return text.withStyle(style -> style
@@ -153,11 +153,11 @@ public class MenuSystem {
             
             // Send header
             String headerText = "&6====== &l" + title + "&r &6======";
-            player.sendSystemMessage(Component.literal(MessageUtil.formatText(headerText)));
+            player.sendSystemMessage(Component.literal(LanguageUtil.formatText(headerText)));
             
             // Show page numbers if enabled
             if (showPageNumbers && totalPages > 1) {
-                player.sendSystemMessage(Component.literal(MessageUtil.formatText(
+                player.sendSystemMessage(Component.literal(LanguageUtil.formatText(
                         "&7Page &e" + page + "&7/&e" + totalPages)));
             }
             
@@ -167,7 +167,7 @@ public class MenuSystem {
             
             if (items.isEmpty()) {
                 // No items to display
-                player.sendSystemMessage(Component.literal(MessageUtil.formatText("&7No items to display.")));
+                player.sendSystemMessage(Component.literal(LanguageUtil.formatText("&7No items to display.")));
             } else {
                 // Display items for this page
                 for (int i = startIndex; i < endIndex; i++) {
@@ -205,7 +205,7 @@ public class MenuSystem {
             
             // Send footer
             String footerText = "&6===================================";
-            player.sendSystemMessage(Component.literal(MessageUtil.formatText(footerText)));
+            player.sendSystemMessage(Component.literal(LanguageUtil.formatText(footerText)));
         }
     }
     
