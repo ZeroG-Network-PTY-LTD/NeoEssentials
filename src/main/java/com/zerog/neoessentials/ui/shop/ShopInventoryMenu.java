@@ -179,7 +179,7 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
             }
             
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "Failed to remove items: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(player, "Failed to remove items: " + e.getMessage());
         }
     }
     
@@ -249,7 +249,7 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
             }
             
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(player, "Failed to modify item: " + e.getMessage());
+            LanguageUtil.sendErrorMessage(player, "Failed to modify item: " + e.getMessage());
         }
     }
 }
