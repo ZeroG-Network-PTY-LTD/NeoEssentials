@@ -161,32 +161,32 @@ public class ShopCommandsNew {
     private int showShopHelp(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6=== NeoEssentials Shop System ===");
-            MessageUtil.sendMessage(player, "§7");
-            MessageUtil.sendMessage(player, "§6Shop Management:");
-            MessageUtil.sendMessage(player, "§e/shop create <name> <category> <type> §7- Create a new shop");
-            MessageUtil.sendMessage(player, "§e/shop delete <shop_name> §7- Delete your shop");
-            MessageUtil.sendMessage(player, "§e/shop list [category] §7- List all shops");
-            MessageUtil.sendMessage(player, "§e/shop info <shop_name> §7- Get shop information");
-            MessageUtil.sendMessage(player, "§e/shop myshops §7- List your shops");
-            MessageUtil.sendMessage(player, "§7");
-            MessageUtil.sendMessage(player, "§6Item Management:");
-            MessageUtil.sendMessage(player, "§e/shop stock <shop> <item> <qty> <buy_price> [sell_price] §7- Add items");
-            MessageUtil.sendMessage(player, "§e/shop setprice <shop> <item> <buy_price> [sell_price] §7- Set item prices");
-            MessageUtil.sendMessage(player, "§e/shop price <shop> <item> §7- Check item price");
-            MessageUtil.sendMessage(player, "§e/shop remove <shop> <item> §7- Remove item from shop");
-            MessageUtil.sendMessage(player, "§7");
-            MessageUtil.sendMessage(player, "§6Trading:");
-            MessageUtil.sendMessage(player, "§e/shop buy <shop> <item> [quantity] §7- Buy items");
-            MessageUtil.sendMessage(player, "§e/shop sell <shop> <item> [quantity] §7- Sell items");
-            MessageUtil.sendMessage(player, "§7");
-            MessageUtil.sendMessage(player, "§6Discovery:");
-            MessageUtil.sendMessage(player, "§e/shop search <item_name> §7- Search for items");
-            MessageUtil.sendMessage(player, "§e/shop categories §7- List available categories");
-            MessageUtil.sendMessage(player, "§e/shop stats §7- Show shop statistics");
-            MessageUtil.sendMessage(player, "§7");
-            MessageUtil.sendMessage(player, "§6Shop Types: §ePlayer, Server, Auction");
-            MessageUtil.sendMessage(player, "§7Shop creation fee: §e" + 
+            LanguageUtil.sendMessage(player, "§6=== NeoEssentials Shop System ===");
+            LanguageUtil.sendMessage(player, "§7");
+            LanguageUtil.sendMessage(player, "§6Shop Management:");
+            LanguageUtil.sendMessage(player, "§e/shop create <name> <category> <type> §7- Create a new shop");
+            LanguageUtil.sendMessage(player, "§e/shop delete <shop_name> §7- Delete your shop");
+            LanguageUtil.sendMessage(player, "§e/shop list [category] §7- List all shops");
+            LanguageUtil.sendMessage(player, "§e/shop info <shop_name> §7- Get shop information");
+            LanguageUtil.sendMessage(player, "§e/shop myshops §7- List your shops");
+            LanguageUtil.sendMessage(player, "§7");
+            LanguageUtil.sendMessage(player, "§6Item Management:");
+            LanguageUtil.sendMessage(player, "§e/shop stock <shop> <item> <qty> <buy_price> [sell_price] §7- Add items");
+            LanguageUtil.sendMessage(player, "§e/shop setprice <shop> <item> <buy_price> [sell_price] §7- Set item prices");
+            LanguageUtil.sendMessage(player, "§e/shop price <shop> <item> §7- Check item price");
+            LanguageUtil.sendMessage(player, "§e/shop remove <shop> <item> §7- Remove item from shop");
+            LanguageUtil.sendMessage(player, "§7");
+            LanguageUtil.sendMessage(player, "§6Trading:");
+            LanguageUtil.sendMessage(player, "§e/shop buy <shop> <item> [quantity] §7- Buy items");
+            LanguageUtil.sendMessage(player, "§e/shop sell <shop> <item> [quantity] §7- Sell items");
+            LanguageUtil.sendMessage(player, "§7");
+            LanguageUtil.sendMessage(player, "§6Discovery:");
+            LanguageUtil.sendMessage(player, "§e/shop search <item_name> §7- Search for items");
+            LanguageUtil.sendMessage(player, "§e/shop categories §7- List available categories");
+            LanguageUtil.sendMessage(player, "§e/shop stats §7- Show shop statistics");
+            LanguageUtil.sendMessage(player, "§7");
+            LanguageUtil.sendMessage(player, "§6Shop Types: §ePlayer, Server, Auction");
+            LanguageUtil.sendMessage(player, "§7Shop creation fee: §e" + 
                 CurrencyManager.getInstance().getDefaultCurrency().format(ShopManagerNew.getInstance().getShopCreationFee()));
             
             return 1;
@@ -206,7 +206,7 @@ public class ShopCommandsNew {
             try {
                 shopType = ShopNew.ShopType.valueOf(typeStr.toUpperCase());
             } catch (IllegalArgumentException e) {
-                MessageUtil.sendErrorMessage(player, "Invalid shop type. Available types: Player, Server, Auction");
+                LanguageUtil.sendErrorMessage(player, "Invalid shop type. Available types: Player, Server, Auction");
                 return 0;
             }
             
@@ -216,13 +216,13 @@ public class ShopCommandsNew {
             
             if (result.isSuccess()) {
                 LanguageUtil.sendMessage(player, "Shop created successfully!");
-                MessageUtil.sendMessage(player, "§7Shop Name: §e" + name);
-                MessageUtil.sendMessage(player, "§7Category: §e" + category);
-                MessageUtil.sendMessage(player, "§7Type: §e" + shopType.getDisplayName());
-                MessageUtil.sendMessage(player, "§7Shop ID: §e" + result.getShop().getShopId().toString().substring(0, 8));
-                MessageUtil.sendMessage(player, "§7Use §e/shop stock " + name + " <item> <quantity> <price>§7 to add items.");
+                LanguageUtil.sendMessage(player, "§7Shop Name: §e" + name);
+                LanguageUtil.sendMessage(player, "§7Category: §e" + category);
+                LanguageUtil.sendMessage(player, "§7Type: §e" + shopType.getDisplayName());
+                LanguageUtil.sendMessage(player, "§7Shop ID: §e" + result.getShop().getShopId().toString().substring(0, 8));
+                LanguageUtil.sendMessage(player, "§7Use §e/shop stock " + name + " <item> <quantity> <price>§7 to add items.");
             } else {
-                MessageUtil.sendErrorMessage(player, result.getMessage());
+                LanguageUtil.sendErrorMessage(player, result.getMessage());
             }
             
             return result.isSuccess() ? 1 : 0;
@@ -239,12 +239,12 @@ public class ShopCommandsNew {
             
             ShopNew shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
+                LanguageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
                 return 0;
             }
             
             if (!shop.getOwnerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "You can only delete your own shops.");
+                LanguageUtil.sendErrorMessage(player, "You can only delete your own shops.");
                 return 0;
             }
             
@@ -252,7 +252,7 @@ public class ShopCommandsNew {
             if (success) {
                 LanguageUtil.sendMessage(player, "Shop deleted successfully!");
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to delete shop.");
+                LanguageUtil.sendErrorMessage(player, "Failed to delete shop.");
             }
             
             return success ? 1 : 0;
@@ -272,26 +272,26 @@ public class ShopCommandsNew {
                 shopManager.getAllActiveShops();
             
             if (shops.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No shops found" + (category != null ? " in category: " + category : ""));
+                LanguageUtil.sendMessage(player, "§7No shops found" + (category != null ? " in category: " + category : ""));
                 return 1;
             }
             
             String title = (category != null) ? 
                 "=== " + category.toUpperCase() + " Shops ===" : 
                 "=== All Shops ===";
-            MessageUtil.sendMessage(player, "§6" + title);
+            LanguageUtil.sendMessage(player, "§6" + title);
             
             for (ShopNew shop : shops.stream().limit(10).toList()) {
                 String ownerName = "Unknown"; // TODO: Get player name from UUID
-                MessageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7- §a" + shop.getCategory() + 
+                LanguageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7- §a" + shop.getCategory() + 
                     " §7- §e" + shop.getShopType().getDisplayName() + " §7- §b" + ownerName);
             }
             
             if (shops.size() > 10) {
-                MessageUtil.sendMessage(player, "§7... and " + (shops.size() - 10) + " more shops.");
+                LanguageUtil.sendMessage(player, "§7... and " + (shops.size() - 10) + " more shops.");
             }
             
-            MessageUtil.sendMessage(player, "§7Use §e/shop info <shop_name>§7 for detailed information.");
+            LanguageUtil.sendMessage(player, "§7Use §e/shop info <shop_name>§7 for detailed information.");
             return 1;
         } catch (Exception e) {
             source.sendFailure(net.minecraft.network.chat.Component.literal("An error occurred: " + e.getMessage()));
@@ -306,25 +306,25 @@ public class ShopCommandsNew {
             
             ShopNew shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
+                LanguageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
                 return 0;
             }
             
             Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
-            MessageUtil.sendMessage(player, "§6=== Shop Information ===");
-            MessageUtil.sendMessage(player, "§7Name: §e" + shop.getShopName());
-            MessageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
-            MessageUtil.sendMessage(player, "§7Type: §e" + shop.getShopType().getDisplayName());
-            MessageUtil.sendMessage(player, "§7Status: §e" + (shop.isActive() ? "Active" : "Inactive"));
-            MessageUtil.sendMessage(player, "§7Total Sales: §e" + shop.getTotalSales());
-            MessageUtil.sendMessage(player, "§7Total Revenue: §e" + currency.format(shop.getTotalRevenue()));
-            MessageUtil.sendMessage(player, "§7Items Available: §e" + shop.getAvailableItems().size());
+            LanguageUtil.sendMessage(player, "§6=== Shop Information ===");
+            LanguageUtil.sendMessage(player, "§7Name: §e" + shop.getShopName());
+            LanguageUtil.sendMessage(player, "§7Category: §e" + shop.getCategory());
+            LanguageUtil.sendMessage(player, "§7Type: §e" + shop.getShopType().getDisplayName());
+            LanguageUtil.sendMessage(player, "§7Status: §e" + (shop.isActive() ? "Active" : "Inactive"));
+            LanguageUtil.sendMessage(player, "§7Total Sales: §e" + shop.getTotalSales());
+            LanguageUtil.sendMessage(player, "§7Total Revenue: §e" + currency.format(shop.getTotalRevenue()));
+            LanguageUtil.sendMessage(player, "§7Items Available: §e" + shop.getAvailableItems().size());
             
             if (!shop.getDescription().isEmpty()) {
-                MessageUtil.sendMessage(player, "§7Description: §e" + shop.getDescription());
+                LanguageUtil.sendMessage(player, "§7Description: §e" + shop.getDescription());
             }
             
-            MessageUtil.sendMessage(player, "§7Use §e/shop buy " + shopName + " <item>§7 to purchase items.");
+            LanguageUtil.sendMessage(player, "§7Use §e/shop buy " + shopName + " <item>§7 to purchase items.");
             return 1;
         } catch (Exception e) {
             source.sendFailure(net.minecraft.network.chat.Component.literal("An error occurred: " + e.getMessage()));
@@ -340,21 +340,21 @@ public class ShopCommandsNew {
             List<ShopNew> shops = shopManager.getPlayerShops(player.getUUID());
             
             if (shops.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7You don't own any shops.");
-                MessageUtil.sendMessage(player, "§7Use §e/shop create <name> <category> <type>§7 to create a shop.");
+                LanguageUtil.sendMessage(player, "§7You don't own any shops.");
+                LanguageUtil.sendMessage(player, "§7Use §e/shop create <name> <category> <type>§7 to create a shop.");
                 return 1;
             }
             
             Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
-            MessageUtil.sendMessage(player, "§6=== Your Shops ===");
+            LanguageUtil.sendMessage(player, "§6=== Your Shops ===");
             
             for (ShopNew shop : shops) {
                 String status = shop.isActive() ? "§aActive" : "§cInactive";
-                MessageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7- §a" + shop.getCategory() + 
+                LanguageUtil.sendMessage(player, "§e" + shop.getShopName() + " §7- §a" + shop.getCategory() + 
                     " §7- " + status + " §7- §e" + currency.format(shop.getTotalRevenue()) + " total");
             }
             
-            MessageUtil.sendMessage(player, "§7Use §e/shop info <shop_name>§7 for detailed information.");
+            LanguageUtil.sendMessage(player, "§7Use §e/shop info <shop_name>§7 for detailed information.");
             return 1;
         } catch (Exception e) {
             source.sendFailure(net.minecraft.network.chat.Component.literal("An error occurred: " + e.getMessage()));
@@ -369,18 +369,18 @@ public class ShopCommandsNew {
             
             ShopNew shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
+                LanguageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
                 return 0;
             }
             
             if (!shop.getOwnerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "You can only stock your own shops.");
+                LanguageUtil.sendErrorMessage(player, "You can only stock your own shops.");
                 return 0;
             }
             
             // Validate item ID
             if (!ItemHandler.isValidItem(itemId)) {
-                MessageUtil.sendErrorMessage(player, "Invalid item ID: " + itemId);
+                LanguageUtil.sendErrorMessage(player, "Invalid item ID: " + itemId);
                 return 0;
             }
             
@@ -391,14 +391,14 @@ public class ShopCommandsNew {
             if (success) {
                 Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
                 LanguageUtil.sendMessage(player, "Item stocked successfully!");
-                MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
-                MessageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
-                MessageUtil.sendMessage(player, "§7Buy Price: §e" + currency.format(buyPrice));
+                LanguageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
+                LanguageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
+                LanguageUtil.sendMessage(player, "§7Buy Price: §e" + currency.format(buyPrice));
                 if (actualSellPrice > 0) {
-                    MessageUtil.sendMessage(player, "§7Sell Price: §e" + currency.format(actualSellPrice));
+                    LanguageUtil.sendMessage(player, "§7Sell Price: §e" + currency.format(actualSellPrice));
                 }
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to stock item.");
+                LanguageUtil.sendErrorMessage(player, "Failed to stock item.");
             }
             
             return success ? 1 : 0;
@@ -415,18 +415,18 @@ public class ShopCommandsNew {
             
             ShopNew shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
+                LanguageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
                 return 0;
             }
             
             if (!shop.getOwnerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "You can only modify your own shops.");
+                LanguageUtil.sendErrorMessage(player, "You can only modify your own shops.");
                 return 0;
             }
             
             // Validate item ID
             if (!ItemHandler.isValidItem(itemId)) {
-                MessageUtil.sendErrorMessage(player, "Invalid item ID: " + itemId);
+                LanguageUtil.sendErrorMessage(player, "Invalid item ID: " + itemId);
                 return 0;
             }
             
@@ -436,13 +436,13 @@ public class ShopCommandsNew {
             if (success) {
                 Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
                 LanguageUtil.sendMessage(player, "Item price updated successfully!");
-                MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
-                MessageUtil.sendMessage(player, "§7Buy Price: §e" + currency.format(buyPrice));
+                LanguageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
+                LanguageUtil.sendMessage(player, "§7Buy Price: §e" + currency.format(buyPrice));
                 if (actualSellPrice > 0) {
-                    MessageUtil.sendMessage(player, "§7Sell Price: §e" + currency.format(actualSellPrice));
+                    LanguageUtil.sendMessage(player, "§7Sell Price: §e" + currency.format(actualSellPrice));
                 }
             } else {
-                MessageUtil.sendErrorMessage(player, "Item not found in shop. Use /shop stock to add items first.");
+                LanguageUtil.sendErrorMessage(player, "Item not found in shop. Use /shop stock to add items first.");
             }
             
             return success ? 1 : 0;
@@ -459,13 +459,13 @@ public class ShopCommandsNew {
             
             ShopNew shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
+                LanguageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
                 return 0;
             }
             
             // Validate item ID
             if (!ItemHandler.isValidItem(itemId)) {
-                MessageUtil.sendErrorMessage(player, "Invalid item ID: " + itemId);
+                LanguageUtil.sendErrorMessage(player, "Invalid item ID: " + itemId);
                 return 0;
             }
             
@@ -473,25 +473,25 @@ public class ShopCommandsNew {
             double sellPrice = shop.getItemSellPrice(itemId);
             
             if (buyPrice <= 0 && sellPrice <= 0) {
-                MessageUtil.sendErrorMessage(player, "Item not available in this shop: " + itemId);
+                LanguageUtil.sendErrorMessage(player, "Item not available in this shop: " + itemId);
                 return 0;
             }
             
             Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
-            MessageUtil.sendMessage(player, "§6=== Item Price Information ===");
-            MessageUtil.sendMessage(player, "§7Shop: §e" + shop.getShopName());
-            MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
+            LanguageUtil.sendMessage(player, "§6=== Item Price Information ===");
+            LanguageUtil.sendMessage(player, "§7Shop: §e" + shop.getShopName());
+            LanguageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
             
             if (buyPrice > 0) {
-                MessageUtil.sendMessage(player, "§7Buy Price: §e" + currency.format(buyPrice));
+                LanguageUtil.sendMessage(player, "§7Buy Price: §e" + currency.format(buyPrice));
             } else {
-                MessageUtil.sendMessage(player, "§7Buy Price: §cNot available");
+                LanguageUtil.sendMessage(player, "§7Buy Price: §cNot available");
             }
             
             if (sellPrice > 0) {
-                MessageUtil.sendMessage(player, "§7Sell Price: §e" + currency.format(sellPrice));
+                LanguageUtil.sendMessage(player, "§7Sell Price: §e" + currency.format(sellPrice));
             } else {
-                MessageUtil.sendMessage(player, "§7Sell Price: §cNot available");
+                LanguageUtil.sendMessage(player, "§7Sell Price: §cNot available");
             }
             
             return 1;
@@ -508,21 +508,21 @@ public class ShopCommandsNew {
             
             ShopNew shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
+                LanguageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
                 return 0;
             }
             
             if (!shop.getOwnerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "You can only modify your own shops.");
+                LanguageUtil.sendErrorMessage(player, "You can only modify your own shops.");
                 return 0;
             }
             
             boolean success = shop.removeItem(itemId);
             if (success) {
                 LanguageUtil.sendMessage(player, "Item removed from shop successfully!");
-                MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
+                LanguageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to remove item from shop.");
+                LanguageUtil.sendErrorMessage(player, "Failed to remove item from shop.");
             }
             
             return success ? 1 : 0;
@@ -539,13 +539,13 @@ public class ShopCommandsNew {
             
             ShopNew shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
+                LanguageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
                 return 0;
             }
             
             // Validate item ID
             if (!ItemHandler.isValidItem(itemId)) {
-                MessageUtil.sendErrorMessage(player, "Invalid item ID: " + itemId);
+                LanguageUtil.sendErrorMessage(player, "Invalid item ID: " + itemId);
                 return 0;
             }
             
@@ -553,12 +553,12 @@ public class ShopCommandsNew {
             
             if (result.isSuccess()) {
                 LanguageUtil.sendMessage(player, "Purchase successful!");
-                MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
-                MessageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
-                MessageUtil.sendMessage(player, "§7Shop: §e" + shop.getShopName());
+                LanguageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
+                LanguageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
+                LanguageUtil.sendMessage(player, "§7Shop: §e" + shop.getShopName());
                 // TODO: Add item to player's inventory
             } else {
-                MessageUtil.sendErrorMessage(player, result.getMessage());
+                LanguageUtil.sendErrorMessage(player, result.getMessage());
             }
             
             return result.isSuccess() ? 1 : 0;
@@ -575,13 +575,13 @@ public class ShopCommandsNew {
             
             ShopNew shop = shopManager.getShopByName(shopName);
             if (shop == null) {
-                MessageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
+                LanguageUtil.sendErrorMessage(player, "Shop not found: " + shopName);
                 return 0;
             }
             
             // Validate item ID
             if (!ItemHandler.isValidItem(itemId)) {
-                MessageUtil.sendErrorMessage(player, "Invalid item ID: " + itemId);
+                LanguageUtil.sendErrorMessage(player, "Invalid item ID: " + itemId);
                 return 0;
             }
             
@@ -589,12 +589,12 @@ public class ShopCommandsNew {
             
             if (result.isSuccess()) {
                 LanguageUtil.sendMessage(player, "Sale successful!");
-                MessageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
-                MessageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
-                MessageUtil.sendMessage(player, "§7Shop: §e" + shop.getShopName());
+                LanguageUtil.sendMessage(player, "§7Item: §e" + ItemHandler.getItemDisplayName(itemId));
+                LanguageUtil.sendMessage(player, "§7Quantity: §e" + quantity);
+                LanguageUtil.sendMessage(player, "§7Shop: §e" + shop.getShopName());
                 // TODO: Remove item from player's inventory
             } else {
-                MessageUtil.sendErrorMessage(player, result.getMessage());
+                LanguageUtil.sendErrorMessage(player, result.getMessage());
             }
             
             return result.isSuccess() ? 1 : 0;
@@ -612,11 +612,11 @@ public class ShopCommandsNew {
             List<ShopManagerNew.ShopItemSearchResult> results = shopManager.searchItems(itemName);
             
             if (results.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No items found matching: " + itemName);
+                LanguageUtil.sendMessage(player, "§7No items found matching: " + itemName);
                 return 1;
             }
             
-            MessageUtil.sendMessage(player, "§6=== Search Results for: " + itemName + " ===");
+            LanguageUtil.sendMessage(player, "§6=== Search Results for: " + itemName + " ===");
             
             Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
             for (ShopManagerNew.ShopItemSearchResult result : results.stream().limit(10).toList()) {
@@ -624,15 +624,15 @@ public class ShopCommandsNew {
                 ShopNew.ShopItem item = result.getItem();
                 double buyPrice = shop.getItemBuyPrice(item.getItemId());
                 
-                MessageUtil.sendMessage(player, "§e" + item.getItemName() + " §7- §a" + currency.format(buyPrice) + 
+                LanguageUtil.sendMessage(player, "§e" + item.getItemName() + " §7- §a" + currency.format(buyPrice) + 
                     " §7- §e" + shop.getShopName() + " §7- §b" + item.getQuantity() + " available");
             }
             
             if (results.size() > 10) {
-                MessageUtil.sendMessage(player, "§7... and " + (results.size() - 10) + " more results.");
+                LanguageUtil.sendMessage(player, "§7... and " + (results.size() - 10) + " more results.");
             }
             
-            MessageUtil.sendMessage(player, "§7Use §e/shop buy <shop_name> <item>§7 to purchase items.");
+            LanguageUtil.sendMessage(player, "§7Use §e/shop buy <shop_name> <item>§7 to purchase items.");
             return 1;
         } catch (Exception e) {
             source.sendFailure(net.minecraft.network.chat.Component.literal("An error occurred: " + e.getMessage()));
@@ -645,14 +645,14 @@ public class ShopCommandsNew {
             ServerPlayer player = source.getPlayerOrException();
             ShopManagerNew shopManager = ShopManagerNew.getInstance();
             
-            MessageUtil.sendMessage(player, "§6=== Available Shop Categories ===");
+            LanguageUtil.sendMessage(player, "§6=== Available Shop Categories ===");
             
             for (String category : shopManager.getValidCategories()) {
                 List<ShopNew> shops = shopManager.getShopsByCategory(category);
-                MessageUtil.sendMessage(player, "§e" + category + " §7- §a" + shops.size() + " shops");
+                LanguageUtil.sendMessage(player, "§e" + category + " §7- §a" + shops.size() + " shops");
             }
             
-            MessageUtil.sendMessage(player, "§7Use §e/shop list <category>§7 to view shops in a category.");
+            LanguageUtil.sendMessage(player, "§7Use §e/shop list <category>§7 to view shops in a category.");
             return 1;
         } catch (Exception e) {
             source.sendFailure(net.minecraft.network.chat.Component.literal("An error occurred: " + e.getMessage()));
@@ -668,12 +668,12 @@ public class ShopCommandsNew {
             ShopManagerNew.ShopStatistics stats = shopManager.getGlobalStatistics();
             Currency currency = CurrencyManager.getInstance().getDefaultCurrency();
             
-            MessageUtil.sendMessage(player, "§6=== Shop System Statistics ===");
-            MessageUtil.sendMessage(player, "§7Total Shops: §e" + stats.getTotalShops());
-            MessageUtil.sendMessage(player, "§7Active Shops: §e" + stats.getActiveShops());
-            MessageUtil.sendMessage(player, "§7Total Revenue: §e" + currency.format(stats.getTotalRevenue()));
-            MessageUtil.sendMessage(player, "§7Total Sales: §e" + stats.getTotalSales());
-            MessageUtil.sendMessage(player, "§7Your Shops: §e" + shopManager.getPlayerShops(player.getUUID()).size());
+            LanguageUtil.sendMessage(player, "§6=== Shop System Statistics ===");
+            LanguageUtil.sendMessage(player, "§7Total Shops: §e" + stats.getTotalShops());
+            LanguageUtil.sendMessage(player, "§7Active Shops: §e" + stats.getActiveShops());
+            LanguageUtil.sendMessage(player, "§7Total Revenue: §e" + currency.format(stats.getTotalRevenue()));
+            LanguageUtil.sendMessage(player, "§7Total Sales: §e" + stats.getTotalSales());
+            LanguageUtil.sendMessage(player, "§7Your Shops: §e" + shopManager.getPlayerShops(player.getUUID()).size());
             
             return 1;
         } catch (Exception e) {
