@@ -131,6 +131,26 @@ public class LanguageUtil {
         }
     }
 
+    /**
+     * Sends a component message directly to a player.
+     * 
+     * @param player The player to send the message to
+     * @param component The component to send
+     */
+    public static void sendComponent(ServerPlayer player, Component component) {
+        player.sendSystemMessage(component);
+    }
+
+    /**
+     * Sends a component message directly to a command source.
+     * 
+     * @param source The command source
+     * @param component The component to send
+     */
+    public static void sendComponent(CommandSourceStack source, Component component) {
+        source.sendSuccess(() -> component, false);
+    }
+
     // Common error messages
     public static MutableComponent noPermission() {
         return getTranslated("neoessentials.commands.error.no_permission");
