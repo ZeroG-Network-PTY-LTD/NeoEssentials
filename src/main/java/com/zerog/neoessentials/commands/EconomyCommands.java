@@ -618,6 +618,46 @@ public class EconomyCommands {
                 )
         );
         
+        // Register /economy command with history subcommand
+        dispatcher.register(
+            Commands.literal("economy")
+                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.economy"))
+                .executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    displayEconomyHelp(player);
+                    return 1;
+                })
+                .then(
+                    Commands.literal("history")
+                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.economy.history"))
+                        .executes(context -> {
+                            // Show own transaction history
+                            ServerPlayer player = context.getSource().getPlayerOrException();
+                            displayTransactionHistory(player, player.getUUID(), 1, 10);
+                            return 1;
+                        })
+                        .then(
+                            Commands.argument("page", StringArgumentType.word())
+                                .executes(context -> {
+                                    ServerPlayer player = context.getSource().getPlayerOrException();
+                                    String pageStr = StringArgumentType.getString(context, "page");
+                                    
+                                    try {
+                                        int page = Integer.parseInt(pageStr);
+                                        if (page < 1) page = 1;
+                                        
+                                        // Show own transaction history with specified page
+                                        displayTransactionHistory(player, player.getUUID(), page, 10);
+                                        return 1;
+                                    } catch (NumberFormatException e) {
+                                        MessageUtil.sendErrorMessage(player, "Invalid page number: " + pageStr);
+                                        return 0;
+                                    }
+                                })
+                        )
+                )
+        );
+        
         NeoEssentials.LOGGER.info("Registered economy commands");
     }
       /**
