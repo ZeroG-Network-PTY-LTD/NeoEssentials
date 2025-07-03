@@ -26,7 +26,7 @@ public class EconomyAdminCommands {
         // Main /economyadmin command with subcommands
         dispatcher.register(
             Commands.literal("economyadmin")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.admin.economy"))
+                .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.admin.economy"))
                 .executes(context -> {
                     return showEconomyAdminHelp(context.getSource());
                 })
@@ -78,7 +78,7 @@ public class EconomyAdminCommands {
                                 int limit = Integer.parseInt(StringArgumentType.getString(context, "limit"));
                                 return showRecentTransactions(context.getSource(), limit);
                             } catch (NumberFormatException e) {
-                                MessageUtil.sendErrorMessage((ServerPlayer) context.getSource().getEntity(), 
+                                LanguageUtil.sendErrorMessage((ServerPlayer) context.getSource().getEntity(), 
                                     "Invalid number format.");
                                 return 0;
                             }
@@ -92,7 +92,7 @@ public class EconomyAdminCommands {
         // Add alias command
         dispatcher.register(
             Commands.literal("ecoadmin")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.admin.economy"))
+                .requires(source -> PermissionUtil.hasAdminPermission(source, "neoessentials.admin.economy"))
                 .redirect(dispatcher.getRoot().getChild("economyadmin"))
         );
     }
@@ -101,20 +101,20 @@ public class EconomyAdminCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             
-            LanguageUtil.sendMessage(player, "§6§l=== Economy Administration Commands ===");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_header");
             LanguageUtil.sendMessage(player, "");
-            LanguageUtil.sendMessage(player, "§e/economyadmin stats§7 - View economy statistics");
-            LanguageUtil.sendMessage(player, "§e/economyadmin dashboard§7 - Real-time economy dashboard");
-            LanguageUtil.sendMessage(player, "§e/economyadmin health§7 - Economy health check");
-            LanguageUtil.sendMessage(player, "§e/economyadmin backup§7 - Create economy backup");
-            LanguageUtil.sendMessage(player, "§e/economyadmin reload§7 - Reload economy configuration");
-            LanguageUtil.sendMessage(player, "§e/economyadmin reset <player>§7 - Reset player economy data");
-            LanguageUtil.sendMessage(player, "§e/economyadmin inflation§7 - Show inflation statistics");
-            LanguageUtil.sendMessage(player, "§e/economyadmin wealth§7 - Show wealth distribution");
-            LanguageUtil.sendMessage(player, "§e/economyadmin performance§7 - Show performance metrics");
-            LanguageUtil.sendMessage(player, "§e/economyadmin transactions [limit]§7 - Show recent transactions");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_stats");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_dashboard");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_health");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_backup");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_reload");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_reset");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_inflation");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_wealth");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_performance");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_transactions");
             LanguageUtil.sendMessage(player, "");
-            LanguageUtil.sendMessage(player, "§7Alias: §e/ecoadmin");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.help_alias");
             
             return 1;
         } catch (Exception e) {
@@ -130,7 +130,7 @@ public class EconomyAdminCommands {
             BankManager bankManager = economyManager.getBankManager();
             ShopManager shopManager = economyManager.getShopManager();
             
-            LanguageUtil.sendMessage(player, "§6§l=== Economy Statistics ===");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_header");
             LanguageUtil.sendMessage(player, "");
             
             // Basic economy stats
@@ -138,9 +138,9 @@ public class EconomyAdminCommands {
             double totalMoney = calculateTotalMoney();
             double averageBalance = calculateAverageBalance();
             
-            LanguageUtil.sendMessage(player, "§e§lGeneral Statistics:");
-            LanguageUtil.sendMessage(player, "§7Total Money in Circulation: §a" + defaultCurrency.format(totalMoney));
-            LanguageUtil.sendMessage(player, "§7Average Player Balance: §a" + defaultCurrency.format(averageBalance));
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_general");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_total_money", defaultCurrency.format(totalMoney));
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_average_balance", defaultCurrency.format(averageBalance));
             LanguageUtil.sendMessage(player, "");
             
             // Transaction stats
@@ -148,10 +148,10 @@ public class EconomyAdminCommands {
             double totalVolume = transactionManager.getTotalTransactionVolume();
             double dailyVolume = transactionManager.getDailyTransactionVolume();
             
-            LanguageUtil.sendMessage(player, "§e§lTransaction Statistics:");
-            LanguageUtil.sendMessage(player, "§7Total Transactions: §e" + String.format("%,d", totalTransactions));
-            LanguageUtil.sendMessage(player, "§7Total Volume: §a" + defaultCurrency.format(totalVolume));
-            LanguageUtil.sendMessage(player, "§7Daily Volume: §a" + defaultCurrency.format(dailyVolume));
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_transactions");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_total_transactions", String.format("%,d", totalTransactions));
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_total_volume", defaultCurrency.format(totalVolume));
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_daily_volume", defaultCurrency.format(dailyVolume));
             LanguageUtil.sendMessage(player, "");
             
             // Banking stats
@@ -161,9 +161,9 @@ public class EconomyAdminCommands {
                 .mapToDouble(account -> account.getBalance(defaultCurrency))
                 .sum();
             
-            LanguageUtil.sendMessage(player, "§e§lBanking Statistics:");
-            LanguageUtil.sendMessage(player, "§7Total Bank Accounts: §e" + String.format("%,d", totalAccounts));
-            LanguageUtil.sendMessage(player, "§7Total Bank Deposits: §a" + defaultCurrency.format(totalBankDeposits));
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_banking");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_total_accounts", String.format("%,d", totalAccounts));
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_total_deposits", defaultCurrency.format(totalBankDeposits));
             LanguageUtil.sendMessage(player, "");
             
             // Shop stats
@@ -171,17 +171,17 @@ public class EconomyAdminCommands {
             int totalShops = allShops.size();
             int activeShops = (int) allShops.stream().filter(Shop::isActive).count();
             
-            LanguageUtil.sendMessage(player, "§e§lShop Statistics:");
-            LanguageUtil.sendMessage(player, "§7Total Shops: §e" + String.format("%,d", totalShops));
-            LanguageUtil.sendMessage(player, "§7Active Shops: §a" + String.format("%,d", activeShops));
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_shops");
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_total_shops", String.format("%,d", totalShops));
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_active_shops", String.format("%,d", activeShops));
             LanguageUtil.sendMessage(player, "");
             
-            LanguageUtil.sendMessage(player, "§7Generated at: §e" + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+            LanguageUtil.sendMessage(player, "neoessentials.economyadmin.stats_generated", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
-                "An error occurred while generating statistics: " + e.getMessage());
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+                "neoessentials.economyadmin.stats_error", e.getMessage());
             return 0;
         }
     }
@@ -225,7 +225,7 @@ public class EconomyAdminCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
                 "An error occurred while generating dashboard: " + e.getMessage());
             return 0;
         }
@@ -281,7 +281,7 @@ public class EconomyAdminCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
                 "An error occurred during health check: " + e.getMessage());
             return 0;
         }
@@ -301,12 +301,12 @@ public class EconomyAdminCommands {
                 LanguageUtil.sendMessage(player, "§7Backup includes: accounts, transactions, shops, auctions, loans");
                 LanguageUtil.sendMessage(player, "§7Timestamp: §e" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()));
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to create economy backup.");
+                LanguageUtil.sendErrorMessage(player, "Failed to create economy backup.");
             }
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
                 "An error occurred while creating backup: " + e.getMessage());
             return 0;
         }
@@ -324,12 +324,12 @@ public class EconomyAdminCommands {
             if (success) {
                 LanguageUtil.sendMessage(player, "§a✓ Economy configuration reloaded successfully!");
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to reload economy configuration.");
+                LanguageUtil.sendErrorMessage(player, "Failed to reload economy configuration.");
             }
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
                 "An error occurred while reloading configuration: " + e.getMessage());
             return 0;
         }
@@ -347,7 +347,7 @@ public class EconomyAdminCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
                 "An error occurred: " + e.getMessage());
             return 0;
         }
@@ -378,7 +378,7 @@ public class EconomyAdminCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
                 "An error occurred while generating inflation statistics: " + e.getMessage());
             return 0;
         }
@@ -408,7 +408,7 @@ public class EconomyAdminCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
                 "An error occurred while analyzing wealth distribution: " + e.getMessage());
             return 0;
         }
@@ -450,7 +450,7 @@ public class EconomyAdminCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
                 "An error occurred while retrieving performance metrics: " + e.getMessage());
             return 0;
         }
@@ -485,7 +485,7 @@ public class EconomyAdminCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
                 "An error occurred while retrieving transactions: " + e.getMessage());
             return 0;
         }
@@ -658,7 +658,7 @@ public class EconomyAdminCommands {
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
+            LanguageUtil.sendErrorMessage((ServerPlayer) source.getEntity(), 
                 "An error occurred while retrieving auction statistics: " + e.getMessage());
             return 0;
         }

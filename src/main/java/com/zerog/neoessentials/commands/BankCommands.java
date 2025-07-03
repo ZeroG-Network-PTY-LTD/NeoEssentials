@@ -7,7 +7,8 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.*;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -128,26 +129,26 @@ public class BankCommands {
     private int showBankHelp(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6=== NeoEssentials Banking System ===");
-            MessageUtil.sendMessage(player, "§e§lAccount Management:");
-            MessageUtil.sendMessage(player, "§e/bank create <type> §7- Create new account (checking, savings, business, investment)");
-            MessageUtil.sendMessage(player, "§e/bank deposit <amount> <to-account> <from-account> §7- Transfer between your accounts");
-            MessageUtil.sendMessage(player, "§e/bank withdraw <amount> <account> §7- Withdraw to cash");
-            MessageUtil.sendMessage(player, "§e/bank transfer <amount> <to-account> [from-account] §7- Transfer money");
-            MessageUtil.sendMessage(player, "§e/bank balance [account] §7- Check account balance");
-            MessageUtil.sendMessage(player, "§e/bank list §7- List all your accounts");
-            MessageUtil.sendMessage(player, "§e/bank info <account> §7- Account details");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§e§lLoan System:");
-            MessageUtil.sendMessage(player, "§e/bank loan apply <amount> <type> <term-months> §7- Apply for loan");
-            MessageUtil.sendMessage(player, "§e/bank loan pay <amount> [loan-id] §7- Make loan payment");
-            MessageUtil.sendMessage(player, "§e/bank loan list §7- List your loans");
-            MessageUtil.sendMessage(player, "§e/bank loan info <loan-id> §7- Loan details");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§c§lWallet + Banking System: §7Two types of money!");
-            MessageUtil.sendMessage(player, "§7Use §e/balance §7to see both cash on hand and bank balance.");
-            MessageUtil.sendMessage(player, "§7Use §e/pay <player> <amount> §7to pay others with cash.");
-            MessageUtil.sendMessage(player, "§7Use §e/bank withdraw §7to get cash from your account.");
+            LanguageUtil.sendMessage(player, "§6=== NeoEssentials Banking System ===");
+            LanguageUtil.sendMessage(player, "§e§lAccount Management:");
+            LanguageUtil.sendMessage(player, "§e/bank create <type> §7- Create new account (checking, savings, business, investment)");
+            LanguageUtil.sendMessage(player, "§e/bank deposit <amount> <to-account> <from-account> §7- Transfer between your accounts");
+            LanguageUtil.sendMessage(player, "§e/bank withdraw <amount> <account> §7- Withdraw to cash");
+            LanguageUtil.sendMessage(player, "§e/bank transfer <amount> <to-account> [from-account] §7- Transfer money");
+            LanguageUtil.sendMessage(player, "§e/bank balance [account] §7- Check account balance");
+            LanguageUtil.sendMessage(player, "§e/bank list §7- List all your accounts");
+            LanguageUtil.sendMessage(player, "§e/bank info <account> §7- Account details");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§e§lLoan System:");
+            LanguageUtil.sendMessage(player, "§e/bank loan apply <amount> <type> <term-months> §7- Apply for loan");
+            LanguageUtil.sendMessage(player, "§e/bank loan pay <amount> [loan-id] §7- Make loan payment");
+            LanguageUtil.sendMessage(player, "§e/bank loan list §7- List your loans");
+            LanguageUtil.sendMessage(player, "§e/bank loan info <loan-id> §7- Loan details");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§c§lWallet + Banking System: §7Two types of money!");
+            LanguageUtil.sendMessage(player, "§7Use §e/balance §7to see both cash on hand and bank balance.");
+            LanguageUtil.sendMessage(player, "§7Use §e/pay <player> <amount> §7to pay others with cash.");
+            LanguageUtil.sendMessage(player, "§7Use §e/bank withdraw §7to get cash from your account.");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
@@ -166,7 +167,7 @@ public class BankCommands {
             try {
                 type = BankAccount.AccountType.valueOf(typeString.toUpperCase());
             } catch (IllegalArgumentException e) {
-                MessageUtil.sendErrorMessage(player, "Invalid account type. Valid types: checking, savings, business, joint, investment");
+                LanguageUtil.sendErrorMessage(player, "Invalid account type. Valid types: checking, savings, business, joint, investment");
                 return 0;
             }
             
@@ -174,11 +175,11 @@ public class BankCommands {
             if (account != null) {
                 MessageUtil.sendSuccessMessage(player, "Successfully created " + type.name().toLowerCase() + 
                     " account: " + account.getAccountNumber());
-                MessageUtil.sendMessage(player, "§7Account ID: §e" + account.getAccountId());
-                MessageUtil.sendMessage(player, "§7Interest Rate: §e" + String.format("%.2f%%", account.getInterestRate() * 100));
+                LanguageUtil.sendMessage(player, "§7Account ID: §e" + account.getAccountId());
+                LanguageUtil.sendMessage(player, "§7Interest Rate: §e" + String.format("%.2f%%", account.getInterestRate() * 100));
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to create account. You may have reached the maximum number of accounts.");
+                LanguageUtil.sendErrorMessage(player, "Failed to create account. You may have reached the maximum number of accounts.");
                 return 0;
             }
         } catch (CommandSyntaxException e) {
@@ -190,15 +191,15 @@ public class BankCommands {
     private int showDepositHelp(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6§l--- Bank Deposit Help ---");
-            MessageUtil.sendMessage(player, "§eUsage: /bank deposit <amount> <to-account> [from-account]");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§eExamples:");
-            MessageUtil.sendMessage(player, "§7• /bank deposit 100 CHK001 §f- Deposit $100 cash to checking account");
-            MessageUtil.sendMessage(player, "§7• /bank deposit 100 CHK001 SAV002 §f- Transfer $100 from savings to checking");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7If no from-account is specified, cash from your wallet is used.");
-            MessageUtil.sendMessage(player, "§eTo see your accounts: /bank list");
+            LanguageUtil.sendMessage(player, "§6§l--- Bank Deposit Help ---");
+            LanguageUtil.sendMessage(player, "§eUsage: /bank deposit <amount> <to-account> [from-account]");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§eExamples:");
+            LanguageUtil.sendMessage(player, "§7• /bank deposit 100 CHK001 §f- Deposit $100 cash to checking account");
+            LanguageUtil.sendMessage(player, "§7• /bank deposit 100 CHK001 SAV002 §f- Transfer $100 from savings to checking");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§7If no from-account is specified, cash from your wallet is used.");
+            LanguageUtil.sendMessage(player, "§eTo see your accounts: /bank list");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
@@ -215,14 +216,14 @@ public class BankCommands {
             
             List<BankAccount> accounts = bankManager.getPlayerAccounts(player.getUUID());
             if (accounts.isEmpty()) {
-                MessageUtil.sendErrorMessage(player, "You don't have any bank accounts. Create one with: /bank create checking");
+                LanguageUtil.sendErrorMessage(player, "You don't have any bank accounts. Create one with: /bank create checking");
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§6§l--- Select Destination Account ---");
-            MessageUtil.sendMessage(player, "§7Depositing: §e$" + String.format("%.2f", amount));
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§eYour accounts:");
+            LanguageUtil.sendMessage(player, "§6§l--- Select Destination Account ---");
+            LanguageUtil.sendMessage(player, "§7Depositing: §e$" + String.format("%.2f", amount));
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§eYour accounts:");
             
             for (BankAccount account : accounts) {
                 if (account.isActive()) {
@@ -232,12 +233,12 @@ public class BankCommands {
                         account.getAccountNumber(), 
                         account.getType().toString().toLowerCase(), 
                         balance);
-                    MessageUtil.sendMessage(player, accountInfo);
+                    LanguageUtil.sendMessage(player, accountInfo);
                 }
             }
             
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7Use: §e/bank deposit " + amount + " <account-number> [from-account]");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§7Use: §e/bank deposit " + amount + " <account-number> [from-account]");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
@@ -256,7 +257,7 @@ public class BankCommands {
             // Verify destination account exists and is owned by player
             BankAccount toAccount = bankManager.getAccountByNumber(toAccountNumber);
             if (toAccount == null || !toAccount.getOwnerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "Destination account not found or you don't have access to it.");
+                LanguageUtil.sendErrorMessage(player, "Destination account not found or you don't have access to it.");
                 return 0;
             }
             
@@ -268,17 +269,17 @@ public class BankCommands {
                 .toList();
             
             if (validFromAccounts.isEmpty()) {
-                MessageUtil.sendErrorMessage(player, "No accounts found with sufficient funds ($" + 
+                LanguageUtil.sendErrorMessage(player, "No accounts found with sufficient funds ($" + 
                     String.format("%.2f", amount) + ") to transfer from.");
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§6§l--- Select Source Account ---");
-            MessageUtil.sendMessage(player, "§7Transferring: §e$" + String.format("%.2f", amount));
-            MessageUtil.sendMessage(player, "§7To: §e" + toAccount.getAccountNumber() + " §7(" + 
+            LanguageUtil.sendMessage(player, "§6§l--- Select Source Account ---");
+            LanguageUtil.sendMessage(player, "§7Transferring: §e$" + String.format("%.2f", amount));
+            LanguageUtil.sendMessage(player, "§7To: §e" + toAccount.getAccountNumber() + " §7(" + 
                 toAccount.getType().toString().toLowerCase() + ")");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§eAccounts with sufficient funds:");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§eAccounts with sufficient funds:");
             
             for (BankAccount account : validFromAccounts) {
                 double balance = account.getBalance(defaultCurrency);
@@ -286,11 +287,11 @@ public class BankCommands {
                     account.getAccountNumber(), 
                     account.getType().toString().toLowerCase(), 
                     balance);
-                MessageUtil.sendMessage(player, accountInfo);
+                LanguageUtil.sendMessage(player, accountInfo);
             }
             
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7Use: §e/bank deposit " + amount + " " + toAccountNumber + " <from-account>");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§7Use: §e/bank deposit " + amount + " " + toAccountNumber + " <from-account>");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
@@ -307,7 +308,7 @@ public class BankCommands {
             Currency defaultCurrency = economyManager.getCurrencyManager().getDefaultCurrency();
             
             if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                LanguageUtil.sendErrorMessage(player, "No default currency configured.");
                 return 0;
             }
             
@@ -317,31 +318,31 @@ public class BankCommands {
             
             // Verify accounts exist and are owned by player
             if (toAccount == null || !toAccount.getOwnerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "Destination account not found or you don't have access to it.");
+                LanguageUtil.sendErrorMessage(player, "Destination account not found or you don't have access to it.");
                 return 0;
             }
             
             if (fromAccount == null || !fromAccount.getOwnerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "Source account not found or you don't have access to it.");
+                LanguageUtil.sendErrorMessage(player, "Source account not found or you don't have access to it.");
                 return 0;
             }
             
             // Check if accounts are different
             if (toAccount.getAccountNumber().equals(fromAccount.getAccountNumber())) {
-                MessageUtil.sendErrorMessage(player, "Cannot transfer money to the same account.");
+                LanguageUtil.sendErrorMessage(player, "Cannot transfer money to the same account.");
                 return 0;
             }
             
             // Check if both accounts are active
             if (!toAccount.isActive() || !fromAccount.isActive()) {
-                MessageUtil.sendErrorMessage(player, "One or both accounts are inactive.");
+                LanguageUtil.sendErrorMessage(player, "One or both accounts are inactive.");
                 return 0;
             }
             
             // Check if source account has sufficient funds
             double fromBalance = fromAccount.getBalance(defaultCurrency);
             if (fromBalance < amount) {
-                MessageUtil.sendErrorMessage(player, "Insufficient funds in source account. Available: $" + 
+                LanguageUtil.sendErrorMessage(player, "Insufficient funds in source account. Available: $" + 
                     String.format("%.2f", fromBalance));
                 return 0;
             }
@@ -355,14 +356,14 @@ public class BankCommands {
                     amount, fromAccount.getAccountNumber(), toAccount.getAccountNumber()));
                     
                 // Show updated balances
-                MessageUtil.sendMessage(player, String.format("§7%s balance: §a$%.2f", 
+                LanguageUtil.sendMessage(player, String.format("§7%s balance: §a$%.2f", 
                     fromAccount.getAccountNumber(), fromAccount.getBalance(defaultCurrency)));
-                MessageUtil.sendMessage(player, String.format("§7%s balance: §a$%.2f", 
+                LanguageUtil.sendMessage(player, String.format("§7%s balance: §a$%.2f", 
                     toAccount.getAccountNumber(), toAccount.getBalance(defaultCurrency)));
                     
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "Transfer failed. Please try again.");
+                LanguageUtil.sendErrorMessage(player, "Transfer failed. Please try again.");
                 return 0;
             }
         } catch (CommandSyntaxException e) {
@@ -374,18 +375,18 @@ public class BankCommands {
     private int showWithdrawHelp(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6§l--- Bank Withdrawal Help ---");
-            MessageUtil.sendMessage(player, "§eUsage: /bank withdraw <amount> <account>");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§eExample: /bank withdraw 100 CHK001");
-            MessageUtil.sendMessage(player, "§7This withdraws $100 from checking account CHK001 to your cash wallet");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§7Cash on hand is used for:");
-            MessageUtil.sendMessage(player, "§7• Paying other players with /pay");
-            MessageUtil.sendMessage(player, "§7• Shopping at player stores");
-            MessageUtil.sendMessage(player, "§7• Auction house bidding");
-            MessageUtil.sendMessage(player, "");
-            MessageUtil.sendMessage(player, "§eTo see your accounts: /bank list");
+            LanguageUtil.sendMessage(player, "§6§l--- Bank Withdrawal Help ---");
+            LanguageUtil.sendMessage(player, "§eUsage: /bank withdraw <amount> <account>");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§eExample: /bank withdraw 100 CHK001");
+            LanguageUtil.sendMessage(player, "§7This withdraws $100 from checking account CHK001 to your cash wallet");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§7Cash on hand is used for:");
+            LanguageUtil.sendMessage(player, "§7• Paying other players with /pay");
+            LanguageUtil.sendMessage(player, "§7• Shopping at player stores");
+            LanguageUtil.sendMessage(player, "§7• Auction house bidding");
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§eTo see your accounts: /bank list");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
@@ -405,7 +406,7 @@ public class BankCommands {
                 economyManager.getCurrencyManager().getDefaultCurrency();
             
             if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured");
+                LanguageUtil.sendErrorMessage(player, "No default currency configured");
                 return 0;
             }
             
@@ -422,8 +423,8 @@ public class BankCommands {
             }
             
             if (targetAccount == null) {
-                MessageUtil.sendErrorMessage(player, "Bank account not found: " + accountNumber);
-                MessageUtil.sendMessage(player, "§7Use /bank list to see your accounts");
+                LanguageUtil.sendErrorMessage(player, "Bank account not found: " + accountNumber);
+                LanguageUtil.sendMessage(player, "§7Use /bank list to see your accounts");
                 return 0;
             }
             
@@ -431,7 +432,7 @@ public class BankCommands {
             double accountBalance = targetAccount.getBalance(defaultCurrency);
             if (accountBalance < amount) {
                 String formattedBalance = String.format("$%.2f", accountBalance);
-                MessageUtil.sendErrorMessage(player, "Insufficient bank account balance. Account balance: " + formattedBalance);
+                LanguageUtil.sendErrorMessage(player, "Insufficient bank account balance. Account balance: " + formattedBalance);
                 return 0;
             }
             
@@ -447,12 +448,12 @@ public class BankCommands {
                 String formattedAccountBalance = String.format("$%.2f", newAccountBalance);
                 String formattedCashBalance = String.format("$%.2f", cashBalance);
                 
-                MessageUtil.sendMessage(player, "§7Account Balance: §e" + formattedAccountBalance);
-                MessageUtil.sendMessage(player, "§7Cash on Hand: §e" + formattedCashBalance);
+                LanguageUtil.sendMessage(player, "§7Account Balance: §e" + formattedAccountBalance);
+                LanguageUtil.sendMessage(player, "§7Cash on Hand: §e" + formattedCashBalance);
                 
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "Withdrawal failed. Account may have restrictions or you may have reached cash limits.");
+                LanguageUtil.sendErrorMessage(player, "Withdrawal failed. Account may have restrictions or you may have reached cash limits.");
                 return 0;
             }
             
@@ -462,7 +463,7 @@ public class BankCommands {
         } catch (Exception e) {
             try {
                 ServerPlayer player = source.getPlayerOrException();
-                MessageUtil.sendErrorMessage(player, "Error processing withdrawal: " + e.getMessage());
+                LanguageUtil.sendErrorMessage(player, "Error processing withdrawal: " + e.getMessage());
             } catch (CommandSyntaxException ex) {
                 source.sendFailure(Component.literal("§cError processing withdrawal: " + e.getMessage()));
             }
@@ -480,7 +481,7 @@ public class BankCommands {
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             
             if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                LanguageUtil.sendErrorMessage(player, "No default currency configured.");
                 return 0;
             }
             
@@ -488,20 +489,20 @@ public class BankCommands {
             if (fromAccountNumber != null) {
                 fromAccount = bankManager.getAccountByNumber(fromAccountNumber);
                 if (fromAccount == null || !fromAccount.getOwnerId().equals(player.getUUID())) {
-                    MessageUtil.sendErrorMessage(player, "Source account not found or you don't have access to it.");
+                    LanguageUtil.sendErrorMessage(player, "Source account not found or you don't have access to it.");
                     return 0;
                 }
             } else {
                 fromAccount = bankManager.getPrimaryAccount(player.getUUID());
                 if (fromAccount == null) {
-                    MessageUtil.sendErrorMessage(player, "No primary account found.");
+                    LanguageUtil.sendErrorMessage(player, "No primary account found.");
                     return 0;
                 }
             }
             
             BankAccount toAccount = bankManager.getAccountByNumber(toAccountNumber);
             if (toAccount == null) {
-                MessageUtil.sendErrorMessage(player, "Destination account not found.");
+                LanguageUtil.sendErrorMessage(player, "Destination account not found.");
                 return 0;
             }
             
@@ -511,7 +512,7 @@ public class BankCommands {
                     " to " + toAccount.getAccountNumber());
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "Transfer failed. Check account balances and limits.");
+                LanguageUtil.sendErrorMessage(player, "Transfer failed. Check account balances and limits.");
                 return 0;
             }
         } catch (CommandSyntaxException e) {
@@ -530,7 +531,7 @@ public class BankCommands {
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             
             if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                LanguageUtil.sendErrorMessage(player, "No default currency configured.");
                 return 0;
             }
             
@@ -538,23 +539,23 @@ public class BankCommands {
             if (accountNumber != null) {
                 account = bankManager.getAccountByNumber(accountNumber);
                 if (account == null || !account.getOwnerId().equals(player.getUUID())) {
-                    MessageUtil.sendErrorMessage(player, "Account not found or you don't have access to it.");
+                    LanguageUtil.sendErrorMessage(player, "Account not found or you don't have access to it.");
                     return 0;
                 }
             } else {
                 account = bankManager.getPrimaryAccount(player.getUUID());
                 if (account == null) {
-                    MessageUtil.sendErrorMessage(player, "No primary account found.");
+                    LanguageUtil.sendErrorMessage(player, "No primary account found.");
                     return 0;
                 }
             }
             
             double balance = account.getBalance(defaultCurrency);
-            MessageUtil.sendMessage(player, "§6=== Account Balance ===");
-            MessageUtil.sendMessage(player, "§7Account: §e" + account.getAccountNumber());
-            MessageUtil.sendMessage(player, "§7Type: §e" + account.getType().name());
-            MessageUtil.sendMessage(player, "§7Balance: §e" + defaultCurrency.format(balance));
-            MessageUtil.sendMessage(player, "§7Interest Rate: §e" + String.format("%.2f%%", account.getInterestRate() * 100));
+            LanguageUtil.sendMessage(player, "§6=== Account Balance ===");
+            LanguageUtil.sendMessage(player, "§7Account: §e" + account.getAccountNumber());
+            LanguageUtil.sendMessage(player, "§7Type: §e" + account.getType().name());
+            LanguageUtil.sendMessage(player, "§7Balance: §e" + defaultCurrency.format(balance));
+            LanguageUtil.sendMessage(player, "§7Interest Rate: §e" + String.format("%.2f%%", account.getInterestRate() * 100));
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -573,22 +574,22 @@ public class BankCommands {
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             
             if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                LanguageUtil.sendErrorMessage(player, "No default currency configured.");
                 return 0;
             }
             
             List<BankAccount> accounts = bankManager.getPlayerAccounts(player.getUUID());
             if (accounts.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7You have no bank accounts. Create one with §e/bank create checking");
+                LanguageUtil.sendMessage(player, "§7You have no bank accounts. Create one with §e/bank create checking");
                 return 1;
             }
             
-            MessageUtil.sendMessage(player, "§6=== Your Bank Accounts ===");
+            LanguageUtil.sendMessage(player, "§6=== Your Bank Accounts ===");
             for (BankAccount account : accounts) {
                 if (account.isActive()) {
                     double balance = account.getBalance(defaultCurrency);
                     String status = account == bankManager.getPrimaryAccount(player.getUUID()) ? " §a(Primary)" : "";
-                    MessageUtil.sendMessage(player, "§e" + account.getAccountNumber() + " §7(" + 
+                    LanguageUtil.sendMessage(player, "§e" + account.getAccountNumber() + " §7(" + 
                         account.getType().name() + ") - " + defaultCurrency.format(balance) + status);
                 }
             }
@@ -610,24 +611,24 @@ public class BankCommands {
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             
             if (defaultCurrency == null) {
-                MessageUtil.sendErrorMessage(player, "No default currency configured.");
+                LanguageUtil.sendErrorMessage(player, "No default currency configured.");
                 return 0;
             }
             
             BankAccount account = bankManager.getAccountByNumber(accountNumber);
             if (account == null || !account.getOwnerId().equals(player.getUUID())) {
-                MessageUtil.sendErrorMessage(player, "Account not found or you don't have access to it.");
+                LanguageUtil.sendErrorMessage(player, "Account not found or you don't have access to it.");
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§6=== Account Information ===");
-            MessageUtil.sendMessage(player, "§7Account Number: §e" + account.getAccountNumber());
-            MessageUtil.sendMessage(player, "§7Account Type: §e" + account.getType().name());
-            MessageUtil.sendMessage(player, "§7Balance: §e" + defaultCurrency.format(account.getBalance(defaultCurrency)));
-            MessageUtil.sendMessage(player, "§7Interest Rate: §e" + String.format("%.2f%%", account.getInterestRate() * 100));
-            MessageUtil.sendMessage(player, "§7Credit Limit: §e" + defaultCurrency.format(account.getCreditLimit()));
-            MessageUtil.sendMessage(player, "§7Status: §e" + (account.isActive() ? "Active" : "Inactive"));
-            MessageUtil.sendMessage(player, "§7Created: §e" + new java.util.Date(account.getCreatedTime()));
+            LanguageUtil.sendMessage(player, "§6=== Account Information ===");
+            LanguageUtil.sendMessage(player, "§7Account Number: §e" + account.getAccountNumber());
+            LanguageUtil.sendMessage(player, "§7Account Type: §e" + account.getType().name());
+            LanguageUtil.sendMessage(player, "§7Balance: §e" + defaultCurrency.format(account.getBalance(defaultCurrency)));
+            LanguageUtil.sendMessage(player, "§7Interest Rate: §e" + String.format("%.2f%%", account.getInterestRate() * 100));
+            LanguageUtil.sendMessage(player, "§7Credit Limit: §e" + defaultCurrency.format(account.getCreditLimit()));
+            LanguageUtil.sendMessage(player, "§7Status: §e" + (account.isActive() ? "Active" : "Inactive"));
+            LanguageUtil.sendMessage(player, "§7Created: §e" + new java.util.Date(account.getCreatedTime()));
             
             return 1;
         } catch (CommandSyntaxException e) {
@@ -640,12 +641,12 @@ public class BankCommands {
     private int applyForLoan(CommandSourceStack source, double amount, String loanType, int termMonths) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6Loan Application Submitted");
-            MessageUtil.sendMessage(player, "§7Amount: §e$" + String.format("%.2f", amount));
-            MessageUtil.sendMessage(player, "§7Type: §e" + loanType);
-            MessageUtil.sendMessage(player, "§7Term: §e" + termMonths + " months");
-            MessageUtil.sendMessage(player, "§7Status: §ePending Review");
-            MessageUtil.sendMessage(player, "§7Note: Loan system is in development");
+            LanguageUtil.sendMessage(player, "§6Loan Application Submitted");
+            LanguageUtil.sendMessage(player, "§7Amount: §e$" + String.format("%.2f", amount));
+            LanguageUtil.sendMessage(player, "§7Type: §e" + loanType);
+            LanguageUtil.sendMessage(player, "§7Term: §e" + termMonths + " months");
+            LanguageUtil.sendMessage(player, "§7Status: §ePending Review");
+            LanguageUtil.sendMessage(player, "§7Note: Loan system is in development");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
@@ -656,12 +657,12 @@ public class BankCommands {
     private int makeLoanPayment(CommandSourceStack source, double amount, String loanId) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6Loan Payment Processing");
-            MessageUtil.sendMessage(player, "§7Amount: §e$" + String.format("%.2f", amount));
+            LanguageUtil.sendMessage(player, "§6Loan Payment Processing");
+            LanguageUtil.sendMessage(player, "§7Amount: §e$" + String.format("%.2f", amount));
             if (loanId != null) {
-                MessageUtil.sendMessage(player, "§7Loan ID: §e" + loanId);
+                LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loanId);
             }
-            MessageUtil.sendMessage(player, "§7Note: Loan system is in development");
+            LanguageUtil.sendMessage(player, "§7Note: Loan system is in development");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
@@ -672,9 +673,9 @@ public class BankCommands {
     private int listLoans(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6=== Your Loans ===");
-            MessageUtil.sendMessage(player, "§7No loans found");
-            MessageUtil.sendMessage(player, "§7Note: Loan system is in development");
+            LanguageUtil.sendMessage(player, "§6=== Your Loans ===");
+            LanguageUtil.sendMessage(player, "§7No loans found");
+            LanguageUtil.sendMessage(player, "§7Note: Loan system is in development");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
@@ -685,9 +686,9 @@ public class BankCommands {
     private int loanInfo(CommandSourceStack source, String loanId) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6=== Loan Information ===");
-            MessageUtil.sendMessage(player, "§7Loan ID: §e" + loanId);
-            MessageUtil.sendMessage(player, "§7Note: Loan system is in development");
+            LanguageUtil.sendMessage(player, "§6=== Loan Information ===");
+            LanguageUtil.sendMessage(player, "§7Loan ID: §e" + loanId);
+            LanguageUtil.sendMessage(player, "§7Note: Loan system is in development");
             return 1;
         } catch (CommandSyntaxException e) {
             source.sendFailure(Component.literal("§cOnly players can use banking commands"));
@@ -709,21 +710,21 @@ public class BankCommands {
             // Get the account
             BankAccount account = bankManager.getAccountByNumber(accountNumber);
             if (account == null) {
-                MessageUtil.sendMessage(player, "§cAccount not found: " + accountNumber);
+                LanguageUtil.sendMessage(player, "§cAccount not found: " + accountNumber);
                 return 0;
             }
             
             // Check if player owns the account or has permission
             if (!account.getOwnerId().equals(playerId) && !account.hasPermission(playerId, BankAccount.Permission.FULL_ACCESS)) {
-                MessageUtil.sendMessage(player, "§cYou don't have permission to close this account");
+                LanguageUtil.sendMessage(player, "§cYou don't have permission to close this account");
                 return 0;
             }
             
             // Check if account has remaining balance
             if (account.getBalance() > 0) {
-                MessageUtil.sendMessage(player, "§cCannot close account with remaining balance: $" + 
+                LanguageUtil.sendMessage(player, "§cCannot close account with remaining balance: $" + 
                     String.format("%.2f", account.getBalance()));
-                MessageUtil.sendMessage(player, "§7Please withdraw all funds before closing the account");
+                LanguageUtil.sendMessage(player, "§7Please withdraw all funds before closing the account");
                 return 0;
             }
             
@@ -731,15 +732,15 @@ public class BankCommands {
             boolean success = bankManager.closeAccount(accountNumber, reason);
             
             if (success) {
-                MessageUtil.sendMessage(player, "§aAccount successfully closed: " + accountNumber);
-                MessageUtil.sendMessage(player, "§7Reason: " + reason);
+                LanguageUtil.sendMessage(player, "§aAccount successfully closed: " + accountNumber);
+                LanguageUtil.sendMessage(player, "§7Reason: " + reason);
                 
                 // Log the closure for admin purposes
-                MessageUtil.sendMessage(player, "§7Account closure has been logged for security purposes");
+                LanguageUtil.sendMessage(player, "§7Account closure has been logged for security purposes");
                 
                 return 1;
             } else {
-                MessageUtil.sendMessage(player, "§cFailed to close account. Please contact an administrator");
+                LanguageUtil.sendMessage(player, "§cFailed to close account. Please contact an administrator");
                 return 0;
             }
             
