@@ -25,7 +25,7 @@ public class UserCommands {
         // Register /heal command
         dispatcher.register(
             Commands.literal("heal")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.heal"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.heal"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Heal self
@@ -36,14 +36,14 @@ public class UserCommands {
                 })
                 .then(
                     Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.heal.others"))                        .executes(context -> {
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.heal.others"))                        .executes(context -> {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Heal another player
                             healPlayer(target);
                             MessageUtil.sendSuccessMessage(source, "You have healed " + target.getScoreboardName() + ".");
-                            MessageUtil.sendMessage(target, "You have been healed by " + source.getScoreboardName() + ".");
+                            LanguageUtil.sendMessage(target, "You have been healed by " + source.getScoreboardName() + ".");
                             
                             return 1;
                         })
@@ -53,7 +53,7 @@ public class UserCommands {
         // Register /feed command
         dispatcher.register(
             Commands.literal("feed")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.feed"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.feed"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Feed self
@@ -64,14 +64,14 @@ public class UserCommands {
                 })
                 .then(
                     Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.feed.others"))                        .executes(context -> {
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.feed.others"))                        .executes(context -> {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Feed another player
                             feedPlayer(target);
                             MessageUtil.sendSuccessMessage(source, "You have fed " + target.getScoreboardName() + ".");
-                            MessageUtil.sendMessage(target, "You have been fed by " + source.getScoreboardName() + ".");
+                            LanguageUtil.sendMessage(target, "You have been fed by " + source.getScoreboardName() + ".");
                             
                             return 1;
                         })
@@ -81,7 +81,7 @@ public class UserCommands {
         // Register /fly command
         dispatcher.register(
             Commands.literal("fly")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.fly"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.fly"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Toggle flight for self
@@ -94,7 +94,7 @@ public class UserCommands {
                 })
                 .then(
                     Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.fly.others"))                        .executes(context -> {
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.fly.others"))                        .executes(context -> {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
@@ -103,7 +103,7 @@ public class UserCommands {
                             toggleFlight(target, newFlyingState);
                             
                             MessageUtil.sendSuccessMessage(source, target.getScoreboardName() + "'s flight " + (newFlyingState ? "enabled" : "disabled") + ".");
-                            MessageUtil.sendMessage(target, "Your flight has been " + (newFlyingState ? "enabled" : "disabled") + " by " + source.getScoreboardName() + ".");
+                            LanguageUtil.sendMessage(target, "Your flight has been " + (newFlyingState ? "enabled" : "disabled") + " by " + source.getScoreboardName() + ".");
                             
                             return 1;
                         })
@@ -128,7 +128,7 @@ public class UserCommands {
         // Register /gmc command (creative mode)
         dispatcher.register(
             Commands.literal("gmc")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.gamemode.creative"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.gamemode.creative"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Set gamemode to creative
@@ -139,14 +139,14 @@ public class UserCommands {
                 })
                 .then(
                     Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.gamemode.creative.others"))                        .executes(context -> {
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.gamemode.creative.others"))                        .executes(context -> {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Set gamemode to creative for another player
                             setGameMode(target, net.minecraft.world.level.GameType.CREATIVE);
                             MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Creative Mode.");
-                            MessageUtil.sendMessage(target, "Your game mode has been set to Creative Mode by " + source.getScoreboardName() + ".");
+                            LanguageUtil.sendMessage(target, "Your game mode has been set to Creative Mode by " + source.getScoreboardName() + ".");
                             
                             return 1;
                         })
@@ -156,7 +156,7 @@ public class UserCommands {
         // Register /gms command (survival mode)
         dispatcher.register(
             Commands.literal("gms")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.gamemode.survival"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.gamemode.survival"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Set gamemode to survival
@@ -167,14 +167,14 @@ public class UserCommands {
                 })
                 .then(
                     Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.gamemode.survival.others"))                        .executes(context -> {
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.gamemode.survival.others"))                        .executes(context -> {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Set gamemode to survival for another player
                             setGameMode(target, net.minecraft.world.level.GameType.SURVIVAL);
                             MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Survival Mode.");
-                            MessageUtil.sendMessage(target, "Your game mode has been set to Survival Mode by " + source.getScoreboardName() + ".");
+                            LanguageUtil.sendMessage(target, "Your game mode has been set to Survival Mode by " + source.getScoreboardName() + ".");
                             
                             return 1;
                         })
@@ -184,7 +184,7 @@ public class UserCommands {
         // Register /gmsp command (spectator mode)
         dispatcher.register(
             Commands.literal("gmsp")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.gamemode.spectator"))                .executes(context -> {
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.gamemode.spectator"))                .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Set gamemode to spectator
@@ -195,14 +195,14 @@ public class UserCommands {
                 })
                 .then(
                     Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.gamemode.spectator.others"))                        .executes(context -> {
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.gamemode.spectator.others"))                        .executes(context -> {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                             
                             // Set gamemode to spectator for another player
                             setGameMode(target, net.minecraft.world.level.GameType.SPECTATOR);
                             MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Spectator Mode.");
-                            MessageUtil.sendMessage(target, "Your game mode has been set to Spectator Mode by " + source.getScoreboardName() + ".");
+                            LanguageUtil.sendMessage(target, "Your game mode has been set to Spectator Mode by " + source.getScoreboardName() + ".");
                             
                             return 1;
                         })
@@ -212,7 +212,7 @@ public class UserCommands {
         // Register /gma command (adventure mode)
         dispatcher.register(
             Commands.literal("gma")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.gamemode.adventure"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.gamemode.adventure"))
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                       // Set gamemode to adventure
@@ -223,14 +223,14 @@ public class UserCommands {
                 })
                 .then(
                     Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.gamemode.adventure.others"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.gamemode.adventure.others"))
                         .executes(context -> {
                             ServerPlayer source = context.getSource().getPlayerOrException();
                             ServerPlayer target = EntityArgument.getPlayer(context, "player");
                               // Set gamemode to adventure for another player
                             setGameMode(target, net.minecraft.world.level.GameType.ADVENTURE);
                             MessageUtil.sendSuccessMessage(source, "Set " + target.getScoreboardName() + "'s game mode to Adventure Mode.");
-                            MessageUtil.sendMessage(target, "Your game mode has been set to Adventure Mode by " + source.getScoreboardName() + ".");
+                            LanguageUtil.sendMessage(target, "Your game mode has been set to Adventure Mode by " + source.getScoreboardName() + ".");
                             
                             return 1;
                         })
@@ -247,7 +247,7 @@ public class UserCommands {
         // Register /time command
         dispatcher.register(
             Commands.literal("time")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.time"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
                 .then(
                     Commands.literal("day")
                         .executes(context -> {
@@ -255,7 +255,7 @@ public class UserCommands {
                             
                             // Set time to day
                             // TODO: Implement time logic
-                            MessageUtil.sendMessage(player, "Command not implemented yet");
+                            LanguageUtil.sendMessage(player, "Command not implemented yet");
                             
                             return 1;
                         })
@@ -267,7 +267,7 @@ public class UserCommands {
                             
                             // Set time to night
                             // TODO: Implement time logic
-                            MessageUtil.sendMessage(player, "Command not implemented yet");
+                            LanguageUtil.sendMessage(player, "Command not implemented yet");
                             
                             return 1;
                         })
@@ -279,7 +279,7 @@ public class UserCommands {
                             
                             // Set time to noon
                             // TODO: Implement time logic
-                            MessageUtil.sendMessage(player, "Command not implemented yet");
+                            LanguageUtil.sendMessage(player, "Command not implemented yet");
                             
                             return 1;
                         })
@@ -291,7 +291,7 @@ public class UserCommands {
                             
                             // Set time to midnight
                             // TODO: Implement time logic
-                            MessageUtil.sendMessage(player, "Command not implemented yet");
+                            LanguageUtil.sendMessage(player, "Command not implemented yet");
                             
                             return 1;
                         })
@@ -303,7 +303,7 @@ public class UserCommands {
                             
                             // Set time to dawn
                             // TODO: Implement time logic
-                            MessageUtil.sendMessage(player, "Command not implemented yet");
+                            LanguageUtil.sendMessage(player, "Command not implemented yet");
                             
                             return 1;
                         })
@@ -315,7 +315,7 @@ public class UserCommands {
                             
                             // Set time to dusk
                             // TODO: Implement time logic
-                            MessageUtil.sendMessage(player, "Command not implemented yet");
+                            LanguageUtil.sendMessage(player, "Command not implemented yet");
                             
                             return 1;
                         })
@@ -325,7 +325,7 @@ public class UserCommands {
         // Register /weather command
         dispatcher.register(
             Commands.literal("weather")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.weather"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.weather"))
                 .then(
                     Commands.literal("clear")
                         .executes(context -> {
@@ -333,7 +333,7 @@ public class UserCommands {
                             
                             // Set weather to clear
                             // TODO: Implement weather logic
-                            MessageUtil.sendMessage(player, "Command not implemented yet");
+                            LanguageUtil.sendMessage(player, "Command not implemented yet");
                             
                             return 1;
                         })
@@ -345,7 +345,7 @@ public class UserCommands {
                             
                             // Set weather to rain
                             // TODO: Implement weather logic
-                            MessageUtil.sendMessage(player, "Command not implemented yet");
+                            LanguageUtil.sendMessage(player, "Command not implemented yet");
                             
                             return 1;
                         })
@@ -357,7 +357,7 @@ public class UserCommands {
                             
                             // Set weather to thunder
                             // TODO: Implement weather logic
-                            MessageUtil.sendMessage(player, "Command not implemented yet");
+                            LanguageUtil.sendMessage(player, "Command not implemented yet");
                             
                             return 1;
                         })

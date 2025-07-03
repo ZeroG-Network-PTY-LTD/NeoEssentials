@@ -54,18 +54,18 @@ public class PaymentCommands {
         // Payment toggle command
         dispatcher.register(
             Commands.literal("paytoggle")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.paytoggle"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.paytoggle"))
                 .executes(context -> togglePayments(context, null, null))
                 .then(Commands.argument("enabled", BoolArgumentType.bool())
                     .executes(context -> togglePayments(context, 
                         BoolArgumentType.getBool(context, "enabled"), null))
                     .then(Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.paytoggle.others"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.paytoggle.others"))
                         .executes(context -> togglePayments(context,
                             BoolArgumentType.getBool(context, "enabled"),
                             EntityArgument.getPlayer(context, "player")))))
                 .then(Commands.argument("player", EntityArgument.player())
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.paytoggle.others"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.paytoggle.others"))
                     .executes(context -> togglePayments(context, null,
                         EntityArgument.getPlayer(context, "player"))))
         );
@@ -73,18 +73,18 @@ public class PaymentCommands {
         // Payment confirmation toggle command
         dispatcher.register(
             Commands.literal("payconfirm")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.payconfirm"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.payconfirm"))
                 .executes(context -> togglePaymentConfirmation(context, null, null))
                 .then(Commands.argument("enabled", BoolArgumentType.bool())
                     .executes(context -> togglePaymentConfirmation(context,
                         BoolArgumentType.getBool(context, "enabled"), null))
                     .then(Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.payconfirm.others"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.payconfirm.others"))
                         .executes(context -> togglePaymentConfirmation(context,
                             BoolArgumentType.getBool(context, "enabled"),
                             EntityArgument.getPlayer(context, "player")))))
                 .then(Commands.argument("player", EntityArgument.player())
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.payconfirm.others"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.payconfirm.others"))
                     .executes(context -> togglePaymentConfirmation(context, null,
                         EntityArgument.getPlayer(context, "player"))))
         );
@@ -92,20 +92,20 @@ public class PaymentCommands {
         // Payment confirmation commands
         dispatcher.register(
             Commands.literal("payyes")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.pay"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.pay"))
                 .executes(context -> confirmPayment(context))
         );
         
         dispatcher.register(
             Commands.literal("payno")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.pay"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.pay"))
                 .executes(context -> cancelPayment(context))
         );
         
         // Enhanced pay command with confirmation support
         dispatcher.register(
             Commands.literal("pay")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.pay"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.pay"))
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                         .executes(context -> initiatePayment(context,
@@ -129,17 +129,17 @@ public class PaymentCommands {
         
         if (target == executor) {
             if (newState) {
-                MessageUtil.sendMessage(executor, "§aPayment reception enabled! You can now receive payments from other players.");
+                LanguageUtil.sendMessage(executor, "§aPayment reception enabled! You can now receive payments from other players.");
             } else {
-                MessageUtil.sendMessage(executor, "§cPayment reception disabled! You will not receive payments from other players.");
+                LanguageUtil.sendMessage(executor, "§cPayment reception disabled! You will not receive payments from other players.");
             }
         } else {
             if (newState) {
-                MessageUtil.sendMessage(executor, "§aPayment reception enabled for " + target.getDisplayName().getString() + ".");
-                MessageUtil.sendMessage(target, "§aPayment reception has been enabled by an administrator.");
+                LanguageUtil.sendMessage(executor, "§aPayment reception enabled for " + target.getDisplayName().getString() + ".");
+                LanguageUtil.sendMessage(target, "§aPayment reception has been enabled by an administrator.");
             } else {
-                MessageUtil.sendMessage(executor, "§cPayment reception disabled for " + target.getDisplayName().getString() + ".");
-                MessageUtil.sendMessage(target, "§cPayment reception has been disabled by an administrator.");
+                LanguageUtil.sendMessage(executor, "§cPayment reception disabled for " + target.getDisplayName().getString() + ".");
+                LanguageUtil.sendMessage(target, "§cPayment reception has been disabled by an administrator.");
             }
         }
         
@@ -161,18 +161,18 @@ public class PaymentCommands {
         
         if (target == executor) {
             if (newState) {
-                MessageUtil.sendMessage(executor, "§aPayment confirmation enabled! You will be asked to confirm large payments.");
-                MessageUtil.sendMessage(executor, "§7Use §e/payyes§7 or §e/payno§7 to confirm or cancel payments.");
+                LanguageUtil.sendMessage(executor, "§aPayment confirmation enabled! You will be asked to confirm large payments.");
+                LanguageUtil.sendMessage(executor, "§7Use §e/payyes§7 or §e/payno§7 to confirm or cancel payments.");
             } else {
-                MessageUtil.sendMessage(executor, "§cPayment confirmation disabled! Payments will be sent immediately.");
+                LanguageUtil.sendMessage(executor, "§cPayment confirmation disabled! Payments will be sent immediately.");
             }
         } else {
             if (newState) {
-                MessageUtil.sendMessage(executor, "§aPayment confirmation enabled for " + target.getDisplayName().getString() + ".");
-                MessageUtil.sendMessage(target, "§aPayment confirmation has been enabled by an administrator.");
+                LanguageUtil.sendMessage(executor, "§aPayment confirmation enabled for " + target.getDisplayName().getString() + ".");
+                LanguageUtil.sendMessage(target, "§aPayment confirmation has been enabled by an administrator.");
             } else {
-                MessageUtil.sendMessage(executor, "§cPayment confirmation disabled for " + target.getDisplayName().getString() + ".");
-                MessageUtil.sendMessage(target, "§cPayment confirmation has been disabled by an administrator.");
+                LanguageUtil.sendMessage(executor, "§cPayment confirmation disabled for " + target.getDisplayName().getString() + ".");
+                LanguageUtil.sendMessage(target, "§cPayment confirmation has been disabled by an administrator.");
             }
         }
         
@@ -190,14 +190,14 @@ public class PaymentCommands {
         // Check if recipient accepts payments
         boolean recipientAcceptsPayments = userManager.getUserDataBoolean(recipient.getUUID(), "payments_enabled", true);
         if (!recipientAcceptsPayments) {
-            MessageUtil.sendErrorMessage(sender, "§c" + recipient.getDisplayName().getString() + " is not accepting payments.");
+            LanguageUtil.sendErrorMessage(sender, "§c" + recipient.getDisplayName().getString() + " is not accepting payments.");
             return 0;
         }
         
         // Check if sender has sufficient funds
         double senderBalance = economyManager.getBalance(sender.getUUID(), defaultCurrency);
         if (senderBalance < amount) {
-            MessageUtil.sendErrorMessage(sender, "§cInsufficient funds! You need " + 
+            LanguageUtil.sendErrorMessage(sender, "§cInsufficient funds! You need " + 
                 defaultCurrency.format(amount) + " but only have " + 
                 defaultCurrency.format(senderBalance) + ".");
             return 0;
@@ -213,8 +213,8 @@ public class PaymentCommands {
                 sender.getUUID(), recipient.getUUID(), amount, defaultCurrency, System.currentTimeMillis()
             ));
             
-            MessageUtil.sendMessage(sender, "§6⚠ Payment Confirmation Required");
-            MessageUtil.sendMessage(sender, "§7You are about to send §a" + defaultCurrency.format(amount) + 
+            LanguageUtil.sendMessage(sender, "§6⚠ Payment Confirmation Required");
+            LanguageUtil.sendMessage(sender, "§7You are about to send §a" + defaultCurrency.format(amount) + 
                 "§7 to §e" + recipient.getDisplayName().getString() + "§7.");
             
             // Create clickable confirmation buttons
@@ -235,8 +235,8 @@ public class PaymentCommands {
                 .append(Component.literal(" "))
                 .append(cancelButton));
             
-            MessageUtil.sendMessage(sender, "§7Or type §e/payyes§7 to confirm or §e/payno§7 to cancel.");
-            MessageUtil.sendMessage(sender, "§7This confirmation will expire in 30 seconds.");
+            LanguageUtil.sendMessage(sender, "§7Or type §e/payyes§7 to confirm or §e/payno§7 to cancel.");
+            LanguageUtil.sendMessage(sender, "§7This confirmation will expire in 30 seconds.");
             
             return 1;
         } else {
@@ -253,26 +253,26 @@ public class PaymentCommands {
         PendingPayment pending = pendingPayments.remove(sender.getUUID());
         
         if (pending == null) {
-            MessageUtil.sendErrorMessage(sender, "§cNo pending payment to confirm.");
+            LanguageUtil.sendErrorMessage(sender, "§cNo pending payment to confirm.");
             return 0;
         }
         
         // Check if payment has expired
         if (System.currentTimeMillis() - pending.timestamp > CONFIRMATION_TIMEOUT) {
-            MessageUtil.sendErrorMessage(sender, "§cPayment confirmation expired. Please try again.");
+            LanguageUtil.sendErrorMessage(sender, "§cPayment confirmation expired. Please try again.");
             return 0;
         }
         
         // Find recipient (they might have logged off)
         var server = sender.getServer();
         if (server == null) {
-            MessageUtil.sendErrorMessage(sender, "§cServer unavailable. Payment cancelled.");
+            LanguageUtil.sendErrorMessage(sender, "§cServer unavailable. Payment cancelled.");
             return 0;
         }
         
         ServerPlayer recipient = server.getPlayerList().getPlayer(pending.recipientId);
         if (recipient == null) {
-            MessageUtil.sendErrorMessage(sender, "§cRecipient is no longer online. Payment cancelled.");
+            LanguageUtil.sendErrorMessage(sender, "§cRecipient is no longer online. Payment cancelled.");
             return 0;
         }
         
@@ -287,11 +287,11 @@ public class PaymentCommands {
         PendingPayment pending = pendingPayments.remove(sender.getUUID());
         
         if (pending == null) {
-            MessageUtil.sendErrorMessage(sender, "§cNo pending payment to cancel.");
+            LanguageUtil.sendErrorMessage(sender, "§cNo pending payment to cancel.");
             return 0;
         }
         
-        MessageUtil.sendMessage(sender, "§ePayment cancelled.");
+        LanguageUtil.sendMessage(sender, "§ePayment cancelled.");
         return 1;
     }
     
@@ -305,18 +305,18 @@ public class PaymentCommands {
                 amount, currency, "Payment via /pay command");
             
             if (success) {
-                MessageUtil.sendMessage(sender, "§aSent " + currency.format(amount) + " to " + 
+                LanguageUtil.sendMessage(sender, "§aSent " + currency.format(amount) + " to " + 
                     recipient.getDisplayName().getString() + ".");
-                MessageUtil.sendMessage(recipient, "§aReceived " + currency.format(amount) + " from " + 
+                LanguageUtil.sendMessage(recipient, "§aReceived " + currency.format(amount) + " from " + 
                     sender.getDisplayName().getString() + ".");
                 
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(sender, "§cPayment failed. Please try again.");
+                LanguageUtil.sendErrorMessage(sender, "§cPayment failed. Please try again.");
                 return 0;
             }
         } catch (Exception e) {
-            MessageUtil.sendErrorMessage(sender, "§cAn error occurred while processing the payment.");
+            LanguageUtil.sendErrorMessage(sender, "§cAn error occurred while processing the payment.");
             return 0;
         }
     }
