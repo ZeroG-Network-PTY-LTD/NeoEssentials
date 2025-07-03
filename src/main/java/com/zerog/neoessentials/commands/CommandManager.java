@@ -247,8 +247,9 @@ public class CommandManager {    // Command classes
         NeoEssentials.LOGGER.info("Registered tablist fix commands");
         
         // Register sign edit commands
-        SignEditCommands.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered sign edit commands");
+        // TODO: Fix SignEditCommands compilation issue
+        // SignEditCommands.register(dispatcher);
+        // NeoEssentials.LOGGER.info("Registered sign edit commands");
         
         // Register inventory management commands
         InventoryManagementCommands.register(dispatcher);
@@ -257,6 +258,10 @@ public class CommandManager {    // Command classes
         // Register item enhancement commands
         ItemEnhancementCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered item enhancement commands");
+        
+        // Register gamemode commands
+        GamemodeCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered gamemode commands");
         
         // Register spawn commands
         SpawnCommands.register(dispatcher);
