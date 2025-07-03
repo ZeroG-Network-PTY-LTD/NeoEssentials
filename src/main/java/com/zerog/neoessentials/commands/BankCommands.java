@@ -173,7 +173,7 @@ public class BankCommands {
             
             BankAccount account = bankManager.createAccount(player.getUUID(), type);
             if (account != null) {
-                MessageUtil.sendSuccessMessage(player, "Successfully created " + type.name().toLowerCase() + 
+                LanguageUtil.sendMessage(player, "Successfully created " + type.name().toLowerCase() + 
                     " account: " + account.getAccountNumber());
                 LanguageUtil.sendMessage(player, "§7Account ID: §e" + account.getAccountId());
                 LanguageUtil.sendMessage(player, "§7Interest Rate: §e" + String.format("%.2f%%", account.getInterestRate() * 100));
@@ -351,7 +351,7 @@ public class BankCommands {
             if (bankManager.transferBetweenAccounts(fromAccount, toAccount, amount, defaultCurrency, 
                 "Internal transfer via deposit command")) {
                 
-                MessageUtil.sendSuccessMessage(player, String.format(
+                LanguageUtil.sendMessage(player, String.format(
                     "Successfully transferred $%.2f from %s to %s", 
                     amount, fromAccount.getAccountNumber(), toAccount.getAccountNumber()));
                     
@@ -439,7 +439,7 @@ public class BankCommands {
             // Perform the withdrawal (bank to wallet)
             if (walletManager.withdrawFromBank(player.getUUID(), targetAccount, defaultCurrency, amount)) {
                 String formattedAmount = String.format("$%.2f", amount);
-                MessageUtil.sendSuccessMessage(player, "Successfully withdrew " + formattedAmount + 
+                LanguageUtil.sendMessage(player, "Successfully withdrew " + formattedAmount + 
                     " from account " + targetAccount.getAccountNumber());
                 
                 // Show updated balances
@@ -507,7 +507,7 @@ public class BankCommands {
             }
             
             if (bankManager.transferBetweenAccounts(fromAccount, toAccount, amount, defaultCurrency, "Player transfer")) {
-                MessageUtil.sendSuccessMessage(player, "Successfully transferred " + 
+                LanguageUtil.sendMessage(player, "Successfully transferred " + 
                     defaultCurrency.format(amount) + " from " + fromAccount.getAccountNumber() + 
                     " to " + toAccount.getAccountNumber());
                 return 1;
