@@ -188,7 +188,7 @@ public class KitCommands {
         if (success) {
             NeoEssentials.LOGGER.info("Player {} claimed kit '{}'", player.getScoreboardName(), kitName);
             MutableComponent message = Component.literal("You received kit '" + kitName + "'");
-            MessageUtil.sendSuccess(player, message);
+            LanguageUtil.sendComponent(player, message);
             return 1;
         } else {
             NeoEssentials.LOGGER.error("Failed to give kit '{}' to player {}", kitName, player.getScoreboardName());
@@ -320,7 +320,7 @@ public class KitCommands {
         }
         
         NeoEssentials.LOGGER.debug("Sending interactive kit list ({} kits) to player {}", kits.size(), player.getScoreboardName());
-        MessageUtil.sendInfo(player, message);
+        LanguageUtil.sendComponent(player, message);
         return 1;
     }
     
@@ -428,7 +428,7 @@ public class KitCommands {
             message.append(Component.literal(" and a cooldown of " + formatTime(cooldown)));
         }
         
-        MessageUtil.sendSuccess(player, message);
+        LanguageUtil.sendComponent(player, message);
         return 1;
     }
     
@@ -457,7 +457,7 @@ public class KitCommands {
         if (success) {
             NeoEssentials.LOGGER.info("Player {} deleted kit '{}'", player.getScoreboardName(), kitName);
             MutableComponent message = Component.literal("Deleted kit '" + kitName + "'");
-            MessageUtil.sendSuccess(player, message);
+            LanguageUtil.sendComponent(player, message);
             return 1;
         } else {
             NeoEssentials.LOGGER.debug("Kit '{}' not found for deletion by {}", kitName, player.getScoreboardName());
@@ -503,10 +503,10 @@ public class KitCommands {
                     player.getScoreboardName(), kitName, target.getScoreboardName());
                     
                 MutableComponent messageToAdmin = Component.literal("Gave kit '" + kitName + "' to " + target.getScoreboardName());
-                MessageUtil.sendSuccess(player, messageToAdmin);
+                LanguageUtil.sendComponent(player, messageToAdmin);
                 
                 MutableComponent messageToTarget = Component.literal("You received kit '" + kitName + "' from " + player.getScoreboardName());
-                MessageUtil.sendInfo(target, messageToTarget);
+                LanguageUtil.sendComponent(target, messageToTarget);
                 
                 return 1;
             } else {
@@ -637,7 +637,7 @@ public class KitCommands {
             message.append(Component.literal(", price: " + formattedPrice));
         }
         
-        MessageUtil.sendSuccess(player, message);
+        LanguageUtil.sendComponent(player, message);
         return 1;
     }
     

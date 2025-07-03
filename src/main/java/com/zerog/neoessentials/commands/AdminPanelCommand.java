@@ -87,7 +87,7 @@ public class AdminPanelCommand {
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Main admin panel command with comprehensive subcommands
         LiteralArgumentBuilder<CommandSourceStack> adminPanelCommand = Commands.literal("adminpanel")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel"))
                 .executes(this::executeAdminPanel)
                 // Section navigation
                 .then(Commands.literal("section")
@@ -96,7 +96,7 @@ public class AdminPanelCommand {
                                 .executes(this::executeAdminPanelSection)))
                 // Configuration management                
                 .then(Commands.literal("config")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.config"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.config"))
                         .executes(this::executeConfigurationMenu)
                         .then(Commands.literal("reload")
                                 .executes(this::executeConfigReload))
@@ -108,7 +108,7 @@ public class AdminPanelCommand {
                                                 .executes(this::executeConfigEdit)))))
                 // Module reload                
                 .then(Commands.literal("reload")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.reload"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.reload"))
                         .executes(this::executeAdminPanelReload)
                         .then(Commands.literal("permissions")
                                 .executes(this::executeReloadPermissions))
@@ -120,7 +120,7 @@ public class AdminPanelCommand {
                                 .executes(this::executeReloadAll)))
                 // Player management                
                 .then(Commands.literal("manage")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.manage"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.manage"))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(this::executeAdminPanelManagePlayer)
                                 .then(Commands.literal("gamemode")
@@ -139,7 +139,7 @@ public class AdminPanelCommand {
                                                 .executes(this::executePlayerFly)))))
                 // Feature toggles                
                 .then(Commands.literal("toggle")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.toggle"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.toggle"))
                         .executes(this::executeToggleMenu)
                         .then(Commands.argument("feature", StringArgumentType.word())
                                 .suggests(FEATURE_SUGGESTIONS)
@@ -148,7 +148,7 @@ public class AdminPanelCommand {
                                         .executes(this::executeFeatureToggle))))
                 // Performance monitoring and optimization                
                 .then(Commands.literal("performance")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.performance"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.performance"))
                         .executes(this::executePerformanceMonitor)
                         .then(Commands.literal("tps")
                                 .executes(this::executePerformanceTPS))
@@ -159,14 +159,14 @@ public class AdminPanelCommand {
                         .then(Commands.literal("dimensions")
                                 .executes(this::executePerformanceDimensions))
                         .then(Commands.literal("optimize")
-                                .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.optimize"))
+                                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.optimize"))
                                 .executes(this::executeOptimize)
                                 .then(Commands.argument("target", StringArgumentType.word())
                                         .suggests(PERFORMANCE_TARGET_SUGGESTIONS)
                                         .executes(this::executeOptimizeTarget))))
                 // Server management                
                 .then(Commands.literal("server")
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.server"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.server"))
                         .executes(this::executeServerManagement)
                         .then(Commands.literal("status")
                                 .executes(this::executeServerStatus))
@@ -180,27 +180,27 @@ public class AdminPanelCommand {
 
         // Register enhanced alias with better command structure
         dispatcher.register(Commands.literal("ap")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel"))
                 .executes(this::executeAdminPanel)
                 .then(Commands.literal("s") // Short for section
                         .then(Commands.argument("name", StringArgumentType.word())
                                 .suggests(SECTION_SUGGESTIONS)
                                 .executes(this::executeAdminPanelSection)))
                 .then(Commands.literal("r") // Short for reload
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.reload"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.reload"))
                         .executes(this::executeAdminPanelReload))
                 .then(Commands.literal("t") // Short for toggle
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.toggle"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.toggle"))
                         .then(Commands.argument("feature", StringArgumentType.word())
                                 .suggests(FEATURE_SUGGESTIONS)
                                 .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                         .suggests(VanillaBooleanParser.booleanSuggestions())
                                         .executes(this::executeFeatureToggle))))
                 .then(Commands.literal("p") // Short for performance
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.performance"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.performance"))
                         .executes(this::executePerformanceMonitor))
                 .then(Commands.literal("m") // Short for manage
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.manage"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.manage"))
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(this::executeAdminPanelManagePlayer))));
         
@@ -219,25 +219,25 @@ public class AdminPanelCommand {
     private void registerSectionCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /adminpanel economy - Opens the economy section of the admin panel
         dispatcher.register(Commands.literal("adminpanel")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.economy"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.economy"))
                 .then(Commands.literal("economy")
                         .executes(this::executeEconomyPanel)));
                         
         // /adminpanel kits - Opens the kits section of the admin panel
         dispatcher.register(Commands.literal("adminpanel")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.kits"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.kits"))
                 .then(Commands.literal("kits")
                         .executes(this::executeKitsPanel)));
                         
         // /adminpanel warps - Opens the warps section of the admin panel
         dispatcher.register(Commands.literal("adminpanel")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.warps"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.warps"))
                 .then(Commands.literal("warps")
                         .executes(this::executeWarpsPanel)));
                         
         // /adminpanel players - Opens the players section of the admin panel
         dispatcher.register(Commands.literal("adminpanel")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.players"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.players"))
                 .then(Commands.literal("players")
                         .executes(this::executePlayersPanel)));
     }
@@ -250,7 +250,7 @@ public class AdminPanelCommand {
     private void registerAdvancedCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Register server control commands
         dispatcher.register(Commands.literal("server")
-            .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.server"))
+            .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.server"))
             .then(Commands.literal("status")
                 .executes(this::executeServerStatus))
             .then(Commands.literal("reload")
@@ -262,7 +262,7 @@ public class AdminPanelCommand {
                     
         // Register optimizations commands
         dispatcher.register(Commands.literal("optimize")
-            .requires(source -> CommandManager.hasPermission(source, "neoessentials.adminpanel.optimize"))
+            .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.adminpanel.optimize"))
             .executes(this::executeOptimize)
             .then(Commands.literal("entities")
                 .executes(this::executeOptimizeEntities))
@@ -284,7 +284,7 @@ public class AdminPanelCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         
         // Check if player has permission
-        if (!CommandManager.hasPermission(context.getSource(), "neoessentials.adminpanel")) {
+        if (!PermissionUtil.hasPermission(context.getSource(), "neoessentials.adminpanel")) {
             LanguageUtil.sendErrorMessage(player, "You don't have permission to use the admin panel.");
             return 0;
         }
