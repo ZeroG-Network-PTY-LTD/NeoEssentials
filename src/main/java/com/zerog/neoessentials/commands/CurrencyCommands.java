@@ -23,7 +23,7 @@ public class CurrencyCommands {
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("currency")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.currency"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.currency"))
                 .executes(context -> showCurrencyHelp(context.getSource()))
                 
                 // /currency list - List all available currencies
@@ -55,7 +55,7 @@ public class CurrencyCommands {
                 
                 // Admin commands
                 .then(Commands.literal("admin")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.currency.admin"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.currency.admin"))
                     
                     // /currency admin create <id> <name> <symbol> [type]
                     .then(Commands.literal("create")
@@ -102,18 +102,18 @@ public class CurrencyCommands {
     private int showCurrencyHelp(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException();
-            MessageUtil.sendMessage(player, "§6=== Currency Commands ===");
-            MessageUtil.sendMessage(player, "§e/currency list §7- List all currencies");
-            MessageUtil.sendMessage(player, "§e/currency info <currency> §7- Show currency details");
-            MessageUtil.sendMessage(player, "§e/currency rates §7- Show exchange rates");
-            MessageUtil.sendMessage(player, "§e/currency convert <amount> <from> <to> §7- Convert currencies");
+            LanguageUtil.sendMessage(player, "§6=== Currency Commands ===");
+            LanguageUtil.sendMessage(player, "§e/currency list §7- List all currencies");
+            LanguageUtil.sendMessage(player, "§e/currency info <currency> §7- Show currency details");
+            LanguageUtil.sendMessage(player, "§e/currency rates §7- Show exchange rates");
+            LanguageUtil.sendMessage(player, "§e/currency convert <amount> <from> <to> §7- Convert currencies");
             
-            if (CommandManager.hasPermission(source, "neoessentials.command.currency.admin")) {
-                MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, "§6=== Admin Commands ===");
-                MessageUtil.sendMessage(player, "§e/currency admin create <id> <name> <symbol> [type] §7- Create currency");
-                MessageUtil.sendMessage(player, "§e/currency admin setrate <currency> <rate> §7- Set exchange rate");
-                MessageUtil.sendMessage(player, "§e/currency admin setdefault <currency> §7- Set default currency");
+            if (PermissionUtil.hasPermission(source, "neoessentials.command.currency.admin")) {
+                LanguageUtil.sendMessage(player, "");
+                LanguageUtil.sendMessage(player, "§6=== Admin Commands ===");
+                LanguageUtil.sendMessage(player, "§e/currency admin create <id> <name> <symbol> [type] §7- Create currency");
+                LanguageUtil.sendMessage(player, "§e/currency admin setrate <currency> <rate> §7- Set exchange rate");
+                LanguageUtil.sendMessage(player, "§e/currency admin setdefault <currency> §7- Set default currency");
             }
             return 1;
         } catch (CommandSyntaxException e) {
@@ -129,18 +129,18 @@ public class CurrencyCommands {
             List<Currency> currencies = new ArrayList<>(currencyManager.getAllCurrencies());
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             
-            MessageUtil.sendMessage(player, "§6=== Available Currencies ===");
+            LanguageUtil.sendMessage(player, "§6=== Available Currencies ===");
             
             if (currencies.isEmpty()) {
-                MessageUtil.sendMessage(player, "§7No currencies configured");
+                LanguageUtil.sendMessage(player, "§7No currencies configured");
                 return 1;
             }
             
             for (Currency currency : currencies) {
                 String defaultMarker = currency.equals(defaultCurrency) ? " §a[DEFAULT]" : "";
-                MessageUtil.sendMessage(player, String.format("§e%s §7(%s) - %s%s", 
+                LanguageUtil.sendMessage(player, String.format("§e%s §7(%s) - %s%s", 
                     currency.getDisplayName(), currency.getSymbol(), currency.getId(), defaultMarker));
-                MessageUtil.sendMessage(player, String.format("  §7Type: §f%s §7| Physical: §f%s", 
+                LanguageUtil.sendMessage(player, String.format("  §7Type: §f%s §7| Physical: §f%s", 
                     currency.getType(), currency.isPhysical() ? "Yes" : "No"));
             }
             
@@ -158,23 +158,23 @@ public class CurrencyCommands {
             Currency currency = currencyManager.getCurrency(currencyId);
             
             if (currency == null) {
-                MessageUtil.sendMessage(player, "§cCurrency not found: " + currencyId);
+                LanguageUtil.sendMessage(player, "§cCurrency not found: " + currencyId);
                 return 0;
             }
             
-            MessageUtil.sendMessage(player, "§6=== Currency Information ===");
-            MessageUtil.sendMessage(player, "§7ID: §e" + currency.getId());
-            MessageUtil.sendMessage(player, "§7Name: §e" + currency.getDisplayName());
-            MessageUtil.sendMessage(player, "§7Symbol: §e" + currency.getSymbol());
-            MessageUtil.sendMessage(player, "§7Type: §e" + currency.getType());
-            MessageUtil.sendMessage(player, "§7Physical: §e" + (currency.isPhysical() ? "Yes" : "No"));
-            MessageUtil.sendMessage(player, "§7Exchange Rate: §e" + currency.getExchangeRate());
+            LanguageUtil.sendMessage(player, "§6=== Currency Information ===");
+            LanguageUtil.sendMessage(player, "§7ID: §e" + currency.getId());
+            LanguageUtil.sendMessage(player, "§7Name: §e" + currency.getDisplayName());
+            LanguageUtil.sendMessage(player, "§7Symbol: §e" + currency.getSymbol());
+            LanguageUtil.sendMessage(player, "§7Type: §e" + currency.getType());
+            LanguageUtil.sendMessage(player, "§7Physical: §e" + (currency.isPhysical() ? "Yes" : "No"));
+            LanguageUtil.sendMessage(player, "§7Exchange Rate: §e" + currency.getExchangeRate());
             
             // Show exchange rate if not default currency
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             if (!currency.equals(defaultCurrency)) {
                 double rate = currencyManager.getExchangeRate(currency.getId());
-                MessageUtil.sendMessage(player, String.format("§7Exchange Rate: §e%.4f %s per %s", 
+                LanguageUtil.sendMessage(player, String.format("§7Exchange Rate: §e%.4f %s per %s", 
                     rate, defaultCurrency.getSymbol(), currency.getSymbol()));
             }
             
@@ -192,14 +192,14 @@ public class CurrencyCommands {
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             List<Currency> currencies = new ArrayList<>(currencyManager.getAllCurrencies());
             
-            MessageUtil.sendMessage(player, "§6=== Exchange Rates ===");
-            MessageUtil.sendMessage(player, "§7Base Currency: §e" + defaultCurrency.getDisplayName() + " (" + defaultCurrency.getSymbol() + ")");
-            MessageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "§6=== Exchange Rates ===");
+            LanguageUtil.sendMessage(player, "§7Base Currency: §e" + defaultCurrency.getDisplayName() + " (" + defaultCurrency.getSymbol() + ")");
+            LanguageUtil.sendMessage(player, "");
             
             for (Currency currency : currencies) {
                 if (!currency.equals(defaultCurrency)) {
                     double rate = currencyManager.getExchangeRate(currency.getId());
-                    MessageUtil.sendMessage(player, String.format("§e1 %s §7= §e%.4f %s", 
+                    LanguageUtil.sendMessage(player, String.format("§e1 %s §7= §e%.4f %s", 
                         currency.getSymbol(), rate, defaultCurrency.getSymbol()));
                 }
             }
@@ -220,19 +220,19 @@ public class CurrencyCommands {
             Currency toCurrency = currencyManager.getCurrency(toCurrencyId);
             
             if (fromCurrency == null) {
-                MessageUtil.sendMessage(player, "§cFrom currency not found: " + fromCurrencyId);
+                LanguageUtil.sendMessage(player, "§cFrom currency not found: " + fromCurrencyId);
                 return 0;
             }
             
             if (toCurrency == null) {
-                MessageUtil.sendMessage(player, "§cTo currency not found: " + toCurrencyId);
+                LanguageUtil.sendMessage(player, "§cTo currency not found: " + toCurrencyId);
                 return 0;
             }
             
             double convertedAmount = currencyManager.convertCurrency(amount, fromCurrency, toCurrency);
             
-            MessageUtil.sendMessage(player, "§6=== Currency Conversion ===");
-            MessageUtil.sendMessage(player, String.format("§e%.2f %s §7= §e%.4f %s", 
+            LanguageUtil.sendMessage(player, "§6=== Currency Conversion ===");
+            LanguageUtil.sendMessage(player, String.format("§e%.2f %s §7= §e%.4f %s", 
                 amount, fromCurrency.getSymbol(), convertedAmount, toCurrency.getSymbol()));
             
             return 1;
