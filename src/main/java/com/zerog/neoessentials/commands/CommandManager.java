@@ -3,7 +3,6 @@ package com.zerog.neoessentials.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 
@@ -33,7 +32,6 @@ public class CommandManager {    // Command classes
     private final WalletCommands walletCommands;
     private final ShopCommands shopCommands;
     private final AuctionCommands auctionCommands;
-    private final AuctionCommandsNew auctionCommandsNew;
     private final CurrencyCommands currencyCommands;
     private final EconomyAdminCommands economyAdminCommands;
     private final UserCommands userCommands;
@@ -71,7 +69,6 @@ public class CommandManager {    // Command classes
         walletCommands = new WalletCommands();
         shopCommands = new ShopCommands();
         auctionCommands = new AuctionCommands();
-        auctionCommandsNew = new AuctionCommandsNew();
         currencyCommands = new CurrencyCommands();
         economyAdminCommands = new EconomyAdminCommands();
         userCommands = new UserCommands();
@@ -168,10 +165,6 @@ public class CommandManager {    // Command classes
         auctionCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered auction commands");
         
-        // Register new auction commands
-        auctionCommandsNew.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered new auction commands");
-        
         // Register currency commands
         currencyCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered currency commands");
@@ -245,18 +238,6 @@ public class CommandManager {    // Command classes
         ItemSearchCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered item search commands");
         
-        // Register sign edit commands
-        signEditCommands.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered sign edit commands");
-        
-        // Register inventory management commands
-        inventoryManagementCommands.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered inventory management commands");
-        
-        // Register item enhancement commands
-        ItemEnhancementCommands.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered item enhancement commands");
-        
         // Register permission commands
         PermissionCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered permission commands");
@@ -264,6 +245,22 @@ public class CommandManager {    // Command classes
         // Register tabfix commands
         TabFixCommand.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered tablist fix commands");
+        
+        // Register sign edit commands
+        SignEditCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered sign edit commands");
+        
+        // Register inventory management commands
+        InventoryManagementCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered inventory management commands");
+        
+        // Register item enhancement commands
+        ItemEnhancementCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered item enhancement commands");
+        
+        // Register spawn commands
+        SpawnCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered spawn commands");
         
         // Register permission commands
         PermissionCommands.register(dispatcher);
@@ -362,18 +359,6 @@ public class CommandManager {    // Command classes
      */
     public static boolean hasPermission(CommandSourceStack source, String permission) {
         return com.zerog.neoessentials.utils.PermissionUtil.hasPermission(source, permission);
-    }
-    
-    /**
-     * Static method to check if a player has a permission.
-     * This is a convenience method for commands to use.
-     *
-     * @param player The player to check
-     * @param permission The permission node to check for
-     * @return True if the player has permission, false otherwise
-     */
-    public static boolean hasPermission(ServerPlayer player, String permission) {
-        return com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player.createCommandSourceStack(), permission);
     }
     
     /**
