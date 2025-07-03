@@ -32,6 +32,7 @@ public class CommandManager {    // Command classes
     private final WalletCommands walletCommands;
     private final ShopCommands shopCommands;
     private final AuctionCommands auctionCommands;
+    private final AuctionCommandsNew auctionCommandsNew;
     private final CurrencyCommands currencyCommands;
     private final EconomyAdminCommands economyAdminCommands;
     private final UserCommands userCommands;
@@ -66,6 +67,7 @@ public class CommandManager {    // Command classes
         walletCommands = new WalletCommands();
         shopCommands = new ShopCommands();
         auctionCommands = new AuctionCommands();
+        auctionCommandsNew = new AuctionCommandsNew();
         currencyCommands = new CurrencyCommands();
         economyAdminCommands = new EconomyAdminCommands();
         userCommands = new UserCommands();
@@ -158,6 +160,10 @@ public class CommandManager {    // Command classes
         // Register auction commands
         auctionCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered auction commands");
+        
+        // Register new auction commands
+        auctionCommandsNew.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered new auction commands");
         
         // Register currency commands
         currencyCommands.register(dispatcher);
