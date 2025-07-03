@@ -51,8 +51,8 @@ public class CommandManager {    // Command classes
     private final AdminPanelCommand adminPanelCommand;
     private final TablistCommand tablistCommand;
     private final ItemSearchCommands itemSearchCommands;
-    private final SignEditCommands signEditCommands;
-    private final InventoryManagementCommands inventoryManagementCommands;
+    // SignEditCommands is now fully static
+    // InventoryManagementCommands is now fully static
     private final ItemEnhancementCommands itemEnhancementCommands;
     
     // Debug command disabled while developing TablistFix
@@ -88,8 +88,8 @@ public class CommandManager {    // Command classes
         adminPanelCommand = new AdminPanelCommand();
         tablistCommand = new TablistCommand();
         itemSearchCommands = new ItemSearchCommands();
-        signEditCommands = new SignEditCommands();
-        inventoryManagementCommands = new InventoryManagementCommands();
+        // SignEditCommands is now fully static - no instance needed
+        // InventoryManagementCommands is now fully static - no instance needed
         itemEnhancementCommands = new ItemEnhancementCommands();
         
         // Debug commands will be initialized later when TABLikeTablistManager is available
