@@ -166,8 +166,8 @@ public class CurrencyCommands {
             MessageUtil.sendMessage(player, "§7Name: §e" + currency.getDisplayName());
             MessageUtil.sendMessage(player, "§7Symbol: §e" + currency.getSymbol());
             MessageUtil.sendMessage(player, "§7Type: §e" + currency.getType());
-            MessageUtil.sendMessage(player, "§7Tradeable: §e" + (currency.isTradeable() ? "Yes" : "No"));
-            MessageUtil.sendMessage(player, "§7Decimals: §e" + (currency.hasDecimals() ? "Yes" : "No"));
+            MessageUtil.sendMessage(player, "§7Physical: §e" + (currency.isPhysical() ? "Yes" : "No"));
+            MessageUtil.sendMessage(player, "§7Exchange Rate: §e" + currency.getExchangeRate());
             
             // Show exchange rate if not default currency
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
