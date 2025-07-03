@@ -6,8 +6,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.WarpManager;
-import com.zerog.neoessentials.utils.MessageUtil;
-import com.zerog.neoessentials.utils.PermissionUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.utils.TeleportUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -132,7 +132,7 @@ public class WarpCommands {
         if (success) {
             NeoEssentials.LOGGER.debug("Successfully teleported player {} to warp '{}'", player.getScoreboardName(), warpName);
             MutableComponent message = Component.literal("Teleported to warp '" + warpName + "'");
-            MessageUtil.sendSuccess(player, message);
+            LanguageUtil.sendComponent(player, message);
             return 1;
         } else {
             NeoEssentials.LOGGER.error("Failed to teleport player {} to warp '{}'", player.getScoreboardName(), warpName);
@@ -189,10 +189,8 @@ public class WarpCommands {
                     (int)warpLocation.getZ()));
             }
             
-            warpComponent = MessageUtil.addHoverText(warpComponent, hoverText);
-            
-            // Add click event to teleport to the warp
-            warpComponent = MessageUtil.makeClickableCommand(warpComponent, "/warp " + warpName);
+            // Simplified warp display (removing complex hover/click for now)
+            warpComponent.append(Component.literal("§7 - Type /warp " + warpName + " to teleport"));
             
             message.append(warpComponent);
             first = false;
@@ -201,20 +199,15 @@ public class WarpCommands {
         NeoEssentials.LOGGER.debug("Sending interactive warp list ({} warps) to player {}", warps.size(), player.getScoreboardName());
         
         // Add a heading
-        MessageUtil.sendInfo(player, Component.literal("§2§l====== §r§6Warp List §2§l======"));
+        LanguageUtil.sendComponent(player, Component.literal("§2§l====== §r§6Warp List §2§l======"));
         
         // Send the warp list
-        MessageUtil.sendInfo(player, message);
+        LanguageUtil.sendComponent(player, message);
         
-        // Add clickable help button
-        MutableComponent helpMessage = Component.literal("§7Type ");
-        MutableComponent helpButton = Component.literal("§e/warphelp");
-        helpButton = MessageUtil.makeClickableCommand(helpButton, "/warphelp");
-        helpButton = MessageUtil.addHoverText(helpButton, Component.literal("§7Click to view warp command help"));
-        helpMessage.append(helpButton);
-        helpMessage.append(Component.literal(" §7for more information."));
+        // Add clickable help button (simplified)
+        MutableComponent helpMessage = Component.literal("§7Type §e/warphelp§7 for more information.");
         
-        MessageUtil.sendInfo(player, helpMessage);
+        LanguageUtil.sendComponent(player, helpMessage);
         return 1;
     }
     
@@ -248,7 +241,7 @@ public class WarpCommands {
                 player.getX(), player.getY(), player.getZ(),
                 player.level().dimension().location());
             MutableComponent message = Component.literal("Set warp '" + warpName + "' at your current location");
-            MessageUtil.sendSuccess(player, message);
+            LanguageUtil.sendComponent(player, message);
             return 1;
         } else {
             NeoEssentials.LOGGER.error("Failed to set warp '{}' for player {}", warpName, player.getScoreboardName());
@@ -281,7 +274,7 @@ public class WarpCommands {
         if (success) {
             NeoEssentials.LOGGER.info("Player {} deleted warp '{}'", player.getScoreboardName(), warpName);
             MutableComponent message = Component.literal("Deleted warp '" + warpName + "'");
-            MessageUtil.sendSuccess(player, message);
+            LanguageUtil.sendComponent(player, message);
             return 1;
         } else {
             NeoEssentials.LOGGER.debug("Warp '{}' not found for deletion by player {}", warpName, player.getScoreboardName());
@@ -330,10 +323,10 @@ public class WarpCommands {
             NeoEssentials.LOGGER.info("Player {} teleported {} to warp '{}'", 
                 source.getScoreboardName(), targetPlayer.getScoreboardName(), warpName);
             MutableComponent messageToAdmin = Component.literal("Teleported " + targetPlayer.getScoreboardName() + " to warp '" + warpName + "'");
-            MessageUtil.sendSuccess(source, messageToAdmin);
+            LanguageUtil.sendComponent(source, messageToAdmin);
             
             MutableComponent messageToTarget = Component.literal("You have been teleported to warp '" + warpName + "'");
-            MessageUtil.sendInfo(targetPlayer, messageToTarget);
+            LanguageUtil.sendComponent(targetPlayer, messageToTarget);
             return 1;
         } else {
             NeoEssentials.LOGGER.error("Failed to teleport player {} to warp '{}'", targetPlayer.getScoreboardName(), warpName);
@@ -461,35 +454,24 @@ public class WarpCommands {
         NeoEssentials.LOGGER.debug("Player {} is requesting warp help", player.getScoreboardName());
         
         // Header
-        MessageUtil.sendInfo(player, Component.literal("§2§l====== §r§6Warp Commands §2§l======"));
+        LanguageUtil.sendComponent(player, Component.literal("§2§l====== §r§6Warp Commands §2§l======"));
         
-        // Commands list with clickable examples
-        MutableComponent warpCmd = Component.literal("§b/warp <name>");
-        warpCmd = MessageUtil.addHoverText(warpCmd, Component.literal("§7Teleport to a warp"));
-        MessageUtil.sendInfo(player, warpCmd.append(Component.literal(" §7- Teleport to a warp location")));
+        // Commands list (simplified)
+        LanguageUtil.sendComponent(player, Component.literal("§b/warp <name> §7- Teleport to a warp location"));
         
-        MutableComponent warpsCmd = Component.literal("§b/warps");
-        warpsCmd = MessageUtil.makeClickableCommand(warpsCmd, "/warps");
-        warpsCmd = MessageUtil.addHoverText(warpsCmd, Component.literal("§7List all available warps\n§eClick to execute"));
-        MessageUtil.sendInfo(player, warpsCmd.append(Component.literal(" §7- List all available warps")));
+        LanguageUtil.sendComponent(player, Component.literal("§b/warps §7- List all available warps"));
         
         // Only show admin commands to players with appropriate permissions
         if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.set")) {
-            MutableComponent setWarpCmd = Component.literal("§b/setwarp <name>");
-            setWarpCmd = MessageUtil.addHoverText(setWarpCmd, Component.literal("§7Create a new warp at your location"));
-            MessageUtil.sendInfo(player, setWarpCmd.append(Component.literal(" §7- Create a new warp at your location")));
+            LanguageUtil.sendComponent(player, Component.literal("§b/setwarp <name> §7- Create a new warp at your location"));
         }
         
         if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.delete")) {
-            MutableComponent delWarpCmd = Component.literal("§b/delwarp <name>");
-            delWarpCmd = MessageUtil.addHoverText(delWarpCmd, Component.literal("§7Delete an existing warp"));
-            MessageUtil.sendInfo(player, delWarpCmd.append(Component.literal(" §7- Delete an existing warp")));
+            LanguageUtil.sendComponent(player, Component.literal("§b/delwarp <name> §7- Delete an existing warp"));
         }
         
         if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.player")) {
-            MutableComponent warpPlayerCmd = Component.literal("§b/warpplayer <player> <warp>");
-            warpPlayerCmd = MessageUtil.addHoverText(warpPlayerCmd, Component.literal("§7Teleport another player to a warp"));
-            MessageUtil.sendInfo(player, warpPlayerCmd.append(Component.literal(" §7- Teleport another player to a warp")));
+            LanguageUtil.sendComponent(player, Component.literal("§b/warpplayer <player> <warp> §7- Teleport another player to a warp"));
         }
         
         return 1;

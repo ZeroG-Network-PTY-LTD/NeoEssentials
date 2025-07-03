@@ -4,7 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -36,86 +37,86 @@ public class InventoryCommands {
         // Register /workbench command
         dispatcher.register(
             Commands.literal("workbench")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.workbench"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.workbench"))
                 .executes(this::executeWorkbench)
         );
         
         // Register /wb alias
         dispatcher.register(
             Commands.literal("wb")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.workbench"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.workbench"))
                 .executes(this::executeWorkbench)
         );
         
         // Register /craft alias
         dispatcher.register(
             Commands.literal("craft")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.workbench"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.workbench"))
                 .executes(this::executeWorkbench)
         );
         
         // Register /anvil command
         dispatcher.register(
             Commands.literal("anvil")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.anvil"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.anvil"))
                 .executes(this::executeAnvil)
         );
         
         // Register /grindstone command
         dispatcher.register(
             Commands.literal("grindstone")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.grindstone"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.grindstone"))
                 .executes(this::executeGrindstone)
         );
         
         // Register /cartographytable command
         dispatcher.register(
             Commands.literal("cartographytable")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.cartographytable"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.cartographytable"))
                 .executes(this::executeCartographyTable)
         );
         
         // Register /carttable alias
         dispatcher.register(
             Commands.literal("carttable")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.cartographytable"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.cartographytable"))
                 .executes(this::executeCartographyTable)
         );
         
         // Register /loom command
         dispatcher.register(
             Commands.literal("loom")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loom"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loom"))
                 .executes(this::executeLoom)
         );
         
         // Register /smithingtable command
         dispatcher.register(
             Commands.literal("smithingtable")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.smithingtable"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.smithingtable"))
                 .executes(this::executeSmithingTable)
         );
         
         // Register /smithtable alias
         dispatcher.register(
             Commands.literal("smithtable")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.smithingtable"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.smithingtable"))
                 .executes(this::executeSmithingTable)
         );
           // Register /stonecutter command
         dispatcher.register(
             Commands.literal("stonecutter")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.stonecutter"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.stonecutter"))
                 .executes(this::executeStonecutter)
         );
         
         // Register /enderchest command
         dispatcher.register(
             Commands.literal("enderchest")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.enderchest"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.enderchest"))
                 .executes(this::executeEnderchest)
                 .then(Commands.argument("player", EntityArgument.player())
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.enderchest.others"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.enderchest.others"))
                     .executes(this::executeEnderchestOthers)
                 )
         );
@@ -123,10 +124,10 @@ public class InventoryCommands {
         // Register /echest alias
         dispatcher.register(
             Commands.literal("echest")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.enderchest"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.enderchest"))
                 .executes(this::executeEnderchest)
                 .then(Commands.argument("player", EntityArgument.player())
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.enderchest.others"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.enderchest.others"))
                     .executes(this::executeEnderchestOthers)
                 )
         );
@@ -146,6 +147,7 @@ public class InventoryCommands {
             Component.translatable("container.crafting")
         ));
         
+        LanguageUtil.sendMessage(player, "inventory.workbench.opened");
         return 1;
     }
     
@@ -161,6 +163,7 @@ public class InventoryCommands {
             Component.translatable("container.repair")
         ));
         
+        LanguageUtil.sendMessage(player, "inventory.anvil.opened");
         return 1;
     }
     
@@ -176,6 +179,7 @@ public class InventoryCommands {
             Component.translatable("container.grindstone_title")
         ));
         
+        LanguageUtil.sendMessage(player, "inventory.grindstone.opened");
         return 1;
     }
     
@@ -191,6 +195,7 @@ public class InventoryCommands {
             Component.translatable("container.cartography_table")
         ));
         
+        LanguageUtil.sendMessage(player, "inventory.cartography_table.opened");
         return 1;
     }
     
@@ -206,6 +211,7 @@ public class InventoryCommands {
             Component.translatable("container.loom")
         ));
         
+        LanguageUtil.sendMessage(player, "inventory.loom.opened");
         return 1;
     }
     
@@ -221,6 +227,7 @@ public class InventoryCommands {
             Component.translatable("container.upgrade")
         ));
         
+        LanguageUtil.sendMessage(player, "inventory.smithing_table.opened");
         return 1;
     }
       /**
@@ -235,6 +242,7 @@ public class InventoryCommands {
             Component.translatable("container.stonecutter")
         ));
         
+        LanguageUtil.sendMessage(player, "inventory.stonecutter.opened");
         return 1;
     }
     
@@ -250,6 +258,7 @@ public class InventoryCommands {
             Component.translatable("container.enderchest")
         ));
         
+        LanguageUtil.sendMessage(player, "inventory.enderchest.opened");
         return 1;
     }
     
@@ -266,6 +275,7 @@ public class InventoryCommands {
             Component.literal(target.getScoreboardName() + "'s Enderchest")
         ));
         
+        LanguageUtil.sendMessage(source, "inventory.enderchest.opened_other", target.getDisplayName().getString());
         return 1;
     }
 }
