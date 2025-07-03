@@ -22,6 +22,7 @@ public class DataManager {    private UserManager userManager;
     private JailManager jailManager;
     private PowerToolManager powerToolManager;
     private MailManager mailManager;
+    private BookmarkManager bookmarkManager;
     // Use TABLikeTablistManager (enhanced system)
     private com.zerog.neoessentials.ui.tablist.enhanced.TABLikeTablistManager tablistManager;
     
@@ -44,7 +45,8 @@ public class DataManager {    private UserManager userManager;
         kitManager = new KitManager();        
         jailManager = new JailManager(dataFolderFile);
         powerToolManager = new PowerToolManager(dataFolderFile);
-        mailManager = new MailManager(dataFolderFile);        
+        mailManager = new MailManager(dataFolderFile);
+        bookmarkManager = new BookmarkManager();
         
         // Get the scheduler from NeoEssentials for scheduled tasks like tablist updates
         java.util.concurrent.ScheduledExecutorService scheduler = neoEssentials.getScheduler();
@@ -278,6 +280,16 @@ public class DataManager {    private UserManager userManager;
     public MailManager getMailManager() {
         return mailManager;
     }
+
+    /**
+     * Gets the bookmark manager instance
+     * 
+     * @return The bookmark manager
+     */
+    public BookmarkManager getBookmarkManager() {
+        return bookmarkManager;
+    }
+
     /**
      * Gets the enhanced tablist manager.
      * 
