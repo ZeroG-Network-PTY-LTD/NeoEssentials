@@ -2,7 +2,7 @@ package com.zerog.neoessentials.ui.shop;
 
 import com.zerog.neoessentials.economy.Shop;
 import com.zerog.neoessentials.economy.ShopManager;
-import com.zerog.neoessentials.utils.MessageUtil;
+import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -100,7 +100,7 @@ public class ShopStatisticsMenu extends AbstractContainerMenu {
                 break;
                 
             default:
-                MessageUtil.sendMessage(player, "§cUnknown action: " + action);
+                LanguageUtil.sendMessage(player, "§cUnknown action: " + action);
                 break;
         }
     }
