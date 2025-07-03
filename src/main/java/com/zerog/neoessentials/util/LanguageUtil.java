@@ -151,6 +151,29 @@ public class LanguageUtil {
         source.sendSuccess(() -> component, false);
     }
 
+    /**
+     * Formats text with color codes.
+     * 
+     * @param text The text to format
+     * @return The formatted text with color codes applied
+     */
+    public static String formatText(String text) {
+        if (text == null) {
+            return "";
+        }
+        return ColorUtils.processColorCodes(text);
+    }
+
+    /**
+     * Sends a success message to a player.
+     * 
+     * @param player The player to send the message to
+     * @param message The message to send
+     */
+    public static void sendSuccessMessage(ServerPlayer player, String message) {
+        sendMessage(player, "§a" + message);
+    }
+
     // Common error messages
     public static MutableComponent noPermission() {
         return getTranslated("neoessentials.commands.error.no_permission");
