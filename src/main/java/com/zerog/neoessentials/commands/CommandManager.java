@@ -32,6 +32,7 @@ public class CommandManager {    // Command classes
     private final WalletCommands walletCommands;
     private final ShopCommands shopCommands;
     private final AuctionCommands auctionCommands;
+    private final CurrencyCommands currencyCommands;
     private final EconomyAdminCommands economyAdminCommands;
     private final UserCommands userCommands;
     private final WarpCommands warpCommands;
@@ -65,6 +66,7 @@ public class CommandManager {    // Command classes
         walletCommands = new WalletCommands();
         shopCommands = new ShopCommands();
         auctionCommands = new AuctionCommands();
+        currencyCommands = new CurrencyCommands();
         economyAdminCommands = new EconomyAdminCommands();
         userCommands = new UserCommands();
         warpCommands = new WarpCommands();
@@ -156,6 +158,10 @@ public class CommandManager {    // Command classes
         // Register auction commands
         auctionCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered auction commands");
+        
+        // Register currency commands
+        currencyCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered currency commands");
         
         // Register economy admin commands
         economyAdminCommands.register(dispatcher);
@@ -264,6 +270,10 @@ public class CommandManager {    // Command classes
             java.lang.reflect.Method loanRegister = loanCommandsClass.getMethod("register", CommandDispatcher.class);
             loanRegister.invoke(loanCommands, dispatcher);
             NeoEssentials.LOGGER.info("Registered loan commands");
+            
+            // Register currency commands
+            currencyCommands.register(dispatcher);
+            NeoEssentials.LOGGER.info("Registered currency commands");
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to register economy commands: " + e.getMessage());

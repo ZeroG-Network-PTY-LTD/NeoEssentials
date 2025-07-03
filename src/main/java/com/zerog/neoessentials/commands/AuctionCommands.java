@@ -471,10 +471,8 @@ public class AuctionCommands {
                 return 0;
             }
             
-            // Set up auto-bidding (this would need to be implemented in the AuctionHouse class)
-            // TODO: Implement auto-bidding in AuctionHouse class
-            // boolean success = auctionHouse.setAutoBid(auctionUUID, player.getUUID(), maxAmount, increment);
-            boolean success = false; // Temporarily disabled until AuctionHouse supports auto-bidding
+            // Set up auto-bidding
+            boolean success = auctionHouse.setAutoBid(auctionUUID, player.getUUID(), maxAmount, increment);
             
             if (success) {
                 MessageUtil.sendSuccessMessage(player, "Auto-bidding set up successfully!");
@@ -512,10 +510,8 @@ public class AuctionCommands {
                 return 0;
             }
             
-            // Cancel auto-bidding (this would need to be implemented in the AuctionHouse class)
-            // TODO: Implement auto-bidding in AuctionHouse class
-            // boolean success = auctionHouse.cancelAutoBid(auctionUUID, player.getUUID());
-            boolean success = false; // Temporarily disabled until AuctionHouse supports auto-bidding
+            // Cancel auto-bidding
+            boolean success = auctionHouse.cancelAutoBid(auctionUUID, player.getUUID());
             
             if (success) {
                 MessageUtil.sendSuccessMessage(player, "Auto-bidding cancelled successfully!");
@@ -541,16 +537,9 @@ public class AuctionCommands {
                 com.zerog.neoessentials.NeoEssentials.getInstance().getDataManager().getNewEconomyManager();
             AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
             
-            // Get player's auto-bids (this would need to be implemented in the AuctionHouse class)
-            // TODO: Implement auto-bidding in AuctionHouse class
-            // List<AutoBid> autoBids = auctionHouse.getAutoBidsForPlayer(player.getUUID());
-            List<AutoBid> autoBids = java.util.Collections.emptyList(); // Temporarily empty until auto-bidding is implemented
+            // Get player's auto-bids
+            List<AutoBid> autoBids = auctionHouse.getAutoBidsForPlayer(player.getUUID());
             
-            MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
-            MessageUtil.sendMessage(player, "§7Auto-bidding feature is not yet implemented. Please check back in a future update.");
-            return 1;
-            
-            /* TODO: Uncomment when auto-bidding is implemented
             if (autoBids.isEmpty()) {
                 MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
                 MessageUtil.sendMessage(player, "§7You have no active auto-bids.");
@@ -561,7 +550,7 @@ public class AuctionCommands {
             MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
             
             for (AutoBid autoBid : autoBids) {
-                Auction auction = auctionHouse.getAuction(autoBid.getAuctionId());
+                Auction auction = auctionHouse.getAuctionById(autoBid.getAuctionId());
                 if (auction != null && auction.isActive()) {
                     MessageUtil.sendMessage(player, "§e" + auction.getItemName() + " §7(ID: " + 
                         autoBid.getAuctionId().toString().substring(0, 8) + "...)");
@@ -575,7 +564,6 @@ public class AuctionCommands {
             
             MessageUtil.sendMessage(player, "§7Use §e/auction autocancel <id> §7to cancel auto-bidding.");
             return 1;
-            */
             
         } catch (Exception e) {
             MessageUtil.sendErrorMessage(player, "An error occurred while listing auto-bids: " + e.getMessage());
