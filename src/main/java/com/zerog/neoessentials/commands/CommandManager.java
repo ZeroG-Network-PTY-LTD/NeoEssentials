@@ -25,6 +25,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 
 public class CommandManager {    // Command classes
     private final TeleportCommands teleportCommands;
+    private final DirectTeleportCommands directTeleportCommands;
     private final HomeCommands homeCommands;
     private final EconomyCommands economyCommands;
     private final BankCommands bankCommands;
@@ -62,6 +63,7 @@ public class CommandManager {    // Command classes
         // mod reference removed while disabling debug commands
         
         teleportCommands = new TeleportCommands();
+        directTeleportCommands = new DirectTeleportCommands();
         homeCommands = new HomeCommands();
         economyCommands = new EconomyCommands();
         bankCommands = new BankCommands();
@@ -133,9 +135,13 @@ public class CommandManager {    // Command classes
      * Registers all command categories with the dispatcher.
      * 
      * @param dispatcher The command dispatcher
-     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {// Register teleport commands
+     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {        // Register teleport commands
         teleportCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered teleport commands");
+        
+        // Register direct teleport commands
+        directTeleportCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered direct teleport commands");
         
         // Register home commands
         homeCommands.register(dispatcher);
