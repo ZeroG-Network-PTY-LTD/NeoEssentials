@@ -165,7 +165,7 @@ public class ShopInventoryMenu extends AbstractContainerMenu {
             }
             
             if (itemsRemoved > 0) {
-                MessageUtil.sendSuccessMessage(player, "Removed " + itemsRemoved + " item types from shop inventory.");
+                LanguageUtil.sendSuccessMessage(player, "Removed " + itemsRemoved + " item types from shop inventory.");
                 
                 // Save shop changes
                 if (shopManager != null) {
