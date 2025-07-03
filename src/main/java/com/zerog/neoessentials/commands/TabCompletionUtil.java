@@ -31,6 +31,17 @@ public class TabCompletionUtil {
         "10", "25", "50", "100", "250", "500", "1000", "2500", "5000", "10000"
     };
     
+    // Common stack amounts for item enhancement commands
+    public static final String[] STACK_AMOUNTS = {
+        "1", "8", "16", "32", "48", "64"
+    };
+    
+    // Common item names for demonstration
+    public static final String[] EXAMPLE_ITEM_NAMES = {
+        "§cFire Sword", "§9Ice Axe", "§aEnchanted Bow", "§6Golden Tool", 
+        "§5Magic Wand", "§bDiamond Pickaxe", "§eShiny Helmet", "§dRare Gem"
+    };
+    
     // Bank account types
     public static final String[] BANK_ACCOUNT_TYPES = {
         "checking", "savings", "business", "investment"
@@ -626,5 +637,19 @@ public class TabCompletionUtil {
      */
     public static final SuggestionProvider<CommandSourceStack> AUCTION_LIST_FILTER_SUGGESTIONS = (context, builder) -> {
         return SharedSuggestionProvider.suggest(List.of(AUCTION_CATEGORIES), builder);
+    };
+    
+    /**
+     * Provides stack amount suggestions for item enhancement commands.
+     */
+    public static final SuggestionProvider<CommandSourceStack> STACK_AMOUNT_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(List.of(STACK_AMOUNTS), builder);
+    };
+    
+    /**
+     * Provides example item name suggestions for item renaming commands.
+     */
+    public static final SuggestionProvider<CommandSourceStack> ITEM_NAME_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(List.of(EXAMPLE_ITEM_NAMES), builder);
     };
 }

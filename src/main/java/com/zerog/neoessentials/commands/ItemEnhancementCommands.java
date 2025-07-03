@@ -18,11 +18,10 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
-import net.minecraft.world.level.block.entity.SkullBlockEntity;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.neoforged.neoforge.server.command.EnumArgument;
 
 import java.util.Collection;
-import java.util.Optional;
 
 /**
  * Commands for item enhancement and manipulation.
@@ -67,9 +66,11 @@ public class ItemEnhancementCommands {
             .requires(source -> hasPermission(source, "neoessentials.more"))
             .executes(context -> executeMore(context, -1)) // Fill to max
             .then(Commands.argument("amount", IntegerArgumentType.integer(1, 64))
+                .suggests(TabCompletionUtil.STACK_AMOUNT_SUGGESTIONS)
                 .executes(context -> executeMore(context, IntegerArgumentType.getInteger(context, "amount")))
                 .then(Commands.argument("player", EntityArgument.player())
                     .requires(source -> hasPermission(source, "neoessentials.more.others"))
+                    .suggests(TabCompletionUtil.ONLINE_PLAYER_SUGGESTIONS)
                     .executes(context -> executeMoreForPlayer(context, 
                         IntegerArgumentType.getInteger(context, "amount"),
                         EntityArgument.getPlayer(context, "player")))
@@ -88,6 +89,7 @@ public class ItemEnhancementCommands {
         dispatcher.register(Commands.literal("itemname")
             .requires(source -> hasPermission(source, "neoessentials.itemname"))
             .then(Commands.argument("name", StringArgumentType.greedyString())
+                .suggests(TabCompletionUtil.ITEM_NAME_SUGGESTIONS)
                 .executes(context -> executeItemName(context, StringArgumentType.getString(context, "name")))
             )
         );
@@ -96,6 +98,7 @@ public class ItemEnhancementCommands {
         dispatcher.register(Commands.literal("iname")
             .requires(source -> hasPermission(source, "neoessentials.itemname"))
             .then(Commands.argument("name", StringArgumentType.greedyString())
+                .suggests(TabCompletionUtil.ITEM_NAME_SUGGESTIONS)
                 .executes(context -> executeItemName(context, StringArgumentType.getString(context, "name")))
             )
         );
@@ -112,6 +115,7 @@ public class ItemEnhancementCommands {
             .executes(context -> executeHat(context))
             .then(Commands.argument("player", EntityArgument.player())
                 .requires(source -> hasPermission(source, "neoessentials.hat.others"))
+                .suggests(TabCompletionUtil.ONLINE_PLAYER_SUGGESTIONS)
                 .executes(context -> executeHatForPlayer(context, EntityArgument.getPlayer(context, "player")))
             )
         );
@@ -128,6 +132,7 @@ public class ItemEnhancementCommands {
             .requires(source -> hasPermission(source, "neoessentials.skull"))
             .executes(context -> executeSkull(context, null)) // Own skull
             .then(Commands.argument("player", GameProfileArgument.gameProfile())
+                .suggests(TabCompletionUtil.ONLINE_PLAYER_SUGGESTIONS)
                 .executes(context -> executeSkull(context, GameProfileArgument.getGameProfiles(context, "player")))
             )
         );
@@ -137,6 +142,7 @@ public class ItemEnhancementCommands {
             .requires(source -> hasPermission(source, "neoessentials.skull"))
             .executes(context -> executeSkull(context, null)) // Own skull
             .then(Commands.argument("player", GameProfileArgument.gameProfile())
+                .suggests(TabCompletionUtil.ONLINE_PLAYER_SUGGESTIONS)
                 .executes(context -> executeSkull(context, GameProfileArgument.getGameProfiles(context, "player")))
             )
         );
@@ -335,8 +341,8 @@ public class ItemEnhancementCommands {
             // Create player skull
             ItemStack skull = new ItemStack(Items.PLAYER_HEAD);
             
-            // Set the skull owner
-            skull.set(DataComponents.PROFILE, Optional.of(targetProfile));
+            // Set the skull owner using ResolvableProfile
+            skull.set(DataComponents.PROFILE, new ResolvableProfile(targetProfile));
             
             // Give the skull to the player
             boolean success = player.getInventory().add(skull);
