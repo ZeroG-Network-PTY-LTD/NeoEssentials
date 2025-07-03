@@ -3,8 +3,7 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.93'
     id 'idea'
-    // Temporarily removing Shadow plugin due to Java 17 ASM compatibility issues
-    // id 'com.github.johnrengelman.shadow' version '8.1.1'
+    // Removing Shadow plugin - will use server-provided SQLite instead
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -115,16 +114,12 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 // "optional", meaning it will not be pulled by dependents of this mod.
 configurations {
     runtimeClasspath.extendsFrom localRuntime
-    include
-    implementation.extendsFrom include
+    // No longer need 'include' configuration since we're using Shadow
 }
 
 dependencies {    
-    // Database dependencies - SQLite will be bundled for guaranteed availability
-    implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
-        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
-    }
-    include('org.xerial:sqlite-jdbc:3.44.1.0') {
+    // Database dependencies - SQLite will rely on server environment to avoid conflicts
+    compileOnly('org.xerial:sqlite-jdbc:3.44.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
     }
     
@@ -252,7 +247,7 @@ idea {
     }
 }
 
-// Jar configuration - relies on server environment for SnakeYAML
+// Jar configuration - relies on server environment for both SnakeYAML and SQLite
 jar {
     manifest {
         attributes(
@@ -266,16 +261,8 @@ jar {
         )
     }
     
-    // Include all dependencies from the 'include' configuration (SQLite, etc.)
-    from {
-        configurations.include.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-    
-    // Avoid duplicate entries when including dependencies
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    
     doFirst {
-        println "Building JAR without bundled SnakeYAML (relying on server environment)..."
+        println "Building JAR without bundled dependencies (relying on server environment for SnakeYAML and SQLite)..."
     }
 }
 
