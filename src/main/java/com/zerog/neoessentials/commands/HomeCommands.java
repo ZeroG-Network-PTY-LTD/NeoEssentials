@@ -120,14 +120,14 @@ public class HomeCommands {
         HomeManager.HomeLocation home = homeManager.getHome(player.getUUID(), homeName.toLowerCase());
         
         if (home == null) {
-            MessageUtil.sendErrorMessage(player, "Home '" + homeName + "' not found");
+            LanguageUtil.sendErrorMessage(player, "neoessentials.home.not_found", homeName);
             return 0;
         }
         
         // Get the destination level
         ServerLevel level = home.getLevel(player.getServer());
         if (level == null) {
-            MessageUtil.sendErrorMessage(player, "Could not find dimension for home '" + homeName + "'");
+            LanguageUtil.sendErrorMessage(player, "neoessentials.home.dimension_not_found", homeName);
             return 0;
         }
         
