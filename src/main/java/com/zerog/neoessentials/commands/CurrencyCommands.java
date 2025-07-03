@@ -124,7 +124,7 @@ public class CurrencyCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             CurrencyManager currencyManager = CurrencyManager.getInstance();
-            List<Currency> currencies = currencyManager.getAllCurrencies();
+            List<Currency> currencies = new ArrayList<>(currencyManager.getAllCurrencies());
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
             
             MessageUtil.sendMessage(player, "§6=== Available Currencies ===");
@@ -188,7 +188,7 @@ public class CurrencyCommands {
             ServerPlayer player = source.getPlayerOrException();
             CurrencyManager currencyManager = CurrencyManager.getInstance();
             Currency defaultCurrency = currencyManager.getDefaultCurrency();
-            List<Currency> currencies = currencyManager.getAllCurrencies();
+            List<Currency> currencies = new ArrayList<>(currencyManager.getAllCurrencies());
             
             MessageUtil.sendMessage(player, "§6=== Exchange Rates ===");
             MessageUtil.sendMessage(player, "§7Base Currency: §e" + defaultCurrency.getDisplayName() + " (" + defaultCurrency.getSymbol() + ")");

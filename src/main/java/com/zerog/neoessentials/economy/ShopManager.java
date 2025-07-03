@@ -702,8 +702,8 @@ public class ShopManager {
             
             for (AutoBid autoBid : auctionAutoBids) {
                 // Skip if this auto-bid belongs to current highest bidder
-                if (auction.getHighestBidderId() != null && 
-                    auction.getHighestBidderId().equals(autoBid.getPlayerId())) {
+                if (auction.getCurrentBidder() != null && 
+                    auction.getCurrentBidder().equals(autoBid.getPlayerId())) {
                     continue;
                 }
                 
@@ -711,25 +711,19 @@ public class ShopManager {
                 if (nextBid > 0) {
                     // Try to place the auto-bid
                     UUID bidderId = autoBid.getPlayerId();
-                    EconomyManager economyManager = EconomyManager.getInstance();
+                    WalletManager walletManager = WalletManager.getInstance();
                     
-                    // Check if player has enough funds (wallet + bank)
-                    double walletBalance = economyManager.getBalance(bidderId);
-                    double bankBalance = 0; // TODO: Get bank balance when available
-                    double totalAvailable = walletBalance + bankBalance;
+                    // Check if player has enough funds (wallet only for now)
+                    double walletBalance = walletManager.getCashBalance(bidderId);
+                    // TODO: Add bank balance when bank integration is ready
+                    double totalAvailable = walletBalance;
                     
                     if (totalAvailable >= nextBid) {
                         // Place the auto-bid
                         boolean bidSuccess = auction.placeBid(bidderId, nextBid);
                         if (bidSuccess) {
-                            // Charge the player (prefer wallet first, then bank)
-                            double walletCharge = Math.min(nextBid, walletBalance);
-                            double bankCharge = nextBid - walletCharge;
-                            
-                            if (walletCharge > 0) {
-                                economyManager.subtractMoney(bidderId, walletCharge);
-                            }
-                            // TODO: Charge bank when available
+                            // Charge the player from wallet
+                            walletManager.subtractCash(bidderId, nextBid);
                             
                             currentHighestBid = nextBid;
                             break; // Stop processing auto-bids for this round
