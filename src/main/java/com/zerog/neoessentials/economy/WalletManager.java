@@ -305,4 +305,90 @@ public class WalletManager {
     public void removeWallet(UUID playerId) {
         wallets.remove(playerId);
     }
+    
+    /**
+     * Check if a player has enough money (wallet + bank) for a purchase
+     * 
+     * @param playerId The player UUID
+     * @param amount The amount needed
+     * @return true if player has sufficient funds
+     */
+    public boolean hasEnoughMoney(UUID playerId, double amount) {
+        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        if (defaultCurrency == null) return false;
+        
+        double walletBalance = getCashBalance(playerId, defaultCurrency);
+        double bankBalance = 0.0;
+        
+        // Get bank balance if bank manager is available
+        try {
+            BankManager bankManager = BankManager.getInstance();
+            bankBalance = bankManager.getTotalPlayerBalance(playerId, defaultCurrency);
+        } catch (Exception e) {
+            // Bank system might not be available, just use wallet
+        }
+        
+        return (walletBalance + bankBalance) >= amount;
+    }
+    
+    /**
+     * Add money to a player (wallet + bank if needed)
+     * 
+     * @param playerId The player UUID
+     * @param amount The amount to add
+     * @return true if successful
+     */
+    public boolean addMoney(UUID playerId, double amount) {
+        return addCash(playerId, amount);
+    }
+    
+    /**
+     * Subtract money from a player (wallet first, then bank if needed)
+     * 
+     * @param playerId The player UUID
+     * @param amount The amount to subtract
+     * @return true if successful
+     */
+    public boolean subtractMoney(UUID playerId, double amount) {
+        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
+        if (defaultCurrency == null) return false;
+        
+        double walletBalance = getCashBalance(playerId, defaultCurrency);
+        
+        if (walletBalance >= amount) {
+            // Take from wallet only
+            return subtractCash(playerId, defaultCurrency, amount);
+        } else {
+            // Take what we can from wallet, rest from bank
+            double remainingAmount = amount - walletBalance;
+            
+            // Empty the wallet
+            if (walletBalance > 0) {
+                subtractCash(playerId, defaultCurrency, walletBalance);
+            }
+            
+            // Take the rest from bank if available
+            try {
+                BankManager bankManager = BankManager.getInstance();
+                BankAccount primaryAccount = bankManager.getPrimaryAccount(playerId);
+                if (primaryAccount != null) {
+                    return primaryAccount.withdraw(defaultCurrency, remainingAmount);
+                } else {
+                    // No bank account, operation failed
+                    // Restore wallet balance
+                    if (walletBalance > 0) {
+                        addCash(playerId, defaultCurrency, walletBalance);
+                    }
+                    return false;
+                }
+            } catch (Exception e) {
+                // Bank system not available, operation failed
+                // Restore wallet balance
+                if (walletBalance > 0) {
+                    addCash(playerId, defaultCurrency, walletBalance);
+                }
+                return false;
+            }
+        }
+    }
 }
