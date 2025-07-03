@@ -3,6 +3,7 @@ package com.zerog.neoessentials.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 
@@ -52,6 +53,7 @@ public class CommandManager {    // Command classes
     private final AdminPanelCommand adminPanelCommand;
     private final TablistCommand tablistCommand;
     private final ItemSearchCommands itemSearchCommands;
+    private final SignEditCommands signEditCommands;
     
     // Debug command disabled while developing TablistFix
       // NeoEssentials main reference - disabled while developing TablistFix
@@ -87,6 +89,7 @@ public class CommandManager {    // Command classes
         adminPanelCommand = new AdminPanelCommand();
         tablistCommand = new TablistCommand();
         itemSearchCommands = new ItemSearchCommands();
+        signEditCommands = new SignEditCommands();
         
         // Debug commands will be initialized later when TABLikeTablistManager is available
         // ItemCommands needs CommandBuildContext which is only available during register event
@@ -238,6 +241,10 @@ public class CommandManager {    // Command classes
         ItemSearchCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered item search commands");
         
+        // Register sign edit commands
+        signEditCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered sign edit commands");
+        
         // Register permission commands
         PermissionCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered permission commands");
@@ -343,6 +350,18 @@ public class CommandManager {    // Command classes
      */
     public static boolean hasPermission(CommandSourceStack source, String permission) {
         return com.zerog.neoessentials.utils.PermissionUtil.hasPermission(source, permission);
+    }
+    
+    /**
+     * Static method to check if a player has a permission.
+     * This is a convenience method for commands to use.
+     *
+     * @param player The player to check
+     * @param permission The permission node to check for
+     * @return True if the player has permission, false otherwise
+     */
+    public static boolean hasPermission(ServerPlayer player, String permission) {
+        return com.zerog.neoessentials.utils.PermissionUtil.hasPermission(player.createCommandSourceStack(), permission);
     }
     
     /**
