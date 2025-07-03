@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.ArrayList;
 
 /**
  * Commands for managing multiple currencies in NeoEssentials
@@ -138,8 +139,8 @@ public class CurrencyCommands {
                 String defaultMarker = currency.equals(defaultCurrency) ? " §a[DEFAULT]" : "";
                 MessageUtil.sendMessage(player, String.format("§e%s §7(%s) - %s%s", 
                     currency.getDisplayName(), currency.getSymbol(), currency.getId(), defaultMarker));
-                MessageUtil.sendMessage(player, String.format("  §7Type: §f%s §7| Tradeable: §f%s", 
-                    currency.getType(), currency.isTradeable() ? "Yes" : "No"));
+                MessageUtil.sendMessage(player, String.format("  §7Type: §f%s §7| Physical: §f%s", 
+                    currency.getType(), currency.isPhysical() ? "Yes" : "No"));
             }
             
             return 1;
