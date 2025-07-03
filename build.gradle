@@ -3,8 +3,8 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.93'
     id 'idea'
-    // Using new GradleUp Shadow plugin with latest version
-    id 'com.gradleup.shadow' version '9.0.0'
+    // Temporarily removing Shadow plugin due to Java 17 ASM compatibility issues
+    // id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -118,11 +118,8 @@ configurations {
 }
 
 dependencies {    
-    // Database dependencies - SQLite will be relocated using Shadow to avoid conflicts
-    shadow('org.xerial:sqlite-jdbc:3.44.1.0') {
-        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
-    }
-    implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
+    // Database dependencies - SQLite will rely on server environment to avoid conflicts
+    compileOnly('org.xerial:sqlite-jdbc:3.44.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
     }
     
@@ -250,36 +247,7 @@ idea {
     }
 }
 
-// Shadow configuration for relocating SQLite to avoid conflicts
-shadowJar {
-    configurations = [project.configurations.shadow]
-    
-    // Relocate SQLite to avoid conflicts with other mods like GriefLogger
-    relocate 'org.sqlite', 'com.zerog.neoessentials.libs.sqlite'
-    
-    // Merge service files
-    mergeServiceFiles()
-    
-    archiveClassifier = '' // Use this as the main JAR
-    
-    manifest {
-        attributes(
-            'Specification-Title': 'NeoEssentials',
-            'Specification-Vendor': 'ZeroG',
-            'Specification-Version': '1',
-            'Implementation-Title': project.name,
-            'Implementation-Version': project.version,
-            'Implementation-Vendor': 'ZeroG',
-            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        )
-    }
-    
-    doFirst {
-        println "Building Shadow JAR with relocated SQLite to avoid conflicts with GriefLogger..."
-    }
-}
-
-// Configure regular jar to be lightweight (no dependencies)
+// Jar configuration - relies on server environment for SnakeYAML and SQLite
 jar {
     manifest {
         attributes(
@@ -293,20 +261,10 @@ jar {
         )
     }
     
-    archiveClassifier = 'slim' // Mark this as the slim version
-    
     doFirst {
-        println "Building slim JAR without dependencies..."
+        println "Building JAR without bundled dependencies (relying on server environment for SnakeYAML and SQLite)..."
     }
 }
-
-// Use shadowJar as the main artifact
-artifacts {
-    archives shadowJar
-}
-
-// Make build depend on shadowJar instead of jar
-build.dependsOn shadowJar
 
 // Configuration adjustments if needed go here
 
