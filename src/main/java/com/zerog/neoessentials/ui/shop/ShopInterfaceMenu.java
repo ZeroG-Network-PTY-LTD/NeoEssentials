@@ -144,7 +144,7 @@ public class ShopInterfaceMenu extends ChestMenu {
             
             // Success message
             String displayName = itemName; // Use item name directly
-            MessageUtil.sendSuccessMessage(player, 
+            LanguageUtil.sendSuccessMessage(player, 
                 "Purchased " + quantity + "x " + displayName + " for $" + String.format("%.2f", totalCost));
             
             // Pay shop owner (if it's a player shop)
@@ -208,7 +208,7 @@ public class ShopInterfaceMenu extends ChestMenu {
             
             // Success message
             String displayName = itemName; // Use item name directly
-            MessageUtil.sendSuccessMessage(player, 
+            LanguageUtil.sendSuccessMessage(player, 
                 "Sold " + quantity + "x " + displayName + " for $" + String.format("%.2f", totalPayment));
             
             // Refresh the interface
