@@ -46,7 +46,7 @@ public class ShopInterfaceGUI {
     public void openShopInterface(ServerPlayer player) {
         // Check if player can view the shop
         if (!shop.isActive()) {
-            MessageUtil.sendErrorMessage(player, "This shop is currently inactive.");
+            LanguageUtil.sendErrorMessage(player, "This shop is currently inactive.");
             return;
         }
         
