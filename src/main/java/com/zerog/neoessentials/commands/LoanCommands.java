@@ -154,14 +154,14 @@ public class LoanCommands {
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("loan")
-                .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan"))
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan"))
                 .executes(context -> showLoanHelp(context.getSource()))
                 .then(Commands.literal("help")
                     .executes(context -> showLoanHelp(context.getSource())))
                 
                 // Loan Application System
                 .then(Commands.literal("apply")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.apply"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.apply"))
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(1.0))
                         .suggests(LOAN_AMOUNT_SUGGESTIONS)
                         .then(Commands.argument("type", StringArgumentType.string())
@@ -175,7 +175,7 @@ public class LoanCommands {
                 
                 // Loan Information
                 .then(Commands.literal("info")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.info"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.info"))
                     .then(Commands.argument("loan-id", StringArgumentType.string())
                         .suggests(LOAN_ID_SUGGESTIONS)
                         .executes(context -> showLoanInfo(context.getSource(),
@@ -183,30 +183,30 @@ public class LoanCommands {
                 
                 // List Loans
                 .then(Commands.literal("list")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.list"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.list"))
                     .executes(context -> listPlayerLoans(context.getSource()))
                     .then(Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.list.others"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.list.others"))
                         .executes(context -> listPlayerLoans(context.getSource(),
                             EntityArgument.getPlayer(context, "player")))))
                 
                 // List Applications (pending/approved loans)
                 .then(Commands.literal("applications")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.list"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.list"))
                     .executes(context -> listLoanApplications(context.getSource()))
                     .then(Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.list.others"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.list.others"))
                         .executes(context -> listLoanApplications(context.getSource(),
                             EntityArgument.getPlayer(context, "player")))))
                 
                 // Quick recent applications view
                 .then(Commands.literal("recent")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.list"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.list"))
                     .executes(context -> listRecentApplications(context.getSource())))
                 
                 // Make Payment
                 .then(Commands.literal("pay")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.pay"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.pay"))
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                         .suggests(PAYMENT_AMOUNT_SUGGESTIONS)
                         .executes(context -> makeLoanPayment(context.getSource(),
@@ -219,16 +219,16 @@ public class LoanCommands {
                 
                 // Credit Score
                 .then(Commands.literal("credit")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.credit"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.credit"))
                     .executes(context -> showCreditScore(context.getSource()))
                     .then(Commands.argument("player", EntityArgument.player())
-                        .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.credit.others"))
+                        .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.credit.others"))
                         .executes(context -> showCreditScore(context.getSource(),
                             EntityArgument.getPlayer(context, "player")))))
                 
                 // Admin Commands
                 .then(Commands.literal("admin")
-                    .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.loan.admin"))
+                    .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.loan.admin"))
                     .then(Commands.literal("listall")
                         .executes(context -> listAllLoans(context.getSource())))
                     .then(Commands.literal("stats")
@@ -257,7 +257,7 @@ public class LoanCommands {
             LanguageUtil.sendMessage(player, "§e• business §7- Business loans (1-120 months)");
             LanguageUtil.sendMessage(player, "§e• mortgage §7- Mortgages (1-360 months)");
             
-            if (CommandManager.hasPermission(source, "neoessentials.command.loan.admin")) {
+            if (PermissionUtil.hasPermission(source, "neoessentials.command.loan.admin")) {
                 LanguageUtil.sendMessage(player, "§c§lAdmin Commands:");
                 LanguageUtil.sendMessage(player, "§c/loan admin listall §7- List all loans");
                 LanguageUtil.sendMessage(player, "§c/loan admin stats §7- View loan system statistics");
@@ -634,7 +634,7 @@ public class LoanCommands {
             
             // Check if viewing own applications or has permission to view others
             if (!targetPlayer.getUUID().equals(executor.getUUID()) && 
-                !CommandManager.hasPermission(source, "neoessentials.command.loan.list.others")) {
+                !PermissionUtil.hasPermission(source, "neoessentials.command.loan.list.others")) {
                 LanguageUtil.sendErrorMessage(executor, "You don't have permission to view other players' loan applications.");
                 return 0;
             }
