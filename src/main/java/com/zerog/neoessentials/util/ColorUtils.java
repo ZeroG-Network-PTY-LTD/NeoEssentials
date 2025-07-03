@@ -86,4 +86,16 @@ public class ColorUtils {
                c == 'o' || c == 'O' ||
                c == 'r' || c == 'R';
     }
+    
+    /**
+     * Applies color codes to a MutableComponent.
+     * 
+     * @param component The component to apply color codes to
+     * @return The component with color codes applied
+     */
+    public static net.minecraft.network.chat.MutableComponent applyColorCodes(net.minecraft.network.chat.MutableComponent component) {
+        // For now, just return the component as-is
+        // In a full implementation, this would parse the text content and apply color formatting
+        return component;
+    }
 }

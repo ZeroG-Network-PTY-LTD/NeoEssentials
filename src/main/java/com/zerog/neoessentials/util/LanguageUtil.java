@@ -69,6 +69,34 @@ public class LanguageUtil {
     }
 
     /**
+     * Sends a translated message to a player.
+     * 
+     * @param player The player to send the message to
+     * @param key The translation key
+     * @param args Optional arguments for string formatting
+     */
+    public static void sendMessage(ServerPlayer player, String key, Object... args) {
+        sendTranslatedColored(player, key, args);
+    }
+
+    /**
+     * Sends a translated message to a command source.
+     * 
+     * @param source The command source
+     * @param key The translation key
+     * @param args Optional arguments for string formatting
+     */
+    public static void sendMessage(CommandSourceStack source, String key, Object... args) {
+        try {
+            MutableComponent message = getTranslatedColored(key, args);
+            source.sendSuccess(() -> message, false);
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.warn("Failed to send message to source with key '{}': {}", key, e.getMessage());
+            source.sendFailure(Component.literal("[ERROR: " + key + "]"));
+        }
+    }
+
+    /**
      * Sends an error message to a command source.
      * 
      * @param source The command source
