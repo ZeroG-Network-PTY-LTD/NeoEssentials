@@ -538,7 +538,7 @@ public class AuctionCommands {
             AuctionHouse auctionHouse = economyManager.getShopManager().getAuctionHouse();
             
             // Get player's auto-bids
-            List<AutoBid> autoBids = auctionHouse.getAutoBidsForPlayer(player.getUUID());
+            List<com.zerog.neoessentials.economy.AutoBid> autoBids = auctionHouse.getAutoBidsForPlayer(player.getUUID());
             
             if (autoBids.isEmpty()) {
                 MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
@@ -549,7 +549,7 @@ public class AuctionCommands {
             Currency defaultCurrency = economyManager.getCurrencyManager().getDefaultCurrency();
             MessageUtil.sendMessage(player, "§6=== Your Auto-Bids ===");
             
-            for (AutoBid autoBid : autoBids) {
+            for (com.zerog.neoessentials.economy.AutoBid autoBid : autoBids) {
                 Auction auction = auctionHouse.getAuctionById(autoBid.getAuctionId());
                 if (auction != null && auction.isActive()) {
                     MessageUtil.sendMessage(player, "§e" + auction.getItemName() + " §7(ID: " + 
@@ -557,7 +557,7 @@ public class AuctionCommands {
                     MessageUtil.sendMessage(player, "  §7Max Bid: §e" + defaultCurrency.format(autoBid.getMaxAmount()) +
                         " §7| Increment: §e" + defaultCurrency.format(autoBid.getIncrement()));
                     MessageUtil.sendMessage(player, "  §7Current Bid: §e" + defaultCurrency.format(auction.getCurrentBid()) +
-                        " §7| Time Left: §e" + getTimeRemaining(auction));
+                        " §7| Time Left: §e" + auction.getFormattedTimeRemaining());
                     MessageUtil.sendMessage(player, "");
                 }
             }
