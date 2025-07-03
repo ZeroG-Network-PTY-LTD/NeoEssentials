@@ -64,12 +64,12 @@ public class ShopManager {
         
         // Check if player has enough money for creation fee
         WalletManager walletManager = WalletManager.getInstance();
-        if (walletManager.getBalance(ownerId) < shopCreationFee) {
+        if (walletManager.getCashBalance(ownerId) < shopCreationFee) {
             return null;
         }
         
         // Charge creation fee
-        walletManager.subtractMoney(ownerId, shopCreationFee);
+        walletManager.subtractCash(ownerId, shopCreationFee);
         
         // Create the shop
         Shop shop = new Shop(ownerId, shopName, location, "general", shopType);
