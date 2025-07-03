@@ -31,17 +31,6 @@ public class TabCompletionUtil {
         "10", "25", "50", "100", "250", "500", "1000", "2500", "5000", "10000"
     };
     
-    // Common stack amounts for item enhancement commands
-    public static final String[] STACK_AMOUNTS = {
-        "1", "8", "16", "32", "48", "64"
-    };
-    
-    // Common item names for demonstration
-    public static final String[] EXAMPLE_ITEM_NAMES = {
-        "§cFire Sword", "§9Ice Axe", "§aEnchanted Bow", "§6Golden Tool", 
-        "§5Magic Wand", "§bDiamond Pickaxe", "§eShiny Helmet", "§dRare Gem"
-    };
-    
     // Bank account types
     public static final String[] BANK_ACCOUNT_TYPES = {
         "checking", "savings", "business", "investment"
@@ -52,28 +41,24 @@ public class TabCompletionUtil {
         "general", "food", "tools", "weapons", "armor", "blocks", "redstone", "magic"
     };
     
-    // Shop categories for the new shop system
-    public static final String[] SHOP_CATEGORIES = {
-        "general", "armor", "weapons", "tools", "blocks", "food", "potions", 
-        "enchanted", "rare", "building", "decoration", "redstone", "transportation", 
-        "farming", "mining"
-    };
-    
     // Shop ownership types
     public static final String[] SHOP_OWNERSHIP_TYPES = {
         "player", "server", "auction"
     };
     
-    // Auction types for the new auction system
+    // Auction types
     public static final String[] AUCTION_TYPES = {
-        "standard", "buyitnow", "reserve", "dutch"
+        "item", "service", "chest", "bulk", "rare", "enchanted"
     };
     
-    // Auction categories for filtering
-    public static final String[] AUCTION_CATEGORIES = {
-        "all", "armor", "weapons", "tools", "blocks", "food", "potions", 
-        "enchanted", "rare", "building", "decoration", "redstone", "transportation", 
-        "farming", "mining", "ended", "active"
+    // Auction list filters
+    public static final String[] AUCTION_LIST_FILTERS = {
+        "all", "mine", "active", "expired", "sold", "type", "player"
+    };
+    
+    // Stack amount suggestions
+    public static final String[] STACK_AMOUNTS = {
+        "1", "16", "32", "64", "128", "256", "512", "1024"
     };
     
     // Time units for various commands
@@ -549,28 +534,6 @@ public class TabCompletionUtil {
      */
     public static final SuggestionProvider<CommandSourceStack> AUCTION_ID_SUGGESTIONS = (context, builder) -> {
         try {
-            // Try new auction system first
-            com.zerog.neoessentials.economy.AuctionManagerNew auctionManagerNew = 
-                com.zerog.neoessentials.economy.AuctionManagerNew.getInstance();
-            if (auctionManagerNew != null) {
-                List<String> auctionIds = auctionManagerNew.getActiveAuctions()
-                    .stream()
-                    .map(auction -> auction.getAuctionId().toString())
-                    .limit(20)
-                    .collect(Collectors.toList());
-                
-                // Also provide shortened versions (first 8 characters)
-                List<String> shortIds = auctionManagerNew.getActiveAuctions()
-                    .stream()
-                    .map(auction -> auction.getAuctionId().toString().substring(0, 8))
-                    .limit(20)
-                    .collect(Collectors.toList());
-                
-                auctionIds.addAll(shortIds);
-                return SharedSuggestionProvider.suggest(auctionIds, builder);
-            }
-            
-            // Fallback to legacy auction system
             EconomyManager economyManager = EconomyManager.getInstance();
             if (economyManager != null) {
                 ShopManager shopManager = economyManager.getShopManager();
@@ -599,57 +562,58 @@ public class TabCompletionUtil {
     };
     
     /**
-     * Provides shop category suggestions for the new shop system.
-     */
-    public static final SuggestionProvider<CommandSourceStack> SHOP_CATEGORY_SUGGESTIONS = (context, builder) -> {
-        return SharedSuggestionProvider.suggest(List.of(SHOP_CATEGORIES), builder);
-    };
-    
-    /**
-     * Provides player's shop name suggestions.
-     */
-    public static final SuggestionProvider<CommandSourceStack> PLAYER_SHOP_SUGGESTIONS = (context, builder) -> {
-        try {
-            ServerPlayer player = context.getSource().getPlayerOrException();
-            // TODO: Get actual player shops from ShopManagerNew
-            return SharedSuggestionProvider.suggest(Collections.emptyList(), builder);
-        } catch (Exception e) {
-            return SharedSuggestionProvider.suggest(Collections.emptyList(), builder);
-        }
-    };
-    
-    /**
-     * Provides auction type suggestions for auction commands.
+     * Provides auction type suggestions.
      */
     public static final SuggestionProvider<CommandSourceStack> AUCTION_TYPE_SUGGESTIONS = (context, builder) -> {
-        return SharedSuggestionProvider.suggest(List.of(AUCTION_TYPES), builder);
-    };
-    
-    /**
-     * Provides auction category suggestions for filtering auctions.
-     */
-    public static final SuggestionProvider<CommandSourceStack> AUCTION_CATEGORY_SUGGESTIONS = (context, builder) -> {
-        return SharedSuggestionProvider.suggest(List.of(AUCTION_CATEGORIES), builder);
+        return SharedSuggestionProvider.suggest(AUCTION_TYPES, builder);
     };
     
     /**
      * Provides auction list filter suggestions.
      */
     public static final SuggestionProvider<CommandSourceStack> AUCTION_LIST_FILTER_SUGGESTIONS = (context, builder) -> {
-        return SharedSuggestionProvider.suggest(List.of(AUCTION_CATEGORIES), builder);
+        return SharedSuggestionProvider.suggest(AUCTION_LIST_FILTERS, builder);
     };
     
     /**
-     * Provides stack amount suggestions for item enhancement commands.
+     * Provides shop category suggestions.
+     */
+    public static final SuggestionProvider<CommandSourceStack> SHOP_CATEGORY_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(SHOP_TYPES, builder);
+    };
+    
+    /**
+     * Provides player shop suggestions.
+     */
+    public static final SuggestionProvider<CommandSourceStack> PLAYER_SHOP_SUGGESTIONS = (context, builder) -> {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            // Get shops owned by the player
+            EconomyManager economyManager = EconomyManager.getInstance();
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            List<String> playerShops = shopManager.getPlayerShops(player.getUUID())
+                .stream()
+                .map(Shop::getName)
+                .collect(Collectors.toList());
+            
+            return SharedSuggestionProvider.suggest(playerShops, builder);
+        } catch (Exception e) {
+            return SharedSuggestionProvider.suggest(Collections.emptyList(), builder);
+        }
+    };
+    
+    /**
+     * Provides stack amount suggestions.
      */
     public static final SuggestionProvider<CommandSourceStack> STACK_AMOUNT_SUGGESTIONS = (context, builder) -> {
-        return SharedSuggestionProvider.suggest(List.of(STACK_AMOUNTS), builder);
+        return SharedSuggestionProvider.suggest(STACK_AMOUNTS, builder);
     };
     
     /**
-     * Provides example item name suggestions for item renaming commands.
+     * Provides item name suggestions.
      */
     public static final SuggestionProvider<CommandSourceStack> ITEM_NAME_SUGGESTIONS = (context, builder) -> {
-        return SharedSuggestionProvider.suggest(List.of(EXAMPLE_ITEM_NAMES), builder);
+        return ITEM_SUGGESTIONS.getSuggestions(context, builder);
     };
 }

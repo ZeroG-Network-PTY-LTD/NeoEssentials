@@ -211,15 +211,7 @@ public class AuctionCommands {
             MessageUtil.sendMessage(player, "§e/auction search <item> §7- Search for items");
             MessageUtil.sendMessage(player, "§e/auction watch <id> §7- Watch auction for updates");
             MessageUtil.sendMessage(player, "§e/auction unwatch <id> §7- Stop watching auction");
-            MessageUtil.sendMessage(player, "§e/auction autobid <id> <max> [increment] §7- Set up auto-bidding");
-            MessageUtil.sendMessage(player, "§e/auction autocancel <id> §7- Cancel auto-bidding");
-            MessageUtil.sendMessage(player, "§e/auction autobids §7- List your auto-bids");
-            MessageUtil.sendMessage(player, "§7");
-            MessageUtil.sendMessage(player, "§6Auction Types:");
-            MessageUtil.sendMessage(player, "§7• §eStandard §7- " + getAuctionTypeDescription(Auction.AuctionType.STANDARD));
-            MessageUtil.sendMessage(player, "§7• §eBuy It Now §7- " + getAuctionTypeDescription(Auction.AuctionType.BUY_IT_NOW));
-            MessageUtil.sendMessage(player, "§7• §eReserve §7- " + getAuctionTypeDescription(Auction.AuctionType.RESERVE));
-            MessageUtil.sendMessage(player, "§7• §eDutch §7- " + getAuctionTypeDescription(Auction.AuctionType.DUTCH));
+            MessageUtil.sendMessage(player, "§7Auction Types: standard, buyitnow, reserve, dutch");
             MessageUtil.sendMessage(player, "§7Alias: §e/auc§7 can be used instead of §e/auction");
             return 1;
         } catch (Exception e) {
@@ -490,8 +482,7 @@ public class AuctionCommands {
                 MessageUtil.sendMessage(player, "§7The system will automatically bid for you when outbid, up to your maximum.");
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "Failed to set up auto-bidding.");
-                MessageUtil.sendMessage(player, "§7This could be due to already having an active auto-bid on this auction.");
+                MessageUtil.sendErrorMessage(player, "Auto-bidding feature is not yet implemented. Please check back in a future update.");
                 return 0;
             }
             
@@ -527,8 +518,7 @@ public class AuctionCommands {
                 MessageUtil.sendMessage(player, "§7You will no longer automatically bid on this auction.");
                 return 1;
             } else {
-                MessageUtil.sendErrorMessage(player, "No active auto-bid found for auction ID: " + auctionId);
-                MessageUtil.sendMessage(player, "§7Make sure you have an active auto-bid on this auction.");
+                MessageUtil.sendErrorMessage(player, "Auto-bidding feature is not yet implemented. Please check back in a future update.");
                 return 0;
             }
             
@@ -642,24 +632,11 @@ public class AuctionCommands {
      */
     private String getAuctionTypeDisplayName(Auction.AuctionType type) {
         return switch (type) {
-            case STANDARD -> "Standard Auction";
+            case STANDARD -> "Standard";
             case BUY_IT_NOW -> "Buy It Now";
-            case RESERVE -> "Reserve Auction";
-            case DUTCH -> "Dutch Auction";
+            case RESERVE -> "Reserve";
+            case DUTCH -> "Dutch";
             default -> type.name(); // Fallback to enum name
-        };
-    }
-    
-    /**
-     * Get detailed description of auction type
-     */
-    private String getAuctionTypeDescription(Auction.AuctionType type) {
-        return switch (type) {
-            case STANDARD -> "Normal auction where players bid against each other, highest bid wins";
-            case BUY_IT_NOW -> "Fixed price sale - pay the listed price to buy immediately";
-            case RESERVE -> "Auction with a hidden minimum price that must be met to sell";
-            case DUTCH -> "Price starts high and decreases over time until someone buys";
-            default -> "Unknown auction type";
         };
     }
 }
