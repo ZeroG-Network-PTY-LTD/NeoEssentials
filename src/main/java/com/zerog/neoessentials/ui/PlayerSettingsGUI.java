@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.ui;
 
-import com.zerog.neoessentials.data.DataManager;
+import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.PlayerSettingsManager;
 import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,7 +20,7 @@ public class PlayerSettingsGUI {
      * @param player The player to show the menu to
      */
     public static void showMainMenu(ServerPlayer player) {
-        PlayerSettingsManager settingsManager = DataManager.getInstance().getPlayerSettingsManager();
+        PlayerSettingsManager settingsManager = NeoEssentials.getInstance().getDataManager().getPlayerSettingsManager();
         PlayerSettingsManager.PlayerSettings settings = settingsManager.getPlayerSettings(player);
         
         List<MenuSystem.MenuItem> items = new ArrayList<>();
@@ -89,7 +89,7 @@ public class PlayerSettingsGUI {
      * @param player The player to show the menu to
      */
     public static void showTeleportSettings(ServerPlayer player) {
-        PlayerSettingsManager settingsManager = DataManager.getInstance().getPlayerSettingsManager();
+        PlayerSettingsManager settingsManager = NeoEssentials.getInstance().getDataManager().getPlayerSettingsManager();
         PlayerSettingsManager.PlayerSettings settings = settingsManager.getPlayerSettings(player);
         
         List<MenuSystem.MenuItem> items = new ArrayList<>();
@@ -148,7 +148,7 @@ public class PlayerSettingsGUI {
      * @param player The player to show the menu to
      */
     public static void showInterfaceSettings(ServerPlayer player) {
-        PlayerSettingsManager settingsManager = DataManager.getInstance().getPlayerSettingsManager();
+        PlayerSettingsManager settingsManager = NeoEssentials.getInstance().getDataManager().getPlayerSettingsManager();
         PlayerSettingsManager.PlayerSettings settings = settingsManager.getPlayerSettings(player);
         
         List<MenuSystem.MenuItem> items = new ArrayList<>();
