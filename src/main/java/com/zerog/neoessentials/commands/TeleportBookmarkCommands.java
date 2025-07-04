@@ -281,8 +281,9 @@ public class TeleportBookmarkCommands {
             
             // Find the target dimension
             net.minecraft.server.level.ServerLevel targetLevel = null;
-            if (player.getServer() != null) {
-                for (net.minecraft.server.level.ServerLevel level : player.getServer().getAllLevels()) {
+            var server = player.getServer();
+            if (server != null) {
+                for (net.minecraft.server.level.ServerLevel level : server.getAllLevels()) {
                     if (level.dimension().location().toString().equals(bookmark.dimension)) {
                         targetLevel = level;
                         break;
@@ -358,8 +359,9 @@ public class TeleportBookmarkCommands {
             
             // Find the target dimension
             net.minecraft.server.level.ServerLevel targetLevel = null;
-            if (player.getServer() != null) {
-                for (net.minecraft.server.level.ServerLevel level : player.getServer().getAllLevels()) {
+            var server = player.getServer();
+            if (server != null) {
+                for (net.minecraft.server.level.ServerLevel level : server.getAllLevels()) {
                     if (level.dimension().location().toString().equals(location.getDimension())) {
                         targetLevel = level;
                         break;
