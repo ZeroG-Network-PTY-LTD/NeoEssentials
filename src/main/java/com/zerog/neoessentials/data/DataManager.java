@@ -23,6 +23,8 @@ public class DataManager {    private UserManager userManager;
     private PowerToolManager powerToolManager;
     private MailManager mailManager;
     private BookmarkManager bookmarkManager;
+    private PlayerSettingsManager playerSettingsManager;
+    private TeleportHistoryManager teleportHistoryManager;
     // Use TABLikeTablistManager (enhanced system)
     private com.zerog.neoessentials.ui.tablist.enhanced.TABLikeTablistManager tablistManager;
     
@@ -47,6 +49,8 @@ public class DataManager {    private UserManager userManager;
         powerToolManager = new PowerToolManager(dataFolderFile);
         mailManager = new MailManager(dataFolderFile);
         bookmarkManager = new BookmarkManager();
+        playerSettingsManager = new PlayerSettingsManager();
+        teleportHistoryManager = new TeleportHistoryManager();
         
         // Get the scheduler from NeoEssentials for scheduled tasks like tablist updates
         java.util.concurrent.ScheduledExecutorService scheduler = neoEssentials.getScheduler();
@@ -282,12 +286,30 @@ public class DataManager {    private UserManager userManager;
     }
 
     /**
-     * Gets the bookmark manager instance
+     * Get the bookmark manager
      * 
      * @return The bookmark manager
      */
     public BookmarkManager getBookmarkManager() {
         return bookmarkManager;
+    }
+    
+    /**
+     * Get the player settings manager
+     * 
+     * @return The player settings manager
+     */
+    public PlayerSettingsManager getPlayerSettingsManager() {
+        return playerSettingsManager;
+    }
+    
+    /**
+     * Get the teleport history manager
+     * 
+     * @return The teleport history manager
+     */
+    public TeleportHistoryManager getTeleportHistoryManager() {
+        return teleportHistoryManager;
     }
 
     /**
