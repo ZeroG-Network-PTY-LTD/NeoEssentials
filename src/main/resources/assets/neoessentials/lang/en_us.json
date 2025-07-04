@@ -480,6 +480,7 @@
   "commands.tphistory.export_truncated": "§7... and %s more entries (showing first 20 only)",
   "commands.tpbookmark.added": "Bookmark '%s' added at your current location!",
   "commands.tpbookmark.removed": "Bookmark '%s' removed!",
+  "commands.tpbookmark.remove_failed": "Failed to remove bookmark '%s'!",
   "commands.tpbookmark.not_found": "Bookmark '%s' not found!",
   "commands.tpbookmark.teleported": "Teleported to bookmark '%s'!",
   "commands.tpbookmark.teleport_failed": "Failed to teleport to bookmark '%s'!",
@@ -535,5 +536,23 @@
   "teleport.history.header": "§6=== Teleport History ===",
   "teleport.history.entry": "§7%s. §f%s §7at §f%.1f, %.1f, %.1f §7(§f%s§7)",
   "teleport.history.empty": "§cNo teleport history found.",
-  "teleport.history.cleared": "§aTeleport history cleared!"
+  "teleport.history.cleared": "§aTeleport history cleared!",
+  
+  "settings.teleport_requests.enabled": "§aTeleport requests are now enabled",
+  "settings.teleport_requests.disabled": "§cTeleport requests are now disabled",
+  "settings.join_messages.enabled": "§aJoin messages are now enabled",
+  "settings.join_messages.disabled": "§cJoin messages are now disabled",
+  "settings.leave_messages.enabled": "§aLeave messages are now enabled",
+  "settings.leave_messages.disabled": "§cLeave messages are now disabled",
+  "settings.system_messages.enabled": "§aSystem messages are now enabled",
+  "settings.system_messages.disabled": "§cSystem messages are now disabled",
+  "settings.economy_messages.enabled": "§aEconomy messages are now enabled",
+  "settings.economy_messages.disabled": "§cEconomy messages are now disabled",
+  "settings.afk_mode.enabled": "§aAFK mode is now enabled",
+  "settings.afk_mode.disabled": "§cAFK mode is now disabled",
+  "settings.player_locations.enabled": "§aPlayer location sharing is now enabled",
+  "settings.player_locations.disabled": "§cPlayer location sharing is now disabled",
+  "settings.data_collection.enabled": "§aData collection is now enabled",
+  "settings.data_collection.disabled": "§cData collection is now disabled",
+  "settings.currency.set": "§aPreferred currency set to: §e%s"
 }
