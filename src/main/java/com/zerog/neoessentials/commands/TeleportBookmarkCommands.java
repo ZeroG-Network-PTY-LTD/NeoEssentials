@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.BookmarkManager;
+import com.zerog.neoessentials.ui.TeleportHistoryGUI;
 import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.utils.TeleportUtil;
@@ -321,12 +322,10 @@ public class TeleportBookmarkCommands {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
             
-            // For now, show the enhanced text version
-            // TODO: Re-enable GUI when TeleportHistoryGUI is working
-            LanguageUtil.sendMessage(player, "§6=== Interactive Teleport History ===");
-            LanguageUtil.sendMessage(player, "§7Click on entries to teleport instantly!");
+            // Show the MenuSystem-based GUI
+            TeleportHistoryGUI.showFirstPage(player);
             
-            return showTeleportHistory(context);
+            return 1;
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error showing teleport history GUI: {}", e.getMessage());
             return 0;
