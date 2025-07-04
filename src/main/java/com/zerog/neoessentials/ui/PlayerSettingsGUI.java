@@ -191,7 +191,7 @@ public class PlayerSettingsGUI {
      * @param player The player to show the menu to
      */
     public static void showEconomySettings(ServerPlayer player) {
-        PlayerSettingsManager settingsManager = DataManager.getInstance().getPlayerSettingsManager();
+        PlayerSettingsManager settingsManager = NeoEssentials.getInstance().getDataManager().getPlayerSettingsManager();
         PlayerSettingsManager.PlayerSettings settings = settingsManager.getPlayerSettings(player);
         
         List<MenuSystem.MenuItem> items = new ArrayList<>();
@@ -234,7 +234,7 @@ public class PlayerSettingsGUI {
      * @param player The player to show the menu to
      */
     public static void showPrivacySettings(ServerPlayer player) {
-        PlayerSettingsManager settingsManager = DataManager.getInstance().getPlayerSettingsManager();
+        PlayerSettingsManager settingsManager = NeoEssentials.getInstance().getDataManager().getPlayerSettingsManager();
         PlayerSettingsManager.PlayerSettings settings = settingsManager.getPlayerSettings(player);
         
         List<MenuSystem.MenuItem> items = new ArrayList<>();
@@ -278,7 +278,7 @@ public class PlayerSettingsGUI {
      * @param player The player to show the menu to
      */
     public static void showAdvancedSettings(ServerPlayer player) {
-        PlayerSettingsManager settingsManager = DataManager.getInstance().getPlayerSettingsManager();
+        PlayerSettingsManager settingsManager = NeoEssentials.getInstance().getDataManager().getPlayerSettingsManager();
         PlayerSettingsManager.PlayerSettings settings = settingsManager.getPlayerSettings(player);
         
         List<MenuSystem.MenuItem> items = new ArrayList<>();
