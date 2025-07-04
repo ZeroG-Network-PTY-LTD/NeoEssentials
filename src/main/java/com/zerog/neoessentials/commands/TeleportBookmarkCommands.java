@@ -95,6 +95,11 @@ public class TeleportBookmarkCommands {
                                 .executes(this::teleportToBookmark)
                         )
                 )
+                .then(
+                    // /tpbookmark gui - Show GUI for bookmark management
+                    Commands.literal("gui")
+                        .executes(this::showBookmarkGUI)
+                )
         );
     }
 
@@ -510,6 +515,80 @@ public class TeleportBookmarkCommands {
             return minutes + "m ago";
         } else {
             return seconds + "s ago";
+        }
+    }
+    
+    /**
+     * Shows the bookmark GUI interface.
+     */
+    private int showBookmarkGUI(CommandContext<CommandSourceStack> context) {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            
+            // Show the bookmark GUI with page 1
+            com.zerog.neoessentials.ui.BookmarkGUI.showBookmarkMenu(player, 1);
+            
+            return 1;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error showing bookmark GUI: {}", e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Shows a specific page of the bookmark GUI.
+     */
+    private int showBookmarkGUIPage(CommandContext<CommandSourceStack> context) {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            int page = IntegerArgumentType.getInteger(context, "page");
+            
+            if (page < 1) {
+                LanguageUtil.sendErrorMessage(player, "Page number must be positive!");
+                return 0;
+            }
+            
+            // Show the specified page
+            com.zerog.neoessentials.ui.BookmarkGUI.showBookmarkMenu(player, page);
+            
+            return 1;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error showing bookmark GUI page: {}", e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Confirms removal of a bookmark.
+     */
+    private int confirmRemoveBookmark(CommandContext<CommandSourceStack> context) {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            String bookmarkName = StringArgumentType.getString(context, "name");
+            
+            BookmarkManager bookmarkManager = NeoEssentials.getInstance().getDataManager().getBookmarkManager();
+            
+            // Check if bookmark exists
+            if (!bookmarkManager.hasBookmark(player.getUUID(), bookmarkName)) {
+                LanguageUtil.sendMessage(player, "commands.tpbookmark.not_found", bookmarkName);
+                return 0;
+            }
+            
+            // Remove the bookmark
+            if (bookmarkManager.removeBookmark(player.getUUID(), bookmarkName)) {
+                LanguageUtil.sendMessage(player, "commands.tpbookmark.removed", bookmarkName);
+                
+                // Show updated GUI if they want to continue managing bookmarks
+                LanguageUtil.sendMessage(player, "&7Type &e/tpbookmark gui &7to manage more bookmarks");
+            } else {
+                LanguageUtil.sendErrorMessage(player, "Failed to remove bookmark '" + bookmarkName + "'");
+                return 0;
+            }
+            
+            return 1;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error confirming bookmark removal: {}", e.getMessage());
+            return 0;
         }
     }
 }
