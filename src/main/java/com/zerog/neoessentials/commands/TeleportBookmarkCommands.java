@@ -99,6 +99,22 @@ public class TeleportBookmarkCommands {
                     // /tpbookmark gui - Show GUI for bookmark management
                     Commands.literal("gui")
                         .executes(this::showBookmarkGUI)
+                        .then(
+                            // /tpbookmark gui page <number> - Show specific page
+                            Commands.literal("page")
+                                .then(
+                                    Commands.argument("page", IntegerArgumentType.integer(1))
+                                        .executes(this::showBookmarkGUIPage)
+                                )
+                        )
+                )
+                .then(
+                    // /tpbookmark confirm-remove <name> - Confirm bookmark removal
+                    Commands.literal("confirm-remove")
+                        .then(
+                            Commands.argument("name", StringArgumentType.string())
+                                .executes(this::confirmRemoveBookmark)
+                        )
                 )
         );
     }
@@ -569,7 +585,7 @@ public class TeleportBookmarkCommands {
             BookmarkManager bookmarkManager = NeoEssentials.getInstance().getDataManager().getBookmarkManager();
             
             // Check if bookmark exists
-            if (!bookmarkManager.hasBookmark(player.getUUID(), bookmarkName)) {
+            if (bookmarkManager.getBookmark(player.getUUID(), bookmarkName) == null) {
                 LanguageUtil.sendMessage(player, "commands.tpbookmark.not_found", bookmarkName);
                 return 0;
             }
