@@ -45,14 +45,8 @@ public class TeleportHistoryGUI {
         // Convert history to menu items
         List<MenuSystem.MenuItem> items = createHistoryMenuItems(history, player);
         
-        // Create and show the menu
-        MenuSystem.builder()
-            .title("Teleport History")
-            .items(items)
-            .itemsPerPage(ITEMS_PER_PAGE)
-            .showPageNumbers(true)
-            .back("/tphistory", "&8[&7Back to Commands&8]", "&7Click to return to teleport commands")
-            .show(player, page);
+        // Create and show the menu using our custom implementation
+        showCustomTeleportHistoryMenu(player, page, items);
     }
     
     /**
@@ -189,5 +183,74 @@ public class TeleportHistoryGUI {
      */
     public static void showFirstPage(ServerPlayer player) {
         show(player, 1);
+    }
+    
+    /**
+     * Shows a custom teleport history menu with proper navigation commands.
+     * 
+     * @param player The player to show the menu to
+     * @param page The page number to show
+     * @param items The menu items to display
+     */
+    private static void showCustomTeleportHistoryMenu(ServerPlayer player, int page, List<MenuSystem.MenuItem> items) {
+        // Calculate total pages
+        int totalPages = (int) Math.ceil((double) items.size() / ITEMS_PER_PAGE);
+        
+        // Ensure page is in valid range
+        page = Math.max(1, Math.min(page, totalPages));
+        
+        // Send header
+        String headerText = "&6====== &lTeleport History&r &6======";
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageUtil.formatText(headerText)));
+        
+        // Show page numbers if needed
+        if (totalPages > 1) {
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageUtil.formatText(
+                    "&7Page &e" + page + "&7/&e" + totalPages)));
+        }
+        
+        // Send items for this page
+        int startIndex = (page - 1) * ITEMS_PER_PAGE;
+        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, items.size());
+        
+        if (items.isEmpty()) {
+            // No items to display
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageUtil.formatText("&7No teleport history to display.")));
+        } else {
+            // Display items for this page
+            for (int i = startIndex; i < endIndex; i++) {
+                MenuSystem.MenuItem item = items.get(i);
+                player.sendSystemMessage(item.getFormattedComponent());
+            }
+        }
+        
+        // Add navigation if needed
+        if (totalPages > 1) {
+            net.minecraft.network.chat.MutableComponent navigation = net.minecraft.network.chat.Component.literal("");
+            
+            // Previous page button
+            if (page > 1) {
+                MenuSystem.MenuItem prevPageItem = new MenuSystem.MenuItem("&8[&aPrevious Page&8] ", 
+                        "/tphistory gui page " + (page - 1), "&7Click to go to the previous page");
+                navigation.append(prevPageItem.getFormattedComponent()).append(" ");
+            }
+            
+            // Next page button
+            if (page < totalPages) {
+                MenuSystem.MenuItem nextPageItem = new MenuSystem.MenuItem("&8[&aNext Page&8]", 
+                        "/tphistory gui page " + (page + 1), "&7Click to go to the next page");
+                navigation.append(nextPageItem.getFormattedComponent());
+            }
+            
+            player.sendSystemMessage(navigation);
+        }
+        
+        // Back button
+        MenuSystem.MenuItem backItem = new MenuSystem.MenuItem("&8[&7Back to Commands&8]", "/tphistory", "&7Click to return to teleport commands");
+        player.sendSystemMessage(backItem.getFormattedComponent());
+        
+        // Send footer
+        String footerText = "&6===================================";
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageUtil.formatText(footerText)));
     }
 }

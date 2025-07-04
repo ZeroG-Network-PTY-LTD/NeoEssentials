@@ -8,6 +8,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.PlayerSettingsManager;
+import com.zerog.neoessentials.ui.PlayerSettingsGUI;
 import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -136,6 +137,96 @@ public class PlayerSettingsCommands {
         dispatcher.register(Commands.literal("preferences")
             .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.settings"))
             .executes(PlayerSettingsCommands::showSettingsMenu)
+        );
+        
+        // Player settings GUI command
+        dispatcher.register(Commands.literal("playersettings")
+            .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.settings"))
+            .executes(PlayerSettingsCommands::showSettingsMenu)
+            .then(Commands.literal("gui")
+                .executes(PlayerSettingsCommands::showPlayerSettingsGUI)
+                .then(Commands.literal("teleport")
+                    .executes(PlayerSettingsCommands::showTeleportSettingsGUI)
+                )
+                .then(Commands.literal("interface")
+                    .executes(PlayerSettingsCommands::showInterfaceSettingsGUI)
+                )
+                .then(Commands.literal("messages")
+                    .executes(PlayerSettingsCommands::showMessageSettingsGUI)
+                )
+                .then(Commands.literal("economy")
+                    .executes(PlayerSettingsCommands::showEconomySettingsGUI)
+                )
+                .then(Commands.literal("privacy")
+                    .executes(PlayerSettingsCommands::showPrivacySettingsGUI)
+                )
+                .then(Commands.literal("advanced")
+                    .executes(PlayerSettingsCommands::showAdvancedSettingsGUI)
+                )
+            )
+            .then(Commands.literal("set")
+                .then(Commands.literal("autoRecordTeleports")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(PlayerSettingsCommands::setAutoRecordTeleportsFromGUI)
+                    )
+                )
+                .then(Commands.literal("teleportConfirmations")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(PlayerSettingsCommands::setTeleportConfirmationsFromGUI)
+                    )
+                )
+                .then(Commands.literal("showTeleportMessages")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(PlayerSettingsCommands::setTeleportMessagesFromGUI)
+                    )
+                )
+                .then(Commands.literal("allowTeleportRequests")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(PlayerSettingsCommands::setAllowTeleportRequestsFromGUI)
+                    )
+                )
+                .then(Commands.literal("preferGUIInterfaces")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(PlayerSettingsCommands::setPreferGUIFromGUI)
+                    )
+                )
+                .then(Commands.literal("guiTheme")
+                    .then(Commands.argument("theme", StringArgumentType.string())
+                        .executes(PlayerSettingsCommands::setGUIThemeFromGUI)
+                    )
+                )
+                .then(Commands.literal("showJoinMessages")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(PlayerSettingsCommands::setShowJoinMessagesFromGUI)
+                    )
+                )
+                .then(Commands.literal("showLeaveMessages")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(PlayerSettingsCommands::setShowLeaveMessagesFromGUI)
+                    )
+                )
+                .then(Commands.literal("enableAFKMode")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(PlayerSettingsCommands::setEnableAFKModeFromGUI)
+                    )
+                )
+                .then(Commands.literal("showPlayerLocations")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(PlayerSettingsCommands::setShowPlayerLocationsFromGUI)
+                    )
+                )
+                .then(Commands.literal("allowDataCollection")
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(PlayerSettingsCommands::setAllowDataCollectionFromGUI)
+                    )
+                )
+            )
+            .then(Commands.literal("reset")
+                .then(Commands.literal("confirm")
+                    .executes(PlayerSettingsCommands::resetSettingsConfirm)
+                )
+                .executes(PlayerSettingsCommands::resetSettingsPrompt)
+            )
         );
     }
     
@@ -584,6 +675,186 @@ public class PlayerSettingsCommands {
         settingsManager.updatePlayerSettings(player, settings);
         
         LanguageUtil.sendMessage(player, "§aSetting updated: " + newValue);
+        return 1;
+    }
+    
+    // GUI Command Handlers
+    
+    /**
+     * Shows the main player settings GUI
+     */
+    private static int showPlayerSettingsGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        PlayerSettingsGUI.showMainMenu(player);
+        return 1;
+    }
+    
+    /**
+     * Shows the teleport settings GUI submenu
+     */
+    private static int showTeleportSettingsGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        PlayerSettingsGUI.showTeleportSettings(player);
+        return 1;
+    }
+    
+    /**
+     * Shows the interface settings GUI submenu
+     */
+    private static int showInterfaceSettingsGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        PlayerSettingsGUI.showInterfaceSettings(player);
+        return 1;
+    }
+    
+    /**
+     * Shows the message settings GUI submenu
+     */
+    private static int showMessageSettingsGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        PlayerSettingsGUI.showMessageSettings(player);
+        return 1;
+    }
+    
+    /**
+     * Shows the economy settings GUI submenu
+     */
+    private static int showEconomySettingsGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        PlayerSettingsGUI.showEconomySettings(player);
+        return 1;
+    }
+    
+    /**
+     * Shows the privacy settings GUI submenu
+     */
+    private static int showPrivacySettingsGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        PlayerSettingsGUI.showPrivacySettings(player);
+        return 1;
+    }
+    
+    /**
+     * Shows the advanced settings GUI submenu
+     */
+    private static int showAdvancedSettingsGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        PlayerSettingsGUI.showAdvancedSettings(player);
+        return 1;
+    }
+    
+    // GUI Setting Commands (with automatic menu refresh)
+    
+    private static int setAutoRecordTeleportsFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        int result = setAutoRecordTeleports(context);
+        if (result > 0) {
+            // Refresh the teleport settings menu
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            PlayerSettingsGUI.showTeleportSettings(player);
+        }
+        return result;
+    }
+    
+    private static int setTeleportConfirmationsFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        int result = setTeleportConfirmations(context);
+        if (result > 0) {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            PlayerSettingsGUI.showTeleportSettings(player);
+        }
+        return result;
+    }
+    
+    private static int setTeleportMessagesFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        int result = setTeleportMessages(context);
+        if (result > 0) {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            PlayerSettingsGUI.showTeleportSettings(player);
+        }
+        return result;
+    }
+    
+    private static int setAllowTeleportRequestsFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        boolean enabled = BoolArgumentType.getBool(context, "enabled");
+        
+        PlayerSettingsManager settingsManager = NeoEssentials.getInstance().getDataManager().getPlayerSettingsManager();
+        PlayerSettingsManager.PlayerSettings settings = settingsManager.getPlayerSettings(player);
+        
+        settings.setAllowTeleportRequests(enabled);
+        // Settings are automatically saved by the manager
+        
+        String status = enabled ? "enabled" : "disabled";
+        LanguageUtil.sendMessage(player, "settings.teleport_requests." + status);
+        
+        // Refresh the teleport settings menu
+        PlayerSettingsGUI.showTeleportSettings(player);
+        return 1;
+    }
+    
+    private static int setPreferGUIFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        int result = setPreferGUI(context);
+        if (result > 0) {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            PlayerSettingsGUI.showInterfaceSettings(player);
+        }
+        return result;
+    }
+    
+    private static int setGUIThemeFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        int result = setGUITheme(context);
+        if (result > 0) {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            PlayerSettingsGUI.showInterfaceSettings(player);
+        }
+        return result;
+    }
+    
+    private static int setShowJoinMessagesFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        LanguageUtil.sendMessage(player, "§eThis setting is not yet implemented in the GUI.");
+        PlayerSettingsGUI.showMessageSettings(player);
+        return 1;
+    }
+    
+    private static int setShowLeaveMessagesFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        LanguageUtil.sendMessage(player, "§eThis setting is not yet implemented in the GUI.");
+        PlayerSettingsGUI.showMessageSettings(player);
+        return 1;
+    }
+    
+    private static int setEnableAFKModeFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        LanguageUtil.sendMessage(player, "§eThis setting is not yet implemented in the GUI.");
+        PlayerSettingsGUI.showAdvancedSettings(player);
+        return 1;
+    }
+    
+    private static int setShowPlayerLocationsFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        LanguageUtil.sendMessage(player, "§eThis setting is not yet implemented in the GUI.");
+        PlayerSettingsGUI.showPrivacySettings(player);
+        return 1;
+    }
+    
+    private static int setAllowDataCollectionFromGUI(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        LanguageUtil.sendMessage(player, "§eThis setting is not yet implemented in the GUI.");
+        PlayerSettingsGUI.showPrivacySettings(player);
+        return 1;
+    }
+    
+    private static int resetSettingsPrompt(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        LanguageUtil.sendMessage(player, "§eAre you sure you want to reset all settings to defaults?");
+        LanguageUtil.sendMessage(player, "§7Type §e/playersettings reset confirm §7to proceed.");
+        return 1;
+    }
+    
+    private static int resetSettingsConfirm(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        LanguageUtil.sendMessage(player, "§eSettings reset functionality not yet implemented.");
+        PlayerSettingsGUI.showMainMenu(player);
         return 1;
     }
 }
