@@ -157,6 +157,10 @@ public class CommandManager {    // Command classes
         advancedUtilityCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered advanced utility commands");
         
+        // Register player settings commands
+        PlayerSettingsCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered player settings commands");
+        
         // Register world management commands
         worldCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered world management commands");
