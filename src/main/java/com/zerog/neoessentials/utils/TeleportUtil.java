@@ -57,8 +57,8 @@ public class TeleportUtil {
             // Save the player's current location
             saveLastLocation(player);
             
-            // Record position for /back command
-            TeleportHistory.recordPosition(player);
+            // Record position for /back command using the new persistent history manager
+            NeoEssentials.getInstance().getDataManager().getTeleportHistoryManager().recordPosition(player);
             
             // Perform the teleport
             player.teleportTo(level, x, y, z, yaw, pitch);

@@ -8,7 +8,7 @@ import com.zerog.neoessentials.data.SpawnManager;
 import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.utils.TeleportUtil;
-import com.zerog.neoessentials.utils.TeleportHistory;
+import com.zerog.neoessentials.data.TeleportHistoryManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -122,8 +122,9 @@ public class TeleportCommands {
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
-                    // Try to teleport using the history stack first
-                    boolean success = TeleportHistory.teleportBack(player);
+                    // Try to teleport using the new history manager
+                    TeleportHistoryManager historyManager = NeoEssentials.getInstance().getDataManager().getTeleportHistoryManager();
+                    boolean success = historyManager.teleportBack(player);
                     
                     // Fall back to the old method if we have no history
                     if (!success) {
@@ -203,7 +204,8 @@ public class TeleportCommands {
                     int topY = findHighestBlock(level, x, z);
                     
                     // Record current position for /back
-                    TeleportHistory.recordPosition(player);
+                    TeleportHistoryManager historyManager = NeoEssentials.getInstance().getDataManager().getTeleportHistoryManager();
+                    historyManager.recordPosition(player);
                     
                     // Teleport to the top
                     boolean success = TeleportUtil.teleport(player, level, x + 0.5, topY, z + 0.5, player.getYRot(), player.getXRot());
@@ -231,7 +233,8 @@ public class TeleportCommands {
                     int bottomY = findLowestBlock(level, x, z);
                     
                     // Record current position for /back
-                    TeleportHistory.recordPosition(player);
+                    TeleportHistoryManager historyManager = NeoEssentials.getInstance().getDataManager().getTeleportHistoryManager();
+                    historyManager.recordPosition(player);
                     
                     // Teleport to the bottom
                     boolean success = TeleportUtil.teleport(player, level, x + 0.5, bottomY, z + 0.5, player.getYRot(), player.getXRot());

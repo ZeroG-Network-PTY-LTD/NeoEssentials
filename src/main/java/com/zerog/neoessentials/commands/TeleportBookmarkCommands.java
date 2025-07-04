@@ -76,10 +76,41 @@ public class TeleportBookmarkCommands {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
             
-            // This is a simplified version - in a full implementation you'd want to 
-            // extend TeleportHistory to provide a method to get history for display
+            var historyManager = NeoEssentials.getInstance().getDataManager().getTeleportHistoryManager();
+            var history = historyManager.getPlayerHistory(player.getUUID());
+            
+            if (history.isEmpty()) {
+                LanguageUtil.sendMessage(player, "commands.tphistory.no_history");
+                return 0;
+            }
+            
             LanguageUtil.sendMessage(player, "commands.tphistory.header");
-            LanguageUtil.sendMessage(player, "§7Use /back to return to your previous location.");
+            
+            // Show up to 10 most recent locations
+            int count = 0;
+            for (var location : history) {
+                if (count >= 10) break;
+                count++;
+                
+                // Format the timestamp
+                long timeDiff = System.currentTimeMillis() - location.getTimestamp();
+                String timeAgo = formatTimeAgo(timeDiff);
+                
+                // Format coordinates
+                String coords = String.format("%.1f, %.1f, %.1f", 
+                    location.getX(), location.getY(), location.getZ());
+                
+                // Get dimension name (extract just the dimension name from the full path)
+                String dimName = location.getDimension();
+                if (dimName.contains(":")) {
+                    dimName = dimName.substring(dimName.lastIndexOf(':') + 1);
+                }
+                
+                LanguageUtil.sendMessage(player, "commands.tphistory.entry", 
+                    String.valueOf(count), coords, dimName, timeAgo);
+            }
+            
+            LanguageUtil.sendMessage(player, "commands.tphistory.footer");
             
             return 1;
         } catch (Exception e) {
@@ -228,6 +259,9 @@ public class TeleportBookmarkCommands {
                         break;
                     }
                 }
+            } else {
+                LanguageUtil.sendErrorMessage(player, "commands.tpbookmark.server_not_available");
+                return 0;
             }
             
             if (targetLevel == null) {
@@ -249,6 +283,29 @@ public class TeleportBookmarkCommands {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error teleporting to bookmark: {}", e.getMessage());
             return 0;
+        }
+    }
+    
+    /**
+     * Formats a time difference into a human-readable string.
+     * 
+     * @param timeDiff Time difference in milliseconds
+     * @return Formatted time string (e.g., "5m ago", "2h ago", "3d ago")
+     */
+    private String formatTimeAgo(long timeDiff) {
+        long seconds = timeDiff / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+        
+        if (days > 0) {
+            return days + "d ago";
+        } else if (hours > 0) {
+            return hours + "h ago";
+        } else if (minutes > 0) {
+            return minutes + "m ago";
+        } else {
+            return seconds + "s ago";
         }
     }
 }

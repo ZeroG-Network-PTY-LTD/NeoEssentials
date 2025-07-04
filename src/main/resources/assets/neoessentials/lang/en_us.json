@@ -466,6 +466,9 @@
   "commands.world.spawn.invalid": "Invalid world specified!",
   
   "commands.tphistory.header": "§6=== Teleport History ===",
+  "commands.tphistory.no_history": "§7You don't have any teleport history yet!",
+  "commands.tphistory.entry": "§e%s. §7%s §8(%s) §7- %s",
+  "commands.tphistory.footer": "§7Use /back to return to your previous location.",
   "commands.tpbookmark.added": "Bookmark '%s' added at your current location!",
   "commands.tpbookmark.removed": "Bookmark '%s' removed!",
   "commands.tpbookmark.not_found": "Bookmark '%s' not found!",
@@ -478,6 +481,7 @@
   "commands.tpbookmark.list.header": "§6=== Your Bookmarks ===",
   "commands.tpbookmark.list.footer": "§7Total: %s/%s bookmarks",
   "commands.tpbookmark.dimension_not_found": "Dimension '%s' not found!",
+  "commands.tpbookmark.server_not_available": "Server is not available for teleportation!",
   
   "commands.serverinfo.header": "§6=== Server Information ===",
   "commands.ping.self": "Your ping: %sms",
@@ -488,5 +492,39 @@
   "commands.sudo.executed": "Executed '%s' as %s",
   "commands.workbench.opened": "Opened crafting table!",
   "commands.enderchest.opened": "Opened your ender chest!",
-  "commands.enderchest.opened.other": "Opened %s's ender chest!"
+  "commands.enderchest.opened.other": "Opened %s's ender chest!",
+  
+  "settings.menu.header": "§6=== Player Settings ===",
+  "settings.menu.footer": "§7Use '/settings help' for command syntax",
+  "settings.menu.teleport.header": "§e--- Teleport Settings ---",
+  "settings.menu.teleport.auto_record": "§7Auto-record teleports: §f%s",
+  "settings.menu.teleport.confirmations": "§7Teleport confirmations: §f%s",
+  "settings.menu.teleport.history_limit": "§7History limit: §f%s",
+  "settings.menu.teleport.messages": "§7Teleport messages: §f%s",
+  "settings.menu.gui.header": "§e--- GUI Settings ---",
+  "settings.menu.gui.prefer": "§7Prefer GUI interfaces: §f%s",
+  "settings.menu.gui.theme": "§7GUI theme: §f%s",
+  "settings.menu.messages.header": "§e--- Message Settings ---",
+  "settings.menu.messages.economy": "§7Economy messages: §f%s",
+  "settings.menu.messages.system": "§7System messages: §f%s",
+  "settings.menu.economy.header": "§e--- Economy Settings ---",
+  "settings.menu.economy.auto_confirm": "§7Auto-confirm payments: §f%s",
+  "settings.menu.economy.currency": "§7Preferred currency: §f%s",
+  "settings.menu.privacy.header": "§e--- Privacy Settings ---",
+  "settings.menu.privacy.teleport_requests": "§7Allow teleport requests: §f%s",
+  "settings.menu.privacy.online_status": "§7Show online status: §f%s",
+  "settings.menu.privacy.player_info": "§7Allow player info access: §f%s",
+  
+  "settings.help.header": "§6=== Player Settings Help ===",
+  "settings.help.usage": "§7Usage: /settings <category> <setting> [value]",
+  "settings.help.examples": "§7Examples: /settings teleport auto-record true, /settings gui theme dark",
+  "settings.help.footer": "§7Categories: teleport, gui, messages, economy, privacy",
+  
+  "settings.reset.success": "§aAll settings have been reset to defaults!",
+  "settings.export.header": "§6=== Settings Export ===",
+  
+  "teleport.history.header": "§6=== Teleport History ===",
+  "teleport.history.entry": "§7%s. §f%s §7at §f%.1f, %.1f, %.1f §7(§f%s§7)",
+  "teleport.history.empty": "§cNo teleport history found.",
+  "teleport.history.cleared": "§aTeleport history cleared!"
 }
