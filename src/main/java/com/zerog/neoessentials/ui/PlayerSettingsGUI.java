@@ -414,4 +414,54 @@ public class PlayerSettingsGUI {
             .back("/playersettings gui economy", "&7Back to Economy Settings", "&7Return to economy settings menu")
             .show(player, 1);
     }
+    
+    /**
+     * Shows the message settings submenu
+     * 
+     * @param player The player to show the menu to
+     */
+    public static void showMessageSettings(ServerPlayer player) {
+        PlayerSettingsManager settingsManager = NeoEssentials.getInstance().getDataManager().getPlayerSettingsManager();
+        PlayerSettingsManager.PlayerSettings settings = settingsManager.getPlayerSettings(player);
+        
+        List<MenuSystem.MenuItem> items = new ArrayList<>();
+        
+        // Show join messages setting (placeholder)
+        items.add(new MenuSystem.MenuItem(
+            "&e📥 Join Messages: &7Not Yet Available",
+            "/playersettings set showJoinMessages true",
+            "&7This setting will be available in a future update"
+        ));
+        
+        // Show leave messages setting (placeholder)
+        items.add(new MenuSystem.MenuItem(
+            "&c📤 Leave Messages: &7Not Yet Available",
+            "/playersettings set showLeaveMessages true",
+            "&7This setting will be available in a future update"
+        ));
+        
+        // Show system messages setting
+        String systemStatus = settings.isShowSystemMessages() ? "&aEnabled" : "&cDisabled";
+        items.add(new MenuSystem.MenuItem(
+            "&6📋 System Messages: " + systemStatus,
+            "/playersettings set showSystemMessages " + !settings.isShowSystemMessages(),
+            "&7Toggle system status and information messages"
+        ));
+        
+        // Show economy messages setting
+        String economyStatus = settings.isShowEconomyMessages() ? "&aEnabled" : "&cDisabled";
+        items.add(new MenuSystem.MenuItem(
+            "&a💰 Economy Messages: " + economyStatus,
+            "/playersettings set showEconomyMessages " + !settings.isShowEconomyMessages(),
+            "&7Toggle economy transaction and status messages"
+        ));
+        
+        MenuSystem.builder()
+            .title("Chat & Message Settings")
+            .items(items)
+            .itemsPerPage(8)
+            .showPageNumbers(false)
+            .back("/playersettings gui", "&7Back to Main Menu", "&7Return to the main settings menu")
+            .show(player, 1);
+    }
 }
