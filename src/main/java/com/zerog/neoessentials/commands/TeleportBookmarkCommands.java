@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.NeoEssentials;
@@ -26,11 +27,38 @@ public class TeleportBookmarkCommands {
      * @param dispatcher The command dispatcher to register commands with
      */
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // /tphistory - Show teleport history
+        // /tphistory - Show teleport history with subcommands
         dispatcher.register(
             Commands.literal("tphistory")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.tphistory"))
                 .executes(this::showTeleportHistory)
+                .then(
+                    // /tphistory gui - Show GUI version
+                    Commands.literal("gui")
+                        .executes(this::showTeleportHistoryGUI)
+                )
+                .then(
+                    // /tphistory teleport <index> - Teleport to specific history entry
+                    Commands.literal("teleport")
+                        .then(
+                            Commands.argument("index", IntegerArgumentType.integer(0))
+                                .executes(this::teleportToHistoryEntry)
+                        )
+                )
+                .then(
+                    // /tphistory clear [confirm] - Clear history
+                    Commands.literal("clear")
+                        .executes(this::clearHistoryPrompt)
+                        .then(
+                            Commands.literal("confirm")
+                                .executes(this::clearHistoryConfirm)
+                        )
+                )
+                .then(
+                    // /tphistory export - Export history to text
+                    Commands.literal("export")
+                        .executes(this::exportHistory)
+                )
         );
         
         // /tpbookmark commands
@@ -282,6 +310,181 @@ public class TeleportBookmarkCommands {
             return success ? 1 : 0;
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error teleporting to bookmark: {}", e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Shows the teleport history GUI (fallback to text for now)
+     */
+    private int showTeleportHistoryGUI(CommandContext<CommandSourceStack> context) {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            
+            // For now, show the enhanced text version
+            // TODO: Re-enable GUI when TeleportHistoryGUI is working
+            LanguageUtil.sendMessage(player, "§6=== Interactive Teleport History ===");
+            LanguageUtil.sendMessage(player, "§7Click on entries to teleport instantly!");
+            
+            return showTeleportHistory(context);
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error showing teleport history GUI: {}", e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Teleports to a specific history entry by index
+     */
+    private int teleportToHistoryEntry(CommandContext<CommandSourceStack> context) {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            int index = IntegerArgumentType.getInteger(context, "index");
+            
+            var historyManager = NeoEssentials.getInstance().getDataManager().getTeleportHistoryManager();
+            var history = historyManager.getPlayerHistory(player.getUUID());
+            
+            if (history.isEmpty()) {
+                LanguageUtil.sendMessage(player, "commands.tphistory.no_history");
+                return 0;
+            }
+            
+            if (index >= history.size()) {
+                LanguageUtil.sendErrorMessage(player, "commands.tphistory.invalid_index", 
+                    String.valueOf(index), String.valueOf(history.size() - 1));
+                return 0;
+            }
+            
+            var location = history.get(index);
+            
+            // Find the target dimension
+            net.minecraft.server.level.ServerLevel targetLevel = null;
+            if (player.getServer() != null) {
+                for (net.minecraft.server.level.ServerLevel level : player.getServer().getAllLevels()) {
+                    if (level.dimension().location().toString().equals(location.getDimension())) {
+                        targetLevel = level;
+                        break;
+                    }
+                }
+            } else {
+                LanguageUtil.sendErrorMessage(player, "commands.tpbookmark.server_not_available");
+                return 0;
+            }
+            
+            if (targetLevel == null) {
+                LanguageUtil.sendErrorMessage(player, "commands.tphistory.dimension_not_found", location.getDimension());
+                return 0;
+            }
+            
+            // Teleport the player
+            boolean success = TeleportUtil.teleport(player, targetLevel, 
+                location.getX(), location.getY(), location.getZ(), 
+                location.getYaw(), location.getPitch());
+            
+            if (success) {
+                LanguageUtil.sendMessage(player, "commands.tphistory.teleported", String.valueOf(index + 1));
+            } else {
+                LanguageUtil.sendErrorMessage(player, "commands.tphistory.teleport_failed", String.valueOf(index + 1));
+            }
+            
+            return success ? 1 : 0;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error teleporting to history entry: {}", e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Shows clear history prompt
+     */
+    private int clearHistoryPrompt(CommandContext<CommandSourceStack> context) {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            
+            var historyManager = NeoEssentials.getInstance().getDataManager().getTeleportHistoryManager();
+            var history = historyManager.getPlayerHistory(player.getUUID());
+            
+            if (history.isEmpty()) {
+                LanguageUtil.sendMessage(player, "commands.tphistory.no_history");
+                return 0;
+            }
+            
+            LanguageUtil.sendMessage(player, "commands.tphistory.clear_prompt", String.valueOf(history.size()));
+            LanguageUtil.sendMessage(player, "commands.tphistory.clear_confirm_instruction");
+            
+            return 1;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error showing clear history prompt: {}", e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Confirms and clears teleport history
+     */
+    private int clearHistoryConfirm(CommandContext<CommandSourceStack> context) {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            
+            var historyManager = NeoEssentials.getInstance().getDataManager().getTeleportHistoryManager();
+            var history = historyManager.getPlayerHistory(player.getUUID());
+            
+            if (history.isEmpty()) {
+                LanguageUtil.sendMessage(player, "commands.tphistory.no_history");
+                return 0;
+            }
+            
+            int clearedCount = history.size();
+            historyManager.clearPlayerHistory(player.getUUID());
+            
+            LanguageUtil.sendMessage(player, "commands.tphistory.cleared", String.valueOf(clearedCount));
+            
+            return 1;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error clearing teleport history: {}", e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Exports teleport history to chat
+     */
+    private int exportHistory(CommandContext<CommandSourceStack> context) {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            
+            var historyManager = NeoEssentials.getInstance().getDataManager().getTeleportHistoryManager();
+            var history = historyManager.getPlayerHistory(player.getUUID());
+            
+            if (history.isEmpty()) {
+                LanguageUtil.sendMessage(player, "commands.tphistory.no_history");
+                return 0;
+            }
+            
+            LanguageUtil.sendMessage(player, "commands.tphistory.export_header", String.valueOf(history.size()));
+            
+            for (int i = 0; i < Math.min(history.size(), 20); i++) {
+                var location = history.get(i);
+                String timeStr = formatTimeAgo(System.currentTimeMillis() - location.getTimestamp());
+                String coords = String.format("%.1f, %.1f, %.1f", 
+                    location.getX(), location.getY(), location.getZ());
+                String dimName = location.getDimension();
+                if (dimName.contains(":")) {
+                    dimName = dimName.substring(dimName.lastIndexOf(':') + 1);
+                }
+                
+                LanguageUtil.sendMessage(player, "§7%d. §f%s §7(%s) §8- %s", 
+                    i + 1, coords, dimName, timeStr);
+            }
+            
+            if (history.size() > 20) {
+                LanguageUtil.sendMessage(player, "commands.tphistory.export_truncated", 
+                    String.valueOf(history.size() - 20));
+            }
+            
+            return 1;
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error exporting teleport history: {}", e.getMessage());
             return 0;
         }
     }
