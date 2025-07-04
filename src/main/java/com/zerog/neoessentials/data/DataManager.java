@@ -183,6 +183,14 @@ public class DataManager {    private UserManager userManager;
         jailManager.saveJailedPlayers();
         powerToolManager.savePowerTools();
         mailManager.saveMail();
+        
+        // Save new persistent data managers
+        if (teleportHistoryManager != null) {
+            teleportHistoryManager.shutdown(); // This calls saveHistory internally
+        }
+        if (playerSettingsManager != null) {
+            playerSettingsManager.shutdown(); // This calls saveSettings internally
+        }
     }
     
     /**
