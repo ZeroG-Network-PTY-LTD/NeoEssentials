@@ -6,7 +6,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.data.EconomyData;
 import com.zerog.neoessentials.data.HomeData;
 import com.zerog.neoessentials.data.KitManager;
 import com.zerog.neoessentials.data.WarpData;
@@ -341,49 +340,6 @@ public class SQLiteStorageHandler implements StorageHandler {
         }
         
         return warps;
-    }
-    
-    @Override
-    public boolean saveEconomyData(UUID uuid, EconomyData economyData) {
-        try (Connection connection = connectionManager.getConnection();
-             PreparedStatement stmt = connection.prepareStatement(
-                    "INSERT OR REPLACE INTO economy (uuid, balance) VALUES (?, ?)")) {
-            
-            stmt.setString(1, uuid.toString());
-            stmt.setString(2, economyData.getBalance().toPlainString());
-            
-            stmt.executeUpdate();
-            return true;
-        } catch (SQLException e) {
-            NeoEssentials.LOGGER.error("Failed to save economy data for {}: {}", uuid, e.getMessage());
-            return false;
-        }
-    }
-    
-    @Override
-    public EconomyData loadEconomyData(UUID uuid) {
-        try (Connection connection = connectionManager.getConnection();
-             PreparedStatement stmt = connection.prepareStatement("SELECT balance FROM economy WHERE uuid = ?")) {
-            
-            stmt.setString(1, uuid.toString());
-            
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String balanceStr = rs.getString("balance");
-                    try {
-                        BigDecimal balance = new BigDecimal(balanceStr);
-                        return new EconomyData(balance);
-                    } catch (IllegalArgumentException e) {
-                        NeoEssentials.LOGGER.error("Invalid balance in economy data: {}", balanceStr);
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            NeoEssentials.LOGGER.error("Failed to load economy data for {}: {}", uuid, e.getMessage());
-        }
-        
-        // Return default economy data if none found
-        return new EconomyData();
     }
     
     @Override
