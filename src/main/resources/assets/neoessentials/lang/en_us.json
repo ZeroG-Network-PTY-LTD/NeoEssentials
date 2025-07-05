@@ -154,6 +154,12 @@
   "neoessentials.teleport.back_no_location": "No previous location to teleport to!",
   "neoessentials.teleport.player_teleported": "Teleported %s to %s!",
   "neoessentials.teleport.cooldown_active": "You must wait %s before teleporting again!",
+  "neoessentials.teleport.teleporting_to_player": "Teleporting to %s.",
+  "neoessentials.teleport.player_teleporting_to_you": "%s is teleporting to you.",
+  "neoessentials.teleport.you_denied_request": "%s denied your teleport request.",
+  "neoessentials.teleport.requester_offline": "The player who sent the teleport request is no longer online.",
+  "neoessentials.teleport.no_previous_location": "You have no previous location to return to.",
+  "neoessentials.teleport.dimension_error": "Error: Could not find the dimension you were previously in.",
   "neoessentials.teleport.top_success": "Teleported to the highest point!",
   "neoessentials.teleport.top_failed": "Failed to teleport to the highest point!",
   "neoessentials.teleport.bottom_success": "Teleported to the lowest point!",
@@ -554,5 +560,18 @@
   "settings.player_locations.disabled": "§cPlayer location sharing is now disabled",
   "settings.data_collection.enabled": "§aData collection is now enabled",
   "settings.data_collection.disabled": "§cData collection is now disabled",
-  "settings.currency.set": "§aPreferred currency set to: §e%s"
+  "settings.currency.set": "§aPreferred currency set to: §e%s",
+  
+  "commands.worldinfo.header": "§6====== World Information ======",
+  "commands.worldinfo.footer": "§6================================",
+  "commands.worldinfo.dimension_not_found": "§cDimension '%s' not found!",
+  "commands.worldinfo.error": "§cError retrieving world information: %s",
+  
+  "commands.dimensions.header": "§6====== Available Dimensions ======",
+  "commands.dimensions.footer": "§6===================================",
+  "commands.dimensions.entry": "§e%d. §f%s §7(%s) §8- %s",
+  "commands.dimensions.no_dimensions": "§cNo dimensions found!",
+  "commands.dimensions.teleport_success": "§aTeleported to dimension: §e%s",
+  "commands.dimensions.teleport_failed": "§cFailed to teleport to dimension: %s",
+  "commands.dimensions.invalid_dimension": "§cInvalid dimension: %s"
 }

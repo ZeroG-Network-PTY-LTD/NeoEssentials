@@ -19,6 +19,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
@@ -456,5 +457,17 @@ public class NeoEssentials {
             LOGGER.debug("Error checking debug mode status", e);
         }
         return false;
+    }
+    
+    /**
+     * Event handler for server ticks to track performance.
+     * Called every server tick for performance monitoring.
+     * 
+     * @param event The server tick event
+     */
+    @SubscribeEvent
+    public void onServerTick(ServerTickEvent.Post event) {
+        // Record tick for performance monitoring
+        com.zerog.neoessentials.util.PerformanceMonitor.recordTick();
     }
 }

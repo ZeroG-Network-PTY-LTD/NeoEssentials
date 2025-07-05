@@ -89,7 +89,7 @@ public class TeleportUtil {
         // Check if player is on cooldown
         if (isOnCooldown(player.getUUID())) {
             long remainingCooldown = getRemainingCooldown(player.getUUID()) / 1000;
-            LanguageUtil.sendErrorMessage(player, "You must wait " + remainingCooldown + " seconds before teleporting again.");
+            LanguageUtil.sendErrorMessage(player, "neoessentials.teleport.cooldown_active", remainingCooldown);
             return false;
         }
         
@@ -140,7 +140,7 @@ public class TeleportUtil {
         UUID playerId = player.getUUID();
         
         if (!lastLocations.containsKey(playerId)) {
-            LanguageUtil.sendErrorMessage(player, "You have no previous location to return to.");
+            LanguageUtil.sendErrorMessage(player, "neoessentials.teleport.no_previous_location");
             return false;
         }
           LocationData lastLocation = lastLocations.get(playerId);
@@ -150,7 +150,7 @@ public class TeleportUtil {
                 Level.OVERWORLD);
         
         if (level == null) {
-            LanguageUtil.sendErrorMessage(player, "Error: Could not find the dimension you were previously in.");
+            LanguageUtil.sendErrorMessage(player, "neoessentials.teleport.dimension_error");
             return false;
         }
         
@@ -230,7 +230,7 @@ public class TeleportUtil {
         
         if (otherPlayer == null) {
             teleportRequests.remove(playerId);
-            LanguageUtil.sendErrorMessage(player, "The player who sent the teleport request is no longer online.");
+            LanguageUtil.sendErrorMessage(player, "neoessentials.teleport.requester_offline");
             return false;
         }        // Perform teleport based on the request type
         boolean success;
@@ -240,8 +240,8 @@ public class TeleportUtil {
                     new net.minecraft.world.phys.Vec3(player.getX(), player.getY(), player.getZ()), true);
             
             if (success) {
-                LanguageUtil.sendMessage(otherPlayer, "Teleporting to " + player.getScoreboardName() + ".");
-                LanguageUtil.sendMessage(player, otherPlayer.getScoreboardName() + " is teleporting to you.");
+                LanguageUtil.sendMessage(otherPlayer, "neoessentials.teleport.teleporting_to_player", player.getScoreboardName());
+                LanguageUtil.sendMessage(player, "neoessentials.teleport.player_teleporting_to_you", otherPlayer.getScoreboardName());
             }
         } else {
             // Target teleports to requester
@@ -249,8 +249,8 @@ public class TeleportUtil {
                     new net.minecraft.world.phys.Vec3(otherPlayer.getX(), otherPlayer.getY(), otherPlayer.getZ()), true);
             
             if (success) {
-                LanguageUtil.sendMessage(player, "Teleporting to " + otherPlayer.getScoreboardName() + ".");
-                LanguageUtil.sendMessage(otherPlayer, player.getScoreboardName() + " is teleporting to you.");
+                LanguageUtil.sendMessage(player, "neoessentials.teleport.teleporting_to_player", otherPlayer.getScoreboardName());
+                LanguageUtil.sendMessage(otherPlayer, "neoessentials.teleport.player_teleporting_to_you", player.getScoreboardName());
             }
         }
         
@@ -286,7 +286,7 @@ public class TeleportUtil {
             
             // Notify the requester if they're online
             if (otherPlayer != null) {
-                LanguageUtil.sendMessage(otherPlayer, player.getScoreboardName() + " denied your teleport request.");
+                LanguageUtil.sendMessage(otherPlayer, "neoessentials.teleport.you_denied_request", player.getScoreboardName());
             }
         }
         
