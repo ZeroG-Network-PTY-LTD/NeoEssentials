@@ -646,5 +646,18 @@
   "neoessentials.economy.settings_feature_stats": "&a✓ Financial Statistics",
   "neoessentials.economy.settings_feature_banking_planned": "&e⚠ Banking System (Planned)",
   "neoessentials.economy.settings_footer": "&6==============================",
-  "neoessentials.economy.settings_error": "&cError accessing economy settings: %s"
+  "neoessentials.economy.settings_error": "&cError accessing economy settings: %s",
+  
+  "neoessentials.economy.loans_header": "&6====== Loan Management ======",
+  "neoessentials.economy.loans_preview_header": "&7Planned Loan Features:",
+  "neoessentials.economy.loans_feature_basic": "&e• Basic Loans: &7Borrow money with competitive rates",
+  "neoessentials.economy.loans_feature_interest": "&e• Interest System: &7Fair interest rates based on risk",
+  "neoessentials.economy.loans_feature_collateral": "&e• Collateral Options: &7Secure loans with items or property",
+  "neoessentials.economy.loans_feature_repayment": "&e• Flexible Repayment: &7Multiple payment schedules available",
+  "neoessentials.economy.loans_eligibility_header": "&7Current Loan Eligibility:",
+  "neoessentials.economy.loans_eligibility_qualified": "&a✓ You qualify for loans",
+  "neoessentials.economy.loans_eligibility_insufficient": "&c✗ Insufficient balance for loan qualification",
+  "neoessentials.economy.loans_max_amount": "&eMaximum Loan Amount: &f%s",
+  "neoessentials.economy.loans_minimum_balance": "&eMinimum Required Balance: &f%s",
+  "neoessentials.economy.loans_error": "&cError accessing loan management: %s"
 }
