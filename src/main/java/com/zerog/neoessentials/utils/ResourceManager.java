@@ -21,9 +21,9 @@ public class ResourceManager {
         // "database.toml"
     );
     
-    // YAML config files that go to config/neoessentials/
+    // YAML config files that go to config/neoessentials/ (currently empty - economy system removed)
     private static final List<String> YAML_CONFIG_FILES = Arrays.asList(
-        "economy.yml"
+        // Economy config files have been removed
     );
     
     // Files to be placed in the main neoessentials directory (outside of config)

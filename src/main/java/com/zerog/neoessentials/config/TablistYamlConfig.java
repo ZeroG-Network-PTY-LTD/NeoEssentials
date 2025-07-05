@@ -29,7 +29,6 @@ public class TablistYamlConfig {
     private static final String DEFAULT_TIME_FORMAT = "HH:mm:ss";
     private static final boolean DEFAULT_ENABLE_SORTING = true;
     private static final String DEFAULT_SORT_TYPE = "name";
-    private static final boolean DEFAULT_SHOW_ECONOMY = true;
     private static final boolean DEFAULT_ENABLE_PLAYER_HEADERS = true;
     private static final boolean DEFAULT_ENABLE_PLAYER_FOOTERS = true;
     private static final boolean DEFAULT_ENABLE_ANIMATIONS = true;
@@ -45,7 +44,6 @@ public class TablistYamlConfig {
     private static String timeFormat = DEFAULT_TIME_FORMAT;
     private static boolean enableSorting = DEFAULT_ENABLE_SORTING;
     private static String sortType = DEFAULT_SORT_TYPE;
-    private static boolean showEconomyInTablist = DEFAULT_SHOW_ECONOMY;
     private static boolean enablePlayerSpecificHeaders = DEFAULT_ENABLE_PLAYER_HEADERS;
     private static boolean enablePlayerSpecificFooters = DEFAULT_ENABLE_PLAYER_FOOTERS;
     private static boolean enableAnimations = DEFAULT_ENABLE_ANIMATIONS;
@@ -160,7 +158,6 @@ public class TablistYamlConfig {
             sortType = getString(tablist, "sortType", DEFAULT_SORT_TYPE);
             
             // Display settings
-            showEconomyInTablist = getBoolean(tablist, "showEconomyInTablist", DEFAULT_SHOW_ECONOMY);
             enablePlayerSpecificHeaders = getBoolean(tablist, "enablePlayerSpecificHeaders", DEFAULT_ENABLE_PLAYER_HEADERS);
             enablePlayerSpecificFooters = getBoolean(tablist, "enablePlayerSpecificFooters", DEFAULT_ENABLE_PLAYER_FOOTERS);
             
@@ -227,7 +224,6 @@ public class TablistYamlConfig {
             tablist.put("timeFormat", DEFAULT_TIME_FORMAT);
             tablist.put("enableSorting", DEFAULT_ENABLE_SORTING);
             tablist.put("sortType", DEFAULT_SORT_TYPE);
-            tablist.put("showEconomyInTablist", DEFAULT_SHOW_ECONOMY);
             tablist.put("enablePlayerSpecificHeaders", DEFAULT_ENABLE_PLAYER_HEADERS);
             tablist.put("enablePlayerSpecificFooters", DEFAULT_ENABLE_PLAYER_FOOTERS);
             tablist.put("enableAnimations", DEFAULT_ENABLE_ANIMATIONS);
@@ -370,10 +366,6 @@ public class TablistYamlConfig {
     
     public static String getSortType() {
         return sortType;
-    }
-    
-    public static boolean isShowEconomyInTablist() {
-        return showEconomyInTablist;
     }
     
     public static boolean isEnablePlayerSpecificHeaders() {

@@ -32,6 +32,16 @@ public class TabCompletionUtil {
         "1", "8", "16", "32", "64"
     };
 
+    // Price suggestions for economy-related commands (default values)
+    public static final String[] PRICE_VALUES = {
+        "0.0", "1.0", "5.0", "10.0", "25.0", "50.0", "100.0", "500.0", "1000.0"
+    };
+
+    // Item name suggestions (simple strings)
+    public static final String[] ITEM_NAMES = {
+        "sword", "pickaxe", "axe", "shovel", "hoe", "helmet", "chestplate", "leggings", "boots"
+    };
+
     // Time units
     public static final String[] TIME_UNITS = {
         "s", "m", "h", "d", "w", "seconds", "minutes", "hours", "days", "weeks"
@@ -197,5 +207,26 @@ public class TabCompletionUtil {
             new String[]{"1", "4", "8", "16", "32", "64", "128", "256"}, 
             builder
         );
+    };
+
+    /**
+     * Provides stack amount suggestions.
+     */
+    public static final SuggestionProvider<CommandSourceStack> STACK_AMOUNT_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(STACK_AMOUNTS, builder);
+    };
+
+    /**
+     * Provides price suggestions.
+     */
+    public static final SuggestionProvider<CommandSourceStack> PRICE_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(PRICE_VALUES, builder);
+    };
+
+    /**
+     * Provides item name suggestions (simple names).
+     */
+    public static final SuggestionProvider<CommandSourceStack> ITEM_NAME_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(ITEM_NAMES, builder);
     };
 }
