@@ -3,7 +3,6 @@ package com.zerog.neoessentials.storage;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.config.DatabaseConfig;
 import com.zerog.neoessentials.config.StorageType;
-import com.zerog.neoessentials.data.EconomyData;
 import com.zerog.neoessentials.data.HomeData;
 import com.zerog.neoessentials.data.KitManager;
 import com.zerog.neoessentials.data.WarpData;
