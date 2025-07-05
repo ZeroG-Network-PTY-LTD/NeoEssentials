@@ -78,14 +78,6 @@ public class NeoEssentialsCommands {
                 LanguageUtil.sendMessage(player, "§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                 LanguageUtil.sendMessage(player, "§7Welcome to NeoEssentials! Here are the main command categories:");
                 LanguageUtil.sendMessage(player, "");
-                LanguageUtil.sendMessage(player, "§a§l💰 Economy Commands:");
-                LanguageUtil.sendMessage(player, "§7  • §e/balance §7- Check your balance");
-                LanguageUtil.sendMessage(player, "§7  • §e/pay <player> <amount> §7- Send money");
-                LanguageUtil.sendMessage(player, "§7  • §e/bank §7- Banking operations");
-                LanguageUtil.sendMessage(player, "§7  • §e/loan §7- Loan management");
-                LanguageUtil.sendMessage(player, "§7  • §e/shop §7- Shop system");
-                LanguageUtil.sendMessage(player, "§7  • §e/auction §7- Auction house");
-                LanguageUtil.sendMessage(player, "");
                 LanguageUtil.sendMessage(player, "§b§l🏠 Utility Commands:");
                 LanguageUtil.sendMessage(player, "§7  • §e/home §7- Home management");
                 LanguageUtil.sendMessage(player, "§7  • §e/warp §7- Server warps");
@@ -120,27 +112,8 @@ public class NeoEssentialsCommands {
                 LanguageUtil.sendMessage(player, "§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                 LanguageUtil.sendMessage(player, "§6§l⚡ NeoEssentials §7Detailed Help");
                 LanguageUtil.sendMessage(player, "§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                LanguageUtil.sendMessage(player, "§a§lEconomy System:");
-                LanguageUtil.sendMessage(player, "§7  The economy system includes wallet, banking, loans, shops, and auctions.");
-                LanguageUtil.sendMessage(player, "§7  All transactions use real-world time for daily/monthly calculations.");
-                LanguageUtil.sendMessage(player, "");
-                LanguageUtil.sendMessage(player, "§b§lBanking Features:");
-                LanguageUtil.sendMessage(player, "§7  • Multiple account types (Checking, Savings, Business, Investment)");
-                LanguageUtil.sendMessage(player, "§7  • Monthly withdrawal limits enforced in real-time");
-                LanguageUtil.sendMessage(player, "§7  • Interest calculations and automatic processing");
-                LanguageUtil.sendMessage(player, "");
-                LanguageUtil.sendMessage(player, "§c§lLoan System:");
-                LanguageUtil.sendMessage(player, "§7  • Personal, Business, and Mortgage loans available");
-                LanguageUtil.sendMessage(player, "§7  • Credit scoring system with automatic approval");
-                LanguageUtil.sendMessage(player, "§7  • Payment scheduling and late fee management");
-                LanguageUtil.sendMessage(player, "");
-                LanguageUtil.sendMessage(player, "§e§lShop & Auction:");
-                LanguageUtil.sendMessage(player, "§7  • Create player-owned shops with GUI management");
-                LanguageUtil.sendMessage(player, "§7  • Auction house with bidding and buyout options");
-                LanguageUtil.sendMessage(player, "§7  • Dynamic pricing and market analytics");
                 LanguageUtil.sendMessage(player, "");
                 LanguageUtil.sendMessage(player, "§7For specific command help, type the command followed by §ehelp§7.");
-                LanguageUtil.sendMessage(player, "§7Example: §e/bank help §7or §e/loan help");
                 LanguageUtil.sendMessage(player, "§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             } else {
                 source.sendSuccess(() -> Component.literal("NeoEssentials Detailed Help - Check console or use in-game for formatted output"), false);
@@ -176,11 +149,9 @@ public class NeoEssentialsCommands {
                 LanguageUtil.sendMessage(player, "§7  • §eNeoForge Version: §a" + neoVersion);
                 LanguageUtil.sendMessage(player, "");
                 LanguageUtil.sendMessage(player, "§b§lFeature Status:");
-                LanguageUtil.sendMessage(player, "§7  • §aEconomy System: §2✓ Complete");
-                LanguageUtil.sendMessage(player, "§7  • §aBanking System: §2✓ Complete");
-                LanguageUtil.sendMessage(player, "§7  • §aLoan System: §2✓ Complete");
-                LanguageUtil.sendMessage(player, "§7  • §aShop System: §2✓ Complete");
-                LanguageUtil.sendMessage(player, "§7  • §aAuction House: §2✓ Complete");
+                LanguageUtil.sendMessage(player, "§7  • §eTeleportation System: §2✓ Complete");
+                LanguageUtil.sendMessage(player, "§7  • §eHome Management: §2✓ Complete");
+                LanguageUtil.sendMessage(player, "§7  • §eWarp System: §2✓ Complete");
                 LanguageUtil.sendMessage(player, "");
                 LanguageUtil.sendMessage(player, "§c§lBuild Information:");
                 LanguageUtil.sendMessage(player, "§7  • §eBuild Date: §aJuly 1, 2025");
@@ -209,38 +180,8 @@ public class NeoEssentialsCommands {
             boolean success = true;
             StringBuilder reloadResults = new StringBuilder();
             
-            try {
-                // Reload economy configuration
-                com.zerog.neoessentials.economy.EconomyManager economyManager = 
-                    com.zerog.neoessentials.economy.EconomyManager.getInstance();
-                economyManager.reloadConfiguration();
-                reloadResults.append("§a✓ Economy configuration reloaded\n");
-            } catch (Exception e) {
-                reloadResults.append("§c✗ Economy configuration failed: ").append(e.getMessage()).append("\n");
-                success = false;
-            }
-            
-            try {
-                // Reload bank configuration
-                com.zerog.neoessentials.economy.BankManager bankManager = 
-                    com.zerog.neoessentials.economy.EconomyManager.getInstance().getBankManager();
-                bankManager.reloadConfiguration();
-                reloadResults.append("§a✓ Banking configuration reloaded\n");
-            } catch (Exception e) {
-                reloadResults.append("§c✗ Banking configuration failed: ").append(e.getMessage()).append("\n");
-                success = false;
-            }
-            
-            try {
-                // Reload shop configuration
-                com.zerog.neoessentials.economy.ShopManager shopManager = 
-                    com.zerog.neoessentials.economy.EconomyManager.getInstance().getShopManager();
-                shopManager.reloadConfiguration();
-                reloadResults.append("§a✓ Shop configuration reloaded\n");
-            } catch (Exception e) {
-                reloadResults.append("§c✗ Shop configuration failed: ").append(e.getMessage()).append("\n");
-                success = false;
-            }
+            // Note: Economy system has been removed for recode
+            reloadResults.append("§e✓ Configuration reload completed\n");
             
             if (isPlayer) {
                 ServerPlayer player = source.getPlayerOrException();
@@ -290,38 +231,6 @@ public class NeoEssentialsCommands {
                 LanguageUtil.sendMessage(player, "§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
                 LanguageUtil.sendMessage(player, "§6§l⚡ NeoEssentials §7System Information");
                 LanguageUtil.sendMessage(player, "§8━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-                
-                try {
-                    // Get economy system status
-                    com.zerog.neoessentials.economy.EconomyManager economyManager = 
-                        com.zerog.neoessentials.economy.EconomyManager.getInstance();
-                    
-                    LanguageUtil.sendMessage(player, "§a§lEconomy System Status:");
-                    LanguageUtil.sendMessage(player, "§7  • §eEconomy Manager: §a" + (economyManager != null ? "Active" : "Inactive"));
-                    LanguageUtil.sendMessage(player, "§7  • §eDatabase: §a" + (economyManager.getPersistenceManager() != null ? "Connected" : "Disconnected"));
-                    LanguageUtil.sendMessage(player, "§7  • §eCurrency System: §aOperational");
-                    LanguageUtil.sendMessage(player, "");
-                    
-                    // Get banking system status
-                    com.zerog.neoessentials.economy.BankManager bankManager = economyManager.getBankManager();
-                    LanguageUtil.sendMessage(player, "§b§lBanking System Status:");
-                    LanguageUtil.sendMessage(player, "§7  • §eBank Manager: §a" + (bankManager != null ? "Active" : "Inactive"));
-                    LanguageUtil.sendMessage(player, "§7  • §eTotal Accounts: §a" + bankManager.getAllAccounts().size());
-                    LanguageUtil.sendMessage(player, "§7  • §eActive Loans: §a" + bankManager.getAllActiveLoans().size());
-                    LanguageUtil.sendMessage(player, "");
-                    
-                    // Get shop system status
-                    com.zerog.neoessentials.economy.ShopManager shopManager = economyManager.getShopManager();
-                    LanguageUtil.sendMessage(player, "§c§lShop System Status:");
-                    LanguageUtil.sendMessage(player, "§7  • §eShop Manager: §a" + (shopManager != null ? "Active" : "Inactive"));
-                    LanguageUtil.sendMessage(player, "§7  • §eTotal Shops: §a" + shopManager.getAllShops().size());
-                    LanguageUtil.sendMessage(player, "§7  • §eAuction House: §a" + (shopManager.getAuctionHouse() != null ? "Active" : "Inactive"));
-                    
-                } catch (Exception e) {
-                    LanguageUtil.sendMessage(player, "§c§lError retrieving system status:");
-                    LanguageUtil.sendMessage(player, "§7  • §cSome systems may not be initialized yet");
-                    LanguageUtil.sendMessage(player, "§7  • §cError: " + e.getMessage());
-                }
                 
                 LanguageUtil.sendMessage(player, "");
                 LanguageUtil.sendMessage(player, "§e§lServer Information:");
