@@ -95,13 +95,13 @@ public class CompatNeoEssentialsConfig {
     public boolean isEconomyEnabled() {
         return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_ECONOMY, true);
     }
-      /**
+
+    /**
      * Gets the singular name of the currency
      * @return The currency name (e.g. "Dollar")
      */
     public String getCurrencyNameSingular() {
-        if (!isEconomyEnabled()) return "Dollar";
-        return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_SINGULAR, "Dollar");
+        return "Dollar"; // Default value since economy system is removed
     }
     
     /**
@@ -109,8 +109,7 @@ public class CompatNeoEssentialsConfig {
      * @return The currency name (e.g. "Dollars")
      */
     public String getCurrencyNamePlural() {
-        if (!isEconomyEnabled()) return "Dollars";
-        return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_PLURAL, "Dollars");
+        return "Dollars"; // Default value since economy system is removed
     }
     
     /**
@@ -118,16 +117,15 @@ public class CompatNeoEssentialsConfig {
      * @return The currency symbol (e.g. "$")
      */
     public String getCurrencySymbol() {
-        if (!isEconomyEnabled()) return "$";
-        return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_SYMBOL, "$");
+        return "$"; // Default value since economy system is removed
     }
-      /**
+
+    /**
      * Gets the starting balance for new players
      * @return The starting balance
      */
     public double getStartingBalance() {
-        if (!isEconomyEnabled()) return 100.0;
-        return ConfigUtil.getConfigSafe(EconomyConfig.STARTING_BALANCE, 100.0);
+        return 100.0; // Default value since economy system is removed
     }
     
     /**

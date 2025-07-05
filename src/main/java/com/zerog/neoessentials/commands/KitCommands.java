@@ -58,20 +58,12 @@ public class KitCommands {
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.list"))
                 .executes(this::executeKitList)
         );
-          // /createkit <n> [cooldown] [price] - Create a kit with your current inventory
+          // /createkit <name> [cooldown] - Create a kit with your current inventory
         dispatcher.register(
             Commands.literal("createkit")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.kit.create"))
                 .then(Commands.argument("name", StringArgumentType.word())
                     .then(Commands.argument("cooldown", LongArgumentType.longArg(0))
-                        .then(Commands.argument("price", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0))
-                            .suggests(TabCompletionUtil.PRICE_SUGGESTIONS)
-                            .executes(context -> {
-                                long cooldown = LongArgumentType.getLong(context, "cooldown");
-                                double price = com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(context, "price");
-                                return executeCreateKitWithPrice(context, cooldown, price);
-                            })
-                        )
                         .executes(this::executeCreateKit)
                     )
                     .executes(context -> executeCreateKit(context, 0)) // Default cooldown of 0
@@ -523,78 +515,6 @@ public class KitCommands {
         }
         
         return true;
-    }
-    
-    /**
-     * Execute the /createkit command with a specified cooldown and price
-     * 
-     * @param context The command context
-     * @param cooldown The cooldown in seconds
-     * @param price The price of the kit
-     * @return Command result
-     */
-    private int executeCreateKitWithPrice(CommandContext<CommandSourceStack> context, long cooldown, double price) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        String kitName = StringArgumentType.getString(context, "name");
-        
-        NeoEssentials.LOGGER.debug("Player {} is attempting to create kit '{}' with cooldown {}s and price {}", 
-            player.getScoreboardName(), kitName, cooldown, price);
-        
-        KitManager kitManager = NeoEssentials.getInstance().getDataManager().getKitManager();
-        if (kitManager == null) {
-            NeoEssentials.LOGGER.error("KitManager is null when executing /createkit command");
-            context.getSource().sendFailure(Component.literal("Kit system is not available"));
-            return 0;
-        }
-        
-        // Check if kit already exists
-        if (kitManager.getKit(kitName) != null) {
-            NeoEssentials.LOGGER.debug("Kit '{}' already exists, cannot be created by {}", 
-                kitName, player.getScoreboardName());
-            context.getSource().sendFailure(Component.literal("Kit '" + kitName + "' already exists. Delete it first if you want to replace it."));
-            return 0;
-        }
-        
-        // Get all items from the player's inventory
-        List<ItemStack> items = new ArrayList<>();
-        for (ItemStack item : player.getInventory().items) {
-            if (!item.isEmpty()) {
-                items.add(item.copy());
-            }
-        }
-        
-        // Also include armor and offhand items
-        for (ItemStack item : player.getInventory().armor) {
-            if (!item.isEmpty()) {
-                items.add(item.copy());
-            }
-        }
-        
-        if (!player.getInventory().offhand.get(0).isEmpty()) {
-            items.add(player.getInventory().offhand.get(0).copy());
-        }
-        
-        if (items.isEmpty()) {
-            NeoEssentials.LOGGER.debug("Player {} has empty inventory, cannot create kit", player.getScoreboardName());
-            context.getSource().sendFailure(Component.literal("Your inventory is empty. Cannot create an empty kit."));
-            return 0;
-        }
-        
-        // Create the kit with appropriate permission node and price
-        String permission = "neoessentials.command.kit." + kitName.toLowerCase();
-        KitManager.Kit kit = kitManager.createKit(kitName, cooldown, permission, price, items);
-        
-        NeoEssentials.LOGGER.info("Player {} created kit '{}' with {} items, {}s cooldown, and price {}", 
-            player.getScoreboardName(), kitName, items.size(), cooldown, price);
-        
-        MutableComponent message = Component.literal("Created kit '" + kitName + "' with " + items.size() + " items");
-        
-        if (cooldown > 0) {
-            message.append(Component.literal(", " + formatTime(cooldown) + " cooldown"));
-        }
-        
-        LanguageUtil.sendComponent(player, message);
-        return 1;
     }
     
     /**

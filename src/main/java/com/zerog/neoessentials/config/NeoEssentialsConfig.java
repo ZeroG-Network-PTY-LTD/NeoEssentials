@@ -12,13 +12,6 @@ public class NeoEssentialsConfig {
     private boolean debug = false;
     private String defaultLanguage = "en_us";
     
-    // Economy settings
-    private boolean economyEnabled = true;
-    private String currencyNameSingular = "Dollar";
-    private String currencyNamePlural = "Dollars";
-    private String currencySymbol = "$";
-    private double startingBalance = 100.0;
-    
     // Teleportation settings
     private boolean teleportEnabled = true;
     private int teleportCooldown = 30;  // seconds
@@ -119,46 +112,6 @@ public class NeoEssentialsConfig {
 
     public void setDefaultLanguage(String defaultLanguage) {
         this.defaultLanguage = defaultLanguage;
-    }
-
-    public boolean isEconomyEnabled() {
-        return economyEnabled;
-    }
-
-    public void setEconomyEnabled(boolean economyEnabled) {
-        this.economyEnabled = economyEnabled;
-    }
-
-    public String getCurrencyNameSingular() {
-        return currencyNameSingular;
-    }
-
-    public void setCurrencyNameSingular(String currencyNameSingular) {
-        this.currencyNameSingular = currencyNameSingular;
-    }
-
-    public String getCurrencyNamePlural() {
-        return currencyNamePlural;
-    }
-
-    public void setCurrencyNamePlural(String currencyNamePlural) {
-        this.currencyNamePlural = currencyNamePlural;
-    }
-
-    public String getCurrencySymbol() {
-        return currencySymbol;
-    }
-
-    public void setCurrencySymbol(String currencySymbol) {
-        this.currencySymbol = currencySymbol;
-    }
-
-    public double getStartingBalance() {
-        return startingBalance;
-    }
-
-    public void setStartingBalance(double startingBalance) {
-        this.startingBalance = startingBalance;
     }
 
     public boolean isTeleportEnabled() {

@@ -26,7 +26,6 @@ public class ModConfigManager {    // Reference to the main mod instance
         // Create compatibility config
         compatConfig = new CompatNeoEssentialsConfig();        // Register all configuration files
         container.registerConfig(ModConfig.Type.COMMON, GeneralConfig.SPEC, "neoessentials/general.toml");
-        // Economy config is handled by EnhancedEconomyConfig (YAML) - not registered here
         container.registerConfig(ModConfig.Type.COMMON, HomeConfig.SPEC, "neoessentials/homes.toml");
         container.registerConfig(ModConfig.Type.COMMON, WarpConfig.SPEC, "neoessentials/warps.toml");
         container.registerConfig(ModConfig.Type.COMMON, KitConfig.SPEC, "neoessentials/kits.toml");

@@ -48,7 +48,6 @@ public class CommandManager {    // Command classes
     private final MailCommands mailCommands;
     private final AdminPanelCommand adminPanelCommand;
     private final TablistCommand tablistCommand;
-    private final ItemSearchCommands itemSearchCommands;
     // SignEditCommands is now fully static
     // InventoryManagementCommands is now fully static
     private final ItemEnhancementCommands itemEnhancementCommands;
@@ -83,7 +82,6 @@ public class CommandManager {    // Command classes
         mailCommands = new MailCommands();
         adminPanelCommand = new AdminPanelCommand();
         tablistCommand = new TablistCommand();
-        itemSearchCommands = new ItemSearchCommands();
         // SignEditCommands is now fully static - no instance needed
         // InventoryManagementCommands is now fully static - no instance needed
         itemEnhancementCommands = new ItemEnhancementCommands();
@@ -222,10 +220,6 @@ public class CommandManager {    // Command classes
             // Register tablist commands
         tablistCommand.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered tablist commands");
-        
-        // Register item search commands
-        ItemSearchCommands.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered item search commands");
         
         // Register permission commands
         PermissionCommands.register(dispatcher);
