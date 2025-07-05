@@ -1,5 +1,10 @@
 package com.zerog.neoessentials.util;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+
 /**
  * Utility class for handling color codes in text.
  * 
@@ -88,14 +93,109 @@ public class ColorUtils {
     }
     
     /**
-     * Applies color codes to a MutableComponent.
+     * Applies color codes to a MutableComponent by parsing color codes and creating styled components.
      * 
      * @param component The component to apply color codes to
      * @return The component with color codes applied
      */
-    public static net.minecraft.network.chat.MutableComponent applyColorCodes(net.minecraft.network.chat.MutableComponent component) {
-        // For now, just return the component as-is
-        // In a full implementation, this would parse the text content and apply color formatting
-        return component;
+    public static MutableComponent applyColorCodes(MutableComponent component) {
+        if (component == null) {
+            return Component.literal("");
+        }
+        
+        // Get the text content from the component
+        String text = component.getString();
+        if (text == null || text.isEmpty()) {
+            return component;
+        }
+        
+        // If the text doesn't contain color codes, return as-is
+        if (!text.contains("§") && !text.contains("&")) {
+            return component;
+        }
+        
+        // Process & codes to § codes first
+        String processedText = processColorCodes(text);
+        
+        // Parse the text and create styled components
+        return parseColoredText(processedText);
+    }
+    
+    /**
+     * Parses colored text and creates a properly styled component.
+     * 
+     * @param text The text with color codes to parse
+     * @return A styled component
+     */
+    private static MutableComponent parseColoredText(String text) {
+        if (text == null || text.isEmpty()) {
+            return Component.literal("");
+        }
+        
+        MutableComponent result = Component.literal("");
+        StringBuilder currentText = new StringBuilder();
+        Style currentStyle = Style.EMPTY;
+        
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            
+            if (c == '§' && i + 1 < text.length()) {
+                // Add current text with current style
+                if (currentText.length() > 0) {
+                    result.append(Component.literal(currentText.toString()).setStyle(currentStyle));
+                    currentText = new StringBuilder();
+                }
+                
+                // Parse the color code
+                char code = text.charAt(i + 1);
+                currentStyle = getStyleFromCode(code);
+                i++; // Skip the next character
+            } else {
+                currentText.append(c);
+            }
+        }
+        
+        // Add any remaining text
+        if (currentText.length() > 0) {
+            result.append(Component.literal(currentText.toString()).setStyle(currentStyle));
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Gets a style from a color code character.
+     * 
+     * @param code The color code character
+     * @return The corresponding style
+     */
+    private static Style getStyleFromCode(char code) {
+        Style style = Style.EMPTY;
+        
+        switch (code) {
+            case '0': return style.withColor(ChatFormatting.BLACK);
+            case '1': return style.withColor(ChatFormatting.DARK_BLUE);
+            case '2': return style.withColor(ChatFormatting.DARK_GREEN);
+            case '3': return style.withColor(ChatFormatting.DARK_AQUA);
+            case '4': return style.withColor(ChatFormatting.DARK_RED);
+            case '5': return style.withColor(ChatFormatting.DARK_PURPLE);
+            case '6': return style.withColor(ChatFormatting.GOLD);
+            case '7': return style.withColor(ChatFormatting.GRAY);
+            case '8': return style.withColor(ChatFormatting.DARK_GRAY);
+            case '9': return style.withColor(ChatFormatting.BLUE);
+            case 'a': return style.withColor(ChatFormatting.GREEN);
+            case 'b': return style.withColor(ChatFormatting.AQUA);
+            case 'c': return style.withColor(ChatFormatting.RED);
+            case 'd': return style.withColor(ChatFormatting.LIGHT_PURPLE);
+            case 'e': return style.withColor(ChatFormatting.YELLOW);
+            case 'f': return style.withColor(ChatFormatting.WHITE);
+            case 'k': return style.withObfuscated(true);
+            case 'l': return style.withBold(true);
+            case 'm': return style.withStrikethrough(true);
+            case 'n': return style.withUnderlined(true);
+            case 'o': return style.withItalic(true);
+            case 'r': return Style.EMPTY; // Reset
+            default: return style;
+        }
     }
 }

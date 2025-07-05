@@ -781,4 +781,222 @@ public class EconomyManager {
         
         return false; // Something went wrong with the payment
     }
+    
+    /**
+     * Get the default currency
+     * 
+     * @return The default currency
+     */
+    public Currency getDefaultCurrency() {
+        return currencyManager.getDefaultCurrency();
+    }
+    
+    /**
+     * Get the top currencies by total amount in circulation
+     * 
+     * @param limit Maximum number of currencies to return
+     * @return List of top currencies
+     */
+    public List<Currency> getTopCurrenciesByCirculation(int limit) {
+        Map<Currency, Double> currencyTotals = new HashMap<>();
+        
+        // Calculate total for each currency
+        for (PlayerEconomyData data : playerData.values()) {
+            for (Map.Entry<Currency, Double> entry : data.getBalances().entrySet()) {
+                currencyTotals.merge(entry.getKey(), entry.getValue(), Double::sum);
+            }
+        }
+        
+        // Add bank account balances to currency totals
+        for (List<BankAccount> accounts : bankManager.playerAccounts.values()) {
+            for (BankAccount account : accounts) {
+                if (account.isActive()) {
+                    Currency accountCurrency = account.getCurrency();
+                    double accountBalance = account.getBalance();
+                    currencyTotals.merge(accountCurrency, accountBalance, Double::sum);
+                }
+            }
+        }
+        
+        // Sort currencies by total amount in circulation
+        return currencyTotals.entrySet().stream()
+                .sorted(Map.Entry.<Currency, Double>comparingByValue().reversed())
+                .limit(limit)
+                .map(Map.Entry::getKey)
+                .toList();
+    }
+    
+    /**
+     * Get player balance across all currencies
+     * 
+     * @param playerId The player's UUID
+     * @return Map of currency to balance
+     */
+    public Map<Currency, Double> getPlayerBalanceSummary(UUID playerId) {
+        PlayerEconomyData data = getPlayerData(playerId);
+        return data != null ? data.getBalances() : Collections.emptyMap();
+    }
+    
+    /**
+     * Get total transaction volume for a player
+     * 
+     * @param playerId The player's UUID
+     * @return Total transaction volume
+     */
+    public double getPlayerTransactionVolume(UUID playerId) {
+        return transactionManager.getPlayerTransactions(playerId, 30).stream()
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+    }
+    
+    /**
+     * Get recent transactions for all players (admin use)
+     * 
+     * @param limit Maximum number of transactions to return
+     * @return List of recent transactions
+     */
+    public List<Transaction> getRecentTransactions(int limit) {
+        return transactionManager.getAllTransactions().stream()
+                .sorted(Comparator.comparingLong(Transaction::getTimestamp).reversed())
+                .limit(limit)
+                .toList();
+    }
+    
+    /**
+     * Get transaction details by transaction ID
+     * 
+     * @param transactionId The transaction ID
+     * @return The transaction, or null if not found
+     */
+    public Transaction getTransactionById(UUID transactionId) {
+        return transactionManager.getTransactionById(transactionId);
+    }
+    
+    /**
+     * Get player loan details
+     * 
+     * @param playerId The player's UUID
+     * @return List of active loans for the player
+     */
+    public List<Loan> getPlayerLoans(UUID playerId) {
+        return bankManager.getActiveLoansForPlayer(playerId);
+    }
+    
+    /**
+     * Get total loan amount for a player
+     * 
+     * @param playerId The player's UUID
+     * @return Total loan amount
+     */
+    public double getPlayerTotalLoanAmount(UUID playerId) {
+        return bankManager.getActiveLoansForPlayer(playerId).stream()
+                .mapToDouble(Loan::getCurrentBalance)
+                .sum();
+    }
+    
+    /**
+     * Get loan payment history for a player
+     * 
+     * @param playerId The player's UUID
+     * @return List of loan payments
+     */
+    public List<LoanPayment> getPlayerLoanPayments(UUID playerId) {
+        return bankManager.getLoanPaymentsForPlayer(playerId);
+    }
+    
+    /**
+     * Get total amount paid towards loans by a player
+     * 
+     * @param playerId The player's UUID
+     * @return Total amount paid
+     */
+    public double getPlayerTotalLoanPayments(UUID playerId) {
+        return bankManager.getLoanPaymentsForPlayer(playerId).stream()
+                .mapToDouble(LoanPayment::getAmount)
+                .sum();
+    }
+    
+    /**
+     * Get average loan interest rate for a player
+     * 
+     * @param playerId The player's UUID
+     * @return Average interest rate
+     */
+    public double getPlayerAverageLoanInterestRate(UUID playerId) {
+        List<Loan> loans = bankManager.getActiveLoansForPlayer(playerId);
+        if (loans.isEmpty()) return 0.0;
+        
+        double totalInterest = loans.stream()
+                .mapToDouble(Loan::getInterestRate)
+                .sum();
+        
+        return totalInterest / loans.size();
+    }
+    
+    /**
+     * Get total assets for a player (wallet + bank + loans)
+     * 
+     * @param playerId The player's UUID
+     * @return Total assets value
+     */
+    public double getPlayerTotalAssets(UUID playerId) {
+        double totalAssets = 0.0;
+        
+        // Add wallet balance
+        WalletManager walletManager = getWalletManager();
+        if (walletManager != null) {
+            totalAssets += walletManager.getCashBalance(playerId, currencyManager.getDefaultCurrency());
+        }
+        
+        // Add bank account balance
+        BankManager bankManager = getBankManager();
+        if (bankManager != null) {
+            BankAccount primaryAccount = bankManager.getPrimaryAccount(playerId);
+            if (primaryAccount != null) {
+                totalAssets += primaryAccount.getBalance(currencyManager.getDefaultCurrency());
+            }
+        }
+        
+        // Add loan balances (subtract liabilities)
+        List<Loan> activeLoans = bankManager.getActiveLoansForPlayer(playerId);
+        for (Loan loan : activeLoans) {
+            totalAssets -= loan.getCurrentBalance();
+        }
+        
+        return totalAssets;
+    }
+    
+    /**
+     * Get net worth of a player (assets - liabilities)
+     * 
+     * @param playerId The player's UUID
+     * @return Net worth value
+     */
+    public double getPlayerNetWorth(UUID playerId) {
+        double totalAssets = 0.0;
+        double totalLiabilities = 0.0;
+        
+        // Add wallet balance
+        WalletManager walletManager = getWalletManager();
+        if (walletManager != null) {
+            totalAssets += walletManager.getCashBalance(playerId, currencyManager.getDefaultCurrency());
+        }
+        
+        // Add bank account balance
+        BankManager bankManager = getBankManager();
+        if (bankManager != null) {
+            BankAccount primaryAccount = bankManager.getPrimaryAccount(playerId);
+            if (primaryAccount != null) {
+                totalAssets += primaryAccount.getBalance(currencyManager.getDefaultCurrency());
+            }
+        }
+        
+        // Add loan balances to liabilities
+        List<Loan> activeLoans = bankManager.getActiveLoansForPlayer(playerId);
+        for (Loan loan : activeLoans) {
+            totalLiabilities += loan.getCurrentBalance();
+        }
+        
+        return totalAssets - totalLiabilities;
+    }
 }

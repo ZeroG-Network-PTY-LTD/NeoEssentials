@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.ui.MenuSystem;
 import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PerformanceMonitor;
 import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -289,36 +290,35 @@ public class WorldManagementCommands {
             LanguageUtil.sendMessage(player, "");
             LanguageUtil.sendMessage(player, "&eDimension Breakdown:");
             
-            int totalChunks = 0;
             for (ServerLevel level : server.getAllLevels()) {
                 String dimensionName = getDimensionDisplayName(level.dimension().location().toString());
                 int playerCount = level.players().size();
                 int chunkCount = level.getChunkSource().getLoadedChunksCount();
-                totalChunks += chunkCount;
                 
                 LanguageUtil.sendMessage(player, "&f  " + dimensionName + ": &7" + playerCount + " players, " + chunkCount + " chunks");
             }
             
-            // Memory and performance info
-            Runtime runtime = Runtime.getRuntime();
-            long maxMemory = runtime.maxMemory();
-            long totalMemory = runtime.totalMemory();
-            long freeMemory = runtime.freeMemory();
-            long usedMemory = totalMemory - freeMemory;
+            // Get comprehensive performance information
+            PerformanceMonitor.ServerPerformanceInfo perfInfo = PerformanceMonitor.getServerPerformance(server);
+            
+            LanguageUtil.sendMessage(player, "");
+            LanguageUtil.sendMessage(player, "&eServer Performance:");
+            LanguageUtil.sendMessage(player, "&f  TPS: &7" + DECIMAL_FORMAT.format(perfInfo.tps));
+            LanguageUtil.sendMessage(player, "&f  Avg Tick Time: &7" + DECIMAL_FORMAT.format(perfInfo.averageTickTime) + "ms");
+            LanguageUtil.sendMessage(player, "&f  Uptime: &7" + perfInfo.getFormattedUptime());
             
             LanguageUtil.sendMessage(player, "");
             LanguageUtil.sendMessage(player, "&eMemory Usage:");
-            LanguageUtil.sendMessage(player, "&f  Used: &7" + formatBytes(usedMemory) + " / " + formatBytes(maxMemory));
-            LanguageUtil.sendMessage(player, "&f  Free: &7" + formatBytes(freeMemory));
-            
-            // Server performance (approximate TPS calculation)
-            // Simple estimation - in production you'd want to track tick times over time
-            double estimatedTps = 20.0; // Default assumption for display
-            LanguageUtil.sendMessage(player, "&f  TPS (est): &7" + DECIMAL_FORMAT.format(estimatedTps));
-            LanguageUtil.sendMessage(player, "&f  Server Uptime: &7" + formatUptime(server.getTickCount()));
+            LanguageUtil.sendMessage(player, "&f  Used: &7" + perfInfo.memory.formatBytes(perfInfo.memory.usedMemory) + 
+                                   " / " + perfInfo.memory.formatBytes(perfInfo.memory.maxMemory));
+            LanguageUtil.sendMessage(player, "&f  Free: &7" + perfInfo.memory.formatBytes(perfInfo.memory.freeMemory));
+            LanguageUtil.sendMessage(player, "&f  Usage: &7" + DECIMAL_FORMAT.format(perfInfo.memory.usagePercentage) + "%");
             
             LanguageUtil.sendMessage(player, "");
-            LanguageUtil.sendMessage(player, "&eTotal Loaded Chunks: &f" + totalChunks);
+            LanguageUtil.sendMessage(player, "&eWorld Statistics:");
+            LanguageUtil.sendMessage(player, "&f  Total Loaded Chunks: &7" + perfInfo.loadedChunks);
+            LanguageUtil.sendMessage(player, "&f  Total Entities: &7" + perfInfo.totalEntities);
+            LanguageUtil.sendMessage(player, "&f  Online Players: &7" + perfInfo.onlinePlayers);
             LanguageUtil.sendMessage(player, "&eServer Uptime: &f" + formatUptime(server.getTickCount()));
             
             LanguageUtil.sendMessage(player, "&6===================================");
@@ -424,16 +424,6 @@ public class WorldManagementCommands {
         } else {
             return seconds + "s";
         }
-    }
-    
-    /**
-     * Formats bytes into a human-readable format.
-     */
-    private String formatBytes(long bytes) {
-        if (bytes < 1024) return bytes + " B";
-        if (bytes < 1024 * 1024) return DECIMAL_FORMAT.format(bytes / 1024.0) + " KB";
-        if (bytes < 1024 * 1024 * 1024) return DECIMAL_FORMAT.format(bytes / (1024.0 * 1024.0)) + " MB";
-        return DECIMAL_FORMAT.format(bytes / (1024.0 * 1024.0 * 1024.0)) + " GB";
     }
     
     /**
