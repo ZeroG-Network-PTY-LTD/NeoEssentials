@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.ui;
 
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.data.EconomyManager;
 import com.zerog.neoessentials.data.KitManager;
 import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.utils.PermissionUtil;
@@ -25,62 +24,6 @@ import java.util.UUID;
  */
 public class AdminPanel {
 
-    /**
-     * Displays the economy management panel.f
-     *
-     * @param player The player viewing the panel
-     */
-    public static void displayEconomyPanel(ServerPlayer player) {
-        // Header
-        sendHeader(player, "Economy Management");
-        
-        // Get economy manager for data
-        EconomyManager economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
-        
-        // Economy statistics
-        double totalCurrency = economyManager.getTotalCurrency();
-        int totalAccounts = economyManager.getTotalAccounts();
-        
-        Component statsLine = Component.literal(TextUtil.formatText("&7Total Currency: &a" + 
-                String.format("%.2f", totalCurrency) + " &7| Active Accounts: &a" + totalAccounts));
-        player.sendSystemMessage(statsLine);
-        
-        // Economy actions
-        sendSpacer(player);
-        player.sendSystemMessage(Component.literal(TextUtil.formatText("&6Economy Actions:")));
-        
-        // Top balances button
-        displayActionButton(player, "&aView Top Balances", "/eco baltop", 
-                "&7Click to view the top player balances");
-        
-        // Set player balance button
-        displayActionButton(player, "&eSet Player Balance", "/eco set <player> <amount>", 
-                "&7Click to set a player's balance\n&7Usage: /eco set <player> <amount>");
-        
-        // Give currency button
-        displayActionButton(player, "&2Give Currency", "/eco give <player> <amount>", 
-                "&7Click to give currency to a player\n&7Usage: /eco give <player> <amount>");
-        
-        // Take currency button
-        displayActionButton(player, "&cTake Currency", "/eco take <player> <amount>", 
-                "&7Click to take currency from a player\n&7Usage: /eco take <player> <amount>");
-        
-        // Reset player button
-        displayActionButton(player, "&4Reset Player", "/eco reset <player>", 
-                "&7Click to reset a player's balance\n&7Usage: /eco reset <player>");
-        
-        // Recent transactions button
-        displayActionButton(player, "&9View Recent Transactions", "/eco transactions", 
-                "&7Click to view recent economic transactions");
-        
-        // Back button
-        sendSpacer(player);
-        displayActionButton(player, "&7Back to Main Menu", "/adminpanel", 
-                "&7Click to return to the main admin panel");
-        
-        sendFooter(player);
-    }
-    
     /**
      * Displays the kit management panel.
      *
