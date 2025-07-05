@@ -129,12 +129,9 @@ public class PermissionUtil {
             "neoessentials.reload",
             "neoessentials.debug",
             "neoessentials.maintenance",
-            "neoessentials.economy.admin",
             "neoessentials.gamemode.others",
             "neoessentials.clearinventory.others",
             "neoessentials.spawn.admin",
-            "neoessentials.shop.admin",
-            "neoessentials.auction.admin",
             "neoessentials.invsee.edit",
             "neoessentials.editsign.admin"
         };

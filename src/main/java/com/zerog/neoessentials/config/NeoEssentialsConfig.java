@@ -61,7 +61,6 @@ public class NeoEssentialsConfig {
         
         // Initialize default warp costs
         warpCosts.put("spawn", 0);
-        warpCosts.put("shop", 5);
         warpCosts.put("mine", 10);
           // Initialize default permissions
         defaultPermissions.put("neoessentials.command.tpa", true);
