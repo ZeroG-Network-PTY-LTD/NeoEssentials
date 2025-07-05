@@ -37,25 +37,6 @@ public class TabCompletionUtil {
     };
     
     // Shop types
-    public static final String[] SHOP_TYPES = {
-        "general", "food", "tools", "weapons", "armor", "blocks", "redstone", "magic"
-    };
-    
-    // Shop ownership types
-    public static final String[] SHOP_OWNERSHIP_TYPES = {
-        "player", "server", "auction"
-    };
-    
-    // Auction types
-    public static final String[] AUCTION_TYPES = {
-        "item", "service", "chest", "bulk", "rare", "enchanted"
-    };
-    
-    // Auction list filters
-    public static final String[] AUCTION_LIST_FILTERS = {
-        "all", "mine", "active", "expired", "sold", "type", "player"
-    };
-    
     // Stack amount suggestions
     public static final String[] STACK_AMOUNTS = {
         "1", "16", "32", "64", "128", "256", "512", "1024"

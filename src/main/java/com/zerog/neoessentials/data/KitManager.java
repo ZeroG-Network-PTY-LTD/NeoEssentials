@@ -361,14 +361,6 @@ public class KitManager {
             }
         }
         
-        // Check if player has enough money if kit has a price and checking price
-        if (checkPrice && kit.getPrice() > 0) {
-            var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
-            if (economyManager != null && economyManager.getBalance(player.getUUID()) < kit.getPrice()) {
-                return false;
-            }
-        }
-        
         return true;
     }
     
@@ -418,31 +410,6 @@ public class KitManager {
         // Check if the player can use the kit (including price check)
         if (!canUseKit(player, kitName, true)) {
             return false;
-        }
-        
-        // Handle payment if kit has a price
-        if (kit.getPrice() > 0) {
-            var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
-            if (economyManager != null) {
-                // Check one more time if player has enough money
-                if (economyManager.getBalance(player.getUUID()) < kit.getPrice()) {
-                    return false;
-                }
-                
-                // Charge the player for the kit
-                boolean success = economyManager.removeBalance(player.getUUID(), kit.getPrice());
-                if (!success) {
-                    return false;
-                }
-                
-                // Record the transaction with a specific description
-                economyManager.recordTransaction(
-                    player.getUUID(), 
-                    EconomyTransaction.TYPE_WITHDRAW, 
-                    kit.getPrice(), 
-                    "Purchased kit: " + kit.getName()
-                );
-            }
         }
         
         // Create and give items to the player

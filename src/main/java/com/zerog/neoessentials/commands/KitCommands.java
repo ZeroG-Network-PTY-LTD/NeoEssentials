@@ -11,7 +11,11 @@ import com.zerog.neoessentials.data.KitManager;
 import com.zerog.neoessentials.data.EconomyTransaction;
 import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
-import net.minecraft.ChatFormatting;
+import n        if (kit.getCooldown() > 0) {
+            infoBuilder.append("§eCooldown: §f").append(formatTime(kit.getCooldown()));
+        }
+        
+        if (!kit.getPermission().isEmpty()) {atFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -165,23 +169,6 @@ public class KitCommands {
             return 0;
         }
         
-        // Check if player has enough money for the kit
-        if (kit.getPrice() > 0) {
-            var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
-            if (economyManager != null) {
-                double balance = economyManager.getBalance(player.getUUID());
-                if (balance < kit.getPrice()) {
-                    String formattedPrice = economyManager.formatCurrency(kit.getPrice());
-                    String formattedBalance = economyManager.formatCurrency(balance);
-                    NeoEssentials.LOGGER.debug("Player {} doesn't have enough money for kit '{}' (has {}, needs {})",
-                        player.getScoreboardName(), kitName, formattedBalance, formattedPrice);
-                    context.getSource().sendFailure(Component.literal("You need " + formattedPrice + 
-                        " to purchase this kit (you have " + formattedBalance + ")"));
-                    return 0;
-                }
-            }
-        }
-        
         // Give the kit to the player
         boolean success = kitManager.giveKit(player, kitName);
         
@@ -253,20 +240,6 @@ public class KitCommands {
                 }
             }
             
-            // Add price info
-            if (kit.getPrice() > 0) {
-                var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
-                String formattedPrice = economyManager.formatCurrency(kit.getPrice());
-                double balance = economyManager.getBalance(player.getUUID());
-                boolean canAfford = balance >= kit.getPrice();
-                
-                hoverText.append(Component.literal("§7Price: " + (canAfford ? "§a" : "§c") + formattedPrice + "\n"));
-                
-                if (!canAfford) {
-                    hoverText.append(Component.literal("§cYou need " + economyManager.formatCurrency(kit.getPrice() - balance) + " more\n"));
-                }
-            }
-            
             // Add instruction text
             hoverText.append(Component.literal("§7Click to claim this kit"));
             
@@ -279,13 +252,6 @@ public class KitCommands {
                 // Check for price
                 boolean canAfford = true;
                 String priceInfo = "";
-                
-                if (kit.getPrice() > 0) {
-                    var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
-                    double balance = economyManager.getBalance(player.getUUID());
-                    canAfford = balance >= kit.getPrice();
-                    priceInfo = " (" + economyManager.formatCurrency(kit.getPrice()) + ")";
-                }
                 
                 if (cooldown > 0) {
                     // On cooldown - show in red with cooldown time
@@ -632,11 +598,6 @@ public class KitCommands {
             message.append(Component.literal(", " + formatTime(cooldown) + " cooldown"));
         }
         
-        if (price > 0) {
-            String formattedPrice = NeoEssentials.getInstance().getDataManager().getEconomyManager().formatCurrency(price);
-            message.append(Component.literal(", price: " + formattedPrice));
-        }
-        
         LanguageUtil.sendComponent(player, message);
         return 1;
     }
@@ -676,16 +637,6 @@ public class KitCommands {
         
         if (kit.getCooldown() > 0) {
             infoBuilder.append("§eCooldown: §f").append(formatTime(kit.getCooldown()));
-        }
-        
-        if (kit.getPrice() > 0) {
-            if (kit.getCooldown() > 0) infoBuilder.append("§7, ");
-            var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
-            String formattedPrice = economyManager.formatCurrency(kit.getPrice());
-            double balance = economyManager.getBalance(player.getUUID());
-            boolean canAfford = balance >= kit.getPrice();
-            
-            infoBuilder.append("§ePrice: ").append(canAfford ? "§a" : "§c").append(formattedPrice);
         }
         
         player.sendSystemMessage(Component.literal(infoBuilder.toString()));
@@ -767,19 +718,6 @@ public class KitCommands {
             if (cooldown > 0) {
                 String timeStr = formatTime(cooldown);
                 player.sendSystemMessage(Component.literal("§cYou must wait §e" + timeStr + "§c before using this kit again."));
-            } else if (kit.getPrice() > 0) {
-                var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
-                double balance = economyManager.getBalance(player.getUUID());
-                if (balance < kit.getPrice()) {
-                    String formattedPrice = economyManager.formatCurrency(kit.getPrice());
-                    String formattedBalance = economyManager.formatCurrency(balance);
-                    String formattedNeeded = economyManager.formatCurrency(kit.getPrice() - balance);
-                    player.sendSystemMessage(Component.literal("§cYou need §e" + formattedPrice + 
-                        " §cto buy this kit (you have §e" + formattedBalance + "§c, need §e" + 
-                        formattedNeeded + " §cmore)"));
-                } else {
-                    player.sendSystemMessage(Component.literal("§cYou don't have permission to use this kit."));
-                }
             } else {
                 player.sendSystemMessage(Component.literal("§cYou don't have permission to use this kit."));
             }
