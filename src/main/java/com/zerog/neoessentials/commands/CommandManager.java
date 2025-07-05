@@ -484,6 +484,10 @@ public class CommandManager {    // Command classes
             currencyCommands.register(dispatcher);
             NeoEssentials.LOGGER.info("Registered currency commands");
             
+            // Register enhanced pay commands for GUI integration
+            com.zerog.neoessentials.commands.EnhancedPayCommands.register(dispatcher);
+            NeoEssentials.LOGGER.info("Registered enhanced pay commands");
+            
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to register economy commands: " + e.getMessage());
             e.printStackTrace();
