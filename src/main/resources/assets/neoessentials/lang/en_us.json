@@ -573,5 +573,22 @@
   "commands.dimensions.no_dimensions": "§cNo dimensions found!",
   "commands.dimensions.teleport_success": "§aTeleported to dimension: §e%s",
   "commands.dimensions.teleport_failed": "§cFailed to teleport to dimension: %s",
-  "commands.dimensions.invalid_dimension": "§cInvalid dimension: %s"
+  "commands.dimensions.invalid_dimension": "§cInvalid dimension: %s",
+  
+  "neoessentials.economy.available_actions_header": "&6&l--- Available Actions ---",
+  "neoessentials.economy.action_send_money": "&e• Send Money: &7/pay <player> <amount>",
+  "neoessentials.economy.action_transaction_history": "&e• Transaction History: &7/economygui transactions",
+  "neoessentials.economy.send_money_header": "&6&l--- Send Money ---",
+  "neoessentials.economy.send_money_instructions": "&7Use /pay <player> <amount> to send money to another player",
+  "neoessentials.economy.send_money_usage": "&7Example: /pay Steve 50",
+  "neoessentials.economy.invalid_amount": "&cInvalid amount: %s",
+  "neoessentials.economy.insufficient_funds": "&cInsufficient funds! You need %s but only have %s",
+  "neoessentials.economy.cannot_send_to_self": "&cYou cannot send money to yourself!",
+  "neoessentials.economy.money_sent": "&aSuccessfully sent %s to %s",
+  "neoessentials.economy.money_received": "&aYou received %s from %s",
+  "neoessentials.economy.transfer_failed": "&cTransfer failed! Please try again later.",
+  "neoessentials.economy.transfer_error": "&cTransfer error: %s",
+  "neoessentials.economy.bank_feature_placeholder": "&6&l--- Bank Account ---",
+  "neoessentials.economy.bank_coming_soon": "&7Banking features are coming soon in a future update!",
+  "neoessentials.commands.error.server_not_available": "&cServer not available! Please try again later."
 }
