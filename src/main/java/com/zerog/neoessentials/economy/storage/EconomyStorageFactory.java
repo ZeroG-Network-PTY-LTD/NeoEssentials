@@ -10,12 +10,6 @@ import java.nio.file.Path;
  */
 public class EconomyStorageFactory {
     
-    public enum StorageType {
-        JSON,
-        SQLITE,
-        MYSQL
-    }
-    
     /**
      * Creates a storage instance based on the configuration
      * @param config the economy configuration
@@ -23,7 +17,7 @@ public class EconomyStorageFactory {
      * @return the storage instance
      */
     public static EconomyStorage createStorage(EconomyConfig config, Path dataDirectory) {
-        StorageType type = config.getStorageType();
+        EconomyConfig.StorageType type = config.getStorageType();
         
         switch (type) {
             case JSON:
@@ -49,7 +43,7 @@ public class EconomyStorageFactory {
      */
     public static EconomyStorage createStorage(String typeString, Path dataDirectory) {
         try {
-            StorageType type = StorageType.valueOf(typeString.toUpperCase());
+            EconomyConfig.StorageType type = EconomyConfig.StorageType.valueOf(typeString.toUpperCase());
             
             switch (type) {
                 case JSON:
