@@ -157,33 +157,6 @@ public class StorageManager {
     }
     
     /**
-     * Save economy data for a player
-     * 
-     * @param uuid The player UUID
-     * @param economyData The economy data
-     * @return True if successful, false otherwise
-     */
-    public boolean saveEconomyData(UUID uuid, EconomyData economyData) {
-        if (storageHandler != null) {
-            return storageHandler.saveEconomyData(uuid, economyData);
-        }
-        return false;
-    }
-    
-    /**
-     * Load economy data for a player
-     * 
-     * @param uuid The player UUID
-     * @return The economy data, or a new EconomyData instance if an error occurs
-     */
-    public EconomyData loadEconomyData(UUID uuid) {
-        if (storageHandler != null) {
-            return storageHandler.loadEconomyData(uuid);
-        }
-        return new EconomyData();
-    }
-    
-    /**
      * Save all kits
      * 
      * @param kits The kits to save
