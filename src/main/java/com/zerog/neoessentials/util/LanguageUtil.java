@@ -163,6 +163,7 @@ public class LanguageUtil {
         FALLBACK_MESSAGES.put("neoessentials.economy.action_financial_stats", "&e• Financial Stats: &7/financialstats");
         FALLBACK_MESSAGES.put("neoessentials.economy.action_bank_account", "&e• Bank Account: &7/bankaccount (coming soon)");
         FALLBACK_MESSAGES.put("neoessentials.economy.action_loans", "&e• Loan Management: &7/loans (coming soon)");
+        FALLBACK_MESSAGES.put("neoessentials.economy.action_settings", "&e• Economy Settings: &7/economysettings");
         FALLBACK_MESSAGES.put("neoessentials.economy.quick_commands_info", "&7Quick access: &e/pay &7| &e/econ &7| &e/transactions &7| &e/financialstats");
         
         // Banking messages
@@ -212,6 +213,29 @@ public class LanguageUtil {
         FALLBACK_MESSAGES.put("neoessentials.economy.loans_max_amount", "&eMaximum Loan Amount: &f%s");
         FALLBACK_MESSAGES.put("neoessentials.economy.loans_minimum_balance", "&eMinimum Required Balance: &f%s");
         FALLBACK_MESSAGES.put("neoessentials.economy.loans_error", "&cError accessing loan management: %s");
+        
+        // Economy help messages
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_header", "&6====== Economy Help Guide ======");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_basic_commands", "&7Basic Economy Commands:");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_command_pay", "&e/pay <player> <amount> &7- Send money to another player");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_command_econ", "&e/econ &7- Open main economy interface");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_command_sendmoney", "&e/sendmoney &7- Open money transfer interface");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_advanced_commands", "&7Advanced Features:");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_command_transactions", "&e/transactions &7- View your transaction history");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_command_financialstats", "&e/financialstats &7- View financial statistics");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_command_bankaccount", "&e/bankaccount &7- Access banking features (coming soon)");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_command_loans", "&e/loans &7- Loan management system (coming soon)");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_command_currencyexchange", "&e/currencyexchange &7- Currency exchange (coming soon)");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_command_economysettings", "&e/economysettings &7- View economy configuration");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_examples_header", "&7Usage Examples:");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_example_pay", "&e/pay Steve 50 &7- Send $50.00 to Steve");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_example_check_balance", "&e/econ &7- Check your current balance");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_example_view_stats", "&e/financialstats &7- View spending and earning statistics");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_tips_header", "&7Tips & Information:");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_tip_safety", "&7• Double-check player names before sending money");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_tip_commands", "&7• Use &e/economyhelp &7to view this guide anytime");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_tip_support", "&7• Contact server staff if you need assistance");
+        FALLBACK_MESSAGES.put("neoessentials.economy.help_footer", "&6===============================");
     }
 
     /**
