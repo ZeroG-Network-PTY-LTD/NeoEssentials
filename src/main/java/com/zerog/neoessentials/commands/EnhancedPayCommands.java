@@ -12,6 +12,7 @@ import com.zerog.neoessentials.ui.economy.BankAccountGUI;
 import com.zerog.neoessentials.ui.economy.CurrencyExchangeGUI;
 import com.zerog.neoessentials.ui.economy.EconomySettingsGUI;
 import com.zerog.neoessentials.ui.economy.LoanManagementGUI;
+import com.zerog.neoessentials.ui.economy.EconomyHelpGUI;
 import com.zerog.neoessentials.util.LanguageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -69,6 +70,10 @@ public class EnhancedPayCommands {
         
         dispatcher.register(Commands.literal("loans")
             .executes(EnhancedPayCommands::openLoanManagement)
+        );
+        
+        dispatcher.register(Commands.literal("economyhelp")
+            .executes(EnhancedPayCommands::openEconomyHelp)
         );
     }
     
@@ -193,6 +198,16 @@ public class EnhancedPayCommands {
         } catch (Exception e) {
             LanguageUtil.sendMessage(player, "neoessentials.economy.loans_error", e.getMessage());
         }
+        return 1;
+    }
+    
+    private static int openEconomyHelp(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            LanguageUtil.sendMessage(context.getSource(), "neoessentials.commands.error.not_player");
+            return 0;
+        }
+        
+        EconomyHelpGUI.openEconomyHelpGUI(player);
         return 1;
     }
 }
