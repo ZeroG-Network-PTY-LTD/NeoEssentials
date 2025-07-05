@@ -84,7 +84,7 @@ public class PlayerEconomyData {
      * 
      * @return Map of currency to balance
      */
-    public Map<Currency, Double> getAllBalances() {
+    public Map<Currency, Double> getBalances() {
         return new HashMap<>(balances);
     }
     
