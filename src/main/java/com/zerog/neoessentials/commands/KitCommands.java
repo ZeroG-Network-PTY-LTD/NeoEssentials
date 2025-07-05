@@ -8,14 +8,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.KitManager;
-import com.zerog.neoessentials.data.EconomyTransaction;
 import com.zerog.neoessentials.util.LanguageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
-import n        if (kit.getCooldown() > 0) {
-            infoBuilder.append("§eCooldown: §f").append(formatTime(kit.getCooldown()));
-        }
-        
-        if (!kit.getPermission().isEmpty()) {atFormatting;
+import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.BuiltInRegistries;
