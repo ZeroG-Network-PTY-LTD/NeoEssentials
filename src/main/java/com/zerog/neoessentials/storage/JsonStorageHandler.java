@@ -8,7 +8,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.data.EconomyData;
 import com.zerog.neoessentials.data.HomeData;
 import com.zerog.neoessentials.data.KitManager;
 import com.zerog.neoessentials.data.WarpData;
@@ -288,78 +287,6 @@ public class JsonStorageHandler implements StorageHandler {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to load warps: {}", e.getMessage(), e);
             return warps;
-        }
-    }
-    
-    @Override
-    public boolean saveEconomyData(UUID uuid, EconomyData economyData) {
-        try {
-            File file = new File(ECONOMY_DIR + "/" + uuid.toString() + ".json");
-            JsonObject rootObj = new JsonObject();
-            
-            // Save balance
-            rootObj.addProperty("balance", economyData.getBalance().toString());
-            
-            // Save transactions
-            JsonArray transactionsArray = new JsonArray();
-            for (EconomyData.Transaction transaction : economyData.getTransactions()) {
-                JsonObject transactionObj = new JsonObject();
-                transactionObj.addProperty("description", transaction.getDescription());
-                transactionObj.addProperty("amount", transaction.getAmount().toString());
-                transactionObj.addProperty("timestamp", transaction.getTimestamp());
-                
-                transactionsArray.add(transactionObj);
-            }
-            rootObj.add("transactions", transactionsArray);
-            
-            try (FileWriter writer = new FileWriter(file)) {
-                gson.toJson(rootObj, writer);
-            }
-            
-            return true;
-        } catch (IOException e) {
-            NeoEssentials.LOGGER.error("Failed to save economy data for {}: {}", uuid, e.getMessage());
-            return false;
-        }
-    }
-    
-    @Override
-    public EconomyData loadEconomyData(UUID uuid) {
-        try {
-            File file = new File(ECONOMY_DIR + "/" + uuid.toString() + ".json");
-            
-            if (!file.exists()) {
-                return new EconomyData();
-            }
-            
-            JsonObject rootObj;
-            try (FileReader reader = new FileReader(file)) {
-                rootObj = JsonParser.parseReader(reader).getAsJsonObject();
-            }
-            
-            // Load balance
-            BigDecimal balance = new BigDecimal(rootObj.get("balance").getAsString());
-            EconomyData economyData = new EconomyData(balance);
-            
-            // Load transactions
-            if (rootObj.has("transactions")) {
-                JsonArray transactionsArray = rootObj.getAsJsonArray("transactions");
-                
-                for (JsonElement element : transactionsArray) {
-                    JsonObject transactionObj = element.getAsJsonObject();
-                    
-                    String description = transactionObj.get("description").getAsString();
-                    BigDecimal amount = new BigDecimal(transactionObj.get("amount").getAsString());
-                    long timestamp = transactionObj.get("timestamp").getAsLong();
-                    
-                    economyData.addTransaction(new EconomyData.Transaction(description, amount, timestamp));
-                }
-            }
-            
-            return economyData;
-        } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Failed to load economy data for {}: {}", uuid, e.getMessage());
-            return new EconomyData();
         }
     }
     
