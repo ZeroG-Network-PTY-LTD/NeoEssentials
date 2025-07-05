@@ -198,6 +198,20 @@ public class LanguageUtil {
         FALLBACK_MESSAGES.put("neoessentials.economy.settings_feature_banking_planned", "&e⚠ Banking System (Planned)");
         FALLBACK_MESSAGES.put("neoessentials.economy.settings_footer", "&6==============================");
         FALLBACK_MESSAGES.put("neoessentials.economy.settings_error", "&cError accessing economy settings: %s");
+        
+        // Loan management messages
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_header", "&6====== Loan Management ======");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_preview_header", "&7Planned Loan Features:");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_feature_basic", "&e• Basic Loans: &7Borrow money with competitive rates");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_feature_interest", "&e• Interest System: &7Fair interest rates based on risk");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_feature_collateral", "&e• Collateral Options: &7Secure loans with items or property");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_feature_repayment", "&e• Flexible Repayment: &7Multiple payment schedules available");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_eligibility_header", "&7Current Loan Eligibility:");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_eligibility_qualified", "&a✓ You qualify for loans");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_eligibility_insufficient", "&c✗ Insufficient balance for loan qualification");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_max_amount", "&eMaximum Loan Amount: &f%s");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_minimum_balance", "&eMinimum Required Balance: &f%s");
+        FALLBACK_MESSAGES.put("neoessentials.economy.loans_error", "&cError accessing loan management: %s");
     }
 
     /**
