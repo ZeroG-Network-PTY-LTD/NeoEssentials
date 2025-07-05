@@ -26,7 +26,24 @@ public class EconomyCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("balance")
-                .aliases("bal", "money")
+                .executes(EconomyCommands::showBalance)
+                .then(Commands.argument("player", EntityArgument.player())
+                    .requires(source -> source.hasPermission(2))
+                    .executes(EconomyCommands::showOtherBalance)
+                )
+        );
+        
+        dispatcher.register(
+            Commands.literal("bal")
+                .executes(EconomyCommands::showBalance)
+                .then(Commands.argument("player", EntityArgument.player())
+                    .requires(source -> source.hasPermission(2))
+                    .executes(EconomyCommands::showOtherBalance)
+                )
+        );
+        
+        dispatcher.register(
+            Commands.literal("money")
                 .executes(EconomyCommands::showBalance)
                 .then(Commands.argument("player", EntityArgument.player())
                     .requires(source -> source.hasPermission(2))
@@ -45,7 +62,11 @@ public class EconomyCommands {
         
         dispatcher.register(
             Commands.literal("baltop")
-                .aliases("balancetop")
+                .executes(EconomyCommands::showTopBalances)
+        );
+        
+        dispatcher.register(
+            Commands.literal("balancetop")
                 .executes(EconomyCommands::showTopBalances)
         );
         
@@ -84,7 +105,11 @@ public class EconomyCommands {
         // Economy main menu command
         dispatcher.register(
             Commands.literal("economymenu")
-                .aliases("emenu")
+                .executes(EconomyCommands::openEconomyMenu)
+        );
+        
+        dispatcher.register(
+            Commands.literal("emenu")
                 .executes(EconomyCommands::openEconomyMenu)
         );
     }
