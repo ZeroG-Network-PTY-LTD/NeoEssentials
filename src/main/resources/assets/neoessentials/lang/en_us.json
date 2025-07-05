@@ -615,6 +615,7 @@
   "neoessentials.economy.action_financial_stats": "&e• Financial Stats: &7/financialstats",
   "neoessentials.economy.action_bank_account": "&e• Bank Account: &7/bankaccount (coming soon)",
   "neoessentials.economy.action_loans": "&e• Loan Management: &7/loans (coming soon)",
+  "neoessentials.economy.action_settings": "&e• Economy Settings: &7/economysettings",
   "neoessentials.economy.quick_commands_info": "&7Quick access: &e/pay &7| &e/econ &7| &e/transactions &7| &e/financialstats",
   
   "neoessentials.economy.current_cash_balance": "&eCash Balance: &f%s",
@@ -659,5 +660,27 @@
   "neoessentials.economy.loans_eligibility_insufficient": "&c✗ Insufficient balance for loan qualification",
   "neoessentials.economy.loans_max_amount": "&eMaximum Loan Amount: &f%s",
   "neoessentials.economy.loans_minimum_balance": "&eMinimum Required Balance: &f%s",
-  "neoessentials.economy.loans_error": "&cError accessing loan management: %s"
+  "neoessentials.economy.loans_error": "&cError accessing loan management: %s",
+  
+  "neoessentials.economy.help_header": "&6====== Economy Help Guide ======",
+  "neoessentials.economy.help_basic_commands": "&7Basic Economy Commands:",
+  "neoessentials.economy.help_command_pay": "&e/pay <player> <amount> &7- Send money to another player",
+  "neoessentials.economy.help_command_econ": "&e/econ &7- Open main economy interface",
+  "neoessentials.economy.help_command_sendmoney": "&e/sendmoney &7- Open money transfer interface",
+  "neoessentials.economy.help_advanced_commands": "&7Advanced Features:",
+  "neoessentials.economy.help_command_transactions": "&e/transactions &7- View your transaction history",
+  "neoessentials.economy.help_command_financialstats": "&e/financialstats &7- View financial statistics",
+  "neoessentials.economy.help_command_bankaccount": "&e/bankaccount &7- Access banking features (coming soon)",
+  "neoessentials.economy.help_command_loans": "&e/loans &7- Loan management system (coming soon)",
+  "neoessentials.economy.help_command_currencyexchange": "&e/currencyexchange &7- Currency exchange (coming soon)",
+  "neoessentials.economy.help_command_economysettings": "&e/economysettings &7- View economy configuration",
+  "neoessentials.economy.help_examples_header": "&7Usage Examples:",
+  "neoessentials.economy.help_example_pay": "&e/pay Steve 50 &7- Send $50.00 to Steve",
+  "neoessentials.economy.help_example_check_balance": "&e/econ &7- Check your current balance",
+  "neoessentials.economy.help_example_view_stats": "&e/financialstats &7- View spending and earning statistics",
+  "neoessentials.economy.help_tips_header": "&7Tips & Information:",
+  "neoessentials.economy.help_tip_safety": "&7• Double-check player names before sending money",
+  "neoessentials.economy.help_tip_commands": "&7• Use &e/economyhelp &7to view this guide anytime",
+  "neoessentials.economy.help_tip_support": "&7• Contact server staff if you need assistance",
+  "neoessentials.economy.help_footer": "&6==============================="
 }

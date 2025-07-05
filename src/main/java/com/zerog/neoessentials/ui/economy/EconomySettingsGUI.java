@@ -34,7 +34,7 @@ public class EconomySettingsGUI {
             LanguageUtil.sendMessage(player, "neoessentials.economy.settings_total_currency", String.format("$%.2f", totalCurrency));
             
             // Display player count
-            int playerCount = economyManager.getPlayerCount();
+            int playerCount = economyManager.getAllBalances().size();
             LanguageUtil.sendMessage(player, "neoessentials.economy.settings_active_players", String.valueOf(playerCount));
             
             // Display system status
