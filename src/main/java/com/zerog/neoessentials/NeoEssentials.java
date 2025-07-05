@@ -344,13 +344,6 @@ public class NeoEssentials {
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
         
-        // Initialize the economy system early to load existing data
-        try {
-            com.zerog.neoessentials.economy.EconomyManager.getInstance().initialize();
-        } catch (Exception e) {
-            LOGGER.error("Failed to initialize economy system", e);
-        }
-        
         // Update the server reference in TABLikeTablistManager if it exists
         if (dataManager != null && dataManager.getTablistManager() != null) {
             LOGGER.info("Updating server reference in TABLikeTablistManager");

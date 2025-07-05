@@ -13,8 +13,6 @@ import java.util.Map;
  * Main data manager class that initializes and manages all data storage components.
  */
 public class DataManager {    private UserManager userManager;
-    private EconomyManager economyManager; // Legacy economy manager for backward compatibility
-    private com.zerog.neoessentials.economy.EconomyManager newEconomyManager; // New v1.0.2 economy system
     private HomeManager homeManager;
     private WarpManager warpManager;
     private SpawnManager spawnManager;
@@ -39,8 +37,6 @@ public class DataManager {    private UserManager userManager;
         
         // Initialize all managers
         userManager = new UserManager();
-        economyManager = new EconomyManager(); // Legacy economy manager for backward compatibility
-        newEconomyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance(); // New v1.0.2 economy system
         homeManager = new HomeManager();
         warpManager = new WarpManager();
         spawnManager = new SpawnManager();
@@ -65,13 +61,11 @@ public class DataManager {    private UserManager userManager;
     public void initialize() {
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");            // Initialize all data managers
         userManager.initialize();
-        economyManager.initialize(); // Legacy economy system
-        // newEconomyManager is already initialized via singleton getInstance()
         homeManager.initialize();
         warpManager.initialize();
         spawnManager.initialize();
         kitManager.initialize();
-        // Initialize tablist after economy is initialized
+        // Initialize tablist manager
         tablistManager.initialize();
         // JailManager doesn't need initialization
         
@@ -88,14 +82,6 @@ public class DataManager {    private UserManager userManager;
         // Create manager instances if they don't exist
         if (userManager == null) {
             userManager = new UserManager();
-        }
-        
-        if (economyManager == null) {
-            economyManager = new EconomyManager();
-        }
-        
-        if (newEconomyManager == null) {
-            newEconomyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
         }
         
         if (homeManager == null) {
@@ -159,7 +145,6 @@ public class DataManager {    private UserManager userManager;
             
             // Reload other data as needed
             // homeManager.reloadHomes();
-            // economyManager.reloadEconomyData();
             // kitManager.reloadKits();
             // spawnManager.reloadSpawnData();
             
@@ -174,7 +159,6 @@ public class DataManager {    private UserManager userManager;
      */
     public void saveAll() {
         NeoEssentials.LOGGER.info("Saving all NeoEssentials data");        userManager.saveAll();
-        economyManager.saveAll();
         homeManager.saveAll();
         warpManager.saveAll();
         spawnManager.saveSpawnData();
@@ -210,24 +194,6 @@ public class DataManager {    private UserManager userManager;
      */
     public UserManager getUserManager() {
         return userManager;
-    }
-    
-    /**
-     * Gets the economy manager instance
-     * 
-     * @return The economy manager
-     */
-    public EconomyManager getEconomyManager() {
-        return economyManager;
-    }
-    
-    /**
-     * Gets the new v1.0.2 economy manager instance
-     * 
-     * @return The new economy manager
-     */
-    public com.zerog.neoessentials.economy.EconomyManager getNewEconomyManager() {
-        return newEconomyManager;
     }
     
     /**
