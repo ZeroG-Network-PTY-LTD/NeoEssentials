@@ -109,17 +109,6 @@ public class TablistPlaceholderManager {
         registerPlaceholder("health", (player, arg) -> String.format("%.1f", player.getHealth()));
         registerPlaceholder("max_health", (player, arg) -> String.format("%.1f", player.getMaxHealth()));
         
-        // Economy (if available)
-        registerPlaceholder("balance", (player, arg) -> {
-            // Check if the economy manager is available
-            if (NeoEssentials.getInstance() != null && 
-                NeoEssentials.getInstance().getDataManager() != null && 
-                NeoEssentials.getInstance().getDataManager().getEconomyManager() != null) {
-                return String.format("%.2f", NeoEssentials.getInstance().getDataManager().getEconomyManager().getBalance(player.getUUID()));
-            }
-            return "0.00";
-        });
-        
         // World information
         registerPlaceholder("world", (player, arg) -> player.level().dimension().location().toString());
         registerPlaceholder("biome", (player, arg) -> player.level().getBiome(player.blockPosition()).unwrapKey()
