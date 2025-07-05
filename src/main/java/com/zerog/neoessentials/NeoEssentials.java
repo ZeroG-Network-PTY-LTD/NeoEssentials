@@ -180,6 +180,9 @@ public class NeoEssentials {
         // Initialize data manager
         dataManager = new com.zerog.neoessentials.data.DataManager(this);
         
+        // Initialize economy manager
+        initializeEconomyManager();
+        
         // Initialize managers that rely on storage
         initializeManagers();
     }
@@ -198,6 +201,7 @@ public class NeoEssentials {
     private com.zerog.neoessentials.data.DataManager dataManager;
     private com.zerog.neoessentials.commands.CommandManager commandManager;
     private com.zerog.neoessentials.storage.StorageManager storageManager;
+    private com.zerog.neoessentials.economy.EconomyManager economyManager;
     private boolean storageManagerInitialized = false;
     
     /**
@@ -263,6 +267,9 @@ public class NeoEssentials {
         // Initialize data manager
         dataManager = new com.zerog.neoessentials.data.DataManager(this);
         dataManager.initialize();
+        
+        // Initialize economy manager
+        initializeEconomyManager();
         
         // Initialize permission handler manager
         initializePermissionHandlers();
