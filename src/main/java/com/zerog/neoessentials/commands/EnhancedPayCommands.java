@@ -181,4 +181,18 @@ public class EnhancedPayCommands {
         }
         return 1;
     }
+    
+    private static int openLoanManagement(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            LanguageUtil.sendMessage(context.getSource(), "neoessentials.commands.error.not_player");
+            return 0;
+        }
+        
+        try {
+            LoanManagementGUI.openLoanManagementGUI(player);
+        } catch (Exception e) {
+            LanguageUtil.sendMessage(player, "neoessentials.economy.loans_error", e.getMessage());
+        }
+        return 1;
+    }
 }
