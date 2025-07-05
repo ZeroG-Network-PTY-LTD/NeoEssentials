@@ -3,10 +3,35 @@ package com.zerog.neoessentials.config;
 import java.math.BigDecimal;
 
 /**
- * Configuration class for the economy system.
- * Provides all necessary settings for economy functionality.
+ * Configuration class for the econ    // Storage getters/setters
+    public StorageType getStorageType() { return storageType; }
+    public void setStorageType(StorageType storageType) { this.storageType = storageType; }
+    
+    public String getStorageTypeString() { return storageType.name().toLowerCase(); }
+    public void setStorageTypeString(String storageType) { 
+        try {
+            this.storageType = StorageType.valueOf(storageType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            this.storageType = StorageType.SQLITE; // Default fallback
+        }
+    }
+    
+    public DatabaseConfig getDatabaseConfig() { return databaseConfig; }
+    public void setDatabaseConfig(DatabaseConfig databaseConfig) { this.databaseConfig = databaseConfig; }
+    
+    public int getBackupIntervalHours() { return backupIntervalHours; }
+    public void setBackupIntervalHours(int backupIntervalHours) { 
+        this.backupIntervalHours = Math.max(1, backupIntervalHours); 
+    }
+    
+    public boolean isEnableBackups() { return enableBackups; }
+    public void setEnableBackups(boolean enableBackups) { this.enableBackups = enableBackups; }rovides all necessary settings for economy functionality.
  */
 public class EconomyConfig {
+    
+    public enum StorageType {
+        JSON, SQLITE, MYSQL
+    }
     
     // Economy system settings
     private boolean enabled = true;
@@ -24,9 +49,10 @@ public class EconomyConfig {
     private BigDecimal minBalance = BigDecimal.ZERO;
     
     // Storage settings
-    private String storageType = "sqlite"; // sqlite, mysql, json
+    private StorageType storageType = StorageType.SQLITE; // sqlite, mysql, json
     private int backupIntervalHours = 24;
     private boolean enableBackups = true;
+    private DatabaseConfig databaseConfig;
     
     // GUI settings
     private String guiTheme = "default";
@@ -109,8 +135,20 @@ public class EconomyConfig {
     public void setMinBalance(BigDecimal minBalance) { this.minBalance = minBalance; }
     
     // Storage getters/setters
-    public String getStorageType() { return storageType; }
-    public void setStorageType(String storageType) { this.storageType = storageType; }
+    public StorageType getStorageType() { return storageType; }
+    public void setStorageType(StorageType storageType) { this.storageType = storageType; }
+    
+    public String getStorageTypeString() { return storageType.name().toLowerCase(); }
+    public void setStorageTypeString(String storageType) { 
+        try {
+            this.storageType = StorageType.valueOf(storageType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            this.storageType = StorageType.SQLITE; // Default fallback
+        }
+    }
+    
+    public DatabaseConfig getDatabaseConfig() { return databaseConfig; }
+    public void setDatabaseConfig(DatabaseConfig databaseConfig) { this.databaseConfig = databaseConfig; }
     
     public int getBackupIntervalHours() { return backupIntervalHours; }
     public void setBackupIntervalHours(int backupIntervalHours) { 

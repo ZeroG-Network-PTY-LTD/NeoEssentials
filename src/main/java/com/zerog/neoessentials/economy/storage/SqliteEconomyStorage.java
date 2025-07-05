@@ -72,17 +72,15 @@ public class SqliteEconomyStorage implements EconomyStorage {
         if (!initialized) return false;
         
         String sql = """
-            INSERT OR REPLACE INTO accounts (player_id, player_name, balance, currency_id, last_seen, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO accounts (player_id, player_name, last_seen, created_at)
+            VALUES (?, ?, ?, ?)
             """;
         
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, account.getPlayerId().toString());
             stmt.setString(2, account.getPlayerName());
-            stmt.setBigDecimal(3, account.getBalance());
-            stmt.setString(4, account.getCurrency().getId());
-            stmt.setLong(5, account.getLastSeen());
-            stmt.setLong(6, account.getCreatedAt());
+            stmt.setLong(3, java.time.ZoneOffset.UTC.getRules().getOffset(account.getLastActivity()).getTotalSeconds());
+            stmt.setLong(4, java.time.ZoneOffset.UTC.getRules().getOffset(account.getCreatedAt()).getTotalSeconds());
             
             stmt.executeUpdate();
             return true;
@@ -184,7 +182,7 @@ public class SqliteEconomyStorage implements EconomyStorage {
             stmt.setString(5, transaction.getCurrency().getId());
             stmt.setString(6, transaction.getType().name());
             stmt.setString(7, transaction.getDescription());
-            stmt.setLong(8, transaction.getTimestamp());
+            stmt.setLong(8, java.time.ZoneOffset.UTC.getRules().getOffset(transaction.getTimestamp()).getTotalSeconds());
             
             stmt.executeUpdate();
             return true;
@@ -475,13 +473,11 @@ public class SqliteEconomyStorage implements EconomyStorage {
     }
     
     private void createTables() throws SQLException {
-        // Create accounts table
+        // Create accounts table - simplified for the current data structure
         String accountsTable = """
             CREATE TABLE IF NOT EXISTS accounts (
                 player_id TEXT PRIMARY KEY,
                 player_name TEXT NOT NULL,
-                balance DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-                currency_id TEXT NOT NULL,
                 last_seen INTEGER NOT NULL,
                 created_at INTEGER NOT NULL
             )
@@ -501,8 +497,20 @@ public class SqliteEconomyStorage implements EconomyStorage {
             )
             """;
         
+        // Create account_balances table for multiple currencies
+        String balancesTable = """
+            CREATE TABLE IF NOT EXISTS account_balances (
+                player_id TEXT NOT NULL,
+                currency_id TEXT NOT NULL,
+                balance DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+                PRIMARY KEY (player_id, currency_id),
+                FOREIGN KEY (player_id) REFERENCES accounts(player_id) ON DELETE CASCADE
+            )
+            """;
+        
         // Create indexes
-        String indexAccounts = "CREATE INDEX IF NOT EXISTS idx_accounts_balance ON accounts(balance DESC)";
+        String indexAccounts = "CREATE INDEX IF NOT EXISTS idx_accounts_last_seen ON accounts(last_seen)";
+        String indexBalances = "CREATE INDEX IF NOT EXISTS idx_balances_balance ON account_balances(balance DESC)";
         String indexTransactions = "CREATE INDEX IF NOT EXISTS idx_transactions_timestamp ON transactions(timestamp DESC)";
         String indexTransactionsFrom = "CREATE INDEX IF NOT EXISTS idx_transactions_from ON transactions(from_account)";
         String indexTransactionsTo = "CREATE INDEX IF NOT EXISTS idx_transactions_to ON transactions(to_account)";
@@ -510,7 +518,9 @@ public class SqliteEconomyStorage implements EconomyStorage {
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(accountsTable);
             stmt.execute(transactionsTable);
+            stmt.execute(balancesTable);
             stmt.execute(indexAccounts);
+            stmt.execute(indexBalances);
             stmt.execute(indexTransactions);
             stmt.execute(indexTransactionsFrom);
             stmt.execute(indexTransactionsTo);
@@ -520,15 +530,15 @@ public class SqliteEconomyStorage implements EconomyStorage {
     private EconomyAccount mapResultSetToAccount(ResultSet rs) throws SQLException {
         UUID playerId = UUID.fromString(rs.getString("player_id"));
         String playerName = rs.getString("player_name");
-        BigDecimal balance = rs.getBigDecimal("balance");
-        String currencyId = rs.getString("currency_id");
-        long lastSeen = rs.getLong("last_seen");
-        long createdAt = rs.getLong("created_at");
+        long lastSeenTimestamp = rs.getLong("last_seen");
+        long createdAtTimestamp = rs.getLong("created_at");
         
-        // For now, create a default currency - this should be loaded from configuration
-        Currency currency = new Currency(currencyId, currencyId, "$", 2);
+        EconomyAccount account = new EconomyAccount(playerId, playerName);
         
-        return new EconomyAccount(playerId, playerName, balance, currency, lastSeen, createdAt);
+        // In a full implementation, you would load the balances for all currencies
+        // For now, we'll just create an empty account
+        
+        return account;
     }
     
     private Transaction mapResultSetToTransaction(ResultSet rs) throws SQLException {
@@ -537,13 +547,21 @@ public class SqliteEconomyStorage implements EconomyStorage {
         UUID toAccount = UUID.fromString(rs.getString("to_account"));
         BigDecimal amount = rs.getBigDecimal("amount");
         String currencyId = rs.getString("currency_id");
-        Transaction.TransactionType type = Transaction.TransactionType.valueOf(rs.getString("type"));
+        Transaction.Type type = Transaction.Type.valueOf(rs.getString("type"));
         String description = rs.getString("description");
-        long timestamp = rs.getLong("timestamp");
+        long timestampSeconds = rs.getLong("timestamp");
         
-        // For now, create a default currency - this should be loaded from configuration
-        Currency currency = new Currency(currencyId, currencyId, "$", 2);
+        // Create a basic currency - in practice this should be loaded from config
+        Currency currency = Currency.createBasic(currencyId, currencyId, "$", currencyId + "s");
         
-        return new Transaction(id, fromAccount, toAccount, amount, currency, type, description, timestamp);
+        return Transaction.builder()
+                .id(id)
+                .fromAccount(fromAccount)
+                .toAccount(toAccount)
+                .amount(amount)
+                .currency(currency)
+                .type(type)
+                .description(description)
+                .build();
     }
 }
