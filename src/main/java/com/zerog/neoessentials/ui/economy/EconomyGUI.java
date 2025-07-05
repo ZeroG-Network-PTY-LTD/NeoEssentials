@@ -37,6 +37,7 @@ public class EconomyGUI {
         LanguageUtil.sendMessage(player, "neoessentials.economy.action_financial_stats");
         LanguageUtil.sendMessage(player, "neoessentials.economy.action_bank_account");
         LanguageUtil.sendMessage(player, "neoessentials.economy.action_loans");
+        LanguageUtil.sendMessage(player, "neoessentials.economy.action_settings");
         LanguageUtil.sendMessage(player, "neoessentials.economy.quick_commands_info");
     }
     
