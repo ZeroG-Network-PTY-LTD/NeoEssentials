@@ -10,7 +10,6 @@ import com.zerog.neoessentials.data.EconomyData;
 import com.zerog.neoessentials.data.HomeData;
 import com.zerog.neoessentials.data.KitManager;
 import com.zerog.neoessentials.data.WarpData;
-import com.zerog.neoessentials.data.EconomyTransaction;
 
 import net.minecraft.core.BlockPos;
 

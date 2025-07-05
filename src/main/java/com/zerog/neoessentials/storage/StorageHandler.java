@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.zerog.neoessentials.data.EconomyData;
 import com.zerog.neoessentials.data.HomeData;
 import com.zerog.neoessentials.data.KitManager.Kit;
 import com.zerog.neoessentials.data.WarpData;
@@ -55,23 +54,6 @@ public interface StorageHandler {
      * @return The warps, or null if an error occurs
      */
     Map<String, WarpData> loadWarps();
-    
-    /**
-     * Saves economy data for a player
-     * 
-     * @param uuid The player UUID
-     * @param economyData The economy data
-     * @return True if successful, false otherwise
-     */
-    boolean saveEconomyData(UUID uuid, EconomyData economyData);
-    
-    /**
-     * Loads economy data for a player
-     * 
-     * @param uuid The player UUID
-     * @return The economy data, or null if an error occurs
-     */
-    EconomyData loadEconomyData(UUID uuid);
     
     /**
      * Saves all kits
