@@ -184,7 +184,7 @@ public class MySqlEconomyStorage implements EconomyStorage {
             stmt.setString(5, transaction.getCurrency().getId());
             stmt.setString(6, transaction.getType().name());
             stmt.setString(7, transaction.getDescription());
-            stmt.setLong(8, transaction.getTimestamp());
+            stmt.setLong(8, java.time.ZoneOffset.UTC.getRules().getOffset(transaction.getTimestamp()).getTotalSeconds());
             
             stmt.executeUpdate();
             return true;
