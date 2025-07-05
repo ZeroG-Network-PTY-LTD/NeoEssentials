@@ -757,39 +757,5 @@ public class CommandManager {    // Command classes
         return mailCommands;
     }
     
-    /**
-     * Gets the bank commands instance
-     * 
-     * @return The bank commands
-     */
-    public BankCommands getBankCommands() {
-        return bankCommands;
-    }
-    
-    /**
-     * Gets the loan commands instance
-     * 
-     * @return The loan commands
-     */
-    public LoanCommands getLoanCommands() {
-        return loanCommands;
-    }
-    
-    /**
-     * Gets the wallet commands instance
-     * 
-     * @return The wallet commands
-     */
-    public WalletCommands getWalletCommands() {
-        return walletCommands;
-    }
-    
-    /**
-     * Gets the economy admin commands instance
-     * 
-     * @return The economy admin commands
-     */
-    public EconomyAdminCommands getEconomyAdminCommands() {
-        return economyAdminCommands;
-    }
+
 }
