@@ -4,12 +4,11 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.EconomyManager;
-import com.zerog.neoessentials.economy.gui.AuctionMenu;
+import com.zerog.neoessentials.economy.gui.SimpleAuctionInterface;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.SimpleMenuProvider;
 
 /**
  * Commands for opening auction GUI interfaces
@@ -50,13 +49,9 @@ public class AuctionGuiCommands {
                 return 0;
             }
             
-            // Create and open the auction menu
-            SimpleMenuProvider menuProvider = new SimpleMenuProvider(
-                (containerId, inventory, menuPlayer) -> new AuctionMenu(containerId, inventory, economyManager),
-                Component.literal("Auction House")
-            );
-            
-            player.openMenu(menuProvider);
+            // Use the new simplified auction interface
+            SimpleAuctionInterface auctionInterface = new SimpleAuctionInterface(economyManager);
+            auctionInterface.openAuctionMenu(player);
             return 1;
             
         } catch (Exception e) {
