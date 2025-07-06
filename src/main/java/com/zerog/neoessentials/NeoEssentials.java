@@ -257,9 +257,16 @@ public class NeoEssentials {
             if (configManager != null) {
                 LOGGER.info("Initializing Economy Manager");
                 
-                // Create economy config based on general config settings
-                com.zerog.neoessentials.config.EconomyConfig economyConfig = new com.zerog.neoessentials.config.EconomyConfig();
-                economyConfig.setEnabled(configManager.isEconomyEnabled());
+                // Load economy config from file or create default
+                java.nio.file.Path configDir = java.nio.file.Paths.get("config/neoessentials");
+                com.zerog.neoessentials.config.EconomyConfig economyConfig = 
+                    com.zerog.neoessentials.config.EconomyConfig.loadFromFile(configDir);
+                
+                // Override enabled status from general config if available
+                if (configManager.isEconomyEnabled() != economyConfig.isEnabled()) {
+                    economyConfig.setEnabled(configManager.isEconomyEnabled());
+                    economyConfig.saveToFile(configDir); // Save the updated config
+                }
                 
                 java.nio.file.Path dataDir = java.nio.file.Paths.get("config/neoessentials/data");
                 economyManager = new com.zerog.neoessentials.economy.EconomyManager(
