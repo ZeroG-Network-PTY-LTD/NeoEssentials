@@ -48,13 +48,8 @@ public class ShopGuiCommands {
                 return 0;
             }
             
-            // Create and open the shop menu
-            SimpleMenuProvider menuProvider = new SimpleMenuProvider(
-                (containerId, inventory, menuPlayer) -> new ShopMenu(containerId, inventory, economyManager),
-                Component.literal("Shop")
-            );
-            
-            player.openMenu(menuProvider);
+            // Use the new simplified shop interface
+            SimpleShopInterface.openShop(player, economyManager);
             return 1;
             
         } catch (Exception e) {
