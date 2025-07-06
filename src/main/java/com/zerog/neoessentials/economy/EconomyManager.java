@@ -31,6 +31,7 @@ public class EconomyManager {
     private final ScheduledExecutorService executor;
     private final ShopManager shopManager;
     private final AuctionManager auctionManager;
+    private final TransactionLogger transactionLogger;
     
     // Account cache for performance
     private final Map<UUID, EconomyAccount> accountCache = new ConcurrentHashMap<>();
@@ -55,6 +56,7 @@ public class EconomyManager {
         );
         this.shopManager = new ShopManager(this);
         this.auctionManager = new AuctionManager(this);
+        this.transactionLogger = new TransactionLogger(dataDirectory.toFile());
     }
     
     /**
@@ -121,6 +123,9 @@ public class EconomyManager {
             
             // Close storage
             storage.close();
+            
+            // Shutdown transaction logger
+            transactionLogger.shutdown();
             
             initialized = false;
             enabled = false;
@@ -229,6 +234,7 @@ public class EconomyManager {
                         .build();
                 
                 storage.logTransaction(transaction);
+                transactionLogger.logTransaction(transaction);
                 
                 // Save accounts
                 storage.saveAccount(fromAccount);
@@ -272,6 +278,7 @@ public class EconomyManager {
                     .build();
             
             storage.logTransaction(transaction);
+            transactionLogger.logTransaction(transaction);
             storage.saveAccount(account);
             
             return true;
@@ -312,6 +319,7 @@ public class EconomyManager {
                         .build();
                 
                 storage.logTransaction(transaction);
+                transactionLogger.logTransaction(transaction);
                 storage.saveAccount(account);
                 
                 return true;
@@ -342,6 +350,10 @@ public class EconomyManager {
             BigDecimal oldBalance = account.getBalance(currency);
             account.setBalance(currency, amount);
             
+            // Log the balance change
+            transactionLogger.logBalanceChange(playerId, account.getPlayerName(), currency, 
+                oldBalance, amount, description);
+            
             // Log the transaction
             Transaction transaction = Transaction.builder()
                     .fromAccount(UUID.fromString("00000000-0000-0000-0000-000000000000")) // System account
@@ -353,6 +365,7 @@ public class EconomyManager {
                     .build();
             
             storage.logTransaction(transaction);
+            transactionLogger.logTransaction(transaction);
             storage.saveAccount(account);
             
             return true;
