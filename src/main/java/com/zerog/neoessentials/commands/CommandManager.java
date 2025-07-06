@@ -52,6 +52,9 @@ public class CommandManager {    // Command classes
     // InventoryManagementCommands is now fully static
     private final ItemEnhancementCommands itemEnhancementCommands;
     
+    // Economy commands
+    // Note: Economy commands are static and don't need instances
+    
     // Debug command disabled while developing TablistFix
       // NeoEssentials main reference - disabled while developing TablistFix
     // private final NeoEssentials mod;
@@ -85,6 +88,8 @@ public class CommandManager {    // Command classes
         // SignEditCommands is now fully static - no instance needed
         // InventoryManagementCommands is now fully static - no instance needed
         itemEnhancementCommands = new ItemEnhancementCommands();
+        
+        // Economy commands are static - no instances needed
         
         // Debug commands will be initialized later when TABLikeTablistManager is available
         // ItemCommands needs CommandBuildContext which is only available during register event
