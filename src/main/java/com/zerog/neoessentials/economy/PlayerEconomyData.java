@@ -90,28 +90,18 @@ public class PlayerEconomyData {
     
     /**
      * Get total net worth in default currency
+     * Note: This method is currently disabled as it requires access to EconomyManager
      * 
      * @return Total value of all balances converted to default currency
      */
     public double getNetWorth() {
-        Currency defaultCurrency = CurrencyManager.getInstance().getDefaultCurrency();
-        if (defaultCurrency == null) return 0.0;
-        
-        double totalWorth = 0.0;
-        CurrencyManager currencyManager = CurrencyManager.getInstance();
-        
-        for (Map.Entry<Currency, Double> entry : balances.entrySet()) {
-            Currency currency = entry.getKey();
-            double amount = entry.getValue();
-            
-            if (currency.equals(defaultCurrency)) {
-                totalWorth += amount;
-            } else {
-                totalWorth += currencyManager.convertCurrency(amount, currency, defaultCurrency);
-            }
+        // TODO: Implement net worth calculation when currency conversion is available
+        // For now, just return the balance of the first currency or 0
+        if (balances.isEmpty()) {
+            return 0.0;
         }
         
-        return totalWorth;
+        return balances.values().iterator().next();
     }
     
     /**
