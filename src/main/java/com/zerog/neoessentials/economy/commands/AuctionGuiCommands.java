@@ -4,7 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.EconomyManager;
-import com.zerog.neoessentials.economy.gui.ShopMenu;
+import com.zerog.neoessentials.economy.gui.AuctionMenu;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -12,25 +12,27 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleMenuProvider;
 
 /**
- * Commands for opening shop GUI interfaces
+ * Commands for opening auction GUI interfaces
  */
-public class ShopGuiCommands {
+public class AuctionGuiCommands {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("shopgui")
+        dispatcher.register(Commands.literal("auctiongui")
             .requires(source -> source.isPlayer())
-            .executes(ShopGuiCommands::openShopGui));
+            .executes(AuctionGuiCommands::openAuctionGui));
         
-        // Alias
-        dispatcher.register(Commands.literal("sgui").redirect(dispatcher.getRoot().getChild("shopgui")));
+        // Aliases
+        dispatcher.register(Commands.literal("agui").redirect(dispatcher.getRoot().getChild("auctiongui")));
+        dispatcher.register(Commands.literal("auctionhouse").redirect(dispatcher.getRoot().getChild("auctiongui")));
+        dispatcher.register(Commands.literal("ah").redirect(dispatcher.getRoot().getChild("auctiongui")));
     }
     
-    private static int openShopGui(CommandContext<CommandSourceStack> context) {
+    private static int openAuctionGui(CommandContext<CommandSourceStack> context) {
         try {
             CommandSourceStack source = context.getSource();
             
             if (!source.isPlayer()) {
-                source.sendFailure(Component.literal("Only players can open the shop GUI"));
+                source.sendFailure(Component.literal("Only players can open the auction GUI"));
                 return 0;
             }
             
@@ -42,18 +44,18 @@ public class ShopGuiCommands {
                 return 0;
             }
             
-            // Create and open the shop menu
+            // Create and open the auction menu
             SimpleMenuProvider menuProvider = new SimpleMenuProvider(
-                (containerId, inventory, menuPlayer) -> new ShopMenu(containerId, inventory, economyManager),
-                Component.literal("Shop")
+                (containerId, inventory, menuPlayer) -> new AuctionMenu(containerId, inventory, economyManager),
+                Component.literal("Auction House")
             );
             
             player.openMenu(menuProvider);
             return 1;
             
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Error opening shop GUI", e);
-            context.getSource().sendFailure(Component.literal("An error occurred while opening the shop"));
+            NeoEssentials.LOGGER.error("Error opening auction GUI", e);
+            context.getSource().sendFailure(Component.literal("An error occurred while opening the auction house"));
             return 0;
         }
     }
