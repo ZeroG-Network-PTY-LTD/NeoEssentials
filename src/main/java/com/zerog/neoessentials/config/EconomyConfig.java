@@ -1,6 +1,14 @@
 package com.zerog.neoessentials.config;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.zerog.neoessentials.NeoEssentials;
+
+import java.io.*;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Configuration class for the econ    // Storage getters/setters
@@ -94,6 +102,11 @@ public class EconomyConfig {
     private int cacheSize = 1000; // Number of accounts to cache
     private int cacheExpirationMinutes = 30;
     private boolean asyncTransactions = true;
+    
+    /**
+     * Default configuration file path
+     */
+    private static final String CONFIG_FILE_NAME = "economy.json";
     
     // Default constructor
     public EconomyConfig() {
@@ -303,6 +316,72 @@ public class EconomyConfig {
         return issues.toString().trim();
     }
     
+    /**
+     * Loads configuration from file or creates default if not exists
+     */
+    public static EconomyConfig loadFromFile(Path configDirectory) {
+        Path configFile = configDirectory.resolve(CONFIG_FILE_NAME);
+        
+        if (!Files.exists(configFile)) {
+            NeoEssentials.LOGGER.info("Economy config file not found, creating default: " + configFile);
+            EconomyConfig defaultConfig = new EconomyConfig();
+            defaultConfig.saveToFile(configDirectory);
+            return defaultConfig;
+        }
+        
+        try {
+            String content = Files.readString(configFile);
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            EconomyConfig config = gson.fromJson(content, EconomyConfig.class);
+            
+            if (config == null) {
+                NeoEssentials.LOGGER.warn("Failed to parse economy config, using defaults");
+                return new EconomyConfig();
+            }
+            
+            String validation = config.validateConfiguration();
+            if (!validation.isEmpty()) {
+                NeoEssentials.LOGGER.warn("Economy config validation issues: " + validation);
+            }
+            
+            NeoEssentials.LOGGER.info("Loaded economy configuration from: " + configFile);
+            return config;
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to load economy config from: " + configFile, e);
+            return new EconomyConfig();
+        }
+    }
+    
+    /**
+     * Saves configuration to file
+     */
+    public boolean saveToFile(Path configDirectory) {
+        try {
+            Files.createDirectories(configDirectory);
+            Path configFile = configDirectory.resolve(CONFIG_FILE_NAME);
+            
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String json = gson.toJson(this);
+            
+            Files.writeString(configFile, json);
+            NeoEssentials.LOGGER.info("Saved economy configuration to: " + configFile);
+            return true;
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to save economy config", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Reloads configuration from file
+     */
+    public static EconomyConfig reloadFromFile(Path configDirectory) {
+        NeoEssentials.LOGGER.info("Reloading economy configuration");
+        return loadFromFile(configDirectory);
+    }
+
     @Override
     public String toString() {
         return String.format("EconomyConfig{enabled=%s, currency=%s, startingBalance=%s}", 
