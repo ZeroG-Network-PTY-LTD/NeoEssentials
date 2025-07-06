@@ -112,6 +112,9 @@ public class EconomyCommands {
             Commands.literal("emenu")
                 .executes(EconomyCommands::openEconomyMenu)
         );
+        
+        // Register shop commands
+        ShopCommands.register(dispatcher);
     }
     
     private static int showBalance(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
