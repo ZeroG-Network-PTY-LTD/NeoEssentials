@@ -4,12 +4,11 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.EconomyManager;
-import com.zerog.neoessentials.economy.gui.ShopMenu;
+import com.zerog.neoessentials.economy.gui.SimpleShopInterface;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.SimpleMenuProvider;
 
 /**
  * Commands for opening shop GUI interfaces
@@ -17,12 +16,19 @@ import net.minecraft.world.SimpleMenuProvider;
 public class ShopGuiCommands {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Main shop command - opens GUI
+        dispatcher.register(Commands.literal("shop")
+            .requires(source -> source.isPlayer())
+            .executes(ShopGuiCommands::openShopGui));
+            
+        // Alternative GUI command
         dispatcher.register(Commands.literal("shopgui")
             .requires(source -> source.isPlayer())
             .executes(ShopGuiCommands::openShopGui));
         
-        // Alias
-        dispatcher.register(Commands.literal("sgui").redirect(dispatcher.getRoot().getChild("shopgui")));
+        // Aliases
+        dispatcher.register(Commands.literal("sgui").redirect(dispatcher.getRoot().getChild("shop")));
+        dispatcher.register(Commands.literal("market").redirect(dispatcher.getRoot().getChild("shop")));
     }
     
     private static int openShopGui(CommandContext<CommandSourceStack> context) {

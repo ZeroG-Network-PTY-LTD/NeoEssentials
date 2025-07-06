@@ -259,19 +259,11 @@ public class CommandManager {    // Command classes
         PermissionCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered permission commands");
         
-        // Register economy commands
+        // Register economy commands (basic balance, pay, eco commands only)
         com.zerog.neoessentials.economy.commands.EconomyCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered economy commands");
         
-        // Register shop commands  
-        com.zerog.neoessentials.economy.commands.ShopCommands.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered shop commands");
-        
-        // Register auction commands
-        com.zerog.neoessentials.economy.commands.AuctionCommands.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered auction commands");
-        
-        // Register GUI commands
+        // Register GUI commands only (shop and auction use GUI-only approach)
         com.zerog.neoessentials.economy.commands.ShopGuiCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered shop GUI commands");
         

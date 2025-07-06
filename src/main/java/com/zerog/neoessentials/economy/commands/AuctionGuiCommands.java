@@ -17,14 +17,20 @@ import net.minecraft.world.SimpleMenuProvider;
 public class AuctionGuiCommands {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Main auction command - opens GUI
+        dispatcher.register(Commands.literal("auction")
+            .requires(source -> source.isPlayer())
+            .executes(AuctionGuiCommands::openAuctionGui));
+            
+        // Alternative GUI command
         dispatcher.register(Commands.literal("auctiongui")
             .requires(source -> source.isPlayer())
             .executes(AuctionGuiCommands::openAuctionGui));
         
         // Aliases
-        dispatcher.register(Commands.literal("agui").redirect(dispatcher.getRoot().getChild("auctiongui")));
-        dispatcher.register(Commands.literal("auctionhouse").redirect(dispatcher.getRoot().getChild("auctiongui")));
-        dispatcher.register(Commands.literal("ah").redirect(dispatcher.getRoot().getChild("auctiongui")));
+        dispatcher.register(Commands.literal("agui").redirect(dispatcher.getRoot().getChild("auction")));
+        dispatcher.register(Commands.literal("auctionhouse").redirect(dispatcher.getRoot().getChild("auction")));
+        dispatcher.register(Commands.literal("ah").redirect(dispatcher.getRoot().getChild("auction")));
     }
     
     private static int openAuctionGui(CommandContext<CommandSourceStack> context) {
