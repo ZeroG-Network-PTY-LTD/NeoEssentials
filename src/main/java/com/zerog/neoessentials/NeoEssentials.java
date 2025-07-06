@@ -241,6 +241,46 @@ public class NeoEssentials {
     }
     
     /**
+     * Gets the economy manager
+     * 
+     * @return The economy manager
+     */
+    public com.zerog.neoessentials.economy.EconomyManager getEconomyManager() {
+        return economyManager;
+    }
+    
+    /**
+     * Initialize the economy manager
+     */
+    private void initializeEconomyManager() {
+        try {
+            if (configManager != null) {
+                LOGGER.info("Initializing Economy Manager");
+                
+                // Create economy config based on general config settings
+                com.zerog.neoessentials.config.EconomyConfig economyConfig = new com.zerog.neoessentials.config.EconomyConfig();
+                economyConfig.setEnabled(configManager.isEconomyEnabled());
+                
+                java.nio.file.Path dataDir = java.nio.file.Paths.get("config/neoessentials/data");
+                economyManager = new com.zerog.neoessentials.economy.EconomyManager(
+                    economyConfig, 
+                    dataDir
+                );
+                
+                if (economyManager.initialize()) {
+                    LOGGER.info("Economy Manager initialized successfully");
+                } else {
+                    LOGGER.error("Failed to initialize Economy Manager");
+                }
+            } else {
+                LOGGER.warn("Cannot initialize Economy Manager - config manager not available yet");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error initializing Economy Manager", e);
+        }
+    }
+    
+    /**
      * Gets the mod container
      * 
      * @return The mod container
@@ -399,6 +439,11 @@ public class NeoEssentials {
         // Save all data and close database connections
         if (dataManager != null) {
             dataManager.saveAll();
+        }
+        
+        // Shutdown economy manager
+        if (economyManager != null) {
+            economyManager.shutdown();
         }
         
         if (storageManager != null && storageManagerInitialized) {
