@@ -230,9 +230,9 @@ public class AuctionMenu extends BaseEconomyMenu {
             // Note: Setting NBT directly on displayed items for auction info
             // In newer MC versions, use hover text through lore instead
             // displayItem.getOrCreateTag().putString("AuctionDisplay", 
-                "§7Current: §a" + economyManager.formatCurrency(auction.getCurrentBid()) +
-                (auction.getBuyNowPrice() != null ? "\n§7Buy Now: §a" + economyManager.formatCurrency(auction.getBuyNowPrice()) : "") +
-                "\n§7Time: §e" + auction.getTimeRemainingMinutes() + "m");
+            //     "§7Current: §a" + economyManager.formatCurrency(auction.getCurrentBid()) +
+            //     (auction.getBuyNowPrice() != null ? "\n§7Buy Now: §a" + economyManager.formatCurrency(auction.getBuyNowPrice()) : "") +
+            //     "\n§7Time: §e" + auction.getTimeRemainingMinutes() + "m");
             
             container.setItem(i, displayItem);
         }
@@ -249,28 +249,28 @@ public class AuctionMenu extends BaseEconomyMenu {
         container.setItem(46, viewModeItem);
         
         ItemStack refresh = new ItemStack(Items.COMPASS);
-        refresh.setHoverName(Component.literal("§eRefresh Auctions"));
+        // refresh.setHoverName(Component.literal("§eRefresh Auctions"));
         container.setItem(49, refresh);
         
         ItemStack createAuction = new ItemStack(Items.GOLDEN_SWORD);
-        createAuction.setHoverName(Component.literal("§eCreate Auction"));
+        // createAuction.setHoverName(Component.literal("§eCreate Auction"));
         container.setItem(52, createAuction);
         
         int maxPages = currentAuctions.isEmpty() ? 0 : (currentAuctions.size() - 1) / ITEMS_PER_PAGE;
         if (currentPage < maxPages) {
             ItemStack nextPage = new ItemStack(Items.ARROW);
-            nextPage.setHoverName(Component.literal("§eNext Page"));
+            // nextPage.setHoverName(Component.literal("§eNext Page"));
             container.setItem(53, nextPage);
         }
         
         // Add page info
         ItemStack pageInfo = new ItemStack(Items.BOOK);
-        pageInfo.setHoverName(Component.literal("§ePage " + (currentPage + 1) + "/" + (maxPages + 1)));
+        // pageInfo.setHoverName(Component.literal("§ePage " + (currentPage + 1) + "/" + (maxPages + 1)));
         container.setItem(48, pageInfo);
     }
     
     @Override
-    public boolean clickMenuButton(net.minecraft.world.entity.player.Player player, int id) {
+    public boolean clickMenuButton(@javax.annotation.Nonnull net.minecraft.world.entity.player.Player player, int id) {
         if (clickHandler != null && player instanceof ServerPlayer) {
             clickHandler.accept(id, ClickType.PICKUP);
             return true;
