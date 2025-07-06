@@ -6,6 +6,7 @@ import com.zerog.neoessentials.economy.external.ExternalEconomyDetector;
 import com.zerog.neoessentials.economy.external.EconomyDetectionReport;
 import com.zerog.neoessentials.economy.storage.EconomyStorage;
 import com.zerog.neoessentials.economy.storage.EconomyStorageFactory;
+import com.zerog.neoessentials.economy.shop.ShopManager;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
@@ -27,6 +28,7 @@ public class EconomyManager {
     private final ExternalEconomyDetector externalDetector;
     private final Currency defaultCurrency;
     private final ScheduledExecutorService executor;
+    private final ShopManager shopManager;
     
     // Account cache for performance
     private final Map<UUID, EconomyAccount> accountCache = new ConcurrentHashMap<>();
@@ -49,6 +51,7 @@ public class EconomyManager {
             config.getCurrencySymbol(),
             config.getCurrencyPluralName()
         );
+        this.shopManager = new ShopManager(this);
     }
     
     /**
@@ -452,4 +455,5 @@ public class EconomyManager {
     public Currency getDefaultCurrency() { return defaultCurrency; }
     public EconomyStorage getStorage() { return storage; }
     public ExternalEconomyDetector getExternalDetector() { return externalDetector; }
+    public ShopManager getShopManager() { return shopManager; }
 }
