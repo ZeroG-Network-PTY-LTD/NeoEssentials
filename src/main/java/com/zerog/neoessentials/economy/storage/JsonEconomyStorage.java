@@ -13,6 +13,7 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.*;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -162,7 +163,7 @@ public class JsonEconomyStorage implements EconomyStorage {
         try {
             return transactionHistory.stream()
                     .filter(t -> t.getFromAccount().equals(playerId) || t.getToAccount().equals(playerId))
-                    .sorted((t1, t2) -> Long.compare(t2.getTimestamp(), t1.getTimestamp()))
+                    .sorted((t1, t2) -> t2.getTimestamp().compareTo(t1.getTimestamp()))
                     .limit(limit)
                     .toList();
         } finally {
@@ -174,12 +175,23 @@ public class JsonEconomyStorage implements EconomyStorage {
     public List<Transaction> getTransactionHistory(UUID playerId, long fromTimestamp, long toTimestamp, int limit) {
         if (!initialized) return new ArrayList<>();
         
+        // Convert long timestamps to LocalDateTime for comparison
+        LocalDateTime fromTime = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(fromTimestamp), 
+            java.time.ZoneId.systemDefault()
+        );
+        LocalDateTime toTime = LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(toTimestamp), 
+            java.time.ZoneId.systemDefault()
+        );
+        
         lock.readLock().lock();
         try {
             return transactionHistory.stream()
                     .filter(t -> t.getFromAccount().equals(playerId) || t.getToAccount().equals(playerId))
-                    .filter(t -> t.getTimestamp() >= fromTimestamp && t.getTimestamp() <= toTimestamp)
-                    .sorted((t1, t2) -> Long.compare(t2.getTimestamp(), t1.getTimestamp()))
+                    .filter(t -> (t.getTimestamp().isAfter(fromTime) || t.getTimestamp().isEqual(fromTime)) && 
+                                (t.getTimestamp().isBefore(toTime) || t.getTimestamp().isEqual(toTime)))
+                    .sorted((t1, t2) -> t2.getTimestamp().compareTo(t1.getTimestamp()))
                     .limit(limit)
                     .toList();
         } finally {
@@ -208,7 +220,7 @@ public class JsonEconomyStorage implements EconomyStorage {
         lock.readLock().lock();
         try {
             return transactionHistory.stream()
-                    .sorted((t1, t2) -> Long.compare(t2.getTimestamp(), t1.getTimestamp()))
+                    .sorted((t1, t2) -> t2.getTimestamp().compareTo(t1.getTimestamp()))
                     .limit(limit)
                     .toList();
         } finally {
@@ -308,7 +320,11 @@ public class JsonEconomyStorage implements EconomyStorage {
             
             // Clean up old transactions (keep only last 30 days)
             long thirtyDaysAgo = System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000);
-            transactionHistory.removeIf(t -> t.getTimestamp() < thirtyDaysAgo);
+            LocalDateTime thirtyDaysAgoTime = LocalDateTime.ofInstant(
+                java.time.Instant.ofEpochMilli(thirtyDaysAgo), 
+                java.time.ZoneId.systemDefault()
+            );
+            transactionHistory.removeIf(t -> t.getTimestamp().isBefore(thirtyDaysAgoTime));
             saveTransactions();
             
             return true;
@@ -334,8 +350,14 @@ public class JsonEconomyStorage implements EconomyStorage {
             List<String> backups = getAvailableBackups();
             if (!backups.isEmpty()) {
                 // Parse timestamp from backup name (backup_yyyy-MM-dd_HH-mm-ss)
-                String latestBackup = backups.get(0);
                 // This is a simplified approach; in practice you might store backup metadata
+                try {
+                    // Try to extract timestamp from backup name if needed
+                    // For now, just use current time if backups exist
+                    lastBackupTime = System.currentTimeMillis();
+                } catch (Exception e) {
+                    // Ignore parsing errors
+                }
             }
             
             return new StorageStatistics(totalAccounts, totalTransactions, storageSize, 
@@ -362,8 +384,12 @@ public class JsonEconomyStorage implements EconomyStorage {
                 if (account.getPlayerId() == null) {
                     errors.add("Account with null player ID found");
                 }
-                if (account.getBalance().compareTo(java.math.BigDecimal.ZERO) < 0) {
-                    warnings.add("Account with negative balance: " + account.getPlayerId());
+                // Check all currency balances for negative values
+                for (java.math.BigDecimal balance : account.getAllBalances().values()) {
+                    if (balance.compareTo(java.math.BigDecimal.ZERO) < 0) {
+                        warnings.add("Account with negative balance: " + account.getPlayerId());
+                        break; // Only warn once per account
+                    }
                 }
             }
             
