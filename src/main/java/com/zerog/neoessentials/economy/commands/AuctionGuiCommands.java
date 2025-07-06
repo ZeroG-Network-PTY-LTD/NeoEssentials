@@ -50,8 +50,7 @@ public class AuctionGuiCommands {
             }
             
             // Use the new simplified auction interface
-            SimpleAuctionInterface auctionInterface = new SimpleAuctionInterface(economyManager);
-            auctionInterface.openAuctionMenu(player);
+            SimpleAuctionInterface.openAuctionHouse(player, economyManager);
             return 1;
             
         } catch (Exception e) {
