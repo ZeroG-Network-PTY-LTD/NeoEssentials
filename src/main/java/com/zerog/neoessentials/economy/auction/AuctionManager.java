@@ -324,12 +324,11 @@ public class AuctionManager {
     }
     
     /**
-     * Gets auctions where the player has placed bids
+     * Gets auctions where the player has placed bids (is the current highest bidder)
      */
     public List<AuctionItem> getBiddedAuctions(UUID playerId) {
         return activeAuctions.values().stream()
-                .filter(auction -> auction.getBids().stream()
-                        .anyMatch(bid -> bid.getBidderId().equals(playerId)))
+                .filter(auction -> playerId.equals(auction.getCurrentBidderId()))
                 .collect(Collectors.toList());
     }
     
