@@ -76,6 +76,13 @@ public class ShopItem {
     public String getDescription() { return description; }
     public boolean isAdminItem() { return adminItem; }
     
+    /**
+     * Gets the appropriate price based on the context (buy price for purchases)
+     */
+    public BigDecimal getPrice() {
+        return canBuy() ? buyPrice : sellPrice;
+    }
+    
     // Utility methods
     public boolean canBuy() { return type == Type.BUY || type == Type.BOTH; }
     public boolean canSell() { return type == Type.SELL || type == Type.BOTH; }

@@ -113,7 +113,7 @@ public abstract class BaseEconomyMenu extends AbstractContainerMenu {
     }
     
     /**
-     * Refreshes the GUI by updating all items
+     * Refreshes the menu content
      */
     public abstract void refresh();
     

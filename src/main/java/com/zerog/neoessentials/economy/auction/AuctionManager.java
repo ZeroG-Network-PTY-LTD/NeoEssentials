@@ -324,6 +324,16 @@ public class AuctionManager {
     }
     
     /**
+     * Gets auctions where the player has placed bids
+     */
+    public List<AuctionItem> getBiddedAuctions(UUID playerId) {
+        return activeAuctions.values().stream()
+                .filter(auction -> auction.getBids().stream()
+                        .anyMatch(bid -> bid.getBidderId().equals(playerId)))
+                .collect(Collectors.toList());
+    }
+    
+    /**
      * Gets a specific auction by ID
      */
     public AuctionItem getAuction(UUID auctionId) {

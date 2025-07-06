@@ -1,46 +1,36 @@
 package com.zerog.neoessentials.economy.gui;
 
-import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.EconomyManager;
 import com.zerog.neoessentials.economy.shop.ShopItem;
 import com.zerog.neoessentials.economy.shop.ShopManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * GUI for the shop system
+ * GUI menu for browsing and purchasing shop items
  */
 public class ShopMenu extends BaseEconomyMenu {
     
-    public static final MenuType<ShopMenu> TYPE = new MenuType<>(ShopMenu::new, FeatureFlagSet.of());
-    
+    private final EconomyManager economyManager;
     private final ShopManager shopManager;
-    private final List<ShopItem> currentItems;
+    private List<ShopItem> currentItems;
     private int currentPage = 0;
-    private static final int ITEMS_PER_PAGE = 45; // 5 rows of 9 items
+    private static final int ITEMS_PER_PAGE = 45; // 5 rows for items, 1 row for navigation
     
-    public ShopMenu(int containerId, Inventory playerInventory) {
-        this(containerId, playerInventory, NeoEssentials.getInstance().getEconomyManager().getShopManager());
-    }
-    
-    public ShopMenu(int containerId, Inventory playerInventory, ShopManager shopManager) {
-        super(TYPE, containerId, playerInventory, 6); // 6 rows for shop interface
-        this.shopManager = shopManager;
-        this.currentItems = new ArrayList<>();
+    public ShopMenu(int containerId, Inventory playerInventory, EconomyManager economyManager) {
+        super(MenuType.GENERIC_9x6, containerId, playerInventory, 6);
+        this.economyManager = economyManager;
+        this.shopManager = economyManager.getShopManager();
         
         setupClickHandler();
-        loadShopItems();
+        refreshItems();
         updateDisplay();
     }
     
@@ -48,32 +38,84 @@ public class ShopMenu extends BaseEconomyMenu {
         this.clickHandler = (slot, clickType) -> {
             if (slot < 0 || slot >= container.getContainerSize()) return;
             
-            // Navigation buttons
-            if (slot == 53) { // Next page button (bottom right)
-                nextPage();
-                return;
-            } else if (slot == 45) { // Previous page button (bottom left)
-                previousPage();
-                return;
-            } else if (slot == 49) { // Close button (bottom center)
-                player.closeContainer();
+            ItemStack clickedItem = container.getItem(slot);
+            if (clickedItem.isEmpty()) return;
+            
+            // Navigation items (bottom row)
+            if (slot >= 45) {
+                handleNavigationClick(slot, clickType);
                 return;
             }
             
-            // Shop item slots (0-44)
-            if (slot >= 0 && slot < ITEMS_PER_PAGE) {
-                int itemIndex = currentPage * ITEMS_PER_PAGE + slot;
-                if (itemIndex < currentItems.size()) {
-                    ShopItem shopItem = currentItems.get(itemIndex);
-                    handleShopItemClick(shopItem, clickType);
-                }
+            // Shop items
+            int itemIndex = currentPage * ITEMS_PER_PAGE + slot;
+            if (itemIndex >= 0 && itemIndex < currentItems.size()) {
+                ShopItem shopItem = currentItems.get(itemIndex);
+                handleShopItemClick(shopItem, clickType);
             }
         };
     }
     
-    private void loadShopItems() {
-        currentItems.clear();
-        currentItems.addAll(shopManager.getAllItems());
+    private void handleNavigationClick(int slot, ClickType clickType) {
+        switch (slot) {
+            case 45: // Previous page
+                if (currentPage > 0) {
+                    currentPage--;
+                    updateDisplay();
+                }
+                break;
+            case 49: // Refresh/Categories
+                refreshItems();
+                updateDisplay();
+                break;
+            case 53: // Next page
+                int maxPages = (currentItems.size() - 1) / ITEMS_PER_PAGE;
+                if (currentPage < maxPages) {
+                    currentPage++;
+                    updateDisplay();
+                }
+                break;
+        }
+    }
+    
+    private void handleShopItemClick(ShopItem shopItem, ClickType clickType) {
+        if (clickType == ClickType.PICKUP) {
+            // Left click - buy 1
+            buyItem(shopItem, 1);
+        } else if (clickType == ClickType.PICKUP_ALL) {
+            // Right click - buy stack
+            buyItem(shopItem, shopItem.getItemStack().getMaxStackSize());
+        } else if (clickType == ClickType.QUICK_MOVE) {
+            // Shift click - show info
+            showItemInfo(shopItem);
+        }
+    }
+    
+    private void buyItem(ShopItem shopItem, int quantity) {
+        ShopManager.PurchaseResult result = shopManager.buyItem(player, shopItem.getId(), quantity);
+        
+        if (result.isSuccess()) {
+            player.sendSystemMessage(Component.literal("§aPurchased " + quantity + "x " + 
+                shopItem.getItemStack().getHoverName().getString() + " for " + 
+                economyManager.formatCurrency(result.getTotalCost())));
+        } else {
+            player.sendSystemMessage(Component.literal("§cPurchase failed: " + result.getMessage()));
+        }
+    }
+    
+    private void showItemInfo(ShopItem shopItem) {
+        player.sendSystemMessage(Component.literal("§6=== Shop Item Info ==="));
+        player.sendSystemMessage(Component.literal("§7Item: §b" + shopItem.getItemStack().getHoverName().getString()));
+        player.sendSystemMessage(Component.literal("§7Price: §a" + economyManager.formatCurrency(shopItem.getPrice())));
+        player.sendSystemMessage(Component.literal("§7Stock: §e" + (shopItem.getStock() == -1 ? "Unlimited" : shopItem.getStock())));
+        if (shopItem.getDescription() != null && !shopItem.getDescription().isEmpty()) {
+            player.sendSystemMessage(Component.literal("§7Description: §f" + shopItem.getDescription()));
+        }
+    }
+    
+    private void refreshItems() {
+        currentItems = shopManager.getAllItems();
+        currentPage = 0;
     }
     
     private void updateDisplay() {
@@ -82,191 +124,55 @@ public class ShopMenu extends BaseEconomyMenu {
             container.setItem(i, ItemStack.EMPTY);
         }
         
-        // Add shop items for current page
+        // Add shop items
         int startIndex = currentPage * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, currentItems.size());
-        
-        for (int i = startIndex; i < endIndex; i++) {
-            ShopItem shopItem = currentItems.get(i);
-            ItemStack displayItem = createShopItemDisplay(shopItem);
-            container.setItem(i - startIndex, displayItem);
+        for (int i = 0; i < ITEMS_PER_PAGE && (startIndex + i) < currentItems.size(); i++) {
+            ShopItem shopItem = currentItems.get(startIndex + i);
+            ItemStack displayItem = shopItem.getItemStack().copy();
+            
+            // Add lore with price information
+            displayItem.getOrCreateTag().putString("PriceDisplay", 
+                "§7Price: §a" + economyManager.formatCurrency(shopItem.getPrice()));
+            
+            container.setItem(i, displayItem);
         }
         
-        // Add navigation buttons
-        addNavigationButtons();
-        
-        // Refresh player's view
-        broadcastChanges();
-    }
-    
-    private ItemStack createShopItemDisplay(ShopItem shopItem) {
-        ItemStack display = shopItem.getItemStack().copy();
-        
-        // Create lore with pricing information
-        List<Component> lore = new ArrayList<>();
-        EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
-        
-        if (shopItem.canBuy()) {
-            lore.add(Component.literal("§aBuy Price: §f" + economyManager.formatCurrency(shopItem.getBuyPrice())));
-        }
-        if (shopItem.canSell()) {
-            lore.add(Component.literal("§cSell Price: §f" + economyManager.formatCurrency(shopItem.getSellPrice())));
-        }
-        
-        lore.add(Component.literal(""));
-        lore.add(Component.literal("§7Left Click: §aBuy §71"));
-        lore.add(Component.literal("§7Right Click: §aSell §71"));
-        lore.add(Component.literal("§7Shift + Left Click: §aBuy §764"));
-        lore.add(Component.literal("§7Shift + Right Click: §aSell §7All"));
-        
-        // Set the lore
-        display.getOrCreateTagElement("display").putString("Lore", lore.toString());
-        
-        return display;
-    }
-    
-    private void addNavigationButtons() {
-        // Previous page button (slot 45)
+        // Add navigation items
         if (currentPage > 0) {
-            ItemStack prevButton = new ItemStack(Items.ARROW);
-            prevButton.setHoverName(Component.literal("§aPrevious Page"));
-            container.setItem(45, prevButton);
+            ItemStack prevPage = new ItemStack(Items.ARROW);
+            prevPage.setHoverName(Component.literal("§ePrevious Page"));
+            container.setItem(45, prevPage);
         }
         
-        // Page info (slot 49)
+        ItemStack refresh = new ItemStack(Items.COMPASS);
+        refresh.setHoverName(Component.literal("§eRefresh Shop"));
+        container.setItem(49, refresh);
+        
+        int maxPages = (currentItems.size() - 1) / ITEMS_PER_PAGE;
+        if (currentPage < maxPages) {
+            ItemStack nextPage = new ItemStack(Items.ARROW);
+            nextPage.setHoverName(Component.literal("§eNext Page"));
+            container.setItem(53, nextPage);
+        }
+        
+        // Add page info
         ItemStack pageInfo = new ItemStack(Items.BOOK);
-        int totalPages = (int) Math.ceil((double) currentItems.size() / ITEMS_PER_PAGE);
-        pageInfo.setHoverName(Component.literal("§ePage " + (currentPage + 1) + " of " + totalPages));
-        container.setItem(49, pageInfo);
-        
-        // Next page button (slot 53)
-        if ((currentPage + 1) * ITEMS_PER_PAGE < currentItems.size()) {
-            ItemStack nextButton = new ItemStack(Items.ARROW);
-            nextButton.setHoverName(Component.literal("§aNext Page"));
-            container.setItem(53, nextButton);
-        }
-        
-        // Close button (slot 4 in bottom row for visibility)
-        ItemStack closeButton = new ItemStack(Items.BARRIER);
-        closeButton.setHoverName(Component.literal("§cClose"));
-        container.setItem(4, closeButton);
-    }
-    
-    private void handleShopItemClick(ShopItem shopItem, ClickType clickType) {
-        int quantity = 1;
-        boolean isBuy = true;
-        
-        switch (clickType) {
-            case LEFT:
-                // Buy 1
-                quantity = 1;
-                isBuy = true;
-                break;
-            case RIGHT:
-                // Sell 1
-                quantity = 1;
-                isBuy = false;
-                break;
-            case SHIFT_LEFT:
-                // Buy 64
-                quantity = 64;
-                isBuy = true;
-                break;
-            case SHIFT_RIGHT:
-                // Sell all
-                quantity = -1; // Special value for "all"
-                isBuy = false;
-                break;
-            default:
-                return;
-        }
-        
-        // Execute the transaction
-        if (isBuy) {
-            if (shopItem.canBuy()) {
-                shopManager.buyItem(player, shopItem.getId(), quantity);
-            }
-        } else {
-            if (shopItem.canSell()) {
-                if (quantity == -1) {
-                    // Sell all - count items in inventory
-                    quantity = countItemsInInventory(shopItem.getItemStack());
-                }
-                if (quantity > 0) {
-                    shopManager.sellItem(player, shopItem.getId(), quantity);
-                }
-            }
-        }
-        
-        // Refresh display
-        updateDisplay();
-    }
-    
-    private int countItemsInInventory(ItemStack targetItem) {
-        int count = 0;
-        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-            ItemStack stack = player.getInventory().getItem(i);
-            if (ItemStack.isSameItemSameTags(stack, targetItem)) {
-                count += stack.getCount();
-            }
-        }
-        return count;
-    }
-    
-    private void nextPage() {
-        int totalPages = (int) Math.ceil((double) currentItems.size() / ITEMS_PER_PAGE);
-        if (currentPage < totalPages - 1) {
-            currentPage++;
-            updateDisplay();
-        }
-    }
-    
-    private void previousPage() {
-        if (currentPage > 0) {
-            currentPage--;
-            updateDisplay();
-        }
+        pageInfo.setHoverName(Component.literal("§ePage " + (currentPage + 1) + "/" + (maxPages + 1)));
+        container.setItem(48, pageInfo);
     }
     
     @Override
-    public boolean stillValid(Player player) {
-        return true; // Virtual container is always valid
+    public boolean clickMenuButton(net.minecraft.world.entity.player.Player player, int id) {
+        if (clickHandler != null && player instanceof ServerPlayer) {
+            clickHandler.accept(id, ClickType.PICKUP);
+            return true;
+        }
+        return false;
     }
     
     @Override
-    public ItemStack quickMoveStack(Player player, int index) {
-        // Disable shift-clicking to move items
+    public ItemStack quickMoveStack(net.minecraft.world.entity.player.Player player, int index) {
+        // Don't allow items to be moved
         return ItemStack.EMPTY;
-    }
-    
-    public static class Provider implements MenuProvider {
-        private final ShopManager shopManager;
-        
-        public Provider(ShopManager shopManager) {
-            this.shopManager = shopManager;
-        }
-        
-        @Override
-        public Component getDisplayName() {
-            return Component.literal("Shop");
-        }
-        
-        @Override
-        public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
-            return new ShopMenu(containerId, playerInventory, shopManager);
-        }
-    }
-    
-    /**
-     * Opens the shop GUI for a player
-     */
-    public static void openFor(ServerPlayer player) {
-        EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
-        if (economyManager != null && economyManager.isEnabled()) {
-            ShopManager shopManager = economyManager.getShopManager();
-            player.openMenu(new Provider(shopManager));
-        } else {
-            player.sendSystemMessage(Component.literal("§cShop system is not available"));
-        }
     }
 }
