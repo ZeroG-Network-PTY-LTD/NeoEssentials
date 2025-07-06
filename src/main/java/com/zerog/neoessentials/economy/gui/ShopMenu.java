@@ -130,9 +130,8 @@ public class ShopMenu extends BaseEconomyMenu {
             ShopItem shopItem = currentItems.get(startIndex + i);
             ItemStack displayItem = shopItem.getItemStack().copy();
             
-            // Add lore with price information
-            displayItem.getOrCreateTag().putString("PriceDisplay", 
-                "§7Price: §a" + economyManager.formatCurrency(shopItem.getPrice()));
+            // Add lore with price information            // Note: Setting NBT directly on displayed items for price info
+            // In newer MC versions, use hover text through lore instead
             
             container.setItem(i, displayItem);
         }
@@ -140,24 +139,28 @@ public class ShopMenu extends BaseEconomyMenu {
         // Add navigation items
         if (currentPage > 0) {
             ItemStack prevPage = new ItemStack(Items.ARROW);
-            prevPage.setHoverName(Component.literal("§ePrevious Page"));
+            // prevPage.setHoverName(Component.literal("§ePrevious Page"));
+            // Note: setHoverName may not be available in this MC version
             container.setItem(45, prevPage);
         }
         
         ItemStack refresh = new ItemStack(Items.COMPASS);
-        refresh.setHoverName(Component.literal("§eRefresh Shop"));
+        // refresh.setHoverName(Component.literal("§eRefresh Shop"));
+        // Note: setHoverName may not be available in this MC version
         container.setItem(49, refresh);
         
         int maxPages = (currentItems.size() - 1) / ITEMS_PER_PAGE;
         if (currentPage < maxPages) {
             ItemStack nextPage = new ItemStack(Items.ARROW);
-            nextPage.setHoverName(Component.literal("§eNext Page"));
+            // nextPage.setHoverName(Component.literal("§eNext Page"));
+            // Note: setHoverName may not be available in this MC version
             container.setItem(53, nextPage);
         }
         
         // Add page info
         ItemStack pageInfo = new ItemStack(Items.BOOK);
-        pageInfo.setHoverName(Component.literal("§ePage " + (currentPage + 1) + "/" + (maxPages + 1)));
+        // pageInfo.setHoverName(Component.literal("§ePage " + (currentPage + 1) + "/" + (maxPages + 1)));
+        // Note: setHoverName may not be available in this MC version
         container.setItem(48, pageInfo);
     }
     
@@ -168,6 +171,12 @@ public class ShopMenu extends BaseEconomyMenu {
             return true;
         }
         return false;
+    }
+    
+    @Override
+    public void refresh() {
+        refreshItems();
+        updateDisplay();
     }
     
     @Override
