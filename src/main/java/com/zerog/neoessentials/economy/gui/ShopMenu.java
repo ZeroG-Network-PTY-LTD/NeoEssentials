@@ -92,12 +92,11 @@ public class ShopMenu extends BaseEconomyMenu {
     }
     
     private void buyItem(ShopItem shopItem, int quantity) {
-        ShopManager.PurchaseResult result = shopManager.buyItem(player, shopItem.getId(), quantity);
+        ShopManager.BuyResult result = shopManager.buyItem(player, shopItem.getId(), quantity);
         
         if (result.isSuccess()) {
             player.sendSystemMessage(Component.literal("§aPurchased " + quantity + "x " + 
-                shopItem.getItemStack().getHoverName().getString() + " for " + 
-                economyManager.formatCurrency(result.getTotalCost())));
+                shopItem.getItemStack().getHoverName().getString() + " successfully!"));
         } else {
             player.sendSystemMessage(Component.literal("§cPurchase failed: " + result.getMessage()));
         }
