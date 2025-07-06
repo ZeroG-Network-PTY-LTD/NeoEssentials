@@ -92,6 +92,8 @@ public class AuctionItem {
     public boolean hasEnded() { return LocalDateTime.now().isAfter(endTime) || status != Status.ACTIVE; }
     public boolean hasBids() { return bidCount > 0; }
     public boolean hasBuyNow() { return buyNowPrice != null; }
+    public UUID getHighestBidder() { return getCurrentBidderId(); }
+    public String getHighestBidderName() { return getCurrentBidderName(); }
     public long getTimeRemainingMinutes() {
         if (hasEnded()) return 0;
         return java.time.Duration.between(LocalDateTime.now(), endTime).toMinutes();
