@@ -3,13 +3,13 @@ package com.zerog.neoessentials.economy.gui;
 import com.zerog.neoessentials.economy.EconomyManager;
 import com.zerog.neoessentials.economy.shop.ShopItem;
 import com.zerog.neoessentials.economy.shop.ShopManager;
+import com.zerog.neoessentials.economy.gui.ItemStackHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.List;
 
@@ -96,7 +96,7 @@ public class ShopMenu extends BaseEconomyMenu {
         
         if (result.isSuccess()) {
             player.sendSystemMessage(Component.literal("§aPurchased " + quantity + "x " + 
-                shopItem.getItemStack().getHoverName().getString() + " successfully!"));
+                ItemStackHelper.getDisplayName(shopItem.getItemStack()) + " successfully!"));
         } else {
             player.sendSystemMessage(Component.literal("§cPurchase failed: " + result.getMessage()));
         }
@@ -104,7 +104,7 @@ public class ShopMenu extends BaseEconomyMenu {
     
     private void showItemInfo(ShopItem shopItem) {
         player.sendSystemMessage(Component.literal("§6=== Shop Item Info ==="));
-        player.sendSystemMessage(Component.literal("§7Item: §b" + shopItem.getItemStack().getHoverName().getString()));
+        player.sendSystemMessage(Component.literal("§7Item: §b" + ItemStackHelper.getDisplayName(shopItem.getItemStack())));
         player.sendSystemMessage(Component.literal("§7Price: §a" + economyManager.formatCurrency(shopItem.getPrice())));
         player.sendSystemMessage(Component.literal("§7Stock: §e" + (shopItem.getStock() == -1 ? "Unlimited" : shopItem.getStock())));
         if (shopItem.getDescription() != null && !shopItem.getDescription().isEmpty()) {
@@ -127,40 +127,32 @@ public class ShopMenu extends BaseEconomyMenu {
         int startIndex = currentPage * ITEMS_PER_PAGE;
         for (int i = 0; i < ITEMS_PER_PAGE && (startIndex + i) < currentItems.size(); i++) {
             ShopItem shopItem = currentItems.get(startIndex + i);
-            ItemStack displayItem = shopItem.getItemStack().copy();
             
-            // Add lore with price information            // Note: Setting NBT directly on displayed items for price info
-            // In newer MC versions, use hover text through lore instead
+            // Create display item with price information
+            ItemStack displayItem = ItemStackHelper.ShopItems.createShopDisplayItem(
+                shopItem.getItemStack(),
+                economyManager.formatCurrency(shopItem.getPrice()),
+                shopItem.getStock()
+            );
             
             container.setItem(i, displayItem);
         }
         
         // Add navigation items
+        int maxPages = (currentItems.size() - 1) / ITEMS_PER_PAGE;
+        
         if (currentPage > 0) {
-            ItemStack prevPage = new ItemStack(Items.ARROW);
-            // prevPage.setHoverName(Component.literal("§ePrevious Page"));
-            // Note: setHoverName may not be available in this MC version
-            container.setItem(45, prevPage);
+            container.setItem(45, ItemStackHelper.NavigationItems.createPreviousPageItem());
         }
         
-        ItemStack refresh = new ItemStack(Items.COMPASS);
-        // refresh.setHoverName(Component.literal("§eRefresh Shop"));
-        // Note: setHoverName may not be available in this MC version
-        container.setItem(49, refresh);
+        container.setItem(49, ItemStackHelper.NavigationItems.createRefreshItem());
         
-        int maxPages = (currentItems.size() - 1) / ITEMS_PER_PAGE;
         if (currentPage < maxPages) {
-            ItemStack nextPage = new ItemStack(Items.ARROW);
-            // nextPage.setHoverName(Component.literal("§eNext Page"));
-            // Note: setHoverName may not be available in this MC version
-            container.setItem(53, nextPage);
+            container.setItem(53, ItemStackHelper.NavigationItems.createNextPageItem());
         }
         
         // Add page info
-        ItemStack pageInfo = new ItemStack(Items.BOOK);
-        // pageInfo.setHoverName(Component.literal("§ePage " + (currentPage + 1) + "/" + (maxPages + 1)));
-        // Note: setHoverName may not be available in this MC version
-        container.setItem(48, pageInfo);
+        container.setItem(48, ItemStackHelper.NavigationItems.createPageInfoItem(currentPage, maxPages + 1));
     }
     
     @Override
