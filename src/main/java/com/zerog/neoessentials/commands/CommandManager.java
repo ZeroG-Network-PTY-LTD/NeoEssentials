@@ -266,6 +266,13 @@ public class CommandManager {    // Command classes
         com.zerog.neoessentials.economy.commands.AuctionCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered auction commands");
         
+        // Register GUI commands
+        com.zerog.neoessentials.economy.commands.ShopGuiCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered shop GUI commands");
+        
+        com.zerog.neoessentials.economy.commands.AuctionGuiCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered auction GUI commands");
+        
         // Note: ItemCommands require CommandBuildContext which is not available here
         // In a full implementation, you would need to get the CommandBuildContext properly
         

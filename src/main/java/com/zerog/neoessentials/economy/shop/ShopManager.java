@@ -98,6 +98,22 @@ public class ShopManager {
     }
     
     /**
+     * Gets all shop items
+     */
+    public List<ShopItem> getAllItems() {
+        return new ArrayList<>(shopItems.values());
+    }
+    
+    /**
+     * Gets available shop items (in stock)
+     */
+    public List<ShopItem> getAvailableItems() {
+        return shopItems.values().stream()
+                .filter(item -> item.getStock() != 0)
+                .collect(Collectors.toList());
+    }
+    
+    /**
      * Player buys an item from the shop
      */
     public BuyResult buyItem(ServerPlayer player, UUID itemId, int quantity) {
@@ -329,6 +345,19 @@ public class ShopManager {
         private final String message;
         
         public BuyResult(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+        
+        public boolean isSuccess() { return success; }
+        public String getMessage() { return message; }
+    }
+    
+    public static class PurchaseResult {
+        private final boolean success;
+        private final String message;
+        
+        public PurchaseResult(boolean success, String message) {
             this.success = success;
             this.message = message;
         }
