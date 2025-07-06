@@ -282,7 +282,7 @@ public class ShopManager {
     private boolean canStackInExistingSlots(ServerPlayer player, ItemStack itemStack) {
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             ItemStack slotStack = player.getInventory().getItem(i);
-            if (!slotStack.isEmpty() && ItemStack.isSameItemSameTags(slotStack, itemStack)) {
+            if (!slotStack.isEmpty() && ItemStack.isSameItem(slotStack, itemStack)) {
                 int spaceInSlot = slotStack.getMaxStackSize() - slotStack.getCount();
                 if (spaceInSlot >= itemStack.getCount()) {
                     return true;
@@ -297,7 +297,7 @@ public class ShopManager {
         
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
             ItemStack slotStack = player.getInventory().getItem(i);
-            if (!slotStack.isEmpty() && ItemStack.isSameItemSameTags(slotStack, itemStack)) {
+            if (!slotStack.isEmpty() && ItemStack.isSameItem(slotStack, itemStack)) {
                 remainingNeeded -= slotStack.getCount();
                 if (remainingNeeded <= 0) {
                     return true;
@@ -313,7 +313,7 @@ public class ShopManager {
         
         for (int i = 0; i < player.getInventory().getContainerSize() && remainingToRemove > 0; i++) {
             ItemStack slotStack = player.getInventory().getItem(i);
-            if (!slotStack.isEmpty() && ItemStack.isSameItemSameTags(slotStack, itemStack)) {
+            if (!slotStack.isEmpty() && ItemStack.isSameItem(slotStack, itemStack)) {
                 int toRemoveFromSlot = Math.min(remainingToRemove, slotStack.getCount());
                 slotStack.shrink(toRemoveFromSlot);
                 remainingToRemove -= toRemoveFromSlot;
