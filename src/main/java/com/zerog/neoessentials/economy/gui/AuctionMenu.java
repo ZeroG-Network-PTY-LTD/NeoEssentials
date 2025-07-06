@@ -3,7 +3,14 @@ package com.zerog.neoessentials.economy.gui;
 import com.zerog.neoessentials.economy.EconomyManager;
 import com.zerog.neoessentials.economy.auction.AuctionItem;
 import com.zerog.neoessentials.economy.auction.AuctionManager;
-import net.minecraft.network.chat.Component;
+                                                  // pageInfo.setHoverName(Component.literal("§ePage " + (currentPage + 1) + "/" + (maxPages + 1)));
+        // Note: setHoverName may not be available in this MC version    // nextPage.setHoverName(Component.literal("§eNext Page"));
+            // Note: setHoverName may not be available in this MC version// createAuction.setHoverName(Component.literal("§eCreate Auction"));
+        // Note: setHoverName may not be available in this MC version  // refresh.setHoverName(Component.literal("§eRefresh Auctions"));
+        // Note: setHoverName may not be available in this MC version  // viewModeItem.setHoverName(Component.literal("§eView: " + viewMode.name()));
+        // Note: setHoverName may not be available in this MC version     // prevPage.setHoverName(Component.literal("§ePrevious Page"));
+            // Note: setHoverName may not be available in this MC version/ Note: Setting NBT directly on displayed items for auction info
+            // In newer MC versions, use hover text through lore insteadport net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
@@ -274,6 +281,12 @@ public class AuctionMenu extends BaseEconomyMenu {
             return true;
         }
         return false;
+    }
+    
+    @Override
+    public void refresh() {
+        refreshAuctions();
+        updateDisplay();
     }
     
     @Override

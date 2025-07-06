@@ -165,7 +165,7 @@ public class ShopMenu extends BaseEconomyMenu {
     }
     
     @Override
-    public boolean clickMenuButton(net.minecraft.world.entity.player.Player player, int id) {
+    public boolean clickMenuButton(@org.jetbrains.annotations.NotNull net.minecraft.world.entity.player.Player player, int id) {
         if (clickHandler != null && player instanceof ServerPlayer) {
             clickHandler.accept(id, ClickType.PICKUP);
             return true;
