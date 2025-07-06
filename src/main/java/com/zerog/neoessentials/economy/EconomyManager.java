@@ -2,16 +2,17 @@ package com.zerog.neoessentials.economy;
 
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.config.EconomyConfig;
+import com.zerog.neoessentials.economy.auction.AuctionManager;
 import com.zerog.neoessentials.economy.external.ExternalEconomyDetector;
 import com.zerog.neoessentials.economy.external.EconomyDetectionReport;
 import com.zerog.neoessentials.economy.storage.EconomyStorage;
 import com.zerog.neoessentials.economy.storage.EconomyStorageFactory;
 import com.zerog.neoessentials.economy.shop.ShopManager;
+import net.minecraft.server.MinecraftServer;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -29,6 +30,7 @@ public class EconomyManager {
     private final Currency defaultCurrency;
     private final ScheduledExecutorService executor;
     private final ShopManager shopManager;
+    private final AuctionManager auctionManager;
     
     // Account cache for performance
     private final Map<UUID, EconomyAccount> accountCache = new ConcurrentHashMap<>();
@@ -52,6 +54,7 @@ public class EconomyManager {
             config.getCurrencyPluralName()
         );
         this.shopManager = new ShopManager(this);
+        this.auctionManager = new AuctionManager(this);
     }
     
     /**
@@ -456,4 +459,20 @@ public class EconomyManager {
     public EconomyStorage getStorage() { return storage; }
     public ExternalEconomyDetector getExternalDetector() { return externalDetector; }
     public ShopManager getShopManager() { return shopManager; }
+    public AuctionManager getAuctionManager() { return auctionManager; }
+    public ScheduledExecutorService getScheduler() { return executor; }
+    
+    /**
+     * Formats a currency amount for display
+     */
+    public String formatCurrency(BigDecimal amount) {
+        return defaultCurrency.format(amount);
+    }
+    
+    /**
+     * Gets the current server instance
+     */
+    public MinecraftServer getServer() {
+        return NeoEssentials.getInstance().getServer();
+    }
 }
