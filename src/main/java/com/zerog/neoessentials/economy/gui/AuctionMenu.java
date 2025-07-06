@@ -240,12 +240,12 @@ public class AuctionMenu extends BaseEconomyMenu {
         // Add navigation items
         if (currentPage > 0) {
             ItemStack prevPage = new ItemStack(Items.ARROW);
-            prevPage.setHoverName(Component.literal("§ePrevious Page"));
+            // prevPage.setHoverName(Component.literal("§ePrevious Page"));
             container.setItem(45, prevPage);
         }
         
         ItemStack viewModeItem = new ItemStack(Items.ENDER_EYE);
-        viewModeItem.setHoverName(Component.literal("§eView: " + viewMode.name()));
+        // viewModeItem.setHoverName(Component.literal("§eView: " + viewMode.name()));
         container.setItem(46, viewModeItem);
         
         ItemStack refresh = new ItemStack(Items.COMPASS);
