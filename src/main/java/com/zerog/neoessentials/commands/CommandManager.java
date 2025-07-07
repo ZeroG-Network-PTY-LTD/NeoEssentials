@@ -50,7 +50,7 @@ public class CommandManager {    // Command classes
     private final TablistCommand tablistCommand;
     // SignEditCommands is now fully static
     // InventoryManagementCommands is now fully static
-    private final ItemEnhancementCommands itemEnhancementCommands;
+    // ItemEnhancementCommands is now fully static
     
     // Economy commands
     // Note: Economy commands are static and don't need instances
@@ -87,7 +87,7 @@ public class CommandManager {    // Command classes
         tablistCommand = new TablistCommand();
         // SignEditCommands is now fully static - no instance needed
         // InventoryManagementCommands is now fully static - no instance needed
-        itemEnhancementCommands = new ItemEnhancementCommands();
+        // ItemEnhancementCommands is now fully static - no instance needed
         
         // Economy commands are static - no instances needed
         
@@ -263,9 +263,9 @@ public class CommandManager {    // Command classes
         com.zerog.neoessentials.economy.commands.EconomyCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered economy commands");
         
-        // Register GUI commands only (shop and auction use GUI-only approach)
-        com.zerog.neoessentials.economy.commands.ShopGuiCommands.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered shop GUI commands");
+        // Register enhanced GUI commands (shop and auction use GUI-only approach)
+        com.zerog.neoessentials.economy.commands.EnhancedShopGuiCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered enhanced shop GUI commands");
         
         com.zerog.neoessentials.economy.commands.AuctionGuiCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered auction GUI commands");
