@@ -43,18 +43,29 @@ public class ShopGuiCommands {
             ServerPlayer player = source.getPlayerOrException();
             EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
             
-            if (economyManager == null || !economyManager.isEnabled()) {
-                source.sendFailure(Component.literal("Economy system is not available"));
+            // Enhanced logging
+            NeoEssentials.LOGGER.info("Player {} is attempting to open shop GUI", player.getName().getString());
+            
+            if (economyManager == null) {
+                source.sendFailure(Component.literal("§cEconomy manager is not initialized"));
+                NeoEssentials.LOGGER.error("Economy manager is null for player {}", player.getName().getString());
+                return 0;
+            }
+            
+            if (!economyManager.isEnabled()) {
+                source.sendFailure(Component.literal("§cEconomy system is disabled"));
+                NeoEssentials.LOGGER.warn("Economy system is disabled for player {}", player.getName().getString());
                 return 0;
             }
             
             // Use the new simplified shop interface
+            NeoEssentials.LOGGER.info("Opening shop interface for player {}", player.getName().getString());
             SimpleShopInterface.openShop(player, economyManager);
             return 1;
             
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Error opening shop GUI", e);
-            context.getSource().sendFailure(Component.literal("An error occurred while opening the shop"));
+            NeoEssentials.LOGGER.error("Error opening shop GUI for player", e);
+            context.getSource().sendFailure(Component.literal("§cAn error occurred while opening the shop: " + e.getMessage()));
             return 0;
         }
     }
