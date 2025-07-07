@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class SimpleShopInterface {
     
-    private static final int ITEMS_PER_PAGE = 45; // 5 rows for items
+    private static final int ITEMS_PER_PAGE = 36; // 4 rows for items, 1 row for navigation
     
     public static void openShop(ServerPlayer player, EconomyManager economyManager) {
         try {
@@ -44,14 +44,14 @@ public class SimpleShopInterface {
                 availableItems = List.of();
             }
             
-            // Create a simple container for the shop
-            SimpleContainer container = new SimpleContainer(54); // 6 rows
+            // Create a simple container for the shop (5 rows instead of 6 to be safe)
+            SimpleContainer container = new SimpleContainer(45); // 5 rows only
             
             // If no items available, show a helpful message
             if (availableItems.isEmpty()) {
                 ItemStack noItemsInfo = new ItemStack(Items.PAPER);
                 noItemsInfo.set(DataComponents.CUSTOM_NAME, Component.literal("§eNo items available"));
-                container.setItem(22, noItemsInfo); // Center slot
+                container.setItem(22, noItemsInfo); // Center slot of 5-row container
                 
                 NeoEssentials.LOGGER.info("Shop is empty for player {}", player.getName().getString());
             } else {
@@ -80,7 +80,8 @@ public class SimpleShopInterface {
             // Create a simple menu provider
             SimpleMenuProvider menuProvider = new SimpleMenuProvider(
                 (containerId, inventory, menuPlayer) -> {
-                    return new ChestMenu(MenuType.GENERIC_9x6, containerId, inventory, container, 6) {
+                    // Create ChestMenu with 5 rows instead of 6
+                    ChestMenu menu = new ChestMenu(MenuType.GENERIC_9x5, containerId, inventory, container, 5) {
                         @Override
                         public boolean stillValid(@Nonnull net.minecraft.world.entity.player.Player menuPlayer) {
                             return menuPlayer == player && menuPlayer.isAlive() && !menuPlayer.isRemoved();
@@ -99,6 +100,7 @@ public class SimpleShopInterface {
                             return false;
                         }
                     };
+                    return menu;
                 },
                 Component.literal("§6Shop")
             );
@@ -142,24 +144,24 @@ public class SimpleShopInterface {
     
     private static void setupNavigationItems(SimpleContainer container, int totalItems, EconomyManager economyManager) {
         try {
-            // Refresh button
+            // Refresh button - bottom row center
             ItemStack refresh = new ItemStack(Items.EMERALD);
             refresh.set(DataComponents.CUSTOM_NAME, Component.literal("§aRefresh Shop"));
-            container.setItem(49, refresh); // Center of bottom row
+            container.setItem(40, refresh); // Center of bottom row (5th row)
             
-            // Close button  
+            // Close button - bottom row right  
             ItemStack close = new ItemStack(Items.BARRIER);
             close.set(DataComponents.CUSTOM_NAME, Component.literal("§cClose Shop"));
-            container.setItem(53, close); // Right side of bottom row
+            container.setItem(44, close); // Right side of bottom row
             
-            // Info item
+            // Info item - bottom row left
             ItemStack info = new ItemStack(Items.BOOK);
             info.set(DataComponents.CUSTOM_NAME, Component.literal("§eShop Info"));
-            container.setItem(45, info); // Left side of bottom row
+            container.setItem(36, info); // Left side of bottom row
             
             // Fill empty slots in bottom row with glass panes
-            for (int i = 46; i < 54; i++) {
-                if (i != 49 && i != 53 && i != 45 && i != 50) {
+            for (int i = 37; i < 44; i++) {
+                if (i != 40 && i != 41) { // Skip refresh and item count slots
                     ItemStack glassPane = new ItemStack(Items.LIGHT_GRAY_STAINED_GLASS_PANE);
                     glassPane.set(DataComponents.CUSTOM_NAME, Component.literal(""));
                     container.setItem(i, glassPane);
@@ -169,7 +171,7 @@ public class SimpleShopInterface {
             // Add item count info
             ItemStack itemCountInfo = new ItemStack(Items.PAPER);
             itemCountInfo.set(DataComponents.CUSTOM_NAME, Component.literal("§7Items available: §f" + totalItems));
-            container.setItem(50, itemCountInfo);
+            container.setItem(41, itemCountInfo);
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.warn("Failed to setup navigation items", e);

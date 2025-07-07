@@ -86,6 +86,11 @@ public class EconomyManager {
             // Start background tasks
             startBackgroundTasks();
             
+            // Add default shop items if enabled
+            if (config.isEnabled()) {
+                com.zerog.neoessentials.economy.shop.ShopUtils.addDefaultShopItems(this);
+            }
+            
             enabled = config.isEnabled();
             initialized = true;
             
