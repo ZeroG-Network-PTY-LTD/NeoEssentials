@@ -268,10 +268,13 @@ public class EnhancedShopMenu extends ChestMenu {
                 return;
             }
             
-            // For now, just show a message about creating shop items
-            player.sendSystemMessage(Component.literal("§eShop item creation coming soon!"));
-            player.sendSystemMessage(Component.literal("§7Held item: " + heldItem.getHoverName().getString()));
-            player.sendSystemMessage(Component.literal("§7Use /shop create <price> to create a listing"));
+            // Close current interface and open shop creation interface
+            player.closeContainer();
+            
+            // Small delay before opening creation interface
+            player.getServer().execute(() -> {
+                ShopCreationInterface.openShopCreation(player, economyManager);
+            });
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error creating shop item", e);
