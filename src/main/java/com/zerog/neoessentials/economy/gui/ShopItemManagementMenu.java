@@ -136,18 +136,21 @@ public class ShopItemManagementMenu extends ChestMenu {
      */
     private void handleEditPrice() {
         try {
-            // For now, show instructions for using commands
-            player.sendSystemMessage(Component.literal("§ePrice editing via GUI coming soon!"));
+            player.sendSystemMessage(Component.literal("§6=== Edit Item Price ==="));
             player.sendSystemMessage(Component.literal("§7Current price: §6" + shopItem.getBuyPrice() + " coins"));
-            player.sendSystemMessage(Component.literal("§7Use command: §f/shop editprice " + 
-                shopItem.getId().toString().substring(0, 8) + " <new_price>"));
+            player.sendSystemMessage(Component.literal("§eClick on the anvil to set a new price"));
             
-            // Close the management interface
+            // Close current interface and open price editing interface
             player.closeContainer();
             
+            // Small delay before opening price editor
+            player.getServer().execute(() -> {
+                openPriceEditor();
+            });
+            
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Error editing price", e);
-            player.sendSystemMessage(Component.literal("§cFailed to edit price"));
+            NeoEssentials.LOGGER.error("Error opening price editor", e);
+            player.sendSystemMessage(Component.literal("§cFailed to open price editor"));
         }
     }
     
@@ -156,19 +159,22 @@ public class ShopItemManagementMenu extends ChestMenu {
      */
     private void handleEditStock() {
         try {
-            // For now, show instructions for using commands
-            player.sendSystemMessage(Component.literal("§eStock editing via GUI coming soon!"));
+            player.sendSystemMessage(Component.literal("§6=== Edit Item Stock ==="));
             player.sendSystemMessage(Component.literal("§7Current stock: §e" + shopItem.getStock()));
-            player.sendSystemMessage(Component.literal("§7Use command: §f/shop addstock " + 
-                shopItem.getId().toString().substring(0, 8) + " <quantity>"));
-            player.sendSystemMessage(Component.literal("§7Hold items in your hand to add them to stock"));
+            player.sendSystemMessage(Component.literal("§eHold the items you want to add to stock"));
+            player.sendSystemMessage(Component.literal("§eClick on the chest to add items from your hand"));
             
-            // Close the management interface
+            // Close current interface and open stock editing interface
             player.closeContainer();
             
+            // Small delay before opening stock editor
+            player.getServer().execute(() -> {
+                openStockEditor();
+            });
+            
         } catch (Exception e) {
-            NeoEssentials.LOGGER.error("Error editing stock", e);
-            player.sendSystemMessage(Component.literal("§cFailed to edit stock"));
+            NeoEssentials.LOGGER.error("Error opening stock editor", e);
+            player.sendSystemMessage(Component.literal("§cFailed to open stock editor"));
         }
     }
     
@@ -286,6 +292,30 @@ public class ShopItemManagementMenu extends ChestMenu {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error returning to shop", e);
             player.sendSystemMessage(Component.literal("§cFailed to return to shop"));
+        }
+    }
+    
+    /**
+     * Opens the price editor interface using anvil GUI
+     */
+    private void openPriceEditor() {
+        try {
+            ShopPriceEditorInterface.openPriceEditor(player, economyManager, shopItem);
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to open price editor", e);
+            player.sendSystemMessage(Component.literal("§cFailed to open price editor"));
+        }
+    }
+    
+    /**
+     * Opens the stock editor interface 
+     */
+    private void openStockEditor() {
+        try {
+            ShopStockEditorInterface.openStockEditor(player, economyManager, shopItem);
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to open stock editor", e);
+            player.sendSystemMessage(Component.literal("§cFailed to open stock editor"));
         }
     }
     
