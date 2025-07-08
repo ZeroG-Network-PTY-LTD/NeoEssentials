@@ -108,25 +108,31 @@ public class ShopItemManagementInterface {
         ItemStack editPrice = new ItemStack(Items.GOLD_INGOT);
         editPrice.set(DataComponents.CUSTOM_NAME, Component.literal("§6Edit Price"));
         // Add lore with current price and instructions
+        String priceInfo = String.format("§7Current: §6%.2f coins\n§eClick to open price editor", 
+            shopItem.getBuyPrice().doubleValue());
         container.setItem(19, editPrice); // Left side of middle row
         
         // Edit Stock button
         ItemStack editStock = new ItemStack(Items.CHEST);
         editStock.set(DataComponents.CUSTOM_NAME, Component.literal("§eEdit Stock"));
         // Add lore with current stock and instructions
+        String stockInfo = String.format("§7Current: §e%d items\n§eClick to open stock editor", 
+            shopItem.getStock());
         container.setItem(21, editStock); // Middle of middle row
         
         // Remove Listing button
         ItemStack removeListing = new ItemStack(Items.RED_WOOL);
         removeListing.set(DataComponents.CUSTOM_NAME, Component.literal("§cRemove Listing"));
         // Add lore with warning about removing
+        String removeInfo = "§7Permanently removes this listing\n§7Returns remaining stock to inventory\n§cClick to confirm removal";
         container.setItem(23, removeListing); // Right side of middle row
         
         // Retrieve Items button (if stock > 0)
         if (shopItem.getStock() > 0) {
             ItemStack retrieveItems = new ItemStack(Items.HOPPER);
             retrieveItems.set(DataComponents.CUSTOM_NAME, Component.literal("§bRetrieve Items"));
-            String retrieveInfo = String.format("§7Take back %d items\n§7This will remove them from sale", shopItem.getStock());
+            String retrieveInfo = String.format("§7Take back %d items\n§7This will remove them from sale\n§bClick to retrieve", 
+                shopItem.getStock());
             container.setItem(25, retrieveItems); // Far right of middle row
         }
     }
