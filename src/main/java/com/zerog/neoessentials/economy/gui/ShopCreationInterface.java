@@ -39,6 +39,14 @@ public class ShopCreationInterface {
                 return;
             }
             
+            // Send clear instructions to the player
+            player.sendSystemMessage(Component.literal("§6=== Create Shop Item ==="));
+            player.sendSystemMessage(Component.literal("§eItem: " + heldItem.getHoverName().getString()));
+            player.sendSystemMessage(Component.literal("§eQuantity: " + heldItem.getCount()));
+            player.sendSystemMessage(Component.literal("§eType the price for this item in chat"));
+            player.sendSystemMessage(Component.literal("§7Example: 10.50"));
+            player.sendSystemMessage(Component.literal("§7This will create a shop listing with " + heldItem.getCount() + " items in stock"));
+            
             // Create menu provider for anvil-like interface
             SimpleMenuProvider menuProvider = new SimpleMenuProvider(
                 (containerId, inventory, menuPlayer) -> {
@@ -160,13 +168,13 @@ public class ShopCreationInterface {
                 
                 int stock = Math.min(itemToSell.getCount(), currentHeldItem.getCount());
                 
-                // Create shop item
-                ShopItem shopItem = new ShopItem.Builder()
+                // Create shop item using the shop manager's helper method
+                ShopManager shopManager = economyManager.getShopManager();
+                ShopItem shopItem = shopManager.createShopItemBuilder()
                     .id(UUID.randomUUID())
                     .itemStack(itemToSell.copy())
                     .type(ShopItem.Type.BUY)
                     .buyPrice(BigDecimal.valueOf(price))
-                    .currency(Currency.createBasic("coins", "Coin", "§6", "Coins"))
                     .stock(stock)
                     .maxStock(stock)
                     .createdBy(player.getUUID())
@@ -175,7 +183,6 @@ public class ShopCreationInterface {
                     .adminItem(false)
                     .build();
                 
-                ShopManager shopManager = economyManager.getShopManager();
                 if (shopManager.addShopItem(shopItem)) {
                     // Remove items from player's inventory
                     currentHeldItem.shrink(stock);
@@ -183,10 +190,11 @@ public class ShopCreationInterface {
                     player.sendSystemMessage(Component.literal("§aSuccessfully created shop listing!"));
                     player.sendSystemMessage(Component.literal("§7Item: " + itemToSell.getHoverName().getString()));
                     player.sendSystemMessage(Component.literal("§7Stock: §e" + stock));
-                    player.sendSystemMessage(Component.literal("§7Price: §6" + price + " coins each"));
+                    player.sendSystemMessage(Component.literal("§7Price: " + economyManager.getDefaultCurrency().format(BigDecimal.valueOf(price)) + " each"));
                     
-                    NeoEssentials.LOGGER.info("Player {} created shop item: {}x {} for {} coins each", 
-                        player.getName().getString(), stock, itemToSell.getHoverName().getString(), price);
+                    NeoEssentials.LOGGER.info("Player {} created shop item: {}x {} for {} each", 
+                        player.getName().getString(), stock, itemToSell.getHoverName().getString(), 
+                        economyManager.getDefaultCurrency().format(BigDecimal.valueOf(price)));
                     
                     // Return to personal shop with updated listings
                     player.getServer().execute(() -> {

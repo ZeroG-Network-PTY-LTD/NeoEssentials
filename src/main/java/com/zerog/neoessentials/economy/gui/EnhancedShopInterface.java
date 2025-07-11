@@ -44,13 +44,42 @@ public class EnhancedShopInterface {
     
     public static void openShop(ServerPlayer player, EconomyManager economyManager, ShopMode mode, UUID targetPlayer, int page) {
         try {
+            NeoEssentials.LOGGER.info("Opening shop GUI for player {} in mode {} on page {}", 
+                player.getName().getString(), mode, page);
+            
+            if (economyManager == null) {
+                player.sendSystemMessage(Component.literal("§cEconomy manager is not available"));
+                NeoEssentials.LOGGER.error("Economy manager is null when opening shop for player {}", player.getName().getString());
+                return;
+            }
+            
+            if (!economyManager.isEnabled()) {
+                player.sendSystemMessage(Component.literal("§cEconomy system is disabled"));
+                NeoEssentials.LOGGER.warn("Economy system is disabled when player {} tried to open shop", player.getName().getString());
+                return;
+            }
+            
             ShopManager shopManager = economyManager.getShopManager();
             if (shopManager == null) {
                 player.sendSystemMessage(Component.literal("§cShop system is not available"));
+                NeoEssentials.LOGGER.error("Shop manager is null when opening shop for player {}", player.getName().getString());
                 return;
             }
             
             List<ShopItem> shopItems = getShopItems(shopManager, mode, targetPlayer, player);
+            NeoEssentials.LOGGER.info("Found {} shop items for player {} in mode {} (total in shop: {})", 
+                shopItems.size(), player.getName().getString(), mode, shopManager.getAllItems().size());
+            
+            // Debug info about available items
+            if (shopItems.isEmpty()) {
+                List<ShopItem> allItems = shopManager.getAllItems();
+                NeoEssentials.LOGGER.info("All items in shop: {}", allItems.size());
+                for (ShopItem item : allItems) {
+                    NeoEssentials.LOGGER.info("  - {}: stock={}, canBuy={}, type={}", 
+                        item.getItemStack().getHoverName().getString(), 
+                        item.getStock(), item.canBuy(), item.getType());
+                }
+            }
             
             // Create container
             SimpleContainer container = new SimpleContainer(CONTAINER_SIZE);
@@ -69,6 +98,8 @@ public class EnhancedShopInterface {
                     ShopItem shopItem = shopItems.get(i);
                     ItemStack displayItem = createEnhancedDisplayItem(shopItem, player, mode);
                     container.setItem(slotIndex, displayItem);
+                    NeoEssentials.LOGGER.debug("Added item {} to slot {}", 
+                        shopItem.getItemStack().getHoverName().getString(), slotIndex);
                 }
             }
             
@@ -86,12 +117,12 @@ public class EnhancedShopInterface {
             );
             
             player.openMenu(menuProvider);
-            NeoEssentials.LOGGER.info("Opened {} shop GUI for player {} (page {})", 
-                                    mode, player.getName().getString(), page);
+            NeoEssentials.LOGGER.info("Successfully opened {} shop GUI for player {} (page {}, {} items)", 
+                                    mode, player.getName().getString(), page, shopItems.size());
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to open shop interface for player " + player.getName().getString(), e);
-            player.sendSystemMessage(Component.literal("§cFailed to open shop interface. Please try again."));
+            player.sendSystemMessage(Component.literal("§cFailed to open shop interface: " + e.getMessage()));
         }
     }
     
@@ -132,16 +163,22 @@ public class EnhancedShopInterface {
                 String itemName = displayItem.getHoverName().getString();
                 StringBuilder nameBuilder = new StringBuilder("§f").append(itemName);
                 
-                // Add pricing information
+                // Add pricing information using proper currency formatting
                 if (shopItem.canBuy() && shopItem.getBuyPrice() != null) {
-                    nameBuilder.append(" §7- §6").append(String.format("%.2f", shopItem.getBuyPrice().doubleValue())).append(" coins");
+                    nameBuilder.append(" §7- §a").append(shopItem.getCurrency().format(shopItem.getBuyPrice()));
+                }
+                
+                if (shopItem.canSell() && shopItem.getSellPrice() != null) {
+                    nameBuilder.append(" §7(Sell: §c").append(shopItem.getCurrency().format(shopItem.getSellPrice())).append("§7)");
                 }
                 
                 // Add stock information
-                if (shopItem.getStock() > 0) {
-                    nameBuilder.append(" §7(").append(shopItem.getStock()).append(" in stock)");
-                } else if (shopItem.getStock() == 0) {
-                    nameBuilder.append(" §c(Out of stock)");
+                if (shopItem.getStock() < 0) {
+                    nameBuilder.append(" §7[§aInfinite Stock§7]");
+                } else if (shopItem.getStock() > 0) {
+                    nameBuilder.append(" §7[§e").append(shopItem.getStock()).append("§7 in stock]");
+                } else {
+                    nameBuilder.append(" §7[§cOut of stock§7]");
                 }
                 
                 // Add owner information if browsing

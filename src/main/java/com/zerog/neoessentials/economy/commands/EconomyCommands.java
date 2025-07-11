@@ -2,7 +2,6 @@ package com.zerog.neoessentials.economy.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
@@ -118,8 +117,8 @@ public class EconomyCommands {
         ServerPlayer player = context.getSource().getPlayerOrException();
         EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
         
-        if (!economyManager.isEnabled()) {
-            context.getSource().sendFailure(Component.literal("Economy system is disabled."));
+        if (!validatePlayerEconomyAccess(player, economyManager)) {
+            sendErrorMessage(context.getSource(), "Cannot access economy system.");
             return 0;
         }
         
@@ -127,8 +126,7 @@ public class EconomyCommands {
         Currency defaultCurrency = economyManager.getDefaultCurrency();
         BigDecimal balance = account.getBalance(defaultCurrency);
         
-        context.getSource().sendSuccess(() -> 
-            Component.literal("Your balance: " + defaultCurrency.format(balance)), false);
+        sendInfoMessage(context.getSource(), "Your balance: " + defaultCurrency.format(balance));
         
         return 1;
     }
@@ -329,7 +327,6 @@ public class EconomyCommands {
     }
     
     private static int openEconomyMenu(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
         EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
         
         if (!economyManager.isEnabled()) {
@@ -341,5 +338,41 @@ public class EconomyCommands {
         context.getSource().sendSuccess(() -> Component.literal("Economy menu GUI coming soon!"), false);
         
         return 1;
+    }
+    
+    /**
+     * Validates that a player can perform economy operations
+     */
+    private static boolean validatePlayerEconomyAccess(ServerPlayer player, EconomyManager economyManager) {
+        if (player == null) {
+            return false;
+        }
+        
+        if (!economyManager.isEnabled()) {
+            return false;
+        }
+        
+        return economyManager.validatePlayerAccount(player.getUUID());
+    }
+    
+    /**
+     * Sends a formatted error message to the player
+     */
+    private static void sendErrorMessage(CommandSourceStack source, String message) {
+        source.sendFailure(Component.literal("§c[Economy] " + message));
+    }
+    
+    /**
+     * Sends a formatted success message to the player
+     */
+    private static void sendSuccessMessage(CommandSourceStack source, String message) {
+        source.sendSuccess(() -> Component.literal("§a[Economy] " + message), false);
+    }
+    
+    /**
+     * Sends a formatted info message to the player
+     */
+    private static void sendInfoMessage(CommandSourceStack source, String message) {
+        source.sendSuccess(() -> Component.literal("§b[Economy] " + message), false);
     }
 }

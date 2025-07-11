@@ -39,8 +39,9 @@ public class ShopItem {
         this.buyPrice = builder.buyPrice;
         this.sellPrice = builder.sellPrice;
         this.currency = Objects.requireNonNull(builder.currency, "Currency cannot be null");
-        this.stock = Math.max(0, builder.stock);
-        this.maxStock = Math.max(0, builder.maxStock);
+        // Allow negative stock for admin items (infinite stock = -1)
+        this.stock = builder.adminItem ? builder.stock : Math.max(0, builder.stock);
+        this.maxStock = builder.adminItem ? builder.maxStock : Math.max(0, builder.maxStock);
         this.createdBy = builder.createdBy;
         this.createdAt = Objects.requireNonNull(builder.createdAt, "Created date cannot be null");
         this.description = builder.description != null ? builder.description : "";
@@ -86,7 +87,7 @@ public class ShopItem {
     // Utility methods
     public boolean canBuy() { return type == Type.BUY || type == Type.BOTH; }
     public boolean canSell() { return type == Type.SELL || type == Type.BOTH; }
-    public boolean hasStock() { return stock > 0; }
+    public boolean hasStock() { return stock > 0 || (adminItem && stock < 0); }
     public boolean canAddStock() { return stock < maxStock; }
     
     /**
