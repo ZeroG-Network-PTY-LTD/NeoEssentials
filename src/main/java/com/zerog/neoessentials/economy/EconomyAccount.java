@@ -120,10 +120,17 @@ public class EconomyAccount {
     }
     
     /**
+     * Checks if the account is valid and can be used for transactions
+     */
+    public boolean isValid() {
+        return status == Status.ACTIVE && playerId != null && playerName != null;
+    }
+    
+    /**
      * Checks if the account can perform transactions
      */
-    public boolean isActive() {
-        return status == Status.ACTIVE;
+    public boolean canTransact() {
+        return isValid() && status != Status.FROZEN && status != Status.SUSPENDED;
     }
     
     /**
