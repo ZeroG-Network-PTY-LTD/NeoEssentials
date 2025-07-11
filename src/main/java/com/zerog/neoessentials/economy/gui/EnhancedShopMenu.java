@@ -179,11 +179,14 @@ public class EnhancedShopMenu extends ChestMenu {
                 break;
                 
             case QUICK_MOVE: // Shift + left click
-                handleBuyItem(shopItem, Math.min(shopItem.getStock(), 64)); // Buy up to a stack
+                // For infinite stock items (stock = -1), buy 64. Otherwise buy up to available stock
+                int shiftClickAmount = shopItem.getStock() < 0 ? 64 : Math.min(shopItem.getStock(), 64);
+                handleBuyItem(shopItem, shiftClickAmount);
                 break;
                 
             case PICKUP_ALL: // Double click
-                handleBuyItem(shopItem, Math.min(shopItem.getStock(), 64));
+                int doubleClickAmount = shopItem.getStock() < 0 ? 64 : Math.min(shopItem.getStock(), 64);
+                handleBuyItem(shopItem, doubleClickAmount);
                 break;
                 
             case QUICK_CRAFT: // Right click
@@ -207,13 +210,15 @@ public class EnhancedShopMenu extends ChestMenu {
                 return;
             }
             
-            if (shopItem.getStock() <= 0) {
+            if (!shopItem.hasStock()) {
                 player.sendSystemMessage(Component.literal("§cThis item is out of stock"));
                 return;
             }
             
-            // Limit quantity to available stock
-            quantity = Math.min(quantity, shopItem.getStock());
+            // Limit quantity to available stock (unless infinite stock)
+            if (shopItem.getStock() > 0) {
+                quantity = Math.min(quantity, shopItem.getStock());
+            }
             
             if (quantity <= 0) {
                 player.sendSystemMessage(Component.literal("§cInvalid quantity"));
@@ -245,9 +250,19 @@ public class EnhancedShopMenu extends ChestMenu {
             player.closeContainer();
             
             // Small delay before opening management interface
-            player.getServer().execute(() -> {
+            try {
+                var server = player.getServer();
+                if (server != null) {
+                    server.execute(() -> {
+                        ShopItemManagementInterface.openItemManagement(player, economyManager, shopItem);
+                    });
+                } else {
+                    ShopItemManagementInterface.openItemManagement(player, economyManager, shopItem);
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error opening item management interface", e);
                 ShopItemManagementInterface.openItemManagement(player, economyManager, shopItem);
-            });
+            }
             
             NeoEssentials.LOGGER.info("Opening shop item management for player {} - item: {}", 
                 player.getName().getString(), shopItem.getItemStack().getHoverName().getString());
@@ -272,9 +287,19 @@ public class EnhancedShopMenu extends ChestMenu {
             player.closeContainer();
             
             // Small delay before opening creation interface
-            player.getServer().execute(() -> {
+            try {
+                var server = player.getServer();
+                if (server != null) {
+                    server.execute(() -> {
+                        ShopCreationInterface.openShopCreation(player, economyManager);
+                    });
+                } else {
+                    ShopCreationInterface.openShopCreation(player, economyManager);
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error opening shop creation interface", e);
                 ShopCreationInterface.openShopCreation(player, economyManager);
-            });
+            }
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error creating shop item", e);

@@ -473,7 +473,9 @@ public class EconomyManager {
     public boolean isEnabled() { return enabled && initialized; }
     public boolean isInitialized() { return initialized; }
     public EconomyConfig getConfig() { return config; }
-    public Currency getDefaultCurrency() { return defaultCurrency; }
+    public Currency getDefaultCurrency() {
+        return defaultCurrency;
+    }
     public EconomyStorage getStorage() { return storage; }
     public ExternalEconomyDetector getExternalDetector() { return externalDetector; }
     public ShopManager getShopManager() { return shopManager; }
@@ -492,5 +494,144 @@ public class EconomyManager {
      */
     public MinecraftServer getServer() {
         return NeoEssentials.getInstance().getServer();
+    }
+    
+    /**
+     * Validates that a currency is supported by this economy system
+     */
+    public boolean isCurrencySupported(Currency currency) {
+        return currency != null && currency.equals(defaultCurrency);
+    }
+    
+    /**
+     * Creates a properly configured currency instance
+     */
+    public Currency createCurrency(String name, String symbol, String pluralName) {
+        return Currency.createBasic(name.toLowerCase(), name, symbol, pluralName);
+    }
+    
+    /**
+     * Gets account balance in the default currency
+     */
+    public BigDecimal getBalance(UUID playerId) {
+        EconomyAccount account = getAccount(playerId).orElse(null);
+        if (account == null) {
+            return BigDecimal.ZERO;
+        }
+        return account.getBalance(defaultCurrency);
+    }
+    
+    /**
+     * Checks if a player has enough balance for a transaction
+     */
+    public boolean hasBalance(UUID playerId, BigDecimal amount) {
+        EconomyAccount account = getAccount(playerId).orElse(null);
+        if (account == null) {
+            return false;
+        }
+        return account.hasBalance(defaultCurrency, amount);
+    }
+    
+    /**
+     * Validates that a player account exists and is accessible
+     */
+    public boolean validatePlayerAccount(UUID playerId) {
+        if (playerId == null) {
+            NeoEssentials.LOGGER.warn("Attempted to validate null player ID");
+            return false;
+        }
+        
+        if (!enabled) {
+            NeoEssentials.LOGGER.warn("Economy system is disabled - cannot validate account for player: {}", playerId);
+            return false;
+        }
+        
+        try {
+            Optional<EconomyAccount> accountOpt = getAccount(playerId);
+            return accountOpt.isPresent() && accountOpt.get().isValid();
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to validate player account: {}", playerId, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Checks if a transaction amount is valid (positive and not too large)
+     */
+    public boolean isValidTransactionAmount(BigDecimal amount) {
+        if (amount == null) {
+            return false;
+        }
+        
+        // Check if amount is positive
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return false;
+        }
+        
+        // Check if amount is reasonable (not more than 1 trillion)
+        BigDecimal maxAmount = new BigDecimal("1000000000000");
+        if (amount.compareTo(maxAmount) > 0) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Performs a safe money transfer between accounts with validation
+     */
+    public boolean safeTransfer(UUID fromPlayer, UUID toPlayer, BigDecimal amount, Currency currency, String description) {
+        if (!enabled) {
+            NeoEssentials.LOGGER.warn("Economy system is disabled - cannot perform transfer");
+            return false;
+        }
+        
+        if (!isValidTransactionAmount(amount)) {
+            NeoEssentials.LOGGER.warn("Invalid transaction amount: {}", amount);
+            return false;
+        }
+        
+        if (!validatePlayerAccount(fromPlayer) || !validatePlayerAccount(toPlayer)) {
+            NeoEssentials.LOGGER.warn("Invalid player accounts for transfer: {} -> {}", fromPlayer, toPlayer);
+            return false;
+        }
+        
+        try {
+            // Check if sender has sufficient balance
+            if (!hasBalance(fromPlayer, amount)) {
+                NeoEssentials.LOGGER.debug("Insufficient balance for transfer: {} needs {}", fromPlayer, amount);
+                return false;
+            }
+            
+            // Perform the transfer atomically
+            boolean deducted = subtractMoney(fromPlayer, amount, currency, description);
+            if (!deducted) {
+                NeoEssentials.LOGGER.warn("Failed to deduct money from sender: {}", fromPlayer);
+                return false;
+            }
+            
+            boolean added = addMoney(toPlayer, amount, currency, description);
+            if (!added) {
+                // Rollback deduction if adding fails
+                addMoney(fromPlayer, amount, currency, "Transfer rollback: " + description);
+                NeoEssentials.LOGGER.warn("Failed to add money to recipient: {}, rolled back", toPlayer);
+                return false;
+            }
+            
+            NeoEssentials.LOGGER.info("Successfully transferred {} {} from {} to {}: {}", 
+                amount, currency.getSymbol(), fromPlayer, toPlayer, description);
+            return true;
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error during safe transfer", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Gets the transaction logger
+     */
+    public TransactionLogger getTransactionLogger() {
+        return transactionLogger;
     }
 }

@@ -15,8 +15,6 @@ import java.util.UUID;
  */
 public class ShopUtils {
     
-    private static final Currency DEFAULT_CURRENCY = Currency.createBasic("coins", "Coin", "§6", "Coins");
-    
     /**
      * Adds some default admin shop items for testing
      */
@@ -28,33 +26,35 @@ public class ShopUtils {
                 return;
             }
             
-            // Add some basic items to the shop for testing
-            addAdminShopItem(shopManager, new ItemStack(Items.DIAMOND, 1), 100.0, 1000);
-            addAdminShopItem(shopManager, new ItemStack(Items.IRON_INGOT, 1), 10.0, 500);
-            addAdminShopItem(shopManager, new ItemStack(Items.GOLD_INGOT, 1), 20.0, 300);
-            addAdminShopItem(shopManager, new ItemStack(Items.EMERALD, 1), 50.0, 200);
-            addAdminShopItem(shopManager, new ItemStack(Items.BREAD, 1), 2.0, 100);
-            addAdminShopItem(shopManager, new ItemStack(Items.COOKED_BEEF, 1), 5.0, 150);
-            addAdminShopItem(shopManager, new ItemStack(Items.ARROW, 64), 15.0, 50);
-            addAdminShopItem(shopManager, new ItemStack(Items.OAK_LOG, 64), 25.0, 75);
-            addAdminShopItem(shopManager, new ItemStack(Items.STONE, 64), 5.0, 200);
-            addAdminShopItem(shopManager, new ItemStack(Items.WHEAT_SEEDS, 32), 3.0, 80);
+            Currency defaultCurrency = economyManager.getDefaultCurrency();
             
-            NeoEssentials.LOGGER.info("Added default admin shop items");
+            // Add some basic items to the shop for testing
+            addAdminShopItem(shopManager, defaultCurrency, new ItemStack(Items.DIAMOND, 1), 100.0, -1);
+            addAdminShopItem(shopManager, defaultCurrency, new ItemStack(Items.IRON_INGOT, 1), 10.0, -1);
+            addAdminShopItem(shopManager, defaultCurrency, new ItemStack(Items.GOLD_INGOT, 1), 20.0, -1);
+            addAdminShopItem(shopManager, defaultCurrency, new ItemStack(Items.EMERALD, 1), 50.0, -1);
+            addAdminShopItem(shopManager, defaultCurrency, new ItemStack(Items.BREAD, 1), 2.0, -1);
+            addAdminShopItem(shopManager, defaultCurrency, new ItemStack(Items.COOKED_BEEF, 1), 5.0, -1);
+            addAdminShopItem(shopManager, defaultCurrency, new ItemStack(Items.ARROW, 64), 15.0, -1);
+            addAdminShopItem(shopManager, defaultCurrency, new ItemStack(Items.OAK_LOG, 64), 25.0, -1);
+            addAdminShopItem(shopManager, defaultCurrency, new ItemStack(Items.STONE, 64), 5.0, -1);
+            addAdminShopItem(shopManager, defaultCurrency, new ItemStack(Items.WHEAT_SEEDS, 32), 3.0, -1);
+            
+            NeoEssentials.LOGGER.info("Added {} default admin shop items", shopManager.getAllItems().size());
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to add default shop items", e);
         }
     }
     
-    private static void addAdminShopItem(ShopManager shopManager, ItemStack itemStack, double price, int stock) {
+    private static void addAdminShopItem(ShopManager shopManager, Currency currency, ItemStack itemStack, double price, int stock) {
         try {
             ShopItem shopItem = new ShopItem.Builder()
                 .id(UUID.randomUUID())
                 .itemStack(itemStack)
                 .type(ShopItem.Type.BUY)
                 .buyPrice(BigDecimal.valueOf(price))
-                .currency(DEFAULT_CURRENCY)
+                .currency(currency)
                 .stock(stock)
                 .maxStock(stock)
                 .createdBy(null) // Admin item
@@ -75,13 +75,13 @@ public class ShopUtils {
     /**
      * Creates a player shop item from a player's held item
      */
-    public static ShopItem createPlayerShopItem(UUID playerId, ItemStack itemStack, double price, int stock) {
+    public static ShopItem createPlayerShopItem(UUID playerId, ItemStack itemStack, double price, int stock, Currency currency) {
         return new ShopItem.Builder()
             .id(UUID.randomUUID())
             .itemStack(itemStack.copy())
             .type(ShopItem.Type.BUY)
             .buyPrice(BigDecimal.valueOf(price))
-            .currency(DEFAULT_CURRENCY)
+            .currency(currency)
             .stock(stock)
             .maxStock(stock)
             .createdBy(playerId)
@@ -94,7 +94,7 @@ public class ShopUtils {
     /**
      * Gets the default currency used in the shop
      */
-    public static Currency getDefaultCurrency() {
-        return DEFAULT_CURRENCY;
+    public static Currency getDefaultCurrency(EconomyManager economyManager) {
+        return economyManager.getDefaultCurrency();
     }
 }

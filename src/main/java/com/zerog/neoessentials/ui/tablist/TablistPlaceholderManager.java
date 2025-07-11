@@ -9,6 +9,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -153,6 +154,35 @@ public class TablistPlaceholderManager {
         
         // NeoForge version
         registerPlaceholder("neoforge", (player, arg) -> "21.1.179+");
+        
+        // Economy placeholders
+        registerPlaceholder("balance", (player, arg) -> {
+            try {
+                if (NeoEssentials.getInstance().getEconomyManager() != null && 
+                    NeoEssentials.getInstance().getEconomyManager().isEnabled()) {
+                    BigDecimal balance = NeoEssentials.getInstance().getEconomyManager().getBalance(player.getUUID());
+                    return NeoEssentials.getInstance().getEconomyManager().getDefaultCurrency().format(balance);
+                }
+                return "0.00";
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.warn("Failed to get balance for player {}", player.getName().getString(), e);
+                return "N/A";
+            }
+        });
+        
+        registerPlaceholder("money", (player, arg) -> {
+            try {
+                if (NeoEssentials.getInstance().getEconomyManager() != null && 
+                    NeoEssentials.getInstance().getEconomyManager().isEnabled()) {
+                    BigDecimal balance = NeoEssentials.getInstance().getEconomyManager().getBalance(player.getUUID());
+                    return NeoEssentials.getInstance().getEconomyManager().getDefaultCurrency().format(balance);
+                }
+                return "0.00";
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.warn("Failed to get money for player {}", player.getName().getString(), e);
+                return "N/A";
+            }
+        });
         
         NeoEssentials.LOGGER.info("Registered {} default placeholders", processors.size());    }
       /**

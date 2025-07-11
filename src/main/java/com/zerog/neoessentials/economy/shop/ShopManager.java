@@ -2,9 +2,8 @@ package com.zerog.neoessentials.economy.shop;
 
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.Currency;
-import com.zerog.neoessentials.economy.EconomyAccount;
 import com.zerog.neoessentials.economy.EconomyManager;
-import com.zerog.neoessentials.economy.Transaction;
+import com.zerog.neoessentials.economy.analytics.ShopAnalyticsManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -21,21 +20,35 @@ public class ShopManager {
     private final EconomyManager economyManager;
     private final Map<UUID, ShopItem> shopItems = new ConcurrentHashMap<>();
     private final Map<String, Set<UUID>> itemIndex = new ConcurrentHashMap<>(); // Item name -> Set of item IDs
+    private final ShopAnalyticsManager analytics;
     
     public ShopManager(EconomyManager economyManager) {
         this.economyManager = Objects.requireNonNull(economyManager, "Economy manager cannot be null");
+        this.analytics = new ShopAnalyticsManager();
+    }
+    
+    /**
+     * Gets the analytics manager
+     */
+    public ShopAnalyticsManager getAnalytics() {
+        return analytics;
     }
     
     /**
      * Adds an item to the shop
      */
     public boolean addShopItem(ShopItem item) {
-        if (item == null) return false;
+        if (!validateShopItem(item)) {
+            return false;
+        }
         
         try {
             shopItems.put(item.getId(), item);
             indexItem(item);
-            NeoEssentials.LOGGER.info("Added shop item: {}", item);
+            NeoEssentials.LOGGER.info("Added shop item: {} for {} {}", 
+                item.getItemStack().getHoverName().getString(),
+                item.getCurrency().format(item.getBuyPrice()),
+                item.getStock() > 0 ? "(" + item.getStock() + " in stock)" : "");
             return true;
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to add shop item", e);
@@ -98,7 +111,7 @@ public class ShopManager {
     }
     
     /**
-     * Gets all shop items
+     * Gets all shop items (including out of stock items)
      */
     public List<ShopItem> getAllItems() {
         return new ArrayList<>(shopItems.values());
@@ -109,7 +122,7 @@ public class ShopManager {
      */
     public List<ShopItem> getAvailableItems() {
         return shopItems.values().stream()
-                .filter(item -> item.getStock() != 0)
+                .filter(item -> item.hasStock()) // Use hasStock() which properly handles infinite stock
                 .collect(Collectors.toList());
     }
     
@@ -121,6 +134,11 @@ public class ShopManager {
             return new BuyResult(false, "Economy system is disabled");
         }
         
+        // Validate the purchase request
+        if (!validatePurchaseRequest(itemId, player, quantity)) {
+            return new BuyResult(false, "Invalid purchase request");
+        }
+        
         ShopItem item = shopItems.get(itemId);
         if (item == null) {
             return new BuyResult(false, "Item not found in shop");
@@ -130,24 +148,19 @@ public class ShopManager {
             return new BuyResult(false, "This item is not for sale");
         }
         
-        if (quantity <= 0) {
-            return new BuyResult(false, "Invalid quantity");
-        }
-        
-        if (item.getStock() < quantity) {
+        // Check stock (admin items with stock = -1 have infinite stock)
+        if (item.getStock() >= 0 && item.getStock() < quantity) {
             return new BuyResult(false, "Insufficient stock (available: " + item.getStock() + ")");
         }
         
+        // Use the item's currency for the transaction
+        Currency currency = item.getCurrency();
         BigDecimal totalCost = item.getBuyPrice().multiply(BigDecimal.valueOf(quantity));
         
-        // Check if player has enough money
-        EconomyAccount account = economyManager.getOrCreateAccount(player.getUUID(), player.getName().getString());
-        if (account == null) {
-            return new BuyResult(false, "Could not access your account");
-        }
-        
-        if (!account.hasBalance(item.getCurrency(), totalCost)) {
-            return new BuyResult(false, "Insufficient funds. Required: " + item.getCurrency().format(totalCost));
+        // Check if player has enough money using the proper currency
+        if (!economyManager.hasBalance(player.getUUID(), totalCost)) {
+            return new BuyResult(false, "Insufficient funds. Required: " + currency.format(totalCost) + 
+                                      ", Available: " + currency.format(economyManager.getBalance(player.getUUID())));
         }
         
         // Check if player has inventory space
@@ -160,28 +173,45 @@ public class ShopManager {
         
         // Process the transaction
         try {
-            // Deduct money
-            if (!economyManager.subtractMoney(player.getUUID(), totalCost, item.getCurrency(), 
-                    "Shop purchase: " + quantity + "x " + item.getItemStack().getDisplayName().getString())) {
+            // Deduct money using the default currency (the economy manager will handle conversion if needed)
+            if (!economyManager.subtractMoney(player.getUUID(), totalCost, economyManager.getDefaultCurrency(), 
+                    "Shop purchase: " + quantity + "x " + item.getItemStack().getHoverName().getString())) {
                 return new BuyResult(false, "Failed to process payment");
             }
             
             // Give items to player
             if (!player.getInventory().add(itemToGive)) {
                 // Rollback payment if item giving fails
-                economyManager.addMoney(player.getUUID(), totalCost, item.getCurrency(), 
+                economyManager.addMoney(player.getUUID(), totalCost, economyManager.getDefaultCurrency(), 
                         "Shop purchase rollback");
                 return new BuyResult(false, "Failed to add items to inventory");
             }
             
-            // Update shop stock
-            ShopItem updatedItem = item.withStock(item.getStock() - quantity);
-            shopItems.put(itemId, updatedItem);
+            // Update shop stock (only if not admin item - admin items have unlimited stock)
+            if (!item.isAdminItem() && item.getStock() > 0) {
+                ShopItem updatedItem = item.withStock(item.getStock() - quantity);
+                shopItems.put(itemId, updatedItem);
+            }
+            
+            // If this is a player shop, pay the seller
+            if (item.getCreatedBy() != null) {
+                economyManager.addMoney(item.getCreatedBy(), totalCost, economyManager.getDefaultCurrency(), 
+                        "Shop sale: " + quantity + "x " + item.getItemStack().getHoverName().getString());
+            }
+            
+            // Record analytics
+            analytics.recordTransaction(player.getUUID(), item.getCreatedBy(), item, quantity, totalCost);
+            
+            // Log the shop transaction
+            NeoEssentials.getInstance().getEconomyManager().getTransactionLogger()
+                .logShopTransaction("PURCHASE", player.getUUID(), player.getName().getString(),
+                                  item.getItemStack().getHoverName().getString(), quantity, totalCost,
+                                  currency, item.getCreatedBy() != null ? "player" : "admin");
             
             String message = String.format("Successfully purchased %dx %s for %s", 
                     quantity, 
-                    item.getItemStack().getDisplayName().getString(),
-                    item.getCurrency().format(totalCost));
+                    item.getItemStack().getHoverName().getString(),
+                    currency.format(totalCost));
             
             return new BuyResult(true, message);
             
@@ -226,6 +256,7 @@ public class ShopManager {
             return new SellResult(false, "You don't have enough of this item");
         }
         
+        Currency currency = item.getCurrency();
         BigDecimal totalPayment = item.getSellPrice().multiply(BigDecimal.valueOf(quantity));
         
         try {
@@ -234,9 +265,9 @@ public class ShopManager {
                 return new SellResult(false, "Failed to remove items from inventory");
             }
             
-            // Pay player
-            if (!economyManager.addMoney(player.getUUID(), totalPayment, item.getCurrency(), 
-                    "Shop sale: " + quantity + "x " + item.getItemStack().getDisplayName().getString())) {
+            // Pay player using the default currency
+            if (!economyManager.addMoney(player.getUUID(), totalPayment, economyManager.getDefaultCurrency(), 
+                    "Shop sale: " + quantity + "x " + item.getItemStack().getHoverName().getString())) {
                 // Try to give items back if payment fails
                 player.getInventory().add(requiredItem);
                 return new SellResult(false, "Failed to process payment");
@@ -248,10 +279,19 @@ public class ShopManager {
                 shopItems.put(itemId, updatedItem);
             }
             
+            // Record analytics (note: for sell transactions, seller is the admin/shop owner, buyer is the player)
+            analytics.recordTransaction(item.getCreatedBy(), player.getUUID(), item, quantity, totalPayment);
+            
+            // Log the shop transaction
+            NeoEssentials.getInstance().getEconomyManager().getTransactionLogger()
+                .logShopTransaction("SALE", player.getUUID(), player.getName().getString(),
+                                  item.getItemStack().getHoverName().getString(), quantity, totalPayment,
+                                  currency, item.getCreatedBy() != null ? "player" : "admin");
+            
             String message = String.format("Successfully sold %dx %s for %s", 
                     quantity, 
-                    item.getItemStack().getDisplayName().getString(),
-                    item.getCurrency().format(totalPayment));
+                    item.getItemStack().getHoverName().getString(),
+                    currency.format(totalPayment));
             
             return new SellResult(true, message);
             
@@ -271,6 +311,57 @@ public class ShopManager {
         int adminItems = (int) shopItems.values().stream().filter(ShopItem::isAdminItem).count();
         
         return new ShopStatistics(totalItems, buyableItems, sellableItems, adminItems);
+    }
+    
+    /**
+     * Debug method to validate shop integrity
+     */
+    public void validateShopIntegrity() {
+        NeoEssentials.LOGGER.info("=== Shop Integrity Check ===");
+        NeoEssentials.LOGGER.info("Total items in shop: {}", shopItems.size());
+        
+        int adminItems = 0;
+        int playerItems = 0;
+        int infiniteStockItems = 0;
+        int buyableItems = 0;
+        int sellableItems = 0;
+        
+        for (ShopItem item : shopItems.values()) {
+            if (item.isAdminItem()) {
+                adminItems++;
+            } else {
+                playerItems++;
+            }
+            
+            if (item.getStock() < 0) {
+                infiniteStockItems++;
+            }
+            
+            if (item.canBuy()) {
+                buyableItems++;
+            }
+            
+            if (item.canSell()) {
+                sellableItems++;
+            }
+            
+            NeoEssentials.LOGGER.info("Item: {} | Stock: {} | Type: {} | Admin: {} | Buy: {} | Sell: {}", 
+                item.getItemStack().getHoverName().getString(),
+                item.getStock() < 0 ? "INFINITE" : item.getStock(),
+                item.getType(),
+                item.isAdminItem(),
+                item.canBuy() ? item.getCurrency().format(item.getBuyPrice()) : "N/A",
+                item.canSell() ? item.getCurrency().format(item.getSellPrice()) : "N/A"
+            );
+        }
+        
+        NeoEssentials.LOGGER.info("Admin items: {}", adminItems);
+        NeoEssentials.LOGGER.info("Player items: {}", playerItems);
+        NeoEssentials.LOGGER.info("Infinite stock items: {}", infiniteStockItems);
+        NeoEssentials.LOGGER.info("Buyable items: {}", buyableItems);
+        NeoEssentials.LOGGER.info("Sellable items: {}", sellableItems);
+        NeoEssentials.LOGGER.info("Available items (filtered): {}", getAvailableItems().size());
+        NeoEssentials.LOGGER.info("=== End Integrity Check ===");
     }
     
     // Helper methods
@@ -337,6 +428,88 @@ public class ShopManager {
         }
         
         return remainingToRemove == 0;
+    }
+    
+    /**
+     * Creates a properly configured shop item builder
+     */
+    public ShopItem.Builder createShopItemBuilder() {
+        return new ShopItem.Builder().currency(economyManager.getDefaultCurrency());
+    }
+    
+    /**
+     * Validates a shop item before adding it to the shop
+     */
+    private boolean validateShopItem(ShopItem item) {
+        if (item == null) {
+            NeoEssentials.LOGGER.warn("Attempted to validate null shop item");
+            return false;
+        }
+        
+        if (item.getItemStack() == null || item.getItemStack().isEmpty()) {
+            NeoEssentials.LOGGER.warn("Shop item has invalid ItemStack");
+            return false;
+        }
+        
+        if (item.getBuyPrice() != null && item.getBuyPrice().compareTo(BigDecimal.ZERO) < 0) {
+            NeoEssentials.LOGGER.warn("Shop item has negative buy price: {}", item.getBuyPrice());
+            return false;
+        }
+        
+        if (item.getSellPrice() != null && item.getSellPrice().compareTo(BigDecimal.ZERO) < 0) {
+            NeoEssentials.LOGGER.warn("Shop item has negative sell price: {}", item.getSellPrice());
+            return false;
+        }
+        
+        if (item.getStock() < -1) {
+            NeoEssentials.LOGGER.warn("Shop item has invalid stock: {}", item.getStock());
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Safely adds a shop item with validation
+     */
+    public boolean safeAddShopItem(ShopItem item) {
+        if (!validateShopItem(item)) {
+            return false;
+        }
+        
+        try {
+            return addShopItem(item);
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Failed to safely add shop item", e);
+            return false;
+        }
+    }
+    
+    /**
+     * Validates a purchase request before processing
+     */
+    private boolean validatePurchaseRequest(UUID itemId, ServerPlayer player, int quantity) {
+        if (itemId == null) {
+            NeoEssentials.LOGGER.warn("Purchase request has null item ID");
+            return false;
+        }
+        
+        if (player == null) {
+            NeoEssentials.LOGGER.warn("Purchase request has null player");
+            return false;
+        }
+        
+        if (quantity <= 0) {
+            NeoEssentials.LOGGER.warn("Purchase request has invalid quantity: {}", quantity);
+            return false;
+        }
+        
+        if (quantity > 2304) { // Max inventory size
+            NeoEssentials.LOGGER.warn("Purchase request exceeds max inventory size: {}", quantity);
+            return false;
+        }
+        
+        return true;
     }
     
     // Result classes
