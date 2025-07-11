@@ -57,20 +57,35 @@ public class EnhancedShopGuiCommands {
             
             if (economyManager == null) {
                 source.sendFailure(Component.literal("§cEconomy manager is not initialized"));
+                NeoEssentials.LOGGER.error("Economy manager is null for player {}", player.getName().getString());
                 return 0;
             }
             
             if (!economyManager.isEnabled()) {
                 source.sendFailure(Component.literal("§cEconomy system is disabled"));
+                NeoEssentials.LOGGER.warn("Economy system is disabled for player {}", player.getName().getString());
                 return 0;
             }
+            
+            // Check if shop manager exists
+            if (economyManager.getShopManager() == null) {
+                source.sendFailure(Component.literal("§cShop manager is not available"));
+                NeoEssentials.LOGGER.error("Shop manager is null for player {}", player.getName().getString());
+                return 0;
+            }
+            
+            // Show some debug info
+            player.sendSystemMessage(Component.literal("§7Opening shop GUI..."));
+            player.sendSystemMessage(Component.literal("§7Economy enabled: §a" + economyManager.isEnabled()));
+            player.sendSystemMessage(Component.literal("§7Your balance: §e" + 
+                economyManager.getDefaultCurrency().format(economyManager.getBalance(player.getUUID()))));
             
             EnhancedShopInterface.openShop(player, economyManager);
             return 1;
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to open global shop GUI", e);
-            context.getSource().sendFailure(Component.literal("§cFailed to open shop interface"));
+            context.getSource().sendFailure(Component.literal("§cFailed to open shop interface: " + e.getMessage()));
             return 0;
         }
     }
@@ -91,20 +106,34 @@ public class EnhancedShopGuiCommands {
             
             if (economyManager == null) {
                 source.sendFailure(Component.literal("§cEconomy manager is not initialized"));
+                NeoEssentials.LOGGER.error("Economy manager is null for player {}", player.getName().getString());
                 return 0;
             }
             
             if (!economyManager.isEnabled()) {
                 source.sendFailure(Component.literal("§cEconomy system is disabled"));
+                NeoEssentials.LOGGER.warn("Economy system is disabled for player {}", player.getName().getString());
                 return 0;
             }
+            
+            // Check if shop manager exists
+            if (economyManager.getShopManager() == null) {
+                source.sendFailure(Component.literal("§cShop manager is not available"));
+                NeoEssentials.LOGGER.error("Shop manager is null for player {}", player.getName().getString());
+                return 0;
+            }
+            
+            // Show some debug info
+            player.sendSystemMessage(Component.literal("§7Opening personal shop GUI..."));
+            player.sendSystemMessage(Component.literal("§7Your balance: §e" + 
+                economyManager.getDefaultCurrency().format(economyManager.getBalance(player.getUUID()))));
             
             EnhancedShopInterface.openPersonalShop(player, economyManager);
             return 1;
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to open personal shop GUI", e);
-            context.getSource().sendFailure(Component.literal("§cFailed to open personal shop interface"));
+            context.getSource().sendFailure(Component.literal("§cFailed to open personal shop interface: " + e.getMessage()));
             return 0;
         }
     }

@@ -267,6 +267,10 @@ public class CommandManager {    // Command classes
         com.zerog.neoessentials.economy.commands.EnhancedShopGuiCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered enhanced shop GUI commands");
         
+        // Register admin shop commands
+        com.zerog.neoessentials.economy.commands.AdminShopCommands.register(dispatcher);
+        NeoEssentials.LOGGER.info("Registered admin shop commands");
+        
         com.zerog.neoessentials.economy.commands.AuctionGuiCommands.register(dispatcher);
         NeoEssentials.LOGGER.info("Registered auction GUI commands");
         

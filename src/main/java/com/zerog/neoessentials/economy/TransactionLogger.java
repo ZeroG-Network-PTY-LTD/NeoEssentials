@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -59,16 +60,20 @@ public class TransactionLogger {
     public void logTransaction(Transaction transaction) {
         if (!running) return;
         
-        LogEntry entry = new LogEntry();
-        entry.timestamp = LocalDateTime.now().format(LOG_DATE_FORMAT);
-        entry.id = transaction.getId().toString();
-        entry.type = transaction.getType().name();
-        entry.fromAccount = transaction.getFromAccount() != null ? transaction.getFromAccount().toString() : null;
-        entry.toAccount = transaction.getToAccount() != null ? transaction.getToAccount().toString() : null;
-        entry.amount = transaction.getAmount().toString();
-        entry.currency = transaction.getCurrency().getSymbol();
-        entry.description = transaction.getDescription();
-        entry.metadata = transaction.getMetadata();
+        LogEntry entry = new LogEntry(
+            LocalDateTime.now().format(LOG_DATE_FORMAT),
+            transaction.getId().toString(),
+            transaction.getType().name(),
+            transaction.getFromAccount() != null ? transaction.getFromAccount().toString() : null,
+            transaction.getToAccount() != null ? transaction.getToAccount().toString() : null,
+            "", // playerName - not available in transaction
+            transaction.getAmount().toString(),
+            transaction.getCurrency().getSymbol(),
+            transaction.getDescription(),
+            transaction.getMetadata(),
+            "", // oldBalance - not available in transaction
+            ""  // newBalance - not available in transaction
+        );
         
         logQueue.offer(entry);
     }
@@ -81,17 +86,20 @@ public class TransactionLogger {
                                 String reason) {
         if (!running) return;
         
-        LogEntry entry = new LogEntry();
-        entry.timestamp = LocalDateTime.now().format(LOG_DATE_FORMAT);
-        entry.id = UUID.randomUUID().toString();
-        entry.type = "BALANCE_CHANGE";
-        entry.fromAccount = playerId.toString();
-        entry.playerName = playerName;
-        entry.amount = newBalance.subtract(oldBalance).toString();
-        entry.currency = currency.getSymbol();
-        entry.description = reason;
-        entry.oldBalance = oldBalance.toString();
-        entry.newBalance = newBalance.toString();
+        LogEntry entry = new LogEntry(
+            LocalDateTime.now().format(LOG_DATE_FORMAT),
+            UUID.randomUUID().toString(),
+            "BALANCE_CHANGE",
+            playerId.toString(),
+            null, // toAccount
+            playerName,
+            newBalance.subtract(oldBalance).toString(),
+            currency.getSymbol(),
+            reason,
+            "", // metadata
+            oldBalance.toString(),
+            newBalance.toString()
+        );
         
         logQueue.offer(entry);
     }
@@ -103,24 +111,89 @@ public class TransactionLogger {
                            String details, Object... metadata) {
         if (!running) return;
         
-        LogEntry entry = new LogEntry();
-        entry.timestamp = LocalDateTime.now().format(LOG_DATE_FORMAT);
-        entry.id = UUID.randomUUID().toString();
-        entry.type = "OPERATION";
-        entry.fromAccount = playerId.toString();
-        entry.playerName = playerName;
-        entry.description = operation + ": " + details;
-        
+        StringBuilder metaBuilder = new StringBuilder();
         if (metadata.length > 0) {
-            StringBuilder meta = new StringBuilder();
             for (int i = 0; i < metadata.length; i += 2) {
                 if (i + 1 < metadata.length) {
-                    if (meta.length() > 0) meta.append(", ");
-                    meta.append(metadata[i]).append("=").append(metadata[i + 1]);
+                    if (metaBuilder.length() > 0) metaBuilder.append(", ");
+                    metaBuilder.append(metadata[i]).append("=").append(metadata[i + 1]);
                 }
             }
-            entry.metadata = meta.toString();
         }
+        
+        LogEntry entry = new LogEntry(
+            LocalDateTime.now().format(LOG_DATE_FORMAT),
+            UUID.randomUUID().toString(),
+            "OPERATION",
+            playerId.toString(),
+            null, // toAccount
+            playerName,
+            "", // amount
+            "", // currency
+            operation + ": " + details,
+            metaBuilder.toString(),
+            "", // oldBalance
+            ""  // newBalance
+        );
+        
+        logQueue.offer(entry);
+    }
+    
+    /**
+     * Logs a formatted transaction with additional context
+     */
+    public void logTransactionWithContext(Transaction transaction, String context) {
+        if (!running) return;
+        
+        String description = transaction.getDescription();
+        if (context != null && !context.isEmpty()) {
+            description += " [Context: " + context + "]";
+        }
+        
+        LogEntry entry = new LogEntry(
+            LocalDateTime.now().format(LOG_DATE_FORMAT),
+            transaction.getId().toString(),
+            transaction.getType().name(),
+            transaction.getFromAccount() != null ? transaction.getFromAccount().toString() : null,
+            transaction.getToAccount() != null ? transaction.getToAccount().toString() : null,
+            "", // playerName - not available in transaction
+            transaction.getAmount().toString(),
+            transaction.getCurrency().getSymbol(),
+            description,
+            transaction.getMetadata() + (context != null ? " | Context: " + context : ""),
+            "", // oldBalance - not available in transaction
+            ""  // newBalance - not available in transaction
+        );
+        
+        logQueue.offer(entry);
+    }
+    
+    /**
+     * Logs a shop transaction with detailed information
+     */
+    public void logShopTransaction(String type, UUID playerId, String playerName, 
+                                  String itemName, int quantity, BigDecimal amount, 
+                                  Currency currency, String shopOwner) {
+        if (!running) return;
+        
+        String description = String.format("%s: %dx %s", type, quantity, itemName);
+        String metadata = String.format("quantity=%d, item=%s, shop_owner=%s", 
+                                      quantity, itemName, shopOwner != null ? shopOwner : "admin");
+        
+        LogEntry entry = new LogEntry(
+            LocalDateTime.now().format(LOG_DATE_FORMAT),
+            UUID.randomUUID().toString(),
+            "SHOP_TRANSACTION",
+            playerId.toString(),
+            null, // toAccount
+            playerName,
+            amount.toString(),
+            currency.getSymbol(),
+            description,
+            metadata,
+            "", // oldBalance - not tracked here
+            ""  // newBalance - not tracked here
+        );
         
         logQueue.offer(entry);
     }
@@ -184,17 +257,48 @@ public class TransactionLogger {
      * Internal class for log entries
      */
     private static class LogEntry {
-        String timestamp;
-        String id;
-        String type;
-        String fromAccount;
-        String toAccount;
-        String playerName;
-        String amount;
-        String currency;
-        String description;
-        String metadata;
-        String oldBalance;
-        String newBalance;
+        final String timestamp;
+        final String id;
+        final String type;
+        final String fromAccount;
+        final String toAccount;
+        final String playerName;
+        final String amount;
+        final String currency;
+        final String description;
+        final String metadata;
+        final String oldBalance;
+        final String newBalance;
+        
+        LogEntry(String timestamp, String id, String type, String fromAccount, String toAccount, 
+                String playerName, String amount, String currency, String description, 
+                String metadata, String oldBalance, String newBalance) {
+            this.timestamp = timestamp;
+            this.id = id;
+            this.type = type;
+            this.fromAccount = fromAccount;
+            this.toAccount = toAccount;
+            this.playerName = playerName;
+            this.amount = amount;
+            this.currency = currency;
+            this.description = description;
+            this.metadata = metadata;
+            this.oldBalance = oldBalance;
+            this.newBalance = newBalance;
+        }
+        
+        // Getters for accessing log entry data
+        public String getTimestamp() { return timestamp; }
+        public String getId() { return id; }
+        public String getType() { return type; }
+        public String getFromAccount() { return fromAccount; }
+        public String getToAccount() { return toAccount; }
+        public String getPlayerName() { return playerName; }
+        public String getAmount() { return amount; }
+        public String getCurrency() { return currency; }
+        public String getDescription() { return description; }
+        public String getMetadata() { return metadata; }
+        public String getOldBalance() { return oldBalance; }
+        public String getNewBalance() { return newBalance; }
     }
 }
