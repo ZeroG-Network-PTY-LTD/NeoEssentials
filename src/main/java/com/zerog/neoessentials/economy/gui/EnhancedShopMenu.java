@@ -192,6 +192,9 @@ public class EnhancedShopMenu extends ChestMenu {
             case QUICK_CRAFT: // Right click
                 if (mode == EnhancedShopInterface.ShopMode.PERSONAL && player.getUUID().equals(shopItem.getCreatedBy())) {
                     handleManageItem(shopItem);
+                } else if (shopItem.canSell()) {
+                    // Right click on items that can be sold - sell to shop
+                    handleSellItem(shopItem, 1);
                 } else {
                     handleBuyItem(shopItem, 1);
                 }
@@ -241,6 +244,57 @@ public class EnhancedShopMenu extends ChestMenu {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error buying item", e);
             player.sendSystemMessage(Component.literal("§cFailed to purchase item"));
+        }
+    }
+    
+    private void handleSellItem(ShopItem shopItem, int quantity) {
+        try {
+            if (!shopItem.canSell()) {
+                player.sendSystemMessage(Component.literal("§cThis shop does not buy this item"));
+                return;
+            }
+            
+            if (shopItem.getSellPrice() == null) {
+                player.sendSystemMessage(Component.literal("§cNo sell price set for this item"));
+                return;
+            }
+            
+            // Check if player has the required items in their inventory
+            ItemStack requiredItem = shopItem.getItemStack().copy();
+            int availableCount = 0;
+            
+            // Count how many of the required item the player has
+            for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                ItemStack stackInSlot = player.getInventory().getItem(i);
+                if (ItemStack.isSameItemSameComponents(stackInSlot, requiredItem)) {
+                    availableCount += stackInSlot.getCount();
+                }
+            }
+            
+            if (availableCount < quantity) {
+                player.sendSystemMessage(Component.literal("§cYou don't have enough " + 
+                    requiredItem.getHoverName().getString() + " to sell. Need: " + quantity + ", Have: " + availableCount));
+                return;
+            }
+            
+            // Sell the items
+            ShopManager shopManager = economyManager.getShopManager();
+            ShopManager.SellResult result = shopManager.sellItem(player, shopItem.getId(), quantity);
+            
+            if (result.isSuccess()) {
+                player.sendSystemMessage(Component.literal("§aSuccessfully sold " + quantity + "x " + 
+                    shopItem.getItemStack().getHoverName().getString() + " for " + 
+                    shopItem.getCurrency().format(shopItem.getSellPrice().multiply(java.math.BigDecimal.valueOf(quantity)))));
+                
+                // Refresh the GUI to show updated stock
+                EnhancedShopInterface.openShop(player, economyManager, mode, targetPlayer, currentPage);
+            } else {
+                player.sendSystemMessage(Component.literal("§c" + result.getMessage()));
+            }
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error selling item", e);
+            player.sendSystemMessage(Component.literal("§cFailed to sell item"));
         }
     }
     
