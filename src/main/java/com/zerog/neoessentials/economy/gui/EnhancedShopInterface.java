@@ -281,6 +281,17 @@ public class EnhancedShopInterface {
         ItemStack refresh = new ItemStack(Items.LIME_DYE);
         refresh.set(DataComponents.CUSTOM_NAME, Component.literal("§aRefresh"));
         container.setItem(42, refresh);
+        
+        // Instructions item
+        ItemStack instructions = new ItemStack(Items.WRITTEN_BOOK);
+        instructions.set(DataComponents.CUSTOM_NAME, Component.literal("§eInstructions"));
+        java.util.List<Component> lore = new java.util.ArrayList<>();
+        lore.add(Component.literal("§7Left click: Buy 1 item"));
+        lore.add(Component.literal("§7Shift+Left click: Buy 64 items"));
+        lore.add(Component.literal("§7Right click: Sell 1 item to shop"));
+        lore.add(Component.literal("§7(Only works if shop buys the item)"));
+        instructions.set(DataComponents.LORE, new net.minecraft.world.item.component.ItemLore(lore));
+        container.setItem(43, instructions);
     }
     
     private static String getShopTitle(ShopMode mode, UUID targetPlayer, ServerPlayer viewer) {

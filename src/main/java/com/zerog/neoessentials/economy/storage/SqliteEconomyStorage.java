@@ -5,7 +5,6 @@ import com.zerog.neoessentials.economy.Currency;
 import com.zerog.neoessentials.economy.EconomyAccount;
 import com.zerog.neoessentials.economy.Transaction;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,22 +70,65 @@ public class SqliteEconomyStorage implements EconomyStorage {
     public boolean saveAccount(EconomyAccount account) {
         if (!initialized) return false;
         
-        String sql = """
-            INSERT OR REPLACE INTO accounts (player_id, player_name, last_seen, created_at)
-            VALUES (?, ?, ?, ?)
-            """;
-        
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, account.getPlayerId().toString());
-            stmt.setString(2, account.getPlayerName());
-            stmt.setLong(3, java.time.ZoneOffset.UTC.getRules().getOffset(account.getLastActivity()).getTotalSeconds());
-            stmt.setLong(4, java.time.ZoneOffset.UTC.getRules().getOffset(account.getCreatedAt()).getTotalSeconds());
+        try {
+            connection.setAutoCommit(false); // Begin transaction
             
-            stmt.executeUpdate();
+            // Save account metadata
+            String accountSql = """
+                INSERT OR REPLACE INTO accounts (player_id, player_name, last_seen, created_at)
+                VALUES (?, ?, ?, ?)
+                """;
+            
+            try (PreparedStatement stmt = connection.prepareStatement(accountSql)) {
+                stmt.setString(1, account.getPlayerId().toString());
+                stmt.setString(2, account.getPlayerName());
+                stmt.setLong(3, java.time.Instant.from(account.getLastActivity().atZone(java.time.ZoneOffset.UTC)).getEpochSecond());
+                stmt.setLong(4, java.time.Instant.from(account.getCreatedAt().atZone(java.time.ZoneOffset.UTC)).getEpochSecond());
+                stmt.executeUpdate();
+            }
+            
+            // Clear existing balances for this account
+            String clearBalancesSql = "DELETE FROM account_balances WHERE player_id = ?";
+            try (PreparedStatement stmt = connection.prepareStatement(clearBalancesSql)) {
+                stmt.setString(1, account.getPlayerId().toString());
+                stmt.executeUpdate();
+            }
+            
+            // Save all balances for this account
+            String balanceSql = """
+                INSERT INTO account_balances (player_id, currency_name, balance, updated_at)
+                VALUES (?, ?, ?, ?)
+                """;
+            
+            try (PreparedStatement stmt = connection.prepareStatement(balanceSql)) {
+                Map<Currency, BigDecimal> balances = account.getAllBalances();
+                for (Map.Entry<Currency, BigDecimal> entry : balances.entrySet()) {
+                    stmt.setString(1, account.getPlayerId().toString());
+                    stmt.setString(2, entry.getKey().getName());
+                    stmt.setBigDecimal(3, entry.getValue());
+                    stmt.setLong(4, System.currentTimeMillis() / 1000);
+                    stmt.addBatch();
+                }
+                stmt.executeBatch();
+            }
+            
+            connection.commit(); // Commit transaction
             return true;
+            
         } catch (SQLException e) {
+            try {
+                connection.rollback(); // Rollback on error
+            } catch (SQLException rollbackEx) {
+                NeoEssentials.LOGGER.error("Failed to rollback transaction", rollbackEx);
+            }
             NeoEssentials.LOGGER.error("Failed to save account: " + account.getPlayerId(), e);
             return false;
+        } finally {
+            try {
+                connection.setAutoCommit(true); // Restore auto-commit
+            } catch (SQLException e) {
+                NeoEssentials.LOGGER.error("Failed to restore auto-commit", e);
+            }
         }
     }
     
@@ -115,15 +157,40 @@ public class SqliteEconomyStorage implements EconomyStorage {
     public boolean deleteAccount(UUID playerId) {
         if (!initialized) return false;
         
-        String sql = "DELETE FROM accounts WHERE player_id = ?";
-        
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, playerId.toString());
-            stmt.executeUpdate();
+        try {
+            connection.setAutoCommit(false); // Begin transaction
+            
+            // Delete balances first
+            String deleteBalancesSql = "DELETE FROM account_balances WHERE player_id = ?";
+            try (PreparedStatement stmt = connection.prepareStatement(deleteBalancesSql)) {
+                stmt.setString(1, playerId.toString());
+                stmt.executeUpdate();
+            }
+            
+            // Delete account
+            String deleteAccountSql = "DELETE FROM accounts WHERE player_id = ?";
+            try (PreparedStatement stmt = connection.prepareStatement(deleteAccountSql)) {
+                stmt.setString(1, playerId.toString());
+                stmt.executeUpdate();
+            }
+            
+            connection.commit(); // Commit transaction
             return true;
+            
         } catch (SQLException e) {
+            try {
+                connection.rollback(); // Rollback on error
+            } catch (SQLException rollbackEx) {
+                NeoEssentials.LOGGER.error("Failed to rollback transaction", rollbackEx);
+            }
             NeoEssentials.LOGGER.error("Failed to delete account: " + playerId, e);
             return false;
+        } finally {
+            try {
+                connection.setAutoCommit(true); // Restore auto-commit
+            } catch (SQLException e) {
+                NeoEssentials.LOGGER.error("Failed to restore auto-commit", e);
+            }
         }
     }
     
@@ -530,15 +597,55 @@ public class SqliteEconomyStorage implements EconomyStorage {
     private EconomyAccount mapResultSetToAccount(ResultSet rs) throws SQLException {
         UUID playerId = UUID.fromString(rs.getString("player_id"));
         String playerName = rs.getString("player_name");
-        long lastSeenTimestamp = rs.getLong("last_seen");
-        long createdAtTimestamp = rs.getLong("created_at");
         
         EconomyAccount account = new EconomyAccount(playerId, playerName);
         
-        // In a full implementation, you would load the balances for all currencies
-        // For now, we'll just create an empty account
+        // Load all balances for this account
+        loadAccountBalances(account);
         
         return account;
+    }
+    
+    /**
+     * Loads all currency balances for an account from the database
+     */
+    private void loadAccountBalances(EconomyAccount account) {
+        String sql = "SELECT currency_name, balance FROM account_balances WHERE player_id = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, account.getPlayerId().toString());
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String currencyName = rs.getString("currency_name");
+                    BigDecimal balance = rs.getBigDecimal("balance");
+                    
+                    // Create a simple currency object for loading
+                    // In a full implementation, you'd have a currency registry
+                    Currency currency = createCurrencyFromName(currencyName);
+                    if (currency != null) {
+                        account.setBalance(currency, balance);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            NeoEssentials.LOGGER.error("Failed to load balances for account: " + account.getPlayerId(), e);
+        }
+    }
+    
+    /**
+     * Creates a Currency object from a currency name
+     * This is a simple implementation - in practice you'd use a currency registry
+     */
+    private Currency createCurrencyFromName(String currencyName) {
+        try {
+            // For now, create a basic currency with default values
+            // This should be replaced with proper currency registry lookup
+            return Currency.createBasic(currencyName, currencyName, "¤", currencyName + "s");
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.warn("Failed to create currency from name: " + currencyName, e);
+            return null;
+        }
     }
     
     private Transaction mapResultSetToTransaction(ResultSet rs) throws SQLException {
@@ -549,7 +656,6 @@ public class SqliteEconomyStorage implements EconomyStorage {
         String currencyId = rs.getString("currency_id");
         Transaction.Type type = Transaction.Type.valueOf(rs.getString("type"));
         String description = rs.getString("description");
-        long timestampSeconds = rs.getLong("timestamp");
         
         // Create a basic currency - in practice this should be loaded from config
         Currency currency = Currency.createBasic(currencyId, currencyId, "$", currencyId + "s");
