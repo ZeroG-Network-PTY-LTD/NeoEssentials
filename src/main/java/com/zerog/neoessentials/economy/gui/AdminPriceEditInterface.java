@@ -276,7 +276,7 @@ public class AdminPriceEditInterface {
                     .type(currentType)
                     .buyPrice(currentType == ShopItem.Type.BUY || currentType == ShopItem.Type.BOTH ? 
                         BigDecimal.valueOf(currentBuyPrice) : null)
-                    .sellPrice(currentType == ShopItem.Type.SELL || currentType == ShopItem.Type.BOTH ? 
+                    .sellPrice((currentType == ShopItem.Type.SELL || currentType == ShopItem.Type.BOTH) && currentSellPrice > 0 ? 
                         BigDecimal.valueOf(currentSellPrice) : null)
                     .currency(originalItem.getCurrency())
                     .stock(originalItem.getStock())
