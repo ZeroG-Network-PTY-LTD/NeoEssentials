@@ -14,7 +14,6 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nonnull;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -136,15 +135,17 @@ public class AdminShopManagementMenu extends ChestMenu {
                 }
                 break;
                 
-            case 52: // Close
-                if (itemName.contains("Close")) {
-                    player.closeContainer();
+            case 52: // Debug button
+                if (itemName.contains("Debug")) {
+                    handleDebugShop();
                 }
                 break;
                 
-            case 53: // Next page
+            case 53: // Next page or Close
                 if (itemName.contains("Next")) {
                     AdminShopManagementInterface.openAdminShopManagement(player, economyManager, currentPage + 1);
+                } else if (itemName.contains("Close")) {
+                    player.closeContainer();
                 }
                 break;
         }
@@ -375,13 +376,64 @@ public class AdminShopManagementMenu extends ChestMenu {
     }
     
     private void showItemInfo(ShopItem adminItem) {
-        player.sendSystemMessage(Component.literal("§6=== Item Info ==="));
+        player.sendSystemMessage(Component.literal("§6=== Admin Item Info ==="));
         player.sendSystemMessage(Component.literal("§eItem: " + adminItem.getItemStack().getHoverName().getString()));
-        player.sendSystemMessage(Component.literal("§ePrice: " + adminItem.getCurrency().format(adminItem.getBuyPrice())));
-        player.sendSystemMessage(Component.literal("§eStock: " + (adminItem.getStock() < 0 ? "Infinite" : adminItem.getStock())));
         player.sendSystemMessage(Component.literal("§eType: " + adminItem.getType()));
-        player.sendSystemMessage(Component.literal("§7Left-click: Edit price | Shift-click: Remove | Double-click: Duplicate"));
+        
+        if (adminItem.getBuyPrice() != null) {
+            player.sendSystemMessage(Component.literal("§eBuy Price: " + adminItem.getCurrency().format(adminItem.getBuyPrice())));
+        }
+        if (adminItem.getSellPrice() != null) {
+            player.sendSystemMessage(Component.literal("§eSell Price: " + adminItem.getCurrency().format(adminItem.getSellPrice())));
+        }
+        
+        player.sendSystemMessage(Component.literal("§eStock: " + (adminItem.getStock() < 0 ? "Infinite" : adminItem.getStock())));
+        player.sendSystemMessage(Component.literal("§eDescription: " + adminItem.getDescription()));
+        player.sendSystemMessage(Component.literal("§eCreated: " + adminItem.getCreatedAt().toString()));
+        
+        player.sendSystemMessage(Component.literal("§7=== Controls ==="));
+        player.sendSystemMessage(Component.literal("§7Left-click: Edit price"));
+        player.sendSystemMessage(Component.literal("§7Right-click: Toggle buy/sell mode"));
+        player.sendSystemMessage(Component.literal("§7Shift-click: Remove item"));
+        player.sendSystemMessage(Component.literal("§7Double-click: Duplicate item"));
     }
+    
+    private void handleDebugShop() {
+        try {
+            ShopManager shopManager = economyManager.getShopManager();
+            
+            // Run integrity check
+            shopManager.validateShopIntegrity();
+            
+            List<ShopItem> allItems = shopManager.getAllItems();
+            List<ShopItem> availableItems = shopManager.getAvailableItems();
+            List<ShopItem> adminItems = allItems.stream().filter(ShopItem::isAdminItem).toList();
+            
+            player.sendSystemMessage(Component.literal("§6=== SHOP DEBUG INFO ==="));
+            player.sendSystemMessage(Component.literal("§7Total items: " + allItems.size()));
+            player.sendSystemMessage(Component.literal("§7Available items: " + availableItems.size()));
+            player.sendSystemMessage(Component.literal("§7Admin items: " + adminItems.size()));
+            
+            if (!adminItems.isEmpty()) {
+                player.sendSystemMessage(Component.literal("§eRecent Admin Items:"));
+                for (ShopItem item : adminItems.stream().limit(5).toList()) {
+                    String stockInfo = item.getStock() < 0 ? "∞" : String.valueOf(item.getStock());
+                    player.sendSystemMessage(Component.literal("§7- " + item.getItemStack().getHoverName().getString() + 
+                        " | Stock: " + stockInfo + " | Type: " + item.getType()));
+                }
+                if (adminItems.size() > 5) {
+                    player.sendSystemMessage(Component.literal("§7... and " + (adminItems.size() - 5) + " more"));
+                }
+            }
+            
+            player.sendSystemMessage(Component.literal("§aCheck server console for detailed debug info"));
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error debugging shop", e);
+            player.sendSystemMessage(Component.literal("§cError debugging shop"));
+        }
+    }
+    
     
     @Override
     public boolean canTakeItemForPickAll(@Nonnull ItemStack stack, @Nonnull net.minecraft.world.inventory.Slot slot) {
