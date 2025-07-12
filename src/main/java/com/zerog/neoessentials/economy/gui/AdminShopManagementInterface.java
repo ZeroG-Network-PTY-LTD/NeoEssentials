@@ -132,6 +132,11 @@ public class AdminShopManagementInterface {
             ItemStack nextPage = new ItemStack(Items.ARROW);
             nextPage.set(DataComponents.CUSTOM_NAME, Component.literal("§eNext Page"));
             container.setItem(53, nextPage);
+        } else {
+            // Close button if no next page
+            ItemStack close = new ItemStack(Items.BARRIER);
+            close.set(DataComponents.CUSTOM_NAME, Component.literal("§cClose"));
+            container.setItem(53, close);
         }
         
         // Add item button
@@ -167,10 +172,10 @@ public class AdminShopManagementInterface {
         playerShop.set(DataComponents.CUSTOM_NAME, Component.literal("§bView Player Shops"));
         container.setItem(51, playerShop);
         
-        // Close button
-        ItemStack close = new ItemStack(Items.BARRIER);
-        close.set(DataComponents.CUSTOM_NAME, Component.literal("§cClose"));
-        container.setItem(52, close);
+        // Debug button
+        ItemStack debugButton = new ItemStack(Items.REDSTONE);
+        debugButton.set(DataComponents.CUSTOM_NAME, Component.literal("§cDebug Shop"));
+        container.setItem(52, debugButton);
         
         // Fill empty spots with glass panes
         for (int i = 45; i < 54; i++) {
