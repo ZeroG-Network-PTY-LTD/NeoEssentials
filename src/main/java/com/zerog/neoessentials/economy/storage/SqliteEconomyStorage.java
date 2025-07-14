@@ -237,7 +237,7 @@ public class SqliteEconomyStorage implements EconomyStorage {
         if (!initialized) return false;
         
         String sql = """
-            INSERT INTO transactions (id, from_account, to_account, amount, currency_id, type, description, timestamp)
+            INSERT INTO transactions (id, from_account, to_account, amount, currency_name, type, description, timestamp)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
         
@@ -246,7 +246,7 @@ public class SqliteEconomyStorage implements EconomyStorage {
             stmt.setString(2, transaction.getFromAccount().toString());
             stmt.setString(3, transaction.getToAccount().toString());
             stmt.setBigDecimal(4, transaction.getAmount());
-            stmt.setString(5, transaction.getCurrency().getId());
+            stmt.setString(5, transaction.getCurrency().getName());
             stmt.setString(6, transaction.getType().name());
             stmt.setString(7, transaction.getDescription());
             stmt.setLong(8, java.time.ZoneOffset.UTC.getRules().getOffset(transaction.getTimestamp()).getTotalSeconds());
@@ -539,7 +539,193 @@ public class SqliteEconomyStorage implements EconomyStorage {
         }
     }
     
+    /**
+     * Migrates the database schema if needed
+     */
+    private void migrateDatabaseIfNeeded() throws SQLException {
+        // Check if account_balances table exists
+        String checkTableSql = "SELECT name FROM sqlite_master WHERE type='table' AND name='account_balances'";
+        try (PreparedStatement stmt = connection.prepareStatement(checkTableSql)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    // Table exists, check if it has currency_name column
+                    String checkColumnSql = "PRAGMA table_info(account_balances)";
+                    try (PreparedStatement columnStmt = connection.prepareStatement(checkColumnSql)) {
+                        try (ResultSet columnRs = columnStmt.executeQuery()) {
+                            boolean hasCurrencyName = false;
+                            boolean hasCurrencyId = false;
+                            
+                            while (columnRs.next()) {
+                                String columnName = columnRs.getString("name");
+                                if ("currency_name".equals(columnName)) {
+                                    hasCurrencyName = true;
+                                } else if ("currency_id".equals(columnName)) {
+                                    hasCurrencyId = true;
+                                }
+                            }
+                            
+                            // If table has currency_id but not currency_name, migrate it
+                            if (hasCurrencyId && !hasCurrencyName) {
+                                NeoEssentials.LOGGER.info("Migrating account_balances table from currency_id to currency_name");
+                                migrateCurrencyColumn();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Check if transactions table exists and needs migration
+        String checkTransactionsTableSql = "SELECT name FROM sqlite_master WHERE type='table' AND name='transactions'";
+        try (PreparedStatement stmt = connection.prepareStatement(checkTransactionsTableSql)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    // Table exists, check if it has currency_name column
+                    String checkColumnSql = "PRAGMA table_info(transactions)";
+                    try (PreparedStatement columnStmt = connection.prepareStatement(checkColumnSql)) {
+                        try (ResultSet columnRs = columnStmt.executeQuery()) {
+                            boolean hasCurrencyName = false;
+                            boolean hasCurrencyId = false;
+                            
+                            while (columnRs.next()) {
+                                String columnName = columnRs.getString("name");
+                                if ("currency_name".equals(columnName)) {
+                                    hasCurrencyName = true;
+                                } else if ("currency_id".equals(columnName)) {
+                                    hasCurrencyId = true;
+                                }
+                            }
+                            
+                            // If table has currency_id but not currency_name, migrate it
+                            if (hasCurrencyId && !hasCurrencyName) {
+                                NeoEssentials.LOGGER.info("Migrating transactions table from currency_id to currency_name");
+                                migrateTransactionsTable();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Migrates the currency_id column to currency_name
+     */
+    private void migrateCurrencyColumn() throws SQLException {
+        try {
+            connection.setAutoCommit(false);
+            
+            // Create new table with correct schema
+            String createNewTable = """
+                CREATE TABLE IF NOT EXISTS account_balances_new (
+                    player_id TEXT NOT NULL,
+                    currency_name TEXT NOT NULL,
+                    balance DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+                    updated_at INTEGER NOT NULL DEFAULT 0,
+                    PRIMARY KEY (player_id, currency_name),
+                    FOREIGN KEY (player_id) REFERENCES accounts(player_id) ON DELETE CASCADE
+                )
+                """;
+            
+            try (PreparedStatement stmt = connection.prepareStatement(createNewTable)) {
+                stmt.executeUpdate();
+            }
+            
+            // Copy data from old table to new table (convert currency_id to currency_name)
+            String copyDataSql = """
+                INSERT INTO account_balances_new (player_id, currency_name, balance, updated_at)
+                SELECT player_id, currency_id, balance, 0 FROM account_balances
+                """;
+            
+            try (PreparedStatement stmt = connection.prepareStatement(copyDataSql)) {
+                stmt.executeUpdate();
+            }
+            
+            // Drop old table
+            String dropOldTable = "DROP TABLE account_balances";
+            try (PreparedStatement stmt = connection.prepareStatement(dropOldTable)) {
+                stmt.executeUpdate();
+            }
+            
+            // Rename new table to old table name
+            String renameTable = "ALTER TABLE account_balances_new RENAME TO account_balances";
+            try (PreparedStatement stmt = connection.prepareStatement(renameTable)) {
+                stmt.executeUpdate();
+            }
+            
+            connection.commit();
+            NeoEssentials.LOGGER.info("Successfully migrated account_balances table");
+            
+        } catch (SQLException e) {
+            connection.rollback();
+            throw e;
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+    
+    /**
+     * Migrates the transactions table from currency_id to currency_name
+     */
+    private void migrateTransactionsTable() throws SQLException {
+        try {
+            connection.setAutoCommit(false);
+            
+            // Create new table with correct schema
+            String createNewTable = """
+                CREATE TABLE IF NOT EXISTS transactions_new (
+                    id TEXT PRIMARY KEY,
+                    from_account TEXT NOT NULL,
+                    to_account TEXT NOT NULL,
+                    amount DECIMAL(20,2) NOT NULL,
+                    currency_name TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    description TEXT,
+                    timestamp INTEGER NOT NULL
+                )
+                """;
+            
+            try (PreparedStatement stmt = connection.prepareStatement(createNewTable)) {
+                stmt.executeUpdate();
+            }
+            
+            // Copy data from old table to new table (convert currency_id to currency_name)
+            String copyDataSql = """
+                INSERT INTO transactions_new (id, from_account, to_account, amount, currency_name, type, description, timestamp)
+                SELECT id, from_account, to_account, amount, currency_id, type, description, timestamp FROM transactions
+                """;
+            
+            try (PreparedStatement stmt = connection.prepareStatement(copyDataSql)) {
+                stmt.executeUpdate();
+            }
+            
+            // Drop old table
+            String dropOldTable = "DROP TABLE transactions";
+            try (PreparedStatement stmt = connection.prepareStatement(dropOldTable)) {
+                stmt.executeUpdate();
+            }
+            
+            // Rename new table to old table name
+            String renameTable = "ALTER TABLE transactions_new RENAME TO transactions";
+            try (PreparedStatement stmt = connection.prepareStatement(renameTable)) {
+                stmt.executeUpdate();
+            }
+            
+            connection.commit();
+            NeoEssentials.LOGGER.info("Successfully migrated transactions table");
+            
+        } catch (SQLException e) {
+            connection.rollback();
+            throw e;
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+    
     private void createTables() throws SQLException {
+        // Check if we need to migrate the database
+        migrateDatabaseIfNeeded();
+        
         // Create accounts table - simplified for the current data structure
         String accountsTable = """
             CREATE TABLE IF NOT EXISTS accounts (
@@ -557,7 +743,7 @@ public class SqliteEconomyStorage implements EconomyStorage {
                 from_account TEXT NOT NULL,
                 to_account TEXT NOT NULL,
                 amount DECIMAL(20,2) NOT NULL,
-                currency_id TEXT NOT NULL,
+                currency_name TEXT NOT NULL,
                 type TEXT NOT NULL,
                 description TEXT,
                 timestamp INTEGER NOT NULL
@@ -568,9 +754,10 @@ public class SqliteEconomyStorage implements EconomyStorage {
         String balancesTable = """
             CREATE TABLE IF NOT EXISTS account_balances (
                 player_id TEXT NOT NULL,
-                currency_id TEXT NOT NULL,
+                currency_name TEXT NOT NULL,
                 balance DECIMAL(20,2) NOT NULL DEFAULT 0.00,
-                PRIMARY KEY (player_id, currency_id),
+                updated_at INTEGER NOT NULL DEFAULT 0,
+                PRIMARY KEY (player_id, currency_name),
                 FOREIGN KEY (player_id) REFERENCES accounts(player_id) ON DELETE CASCADE
             )
             """;
@@ -653,12 +840,12 @@ public class SqliteEconomyStorage implements EconomyStorage {
         UUID fromAccount = UUID.fromString(rs.getString("from_account"));
         UUID toAccount = UUID.fromString(rs.getString("to_account"));
         BigDecimal amount = rs.getBigDecimal("amount");
-        String currencyId = rs.getString("currency_id");
+        String currencyName = rs.getString("currency_name");
         Transaction.Type type = Transaction.Type.valueOf(rs.getString("type"));
         String description = rs.getString("description");
         
         // Create a basic currency - in practice this should be loaded from config
-        Currency currency = Currency.createBasic(currencyId, currencyId, "$", currencyId + "s");
+        Currency currency = Currency.createBasic(currencyName, currencyName, "$", currencyName + "s");
         
         return Transaction.builder()
                 .id(id)
