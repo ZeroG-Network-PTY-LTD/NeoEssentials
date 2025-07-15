@@ -314,10 +314,11 @@ public class ShopManager {
     }
     
     /**
-     * Debug method to validate shop integrity
+     * Enhanced debug method to validate shop integrity and diagnose issues
      */
     public void validateShopIntegrity() {
-        NeoEssentials.LOGGER.info("=== Shop Integrity Check ===");
+        NeoEssentials.LOGGER.info("=== COMPREHENSIVE SHOP INTEGRITY CHECK ===");
+        NeoEssentials.LOGGER.info("Economy system enabled: {}", economyManager.isEnabled());
         NeoEssentials.LOGGER.info("Total items in shop: {}", shopItems.size());
         
         int adminItems = 0;
@@ -325,43 +326,113 @@ public class ShopManager {
         int infiniteStockItems = 0;
         int buyableItems = 0;
         int sellableItems = 0;
+        int bothTypeItems = 0;
+        int invalidItems = 0;
         
         for (ShopItem item : shopItems.values()) {
-            if (item.isAdminItem()) {
-                adminItems++;
-            } else {
-                playerItems++;
+            try {
+                // Basic validation
+                if (!validateShopItem(item)) {
+                    invalidItems++;
+                    NeoEssentials.LOGGER.warn("Invalid shop item found: {}", item.getItemStack().getHoverName().getString());
+                    continue;
+                }
+                
+                if (item.isAdminItem()) {
+                    adminItems++;
+                } else {
+                    playerItems++;
+                }
+                
+                if (item.getStock() < 0) {
+                    infiniteStockItems++;
+                }
+                
+                if (item.canBuy()) {
+                    buyableItems++;
+                }
+                
+                if (item.canSell()) {
+                    sellableItems++;
+                }
+                
+                if (item.getType() == ShopItem.Type.BOTH) {
+                    bothTypeItems++;
+                }
+                
+                NeoEssentials.LOGGER.info("Item: {} | Stock: {} | Type: {} | Admin: {} | Buy: {} | Sell: {} | ID: {}", 
+                    item.getItemStack().getHoverName().getString(),
+                    item.getStock() < 0 ? "INFINITE" : item.getStock(),
+                    item.getType(),
+                    item.isAdminItem(),
+                    item.canBuy() ? item.getCurrency().format(item.getBuyPrice()) : "N/A",
+                    item.canSell() ? item.getCurrency().format(item.getSellPrice()) : "N/A",
+                    item.getId().toString().substring(0, 8)
+                );
+                
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error validating shop item", e);
+                invalidItems++;
             }
-            
-            if (item.getStock() < 0) {
-                infiniteStockItems++;
-            }
-            
-            if (item.canBuy()) {
-                buyableItems++;
-            }
-            
-            if (item.canSell()) {
-                sellableItems++;
-            }
-            
-            NeoEssentials.LOGGER.info("Item: {} | Stock: {} | Type: {} | Admin: {} | Buy: {} | Sell: {}", 
-                item.getItemStack().getHoverName().getString(),
-                item.getStock() < 0 ? "INFINITE" : item.getStock(),
-                item.getType(),
-                item.isAdminItem(),
-                item.canBuy() ? item.getCurrency().format(item.getBuyPrice()) : "N/A",
-                item.canSell() ? item.getCurrency().format(item.getSellPrice()) : "N/A"
-            );
         }
         
+        NeoEssentials.LOGGER.info("=== SHOP STATISTICS ===");
         NeoEssentials.LOGGER.info("Admin items: {}", adminItems);
         NeoEssentials.LOGGER.info("Player items: {}", playerItems);
         NeoEssentials.LOGGER.info("Infinite stock items: {}", infiniteStockItems);
         NeoEssentials.LOGGER.info("Buyable items: {}", buyableItems);
         NeoEssentials.LOGGER.info("Sellable items: {}", sellableItems);
+        NeoEssentials.LOGGER.info("Both type items: {}", bothTypeItems);
+        NeoEssentials.LOGGER.info("Invalid items: {}", invalidItems);
         NeoEssentials.LOGGER.info("Available items (filtered): {}", getAvailableItems().size());
-        NeoEssentials.LOGGER.info("=== End Integrity Check ===");
+        NeoEssentials.LOGGER.info("Index entries: {}", itemIndex.size());
+        
+        // Check for potential issues
+        if (invalidItems > 0) {
+            NeoEssentials.LOGGER.warn("Found {} invalid items in shop!", invalidItems);
+        }
+        
+        if (adminItems == 0) {
+            NeoEssentials.LOGGER.warn("No admin items found in shop!");
+        }
+        
+        if (buyableItems == 0) {
+            NeoEssentials.LOGGER.warn("No buyable items found in shop!");
+        }
+        
+        NeoEssentials.LOGGER.info("=== End Comprehensive Integrity Check ===");
+    }
+    
+    /**
+     * Diagnose economy system issues
+     */
+    public void diagnoseEconomyIssues() {
+        NeoEssentials.LOGGER.info("=== ECONOMY SYSTEM DIAGNOSIS ===");
+        
+        try {
+            NeoEssentials.LOGGER.info("Economy Manager: {}", economyManager != null ? "Present" : "NULL");
+            NeoEssentials.LOGGER.info("Economy Enabled: {}", economyManager.isEnabled());
+            NeoEssentials.LOGGER.info("Default Currency: {}", economyManager.getDefaultCurrency().getName());
+            
+            // Test basic economy functions
+            UUID testUUID = UUID.randomUUID();
+            try {
+                BigDecimal testBalance = economyManager.getBalance(testUUID);
+                NeoEssentials.LOGGER.info("Balance check test: SUCCESS (returned {})", testBalance);
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Balance check test: FAILED", e);
+            }
+            
+            // Check shop manager state
+            NeoEssentials.LOGGER.info("Shop Items Map: {}", shopItems != null ? "Present" : "NULL");
+            NeoEssentials.LOGGER.info("Item Index Map: {}", itemIndex != null ? "Present" : "NULL");
+            NeoEssentials.LOGGER.info("Analytics Manager: {}", analytics != null ? "Present" : "NULL");
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error during economy diagnosis", e);
+        }
+        
+        NeoEssentials.LOGGER.info("=== End Economy Diagnosis ===");
     }
     
     // Helper methods
