@@ -14,6 +14,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nonnull;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -402,35 +403,63 @@ public class AdminShopManagementMenu extends ChestMenu {
         try {
             ShopManager shopManager = economyManager.getShopManager();
             
-            // Run integrity check
+            // Run comprehensive integrity check
             shopManager.validateShopIntegrity();
+            
+            // Run economy diagnosis
+            shopManager.diagnoseEconomyIssues();
             
             List<ShopItem> allItems = shopManager.getAllItems();
             List<ShopItem> availableItems = shopManager.getAvailableItems();
             List<ShopItem> adminItems = allItems.stream().filter(ShopItem::isAdminItem).toList();
+            List<ShopItem> playerItems = allItems.stream().filter(item -> !item.isAdminItem()).toList();
             
             player.sendSystemMessage(Component.literal("§6=== SHOP DEBUG INFO ==="));
+            player.sendSystemMessage(Component.literal("§7Economy enabled: " + (economyManager.isEnabled() ? "§aYES" : "§cNO")));
             player.sendSystemMessage(Component.literal("§7Total items: " + allItems.size()));
             player.sendSystemMessage(Component.literal("§7Available items: " + availableItems.size()));
             player.sendSystemMessage(Component.literal("§7Admin items: " + adminItems.size()));
+            player.sendSystemMessage(Component.literal("§7Player items: " + playerItems.size()));
+            
+            // Show player balance
+            try {
+                BigDecimal balance = economyManager.getBalance(player.getUUID());
+                player.sendSystemMessage(Component.literal("§7Your balance: " + economyManager.getDefaultCurrency().format(balance)));
+            } catch (Exception e) {
+                player.sendSystemMessage(Component.literal("§cError getting balance: " + e.getMessage()));
+            }
             
             if (!adminItems.isEmpty()) {
                 player.sendSystemMessage(Component.literal("§eRecent Admin Items:"));
                 for (ShopItem item : adminItems.stream().limit(5).toList()) {
                     String stockInfo = item.getStock() < 0 ? "∞" : String.valueOf(item.getStock());
+                    String priceInfo = item.canBuy() ? economyManager.getDefaultCurrency().format(item.getBuyPrice()) : "N/A";
                     player.sendSystemMessage(Component.literal("§7- " + item.getItemStack().getHoverName().getString() + 
-                        " | Stock: " + stockInfo + " | Type: " + item.getType()));
+                        " | Stock: " + stockInfo + " | Type: " + item.getType() + " | Price: " + priceInfo));
                 }
                 if (adminItems.size() > 5) {
                     player.sendSystemMessage(Component.literal("§7... and " + (adminItems.size() - 5) + " more"));
                 }
             }
             
-            player.sendSystemMessage(Component.literal("§aCheck server console for detailed debug info"));
+            if (!playerItems.isEmpty()) {
+                player.sendSystemMessage(Component.literal("§eRecent Player Items:"));
+                for (ShopItem item : playerItems.stream().limit(3).toList()) {
+                    String stockInfo = item.getStock() < 0 ? "∞" : String.valueOf(item.getStock());
+                    String priceInfo = item.canBuy() ? economyManager.getDefaultCurrency().format(item.getBuyPrice()) : "N/A";
+                    player.sendSystemMessage(Component.literal("§7- " + item.getItemStack().getHoverName().getString() + 
+                        " | Stock: " + stockInfo + " | Price: " + priceInfo));
+                }
+                if (playerItems.size() > 3) {
+                    player.sendSystemMessage(Component.literal("§7... and " + (playerItems.size() - 3) + " more"));
+                }
+            }
+            
+            player.sendSystemMessage(Component.literal("§aDetailed debug info sent to server console"));
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error debugging shop", e);
-            player.sendSystemMessage(Component.literal("§cError debugging shop"));
+            player.sendSystemMessage(Component.literal("§cError debugging shop: " + e.getMessage()));
         }
     }
     

@@ -4,6 +4,7 @@ import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.economy.EconomyManager;
 import com.zerog.neoessentials.economy.shop.ShopItem;
 import com.zerog.neoessentials.economy.shop.ShopManager;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -15,6 +16,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nonnull;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -208,6 +210,18 @@ public class EnhancedShopMenu extends ChestMenu {
     
     private void handleBuyItem(ShopItem shopItem, int quantity) {
         try {
+            // Check if economy system is enabled
+            if (!economyManager.isEnabled()) {
+                player.sendSystemMessage(Component.literal("§cEconomy system is disabled"));
+                return;
+            }
+            
+            // Validate shop item
+            if (shopItem == null) {
+                player.sendSystemMessage(Component.literal("§cShop item not found"));
+                return;
+            }
+            
             if (!shopItem.canBuy()) {
                 player.sendSystemMessage(Component.literal("§cThis item is not for sale"));
                 return;
@@ -218,16 +232,41 @@ public class EnhancedShopMenu extends ChestMenu {
                 return;
             }
             
-            // Limit quantity to available stock (unless infinite stock)
-            if (shopItem.getStock() > 0) {
-                quantity = Math.min(quantity, shopItem.getStock());
-            }
-            
+            // Validate quantity
             if (quantity <= 0) {
                 player.sendSystemMessage(Component.literal("§cInvalid quantity"));
                 return;
             }
             
+            if (quantity > 2304) { // Max reasonable quantity
+                player.sendSystemMessage(Component.literal("§cQuantity too large"));
+                return;
+            }
+            
+            // Limit quantity to available stock (unless infinite stock)
+            if (shopItem.getStock() > 0) {
+                quantity = Math.min(quantity, shopItem.getStock());
+            }
+            
+            // Check if player has enough inventory space
+            ItemStack itemToGive = shopItem.getItemStack().copy();
+            itemToGive.setCount(quantity);
+            
+            if (!hasInventorySpace(itemToGive)) {
+                player.sendSystemMessage(Component.literal("§cNot enough inventory space"));
+                return;
+            }
+            
+            // Check if player has enough money
+            BigDecimal totalCost = shopItem.getBuyPrice().multiply(BigDecimal.valueOf(quantity));
+            if (!economyManager.hasBalance(player.getUUID(), totalCost)) {
+                player.sendSystemMessage(Component.literal("§cNot enough money. Need: " + 
+                    economyManager.getDefaultCurrency().format(totalCost) + 
+                    ", Have: " + economyManager.getDefaultCurrency().format(economyManager.getBalance(player.getUUID()))));
+                return;
+            }
+            
+            // Proceed with purchase
             ShopManager shopManager = economyManager.getShopManager();
             ShopManager.BuyResult result = shopManager.buyItem(player, shopItem.getId(), quantity);
             
@@ -236,14 +275,63 @@ public class EnhancedShopMenu extends ChestMenu {
                     shopItem.getItemStack().getHoverName().getString()));
                 
                 // Refresh the GUI to show updated stock
-                EnhancedShopInterface.openShop(player, economyManager, mode, targetPlayer, currentPage);
+                refreshShopInterface();
             } else {
                 player.sendSystemMessage(Component.literal("§c" + result.getMessage()));
             }
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error buying item", e);
-            player.sendSystemMessage(Component.literal("§cFailed to purchase item"));
+            player.sendSystemMessage(Component.literal("§cFailed to purchase item: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Checks if player has enough inventory space for the given item
+     */
+    private boolean hasInventorySpace(ItemStack itemStack) {
+        // Check for empty slots
+        if (player.getInventory().getFreeSlot() != -1) {
+            return true;
+        }
+        
+        // Check if can stack in existing slots
+        int remainingCount = itemStack.getCount();
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack slotStack = player.getInventory().getItem(i);
+            if (!slotStack.isEmpty() && ItemStack.isSameItemSameComponents(slotStack, itemStack)) {
+                int spaceInSlot = slotStack.getMaxStackSize() - slotStack.getCount();
+                if (spaceInSlot > 0) {
+                    remainingCount -= spaceInSlot;
+                    if (remainingCount <= 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Refreshes the shop interface
+     */
+    private void refreshShopInterface() {
+        try {
+            var server = player.getServer();
+            if (server != null) {
+                server.execute(() -> {
+                    try {
+                        EnhancedShopInterface.openShop(player, economyManager, mode, targetPlayer, currentPage);
+                    } catch (Exception e) {
+                        NeoEssentials.LOGGER.error("Error refreshing shop interface", e);
+                    }
+                });
+            } else {
+                EnhancedShopInterface.openShop(player, economyManager, mode, targetPlayer, currentPage);
+            }
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error refreshing shop interface", e);
         }
     }
     
@@ -329,11 +417,34 @@ public class EnhancedShopMenu extends ChestMenu {
     
     private void handleCreateShopItem() {
         try {
+            // Check if economy system is enabled
+            if (!economyManager.isEnabled()) {
+                player.sendSystemMessage(Component.literal("§cEconomy system is disabled"));
+                return;
+            }
+            
             // Check if player is holding an item
             ItemStack heldItem = player.getMainHandItem();
             
             if (heldItem.isEmpty()) {
                 player.sendSystemMessage(Component.literal("§cYou must be holding an item to create a shop listing"));
+                return;
+            }
+            
+            // Check if item is valid for shop
+            if (!isValidShopItem(heldItem)) {
+                player.sendSystemMessage(Component.literal("§cThis item cannot be sold in the shop"));
+                return;
+            }
+            
+            // Check if player has reached listing limit
+            ShopManager shopManager = economyManager.getShopManager();
+            long playerListings = shopManager.getAllItems().stream()
+                .filter(item -> item.getCreatedBy() != null && item.getCreatedBy().equals(player.getUUID()))
+                .count();
+            
+            if (playerListings >= 50) {
+                player.sendSystemMessage(Component.literal("§cYou have reached the maximum number of shop listings (50)"));
                 return;
             }
             
@@ -345,7 +456,12 @@ public class EnhancedShopMenu extends ChestMenu {
                 var server = player.getServer();
                 if (server != null) {
                     server.execute(() -> {
-                        ShopCreationInterface.openShopCreation(player, economyManager);
+                        try {
+                            ShopCreationInterface.openShopCreation(player, economyManager);
+                        } catch (Exception e) {
+                            NeoEssentials.LOGGER.error("Error opening shop creation interface", e);
+                            player.sendSystemMessage(Component.literal("§cError opening shop creation interface"));
+                        }
                     });
                 } else {
                     ShopCreationInterface.openShopCreation(player, economyManager);
@@ -357,8 +473,34 @@ public class EnhancedShopMenu extends ChestMenu {
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error creating shop item", e);
-            player.sendSystemMessage(Component.literal("§cFailed to create shop item"));
+            player.sendSystemMessage(Component.literal("§cFailed to create shop item: " + e.getMessage()));
         }
+    }
+    
+    /**
+     * Validates if an item can be sold in the shop
+     */
+    private boolean isValidShopItem(ItemStack item) {
+        if (item.isEmpty()) return false;
+        
+        // Blacklist certain items
+        String itemId = item.getItem().toString();
+        if (itemId.contains("spawn_egg") || 
+            itemId.contains("command_block") || 
+            itemId.contains("barrier") ||
+            itemId.contains("structure_block") ||
+            itemId.contains("debug_stick") ||
+            itemId.contains("knowledge_book")) {
+            return false;
+        }
+        
+        // Check if item has components that make it unsuitable for shop
+        if (item.has(DataComponents.WRITTEN_BOOK_CONTENT) || 
+            item.has(DataComponents.WRITABLE_BOOK_CONTENT)) {
+            return false;
+        }
+        
+        return true;
     }
     
     @Override

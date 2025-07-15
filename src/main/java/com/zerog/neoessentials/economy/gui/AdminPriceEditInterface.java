@@ -221,19 +221,44 @@ public class AdminPriceEditInterface {
                 String priceStr = itemName.replace("Set Price: ", "").replace("$", "").replace(",", "");
                 double price = Double.parseDouble(priceStr);
                 
+                if (price <= 0) {
+                    player.sendSystemMessage(Component.literal("§cPrice must be greater than 0"));
+                    return;
+                }
+                
+                if (price > 1000000) {
+                    player.sendSystemMessage(Component.literal("§cPrice cannot exceed 1,000,000"));
+                    return;
+                }
+                
                 // Set price based on current type
+                boolean priceSet = false;
                 if (currentType == ShopItem.Type.BUY || currentType == ShopItem.Type.BOTH) {
                     currentBuyPrice = price;
+                    priceSet = true;
                 }
                 if (currentType == ShopItem.Type.SELL || currentType == ShopItem.Type.BOTH) {
                     currentSellPrice = price;
+                    priceSet = true;
                 }
                 
-                player.sendSystemMessage(Component.literal("§aSet price to " + 
-                    economyManager.getDefaultCurrency().format(BigDecimal.valueOf(price))));
+                if (priceSet) {
+                    player.sendSystemMessage(Component.literal("§aSet price to " + 
+                        economyManager.getDefaultCurrency().format(BigDecimal.valueOf(price))));
+                    
+                    // Update the interface display
+                    updatePriceDisplay();
+                } else {
+                    player.sendSystemMessage(Component.literal("§cNo valid price type selected"));
+                }
                 
             } catch (NumberFormatException e) {
                 player.sendSystemMessage(Component.literal("§cInvalid price format"));
+                NeoEssentials.LOGGER.warn("Admin {} provided invalid price format: {}", 
+                    player.getName().getString(), itemName);
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error handling preset price", e);
+                player.sendSystemMessage(Component.literal("§cError setting price"));
             }
         }
         
@@ -267,42 +292,134 @@ public class AdminPriceEditInterface {
         
         private void handleSaveChanges() {
             try {
+                // Validate economy system is still enabled
+                if (!economyManager.isEnabled()) {
+                    player.sendSystemMessage(Component.literal("§cEconomy system is disabled"));
+                    return;
+                }
+                
+                // Validate prices
+                if (currentType == ShopItem.Type.BUY || currentType == ShopItem.Type.BOTH) {
+                    if (currentBuyPrice <= 0) {
+                        player.sendSystemMessage(Component.literal("§cBuy price must be greater than 0"));
+                        return;
+                    }
+                    if (currentBuyPrice > 1000000) {
+                        player.sendSystemMessage(Component.literal("§cBuy price cannot exceed 1,000,000"));
+                        return;
+                    }
+                }
+                
+                if (currentType == ShopItem.Type.SELL || currentType == ShopItem.Type.BOTH) {
+                    if (currentSellPrice <= 0) {
+                        player.sendSystemMessage(Component.literal("§cSell price must be greater than 0"));
+                        return;
+                    }
+                    if (currentSellPrice > 1000000) {
+                        player.sendSystemMessage(Component.literal("§cSell price cannot exceed 1,000,000"));
+                        return;
+                    }
+                }
+                
+                // Validate buy price isn't lower than sell price for admin items
+                if (currentType == ShopItem.Type.BOTH) {
+                    if (currentBuyPrice < currentSellPrice) {
+                        player.sendSystemMessage(Component.literal("§cBuy price should be higher than sell price"));
+                        player.sendSystemMessage(Component.literal("§7Buy: " + currentBuyPrice + ", Sell: " + currentSellPrice));
+                        return;
+                    }
+                }
+                
                 ShopManager shopManager = economyManager.getShopManager();
                 
-                // Create updated item
-                ShopItem updatedItem = new ShopItem.Builder()
+                // Create updated item with validation
+                ShopItem.Builder builder = new ShopItem.Builder()
                     .id(originalItem.getId())
                     .itemStack(originalItem.getItemStack())
                     .type(currentType)
-                    .buyPrice(currentType == ShopItem.Type.BUY || currentType == ShopItem.Type.BOTH ? 
-                        BigDecimal.valueOf(currentBuyPrice) : null)
-                    .sellPrice((currentType == ShopItem.Type.SELL || currentType == ShopItem.Type.BOTH) && currentSellPrice > 0 ? 
-                        BigDecimal.valueOf(currentSellPrice) : null)
                     .currency(originalItem.getCurrency())
                     .stock(originalItem.getStock())
                     .maxStock(originalItem.getMaxStock())
                     .createdBy(originalItem.getCreatedBy())
                     .createdAt(originalItem.getCreatedAt())
                     .description(originalItem.getDescription())
-                    .adminItem(originalItem.isAdminItem())
-                    .build();
+                    .adminItem(originalItem.isAdminItem());
                 
-                // Update in shop
-                if (shopManager.removeShopItem(originalItem.getId()) && shopManager.addShopItem(updatedItem)) {
-                    player.sendSystemMessage(Component.literal("§aSuccessfully updated " + 
-                        originalItem.getItemStack().getHoverName().getString()));
-                    
-                    // Close and return to admin shop
-                    player.closeContainer();
-                    AdminShopManagementInterface.openAdminShopManagement(player, economyManager);
+                // Set prices based on type
+                if (currentType == ShopItem.Type.BUY || currentType == ShopItem.Type.BOTH) {
+                    builder.buyPrice(BigDecimal.valueOf(currentBuyPrice));
+                }
+                if (currentType == ShopItem.Type.SELL || currentType == ShopItem.Type.BOTH) {
+                    builder.sellPrice(BigDecimal.valueOf(currentSellPrice));
+                }
+                
+                ShopItem updatedItem = builder.build();
+                
+                // Validate the created item
+                if (!validateUpdatedItem(updatedItem)) {
+                    player.sendSystemMessage(Component.literal("§cItem validation failed"));
+                    return;
+                }
+                
+                // Update in shop atomically
+                if (shopManager.removeShopItem(originalItem.getId())) {
+                    if (shopManager.safeAddShopItem(updatedItem)) {
+                        player.sendSystemMessage(Component.literal("§aSuccessfully updated " + 
+                            originalItem.getItemStack().getHoverName().getString()));
+                        
+                        // Log the change
+                        NeoEssentials.LOGGER.info("Admin {} updated item {} - Type: {}, Buy: {}, Sell: {}", 
+                            player.getName().getString(), 
+                            originalItem.getItemStack().getHoverName().getString(),
+                            currentType,
+                            currentType == ShopItem.Type.BUY || currentType == ShopItem.Type.BOTH ? 
+                                economyManager.getDefaultCurrency().format(BigDecimal.valueOf(currentBuyPrice)) : "N/A",
+                            currentType == ShopItem.Type.SELL || currentType == ShopItem.Type.BOTH ? 
+                                economyManager.getDefaultCurrency().format(BigDecimal.valueOf(currentSellPrice)) : "N/A");
+                        
+                        // Close and return to admin shop
+                        player.closeContainer();
+                        player.getServer().execute(() -> {
+                            try {
+                                AdminShopManagementInterface.openAdminShopManagement(player, economyManager);
+                            } catch (Exception e) {
+                                NeoEssentials.LOGGER.error("Error opening admin shop management", e);
+                            }
+                        });
+                    } else {
+                        // Failed to add updated item, try to restore original
+                        shopManager.safeAddShopItem(originalItem);
+                        player.sendSystemMessage(Component.literal("§cFailed to update item - changes reverted"));
+                    }
                 } else {
-                    player.sendSystemMessage(Component.literal("§cFailed to update item"));
+                    player.sendSystemMessage(Component.literal("§cFailed to update item - original item not found"));
                 }
                 
             } catch (Exception e) {
-                NeoEssentials.LOGGER.error("Error saving changes", e);
-                player.sendSystemMessage(Component.literal("§cError saving changes"));
+                NeoEssentials.LOGGER.error("Error saving changes for admin item", e);
+                player.sendSystemMessage(Component.literal("§cError saving changes: " + e.getMessage()));
             }
+        }
+        
+        /**
+         * Validates the updated item before saving
+         */
+        private boolean validateUpdatedItem(ShopItem item) {
+            if (item == null) return false;
+            if (item.getItemStack() == null || item.getItemStack().isEmpty()) return false;
+            if (item.getBuyPrice() != null && item.getBuyPrice().compareTo(BigDecimal.ZERO) <= 0) return false;
+            if (item.getSellPrice() != null && item.getSellPrice().compareTo(BigDecimal.ZERO) <= 0) return false;
+            
+            return true;
+        }
+        
+        /**
+         * Updates the price display in the interface
+         */
+        private void updatePriceDisplay() {
+            // This could be implemented to show current prices in the interface
+            // For now, we'll just update the toggle buttons
+            updateInterface();
         }
         
         private void handleCancel() {
