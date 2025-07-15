@@ -91,6 +91,51 @@ public class ShopItem {
     public boolean canAddStock() { return stock < maxStock; }
     
     /**
+     * Validates that this shop item is properly configured and usable
+     */
+    public boolean isValid() {
+        try {
+            // Basic null checks
+            if (id == null || itemStack == null || itemStack.isEmpty()) {
+                return false;
+            }
+            
+            if (type == null || currency == null || createdAt == null) {
+                return false;
+            }
+            
+            // Validate prices
+            if (canBuy() && (buyPrice == null || buyPrice.compareTo(BigDecimal.ZERO) <= 0)) {
+                return false;
+            }
+            
+            if (canSell() && (sellPrice == null || sellPrice.compareTo(BigDecimal.ZERO) <= 0)) {
+                return false;
+            }
+            
+            // Validate stock for non-admin items
+            if (!adminItem && stock < 0) {
+                return false;
+            }
+            
+            // Validate max stock
+            if (!adminItem && maxStock < 0) {
+                return false;
+            }
+            
+            // For non-admin items, stock should not exceed max stock
+            if (!adminItem && stock > maxStock) {
+                return false;
+            }
+            
+            return true;
+            
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    /**
      * Creates a new ShopItem with updated stock
      */
     public ShopItem withStock(int newStock) {
