@@ -23,7 +23,7 @@ public class SqliteEconomyStorage implements EconomyStorage {
     private boolean initialized = false;
     
     public SqliteEconomyStorage(Path dataDirectory) {
-        this.databaseFile = dataDirectory.resolve("economy.db");
+        this.databaseFile = dataDirectory.resolve("neoessentials_economy.db");
         this.backupDirectory = dataDirectory.resolve("backups");
     }
     
@@ -37,8 +37,13 @@ public class SqliteEconomyStorage implements EconomyStorage {
             // Load SQLite JDBC driver
             Class.forName("org.sqlite.JDBC");
             
-            // Connect to database
-            connection = DriverManager.getConnection("jdbc:sqlite:" + databaseFile.toAbsolutePath());
+            // Connect to database with retry mechanism
+            connection = connectWithRetry();
+            if (connection == null) {
+                NeoEssentials.LOGGER.error("Failed to connect to SQLite database after multiple attempts");
+                return false;
+            }
+            
             connection.setAutoCommit(true);
             
             // Create tables
@@ -613,6 +618,19 @@ public class SqliteEconomyStorage implements EconomyStorage {
      */
     private void migrateCurrencyColumn() throws SQLException {
         try {
+            NeoEssentials.LOGGER.info("Starting migration of account_balances table...");
+            
+            // Check if migration is needed
+            String checkNewTable = "SELECT name FROM sqlite_master WHERE type='table' AND name='account_balances_new'";
+            try (PreparedStatement stmt = connection.prepareStatement(checkNewTable)) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        NeoEssentials.LOGGER.info("Migration table already exists, cleaning up...");
+                        connection.prepareStatement("DROP TABLE IF EXISTS account_balances_new").executeUpdate();
+                    }
+                }
+            }
+            
             connection.setAutoCommit(false);
             
             // Create new table with correct schema
@@ -629,6 +647,7 @@ public class SqliteEconomyStorage implements EconomyStorage {
             
             try (PreparedStatement stmt = connection.prepareStatement(createNewTable)) {
                 stmt.executeUpdate();
+                NeoEssentials.LOGGER.info("Created new account_balances table");
             }
             
             // Copy data from old table to new table (convert currency_id to currency_name)
@@ -638,29 +657,42 @@ public class SqliteEconomyStorage implements EconomyStorage {
                 """;
             
             try (PreparedStatement stmt = connection.prepareStatement(copyDataSql)) {
-                stmt.executeUpdate();
+                int rows = stmt.executeUpdate();
+                NeoEssentials.LOGGER.info("Copied {} rows to new table", rows);
             }
             
             // Drop old table
             String dropOldTable = "DROP TABLE account_balances";
             try (PreparedStatement stmt = connection.prepareStatement(dropOldTable)) {
                 stmt.executeUpdate();
+                NeoEssentials.LOGGER.info("Dropped old account_balances table");
             }
             
             // Rename new table to old table name
             String renameTable = "ALTER TABLE account_balances_new RENAME TO account_balances";
             try (PreparedStatement stmt = connection.prepareStatement(renameTable)) {
                 stmt.executeUpdate();
+                NeoEssentials.LOGGER.info("Renamed new table to account_balances");
             }
             
             connection.commit();
             NeoEssentials.LOGGER.info("Successfully migrated account_balances table");
             
         } catch (SQLException e) {
-            connection.rollback();
+            NeoEssentials.LOGGER.error("Migration failed with error: {}", e.getMessage());
+            try {
+                connection.rollback();
+                NeoEssentials.LOGGER.info("Migration rolled back successfully");
+            } catch (SQLException rollbackE) {
+                NeoEssentials.LOGGER.error("Failed to rollback migration", rollbackE);
+            }
             throw e;
         } finally {
-            connection.setAutoCommit(true);
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                NeoEssentials.LOGGER.error("Failed to reset auto-commit mode", e);
+            }
         }
     }
     
@@ -669,6 +701,19 @@ public class SqliteEconomyStorage implements EconomyStorage {
      */
     private void migrateTransactionsTable() throws SQLException {
         try {
+            NeoEssentials.LOGGER.info("Starting migration of transactions table...");
+            
+            // Check if migration is needed
+            String checkNewTable = "SELECT name FROM sqlite_master WHERE type='table' AND name='transactions_new'";
+            try (PreparedStatement stmt = connection.prepareStatement(checkNewTable)) {
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        NeoEssentials.LOGGER.info("Migration table already exists, cleaning up...");
+                        connection.prepareStatement("DROP TABLE IF EXISTS transactions_new").executeUpdate();
+                    }
+                }
+            }
+            
             connection.setAutoCommit(false);
             
             // Create new table with correct schema
@@ -687,6 +732,7 @@ public class SqliteEconomyStorage implements EconomyStorage {
             
             try (PreparedStatement stmt = connection.prepareStatement(createNewTable)) {
                 stmt.executeUpdate();
+                NeoEssentials.LOGGER.info("Created new transactions table");
             }
             
             // Copy data from old table to new table (convert currency_id to currency_name)
@@ -696,29 +742,42 @@ public class SqliteEconomyStorage implements EconomyStorage {
                 """;
             
             try (PreparedStatement stmt = connection.prepareStatement(copyDataSql)) {
-                stmt.executeUpdate();
+                int rows = stmt.executeUpdate();
+                NeoEssentials.LOGGER.info("Copied {} rows to new transactions table", rows);
             }
             
             // Drop old table
             String dropOldTable = "DROP TABLE transactions";
             try (PreparedStatement stmt = connection.prepareStatement(dropOldTable)) {
                 stmt.executeUpdate();
+                NeoEssentials.LOGGER.info("Dropped old transactions table");
             }
             
             // Rename new table to old table name
             String renameTable = "ALTER TABLE transactions_new RENAME TO transactions";
             try (PreparedStatement stmt = connection.prepareStatement(renameTable)) {
                 stmt.executeUpdate();
+                NeoEssentials.LOGGER.info("Renamed new table to transactions");
             }
             
             connection.commit();
             NeoEssentials.LOGGER.info("Successfully migrated transactions table");
             
         } catch (SQLException e) {
-            connection.rollback();
+            NeoEssentials.LOGGER.error("Transactions migration failed with error: {}", e.getMessage());
+            try {
+                connection.rollback();
+                NeoEssentials.LOGGER.info("Transactions migration rolled back successfully");
+            } catch (SQLException rollbackE) {
+                NeoEssentials.LOGGER.error("Failed to rollback transactions migration", rollbackE);
+            }
             throw e;
         } finally {
-            connection.setAutoCommit(true);
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                NeoEssentials.LOGGER.error("Failed to reset auto-commit mode after transactions migration", e);
+            }
         }
     }
     
@@ -856,5 +915,52 @@ public class SqliteEconomyStorage implements EconomyStorage {
                 .type(type)
                 .description(description)
                 .build();
+    }
+    
+    /**
+     * Connects to the database with retry mechanism to handle database locks
+     */
+    private Connection connectWithRetry() {
+        int maxRetries = 5;
+        int retryDelay = 1000; // 1 second
+        
+        for (int i = 0; i < maxRetries; i++) {
+            try {
+                String url = "jdbc:sqlite:" + databaseFile.toAbsolutePath();
+                Connection conn = DriverManager.getConnection(url);
+                
+                // Configure SQLite for better concurrent access
+                conn.setAutoCommit(true);
+                
+                // Set SQLite pragmas for better performance and concurrency
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("PRAGMA journal_mode=WAL");
+                    stmt.execute("PRAGMA synchronous=NORMAL");
+                    stmt.execute("PRAGMA cache_size=10000");
+                    stmt.execute("PRAGMA temp_store=MEMORY");
+                    stmt.execute("PRAGMA busy_timeout=30000");
+                }
+                
+                NeoEssentials.LOGGER.info("Successfully connected to SQLite database: {}", databaseFile.toAbsolutePath());
+                return conn;
+                
+            } catch (SQLException e) {
+                NeoEssentials.LOGGER.warn("Database connection attempt {} failed: {}", i + 1, e.getMessage());
+                
+                if (i < maxRetries - 1) {
+                    try {
+                        Thread.sleep(retryDelay);
+                        retryDelay *= 2; // Exponential backoff
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        NeoEssentials.LOGGER.error("Connection retry interrupted");
+                        return null;
+                    }
+                }
+            }
+        }
+        
+        NeoEssentials.LOGGER.error("Failed to connect to database after {} attempts", maxRetries);
+        return null;
     }
 }
