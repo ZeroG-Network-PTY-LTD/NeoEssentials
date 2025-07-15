@@ -99,6 +99,24 @@ public class EconomyCommands {
                         .executes(EconomyCommands::resetPlayerBalance)
                     )
                 )
+                .then(Commands.literal("status")
+                    .executes(EconomyCommands::showEconomyStatus)
+                )
+                .then(Commands.literal("diagnostics")
+                    .executes(EconomyCommands::runEconomyDiagnostics)
+                )
+                .then(Commands.literal("enable")
+                    .executes(EconomyCommands::forceEnableEconomy)
+                )
+                .then(Commands.literal("disable")
+                    .executes(EconomyCommands::forceDisableEconomy)
+                )
+                .then(Commands.literal("reload")
+                    .executes(EconomyCommands::reloadEconomy)
+                )
+                .then(Commands.literal("validate")
+                    .executes(EconomyCommands::validateEconomySystem)
+                )
         );
         
         // Economy main menu command
@@ -338,6 +356,162 @@ public class EconomyCommands {
         context.getSource().sendSuccess(() -> Component.literal("Economy menu GUI coming soon!"), false);
         
         return 1;
+    }
+    
+    /**
+     * Shows economy system status
+     */
+    private static int showEconomyStatus(CommandContext<CommandSourceStack> context) {
+        EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
+        
+        try {
+            sendInfoMessage(context.getSource(), "Economy System Status:");
+            sendInfoMessage(context.getSource(), "Enabled: " + (economyManager != null ? "§aYes" : "§cNo"));
+            sendInfoMessage(context.getSource(), "Total Accounts: " + (economyManager != null ? economyManager.getTotalAccounts() : 0));
+            sendInfoMessage(context.getSource(), "Storage Type: " + (economyManager != null ? economyManager.getStorageType() : "Unknown"));
+            return 1;
+        } catch (Exception e) {
+            sendErrorMessage(context.getSource(), "Error getting economy status: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Runs comprehensive economy diagnostics
+     */
+    private static int runEconomyDiagnostics(CommandContext<CommandSourceStack> context) {
+        EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
+        
+        if (economyManager == null) {
+            sendErrorMessage(context.getSource(), "Economy manager is not available");
+            return 0;
+        }
+        
+        try {
+            sendInfoMessage(context.getSource(), "Running comprehensive economy diagnostics...");
+            
+            List<String> diagnostics = economyManager.performSystemDiagnostics();
+            
+            for (String diagnostic : diagnostics) {
+                sendInfoMessage(context.getSource(), diagnostic);
+            }
+            
+            sendSuccessMessage(context.getSource(), "Diagnostics completed successfully");
+            return 1;
+            
+        } catch (Exception e) {
+            sendErrorMessage(context.getSource(), "Error running diagnostics: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Force enables the economy system
+     */
+    private static int forceEnableEconomy(CommandContext<CommandSourceStack> context) {
+        EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
+        
+        if (economyManager == null) {
+            sendErrorMessage(context.getSource(), "Economy manager is not available");
+            return 0;
+        }
+        
+        try {
+            boolean success = economyManager.forceEnable();
+            if (success) {
+                sendSuccessMessage(context.getSource(), "Economy system force enabled");
+                return 1;
+            } else {
+                sendErrorMessage(context.getSource(), "Failed to force enable economy system");
+                return 0;
+            }
+        } catch (Exception e) {
+            sendErrorMessage(context.getSource(), "Error force enabling economy: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Force disables the economy system
+     */
+    private static int forceDisableEconomy(CommandContext<CommandSourceStack> context) {
+        EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
+        
+        if (economyManager == null) {
+            sendErrorMessage(context.getSource(), "Economy manager is not available");
+            return 0;
+        }
+        
+        try {
+            boolean success = economyManager.forceDisable();
+            if (success) {
+                sendSuccessMessage(context.getSource(), "Economy system force disabled");
+                return 1;
+            } else {
+                sendErrorMessage(context.getSource(), "Failed to force disable economy system");
+                return 0;
+            }
+        } catch (Exception e) {
+            sendErrorMessage(context.getSource(), "Error force disabling economy: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Reloads the economy system
+     */
+    private static int reloadEconomy(CommandContext<CommandSourceStack> context) {
+        EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
+        
+        if (economyManager == null) {
+            sendErrorMessage(context.getSource(), "Economy manager is not available");
+            return 0;
+        }
+        
+        try {
+            sendInfoMessage(context.getSource(), "Reloading economy system...");
+            boolean success = economyManager.reload();
+            
+            if (success) {
+                sendSuccessMessage(context.getSource(), "Economy system reloaded successfully");
+                return 1;
+            } else {
+                sendErrorMessage(context.getSource(), "Failed to reload economy system");
+                return 0;
+            }
+        } catch (Exception e) {
+            sendErrorMessage(context.getSource(), "Error reloading economy: " + e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Validates the economy system integrity
+     */
+    private static int validateEconomySystem(CommandContext<CommandSourceStack> context) {
+        EconomyManager economyManager = NeoEssentials.getInstance().getEconomyManager();
+        
+        if (economyManager == null) {
+            sendErrorMessage(context.getSource(), "Economy manager is not available");
+            return 0;
+        }
+        
+        try {
+            sendInfoMessage(context.getSource(), "Validating economy system...");
+            
+            boolean isValid = economyManager.validateStorageFunctionality();
+            
+            if (isValid) {
+                sendSuccessMessage(context.getSource(), "Economy system validation passed");
+                return 1;
+            } else {
+                sendErrorMessage(context.getSource(), "Economy system validation failed");
+                return 0;
+            }
+        } catch (Exception e) {
+            sendErrorMessage(context.getSource(), "Error validating economy: " + e.getMessage());
+            return 0;
+        }
     }
     
     /**
