@@ -23,7 +23,11 @@ public class SqliteEconomyStorage implements EconomyStorage {
     private boolean initialized = false;
     
     public SqliteEconomyStorage(Path dataDirectory) {
+<<<<<<< HEAD
         this.databaseFile = dataDirectory.resolve("neoessentials_economy.db");
+=======
+        this.databaseFile = dataDirectory.resolve("economy.db");
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         this.backupDirectory = dataDirectory.resolve("backups");
     }
     
@@ -37,6 +41,7 @@ public class SqliteEconomyStorage implements EconomyStorage {
             // Load SQLite JDBC driver
             Class.forName("org.sqlite.JDBC");
             
+<<<<<<< HEAD
             // Connect to database with retry mechanism
             connection = connectWithRetry();
             if (connection == null) {
@@ -44,6 +49,10 @@ public class SqliteEconomyStorage implements EconomyStorage {
                 return false;
             }
             
+=======
+            // Connect to database
+            connection = DriverManager.getConnection("jdbc:sqlite:" + databaseFile.toAbsolutePath());
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             connection.setAutoCommit(true);
             
             // Create tables
@@ -242,7 +251,11 @@ public class SqliteEconomyStorage implements EconomyStorage {
         if (!initialized) return false;
         
         String sql = """
+<<<<<<< HEAD
             INSERT INTO transactions (id, from_account, to_account, amount, currency_name, type, description, timestamp)
+=======
+            INSERT INTO transactions (id, from_account, to_account, amount, currency_id, type, description, timestamp)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
         
@@ -251,7 +264,11 @@ public class SqliteEconomyStorage implements EconomyStorage {
             stmt.setString(2, transaction.getFromAccount().toString());
             stmt.setString(3, transaction.getToAccount().toString());
             stmt.setBigDecimal(4, transaction.getAmount());
+<<<<<<< HEAD
             stmt.setString(5, transaction.getCurrency().getName());
+=======
+            stmt.setString(5, transaction.getCurrency().getId());
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             stmt.setString(6, transaction.getType().name());
             stmt.setString(7, transaction.getDescription());
             stmt.setLong(8, java.time.ZoneOffset.UTC.getRules().getOffset(transaction.getTimestamp()).getTotalSeconds());
@@ -544,6 +561,7 @@ public class SqliteEconomyStorage implements EconomyStorage {
         }
     }
     
+<<<<<<< HEAD
     /**
      * Migrates the database schema if needed
      */
@@ -785,6 +803,9 @@ public class SqliteEconomyStorage implements EconomyStorage {
         // Check if we need to migrate the database
         migrateDatabaseIfNeeded();
         
+=======
+    private void createTables() throws SQLException {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Create accounts table - simplified for the current data structure
         String accountsTable = """
             CREATE TABLE IF NOT EXISTS accounts (
@@ -802,7 +823,11 @@ public class SqliteEconomyStorage implements EconomyStorage {
                 from_account TEXT NOT NULL,
                 to_account TEXT NOT NULL,
                 amount DECIMAL(20,2) NOT NULL,
+<<<<<<< HEAD
                 currency_name TEXT NOT NULL,
+=======
+                currency_id TEXT NOT NULL,
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 type TEXT NOT NULL,
                 description TEXT,
                 timestamp INTEGER NOT NULL
@@ -813,10 +838,16 @@ public class SqliteEconomyStorage implements EconomyStorage {
         String balancesTable = """
             CREATE TABLE IF NOT EXISTS account_balances (
                 player_id TEXT NOT NULL,
+<<<<<<< HEAD
                 currency_name TEXT NOT NULL,
                 balance DECIMAL(20,2) NOT NULL DEFAULT 0.00,
                 updated_at INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (player_id, currency_name),
+=======
+                currency_id TEXT NOT NULL,
+                balance DECIMAL(20,2) NOT NULL DEFAULT 0.00,
+                PRIMARY KEY (player_id, currency_id),
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 FOREIGN KEY (player_id) REFERENCES accounts(player_id) ON DELETE CASCADE
             )
             """;
@@ -899,12 +930,20 @@ public class SqliteEconomyStorage implements EconomyStorage {
         UUID fromAccount = UUID.fromString(rs.getString("from_account"));
         UUID toAccount = UUID.fromString(rs.getString("to_account"));
         BigDecimal amount = rs.getBigDecimal("amount");
+<<<<<<< HEAD
         String currencyName = rs.getString("currency_name");
+=======
+        String currencyId = rs.getString("currency_id");
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         Transaction.Type type = Transaction.Type.valueOf(rs.getString("type"));
         String description = rs.getString("description");
         
         // Create a basic currency - in practice this should be loaded from config
+<<<<<<< HEAD
         Currency currency = Currency.createBasic(currencyName, currencyName, "$", currencyName + "s");
+=======
+        Currency currency = Currency.createBasic(currencyId, currencyId, "$", currencyId + "s");
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         return Transaction.builder()
                 .id(id)
@@ -916,6 +955,7 @@ public class SqliteEconomyStorage implements EconomyStorage {
                 .description(description)
                 .build();
     }
+<<<<<<< HEAD
     
     /**
      * Connects to the database with retry mechanism to handle database locks
@@ -963,4 +1003,6 @@ public class SqliteEconomyStorage implements EconomyStorage {
         NeoEssentials.LOGGER.error("Failed to connect to database after {} attempts", maxRetries);
         return null;
     }
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }

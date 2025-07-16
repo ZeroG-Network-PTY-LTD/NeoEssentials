@@ -2,11 +2,15 @@ package com.zerog.neoessentials.utils;
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
+<<<<<<< HEAD
 =======
 =======
 import net.minecraft.network.chat.ClickEvent;
@@ -20,6 +24,8 @@ import net.minecraft.ChatFormatting;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -122,13 +128,17 @@ public class MessageUtil {
     /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Adds hover text to a component
      * 
      * @param component The component to add hover text to
      * @param hoverText The hover text to add
      * @return The component with hover text
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
      */    public static MutableComponent addHoverText(MutableComponent component, MutableComponent hoverText) {
@@ -145,6 +155,11 @@ public class MessageUtil {
         return component.withStyle(style -> style.withHoverEvent(new HoverEvent(
                 HoverEvent.Action.SHOW_TEXT, 
 >>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
+=======
+     */    public static MutableComponent addHoverText(MutableComponent component, MutableComponent hoverText) {
+        return component.withStyle(style -> style.withHoverEvent(new HoverEvent(
+                HoverEvent.Action.SHOW_TEXT, 
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 hoverText)));
     }
     
@@ -158,6 +173,7 @@ public class MessageUtil {
     public static MutableComponent makeClickableCommand(MutableComponent component, String command) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         return component.withStyle(style -> style.withClickEvent(new ClickEvent(
                 ClickEvent.Action.RUN_COMMAND, 
 =======
@@ -168,6 +184,10 @@ public class MessageUtil {
         return component.withStyle(style -> style.withClickEvent(new ClickEvent(
                 ClickEvent.Action.RUN_COMMAND, 
 >>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
+=======
+        return component.withStyle(style -> style.withClickEvent(new ClickEvent(
+                ClickEvent.Action.RUN_COMMAND, 
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 command)));
     }
     
@@ -181,6 +201,9 @@ public class MessageUtil {
     public static MutableComponent makeSuggestCommand(MutableComponent component, String command) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         return component.withStyle(style -> style.withClickEvent(new ClickEvent(
                 ClickEvent.Action.SUGGEST_COMMAND, 
                 command)));
@@ -196,6 +219,7 @@ public class MessageUtil {
     }
     
     /**
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
@@ -210,11 +234,14 @@ public class MessageUtil {
     
     /**
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Translates standard '&' color codes to Minecraft's internal format
      * 
      * @param message The message with '&' color codes
      * @return The message with Minecraft internal color codes
      */
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     public static String translateColorCodes(String message) {
@@ -224,6 +251,9 @@ public class MessageUtil {
 =======
     public static String translateColorCodes(String message) {
 >>>>>>> 7058369 (feat: Update migration tasks and enhance tablist documentation; refactor permission checks in AdminPanelCommand and CommandManager)
+=======
+    public static String translateColorCodes(String message) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         char colorChar = '&';
         char[] array = message.toCharArray();
         

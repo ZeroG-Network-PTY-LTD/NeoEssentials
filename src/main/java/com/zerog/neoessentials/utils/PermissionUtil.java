@@ -3,6 +3,7 @@ package com.zerog.neoessentials.utils;
 import com.zerog.neoessentials.NeoEssentials;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.config.CompatNeoEssentialsConfig;
 =======
 import com.zerog.neoessentials.config.NeoEssentialsConfig;
@@ -19,6 +20,20 @@ import java.util.UUID;
 
 /**
  * Utility class for handling permission checks with integration for LuckPerms and FTB Ranks.
+=======
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
+
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * Utility class for handling permission checks with integration for LuckPerms.
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
  * This provides a centralized way to check permissions throughout the mod.
  */
 public class PermissionUtil {
@@ -49,13 +64,20 @@ public class PermissionUtil {
     
     /**
      * Check if a command source has a specific permission.
+<<<<<<< HEAD
      * Will check LuckPerms, FTB Ranks, and then fall back to config defaults.
+=======
+     * Will check LuckPerms and then fall back to config defaults.
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      *
      * @param source The command source to check
      * @param permission The permission string to check
      * @return True if the source has the permission, false otherwise
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      */    public static boolean hasPermission(CommandSourceStack source, String permission) {
         boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
         
@@ -65,6 +87,7 @@ public class PermissionUtil {
                 NeoEssentials.LOGGER.debug("Permission '{}' granted to operator {}", 
                     permission, source.getTextName());
             }
+<<<<<<< HEAD
 =======
      */
     public static boolean hasPermission(CommandSourceStack source, String permission) {
@@ -82,6 +105,8 @@ public class PermissionUtil {
                     permission, source.getTextName());
             }
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return true;
         }
         
@@ -89,23 +114,30 @@ public class PermissionUtil {
         if (!(source.getEntity() instanceof ServerPlayer player)) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             if (debug) {
                 NeoEssentials.LOGGER.debug("Permission '{}' denied for non-player source {}", 
                     permission, source.getTextName());
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return false;
         }
         
         UUID uuid = player.getUUID();
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         String playerName = player.getScoreboardName();
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
@@ -182,6 +214,8 @@ public class PermissionUtil {
         }
         
         UUID uuid = player.getUUID();
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         String playerName = player.getScoreboardName();
         
         // Update last access time
@@ -208,10 +242,13 @@ public class PermissionUtil {
                 permission, hasPermission, playerName);
         }
         
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Cache the result
         playerCache.put(permission, new PermissionResult(hasPermission));
         
@@ -222,6 +259,7 @@ public class PermissionUtil {
         
         return hasPermission;
     }
+<<<<<<< HEAD
 <<<<<<< HEAD
     
     /**
@@ -310,6 +348,11 @@ public class PermissionUtil {
 =======
      * Check if a player has a specific permission.
      * Will check LuckPerms, FTB Ranks, and then fall back to config defaults.
+=======
+      /**
+     * Check if a player has a specific permission.
+     * Will check LuckPerms and then fall back to config defaults.
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      *
      * @param player The player to check
      * @param permission The permission string to check
@@ -441,18 +484,71 @@ public class PermissionUtil {
         return result;
     }
       /**
+<<<<<<< HEAD
 >>>>>>> 16744a4 (feat: Add comprehensive compilation fixes documentation; detail issues resolved and future recommendations)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Direct permission check for a player without caching
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if the player has the permission, false otherwise
+<<<<<<< HEAD
      */
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
 >>>>>>> 16744a4 (feat: Add comprehensive compilation fixes documentation; detail issues resolved and future recommendations)
     static boolean checkPermission(ServerPlayer player, String permission) {
+=======
+     */    static boolean checkPermission(ServerPlayer player, String permission) {
+        boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
+        String playerName = player.getScoreboardName();
+        
+        // Use the PermissionHandlerManager to check permissions
+        com.zerog.neoessentials.permissions.PermissionHandlerManager manager = 
+            com.zerog.neoessentials.permissions.PermissionHandlerManager.getInstance();
+        
+        // First check if any registered handlers have the permission
+        if (!manager.getAvailableHandlers().isEmpty()) {
+            boolean result = manager.hasPermission(player, permission);
+            
+            if (result && debug) {
+                NeoEssentials.LOGGER.debug("Permission '{}' granted to player {} by permission handler", 
+                    permission, playerName);
+                return true;
+            }
+            
+            // If permission handlers exist but didn't grant permission, fall back to default config
+            if (!result) {
+                result = checkDefaultPermission(permission);
+                
+                if (debug) {
+                    NeoEssentials.LOGGER.debug("Using default permission for '{}': {} (player: {})", 
+                        permission, result, playerName);
+                }
+                
+                return result;
+            }
+        }
+        
+        // If no permission handlers are available, use legacy reflection-based method
+        // for backward compatibility during transitional period
+        boolean result = checkLegacyPermission(player, permission);
+        
+        if (debug) {
+            NeoEssentials.LOGGER.debug("Using legacy permission check for '{}': {} (player: {})", 
+                permission, result, playerName);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Legacy permission check method for backward compatibility
+     */
+    static boolean checkLegacyPermission(ServerPlayer player, String permission) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         boolean debug = NeoEssentials.getInstance().getConfigManager().getConfig().isDebug();
         String playerName = player.getScoreboardName();
         
@@ -465,6 +561,7 @@ public class PermissionUtil {
             return true;
         }
         
+<<<<<<< HEAD
         // If not found in LuckPerms, try FTB Ranks
         if (!result) {
             result = checkFTBRanksPermission(player, permission);
@@ -484,10 +581,18 @@ public class PermissionUtil {
         
         if (result && debug) {
             NeoEssentials.LOGGER.debug("LuckPerms granted permission '{}' to player {}", 
+=======
+        // Check ForgePerms
+        result = checkForgePermsPermission(player, permission);
+        
+        if (result && debug) {
+            NeoEssentials.LOGGER.debug("ForgePerms granted permission '{}' to player {}", 
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 permission, playerName);
             return true;
         }
         
+<<<<<<< HEAD
         // If not found in LuckPerms, try FTB Ranks
         if (!result) {
             result = checkFTBRanksPermission(player, permission);
@@ -510,20 +615,29 @@ public class PermissionUtil {
 <<<<<<< HEAD
 =======
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+        // If no permission system gave a result, check default config
+        if (!result) {
+            result = checkDefaultPermission(permission);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             
             if (debug) {
                 NeoEssentials.LOGGER.debug("Using default permission for '{}': {} (player: {})", 
                     permission, result, playerName);
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }
         
         return result;
     }
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       /**
@@ -534,12 +648,16 @@ public class PermissionUtil {
 =======
       /**
 >>>>>>> 16744a4 (feat: Add comprehensive compilation fixes documentation; detail issues resolved and future recommendations)
+=======
+      /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Check permission using LuckPerms API if available
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if permission is granted, false otherwise
      */
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     static boolean checkLuckPermsPermission(ServerPlayer player, String permission) {
@@ -549,6 +667,9 @@ public class PermissionUtil {
 =======
     static boolean checkLuckPermsPermission(ServerPlayer player, String permission) {
 >>>>>>> 16744a4 (feat: Add comprehensive compilation fixes documentation; detail issues resolved and future recommendations)
+=======
+    static boolean checkLuckPermsPermission(ServerPlayer player, String permission) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         try {
             // Check if LuckPerms is loaded using reflection
             Class<?> luckPermsClass = Class.forName("net.luckperms.api.LuckPermsProvider");
@@ -580,6 +701,7 @@ public class PermissionUtil {
         }
         
         return false;
+<<<<<<< HEAD
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -592,11 +714,16 @@ public class PermissionUtil {
       /**
 >>>>>>> 16744a4 (feat: Add comprehensive compilation fixes documentation; detail issues resolved and future recommendations)
      * Check permission using FTB Ranks API if available
+=======
+    }    /**
+     * Check permission using ForgePerms API if available
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * 
      * @param player The player to check
      * @param permission The permission string to check
      * @return True if permission is granted, false otherwise
      */
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     static boolean checkFTBRanksPermission(ServerPlayer player, String permission) {
@@ -659,14 +786,58 @@ public class PermissionUtil {
 =======
     }    /**     * Check if a permission should be granted by default when no permission system is found
 >>>>>>> e757913 (feat: Add default permissions retrieval method in CompatNeoEssentialsConfig and update PermissionUtil for compatibility)
+=======
+    static boolean checkForgePermsPermission(ServerPlayer player, String permission) {
+        try {
+            // Check if ForgePerms is loaded using reflection
+            Class<?> forgePermsClass = Class.forName("com.sperion.forgeperms.ForgePerms");
+            Class<?> permissionsBaseClass = Class.forName("com.sperion.forgeperms.PermissionsBase");
+            
+            // Get the methods needed from ForgePerms
+            Method getPermissionHandlerMethod = forgePermsClass.getMethod("getPermissionHandler");
+            Method canAccessMethod = permissionsBaseClass.getMethod("canAccess", String.class, String.class, String.class);
+            
+            // Get the actual permission handler instance
+            Object permissionHandler = getPermissionHandlerMethod.invoke(null);
+            
+            if (permissionHandler != null) {
+                // Get player name and world name
+                String username = player.getName().getString();
+                String world = player.level().dimension().location().toString();
+                
+                // Use reflection to call the canAccess method
+                Object result = canAccessMethod.invoke(permissionHandler, username, world, permission);
+                
+                // Check if the result is a Boolean and return its value
+                if (result instanceof Boolean) {
+                    return (Boolean) result;
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            // ForgePerms not found, that's fine
+            return false;
+        } catch (Exception e) {
+            // Something went wrong, log it
+            NeoEssentials.LOGGER.error("Error checking ForgePerms permission", e);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if a permission should be granted by default when no permission system is found
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * 
      * @param permission The permission string to check
      * @return True if the permission should be granted by default, false otherwise
      */
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 16744a4 (feat: Add comprehensive compilation fixes documentation; detail issues resolved and future recommendations)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     static boolean checkDefaultPermission(String permission) {
         // Get the config instance from NeoEssentials
         com.zerog.neoessentials.config.CompatNeoEssentialsConfig config = NeoEssentials.getInstance().getConfigManager().getConfig();
@@ -688,6 +859,7 @@ public class PermissionUtil {
             }
             return true;
         }
+<<<<<<< HEAD
 =======
     private static boolean checkDefaultPermission(String permission) {
         // Get the config instance from NeoEssentials
@@ -716,6 +888,8 @@ public class PermissionUtil {
             return true;
         }
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -753,6 +927,7 @@ public class PermissionUtil {
         permissionCache.clear();
         lastAccessTime.clear();
     }
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -830,4 +1005,82 @@ public class PermissionUtil {
 =======
   
 >>>>>>> 02542de (refactor: Simplify permission checks in AdminPanelCommand; add checkPlayerPermission method in PermissionUtil)
+=======
+      /**
+     * Get the primary group for a player based on tablist permissions
+     * Checks for tablist-specific group permissions in priority order
+     * 
+     * @param player The player to check
+     * @return The group name (e.g., "admin", "mod", "vip", "default")
+     */
+    public static String getPlayerGroup(ServerPlayer player) {
+        if (player == null) {
+            return "default";
+        }
+        
+        String playerName = player.getScoreboardName();
+        
+        // Check tablist-specific group permissions in priority order
+        String[] groups = {"owner", "admin", "mod", "helper", "builder", "vip"};
+        
+        for (String group : groups) {
+            String permission = "neoessentials.tablist.group." + group;
+            if (hasPermission(player, permission)) {
+                return group;
+            }
+        }
+        
+        // Also check legacy neoessentials.group.* permissions for backward compatibility
+        for (String group : groups) {
+            String permission = "neoessentials.group." + group;
+            if (hasPermission(player, permission)) {
+                return group;
+            }
+        }
+        
+        NeoEssentials.LOGGER.debug("Player {} has no special group permissions - assigned to group 'default'", playerName);
+        return "default";
+    }
+    
+    /**
+     * Get all groups a player belongs to
+     * 
+     * @param player The player to check
+     * @return Set of group names the player belongs to
+     */
+    public static Set<String> getPlayerGroups(ServerPlayer player) {
+        Set<String> groups = new HashSet<>();
+        
+        if (player == null) {
+            groups.add("default");
+            return groups;
+        }
+        
+        // Check tablist-specific group permissions
+        String[] allGroups = {"owner", "admin", "mod", "helper", "builder", "vip", "default"};
+        
+        for (String group : allGroups) {
+            String permission = "neoessentials.tablist.group." + group;
+            if (hasPermission(player, permission)) {
+                groups.add(group);
+            }
+        }
+        
+        // Also check legacy neoessentials.group.* permissions
+        for (String group : allGroups) {
+            String permission = "neoessentials.group." + group;
+            if (hasPermission(player, permission)) {
+                groups.add(group);
+            }
+        }
+        
+        // Always include default if no other groups found
+        if (groups.isEmpty()) {
+            groups.add("default");
+        }
+        
+        return groups;
+    }
+  
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }

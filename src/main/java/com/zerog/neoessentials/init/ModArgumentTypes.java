@@ -3,6 +3,9 @@ package com.zerog.neoessentials.init;
 import com.zerog.neoessentials.NeoEssentials;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import com.zerog.neoessentials.utils.VanillaBooleanParser;
 
 import net.neoforged.bus.api.IEventBus;
@@ -44,6 +47,7 @@ public class ModArgumentTypes {
             
             NeoEssentials.LOGGER.info("Vanilla-compatible command system configured successfully");
         });
+<<<<<<< HEAD
 =======
 import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
 import com.zerog.neoessentials.utils.StringToBooleanArgumentInfo;
@@ -153,5 +157,7 @@ public class ModArgumentTypes {
             NeoEssentials.LOGGER.info("Vanilla-compatible command system configured successfully");
         });
 >>>>>>> faaaf85 (refactor: Update registration of StringToBooleanArgumentType for improved compatibility)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
 }

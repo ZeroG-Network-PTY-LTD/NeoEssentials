@@ -2,6 +2,9 @@ package com.zerog.neoessentials.utils;
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 /**
  * @deprecated This class has been replaced by {@link VanillaBooleanParser}.
  * This file is kept for reference only and should be removed in future versions.
@@ -13,6 +16,7 @@ package com.zerog.neoessentials.utils;
 public class StringToBooleanArgumentType {
     // This class has been intentionally emptied and deprecated.
     // Use VanillaBooleanParser instead which uses vanilla StringArgumentType.
+<<<<<<< HEAD
 =======
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -100,4 +104,6 @@ public class StringToBooleanArgumentType {
     // This class has been intentionally emptied and deprecated.
     // Use VanillaBooleanParser instead which uses vanilla StringArgumentType.
 >>>>>>> 06db8bd (feat: Refactor command argument handling to eliminate custom types and ensure true server-side compatibility)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }

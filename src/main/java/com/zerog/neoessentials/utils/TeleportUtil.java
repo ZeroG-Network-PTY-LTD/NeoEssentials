@@ -40,6 +40,9 @@ public class TeleportUtil {
      * @return True if teleportation was successful, false otherwise
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      */    public static boolean teleport(ServerPlayer player, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
         try {
             // Validate input parameters
@@ -56,6 +59,7 @@ public class TeleportUtil {
             NeoEssentials.LOGGER.debug("Teleporting player {} to [{}, {}, {}] in dimension {}", 
                 player.getScoreboardName(), x, y, z, level.dimension().location());
             
+<<<<<<< HEAD
 =======
      */
     public static boolean teleport(ServerPlayer player, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
@@ -79,6 +83,8 @@ public class TeleportUtil {
                 player.getScoreboardName(), x, y, z, level.dimension().location());
             
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             // Save the player's current location
             saveLastLocation(player);
             
@@ -93,12 +99,16 @@ public class TeleportUtil {
             
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             NeoEssentials.LOGGER.debug("Successfully teleported player {} to [{}, {}, {}] in dimension {}", 
                 player.getScoreboardName(), x, y, z, level.dimension().location());
             
             return true;
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error teleporting player: {}", e.getMessage(), e);
+<<<<<<< HEAD
 =======
             return true;
         } catch (Exception e) {
@@ -112,6 +122,8 @@ public class TeleportUtil {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error teleporting player: {}", e.getMessage(), e);
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return false;
         }
     }

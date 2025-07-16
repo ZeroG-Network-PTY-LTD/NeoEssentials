@@ -9,6 +9,7 @@ import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.PowerToolManager;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.VanillaBooleanParser;
 =======
 import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
@@ -16,6 +17,9 @@ import com.zerog.neoessentials.utils.StringToBooleanArgumentType;
 =======
 import com.zerog.neoessentials.utils.VanillaBooleanParser;
 >>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
+=======
+import com.zerog.neoessentials.utils.VanillaBooleanParser;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import com.zerog.neoessentials.utils.TextUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -67,6 +71,7 @@ public class PowerToolCommands {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                 .suggests(VanillaBooleanParser.booleanSuggestions())
 =======
@@ -80,6 +85,10 @@ public class PowerToolCommands {
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                 .suggests(VanillaBooleanParser.booleanSuggestions())
 >>>>>>> cfe7dd5 (feat: Enhance documentation for true server-side implementation and outline future cleanup tasks)
+=======
+                        .then(Commands.argument("enabled", VanillaBooleanParser.argument())
+                                .suggests(VanillaBooleanParser.booleanSuggestions())
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                                 .executes(this::executePowerToolEnable)))
                 .then(Commands.literal("-t")
                         .executes(this::executePowerToolToggle))
@@ -101,6 +110,7 @@ public class PowerToolCommands {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                 .suggests(VanillaBooleanParser.booleanSuggestions())
 =======
@@ -114,6 +124,10 @@ public class PowerToolCommands {
                         .then(Commands.argument("enabled", VanillaBooleanParser.argument())
                                 .suggests(VanillaBooleanParser.booleanSuggestions())
 >>>>>>> cfe7dd5 (feat: Enhance documentation for true server-side implementation and outline future cleanup tasks)
+=======
+                        .then(Commands.argument("enabled", VanillaBooleanParser.argument())
+                                .suggests(VanillaBooleanParser.booleanSuggestions())
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                                 .executes(this::executePowerToolEnable)))
                 .then(Commands.literal("-t")
                         .executes(this::executePowerToolToggle))
@@ -252,6 +266,7 @@ public class PowerToolCommands {
         ServerPlayer player = source.getPlayerOrException();
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         boolean enabled = VanillaBooleanParser.getBoolean(context, "enabled");
 =======
         boolean enabled = StringToBooleanArgumentType.getBoolean(context, "enabled");
@@ -259,6 +274,9 @@ public class PowerToolCommands {
 =======
         boolean enabled = VanillaBooleanParser.getBoolean(context, "enabled");
 >>>>>>> c8bd7e4 (feat: Replace custom string-to-boolean argument type with vanilla-compatible implementation and update command handling)
+=======
+        boolean enabled = VanillaBooleanParser.getBoolean(context, "enabled");
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 
         PowerToolManager powerToolManager = NeoEssentials.getInstance().getDataManager().getPowerToolManager();
         powerToolManager.setPowerToolEnabled(player, enabled);
@@ -315,12 +333,16 @@ public class PowerToolCommands {
         powerToolManager.setPowerTool(player, item, command);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 0264cbd (fix: Make command and heldItem final for lambda in PowerToolCommands)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         final String finalCommand = command; // Make command final for the lambda
         final ItemStack finalItem = heldItem; // Make heldItem final for the lambda
         
+<<<<<<< HEAD
 <<<<<<< HEAD
         source.sendSuccess(() -> Component.literal(TextUtil.formatText(
                 "&aSet powertool on &6" + finalItem.getDisplayName().getString() + " &ato: &6/" + finalCommand)), true);
@@ -333,6 +355,10 @@ public class PowerToolCommands {
         source.sendSuccess(() -> Component.literal(TextUtil.formatText(
                 "&aSet powertool on &6" + finalItem.getDisplayName().getString() + " &ato: &6/" + finalCommand)), true);
 >>>>>>> 0264cbd (fix: Make command and heldItem final for lambda in PowerToolCommands)
+=======
+        source.sendSuccess(() -> Component.literal(TextUtil.formatText(
+                "&aSet powertool on &6" + finalItem.getDisplayName().getString() + " &ato: &6/" + finalCommand)), true);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 
         boolean enabled = powerToolManager.isPowerToolEnabled(player);
         if (!enabled) {

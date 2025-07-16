@@ -15,6 +15,9 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 public class EventHandler {    /**
      * Registers all event listeners.
      */
@@ -31,6 +34,7 @@ public class EventHandler {    /**
      */
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+<<<<<<< HEAD
 =======
 =======
 public class EventHandler {
@@ -71,6 +75,8 @@ public class EventHandler {    /**
 =======
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
 >>>>>>> 5283f26 (fix: Update build number to 35 and change event handler methods to static for proper registration)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         Player player = event.getEntity();
         if (player instanceof ServerPlayer serverPlayer) {
             NeoEssentials.LOGGER.info("Player logged in: {}", player.getScoreboardName());
@@ -84,6 +90,9 @@ public class EventHandler {    /**
             // Track the player's username for baltop and other lookups
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             userManager.trackPlayer(serverPlayer);            
             // Notify player about unread mail if they have any
             NeoEssentials.getInstance().getDataManager().getMailManager().notifyPlayer(serverPlayer);
@@ -102,6 +111,7 @@ public class EventHandler {    /**
      */
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+<<<<<<< HEAD
 =======
             userManager.trackPlayer(serverPlayer);
             
@@ -141,6 +151,8 @@ public class EventHandler {    /**
 =======
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
 >>>>>>> 5283f26 (fix: Update build number to 35 and change event handler methods to static for proper registration)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         Player player = event.getEntity();
         if (player instanceof ServerPlayer serverPlayer) {
             NeoEssentials.LOGGER.info("Player logged out: {}", player.getScoreboardName());
@@ -148,6 +160,9 @@ public class EventHandler {    /**
             // Get the user manager
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             UserManager userManager = NeoEssentials.getInstance().getDataManager().getUserManager();            
             // Save player data
             userManager.savePlayerData(serverPlayer);
@@ -160,6 +175,7 @@ public class EventHandler {    /**
         }
     }
       /**
+<<<<<<< HEAD
 =======
             UserManager userManager = NeoEssentials.getInstance().getDataManager().getUserManager();
             
@@ -192,10 +208,13 @@ public class EventHandler {    /**
 =======
       /**
 >>>>>>> 5283f26 (fix: Update build number to 35 and change event handler methods to static for proper registration)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Event handler for when the server is stopping.
      * Used to save all data before the server shuts down.
      *
      * @param event The server stopping event
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -224,6 +243,11 @@ public class EventHandler {    /**
 =======
     public static void onServerStopping(ServerStoppingEvent event) {
 >>>>>>> 5283f26 (fix: Update build number to 35 and change event handler methods to static for proper registration)
+=======
+     */
+    @SubscribeEvent
+    public static void onServerStopping(ServerStoppingEvent event) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.info("Server stopping, saving all NeoEssentials data");
         
         // Save all data

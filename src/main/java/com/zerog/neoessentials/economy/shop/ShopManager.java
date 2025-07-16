@@ -314,11 +314,18 @@ public class ShopManager {
     }
     
     /**
+<<<<<<< HEAD
      * Enhanced debug method to validate shop integrity and diagnose issues
      */
     public void validateShopIntegrity() {
         NeoEssentials.LOGGER.info("=== COMPREHENSIVE SHOP INTEGRITY CHECK ===");
         NeoEssentials.LOGGER.info("Economy system enabled: {}", economyManager.isEnabled());
+=======
+     * Debug method to validate shop integrity
+     */
+    public void validateShopIntegrity() {
+        NeoEssentials.LOGGER.info("=== Shop Integrity Check ===");
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.info("Total items in shop: {}", shopItems.size());
         
         int adminItems = 0;
@@ -326,6 +333,7 @@ public class ShopManager {
         int infiniteStockItems = 0;
         int buyableItems = 0;
         int sellableItems = 0;
+<<<<<<< HEAD
         int bothTypeItems = 0;
         int invalidItems = 0;
         
@@ -377,11 +385,44 @@ public class ShopManager {
         }
         
         NeoEssentials.LOGGER.info("=== SHOP STATISTICS ===");
+=======
+        
+        for (ShopItem item : shopItems.values()) {
+            if (item.isAdminItem()) {
+                adminItems++;
+            } else {
+                playerItems++;
+            }
+            
+            if (item.getStock() < 0) {
+                infiniteStockItems++;
+            }
+            
+            if (item.canBuy()) {
+                buyableItems++;
+            }
+            
+            if (item.canSell()) {
+                sellableItems++;
+            }
+            
+            NeoEssentials.LOGGER.info("Item: {} | Stock: {} | Type: {} | Admin: {} | Buy: {} | Sell: {}", 
+                item.getItemStack().getHoverName().getString(),
+                item.getStock() < 0 ? "INFINITE" : item.getStock(),
+                item.getType(),
+                item.isAdminItem(),
+                item.canBuy() ? item.getCurrency().format(item.getBuyPrice()) : "N/A",
+                item.canSell() ? item.getCurrency().format(item.getSellPrice()) : "N/A"
+            );
+        }
+        
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.info("Admin items: {}", adminItems);
         NeoEssentials.LOGGER.info("Player items: {}", playerItems);
         NeoEssentials.LOGGER.info("Infinite stock items: {}", infiniteStockItems);
         NeoEssentials.LOGGER.info("Buyable items: {}", buyableItems);
         NeoEssentials.LOGGER.info("Sellable items: {}", sellableItems);
+<<<<<<< HEAD
         NeoEssentials.LOGGER.info("Both type items: {}", bothTypeItems);
         NeoEssentials.LOGGER.info("Invalid items: {}", invalidItems);
         NeoEssentials.LOGGER.info("Available items (filtered): {}", getAvailableItems().size());
@@ -433,6 +474,10 @@ public class ShopManager {
         }
         
         NeoEssentials.LOGGER.info("=== End Economy Diagnosis ===");
+=======
+        NeoEssentials.LOGGER.info("Available items (filtered): {}", getAvailableItems().size());
+        NeoEssentials.LOGGER.info("=== End Integrity Check ===");
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     // Helper methods

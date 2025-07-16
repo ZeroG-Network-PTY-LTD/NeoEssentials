@@ -12,7 +12,10 @@ import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
+<<<<<<< HEAD
 import java.math.BigDecimal;
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -48,13 +51,17 @@ public class EnhancedShopInterface {
             NeoEssentials.LOGGER.info("Opening shop GUI for player {} in mode {} on page {}", 
                 player.getName().getString(), mode, page);
             
+<<<<<<< HEAD
             // Comprehensive validation
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             if (economyManager == null) {
                 player.sendSystemMessage(Component.literal("§cEconomy manager is not available"));
                 NeoEssentials.LOGGER.error("Economy manager is null when opening shop for player {}", player.getName().getString());
                 return;
             }
             
+<<<<<<< HEAD
             if (!economyManager.isInitialized()) {
                 player.sendSystemMessage(Component.literal("§cEconomy system is not initialized"));
                 NeoEssentials.LOGGER.error("Economy system not initialized when opening shop for player {}", player.getName().getString());
@@ -64,6 +71,10 @@ public class EnhancedShopInterface {
             if (!economyManager.isEnabled()) {
                 player.sendSystemMessage(Component.literal("§cEconomy system is disabled"));
                 player.sendSystemMessage(Component.literal("§7Use '/economy enable' to enable the economy system"));
+=======
+            if (!economyManager.isEnabled()) {
+                player.sendSystemMessage(Component.literal("§cEconomy system is disabled"));
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 NeoEssentials.LOGGER.warn("Economy system is disabled when player {} tried to open shop", player.getName().getString());
                 return;
             }
@@ -75,6 +86,7 @@ public class EnhancedShopInterface {
                 return;
             }
             
+<<<<<<< HEAD
             // Validate player account
             if (!economyManager.validatePlayerAccount(player.getUUID())) {
                 // Try to create account
@@ -89,10 +101,13 @@ public class EnhancedShopInterface {
             }
             
             // Get shop items with comprehensive logging
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             List<ShopItem> shopItems = getShopItems(shopManager, mode, targetPlayer, player);
             NeoEssentials.LOGGER.info("Found {} shop items for player {} in mode {} (total in shop: {})", 
                 shopItems.size(), player.getName().getString(), mode, shopManager.getAllItems().size());
             
+<<<<<<< HEAD
             // Detailed diagnostics if shop is empty
             if (shopItems.isEmpty()) {
                 List<ShopItem> allItems = shopManager.getAllItems();
@@ -125,6 +140,16 @@ public class EnhancedShopInterface {
                     case BROWSE -> {
                         player.sendSystemMessage(Component.literal("§eThis player has no shop items"));
                     }
+=======
+            // Debug info about available items
+            if (shopItems.isEmpty()) {
+                List<ShopItem> allItems = shopManager.getAllItems();
+                NeoEssentials.LOGGER.info("All items in shop: {}", allItems.size());
+                for (ShopItem item : allItems) {
+                    NeoEssentials.LOGGER.info("  - {}: stock={}, canBuy={}, type={}", 
+                        item.getItemStack().getHoverName().getString(), 
+                        item.getStock(), item.canBuy(), item.getType());
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 }
             }
             
@@ -132,7 +157,11 @@ public class EnhancedShopInterface {
             SimpleContainer container = new SimpleContainer(CONTAINER_SIZE);
             
             // Calculate pagination
+<<<<<<< HEAD
             int totalPages = Math.max(1, (int) Math.ceil((double) shopItems.size() / ITEMS_PER_PAGE));
+=======
+            int totalPages = (int) Math.ceil((double) shopItems.size() / ITEMS_PER_PAGE);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             int startIndex = page * ITEMS_PER_PAGE;
             int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, shopItems.size());
             
@@ -153,6 +182,7 @@ public class EnhancedShopInterface {
             // Setup navigation and controls
             setupNavigationItems(container, mode, targetPlayer, player, page, totalPages, shopItems.size());
             
+<<<<<<< HEAD
             // Show player balance
             try {
                 BigDecimal balance = economyManager.getBalance(player.getUUID());
@@ -161,6 +191,8 @@ public class EnhancedShopInterface {
                 NeoEssentials.LOGGER.warn("Failed to get player balance for shop interface", e);
             }
             
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             // Create menu with click handling
             String title = getShopTitle(mode, targetPlayer, player);
             SimpleMenuProvider menuProvider = new SimpleMenuProvider(
@@ -172,17 +204,26 @@ public class EnhancedShopInterface {
             );
             
             player.openMenu(menuProvider);
+<<<<<<< HEAD
             NeoEssentials.LOGGER.info("Successfully opened {} shop GUI for player {} (page {}/{}, {} items)", 
                                     mode, player.getName().getString(), page + 1, totalPages, shopItems.size());
+=======
+            NeoEssentials.LOGGER.info("Successfully opened {} shop GUI for player {} (page {}, {} items)", 
+                                    mode, player.getName().getString(), page, shopItems.size());
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to open shop interface for player " + player.getName().getString(), e);
             player.sendSystemMessage(Component.literal("§cFailed to open shop interface: " + e.getMessage()));
+<<<<<<< HEAD
             player.sendSystemMessage(Component.literal("§7Please report this error to an administrator"));
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }
     }
     
     private static List<ShopItem> getShopItems(ShopManager shopManager, ShopMode mode, UUID targetPlayer, ServerPlayer viewer) {
+<<<<<<< HEAD
         try {
             List<ShopItem> items;
             
@@ -235,6 +276,22 @@ public class EnhancedShopInterface {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error getting shop items for mode " + mode, e);
             return List.of();
+=======
+        switch (mode) {
+            case GLOBAL:
+                return shopManager.getAvailableItems();
+            case PERSONAL:
+                return shopManager.getAvailableItems().stream()
+                    .filter(item -> viewer.getUUID().equals(item.getCreatedBy()))
+                    .collect(Collectors.toList());
+            case BROWSE:
+                if (targetPlayer == null) return List.of();
+                return shopManager.getAvailableItems().stream()
+                    .filter(item -> targetPlayer.equals(item.getCreatedBy()))
+                    .collect(Collectors.toList());
+            default:
+                return List.of();
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }
     }
     

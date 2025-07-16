@@ -89,8 +89,11 @@ public class TimeUtil {
     /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 065da46 (feat: Add time parsing utility and enhance duration formatting in TimeUtil)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Parse a time specification like "1d2h30m" into a Date in the future
      * 
      * @param timeSpec String time specification
@@ -136,10 +139,13 @@ public class TimeUtil {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
 >>>>>>> 065da46 (feat: Add time parsing utility and enhance duration formatting in TimeUtil)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Format a date for display
      * 
      * @param date Date to format
@@ -191,6 +197,9 @@ public class TimeUtil {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     
     /**
      * Format a duration in milliseconds into a human-readable string
@@ -243,6 +252,7 @@ public class TimeUtil {
         return formatDuration(durationMillis);
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
@@ -290,4 +300,6 @@ public class TimeUtil {
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
 =======
 >>>>>>> 61bf426 (feat: Add backward compatibility alias for formatDuration in TimeUtil)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }

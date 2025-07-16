@@ -2,12 +2,16 @@ package com.zerog.neoessentials.data;
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
+<<<<<<< HEAD
 =======
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,6 +34,8 @@ import java.lang.reflect.Type;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,10 +45,14 @@ import java.util.Map;
 public class WarpManager {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     
     // Map of warp names to locations
     private final Map<String, WarpLocation> warps = new HashMap<>();
       /**
+<<<<<<< HEAD
 =======
     private static final String WARP_DATA_FILE = "neoessentials/warps.json";
 =======
@@ -57,6 +67,8 @@ public class WarpManager {
 =======
       /**
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Initialize the warp manager
      */
     public void initialize() {
@@ -64,8 +76,11 @@ public class WarpManager {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Check if storage manager is initialized before loading warps
         if (NeoEssentials.getInstance().getStorageManager() != null) {
             loadWarps();
@@ -81,10 +96,13 @@ public class WarpManager {
     public void reloadWarps() {
         NeoEssentials.LOGGER.info("Reloading warps from storage");
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 6ae378a (refactor: Enhance storage management and data reloading; improve logging for warps and permissions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         loadWarps();
     }
     
@@ -98,6 +116,9 @@ public class WarpManager {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
       /**
      * Load warps from storage
      */
@@ -189,6 +210,7 @@ public class WarpManager {
      */
     public Map<String, WarpLocation> getAllWarps() {
         return new HashMap<>(warps);
+<<<<<<< HEAD
 <<<<<<< HEAD
     }
     
@@ -290,6 +312,11 @@ public class WarpManager {
     
     /**
 >>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
+=======
+    }
+    
+    /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Sets a warp at the player's current location
      * 
      * @param player The player setting the warp

@@ -99,6 +99,7 @@ public class EconomyCommands {
                         .executes(EconomyCommands::resetPlayerBalance)
                     )
                 )
+<<<<<<< HEAD
                 .then(Commands.literal("status")
                     .executes(EconomyCommands::showEconomyStatus)
                 )
@@ -117,6 +118,8 @@ public class EconomyCommands {
                 .then(Commands.literal("validate")
                     .executes(EconomyCommands::validateEconomySystem)
                 )
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         );
         
         // Economy main menu command
@@ -359,6 +362,7 @@ public class EconomyCommands {
     }
     
     /**
+<<<<<<< HEAD
      * Shows economy system status
      */
     private static int showEconomyStatus(CommandContext<CommandSourceStack> context) {
@@ -515,6 +519,8 @@ public class EconomyCommands {
     }
     
     /**
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Validates that a player can perform economy operations
      */
     private static boolean validatePlayerEconomyAccess(ServerPlayer player, EconomyManager economyManager) {

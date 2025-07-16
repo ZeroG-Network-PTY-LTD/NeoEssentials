@@ -2,12 +2,16 @@ package com.zerog.neoessentials.config;
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import com.zerog.neoessentials.NeoEssentials;
 import java.util.HashMap;
 import java.util.Map;
 import com.zerog.neoessentials.NeoEssentials;
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 import java.util.HashMap;
@@ -15,12 +19,17 @@ import java.util.Map;
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
 =======
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 
 /**
  * Compatibility layer that adapts our TOML configs to the old config structure.
  * This allows existing code to continue working with the new config system.
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
  * 
  * This class uses lazy loading for config values - they are fetched directly
  * from the TOML configs when needed rather than being initialized at startup.
@@ -86,6 +95,7 @@ public class CompatNeoEssentialsConfig {
             NeoEssentials.LOGGER.error("Error initializing default permissions", e);
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
     }
       /**
 =======
@@ -115,10 +125,15 @@ public class CompatNeoEssentialsConfig {
     }
       /**
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+    }
+      /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets whether debug mode is enabled
      * @return True if debug mode is enabled
      */
     public boolean isDebug() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -137,6 +152,9 @@ public class CompatNeoEssentialsConfig {
 =======
         return ConfigUtil.getConfigSafe(GeneralConfig.DEBUG_MODE, false);
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+        return ConfigUtil.getConfigSafe(GeneralConfig.DEBUG_MODE, false);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -144,6 +162,7 @@ public class CompatNeoEssentialsConfig {
      * @return The language code (e.g. "en_us")
      */
     public String getDefaultLanguage() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         return "en_us";
@@ -161,6 +180,11 @@ public class CompatNeoEssentialsConfig {
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
 =======
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+        return "en_us";
+    }
+      /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets whether economy is enabled
      * @return True if economy is enabled
      */
@@ -168,13 +192,21 @@ public class CompatNeoEssentialsConfig {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_ECONOMY, true);
     }
       /**
+=======
+        return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_ECONOMY, true);
+    }
+
+    /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets the singular name of the currency
      * @return The currency name (e.g. "Dollar")
      */
     public String getCurrencyNameSingular() {
+<<<<<<< HEAD
         if (!isEconomyEnabled()) return "Dollar";
         return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_SINGULAR, "Dollar");
 =======
@@ -212,10 +244,14 @@ public class CompatNeoEssentialsConfig {
 =======
         return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_SINGULAR, "Dollar");
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+        return "Dollar"; // Default value since economy system is removed
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
      * Gets the plural name of the currency
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
      * @return The currency name (e.g. "Dollars")
@@ -245,10 +281,17 @@ public class CompatNeoEssentialsConfig {
 =======
         return ConfigUtil.getConfigSafe(EconomyConfig.CURRENCY_NAME_PLURAL, "Dollars");
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+     * @return The currency name (e.g. "Dollars")
+     */
+    public String getCurrencyNamePlural() {
+        return "Dollars"; // Default value since economy system is removed
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
      * Gets the currency symbol
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
      * @return The currency symbol (e.g. "$")
@@ -281,10 +324,20 @@ public class CompatNeoEssentialsConfig {
     }
       /**
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+     * @return The currency symbol (e.g. "$")
+     */
+    public String getCurrencySymbol() {
+        return "$"; // Default value since economy system is removed
+    }
+
+    /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets the starting balance for new players
      * @return The starting balance
      */
     public double getStartingBalance() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         if (!isEconomyEnabled()) return 100.0;
@@ -305,6 +358,9 @@ public class CompatNeoEssentialsConfig {
 =======
         return ConfigUtil.getConfigSafe(EconomyConfig.STARTING_BALANCE, 100.0);
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+        return 100.0; // Default value since economy system is removed
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -312,6 +368,7 @@ public class CompatNeoEssentialsConfig {
      * @return True if teleportation is enabled
      */
     public boolean isTeleportEnabled() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -329,6 +386,9 @@ public class CompatNeoEssentialsConfig {
 =======
         return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_TELEPORTATION, true);
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+        return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_TELEPORTATION, true);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -336,6 +396,7 @@ public class CompatNeoEssentialsConfig {
      * @return The cooldown in seconds
      */
     public int getTeleportCooldown() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         if (!isTeleportEnabled()) return 30;
@@ -356,6 +417,10 @@ public class CompatNeoEssentialsConfig {
 =======
         return ConfigUtil.getConfigSafe(HomeConfig.COOLDOWN_SECONDS, 30);
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+        if (!isTeleportEnabled()) return 30;
+        return ConfigUtil.getConfigSafe(HomeConfig.COOLDOWN_SECONDS, 30);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -363,6 +428,7 @@ public class CompatNeoEssentialsConfig {
      * @return The warmup in seconds
      */
     public int getTeleportWarmup() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         if (!isTeleportEnabled()) return 3;
@@ -383,6 +449,10 @@ public class CompatNeoEssentialsConfig {
 =======
         return ConfigUtil.getConfigSafe(HomeConfig.WARMUP_SECONDS, 3);
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+        if (!isTeleportEnabled()) return 3;
+        return ConfigUtil.getConfigSafe(HomeConfig.WARMUP_SECONDS, 3);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -390,6 +460,7 @@ public class CompatNeoEssentialsConfig {
      * @return The max homes
      */
     public int getMaxHomes() {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         if (!isTeleportEnabled()) return 3;
@@ -410,6 +481,10 @@ public class CompatNeoEssentialsConfig {
 =======
         return ConfigUtil.getConfigSafe(HomeConfig.DEFAULT_MAX_HOMES, 3);
 >>>>>>> 7ffa71d (feat: Enhance config management with robust error handling and lazy loading)
+=======
+        if (!isTeleportEnabled()) return 3;
+        return ConfigUtil.getConfigSafe(HomeConfig.DEFAULT_MAX_HOMES, 3);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -420,6 +495,9 @@ public class CompatNeoEssentialsConfig {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         return ConfigUtil.getConfigSafe(GeneralConfig.ENABLE_WARPS, true);
     }
       /**
@@ -464,6 +542,7 @@ public class CompatNeoEssentialsConfig {
      */
     public Map<String, Boolean> defaultPermissions() {
         return defaultPermissions;
+<<<<<<< HEAD
 =======
         return warpsEnabled;
 =======
@@ -537,5 +616,7 @@ public class CompatNeoEssentialsConfig {
      */
     public Map<String, Boolean> defaultPermissions() {
         return defaultPermissions;
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
 }

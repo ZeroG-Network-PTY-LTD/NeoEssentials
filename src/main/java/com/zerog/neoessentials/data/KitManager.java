@@ -7,11 +7,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import com.google.gson.reflect.TypeToken;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> b1b745b (feat: Update migration tasks and enhance kit management with pricing and UI improvements)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import com.zerog.neoessentials.NeoEssentials;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -27,11 +30,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import java.lang.reflect.Type;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> b1b745b (feat: Update migration tasks and enhance kit management with pricing and UI improvements)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +55,7 @@ public class KitManager {
     private final Map<String, Kit> kits = new HashMap<>();
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     
     // Kit usage statistics
     private final Map<String, Integer> kitUsage = new HashMap<>();
@@ -59,6 +66,11 @@ public class KitManager {
     // Kit usage statistics
     private final Map<String, Integer> kitUsage = new HashMap<>();
 >>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
+=======
+    
+    // Kit usage statistics
+    private final Map<String, Integer> kitUsage = new HashMap<>();
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
     
     private final Gson gson = new GsonBuilder()
@@ -106,6 +118,7 @@ public class KitManager {
                             Kit kit = new Kit(kitName);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                               // Set cooldown
 =======
                             
@@ -114,6 +127,9 @@ public class KitManager {
 =======
                               // Set cooldown
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+                              // Set cooldown
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                             if (kitObj.has("cooldown")) {
                                 kit.setCooldown(kitObj.get("cooldown").getAsLong());
                             }
@@ -124,10 +140,14 @@ public class KitManager {
                             }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                               // Set price
                             if (kitObj.has("price")) {
                                 kit.setPrice(kitObj.get("price").getAsDouble());
                             }
+<<<<<<< HEAD
 =======
                             
 <<<<<<< HEAD
@@ -150,6 +170,8 @@ public class KitManager {
                                 kit.setPrice(kitObj.get("price").getAsDouble());
                             }
 >>>>>>> b1b745b (feat: Update migration tasks and enhance kit management with pricing and UI improvements)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                             // Load items (store item IDs and counts)
                             if (kitObj.has("items")) {
                                 JsonArray itemsArray = kitObj.getAsJsonArray("items");
@@ -224,6 +246,7 @@ public class KitManager {
                 JsonObject kitObj = new JsonObject();
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                   // Save cooldown
 =======
                 
@@ -232,12 +255,16 @@ public class KitManager {
 =======
                   // Save cooldown
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+                  // Save cooldown
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 kitObj.addProperty("cooldown", kit.getCooldown());
                 
                 // Save permission
                 if (kit.getPermission() != null) {
                     kitObj.addProperty("permission", kit.getPermission());
                 }
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                   // Save price
@@ -255,6 +282,10 @@ public class KitManager {
                   // Save price
 >>>>>>> b1b745b (feat: Update migration tasks and enhance kit management with pricing and UI improvements)
                 kitObj.addProperty("price", kit.getPrice());
+=======
+                  // Save price
+                kitObj.addProperty("price", kit.getPrice());
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 
                 // Save items
                 JsonArray itemsArray = new JsonArray();
@@ -315,6 +346,7 @@ public class KitManager {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       /**
 =======
     
@@ -323,6 +355,9 @@ public class KitManager {
 =======
       /**
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+      /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Creates a new kit
      * 
      * @param name The name of the kit
@@ -334,8 +369,11 @@ public class KitManager {
     public Kit createKit(String name, long cooldown, String permission, List<ItemStack> items) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         return createKit(name, cooldown, permission, 0, items);
     }
     
@@ -355,6 +393,7 @@ public class KitManager {
         kit.setPermission(permission);
         kit.setPrice(price);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         Kit kit = new Kit(name);
         kit.setCooldown(cooldown);
@@ -362,6 +401,8 @@ public class KitManager {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         for (ItemStack item : items) {
             if (!item.isEmpty()) {
@@ -385,8 +426,11 @@ public class KitManager {
      * @return True if the kit was deleted, false if not found
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      */    public boolean deleteKit(String name) {
         if (name == null) {
             return false;
@@ -395,6 +439,7 @@ public class KitManager {
         String kitName = name.toLowerCase();
         Kit kit = kits.remove(kitName);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
      */
     public boolean deleteKit(String name) {
@@ -402,10 +447,13 @@ public class KitManager {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         if (kit != null) {
             // Remove cooldowns for this kit
             for (Map<String, Long> playerCooldowns : cooldowns.values()) {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                 playerCooldowns.remove(kitName);
@@ -415,6 +463,9 @@ public class KitManager {
 =======
                 playerCooldowns.remove(kitName);
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+                playerCooldowns.remove(kitName);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             }
             
             // Save the kits
@@ -427,8 +478,11 @@ public class KitManager {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
       /**
      * Checks if a player can use a kit (without considering price)
      * 
@@ -440,10 +494,13 @@ public class KitManager {
         return canUseKit(player, kitName, false);
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     
     /**
      * Checks if a player can use a kit
@@ -452,12 +509,16 @@ public class KitManager {
      * @param kitName The name of the kit
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * @param checkPrice Whether to check if the player has enough money for the kit
      * @return True if the player can use the kit, false otherwise
      */
     public boolean canUseKit(ServerPlayer player, String kitName, boolean checkPrice) {
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
      * @return True if the player can use the kit, false otherwise
@@ -466,6 +527,8 @@ public class KitManager {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         Kit kit = getKit(kitName);
         
         if (kit == null || player == null) {
@@ -477,10 +540,14 @@ public class KitManager {
         if (permission != null && !permission.isEmpty()) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             // If specific kit permission defined, check if player has it
             if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, permission)) {
                 // Check if player has bypass permission (e.g., admin level permission)
                 if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.kit.admin")) {
+<<<<<<< HEAD
 =======
             // If specific kit permission defined, check if player has it
             if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, permission)) {
@@ -491,11 +558,14 @@ public class KitManager {
 =======
                 if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.kit.admin")) {
 >>>>>>> 18240f3 (fix: Update permission checks in JailCommands, MessagingCommands, and KitManager to ensure proper player type handling)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     return false;
                 }
             }
         } else {
             // Default permission check if no specific permission is set for the kit
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.kit")) {
@@ -510,6 +580,9 @@ public class KitManager {
 =======
             if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.kit")) {
 >>>>>>> 18240f3 (fix: Update permission checks in JailCommands, MessagingCommands, and KitManager to ensure proper player type handling)
+=======
+            if (!com.zerog.neoessentials.utils.PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.kit")) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 return false;
             }
         }
@@ -530,6 +603,7 @@ public class KitManager {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
         // Check if player has enough money if kit has a price and checking price
@@ -545,6 +619,8 @@ public class KitManager {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         return true;
     }
     
@@ -579,6 +655,7 @@ public class KitManager {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       /**
 =======
     
@@ -587,6 +664,9 @@ public class KitManager {
 =======
       /**
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+      /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gives a kit to a player
      * 
      * @param player The player
@@ -602,11 +682,15 @@ public class KitManager {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Check if the player can use the kit (including price check)
         if (!canUseKit(player, kitName, true)) {
             return false;
         }
         
+<<<<<<< HEAD
         // Handle payment if kit has a price
         if (kit.getPrice() > 0) {
             var economyManager = NeoEssentials.getInstance().getDataManager().getEconomyManager();
@@ -671,6 +755,8 @@ public class KitManager {
         }
         
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Create and give items to the player
         for (ItemDefinition itemDef : kit.getItemDefinitions()) {
             try {
@@ -727,6 +813,9 @@ public class KitManager {
     /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Kit class representing a set of items that players can claim
      */
     public static class Kit {
@@ -734,6 +823,7 @@ public class KitManager {
         private long cooldown;
         private String permission;
         private double price = 0.0; // Add price field with default value of 0
+<<<<<<< HEAD
 =======
      * Represents a kit
      */
@@ -751,6 +841,8 @@ public class KitManager {
         private String permission;
         private double price = 0.0; // Add price field with default value of 0
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         private final List<ItemDefinition> itemDefinitions = new ArrayList<>();
         
         public Kit(String name) {
@@ -779,8 +871,11 @@ public class KitManager {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         public double getPrice() {
             return price;
         }
@@ -788,12 +883,15 @@ public class KitManager {
         public void setPrice(double price) {
             this.price = Math.max(0, price);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         public List<ItemDefinition> getItemDefinitions() {
             return new ArrayList<>(itemDefinitions); // Return a copy to prevent modification
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 3518d7a (feat: Add price management to kit commands and update kit creation logic)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }
         
         public void addItemDefinition(String itemId, int count) {
@@ -801,6 +899,9 @@ public class KitManager {
         }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
           public List<ItemDefinition> getItemDefinitions() {
             return new ArrayList<>(itemDefinitions);
         }
@@ -850,6 +951,7 @@ public class KitManager {
      */
     public void incrementKitUsage(String kitName) {
         kitUsage.put(kitName, kitUsage.getOrDefault(kitName, 0) + 1);
+<<<<<<< HEAD
 =======
         
         public List<ItemDefinition> getItemDefinitions() {
@@ -907,5 +1009,7 @@ public class KitManager {
     public void incrementKitUsage(String kitName) {
         kitUsage.put(kitName, kitUsage.getOrDefault(kitName, 0) + 1);
 >>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
 }

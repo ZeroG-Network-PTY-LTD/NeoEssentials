@@ -26,6 +26,7 @@ public class DatabaseConfig {
     public final ModConfigSpec.ConfigValue<String> mysqlPassword;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     public final ModConfigSpec.BooleanValue mysqlUseSSL;
     public final ModConfigSpec.ConfigValue<String> mysqlTablePrefix;
 =======
@@ -34,6 +35,10 @@ public class DatabaseConfig {
     public final ModConfigSpec.BooleanValue mysqlUseSSL;
     public final ModConfigSpec.ConfigValue<String> mysqlTablePrefix;
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+    public final ModConfigSpec.BooleanValue mysqlUseSSL;
+    public final ModConfigSpec.ConfigValue<String> mysqlTablePrefix;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     
     // SQLite settings
     public final ModConfigSpec.ConfigValue<String> sqliteFilename;
@@ -71,8 +76,11 @@ public class DatabaseConfig {
                 .define("password", "");
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 
         mysqlUseSSL = builder
                 .comment("Whether to use SSL for MySQL connections")
@@ -82,10 +90,13 @@ public class DatabaseConfig {
                 .comment("Prefix for MySQL tables")
                 .define("table_prefix", "ne_");
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         builder.pop();
         
@@ -127,8 +138,11 @@ public class DatabaseConfig {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     
     /**
      * Get the MySQL host
@@ -202,8 +216,11 @@ public class DatabaseConfig {
         return sqliteFilename.get();
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }

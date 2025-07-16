@@ -14,7 +14,10 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nonnull;
+<<<<<<< HEAD
 import java.math.BigDecimal;
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -403,6 +406,7 @@ public class AdminShopManagementMenu extends ChestMenu {
         try {
             ShopManager shopManager = economyManager.getShopManager();
             
+<<<<<<< HEAD
             // Run comprehensive integrity check
             shopManager.validateShopIntegrity();
             
@@ -428,20 +432,39 @@ public class AdminShopManagementMenu extends ChestMenu {
             } catch (Exception e) {
                 player.sendSystemMessage(Component.literal("§cError getting balance: " + e.getMessage()));
             }
+=======
+            // Run integrity check
+            shopManager.validateShopIntegrity();
+            
+            List<ShopItem> allItems = shopManager.getAllItems();
+            List<ShopItem> availableItems = shopManager.getAvailableItems();
+            List<ShopItem> adminItems = allItems.stream().filter(ShopItem::isAdminItem).toList();
+            
+            player.sendSystemMessage(Component.literal("§6=== SHOP DEBUG INFO ==="));
+            player.sendSystemMessage(Component.literal("§7Total items: " + allItems.size()));
+            player.sendSystemMessage(Component.literal("§7Available items: " + availableItems.size()));
+            player.sendSystemMessage(Component.literal("§7Admin items: " + adminItems.size()));
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             
             if (!adminItems.isEmpty()) {
                 player.sendSystemMessage(Component.literal("§eRecent Admin Items:"));
                 for (ShopItem item : adminItems.stream().limit(5).toList()) {
                     String stockInfo = item.getStock() < 0 ? "∞" : String.valueOf(item.getStock());
+<<<<<<< HEAD
                     String priceInfo = item.canBuy() ? economyManager.getDefaultCurrency().format(item.getBuyPrice()) : "N/A";
                     player.sendSystemMessage(Component.literal("§7- " + item.getItemStack().getHoverName().getString() + 
                         " | Stock: " + stockInfo + " | Type: " + item.getType() + " | Price: " + priceInfo));
+=======
+                    player.sendSystemMessage(Component.literal("§7- " + item.getItemStack().getHoverName().getString() + 
+                        " | Stock: " + stockInfo + " | Type: " + item.getType()));
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 }
                 if (adminItems.size() > 5) {
                     player.sendSystemMessage(Component.literal("§7... and " + (adminItems.size() - 5) + " more"));
                 }
             }
             
+<<<<<<< HEAD
             if (!playerItems.isEmpty()) {
                 player.sendSystemMessage(Component.literal("§eRecent Player Items:"));
                 for (ShopItem item : playerItems.stream().limit(3).toList()) {
@@ -460,6 +483,13 @@ public class AdminShopManagementMenu extends ChestMenu {
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error debugging shop", e);
             player.sendSystemMessage(Component.literal("§cError debugging shop: " + e.getMessage()));
+=======
+            player.sendSystemMessage(Component.literal("§aCheck server console for detailed debug info"));
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error debugging shop", e);
+            player.sendSystemMessage(Component.literal("§cError debugging shop"));
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }
     }
     

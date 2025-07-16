@@ -2,8 +2,12 @@ package com.zerog.neoessentials.data;
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.ui.EnhancedTablistManager;
+=======
+import com.zerog.neoessentials.NeoEssentials;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 
@@ -11,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+<<<<<<< HEAD
 =======
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -37,11 +42,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 >>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 
 /**
  * Main data manager class that initializes and manages all data storage components.
  */
 public class DataManager {    private UserManager userManager;
+<<<<<<< HEAD
     private EconomyManager economyManager; // Legacy economy manager for backward compatibility
     private com.zerog.neoessentials.economy.EconomyManager newEconomyManager; // New v1.0.2 economy system
     private HomeManager homeManager;
@@ -61,10 +69,25 @@ public class DataManager {    private UserManager userManager;
 =======
     private MailManager mailManager;    private EnhancedTablistManager tablistManager;
 >>>>>>> 89588f4 (Add configuration management and tablist functionality)
+=======
+    private HomeManager homeManager;
+    private WarpManager warpManager;
+    private SpawnManager spawnManager;
+    private KitManager kitManager;    
+    private JailManager jailManager;
+    private PowerToolManager powerToolManager;
+    private MailManager mailManager;
+    private BookmarkManager bookmarkManager;
+    private PlayerSettingsManager playerSettingsManager;
+    private TeleportHistoryManager teleportHistoryManager;
+    // Use TABLikeTablistManager (enhanced system)
+    private com.zerog.neoessentials.ui.tablist.enhanced.TABLikeTablistManager tablistManager;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     
     private final String dataFolder = "neoessentials/";
     
     public DataManager(NeoEssentials neoEssentials) {
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
     private DatabaseManager databaseManager;
@@ -86,12 +109,15 @@ public class DataManager {    private UserManager userManager;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Create the data folder if it doesn't exist
         File dataFolderFile = new File(dataFolder);
         if (!dataFolderFile.exists()) {
             dataFolderFile.mkdirs();
         }
         
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -146,12 +172,33 @@ public class DataManager {    private UserManager userManager;
 =======
 >>>>>>> 6528176 (feat: Enhance scheduler handling and improve configuration management in NeoEssentials)
         tablistManager = new com.zerog.neoessentials.ui.TablistManager(scheduler);
+=======
+        // Initialize all managers
+        userManager = new UserManager();
+        homeManager = new HomeManager();
+        warpManager = new WarpManager();
+        spawnManager = new SpawnManager();
+        kitManager = new KitManager();        
+        jailManager = new JailManager(dataFolderFile);
+        powerToolManager = new PowerToolManager(dataFolderFile);
+        mailManager = new MailManager(dataFolderFile);
+        bookmarkManager = new BookmarkManager();
+        playerSettingsManager = new PlayerSettingsManager();
+        teleportHistoryManager = new TeleportHistoryManager();
+        
+        // Get the scheduler from NeoEssentials for scheduled tasks like tablist updates
+        java.util.concurrent.ScheduledExecutorService scheduler = neoEssentials.getScheduler();
+        
+        // Use the TABLikeTablistManager (enhanced system) instead of TabManager
+        tablistManager = new com.zerog.neoessentials.ui.tablist.enhanced.TABLikeTablistManager(scheduler);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
      * Initialize the data manager and all its components
      */
     public void initialize() {
+<<<<<<< HEAD
 <<<<<<< HEAD
         NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");
 <<<<<<< HEAD
@@ -167,6 +214,10 @@ public class DataManager {    private UserManager userManager;
         userManager.initialize();
         economyManager.initialize(); // Legacy economy system
         // newEconomyManager is already initialized via singleton getInstance()
+=======
+        NeoEssentials.LOGGER.info("Initializing NeoEssentials Data Manager");            // Initialize all data managers
+        userManager.initialize();
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         homeManager.initialize();
         warpManager.initialize();
         spawnManager.initialize();
@@ -174,9 +225,13 @@ public class DataManager {    private UserManager userManager;
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
         // Initialize tablist after economy is initialized
+=======
+        // Initialize tablist manager
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         tablistManager.initialize();
         // JailManager doesn't need initialization
         
@@ -190,6 +245,9 @@ public class DataManager {    private UserManager userManager;
     public void initializeManagers() {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.info("Initializing managers");
         
         // Create manager instances if they don't exist
@@ -197,6 +255,7 @@ public class DataManager {    private UserManager userManager;
             userManager = new UserManager();
         }
         
+<<<<<<< HEAD
         if (economyManager == null) {
             economyManager = new EconomyManager();
         }
@@ -205,6 +264,8 @@ public class DataManager {    private UserManager userManager;
             newEconomyManager = com.zerog.neoessentials.economy.EconomyManager.getInstance();
         }
         
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         if (homeManager == null) {
             homeManager = new HomeManager();
         }
@@ -230,13 +291,19 @@ public class DataManager {    private UserManager userManager;
         if (mailManager == null) {
             mailManager = new MailManager(dataFolderFile);
         }        if (tablistManager == null && NeoEssentials.getInstance().getConfigManager().isTablistEnabled()) {
+<<<<<<< HEAD
             // Create scheduler in NeoEssentials class
             tablistManager = new EnhancedTablistManager(NeoEssentials.getInstance().getScheduler());
+=======
+            // Create TABLikeTablistManager (enhanced system)
+            tablistManager = new com.zerog.neoessentials.ui.tablist.enhanced.TABLikeTablistManager(NeoEssentials.getInstance().getScheduler());
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             // The server will be set later when available
             if (NeoEssentials.getInstance().getServer() != null) {
                 tablistManager.setServer(NeoEssentials.getInstance().getServer());
             }
         }
+<<<<<<< HEAD
 =======
         // Initialize any managers that need special initialization
         NeoEssentials.LOGGER.info("Initializing data managers");
@@ -287,6 +354,8 @@ public class DataManager {    private UserManager userManager;
             tablistManager.initialize();
         }
 >>>>>>> ecf8e9a (feat: Refactor DataManager initialization and loading process for improved data handling)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -297,8 +366,11 @@ public class DataManager {    private UserManager userManager;
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> ecf8e9a (feat: Refactor DataManager initialization and loading process for improved data handling)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Most managers automatically load their data in their constructor
         // or have specific load methods that are already called
         
@@ -320,7 +392,10 @@ public class DataManager {    private UserManager userManager;
             
             // Reload other data as needed
             // homeManager.reloadHomes();
+<<<<<<< HEAD
             // economyManager.reloadEconomyData();
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             // kitManager.reloadKits();
             // spawnManager.reloadSpawnData();
             
@@ -335,6 +410,7 @@ public class DataManager {    private UserManager userManager;
      */
     public void saveAll() {
         NeoEssentials.LOGGER.info("Saving all NeoEssentials data");        userManager.saveAll();
+<<<<<<< HEAD
 =======
 =======
         // JailManager doesn't need initialization
@@ -390,16 +466,22 @@ public class DataManager {    private UserManager userManager;
         NeoEssentials.LOGGER.info("Saving all NeoEssentials data");        userManager.saveAll();
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
         economyManager.saveAll();
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         homeManager.saveAll();
         warpManager.saveAll();
         spawnManager.saveSpawnData();
         kitManager.saveKits();
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         jailManager.saveJails();
         jailManager.saveJailedPlayers();
         powerToolManager.savePowerTools();
         mailManager.saveMail();
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
@@ -410,6 +492,16 @@ public class DataManager {    private UserManager userManager;
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
 =======
 >>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
+=======
+        
+        // Save new persistent data managers
+        if (teleportHistoryManager != null) {
+            teleportHistoryManager.shutdown(); // This calls saveHistory internally
+        }
+        if (playerSettingsManager != null) {
+            playerSettingsManager.shutdown(); // This calls saveSettings internally
+        }
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -422,6 +514,7 @@ public class DataManager {    private UserManager userManager;
         saveAll();
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         
         // Close database connection if using database
@@ -431,6 +524,8 @@ public class DataManager {    private UserManager userManager;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -443,6 +538,7 @@ public class DataManager {    private UserManager userManager;
     }
     
     /**
+<<<<<<< HEAD
      * Gets the economy manager instance
      * 
      * @return The economy manager
@@ -461,6 +557,8 @@ public class DataManager {    private UserManager userManager;
     }
     
     /**
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets the home manager instance
      * 
      * @return The home manager
@@ -469,6 +567,7 @@ public class DataManager {    private UserManager userManager;
         return homeManager;
     }
     
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     /**
@@ -480,6 +579,10 @@ public class DataManager {    private UserManager userManager;
     /**
      * Gets the warp manager instance
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+    /**
+     * Gets the warp manager instance
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * 
      * @return The warp manager
      */
@@ -493,12 +596,16 @@ public class DataManager {    private UserManager userManager;
      * @return The spawn manager
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      */
     public SpawnManager getSpawnManager() {
         return spawnManager;
     }
     
     /**
+<<<<<<< HEAD
 =======
      */    public SpawnManager getSpawnManager() {
         return spawnManager;
@@ -513,6 +620,8 @@ public class DataManager {    private UserManager userManager;
     
     /**
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets the kit manager instance
      * 
      * @return The kit manager
@@ -525,8 +634,11 @@ public class DataManager {    private UserManager userManager;
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 2b0efb3 (Implement powertool and jail management systems)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets the jail manager instance
      * 
      * @return The jail manager
@@ -547,8 +659,11 @@ public class DataManager {    private UserManager userManager;
     /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 907bd69 (feat: Add MailManager and MailCommands for player mail functionality)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets the mail manager instance
      * 
      * @return The mail manager
@@ -556,6 +671,7 @@ public class DataManager {    private UserManager userManager;
     public MailManager getMailManager() {
         return mailManager;
     }
+<<<<<<< HEAD
     
     /**
 <<<<<<< HEAD
@@ -625,6 +741,46 @@ public class DataManager {    private UserManager userManager;
     
     /**
 >>>>>>> b9b302b (feat: Enhance tablist functionality with player-specific headers and footers; update DataManager and EventHandler for tablist integration)
+=======
+
+    /**
+     * Get the bookmark manager
+     * 
+     * @return The bookmark manager
+     */
+    public BookmarkManager getBookmarkManager() {
+        return bookmarkManager;
+    }
+    
+    /**
+     * Get the player settings manager
+     * 
+     * @return The player settings manager
+     */
+    public PlayerSettingsManager getPlayerSettingsManager() {
+        return playerSettingsManager;
+    }
+    
+    /**
+     * Get the teleport history manager
+     * 
+     * @return The teleport history manager
+     */
+    public TeleportHistoryManager getTeleportHistoryManager() {
+        return teleportHistoryManager;
+    }
+
+    /**
+     * Gets the enhanced tablist manager.
+     * 
+     * @return The TABLikeTablistManager
+     */
+    public com.zerog.neoessentials.ui.tablist.enhanced.TABLikeTablistManager getTablistManager() {
+        return tablistManager;
+    }
+    
+    /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Get the data directory
      * 
      * @return The data directory path
@@ -634,6 +790,7 @@ public class DataManager {    private UserManager userManager;
     }
     
     /**
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -677,6 +834,8 @@ public class DataManager {    private UserManager userManager;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Converts a CompoundTag to a string
      * 
      * @param nbt The NBT tag to convert
@@ -705,8 +864,11 @@ public class DataManager {    private UserManager userManager;
             return null;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }    }
     
     /**
@@ -725,10 +887,13 @@ public class DataManager {    private UserManager userManager;
         
         return warpList;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         }
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
 }
