@@ -506,6 +506,7 @@ public class MessagingCommands {
      */
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message) {        // Skip if sender or recipient has exemption
         if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") || 
             PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
@@ -524,6 +525,11 @@ public class MessagingCommands {
 >>>>>>> 18240f3 (fix: Update permission checks in JailCommands, MessagingCommands, and KitManager to ensure proper player type handling)
             PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
 >>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
+=======
+    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message) {        // Skip if sender or recipient has exemption
+        if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") || 
+            PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return;
         }
         
@@ -541,6 +547,7 @@ public class MessagingCommands {
                 !player.getUUID().equals(recipient.getUUID()) &&
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
 =======
                 PermissionUtil.hasPermission(player, "essentials.socialspy")) {
@@ -548,6 +555,9 @@ public class MessagingCommands {
 =======
                 PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
 >>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
+=======
+                PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 player.sendSystemMessage(spyMessage);
             }
         }

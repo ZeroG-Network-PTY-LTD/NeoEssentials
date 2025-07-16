@@ -20,12 +20,16 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
+=======
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
@@ -41,6 +45,7 @@ import java.util.concurrent.TimeUnit;
  * </p>
  * 
 <<<<<<< HEAD
+<<<<<<< HEAD
  * @author ZeroG
  * @version 1.0.0
 <<<<<<< HEAD
@@ -55,6 +60,10 @@ import java.util.concurrent.TimeUnit;
  * @author ZeroG * @version 1.0.1
  * @since 2025-06-22
 >>>>>>> e614394 (fix: Update version and release date in class documentation for NeoEssentials)
+=======
+ * @author ZeroG * @version 1.0.1
+ * @since 2025-06-22
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
  */
 @Mod(NeoEssentials.MODID)
 public class NeoEssentials {
@@ -74,11 +83,15 @@ public class NeoEssentials {
     private ModContainer modContainer;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     
     /** Flag to track if the database configuration has been loaded */
     private boolean databaseConfigLoaded = false;
     
     /** Scheduled executor service for periodic tasks like AFK checking */
+<<<<<<< HEAD
 <<<<<<< HEAD
     private ScheduledExecutorService scheduler;
 =======
@@ -100,6 +113,9 @@ public class NeoEssentials {
 =======
     private ScheduledExecutorService scheduler;    /**
 >>>>>>> 9f2a583 (feat: Update README and configuration files with detailed tablist animation examples and new settings)
+=======
+    private ScheduledExecutorService scheduler;    /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Main constructor for NeoEssentials
      * <p>
      * Initializes the mod instance, registers event handlers, and sets up
@@ -114,6 +130,7 @@ public class NeoEssentials {
         this.modContainer = modContainer;
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         // Register config loading event handlers
@@ -159,6 +176,15 @@ public class NeoEssentials {
             LOGGER.info("NeoEssentials initializing in DEDICATED SERVER environment - full functionality enabled");
 >>>>>>> 3ee6355 (feat: Update mod to support client-server synchronization and enhance compatibility)
 =======
+=======
+        // Register config loading event handlers
+        modEventBus.addListener(this::onConfigLoad);
+        modEventBus.addListener(this::onConfigReady);
+        
+        // Initialize ResourceManager to set up default configurations
+        com.zerog.neoessentials.utils.ResourceManager.initialize();
+
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Register custom command argument types - now server-side only
         com.zerog.neoessentials.init.ModArgumentTypes.register(modEventBus);
         
@@ -168,7 +194,10 @@ public class NeoEssentials {
         // Check if we're on the physical server or client
         if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.DEDICATED_SERVER) {
             LOGGER.info("NeoEssentials initializing in DEDICATED SERVER environment - full server-side functionality enabled");
+<<<<<<< HEAD
 >>>>>>> 7e60483 (feat: Optimize NeoEssentials for server-only functionality and update documentation)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         } else if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT) {
             LOGGER.info("NeoEssentials initializing in CLIENT environment - providing registry support for server compatibility");
             // On client, we primarily need to register things for synchronization
@@ -182,6 +211,7 @@ public class NeoEssentials {
         // Register the event handlers
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.events.EventHandler.class);
 =======
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.EventHandler());
@@ -189,11 +219,15 @@ public class NeoEssentials {
 =======
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.events.EventHandler.class);
 >>>>>>> e2153e5 (fix: Improve event registration and storage manager initialization in NeoEssentials)
+=======
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.events.EventHandler.class);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.events.PowerToolEventHandler());
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.ui.tablist.enhanced.TABLikeEventListener.class);
 
         // Initialize our configuration system
         configManager = new com.zerog.neoessentials.config.ModConfigManager(this, modContainer);
+<<<<<<< HEAD
 <<<<<<< HEAD
     }
     
@@ -252,6 +286,8 @@ public class NeoEssentials {
         }
 =======
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -314,9 +350,12 @@ public class NeoEssentials {
         LOGGER.info("HELLO FROM COMMON SETUP");
         LOGGER.info("Initializing NeoEssentials managers");
         
+<<<<<<< HEAD
         // Initialize FTB Registry compatibility helpers
         com.zerog.neoessentials.compat.FTBRegistryCompat.init();
         
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Additional registrations that need to happen during common setup
         event.enqueueWork(() -> {
             LOGGER.info("Registering command argument types in common setup");
@@ -325,8 +364,11 @@ public class NeoEssentials {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Initialize storage manager
         initializeStorageManager();
         
@@ -338,11 +380,14 @@ public class NeoEssentials {
         
         // Initialize managers that rely on storage
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         // Initialize the managers
 >>>>>>> fddf77d (feat: Register custom command argument types during mod initialization)
 =======
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         initializeManagers();
     }
 
@@ -358,14 +403,18 @@ public class NeoEssentials {
     // Fields for the essentials managers
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     private com.zerog.neoessentials.config.ModConfigManager configManager;
     private com.zerog.neoessentials.data.DataManager dataManager;
     private com.zerog.neoessentials.commands.CommandManager commandManager;
     private com.zerog.neoessentials.storage.StorageManager storageManager;
     private com.zerog.neoessentials.economy.EconomyManager economyManager;
     private boolean storageManagerInitialized = false;
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
     private com.zerog.neoessentials.config.ConfigManager configManager;
@@ -378,12 +427,15 @@ public class NeoEssentials {
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
 =======
 >>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     
     /**
      * Gets the config manager
      * 
      * @return The config manager
      */
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     public com.zerog.neoessentials.config.ModConfigManager getConfigManager() {
@@ -393,6 +445,9 @@ public class NeoEssentials {
 =======
     public com.zerog.neoessentials.config.ModConfigManager getConfigManager() {
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
+=======
+    public com.zerog.neoessentials.config.ModConfigManager getConfigManager() {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         return configManager;
     }
     
@@ -417,8 +472,11 @@ public class NeoEssentials {
     /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets the storage manager
      * 
      * @return The storage manager
@@ -429,10 +487,60 @@ public class NeoEssentials {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 73a32aa (Implement SQLite storage handler and associated factory and manager classes)
+=======
+     * Gets the economy manager
+     * 
+     * @return The economy manager
+     */
+    public com.zerog.neoessentials.economy.EconomyManager getEconomyManager() {
+        return economyManager;
+    }
+    
+    /**
+     * Initialize the economy manager
+     */
+    private void initializeEconomyManager() {
+        try {
+            if (configManager != null) {
+                LOGGER.info("Initializing Economy Manager");
+                
+                // Load economy config from file or create default
+                java.nio.file.Path configDir = java.nio.file.Paths.get("config/neoessentials");
+                com.zerog.neoessentials.config.EconomyConfig economyConfig = 
+                    com.zerog.neoessentials.config.EconomyConfig.loadFromFile(configDir);
+                
+                // Override enabled status from general config if available
+                if (configManager.isEconomyEnabled() != economyConfig.isEnabled()) {
+                    economyConfig.setEnabled(configManager.isEconomyEnabled());
+                    economyConfig.saveToFile(configDir); // Save the updated config
+                }
+                
+                java.nio.file.Path dataDir = java.nio.file.Paths.get("config/neoessentials/data");
+                economyManager = new com.zerog.neoessentials.economy.EconomyManager(
+                    economyConfig, 
+                    dataDir
+                );
+                
+                if (economyManager.initialize()) {
+                    LOGGER.info("Economy Manager initialized successfully");
+                } else {
+                    LOGGER.error("Failed to initialize Economy Manager");
+                }
+            } else {
+                LOGGER.warn("Cannot initialize Economy Manager - config manager not available yet");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error initializing Economy Manager", e);
+        }
+    }
+    
+    /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets the mod container
      * 
      * @return The mod container
@@ -446,13 +554,19 @@ public class NeoEssentials {
     public void initializeManagers() {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 7409b6f (feat: Add comprehensive configuration management for NeoEssentials, including database, economy, home, kit, warp, and tablist settings)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Initialize managers that rely on data manager
         if (dataManager != null) {
             dataManager.initializeManagers();
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         // Only initialize storage manager if config is loaded, otherwise it will be initialized in onConfigLoad
         if (databaseConfigLoaded) {
@@ -463,6 +577,7 @@ public class NeoEssentials {
         
         // Initialize data manager
         dataManager = new com.zerog.neoessentials.data.DataManager(this);
+<<<<<<< HEAD
 =======
         // Initialize config manager first
         configManager = new com.zerog.neoessentials.config.ConfigManager();
@@ -493,6 +608,8 @@ public class NeoEssentials {
 =======
         dataManager = new com.zerog.neoessentials.data.DataManager(this);
 >>>>>>> ecf8e9a (feat: Refactor DataManager initialization and loading process for improved data handling)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         dataManager.initialize();
         
         // Initialize economy manager
@@ -508,13 +625,20 @@ public class NeoEssentials {
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     /**
      * Initialize the permission handlers
      */
     private void initializePermissionHandlers() {
         try {
             LOGGER.info("Initializing permission handlers");
+<<<<<<< HEAD
             // This will register all available permission handlers (LuckPerms, FTB Ranks, etc.)
+=======
+            // This will register all available permission handlers (LuckPerms, etc.)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             com.zerog.neoessentials.permissions.PermissionHandlerManager.getInstance();
         } catch (Exception e) {
             LOGGER.error("Error initializing permission handlers", e);
@@ -572,6 +696,7 @@ public class NeoEssentials {
      *
      * @param event The server starting event
 <<<<<<< HEAD
+<<<<<<< HEAD
      */
 <<<<<<< HEAD
 =======
@@ -626,14 +751,20 @@ public class NeoEssentials {
 =======
      */    @SubscribeEvent
 >>>>>>> 30dc8b4 (feat: Refactor tablist management to improve server reference handling and placeholder processing)
+=======
+     */    @SubscribeEvent
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     public void onServerStarting(ServerStartingEvent event) {
         // Store the server instance
         server = event.getServer();
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 05e6600 (feat: Enhance documentation for NeoEssentials and command management classes)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Log mod activation
         LOGGER.info("NeoEssentials server-side mod activated!");
         LOGGER.info("Version: {} for Minecraft {}", getVersion(), net.minecraft.SharedConstants.getCurrentVersion().getName());
@@ -657,6 +788,7 @@ public class NeoEssentials {
                 LOGGER.error("Error in AFK checker task", e);
             }
         }, 60, 60, TimeUnit.SECONDS); // Check every minute
+<<<<<<< HEAD
 =======
         // Do something when the server starts
         LOGGER.info("NeoEssentials server-side mod activated!");
@@ -677,6 +809,8 @@ public class NeoEssentials {
             }
         }, 60, 60, TimeUnit.SECONDS); // Check every minute
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -691,8 +825,11 @@ public class NeoEssentials {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Shut down scheduler
         if (scheduler != null) {
             scheduler.shutdown();
@@ -712,6 +849,7 @@ public class NeoEssentials {
             dataManager.saveAll();
         }
         
+<<<<<<< HEAD
         if (storageManager != null && storageManagerInitialized) {
             storageManager.shutdown();
         }
@@ -737,6 +875,11 @@ public class NeoEssentials {
         // Save all data and close database connections
         if (dataManager != null) {
             dataManager.saveAll();
+=======
+        // Shutdown economy manager
+        if (economyManager != null) {
+            economyManager.shutdown();
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }
         
         if (storageManager != null && storageManagerInitialized) {
@@ -759,17 +902,25 @@ public class NeoEssentials {
      * @return The server instance
      */
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
     private net.minecraft.server.MinecraftServer server;
     
 >>>>>>> da6a97e (chore: Update build number to 9 and timestamp in buildnumber.properties)
+=======
+    private net.minecraft.server.MinecraftServer server;
+    
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     public net.minecraft.server.MinecraftServer getServer() {
         return server;
     }
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     private void registerDatabaseConfig() {
         // Database config is now registered in ModConfigManager
         LOGGER.info("Database configuration already registered through ModConfigManager");
@@ -778,6 +929,9 @@ public class NeoEssentials {
     /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Gets the scheduler for async tasks
      * 
      * @return The scheduler
@@ -787,6 +941,7 @@ public class NeoEssentials {
             scheduler = Executors.newScheduledThreadPool(2);
         }
         return scheduler;
+<<<<<<< HEAD
 =======
     /**
      * Gets the mod version from the ModContainer
@@ -831,6 +986,8 @@ public class NeoEssentials {
         }
         return scheduler;
 >>>>>>> 2c0e119 (feat: Add compatibility layer for legacy config structure and enhance DataManager with scheduler integration)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -848,4 +1005,19 @@ public class NeoEssentials {
         }
         return false;
     }
+<<<<<<< HEAD
+=======
+    
+    /**
+     * Event handler for server ticks to track performance.
+     * Called every server tick for performance monitoring.
+     * 
+     * @param event The server tick event
+     */
+    @SubscribeEvent
+    public void onServerTick(ServerTickEvent.Post event) {
+        // Record tick for performance monitoring
+        com.zerog.neoessentials.util.PerformanceMonitor.recordTick();
+    }
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }

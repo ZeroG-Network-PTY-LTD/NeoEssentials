@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.WarpManager;
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.MessageUtil;
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -15,6 +16,10 @@ import com.zerog.neoessentials.utils.PermissionUtil;
 =======
 import com.zerog.neoessentials.utils.PermissionUtil;
 >>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
+=======
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import com.zerog.neoessentials.utils.TeleportUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -39,6 +44,9 @@ public class WarpCommands {
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.info("Registering warp commands");
         
         // /warp <n> - Teleport to a warp
@@ -49,6 +57,7 @@ public class WarpCommands {
                     NeoEssentials.LOGGER.debug("Permission check for 'neoessentials.command.warp': {}", hasPermission);
                     return hasPermission;
                 })
+<<<<<<< HEAD
 =======
         // /warp <name> - Teleport to a warp
         dispatcher.register(
@@ -71,6 +80,8 @@ public class WarpCommands {
                     return hasPermission;
                 })
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .then(Commands.argument("name", StringArgumentType.word())
                     .suggests(TabCompletionUtil.WARP_SUGGESTIONS)
                     .executes(this::executeWarp)
@@ -83,14 +94,20 @@ public class WarpCommands {
             Commands.literal("warps")
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.list"))
                 .executes(this::executeWarpList)
         );
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // /warphelp - Show help for warp commands
         dispatcher.register(
             Commands.literal("warphelp")
@@ -102,6 +119,7 @@ public class WarpCommands {
         dispatcher.register(
             Commands.literal("setwarp")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.set"))
+<<<<<<< HEAD
 =======
                 .requires(source -> source.hasPermission(0)) // Available to all players
 =======
@@ -122,6 +140,8 @@ public class WarpCommands {
 =======
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.set"))
 >>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .then(Commands.argument("name", StringArgumentType.word())
                     .executes(this::executeSetWarp)
                 )
@@ -129,12 +149,16 @@ public class WarpCommands {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // /delwarp <n> - Delete a warp
         dispatcher.register(
             Commands.literal("delwarp")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.delete"))
+<<<<<<< HEAD
 =======
         // /delwarp <name> - Delete a warp
         dispatcher.register(
@@ -145,6 +169,8 @@ public class WarpCommands {
 =======
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.delete"))
 >>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .then(Commands.argument("name", StringArgumentType.word())
                     .suggests(TabCompletionUtil.WARP_SUGGESTIONS)
                     .executes(this::executeDeleteWarp)
@@ -156,6 +182,7 @@ public class WarpCommands {
             Commands.literal("warpplayer")
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.player"))
 =======
                 .requires(source -> source.hasPermission(2)) // Requires permission level 2 (op)
@@ -163,6 +190,9 @@ public class WarpCommands {
 =======
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.player"))
 >>>>>>> 796dc37 (refactor: Update warp command permissions and storage handling)
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.warp.player"))
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("warp", StringArgumentType.word())
                         .suggests(TabCompletionUtil.WARP_SUGGESTIONS)
@@ -170,6 +200,7 @@ public class WarpCommands {
                     )
                 )
         );
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         
@@ -180,6 +211,10 @@ public class WarpCommands {
         
         NeoEssentials.LOGGER.info("Warp commands registered successfully");
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+        
+        NeoEssentials.LOGGER.info("Warp commands registered successfully");
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -194,6 +229,9 @@ public class WarpCommands {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.debug("Player {} is attempting to teleport to warp '{}'", player.getScoreboardName(), warpName);
         
         WarpManager warpManager = NeoEssentials.getInstance().getDataManager().getWarpManager();
@@ -207,6 +245,7 @@ public class WarpCommands {
         
         if (warpLocation == null) {
             NeoEssentials.LOGGER.debug("Warp '{}' not found for player {}", warpName, player.getScoreboardName());
+<<<<<<< HEAD
 =======
 =======
         NeoEssentials.LOGGER.debug("Player {} is attempting to teleport to warp '{}'", player.getScoreboardName(), warpName);
@@ -227,27 +266,36 @@ public class WarpCommands {
 =======
             NeoEssentials.LOGGER.debug("Warp '{}' not found for player {}", warpName, player.getScoreboardName());
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             context.getSource().sendFailure(Component.literal("Warp '" + warpName + "' not found"));
             return 0;
         }
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.debug("Attempting to teleport player {} to warp '{}' at dimension {}, [{}, {}, {}]",
             player.getScoreboardName(), warpName, warpLocation.getDimension(), 
             warpLocation.getX(), warpLocation.getY(), warpLocation.getZ());
             
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Teleport the player to the warp
         boolean success = teleportPlayerToWarp(player, warpLocation);
         
         if (success) {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             NeoEssentials.LOGGER.debug("Successfully teleported player {} to warp '{}'", player.getScoreboardName(), warpName);
@@ -268,6 +316,14 @@ public class WarpCommands {
 =======
             NeoEssentials.LOGGER.error("Failed to teleport player {} to warp '{}'", player.getScoreboardName(), warpName);
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+            NeoEssentials.LOGGER.debug("Successfully teleported player {} to warp '{}'", player.getScoreboardName(), warpName);
+            MutableComponent message = Component.literal("Teleported to warp '" + warpName + "'");
+            LanguageUtil.sendComponent(player, message);
+            return 1;
+        } else {
+            NeoEssentials.LOGGER.error("Failed to teleport player {} to warp '{}'", player.getScoreboardName(), warpName);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             context.getSource().sendFailure(Component.literal("Failed to teleport to warp '" + warpName + "'"));
             return 0;
         }
@@ -284,6 +340,9 @@ public class WarpCommands {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.debug("Player {} is requesting the warp list", player.getScoreboardName());
         
         WarpManager warpManager = NeoEssentials.getInstance().getDataManager().getWarpManager();
@@ -301,6 +360,7 @@ public class WarpCommands {
             return 0;
         }
           MutableComponent message = Component.literal("§2Available warps: ");
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 =======
@@ -326,12 +386,17 @@ public class WarpCommands {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         boolean first = true;
         for (String warpName : warps.keySet()) {
             if (!first) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 message.append(Component.literal("§7, "));
             }
             
@@ -350,10 +415,15 @@ public class WarpCommands {
                     (int)warpLocation.getZ()));
             }
             
+<<<<<<< HEAD
             warpComponent = MessageUtil.addHoverText(warpComponent, hoverText);
             
             // Add click event to teleport to the warp
             warpComponent = MessageUtil.makeClickableCommand(warpComponent, "/warp " + warpName);
+=======
+            // Simplified warp display (removing complex hover/click for now)
+            warpComponent.append(Component.literal("§7 - Type /warp " + warpName + " to teleport"));
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             
             message.append(warpComponent);
             first = false;
@@ -362,6 +432,7 @@ public class WarpCommands {
         NeoEssentials.LOGGER.debug("Sending interactive warp list ({} warps) to player {}", warps.size(), player.getScoreboardName());
         
         // Add a heading
+<<<<<<< HEAD
         MessageUtil.sendInfo(player, Component.literal("§2§l====== §r§6Warp List §2§l======"));
         
         // Send the warp list
@@ -428,6 +499,17 @@ public class WarpCommands {
         
         MessageUtil.sendInfo(player, helpMessage);
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+        LanguageUtil.sendComponent(player, Component.literal("§2§l====== §r§6Warp List §2§l======"));
+        
+        // Send the warp list
+        LanguageUtil.sendComponent(player, message);
+        
+        // Add clickable help button (simplified)
+        MutableComponent helpMessage = Component.literal("§7Type §e/warphelp§7 for more information.");
+        
+        LanguageUtil.sendComponent(player, helpMessage);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         return 1;
     }
     
@@ -443,14 +525,20 @@ public class WarpCommands {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.debug("Player {} is attempting to set warp '{}' at [{}, {}, {}] in dimension {}",
             player.getScoreboardName(), warpName, 
             player.getX(), player.getY(), player.getZ(),
             player.level().dimension().location());
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         WarpManager warpManager = NeoEssentials.getInstance().getDataManager().getWarpManager();
         if (warpManager == null) {
             NeoEssentials.LOGGER.error("WarpManager is null when executing /setwarp command");
@@ -465,6 +553,7 @@ public class WarpCommands {
                 player.getScoreboardName(), warpName, 
                 player.getX(), player.getY(), player.getZ(),
                 player.level().dimension().location());
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
@@ -498,6 +587,13 @@ public class WarpCommands {
 =======
             NeoEssentials.LOGGER.error("Failed to set warp '{}' for player {}", warpName, player.getScoreboardName());
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+            MutableComponent message = Component.literal("Set warp '" + warpName + "' at your current location");
+            LanguageUtil.sendComponent(player, message);
+            return 1;
+        } else {
+            NeoEssentials.LOGGER.error("Failed to set warp '{}' for player {}", warpName, player.getScoreboardName());
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             context.getSource().sendFailure(Component.literal("Failed to set warp '" + warpName + "'"));
             return 0;
         }
@@ -515,6 +611,9 @@ public class WarpCommands {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.debug("Player {} is attempting to delete warp '{}'", player.getScoreboardName(), warpName);
         
         WarpManager warpManager = NeoEssentials.getInstance().getDataManager().getWarpManager();
@@ -528,6 +627,7 @@ public class WarpCommands {
         
         if (success) {
             NeoEssentials.LOGGER.info("Player {} deleted warp '{}'", player.getScoreboardName(), warpName);
+<<<<<<< HEAD
 =======
 =======
         NeoEssentials.LOGGER.debug("Player {} is attempting to delete warp '{}'", player.getScoreboardName(), warpName);
@@ -560,6 +660,13 @@ public class WarpCommands {
 =======
             NeoEssentials.LOGGER.debug("Warp '{}' not found for deletion by player {}", warpName, player.getScoreboardName());
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+            MutableComponent message = Component.literal("Deleted warp '" + warpName + "'");
+            LanguageUtil.sendComponent(player, message);
+            return 1;
+        } else {
+            NeoEssentials.LOGGER.debug("Warp '{}' not found for deletion by player {}", warpName, player.getScoreboardName());
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             context.getSource().sendFailure(Component.literal("Warp '" + warpName + "' not found"));
             return 0;
         }
@@ -578,6 +685,9 @@ public class WarpCommands {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.debug("Player {} is attempting to warp player {} to warp '{}'", 
             source.getScoreboardName(), targetPlayer.getScoreboardName(), warpName);
         
@@ -592,6 +702,7 @@ public class WarpCommands {
         
         if (warpLocation == null) {
             NeoEssentials.LOGGER.debug("Warp '{}' not found for warpplayer command by {}", warpName, source.getScoreboardName());
+<<<<<<< HEAD
 =======
 =======
         NeoEssentials.LOGGER.debug("Player {} is attempting to warp player {} to warp '{}'", 
@@ -613,27 +724,36 @@ public class WarpCommands {
 =======
             NeoEssentials.LOGGER.debug("Warp '{}' not found for warpplayer command by {}", warpName, source.getScoreboardName());
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             context.getSource().sendFailure(Component.literal("Warp '" + warpName + "' not found"));
             return 0;
         }
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.debug("Attempting to teleport player {} to warp '{}' at dimension {}, [{}, {}, {}]",
             targetPlayer.getScoreboardName(), warpName, warpLocation.getDimension(), 
             warpLocation.getX(), warpLocation.getY(), warpLocation.getZ());
         
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Teleport the target player to the warp
         boolean success = teleportPlayerToWarp(targetPlayer, warpLocation);
         
         if (success) {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             NeoEssentials.LOGGER.info("Player {} teleported {} to warp '{}'", 
@@ -659,10 +779,23 @@ public class WarpCommands {
 =======
             NeoEssentials.LOGGER.error("Failed to teleport player {} to warp '{}'", targetPlayer.getScoreboardName(), warpName);
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+            NeoEssentials.LOGGER.info("Player {} teleported {} to warp '{}'", 
+                source.getScoreboardName(), targetPlayer.getScoreboardName(), warpName);
+            MutableComponent messageToAdmin = Component.literal("Teleported " + targetPlayer.getScoreboardName() + " to warp '" + warpName + "'");
+            LanguageUtil.sendComponent(source, messageToAdmin);
+            
+            MutableComponent messageToTarget = Component.literal("You have been teleported to warp '" + warpName + "'");
+            LanguageUtil.sendComponent(targetPlayer, messageToTarget);
+            return 1;
+        } else {
+            NeoEssentials.LOGGER.error("Failed to teleport player {} to warp '{}'", targetPlayer.getScoreboardName(), warpName);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             context.getSource().sendFailure(Component.literal("Failed to teleport " + targetPlayer.getScoreboardName() + " to warp '" + warpName + "'"));
             return 0;
         }
     }
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       /**
@@ -673,11 +806,15 @@ public class WarpCommands {
 =======
       /**
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+      /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Teleports a player to a warp location
      * 
      * @param player The player to teleport
      * @param warpLocation The warp location
      * @return True if teleportation was successful, false otherwise
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
      */
@@ -687,11 +824,16 @@ public class WarpCommands {
      */
     private boolean teleportPlayerToWarp(ServerPlayer player, WarpManager.WarpLocation warpLocation) {
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+     */
+    private boolean teleportPlayerToWarp(ServerPlayer player, WarpManager.WarpLocation warpLocation) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         if (player == null || warpLocation == null) {
             NeoEssentials.LOGGER.error("Cannot teleport with null player or warp location");
             return false;
         }
         
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
@@ -700,6 +842,8 @@ public class WarpCommands {
 >>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
 =======
 >>>>>>> 1713a18 (Refactor warp command handling and improve MySQL storage)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         String dimensionKey = warpLocation.getDimension();
         double x = warpLocation.getX();
         double y = warpLocation.getY();
@@ -709,8 +853,11 @@ public class WarpCommands {
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Check if player's server is available
         if (player.getServer() == null) {
             NeoEssentials.LOGGER.error("Cannot teleport player, server instance is null");
@@ -718,6 +865,9 @@ public class WarpCommands {
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // Get the server from the player
         ServerLevel targetLevel = null;
         
@@ -726,6 +876,7 @@ public class WarpCommands {
             if (level.dimension().location().toString().equals(dimensionKey)) {
                 targetLevel = level;
                 NeoEssentials.LOGGER.debug("Found exact dimension match: {}", dimensionKey);
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> 0e64616 (chore: Update build number to 12 and timestamp in buildnumber.properties; enhance logging in command registration and warp management)
@@ -741,12 +892,17 @@ public class WarpCommands {
 =======
                 NeoEssentials.LOGGER.debug("Found exact dimension match: {}", dimensionKey);
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 break;
             }
         }
         
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         // If direct match failed, try checking just the path part
         if (targetLevel == null) {
             for (ServerLevel level : player.getServer().getAllLevels()) {
@@ -829,6 +985,7 @@ public class WarpCommands {
         NeoEssentials.LOGGER.debug("Player {} is requesting warp help", player.getScoreboardName());
         
         // Header
+<<<<<<< HEAD
         MessageUtil.sendInfo(player, Component.literal("§2§l====== §r§6Warp Commands §2§l======"));
         
         // Commands list with clickable examples
@@ -882,10 +1039,31 @@ public class WarpCommands {
             MutableComponent warpPlayerCmd = Component.literal("§b/warpplayer <player> <warp>");
             warpPlayerCmd = MessageUtil.addHoverText(warpPlayerCmd, Component.literal("§7Teleport another player to a warp"));
             MessageUtil.sendInfo(player, warpPlayerCmd.append(Component.literal(" §7- Teleport another player to a warp")));
+=======
+        LanguageUtil.sendComponent(player, Component.literal("§2§l====== §r§6Warp Commands §2§l======"));
+        
+        // Commands list (simplified)
+        LanguageUtil.sendComponent(player, Component.literal("§b/warp <name> §7- Teleport to a warp location"));
+        
+        LanguageUtil.sendComponent(player, Component.literal("§b/warps §7- List all available warps"));
+        
+        // Only show admin commands to players with appropriate permissions
+        if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.set")) {
+            LanguageUtil.sendComponent(player, Component.literal("§b/setwarp <name> §7- Create a new warp at your location"));
+        }
+        
+        if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.delete")) {
+            LanguageUtil.sendComponent(player, Component.literal("§b/delwarp <name> §7- Delete an existing warp"));
+        }
+        
+        if (PermissionUtil.hasPermission((ServerPlayer)player, "neoessentials.command.warp.player")) {
+            LanguageUtil.sendComponent(player, Component.literal("§b/warpplayer <player> <warp> §7- Teleport another player to a warp"));
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }
         
         return 1;
     }
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 =======
@@ -962,4 +1140,6 @@ public class WarpCommands {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }

@@ -18,6 +18,7 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 import net.minecraft.server.players.PlayerList;
@@ -25,6 +26,9 @@ import net.minecraft.server.players.PlayerList;
 =======
 
 >>>>>>> a0123aa (refactor: Enhance message command handling and introduce StringToBooleanArgumentType for improved command argument parsing)
+=======
+
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 
 import java.util.*;
 
@@ -313,6 +317,7 @@ public class MessageCommands {
         context.getSource().sendSuccess(() -> senderMsg, false);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         recipient.sendSystemMessage(recipientMsg);        // Send to social spies
 =======
         recipient.sendSystemMessage(recipientMsg);
@@ -329,6 +334,10 @@ public class MessageCommands {
         recipient.sendSystemMessage(recipientMsg);        // Send to social spies
         sendToSocialSpies(sender, recipient, formattedMessage, null);
 >>>>>>> a0123aa (refactor: Enhance message command handling and introduce StringToBooleanArgumentType for improved command argument parsing)
+=======
+        recipient.sendSystemMessage(recipientMsg);        // Send to social spies
+        sendToSocialSpies(sender, recipient, formattedMessage, null);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         // Update last message tracking
         lastMessageSender.put(recipient.getUUID(), sender.getUUID());
@@ -526,6 +535,9 @@ public class MessageCommands {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      */    private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {        // Skip if sender or recipient has exemption
         if (PermissionUtil.hasPermission((ServerPlayer)sender, "essentials.chat.spy.exempt") ||
             PermissionUtil.hasPermission((ServerPlayer)recipient, "essentials.chat.spy.exempt")) {
@@ -536,6 +548,7 @@ public class MessageCommands {
         }
         
         net.minecraft.server.players.PlayerList playerList = sender.getServer().getPlayerList();
+<<<<<<< HEAD
 =======
      */
     private void sendToSocialSpies(ServerPlayer sender, ServerPlayer recipient, String message, ServerPlayer skipPlayer) {
@@ -567,6 +580,8 @@ public class MessageCommands {
         
         net.minecraft.server.players.PlayerList playerList = sender.getServer().getPlayerList();
 >>>>>>> a0123aa (refactor: Enhance message command handling and introduce StringToBooleanArgumentType for improved command argument parsing)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         Component spyMessage = Component.translatable("commands.socialspy.format", 
                                                     sender.getDisplayName(), 
                                                     recipient.getDisplayName(), 
@@ -579,6 +594,7 @@ public class MessageCommands {
                 (skipPlayer == null || !player.getUUID().equals(skipPlayer.getUUID())) &&
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
 =======
                 PermissionUtil.hasPermission(player, "essentials.socialspy")) {
@@ -586,6 +602,9 @@ public class MessageCommands {
 =======
                 PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
 >>>>>>> 30e3241 (Refactor code structure for improved readability and maintainability)
+=======
+                PermissionUtil.hasPermission((ServerPlayer)player, "essentials.socialspy")) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 player.sendSystemMessage(spyMessage);
             }
         }

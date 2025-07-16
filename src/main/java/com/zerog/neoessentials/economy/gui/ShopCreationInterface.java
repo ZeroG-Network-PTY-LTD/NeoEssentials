@@ -31,12 +31,15 @@ public class ShopCreationInterface {
      */
     public static void openShopCreation(ServerPlayer player, EconomyManager economyManager) {
         try {
+<<<<<<< HEAD
             // Check if economy system is enabled
             if (!economyManager.isEnabled()) {
                 player.sendSystemMessage(Component.literal("§cEconomy system is disabled. Cannot create shop listings."));
                 return;
             }
             
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             // Check if player is holding an item
             ItemStack heldItem = player.getMainHandItem();
             
@@ -45,6 +48,7 @@ public class ShopCreationInterface {
                 return;
             }
             
+<<<<<<< HEAD
             // Validate item can be sold
             if (!isValidShopItem(heldItem)) {
                 player.sendSystemMessage(Component.literal("§cThis item cannot be sold in the shop"));
@@ -62,11 +66,19 @@ public class ShopCreationInterface {
                 return;
             }
             
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             // Send clear instructions to the player
             player.sendSystemMessage(Component.literal("§6=== Create Shop Item ==="));
             player.sendSystemMessage(Component.literal("§eItem: " + heldItem.getHoverName().getString()));
             player.sendSystemMessage(Component.literal("§eQuantity: " + heldItem.getCount()));
+<<<<<<< HEAD
             player.sendSystemMessage(Component.literal("§7Current balance: " + economyManager.getDefaultCurrency().format(economyManager.getBalance(player.getUUID()))));
+=======
+            player.sendSystemMessage(Component.literal("§eType the price for this item in chat"));
+            player.sendSystemMessage(Component.literal("§7Example: 10.50"));
+            player.sendSystemMessage(Component.literal("§7This will create a shop listing with " + heldItem.getCount() + " items in stock"));
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             
             // Create menu provider for anvil-like interface
             SimpleMenuProvider menuProvider = new SimpleMenuProvider(
@@ -92,6 +104,7 @@ public class ShopCreationInterface {
     }
     
     /**
+<<<<<<< HEAD
      * Validates if an item can be sold in the shop
      */
     private static boolean isValidShopItem(ItemStack item) {
@@ -118,6 +131,8 @@ public class ShopCreationInterface {
     }
     
     /**
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Custom anvil menu for shop creation
      */
     public static class ShopCreationMenu extends AnvilMenu {
@@ -206,6 +221,7 @@ public class ShopCreationInterface {
         
         private void createShopListing(double price) {
             try {
+<<<<<<< HEAD
                 // Validate economy system is still enabled
                 if (!economyManager.isEnabled()) {
                     player.sendSystemMessage(Component.literal("§cEconomy system is disabled"));
@@ -290,10 +306,48 @@ public class ShopCreationInterface {
                     // Log the creation
                     NeoEssentials.LOGGER.info("Player {} created shop item: {}x {} for {} each", 
                         player.getName().getString(), requestedStock, shopItemStack.getHoverName().getString(), 
+=======
+                // Validate player still has the item
+                ItemStack currentHeldItem = player.getMainHandItem();
+                if (currentHeldItem.isEmpty() || !ItemStack.isSameItem(currentHeldItem, itemToSell)) {
+                    player.sendSystemMessage(Component.literal("§cYou no longer have the required item"));
+                    return;
+                }
+                
+                int stock = Math.min(itemToSell.getCount(), currentHeldItem.getCount());
+                
+                // Create shop item using the shop manager's helper method
+                ShopManager shopManager = economyManager.getShopManager();
+                ShopItem shopItem = shopManager.createShopItemBuilder()
+                    .id(UUID.randomUUID())
+                    .itemStack(itemToSell.copy())
+                    .type(ShopItem.Type.BUY)
+                    .buyPrice(BigDecimal.valueOf(price))
+                    .stock(stock)
+                    .maxStock(stock)
+                    .createdBy(player.getUUID())
+                    .createdAt(LocalDateTime.now())
+                    .description("Player shop item")
+                    .adminItem(false)
+                    .build();
+                
+                if (shopManager.addShopItem(shopItem)) {
+                    // Remove items from player's inventory
+                    currentHeldItem.shrink(stock);
+                    
+                    player.sendSystemMessage(Component.literal("§aSuccessfully created shop listing!"));
+                    player.sendSystemMessage(Component.literal("§7Item: " + itemToSell.getHoverName().getString()));
+                    player.sendSystemMessage(Component.literal("§7Stock: §e" + stock));
+                    player.sendSystemMessage(Component.literal("§7Price: " + economyManager.getDefaultCurrency().format(BigDecimal.valueOf(price)) + " each"));
+                    
+                    NeoEssentials.LOGGER.info("Player {} created shop item: {}x {} for {} each", 
+                        player.getName().getString(), stock, itemToSell.getHoverName().getString(), 
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                         economyManager.getDefaultCurrency().format(BigDecimal.valueOf(price)));
                     
                     // Return to personal shop with updated listings
                     player.getServer().execute(() -> {
+<<<<<<< HEAD
                         try {
                             EnhancedShopInterface.openPersonalShop(player, economyManager);
                         } catch (Exception e) {
@@ -318,6 +372,19 @@ public class ShopCreationInterface {
             } catch (Exception e) {
                 NeoEssentials.LOGGER.error("Failed to create shop listing for player {}", player.getName().getString(), e);
                 player.sendSystemMessage(Component.literal("§cFailed to create shop listing: " + e.getMessage()));
+=======
+                        EnhancedShopInterface.openPersonalShop(player, economyManager);
+                    });
+                } else {
+                    player.sendSystemMessage(Component.literal("§cFailed to create shop listing"));
+                    player.getServer().execute(() -> {
+                        EnhancedShopInterface.openPersonalShop(player, economyManager);
+                    });
+                }
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Failed to create shop listing", e);
+                player.sendSystemMessage(Component.literal("§cFailed to create shop listing"));
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             }
         }
     }

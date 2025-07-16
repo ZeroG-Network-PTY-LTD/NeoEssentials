@@ -8,7 +8,10 @@ import com.zerog.neoessentials.economy.external.EconomyDetectionReport;
 import com.zerog.neoessentials.economy.storage.EconomyStorage;
 import com.zerog.neoessentials.economy.storage.EconomyStorageFactory;
 import com.zerog.neoessentials.economy.shop.ShopManager;
+<<<<<<< HEAD
 import com.zerog.neoessentials.economy.shop.ShopItem;
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import net.minecraft.server.MinecraftServer;
 
 import java.math.BigDecimal;
@@ -67,12 +70,15 @@ public class EconomyManager {
         try {
             NeoEssentials.LOGGER.info("Initializing Economy System...");
             
+<<<<<<< HEAD
             // Validate configuration
             if (config == null) {
                 NeoEssentials.LOGGER.error("Economy config is null - cannot initialize");
                 return false;
             }
             
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             // Check for external economy mods
             EconomyDetectionReport detectionReport = externalDetector.getDetectionReport();
             
@@ -84,6 +90,7 @@ public class EconomyManager {
                 return true;
             }
             
+<<<<<<< HEAD
             // Initialize storage with retry logic
             int maxRetries = 3;
             boolean storageInitialized = false;
@@ -129,12 +136,18 @@ public class EconomyManager {
             // Initialize shop manager
             if (shopManager == null) {
                 NeoEssentials.LOGGER.error("Shop manager is null - cannot initialize economy");
+=======
+            // Initialize storage
+            if (!storage.initialize()) {
+                NeoEssentials.LOGGER.error("Failed to initialize economy storage");
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 return false;
             }
             
             // Start background tasks
             startBackgroundTasks();
             
+<<<<<<< HEAD
             // Enable economy if configured
             if (config.isEnabled()) {
                 enabled = true;
@@ -165,10 +178,22 @@ public class EconomyManager {
             NeoEssentials.LOGGER.info("  - Storage Type: {}", storage.getClass().getSimpleName());
             NeoEssentials.LOGGER.info("  - Shop Items: {}", shopManager.getAllItems().size());
             
+=======
+            // Add default shop items if enabled
+            if (config.isEnabled()) {
+                com.zerog.neoessentials.economy.shop.ShopUtils.addDefaultShopItems(this);
+            }
+            
+            enabled = config.isEnabled();
+            initialized = true;
+            
+            NeoEssentials.LOGGER.info("Economy System initialized successfully. Enabled: {}", enabled);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return true;
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Failed to initialize Economy System", e);
+<<<<<<< HEAD
             enabled = false;
             initialized = false;
             return false;
@@ -215,6 +240,8 @@ public class EconomyManager {
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Storage validation failed", e);
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return false;
         }
     }
@@ -266,6 +293,7 @@ public class EconomyManager {
         Objects.requireNonNull(playerName, "Player name cannot be null");
         
         if (!isEnabled()) {
+<<<<<<< HEAD
             NeoEssentials.LOGGER.warn("Economy system is disabled - cannot create account for player: {}", playerName);
             return null;
         }
@@ -357,6 +385,37 @@ public class EconomyManager {
             NeoEssentials.LOGGER.error("Error getting or creating account for player: " + playerName, e);
             return null;
         }
+=======
+            return null;
+        }
+        
+        // Check cache first
+        EconomyAccount cached = accountCache.get(playerId);
+        if (cached != null) {
+            return cached;
+        }
+        
+        // Try to load from storage
+        Optional<EconomyAccount> loaded = storage.loadAccount(playerId);
+        if (loaded.isPresent()) {
+            EconomyAccount account = loaded.get();
+            cacheAccount(account);
+            return account;
+        }
+        
+        // Create new account
+        EconomyAccount newAccount = new EconomyAccount(playerId, playerName);
+        newAccount.setBalance(defaultCurrency, config.getStartingBalance());
+        
+        // Save to storage
+        storage.saveAccount(newAccount);
+        
+        // Cache the account
+        cacheAccount(newAccount);
+        
+        NeoEssentials.LOGGER.debug("Created new economy account for player: {}", playerName);
+        return newAccount;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -438,6 +497,7 @@ public class EconomyManager {
      * Adds money to an account
      */
     public boolean addMoney(UUID playerId, BigDecimal amount, Currency currency, String description) {
+<<<<<<< HEAD
         if (!isEnabled() || !isValidTransactionAmount(amount)) {
             NeoEssentials.LOGGER.warn("Invalid add money request: enabled={}, amount={}", isEnabled(), amount);
             return false;
@@ -449,10 +509,14 @@ public class EconomyManager {
         
         if (!isCurrencySupported(currency)) {
             NeoEssentials.LOGGER.warn("Unsupported currency: {}", currency.getName());
+=======
+        if (!isEnabled() || amount.compareTo(BigDecimal.ZERO) <= 0) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return false;
         }
         
         try {
+<<<<<<< HEAD
             // Get account (will create if needed)
             String playerName = getPlayerName(playerId);
             EconomyAccount account = getOrCreateAccount(playerId, playerName);
@@ -470,6 +534,14 @@ public class EconomyManager {
             BigDecimal oldBalance = account.getBalance(currency);
             account.addBalance(currency, amount);
             BigDecimal newBalance = account.getBalance(currency);
+=======
+            EconomyAccount account = getAccount(playerId).orElse(null);
+            if (account == null) {
+                return false;
+            }
+            
+            account.addBalance(currency, amount);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             
             // Log the transaction
             Transaction transaction = Transaction.builder()
@@ -478,6 +550,7 @@ public class EconomyManager {
                     .amount(amount)
                     .currency(currency)
                     .type(Transaction.Type.ADMIN_GIVE)
+<<<<<<< HEAD
                     .description(description != null ? description : "Money added by system")
                     .build();
             
@@ -498,6 +571,19 @@ public class EconomyManager {
             
         } catch (Exception e) {
             NeoEssentials.LOGGER.error("Error adding money to player " + playerId, e);
+=======
+                    .description(description)
+                    .build();
+            
+            storage.logTransaction(transaction);
+            transactionLogger.logTransaction(transaction);
+            storage.saveAccount(account);
+            
+            return true;
+            
+        } catch (Exception e) {
+            NeoEssentials.LOGGER.error("Error adding money", e);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return false;
         }
     }
@@ -506,6 +592,7 @@ public class EconomyManager {
      * Subtracts money from an account
      */
     public boolean subtractMoney(UUID playerId, BigDecimal amount, Currency currency, String description) {
+<<<<<<< HEAD
         if (!isEnabled() || !isValidTransactionAmount(amount)) {
             NeoEssentials.LOGGER.warn("Invalid subtract money request: enabled={}, amount={}", isEnabled(), amount);
             return false;
@@ -517,12 +604,16 @@ public class EconomyManager {
         
         if (!isCurrencySupported(currency)) {
             NeoEssentials.LOGGER.warn("Unsupported currency: {}", currency.getName());
+=======
+        if (!isEnabled() || amount.compareTo(BigDecimal.ZERO) <= 0) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return false;
         }
         
         try {
             EconomyAccount account = getAccount(playerId).orElse(null);
             if (account == null) {
+<<<<<<< HEAD
                 NeoEssentials.LOGGER.warn("No account found for player: {}", playerId);
                 return false;
             }
@@ -530,10 +621,13 @@ public class EconomyManager {
             if (!account.canTransact()) {
                 NeoEssentials.LOGGER.warn("Account cannot transact: {} (status: {})", 
                     account.getPlayerName(), account.getStatus());
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 return false;
             }
             
             if (!account.hasBalance(currency, amount)) {
+<<<<<<< HEAD
                 NeoEssentials.LOGGER.debug("Insufficient balance for player {}: has {}, needs {}", 
                     account.getPlayerName(), currency.format(account.getBalance(currency)), currency.format(amount));
                 return false;
@@ -544,6 +638,12 @@ public class EconomyManager {
             if (account.subtractBalance(currency, amount)) {
                 BigDecimal newBalance = account.getBalance(currency);
                 
+=======
+                return false;
+            }
+            
+            if (account.subtractBalance(currency, amount)) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 // Log the transaction
                 Transaction transaction = Transaction.builder()
                         .fromAccount(playerId)
@@ -551,6 +651,7 @@ public class EconomyManager {
                         .amount(amount)
                         .currency(currency)
                         .type(Transaction.Type.ADMIN_TAKE)
+<<<<<<< HEAD
                         .description(description != null ? description : "Money subtracted by system")
                         .build();
                 
@@ -568,17 +669,32 @@ public class EconomyManager {
                     NeoEssentials.LOGGER.error("Failed to save account or transaction for subtract money operation");
                     return false;
                 }
+=======
+                        .description(description)
+                        .build();
+                
+                storage.logTransaction(transaction);
+                transactionLogger.logTransaction(transaction);
+                storage.saveAccount(account);
+                
+                return true;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             }
             
             return false;
             
         } catch (Exception e) {
+<<<<<<< HEAD
             NeoEssentials.LOGGER.error("Error subtracting money from player " + playerId, e);
+=======
+            NeoEssentials.LOGGER.error("Error subtracting money", e);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return false;
         }
     }
     
     /**
+<<<<<<< HEAD
      * Gets player name from server
      */
     private String getPlayerName(UUID playerId) {
@@ -597,6 +713,8 @@ public class EconomyManager {
     }
     
     /**
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Sets the balance of an account
      */
     public boolean setBalance(UUID playerId, BigDecimal amount, Currency currency, String description) {
@@ -892,6 +1010,7 @@ public class EconomyManager {
     public TransactionLogger getTransactionLogger() {
         return transactionLogger;
     }
+<<<<<<< HEAD
     
     /**
      * Performs comprehensive economy system diagnostics
@@ -1086,4 +1205,6 @@ public class EconomyManager {
     public String getStorageType() {
         return storage != null ? storage.getClass().getSimpleName() : "Unknown";
     }
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }

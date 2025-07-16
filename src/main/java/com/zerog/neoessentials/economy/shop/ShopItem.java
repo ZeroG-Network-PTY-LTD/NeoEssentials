@@ -91,6 +91,7 @@ public class ShopItem {
     public boolean canAddStock() { return stock < maxStock; }
     
     /**
+<<<<<<< HEAD
      * Validates that this shop item is properly configured and usable
      */
     public boolean isValid() {
@@ -136,6 +137,8 @@ public class ShopItem {
     }
     
     /**
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Creates a new ShopItem with updated stock
      */
     public ShopItem withStock(int newStock) {

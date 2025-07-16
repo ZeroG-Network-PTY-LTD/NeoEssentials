@@ -221,6 +221,7 @@ public class AdminPriceEditInterface {
                 String priceStr = itemName.replace("Set Price: ", "").replace("$", "").replace(",", "");
                 double price = Double.parseDouble(priceStr);
                 
+<<<<<<< HEAD
                 if (price <= 0) {
                     player.sendSystemMessage(Component.literal("§cPrice must be greater than 0"));
                     return;
@@ -259,6 +260,21 @@ public class AdminPriceEditInterface {
             } catch (Exception e) {
                 NeoEssentials.LOGGER.error("Error handling preset price", e);
                 player.sendSystemMessage(Component.literal("§cError setting price"));
+=======
+                // Set price based on current type
+                if (currentType == ShopItem.Type.BUY || currentType == ShopItem.Type.BOTH) {
+                    currentBuyPrice = price;
+                }
+                if (currentType == ShopItem.Type.SELL || currentType == ShopItem.Type.BOTH) {
+                    currentSellPrice = price;
+                }
+                
+                player.sendSystemMessage(Component.literal("§aSet price to " + 
+                    economyManager.getDefaultCurrency().format(BigDecimal.valueOf(price))));
+                
+            } catch (NumberFormatException e) {
+                player.sendSystemMessage(Component.literal("§cInvalid price format"));
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             }
         }
         
@@ -292,6 +308,7 @@ public class AdminPriceEditInterface {
         
         private void handleSaveChanges() {
             try {
+<<<<<<< HEAD
                 // Validate economy system is still enabled
                 if (!economyManager.isEnabled()) {
                     player.sendSystemMessage(Component.literal("§cEconomy system is disabled"));
@@ -337,12 +354,26 @@ public class AdminPriceEditInterface {
                     .id(originalItem.getId())
                     .itemStack(originalItem.getItemStack())
                     .type(currentType)
+=======
+                ShopManager shopManager = economyManager.getShopManager();
+                
+                // Create updated item
+                ShopItem updatedItem = new ShopItem.Builder()
+                    .id(originalItem.getId())
+                    .itemStack(originalItem.getItemStack())
+                    .type(currentType)
+                    .buyPrice(currentType == ShopItem.Type.BUY || currentType == ShopItem.Type.BOTH ? 
+                        BigDecimal.valueOf(currentBuyPrice) : null)
+                    .sellPrice((currentType == ShopItem.Type.SELL || currentType == ShopItem.Type.BOTH) && currentSellPrice > 0 ? 
+                        BigDecimal.valueOf(currentSellPrice) : null)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     .currency(originalItem.getCurrency())
                     .stock(originalItem.getStock())
                     .maxStock(originalItem.getMaxStock())
                     .createdBy(originalItem.getCreatedBy())
                     .createdAt(originalItem.getCreatedAt())
                     .description(originalItem.getDescription())
+<<<<<<< HEAD
                     .adminItem(originalItem.isAdminItem());
                 
                 // Set prices based on type
@@ -422,6 +453,29 @@ public class AdminPriceEditInterface {
             updateInterface();
         }
         
+=======
+                    .adminItem(originalItem.isAdminItem())
+                    .build();
+                
+                // Update in shop
+                if (shopManager.removeShopItem(originalItem.getId()) && shopManager.addShopItem(updatedItem)) {
+                    player.sendSystemMessage(Component.literal("§aSuccessfully updated " + 
+                        originalItem.getItemStack().getHoverName().getString()));
+                    
+                    // Close and return to admin shop
+                    player.closeContainer();
+                    AdminShopManagementInterface.openAdminShopManagement(player, economyManager);
+                } else {
+                    player.sendSystemMessage(Component.literal("§cFailed to update item"));
+                }
+                
+            } catch (Exception e) {
+                NeoEssentials.LOGGER.error("Error saving changes", e);
+                player.sendSystemMessage(Component.literal("§cError saving changes"));
+            }
+        }
+        
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         private void handleCancel() {
             player.closeContainer();
             AdminShopManagementInterface.openAdminShopManagement(player, economyManager);

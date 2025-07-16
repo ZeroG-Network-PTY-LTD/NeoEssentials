@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.MessageUtil;
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -13,6 +14,10 @@ import com.zerog.neoessentials.utils.PermissionUtil;
 =======
 import com.zerog.neoessentials.utils.PermissionUtil;
 >>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
+=======
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -33,10 +38,14 @@ public class TimeAndWeatherCommands {
      */
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {        // /day - Set time to day
         dispatcher.register(
             Commands.literal("day")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
+<<<<<<< HEAD
 =======
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /day - Set time to day
@@ -50,6 +59,8 @@ public class TimeAndWeatherCommands {
             Commands.literal("day")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
 >>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .executes(this::executeDay)
         );
         
@@ -58,10 +69,14 @@ public class TimeAndWeatherCommands {
             Commands.literal("night")
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
                 .executes(this::executeNight)
         );
           // /time <set|add> <time> - Set or add time
+<<<<<<< HEAD
 <<<<<<< HEAD
         dispatcher.register(
             Commands.literal("time")
@@ -85,6 +100,11 @@ public class TimeAndWeatherCommands {
 =======
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
 >>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
+=======
+        dispatcher.register(
+            Commands.literal("time")
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.time"))
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .then(Commands.literal("set")
                     .then(Commands.argument("time", IntegerArgumentType.integer(0, 24000))
                         .executes(context -> executeTimeSet(context, IntegerArgumentType.getInteger(context, "time")))
@@ -103,8 +123,11 @@ public class TimeAndWeatherCommands {
                     )
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     .then(Commands.literal("morning")
                         .executes(context -> executeTimeSet(context, 0))
                     )
@@ -115,10 +138,13 @@ public class TimeAndWeatherCommands {
                         .executes(context -> executeTimeSet(context, 23000))
                     )
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 )
                 .then(Commands.literal("add")
                     .then(Commands.argument("time", IntegerArgumentType.integer(0, 24000))
@@ -128,10 +154,14 @@ public class TimeAndWeatherCommands {
         );
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
           // /weather <clear|rain|thunder> [duration] - Set weather
         dispatcher.register(
             Commands.literal("weather")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.weather"))
+<<<<<<< HEAD
 =======
         
         // /weather <clear|rain|thunder> [duration] - Set weather
@@ -145,6 +175,8 @@ public class TimeAndWeatherCommands {
             Commands.literal("weather")
                 .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.weather"))
 >>>>>>> 99d6b05 (chore: Update build number to 15 and timestamp in buildnumber.properties; modify default permissions for time and weather commands)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .then(Commands.literal("clear")
                     .executes(context -> executeWeather(context, "clear", 6000))
                     .then(Commands.argument("duration", IntegerArgumentType.integer(1, 1000000))
@@ -187,6 +219,7 @@ public class TimeAndWeatherCommands {
     }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       /**
 =======
     
@@ -195,6 +228,9 @@ public class TimeAndWeatherCommands {
 =======
       /**
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+      /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Execute the /time set command
      * 
      * @param context The command context
@@ -204,8 +240,11 @@ public class TimeAndWeatherCommands {
     private int executeTimeSet(CommandContext<CommandSourceStack> context, int time) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         try {
             // Set the time in all dimensions/levels, not just the current one
             for (ServerLevel serverLevel : context.getSource().getServer().getAllLevels()) {
@@ -244,7 +283,11 @@ public class TimeAndWeatherCommands {
             MutableComponent message = Component.literal("Time set to " + timeDescription);
             
             if (context.getSource().getEntity() instanceof ServerPlayer player) {
+<<<<<<< HEAD
                 MessageUtil.sendSuccess(player, message);
+=======
+                LanguageUtil.sendComponent(player, message);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             } else {
                 context.getSource().sendSuccess(() -> message, true);
             }
@@ -254,6 +297,7 @@ public class TimeAndWeatherCommands {
             MutableComponent errorMessage = Component.literal("Failed to set time: " + e.getMessage());
             context.getSource().sendFailure(errorMessage);
             return 0;
+<<<<<<< HEAD
 <<<<<<< HEAD
         }
 =======
@@ -287,6 +331,9 @@ public class TimeAndWeatherCommands {
 =======
         }
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+        }
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -297,18 +344,25 @@ public class TimeAndWeatherCommands {
      * @return Command result
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      */    private int executeTimeAdd(CommandContext<CommandSourceStack> context, int time) {
         // Get the time from the current level
         long currentTime = context.getSource().getLevel().getDayTime();
         long newTime = currentTime + time;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         // Add the time in all dimensions/levels
         for (ServerLevel serverLevel : context.getSource().getServer().getAllLevels()) {
             ((ServerLevelData) serverLevel.getLevelData()).setDayTime(newTime);
         }
+<<<<<<< HEAD
 =======
      */
     private int executeTimeAdd(CommandContext<CommandSourceStack> context, int time) {
@@ -324,18 +378,25 @@ public class TimeAndWeatherCommands {
             ((ServerLevelData) serverLevel.getLevelData()).setDayTime(newTime);
         }
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         // Send message
         MutableComponent message = Component.literal("Added " + time + " to the time");
         
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
+<<<<<<< HEAD
             MessageUtil.sendSuccess(player, message);
+=======
+            LanguageUtil.sendComponent(player, message);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         } else {
             context.getSource().sendSuccess(() -> message, true);
         }
         
         return 1;
     }
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       /**
@@ -346,6 +407,9 @@ public class TimeAndWeatherCommands {
 =======
       /**
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+      /**
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Execute the /weather command
      * 
      * @param context The command context
@@ -356,8 +420,11 @@ public class TimeAndWeatherCommands {
     private int executeWeather(CommandContext<CommandSourceStack> context, String weatherType, int duration) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         try {
             // Apply weather to all dimensions, with special handling for each weather type
             for (ServerLevel level : context.getSource().getServer().getAllLevels()) {
@@ -399,7 +466,11 @@ public class TimeAndWeatherCommands {
             MutableComponent message = Component.literal("Weather set to " + weatherType + " for " + durationStr);
             
             if (context.getSource().getEntity() instanceof ServerPlayer player) {
+<<<<<<< HEAD
                 MessageUtil.sendSuccess(player, message);
+=======
+                LanguageUtil.sendComponent(player, message);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             } else {
                 context.getSource().sendSuccess(() -> message, true);
             }
@@ -409,6 +480,7 @@ public class TimeAndWeatherCommands {
             MutableComponent errorMessage = Component.literal("Failed to set weather: " + e.getMessage());
             context.getSource().sendFailure(errorMessage);
             return 0;
+<<<<<<< HEAD
 <<<<<<< HEAD
         }
 =======
@@ -442,5 +514,8 @@ public class TimeAndWeatherCommands {
 =======
         }
 >>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+=======
+        }
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
 }

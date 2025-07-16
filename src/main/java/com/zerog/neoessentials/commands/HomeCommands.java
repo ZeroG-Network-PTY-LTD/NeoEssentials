@@ -4,16 +4,25 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.data.HomeManager;
+<<<<<<< HEAD
 import com.zerog.neoessentials.utils.MessageUtil;
 import com.zerog.neoessentials.utils.TeleportUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 <<<<<<< HEAD
 <<<<<<< HEAD
+=======
+import com.zerog.neoessentials.util.LanguageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.utils.TeleportUtil;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 =======
@@ -26,6 +35,8 @@ import net.minecraft.world.phys.Vec3;
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> d3089e1 (feat: Update migration tasks and documentation for Home and Warp systems; enhance MessageUtil for improved command interactions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 
 import java.util.Map;
 
@@ -43,14 +54,24 @@ public class HomeCommands {
         // Register /home command
         dispatcher.register(
             Commands.literal("home")
+<<<<<<< HEAD
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.home"))                .executes(context -> {
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.home"))
+                .executes(context -> {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Teleport to default home
                     return teleportToHome(player, "home");
                 })
                 .then(
+<<<<<<< HEAD
                     Commands.argument("name", StringArgumentType.word())                        .suggests(TabCompletionUtil.HOME_SUGGESTIONS)
+=======
+                    Commands.argument("name", StringArgumentType.word())
+                        .suggests(TabCompletionUtil.HOME_SUGGESTIONS)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                         .executes(context -> {
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String homeName = StringArgumentType.getString(context, "name");
@@ -64,14 +85,24 @@ public class HomeCommands {
         // Register /sethome command
         dispatcher.register(
             Commands.literal("sethome")
+<<<<<<< HEAD
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.sethome"))                .executes(context -> {
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.sethome"))
+                .executes(context -> {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
                     // Set default home
                     return setHome(player, "home");
                 })
                 .then(
+<<<<<<< HEAD
                     Commands.argument("name", StringArgumentType.word())                        .executes(context -> {
+=======
+                    Commands.argument("name", StringArgumentType.word())
+                        .executes(context -> {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                             ServerPlayer player = context.getSource().getPlayerOrException();
                             String homeName = StringArgumentType.getString(context, "name");
                             
@@ -84,7 +115,11 @@ public class HomeCommands {
         // Register /delhome command
         dispatcher.register(
             Commands.literal("delhome")
+<<<<<<< HEAD
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.delhome"))
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.delhome"))
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .then(
                     Commands.argument("name", StringArgumentType.word())
                         .suggests(TabCompletionUtil.HOME_SUGGESTIONS)
@@ -101,7 +136,11 @@ public class HomeCommands {
         // Register /homes command
         dispatcher.register(
             Commands.literal("homes")
+<<<<<<< HEAD
                 .requires(source -> CommandManager.hasPermission(source, "neoessentials.command.homes"))
+=======
+                .requires(source -> PermissionUtil.hasPermission(source, "neoessentials.command.homes"))
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     
@@ -110,6 +149,7 @@ public class HomeCommands {
                 })
         );
         
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -131,6 +171,10 @@ public class HomeCommands {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+        // Register /homehelp command (removed for now)
+        
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         NeoEssentials.LOGGER.info("Registered home commands");
     }
     
@@ -168,10 +212,21 @@ public class HomeCommands {
         );
         
         if (success) {
+<<<<<<< HEAD
             MessageUtil.sendSuccessMessage(player, "Teleported to home '" + homeName + "'");
             return 1;
         } else {
             MessageUtil.sendErrorMessage(player, "Failed to teleport to home '" + homeName + "'");
+=======
+            if (homeName.equals("home")) {
+                LanguageUtil.sendMessage(player, "neoessentials.home.teleported_default");
+            } else {
+                LanguageUtil.sendMessage(player, "neoessentials.home.teleported", homeName);
+            }
+            return 1;
+        } else {
+            LanguageUtil.sendErrorMessage(player, "neoessentials.home.not_found", homeName);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
     }
@@ -194,6 +249,7 @@ public class HomeCommands {
         boolean success = homeManager.setHome(player, homeName);
         
         if (success) {
+<<<<<<< HEAD
             if (homeExists) {
                 MessageUtil.sendSuccessMessage(player, "Updated home '" + homeName + "'");
             } else {
@@ -202,6 +258,16 @@ public class HomeCommands {
             return 1;
         } else {
             MessageUtil.sendErrorMessage(player, "You have reached your home limit");
+=======
+            if (homeName.equals("home")) {
+                LanguageUtil.sendMessage(player, "neoessentials.home.set_default");
+            } else {
+                LanguageUtil.sendMessage(player, "neoessentials.home.set_success", homeName);
+            }
+            return 1;
+        } else {
+            LanguageUtil.sendErrorMessage(player, "neoessentials.home.max_homes_reached");
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
     }
@@ -221,10 +287,17 @@ public class HomeCommands {
         boolean success = homeManager.deleteHome(player.getUUID(), homeName.toLowerCase());
         
         if (success) {
+<<<<<<< HEAD
             MessageUtil.sendSuccessMessage(player, "Deleted home '" + homeName + "'");
             return 1;
         } else {
             MessageUtil.sendErrorMessage(player, "Home '" + homeName + "' not found");
+=======
+            LanguageUtil.sendMessage(player, "neoessentials.home.deleted", homeName);
+            return 1;
+        } else {
+            LanguageUtil.sendErrorMessage(player, "neoessentials.home.not_found", homeName);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
     }
@@ -234,6 +307,7 @@ public class HomeCommands {
      * 
      * @param player The player
      * @return Command result code
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
      */    private int listHomes(ServerPlayer player) {
@@ -401,4 +475,30 @@ public class HomeCommands {
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> ca88c1e (Refactor code structure for improved readability and maintainability)
+=======
+     */
+    private int listHomes(ServerPlayer player) {
+        // Get the home manager
+        HomeManager homeManager = NeoEssentials.getInstance().getDataManager().getHomeManager();
+        
+        // Get all homes
+        Map<String, HomeManager.HomeLocation> homes = homeManager.getHomes(player.getUUID());
+        
+        if (homes.isEmpty()) {
+            LanguageUtil.sendMessage(player, "neoessentials.home.list_empty");
+            return 0;
+        } else {
+            // Add a header
+            LanguageUtil.sendMessage(player, "neoessentials.home.list_header");
+            
+            // List each home
+            for (Map.Entry<String, HomeManager.HomeLocation> entry : homes.entrySet()) {
+                String homeName = entry.getKey();
+                LanguageUtil.sendMessage(player, "neoessentials.home.list_format", homeName);
+            }
+            
+            return 1;
+        }
+    }
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }

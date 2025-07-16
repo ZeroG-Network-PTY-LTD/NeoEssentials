@@ -7,12 +7,16 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import com.zerog.neoessentials.NeoEssentials;
 import com.zerog.neoessentials.utils.PermissionUtil;
 import com.zerog.neoessentials.utils.TextUtil;
@@ -22,6 +26,9 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.GameProfileArgument;
@@ -30,6 +37,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+<<<<<<< HEAD
 =======
 =======
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -45,6 +53,8 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.UserBanList;
@@ -57,6 +67,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 import java.util.stream.Collectors;
 
 /**
@@ -81,6 +94,7 @@ import java.util.stream.Collectors;
  * 
  * @author ZeroG
  * @since 1.0.0
+<<<<<<< HEAD
 =======
 
 /**
@@ -117,6 +131,8 @@ import java.util.stream.Collectors;
  * @author ZeroG
  * @since 1.0.0
 >>>>>>> 4a073f5 (feat: Enhance documentation for ModeratorCommands and overall project structure)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
  */
 public class ModeratorCommands {
 
@@ -125,8 +141,11 @@ public class ModeratorCommands {
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     // Common reason suggestions for moderation actions
     private static final List<String> COMMON_REASONS = Arrays.asList(
         "Breaking server rules", 
@@ -150,10 +169,13 @@ public class ModeratorCommands {
             (context, builder) -> SharedSuggestionProvider.suggest(TIME_SUGGESTIONS, builder);
     
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     /**
      * Register all moderator commands
      * 
@@ -168,12 +190,16 @@ public class ModeratorCommands {
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                     .suggests(REASON_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
                     .suggests(REASON_SUGGESTIONS)
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+                    .suggests(REASON_SUGGESTIONS)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     .executes(context -> kickPlayer(
                         context,
                         StringArgumentType.getString(context, "reason")
@@ -190,12 +216,16 @@ public class ModeratorCommands {
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                     .suggests(REASON_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
                     .suggests(REASON_SUGGESTIONS)
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+                    .suggests(REASON_SUGGESTIONS)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     .executes(context -> banPlayer(
                         context,
                         StringArgumentType.getString(context, "reason")
@@ -219,12 +249,16 @@ public class ModeratorCommands {
                 .then(Commands.argument("time", StringArgumentType.word())
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                     .suggests(TIME_DURATION_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
                     .suggests(TIME_DURATION_SUGGESTIONS)
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+                    .suggests(TIME_DURATION_SUGGESTIONS)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     .executes(context -> tempBanPlayer(
                         context, 
                         StringArgumentType.getString(context, "time"),
@@ -233,12 +267,16 @@ public class ModeratorCommands {
                     .then(Commands.argument("reason", StringArgumentType.greedyString())
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                         .suggests(REASON_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
                         .suggests(REASON_SUGGESTIONS)
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+                        .suggests(REASON_SUGGESTIONS)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                         .executes(context -> tempBanPlayer(
                             context,
                             StringArgumentType.getString(context, "time"),
@@ -257,12 +295,16 @@ public class ModeratorCommands {
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                     .suggests(REASON_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
                     .suggests(REASON_SUGGESTIONS)
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+                    .suggests(REASON_SUGGESTIONS)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     .executes(context -> banIp(
                         context,
                         StringArgumentType.getString(context, "reason")
@@ -292,12 +334,16 @@ public class ModeratorCommands {
                 .then(Commands.argument("time", StringArgumentType.word())
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                     .suggests(TIME_DURATION_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
                     .suggests(TIME_DURATION_SUGGESTIONS)
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+                    .suggests(TIME_DURATION_SUGGESTIONS)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     .executes(context -> mutePlayer(
                         context,
                         EntityArgument.getPlayer(context, "player"),
@@ -307,12 +353,16 @@ public class ModeratorCommands {
                     .then(Commands.argument("reason", StringArgumentType.greedyString())
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                         .suggests(REASON_SUGGESTIONS)
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
                         .suggests(REASON_SUGGESTIONS)
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+                        .suggests(REASON_SUGGESTIONS)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                         .executes(context -> mutePlayer(
                             context,
                             EntityArgument.getPlayer(context, "player"),
@@ -325,8 +375,11 @@ public class ModeratorCommands {
         );
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         // Add /unmute command
         dispatcher.register(Commands.literal("unmute")
@@ -350,10 +403,13 @@ public class ModeratorCommands {
         
         NeoEssentials.LOGGER.info("Registered enhanced moderator commands");
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
 =======
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
     
     /**
@@ -363,8 +419,11 @@ public class ModeratorCommands {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         ServerPlayer source = null;
         try {
             source = context.getSource().getPlayerOrException();
@@ -372,10 +431,14 @@ public class ModeratorCommands {
             // Source is not a player (e.g. console)
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         
         // Check for kick exemption
         if (PermissionUtil.hasPermission(player, "essentials.kick.exempt")) {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cYou cannot kick this player.")));
+<<<<<<< HEAD
 =======
         
         if (PermissionUtil.hasPermission((ServerPlayer)player, "essentials.kick.exempt")) {
@@ -387,12 +450,17 @@ public class ModeratorCommands {
         if (PermissionUtil.hasPermission(player, "essentials.kick.exempt")) {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cYou cannot kick this player.")));
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
         
         try {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             String formattedReason = TextUtil.colorize(reason);
             
             // Create a styled kick message
@@ -400,6 +468,9 @@ public class ModeratorCommands {
                     .append(Component.literal(TextUtil.colorize("&7Reason: &f" + formattedReason + "\n")));
                       // Add kicked by information if source is a player
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             if (source != null) {
                 Component kickedByInfo = Component.literal(TextUtil.colorize("&7Kicked by: &f" + source.getScoreboardName()));
                 kickMessage = Component.empty().append(kickMessage).append(kickedByInfo);
@@ -420,6 +491,7 @@ public class ModeratorCommands {
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to kick player: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error kicking player", e);
+<<<<<<< HEAD
 =======
             String formattedReason = TextUtil.formatText(reason);
             player.connection.disconnect(Component.literal(formattedReason));
@@ -459,12 +531,15 @@ public class ModeratorCommands {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to kick player: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error kicking player", e);
 >>>>>>> c24406b (Implement SQLite storage handler and command argument types; enhance tablist management features)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
     }
     
     /**
      * Ban a player with a reason
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -480,10 +555,15 @@ public class ModeratorCommands {
      */    
     private int banPlayer(CommandContext<CommandSourceStack> context, String reason) {
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+     */    
+    private int banPlayer(CommandContext<CommandSourceStack> context, String reason) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         try {
             Collection<GameProfile> targets = GameProfileArgument.getGameProfiles(context, "player");
             
             if (targets.isEmpty()) {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
                 context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cNo players specified.")));
@@ -493,6 +573,9 @@ public class ModeratorCommands {
 =======
                 context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cNo players specified.")));
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+                context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cNo players specified.")));
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 return 0;
             }
             
@@ -503,8 +586,11 @@ public class ModeratorCommands {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 if (profile == null) continue;
                 
                 // Check for ban exemption
@@ -513,6 +599,9 @@ public class ModeratorCommands {
                     context.getSource().sendFailure(Component.literal(TextUtil.colorize(
                             "&cYou cannot ban &e" + profile.getName() + " &cas they are exempt from bans.")));
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     continue;
                 }
                 
@@ -547,6 +636,7 @@ public class ModeratorCommands {
                 final String plural = count > 1 ? "s" : "";
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
                         "&aSuccessfully banned &e" + finalCount + " &aplayer" + plural + ".")), true);
+<<<<<<< HEAD
 =======
                 if (PermissionUtil.hasPermission(profile, "essentials.ban.exempt")) {
 =======
@@ -608,10 +698,13 @@ public class ModeratorCommands {
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
                         "&aSuccessfully banned &e" + finalCount + " &aplayer" + plural + ".")), true);
 >>>>>>> 61bf426 (feat: Add backward compatibility alias for formatDuration in TimeUtil)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             }
             
             return count;
         } catch (Exception e) {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to ban player: " + e.getMessage())));
@@ -623,6 +716,10 @@ public class ModeratorCommands {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to ban player: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error banning player", e);
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to ban player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error banning player", e);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
     }
@@ -633,6 +730,9 @@ public class ModeratorCommands {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      */    private int unbanPlayer(CommandContext<CommandSourceStack> context) {
         String playerName = StringArgumentType.getString(context, "player");
         UserBanList banList = context.getSource().getServer().getPlayerList().getBans();
@@ -644,6 +744,7 @@ public class ModeratorCommands {
         
         // Check if the player is banned
         if (!banList.isBanned(profile)) {
+<<<<<<< HEAD
 =======
      */
     private int unbanPlayer(CommandContext<CommandSourceStack> context) {
@@ -665,12 +766,17 @@ public class ModeratorCommands {
 =======
         if (!banList.isBanned(profile)) {
 >>>>>>> 175e397 (feat: Enhance kick message formatting and improve unban player functionality with GameProfile support)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             context.getSource().sendFailure(Component.literal(TextUtil.colorize(
                     "&cPlayer &e" + playerName + " &cis not banned.")));
             return 0;
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         try {
             banList.remove(profile);
             
@@ -686,6 +792,7 @@ public class ModeratorCommands {
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to unban player: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error unbanning player", e);
+<<<<<<< HEAD
 =======
      */
     private int unbanPlayer(CommandContext<CommandSourceStack> context) {
@@ -714,11 +821,14 @@ public class ModeratorCommands {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to unban player: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error unbanning player", e);
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
     }
     
     /**
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
      * Temporarily ban a player
@@ -728,6 +838,9 @@ public class ModeratorCommands {
 =======
      * Temporarily ban a player
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+     * Temporarily ban a player
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      */
     private int tempBanPlayer(CommandContext<CommandSourceStack> context, String timeStr, String reason) {
         try {
@@ -736,6 +849,9 @@ public class ModeratorCommands {
             if (targets.isEmpty()) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cNo players specified.")));
                 return 0;
             }
@@ -751,6 +867,7 @@ public class ModeratorCommands {
             long durationMillis = expiry.getTime() - System.currentTimeMillis();
             if (durationMillis <= 0) {
                 context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cTime duration must be positive.")));
+<<<<<<< HEAD
 =======
                 context.getSource().sendFailure(Component.literal("No players specified."));
                 return 0;
@@ -780,6 +897,8 @@ public class ModeratorCommands {
             if (durationMillis <= 0) {
                 context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cTime duration must be positive.")));
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 return 0;
             }
             
@@ -790,8 +909,11 @@ public class ModeratorCommands {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 if (profile == null) continue;
                 
                 // Check for ban exemption
@@ -800,6 +922,9 @@ public class ModeratorCommands {
                     context.getSource().sendFailure(Component.literal(TextUtil.colorize(
                             "&cYou cannot ban &e" + profile.getName() + " &cas they are exempt from bans.")));
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                     continue;
                 }
                 
@@ -839,6 +964,7 @@ public class ModeratorCommands {
                 final int finalCount = count;
                 final String plural = count > 1 ? "s" : "";
                 final String formattedTime = TimeUtil.formatDuration(durationMillis);
+<<<<<<< HEAD
 <<<<<<< HEAD
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
                         "&aSuccessfully temporarily banned &e" + finalCount + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
@@ -911,10 +1037,15 @@ public class ModeratorCommands {
                 context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
                         "&aSuccessfully temporarily banned &e" + finalCount + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
 >>>>>>> 61bf426 (feat: Add backward compatibility alias for formatDuration in TimeUtil)
+=======
+                context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
+                        "&aSuccessfully temporarily banned &e" + finalCount + " &aplayer" + plural + " for &e" + formattedTime + "&a.")), true);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             }
             
             return count;
         } catch (Exception e) {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to temp-ban player: " + e.getMessage())));
@@ -926,6 +1057,10 @@ public class ModeratorCommands {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to temp-ban player: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error temp-banning player", e);
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+            context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to temp-ban player: " + e.getMessage())));
+            NeoEssentials.LOGGER.error("Error temp-banning player", e);
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
     }
@@ -936,8 +1071,11 @@ public class ModeratorCommands {
     private int banIp(CommandContext<CommandSourceStack> context, String reason) {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         String target = StringArgumentType.getString(context, "target");
         MinecraftServer server = context.getSource().getServer();
         IpBanList ipBanList = server.getPlayerList().getIpBans();
@@ -952,6 +1090,9 @@ public class ModeratorCommands {
                         "&cCould not find player &e" + target + "&c or the input is not a valid IP address.")));
                 return 0;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             }
             
             ipAddress = targetPlayer.getIpAddress();
@@ -970,6 +1111,7 @@ public class ModeratorCommands {
                     context.getSource().getTextName(), 
                     null,
                     TextUtil.colorize(reason)
+<<<<<<< HEAD
 =======
         try {
             String target = StringArgumentType.getString(context, "target");
@@ -1026,6 +1168,8 @@ public class ModeratorCommands {
                     null,
                     TextUtil.colorize(reason)
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             );
             
             ipBanList.add(banEntry);
@@ -1033,8 +1177,11 @@ public class ModeratorCommands {
             // Kick all players with this IP
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             int kickedCount = 0;
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 if (ipAddress.equals(player.getIpAddress())) {
@@ -1046,6 +1193,9 @@ public class ModeratorCommands {
                     player.connection.disconnect(banMessage);
                     kickedCount++;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
                 }
             }
               // Announce the IP ban
@@ -1068,6 +1218,7 @@ public class ModeratorCommands {
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to ban IP: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error banning IP", e);
+<<<<<<< HEAD
 =======
             List<ServerPlayer> playersToKick = new ArrayList<>();
             for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
@@ -1102,12 +1253,15 @@ public class ModeratorCommands {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to ban IP: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error banning IP", e);
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
     }
     
     /**
      * Unban an IP address
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
      */
@@ -1117,6 +1271,10 @@ public class ModeratorCommands {
      */
     private int unbanIp(CommandContext<CommandSourceStack> context) {
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+     */
+    private int unbanIp(CommandContext<CommandSourceStack> context) {
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         String ipAddress = StringArgumentType.getString(context, "address");
         IpBanList ipBanList = context.getSource().getServer().getPlayerList().getIpBans();
         
@@ -1128,6 +1286,9 @@ public class ModeratorCommands {
         }
         
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         try {
             ipBanList.remove(ipAddress);
             
@@ -1143,6 +1304,7 @@ public class ModeratorCommands {
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to unban IP: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error unbanning IP", e);
+<<<<<<< HEAD
 =======
 =======
      */    private int unbanIp(CommandContext<CommandSourceStack> context) {
@@ -1169,6 +1331,8 @@ public class ModeratorCommands {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to unban IP: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error unbanning IP", e);
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
     }
@@ -1176,6 +1340,9 @@ public class ModeratorCommands {
     /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Mute a player, either permanently or temporarily
      */
     private int mutePlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, String timeStr, String reason) {
@@ -1229,6 +1396,9 @@ public class ModeratorCommands {
             final String playerName = target.getScoreboardName();
             final String finalDurationText = durationText;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             context.getSource().sendSuccess(() -> Component.literal(TextUtil.colorize(
                     "&aPlayer &e" + playerName + " &ahas been muted " + finalDurationText + ".")), true);
                     
@@ -1241,6 +1411,7 @@ public class ModeratorCommands {
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to mute player: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error muting player", e);
+<<<<<<< HEAD
 =======
      * Mute a player for a specific duration or permanently
 =======
@@ -1315,6 +1486,8 @@ public class ModeratorCommands {
             context.getSource().sendFailure(Component.literal(TextUtil.colorize("&cFailed to mute player: " + e.getMessage())));
             NeoEssentials.LOGGER.error("Error muting player", e);
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return 0;
         }
     }
@@ -1322,8 +1495,11 @@ public class ModeratorCommands {
     /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Unmute a player
      */
     private int unmutePlayer(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -1354,6 +1530,9 @@ public class ModeratorCommands {
     
     /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Check if a player is muted
      * 
      * @param player The player to check
@@ -1374,6 +1553,7 @@ public class ModeratorCommands {
         if (expiry.before(new Date())) {
             // Mute has expired, remove it
             mutedPlayers.remove(uuid);
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
@@ -1404,6 +1584,8 @@ public class ModeratorCommands {
             // Mute has expired, remove it
             mutedPlayers.remove(uuid);
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             return false;
         }
         
@@ -1413,13 +1595,19 @@ public class ModeratorCommands {
     /**
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 4b34e9e (Enhance player commands with improved functionality and suggestions)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      * Get the mute expiry date for a player
      * 
      * @param player The player to check
      * @return The mute expiry date, or null if not muted or muted permanently
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
      */
     public Date getMuteExpiry(ServerPlayer player) {
         if (player == null) return null;
@@ -1480,6 +1668,7 @@ public class ModeratorCommands {
                 
                 final Component finalBanEntry = banEntry;
                 context.getSource().sendSuccess(() -> finalBanEntry, false);
+<<<<<<< HEAD
 <<<<<<< HEAD
             }
             
@@ -1596,6 +1785,8 @@ public class ModeratorCommands {
                 context.getSource().sendSuccess(() -> banEntry, false);
 =======
 >>>>>>> dc36409 (fix: Update ban entry message handling in ModeratorCommands for improved clarity)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             }
             
             // If there are more pages, show navigation

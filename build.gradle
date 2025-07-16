@@ -1,10 +1,14 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 plugins {
     id 'java-library'
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.93'
     id 'idea'
+<<<<<<< HEAD
     id "org.sonarqube" version "6.2.0.5505"
 }
 
@@ -84,6 +88,10 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.93'
     id 'idea'
 >>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
+=======
+    // Shadow plugin temporarily disabled due to resolution issues
+    // id 'com.gradleup.shadow' version '8.1.8'
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -104,6 +112,7 @@ repositories {
     
     // Add Maven Central for SnakeYAML
     mavenCentral()
+<<<<<<< HEAD
     
     // Add Modrinth repository for FTB mods
     maven {
@@ -113,6 +122,8 @@ repositories {
             includeGroup "maven.modrinth"
         }
     }
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 }
 
 base {
@@ -203,6 +214,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 // "optional", meaning it will not be pulled by dependents of this mod.
 configurations {
     runtimeClasspath.extendsFrom localRuntime
+<<<<<<< HEAD
     include
     implementation.extendsFrom include
 }
@@ -214,6 +226,15 @@ dependencies {    // Database dependencies - SQLite will be bundled for guarante
     include('org.xerial:sqlite-jdbc:3.44.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
     }
+=======
+}
+
+dependencies {    
+    // Database dependencies - SQLite embedded in the jar
+    implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
+    }
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     
     // Other database drivers as optional (compileOnly)
     compileOnly('com.mysql:mysql-connector-j:8.3.0') {
@@ -221,6 +242,7 @@ dependencies {    // Database dependencies - SQLite will be bundled for guarante
     }
     compileOnly('com.zaxxer:HikariCP:5.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from HikariCP
+<<<<<<< HEAD
     }    // Permission system APIs (soft dependencies)
     compileOnly 'net.luckperms:api:5.4'
     // FTB Ranks is integrated via ModList and reflection to avoid direct dependencies
@@ -231,6 +253,22 @@ dependencies {    // Database dependencies - SQLite will be bundled for guarante
     implementation 'org.yaml:snakeyaml:2.2'
     // Make sure SnakeYAML is included in the JAR
     include 'org.yaml:snakeyaml:2.2'
+=======
+    }
+    
+    // Test dependencies
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    
+    // Permission system APIs (soft dependencies)
+    compileOnly 'net.luckperms:api:5.4'
+    
+    // TOML parsing library for custom animations (legacy)
+    implementation 'com.moandjiezana.toml:toml4j:0.7.2'
+    
+    // YAML parsing library for configuration - rely on server environment
+    compileOnly 'org.yaml:snakeyaml:2.2' // For compilation only, use server-provided version
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
@@ -255,6 +293,7 @@ dependencies {    // Database dependencies - SQLite will be bundled for guarante
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 // Task to increment build number
 tasks.register('incrementBuildNumber') {
@@ -450,6 +489,16 @@ tasks.register('buildAll') {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
+=======
+// Configure test framework
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
@@ -479,6 +528,7 @@ neoForge.ideSyncTask generateModMetadata
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 // Configuration to allow publishing using the maven-publish plugin
 =======
 // Example configuration to allow publishing using the maven-publish plugin
@@ -486,14 +536,20 @@ neoForge.ideSyncTask generateModMetadata
 =======
 // Configuration to allow publishing using the maven-publish plugin
 >>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
+=======
+// Configuration to allow publishing using the maven-publish plugin
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
             from components.java
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
             
             pom {
                 name = 'NeoEssentials'
@@ -513,14 +569,18 @@ publishing {
                 }
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
 >>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }
     }
     repositories {
         maven {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
             name = "localRepo"
@@ -532,6 +592,10 @@ publishing {
             name = "localRepo"
             url = "file://${project.buildDir}/repo"
 >>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
+=======
+            name = "localRepo"
+            url = "file://${project.buildDir}/repo"
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }
     }
 }
@@ -546,6 +610,7 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
+<<<<<<< HEAD
 =======
     finalizedBy tasks.incrementBuildNumber
 =======
@@ -553,6 +618,11 @@ idea {
 build.finalizedBy tasks.incrementBuildNumber
 
 // Jar configuration
+=======
+}
+
+// Jar task configuration
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 jar {
     manifest {
         attributes(
@@ -566,6 +636,7 @@ jar {
         )
     }
     
+<<<<<<< HEAD
     // Include all dependencies from the 'include' configuration
     from {
         configurations.include.collect { it.isDirectory() ? it : zipTree(it) }
@@ -659,6 +730,14 @@ publishing {
 <<<<<<< HEAD
 
 // Jar configuration
+=======
+    doFirst {
+        println "Building Shadow JAR with relocated SQLite to avoid conflicts with GriefLogger..."
+    }
+}
+
+// Configure regular jar to be lightweight (no dependencies)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 jar {
     manifest {
         attributes(
@@ -671,10 +750,21 @@ jar {
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         )
     }
+<<<<<<< HEAD
 }
 
 =======
 >>>>>>> 14c315a (feat: Improve build number handling and remove legacy multi-project configuration)
+=======
+    
+    doFirst {
+        println "Building JAR with dependencies..."
+    }
+}
+
+// Configuration adjustments if needed go here
+
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 // Improved BuildNumber handling with Configuration Cache compatibility
 
 abstract class BuildNumberProvider implements ValueSource<Integer, BuildNumberParameters> {
@@ -696,6 +786,9 @@ abstract class BuildNumberProvider implements ValueSource<Integer, BuildNumberPa
         }
         return (props.getProperty("buildNumber", "1") as String).toInteger()
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
     }
 }
 
@@ -753,6 +846,7 @@ abstract class IncrementBuildNumberTask extends DefaultTask {
         
         propsFile.withOutputStream { stream ->
             props.store(stream, "Build number updated") 
+<<<<<<< HEAD
 =======
 // Get the build number from buildnumber.properties
 def getBuildNumber() {
@@ -809,6 +903,8 @@ abstract class IncrementBuildNumberTask extends DefaultTask {
 >>>>>>> 14c315a (feat: Improve build number handling and remove legacy multi-project configuration)
             props.store(stream, "Build number updated") 
 >>>>>>> d6a7fa7 (feat: Enhance build number management with configuration cache compatibility)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
         }
         
         println "Build number incremented from: ${lastBuildNumber} to: ${currentBuildNumber}"
@@ -817,6 +913,9 @@ abstract class IncrementBuildNumberTask extends DefaultTask {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 // Register the task
 tasks.register('incrementBuildNumber', IncrementBuildNumberTask) {
     description = 'Increments the build number'
@@ -834,6 +933,7 @@ tasks.register('incrementBuildNumber', IncrementBuildNumberTask) {
 tasks.named('build').configure {
     finalizedBy tasks.named('incrementBuildNumber')
 }
+<<<<<<< HEAD
 =======
 >>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
 =======
@@ -883,3 +983,5 @@ tasks.named('build').configure {
     finalizedBy tasks.named('incrementBuildNumber')
 }
 >>>>>>> d6a7fa7 (feat: Enhance build number management with configuration cache compatibility)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
