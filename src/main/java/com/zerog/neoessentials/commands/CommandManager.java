@@ -2,8 +2,7 @@ package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.NeoEssentials;
-<<<<<<< HEAD
-<<<<<<< HEAD
+import com.zerog.neoessentials.economy.commands.EconomyCommands;
 import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -23,181 +22,26 @@ import net.neoforged.bus.api.SubscribeEvent;
  * 
  * @author ZeroG
  * @since 1.0.0
-<<<<<<< HEAD
-=======
-import com.zerog.neoessentials.utils.PermissionUtil;
-import net.minecraft.commands.CommandBuildContext;
-=======
->>>>>>> 2a4d122 (feat: Refactor CommandManager to streamline command registration and add utility/UI command accessors)
-import net.minecraft.commands.CommandSourceStack;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.bus.api.SubscribeEvent;
-
-/**
- * Manages registration and execution of all NeoEssentials commands.
->>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
-=======
->>>>>>> 05e6600 (feat: Enhance documentation for NeoEssentials and command management classes)
  */
-
-public class CommandManager {    // Command classes
-    private final TeleportCommands teleportCommands;
-    private final HomeCommands homeCommands;
-    private final EconomyCommands economyCommands;
-    private final UserCommands userCommands;
-    private final WarpCommands warpCommands;
-    private final KitCommands kitCommands;
-    private final TimeAndWeatherCommands timeAndWeatherCommands;
-<<<<<<< HEAD
-<<<<<<< HEAD
-    private final InventoryCommands inventoryCommands;
-    private final PlayerCommands playerCommands;
-    private final MessageCommands messageCommands;
-    private final ModeratorCommands moderatorCommands;
-<<<<<<< HEAD
-<<<<<<< HEAD
-    private final AfkCommands afkCommands;
-    private final UtilityCommands utilityCommands;    
-    private final UICommands uiCommands;
-    private final JailCommands jailCommands;
-    private final PowerToolCommands powerToolCommands;
-    private final MailCommands mailCommands;
-<<<<<<< HEAD
-    private final AdminPanelCommand adminPanelCommand;    public CommandManager() {
-=======
-    
-    public CommandManager() {
->>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
-=======
-    private final InventoryCommands inventoryCommands;
-    private final PlayerCommands playerCommands;
-    private final MessageCommands messageCommands;
-<<<<<<< HEAD
-      public CommandManager() {
->>>>>>> bac244b (Implement messaging and player state commands)
-=======
-    private final ModeratorCommands moderatorCommands;      public CommandManager() {
->>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
-=======
-    private final AfkCommands afkCommands;    public CommandManager() {
->>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
-=======
-    private final AfkCommands afkCommands;
-    private final UtilityCommands utilityCommands;    
-    private final UICommands uiCommands;
-    private final JailCommands jailCommands;
-    private final PowerToolCommands powerToolCommands;
-    private final MailCommands mailCommands;
-<<<<<<< HEAD
-
-    public CommandManager() {
->>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
-=======
-    private final AdminPanelCommand adminPanelCommand;    public CommandManager() {
->>>>>>> aa6024a (feat: Implement Admin Panel and Menu System)
-=======
-    private final AdminPanelCommand adminPanelCommand;
-    private final TablistCommand tablistCommand;    public CommandManager() {
->>>>>>> 7091c8e (feat: Add TablistCommand to CommandManager for enhanced command management)
-        teleportCommands = new TeleportCommands();
-        homeCommands = new HomeCommands();
-        economyCommands = new EconomyCommands();
-        userCommands = new UserCommands();
-        warpCommands = new WarpCommands();
-        kitCommands = new KitCommands();
-        timeAndWeatherCommands = new TimeAndWeatherCommands();
-<<<<<<< HEAD
-<<<<<<< HEAD
-        inventoryCommands = new InventoryCommands();
-        playerCommands = new PlayerCommands();
-        messageCommands = new MessageCommands();
-        moderatorCommands = new ModeratorCommands();
-        afkCommands = new AfkCommands();
-<<<<<<< HEAD
-<<<<<<< HEAD
-        utilityCommands = new UtilityCommands();
-        uiCommands = new UICommands();
-        jailCommands = new JailCommands();
-        powerToolCommands = new PowerToolCommands();
-        mailCommands = new MailCommands();
-        adminPanelCommand = new AdminPanelCommand();
-        tablistCommand = new TablistCommand();
-        // ItemCommands needs CommandBuildContext which is only available during register event
-=======
->>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
-=======
-        inventoryCommands = new InventoryCommands();
-        playerCommands = new PlayerCommands();
-        messageCommands = new MessageCommands();
-<<<<<<< HEAD
-        playerCommands = new PlayerCommands();
-        messageCommands = new MessageCommands();
->>>>>>> bac244b (Implement messaging and player state commands)
-=======
-        moderatorCommands = new ModeratorCommands();
->>>>>>> 1fb47d4 (Implement messaging and moderation commands, add time utility for duration parsing)
-=======
->>>>>>> 9db1c98 (feat: Implement AFK commands and functionality, including auto-AFK detection and player status management)
-=======
-        utilityCommands = new UtilityCommands();
-        uiCommands = new UICommands();
-        jailCommands = new JailCommands();
-        powerToolCommands = new PowerToolCommands();
-        mailCommands = new MailCommands();
-        adminPanelCommand = new AdminPanelCommand();
-        // ItemCommands needs CommandBuildContext which is only available during register event
->>>>>>> e5d4bb8 (feat: Add UI command functionality for various crafting interfaces including workbench, anvil, and stonecutter)
-    }
-    
-    /**
-     * Registers all commands with the server.
-     */
-    public void registerCommands() {
-        NeoEssentials.LOGGER.info("Registering NeoEssentials commands");
-    }
+public class CommandManager {
     
     /**
      * Event handler for command registration.
      * 
      * @param event The register commands event
-     */    @SubscribeEvent
+     */
+    @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         NeoEssentials.LOGGER.info("Registering NeoEssentials commands");
         
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
         
-        // Register all command categories directly since we're an instance
-        registerAllCommands(dispatcher);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+        // Register economy commands
+        EconomyCommands.register(dispatcher);
         
-        // Register ItemCommands with the CommandBuildContext from the event
-        ItemCommands itemCommands = new ItemCommands(event.getBuildContext());
-        itemCommands.register(dispatcher);
-        NeoEssentials.LOGGER.info("Registered item commands");
-<<<<<<< HEAD
-=======
->>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
-=======
->>>>>>> 734727c (feat: Enhance command registration and execution with improved error handling and user feedback)
+        NeoEssentials.LOGGER.info("Successfully registered all NeoEssentials commands");
     }
-      /**
-     * Registers all command categories with the dispatcher.
-     * 
-     * @param dispatcher The command dispatcher
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {// Register teleport commands
-=======
-     */    private void registerAllCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // Get the server for CommandBuildContext
-        MinecraftServer server = null;
-        try {
-            // Try to get the server from the event
+}
             server = NeoEssentials.getServer();
         } catch (Exception e) {
             // Server might not be available yet
