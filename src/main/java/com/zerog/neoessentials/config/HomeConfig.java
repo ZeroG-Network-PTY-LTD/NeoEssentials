@@ -1,61 +1,39 @@
 package com.zerog.neoessentials.config;
 
-import net.neoforged.neoforge.common.ModConfigSpec;
-
 /**
- * Home system configuration file for NeoEssentials.
- * This config contains all home-related settings.
+ * Home configuration for NeoEssentials
+ * 
+ * @author ZeroG
+ * @since 2.0.0
  */
 public class HomeConfig {
-    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
     
-    // General home settings section
-    static {
-        BUILDER.comment("Home System Settings").push("homes");
+    public boolean enabled = true;
+    public int maxHomesDefault = 3;
+    public int maxHomesVIP = 5;
+    public int maxHomesAdmin = 10;
+    
+    // Teleport settings
+    public int teleportDelay = 3; // seconds
+    public boolean enableTeleportDelay = true;
+    public boolean cancelOnMove = true;
+    public boolean cancelOnDamage = true;
+    
+    // Safety settings
+    public boolean enableSafetyChecks = true;
+    public boolean allowUnsafeHomes = false;
+    public int safetySearchRadius = 3;
+    
+    // Bed homes
+    public boolean enableBedHomes = true;
+    public boolean setBedAsHome = true;
+    public String bedHomeName = "bed";
+    
+    // Cross-world homes
+    public boolean enableCrossWorldHomes = true;
+    public boolean requirePermissionForCrossWorld = true;
+    
+    public static HomeConfig createDefault() {
+        return new HomeConfig();
     }
-    
-    public static final ModConfigSpec.IntValue DEFAULT_MAX_HOMES = BUILDER
-        .comment("Default maximum number of homes per player")
-        .defineInRange("defaultMaxHomes", 3, 1, 1000);
-    
-    public static final ModConfigSpec.IntValue COOLDOWN_SECONDS = BUILDER
-        .comment("Cooldown between home teleportations (in seconds)")
-        .defineInRange("cooldownSeconds", 30, 0, Integer.MAX_VALUE);
-    
-    public static final ModConfigSpec.IntValue WARMUP_SECONDS = BUILDER
-        .comment("Warmup delay before teleportation (in seconds)")
-        .defineInRange("warmupSeconds", 3, 0, Integer.MAX_VALUE);
-    
-    public static final ModConfigSpec.BooleanValue CANCEL_ON_MOVE = BUILDER
-        .comment("Cancel teleportation if player moves during warmup")
-        .define("cancelOnMove", true);
-    
-    public static final ModConfigSpec.BooleanValue CANCEL_ON_DAMAGE = BUILDER
-        .comment("Cancel teleportation if player takes damage during warmup")
-        .define("cancelOnDamage", true);
-        
-    public static final ModConfigSpec.BooleanValue ALLOW_CROSS_DIMENSION = BUILDER
-        .comment("Allow teleporting across dimensions")
-        .define("allowCrossDimension", true);
-        
-    static {
-        BUILDER.pop(); // End homes section
-        
-        // Permission settings
-        BUILDER.comment("Permission Settings").push("permissions");
-    }
-    
-    public static final ModConfigSpec.ConfigValue<String> PERMISSION_PREFIX = BUILDER
-        .comment("Permission prefix for home commands")
-        .define("permissionPrefix", "neoessentials.home");
-        
-    public static final ModConfigSpec.BooleanValue USE_MAX_HOMES_PERMISSION = BUILDER
-        .comment("Use permission-based home limits (neoessentials.home.max.#)")
-        .define("useMaxHomesPermission", true);
-    
-    static {
-        BUILDER.pop(); // End permissions section
-    }
-    
-    public static final ModConfigSpec SPEC = BUILDER.build();
 }
