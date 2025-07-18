@@ -1,12 +1,18 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 9085b7b (Documentation improvements for release - Enhanced README, command documentation, and JavaDoc comments)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 # IDE files
 .idea/
 .vscode/
 *.iml
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 *.ipr
 *.iws
 .settings/
@@ -83,6 +89,7 @@ MIGRATION_*.md
 MULTIVERSION_*.md
 IMPLEMENTATION_*.md
 REVERSION_*.md
+<<<<<<< HEAD
 =======
 # eclipse
 bin
@@ -176,3 +183,17 @@ MULTIVERSION_*.md
 IMPLEMENTATION_*.md
 REVERSION_*.md
 >>>>>>> 9085b7b (Documentation improvements for release - Enhanced README, command documentation, and JavaDoc comments)
+=======
+TODO.md
+Plugins commands.md
+ADMIN_SHOP_MANAGEMENT_COMPLETE_v1.0.2.168.md
+COMPLETION_SUMMARY_v1.0.2.158.md
+ECONOMY_SYSTEM_IMPROVEMENTS_v1.0.2.170.md
+SHOP_GUI_BALANCE_FIX_v1.0.2.162.md
+SHOP_GUI_FIX_COMPLETE_v1.0.2.167.md
+SHOP_SYSTEM_COMPLETE_OVERHAUL_v1.0.2.171.md
+SHOP_SYSTEM_ENHANCEMENT_v1.0.2.160.md
+GUI_ONLY_SHOP_MANAGEMENT_COMPLETE_v1.0.2.173.md
+FINAL_REFACTOR_COMPLETION_v1.0.2.175.md
+SHOP_SYSTEM_FIXES_v1.0.2.177.md
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
