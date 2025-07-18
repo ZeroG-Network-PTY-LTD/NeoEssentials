@@ -1,0 +1,990 @@
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.93'
+    id 'idea'
+<<<<<<< HEAD
+    id "org.sonarqube" version "6.2.0.5505"
+}
+
+<<<<<<< HEAD
+=======
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.TaskAction
+
+// Use a simpler approach that's compatible with configuration cache
+def getBuildNumber() {
+    def propsFile = file("buildnumber.properties")
+    if (!propsFile.exists()) {
+        propsFile.text = "buildNumber=1"
+        return 1
+    }
+    
+    def props = new Properties()
+    propsFile.withInputStream { props.load(it) }
+    return props.getProperty("buildNumber").toInteger()
+}
+
+def buildNumber = getBuildNumber()
+
+// Set the version with the build number
+version = "${mod_version}.${buildNumber}"
+
+// Create a task extension to hold version properties
+abstract class VersionPropertiesExtension {
+    abstract Property<String> getModVersion()
+    abstract Property<String> getLoaderVersionRange()
+    abstract Property<String> getNeoVersionRange()
+    abstract Property<String> getMinecraftVersionRange()
+}
+
+// Add the extension to the project
+def versionProps = extensions.create('versionProps', VersionPropertiesExtension)
+versionProps.modVersion.set(version.toString())
+versionProps.loaderVersionRange.set(loader_version_range)
+versionProps.neoVersionRange.set(neo_version_range)
+versionProps.minecraftVersionRange.set(minecraft_version_range)
+
+// Configure processResources to replace version in mods.toml
+tasks.processResources.configure {
+    inputs.property("version", versionProps.modVersion)
+    inputs.property("loader_version_range", versionProps.loaderVersionRange)
+    inputs.property("neo_version_range", versionProps.neoVersionRange)
+    inputs.property("minecraft_version_range", versionProps.minecraftVersionRange)
+    
+    filesMatching("META-INF/mods.toml") {
+        expand(
+            "version": versionProps.modVersion.get(),
+            "loader_version_range": versionProps.loaderVersionRange.get(),
+            "neo_version_range": versionProps.neoVersionRange.get(),
+            "minecraft_version_range": versionProps.minecraftVersionRange.get()
+        )
+=======
+// Root project build file
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.neoforged.net/releases' }
+        maven { url = 'https://maven.minecraftforge.net/' }
+>>>>>>> 721d16e (Add initial implementation of NeoEssentials mod)
+    }
+=======
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+<<<<<<< HEAD
+    id 'net.neoforged.gradle.userdev' version '7.0.131'
+<<<<<<< HEAD
+>>>>>>> 452fbe2 (refactor: Simplify build.gradle by removing redundant configurations and enhancing build number management)
+=======
+    id 'net.neoforged.gradle.mixin' version '7.0.131'
+>>>>>>> 753cf35 (fix: Adjust repository order in settings.gradle and update logging properties in build.gradle for clarity)
+=======
+    id 'net.neoforged.moddev' version '2.0.93'
+    id 'idea'
+>>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
+=======
+    // Shadow plugin temporarily disabled due to resolution issues
+    // id 'com.gradleup.shadow' version '8.1.8'
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+}
+
+tasks.named('wrapper', Wrapper).configure {
+    // Define wrapper values here so as to not have to always do so when updating gradlew.properties.
+    // Switching this to Wrapper.DistributionType.ALL will download the full gradle sources that comes with
+    // documentation attached on cursor hover of gradle classes and methods. However, this comes with increased
+    // file size for Gradle. If you do switch this to ALL, run the Gradle wrapper task twice afterwards.
+    // (Verify by checking gradle/wrapper/gradle-wrapper.properties to see if distributionUrl now points to `-all`)
+    distributionType = Wrapper.DistributionType.BIN
+}
+
+version = mod_version
+group = mod_group_id
+
+repositories {
+    // Add LuckPerms repository
+    maven { url = 'https://repo.lucko.me/' }
+    
+    // Add Maven Central for SnakeYAML
+    mavenCentral()
+<<<<<<< HEAD
+    
+    // Add Modrinth repository for FTB mods
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+}
+
+base {
+    archivesName = mod_id
+}
+
+// Mojang ships Java 21 to end users starting in 1.20.5, so mods should target Java 21.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    // Specify the version of NeoForge to use.
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    // This line is optional. Access Transformers are automatically detected
+    // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+
+    // Default run configurations.
+    // These can be tweaked, removed, or duplicated as needed.
+    runs {
+        client {
+            client()
+
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        // This run config launches GameTestServer and runs all registered gametests, then exits.
+        // By default, the server will crash when no gametests are provided.
+        // The gametest system is also enabled by default for other run configs under the /test command.
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            data()
+
+            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
+            // gameDirectory = project.file('run-data')
+
+            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        // applies to all the run configs above
+        configureEach {
+            // Recommended logging data for a userdev environment
+            // The markers can be added/remove as needed separated by commas.
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+
+            // Recommended logging level for the console
+            // You can set various levels here.
+            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        // define mod <-> source bindings
+        // these are used to tell the game which sources are for which mod
+        // multi mod projects should define one per mod
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+// Include resources generated by data generators.
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// Sets up a dependency configuration called 'localRuntime'.
+// This configuration should be used instead of 'runtimeOnly' to declare
+// a dependency that will be present for runtime testing but that is
+// "optional", meaning it will not be pulled by dependents of this mod.
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+<<<<<<< HEAD
+    include
+    implementation.extendsFrom include
+}
+
+dependencies {    // Database dependencies - SQLite will be bundled for guaranteed availability
+    implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
+    }
+    include('org.xerial:sqlite-jdbc:3.44.1.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
+    }
+=======
+}
+
+dependencies {    
+    // Database dependencies - SQLite embedded in the jar
+    implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from SQLite to avoid conflicts
+    }
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+    
+    // Other database drivers as optional (compileOnly)
+    compileOnly('com.mysql:mysql-connector-j:8.3.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from MySQL connector
+    }
+    compileOnly('com.zaxxer:HikariCP:5.1.0') {
+        exclude group: 'org.slf4j', module: 'slf4j-api' // Exclude SLF4J from HikariCP
+<<<<<<< HEAD
+    }    // Permission system APIs (soft dependencies)
+    compileOnly 'net.luckperms:api:5.4'
+    // FTB Ranks is integrated via ModList and reflection to avoid direct dependencies
+    // No compile dependency needed as we check for mod presence at runtime
+      // TOML parsing library for custom animations (legacy)
+    implementation 'com.moandjiezana.toml:toml4j:0.7.2'
+      // YAML parsing library for configuration
+    implementation 'org.yaml:snakeyaml:2.2'
+    // Make sure SnakeYAML is included in the JAR
+    include 'org.yaml:snakeyaml:2.2'
+=======
+    }
+    
+    // Test dependencies
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    
+    // Permission system APIs (soft dependencies)
+    compileOnly 'net.luckperms:api:5.4'
+    
+    // TOML parsing library for custom animations (legacy)
+    implementation 'com.moandjiezana.toml:toml4j:0.7.2'
+    
+    // YAML parsing library for configuration - rely on server environment
+    compileOnly 'org.yaml:snakeyaml:2.2' // For compilation only, use server-provided version
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+    
+    // Example optional mod dependency with JEI
+    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
+    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
+    // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
+    // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
+    // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
+
+    // Example mod dependency using a mod jar from ./libs with a flat dir repository
+    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
+    // The group id is ignored when searching -- in this case, it is "blank"
+    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
+
+    // Example mod dependency using a file as dependency
+    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
+
+    // Example project dependency using a sister or child project:
+    // implementation project(":myproject")
+
+    // For more info:
+    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
+    // http://www.gradle.org/docs/current/userguide/dependency_management.html
+}
+
+<<<<<<< HEAD
+<<<<<<< HEAD
+// Task to increment build number
+tasks.register('incrementBuildNumber') {
+    description = 'Increments the build number'
+    
+    doLast {
+        def propsFile = file("buildnumber.properties")
+        def props = new Properties()
+        
+        if (propsFile.exists()) {
+            propsFile.withInputStream { props.load(it) }
+        }
+        
+        def currentBuildNumber = props.getProperty("buildNumber", "0").toInteger() + 1
+        props.setProperty("buildNumber", currentBuildNumber.toString())
+        
+        propsFile.withOutputStream { 
+            props.store(it, "Build number updated") 
+        }
+        
+        println "Build number incremented to: ${currentBuildNumber}"
+    }
+}
+
+<<<<<<< HEAD
+<<<<<<< HEAD
+tasks.register("incrementBuildNumber", IncrementBuildNumberTask) {
+    description = "Increments the build number"
+    buildNumberFile = layout.projectDirectory.file("buildnumber.properties")
+}
+
+// Add the increment task as a finalizer to jar task
+tasks.jar.finalizedBy(tasks.incrementBuildNumber)
+group = mod_group_id
+
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+tasks.named('wrapper', Wrapper).configure {
+    // Define wrapper values here so as to not have to always do so when updating gradlew.properties.
+    // Switching this to Wrapper.DistributionType.ALL will download the full gradle sources that comes with
+    // documentation attached on cursor hover of gradle classes and methods. However, this comes with increased
+    // file size for Gradle. If you do switch this to ALL, run the Gradle wrapper task twice afterwards.
+    // (Verify by checking gradle/wrapper/gradle-wrapper.properties to see if distributionUrl now points to `-all`)
+    distributionType = Wrapper.DistributionType.BIN
+}
+
+<<<<<<< HEAD
+version = mod_version
+group = mod_group_id
+
+repositories {
+    // Add LuckPerms repository
+    maven { url = 'https://repo.lucko.me/' }
+=======
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url = 'https://repo.lucko.me/' } // For LuckPerms API
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+}
+
+base {
+    archivesName = mod_id
+}
+
+// Mojang ships Java 21 to end users starting in 1.20.5, so mods should target Java 21.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    // Specify the version of NeoForge to use.
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    // This line is optional. Access Transformers are automatically detected
+    // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+
+    // Default run configurations.
+    // These can be tweaked, removed, or duplicated as needed.
+    runs {
+        client {
+            client()
+
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        // This run config launches GameTestServer and runs all registered gametests, then exits.
+        // By default, the server will crash when no gametests are provided.
+        // The gametest system is also enabled by default for other run configs under the /test command.
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            data()
+
+            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
+            // gameDirectory = project.file('run-data')
+
+            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        // applies to all the run configs above
+        configureEach {
+            // Recommended logging data for a userdev environment
+            // The markers can be added/remove as needed separated by commas.
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+
+            // Recommended logging level for the console
+            // You can set various levels here.
+            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        // define mod <-> source bindings
+        // these are used to tell the game which sources are for which mod
+        // multi mod projects should define one per mod
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+// Include resources generated by data generators.
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// Sets up a dependency configuration called 'localRuntime'.
+// This configuration should be used instead of 'runtimeOnly' to declare
+// a dependency that will be present for runtime testing but that is
+// "optional", meaning it will not be pulled by dependents of this mod.
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+dependencies {
+    // Database dependencies
+    implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
+<<<<<<< HEAD
+    implementation 'com.mysql:mysql-connector-j:8.3.0'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    
+    // LuckPerms API (soft dependency for permission checking)
+    compileOnly 'net.luckperms:api:5.4'
+    
+    // Example optional mod dependency with JEI
+    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
+    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
+    // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
+    // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
+    // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
+
+    // Example mod dependency using a mod jar from ./libs with a flat dir repository
+    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
+    // The group id is ignored when searching -- in this case, it is "blank"
+    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
+
+    // Example mod dependency using a file as dependency
+    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
+
+    // Example project dependency using a sister or child project:
+    // implementation project(":myproject")
+
+=======
+    implementation 'com.mysql:mysql-connector-j:8.2.0'
+=======
+// Task to build all versions
+tasks.register('buildAll') {
+    description = 'Builds all versions of the mod'
+>>>>>>> 721d16e (Add initial implementation of NeoEssentials mod)
+    
+    dependsOn subprojects.collect { it.tasks.withType(Jar) }
+    
+<<<<<<< HEAD
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+    // For more info:
+    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
+    // http://www.gradle.org/docs/current/userguide/dependency_management.html
+}
+
+=======
+// Configure test framework
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+// This block of code expands all declared replace properties in the specified resource targets.
+// A missing property will result in an error. Properties are expanded using ${} Groovy notation.
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+// Include the output of "generateModMetadata" as an input directory for the build
+// this works with both building through Gradle and the IDE.
+sourceSets.main.resources.srcDir generateModMetadata
+// To avoid having to run "generateModMetadata" manually, make it run on every project reload
+neoForge.ideSyncTask generateModMetadata
+
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+// Configuration to allow publishing using the maven-publish plugin
+=======
+// Example configuration to allow publishing using the maven-publish plugin
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+// Configuration to allow publishing using the maven-publish plugin
+>>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
+=======
+// Configuration to allow publishing using the maven-publish plugin
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+            
+            pom {
+                name = 'NeoEssentials'
+                description = 'Essential server-side commands and utilities for NeoForge servers'
+                url = 'https://github.com/zerog/neoessentials'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'zerog'
+                        name = 'ZeroG'
+                    }
+                }
+            }
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+>>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+        }
+    }
+    repositories {
+        maven {
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+            name = "localRepo"
+            url = "file://${project.buildDir}/repo"
+=======
+            url "file://${project.projectDir}/repo"
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+            name = "localRepo"
+            url = "file://${project.buildDir}/repo"
+>>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
+=======
+            name = "localRepo"
+            url = "file://${project.buildDir}/repo"
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+<<<<<<< HEAD
+=======
+    finalizedBy tasks.incrementBuildNumber
+=======
+// Make sure the build number is incremented when we build
+build.finalizedBy tasks.incrementBuildNumber
+
+// Jar configuration
+=======
+}
+
+// Jar task configuration
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+jar {
+    manifest {
+        attributes(
+            'Specification-Title': 'NeoEssentials',
+            'Specification-Vendor': 'ZeroG',
+            'Specification-Version': '1',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'ZeroG',
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        )
+    }
+    
+<<<<<<< HEAD
+    // Include all dependencies from the 'include' configuration
+    from {
+        configurations.include.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    
+    // Avoid duplicate entries when including dependencies
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+// NeoForge specific configurations
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(17)
+}
+
+// Configure the mixin environment
+mixin {
+    add sourceSets.main, "neoessentials.refmap.json"
+    config "neoessentials.mixins.json"
+}
+
+// Process resources specific configuration
+processResources {
+=======
+// This block of code expands all declared replace properties in the specified resource targets.
+// A missing property will result in an error. Properties are expanded using ${} Groovy notation.
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+>>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+// Include the output of "generateModMetadata" as an input directory for the build
+// this works with both building through Gradle and the IDE.
+sourceSets.main.resources.srcDir generateModMetadata
+// To avoid having to run "generateModMetadata" manually, make it run on every project reload
+neoForge.ideSyncTask generateModMetadata
+
+<<<<<<< HEAD
+// Create a task to finalize the jar with reobfuscation
+tasks.named('jar').configure {
+    finalizedBy 'reobfJar'
+>>>>>>> 452fbe2 (refactor: Simplify build.gradle by removing redundant configurations and enhancing build number management)
+}
+
+// Publishing configuration
+=======
+// Example configuration to allow publishing using the maven-publish plugin
+>>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+<<<<<<< HEAD
+    
+<<<<<<< HEAD
+    dependsOn subprojects.collect { it.tasks.withType(PublishToMavenRepository) }
+    
+    finalizedBy tasks.incrementBuildNumber
+>>>>>>> 721d16e (Add initial implementation of NeoEssentials mod)
+=======
+=======
+>>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
+    repositories {
+        maven {
+            url "file://${project.projectDir}/repo"
+        }
+    }
+>>>>>>> 452fbe2 (refactor: Simplify build.gradle by removing redundant configurations and enhancing build number management)
+}
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+// Jar configuration
+=======
+    doFirst {
+        println "Building Shadow JAR with relocated SQLite to avoid conflicts with GriefLogger..."
+    }
+}
+
+// Configure regular jar to be lightweight (no dependencies)
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+jar {
+    manifest {
+        attributes(
+            'Specification-Title': 'NeoEssentials',
+            'Specification-Vendor': 'ZeroG',
+            'Specification-Version': '1',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'ZeroG',
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        )
+    }
+<<<<<<< HEAD
+}
+
+=======
+>>>>>>> 14c315a (feat: Improve build number handling and remove legacy multi-project configuration)
+=======
+    
+    doFirst {
+        println "Building JAR with dependencies..."
+    }
+}
+
+// Configuration adjustments if needed go here
+
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+// Improved BuildNumber handling with Configuration Cache compatibility
+
+abstract class BuildNumberProvider implements ValueSource<Integer, BuildNumberParameters> {
+    interface BuildNumberParameters extends ValueSourceParameters {
+        Property<File> getPropertiesFile()
+    }
+
+    @Override
+    Integer obtain() {
+        File propsFile = parameters.propertiesFile.get()
+        if (!propsFile.exists()) {
+            // Default to 1 if the file doesn't exist
+            return 1
+        }
+
+        Properties props = new Properties()
+        propsFile.withInputStream { stream ->
+            props.load(stream)
+        }
+        return (props.getProperty("buildNumber", "1") as String).toInteger()
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+    }
+}
+
+// Get the build number using a configuration-cache compatible provider
+def buildNumber = providers.of(BuildNumberProvider) { 
+    parameters.propertiesFile.set(file("buildnumber.properties"))
+}.get()
+
+// Update the version to include the build number
+version = "${mod_version}.${buildNumber}"
+println "Building NeoEssentials version: ${version}"
+
+// Task to increment build number compatible with configuration cache
+abstract class IncrementBuildNumberTask extends DefaultTask {
+    @InputFile
+    @Optional
+    abstract RegularFileProperty getPropertiesFile()
+    
+    @OutputFile
+    abstract RegularFileProperty getOutputFile()
+    
+    @TaskAction
+    def increment() {
+        File propsFile = getOutputFile().getAsFile().get()
+        Properties props = new Properties()
+        
+        // If the input properties file is provided and exists, load from it
+        File inputFile = getPropertiesFile().getAsFile().getOrNull()
+        if (inputFile != null && inputFile.exists()) {
+            inputFile.withInputStream { stream ->
+                props.load(stream)
+            }
+        } else if (propsFile.exists()) {
+            // Otherwise load from the output file if it exists
+            propsFile.withInputStream { stream ->
+                props.load(stream)
+            }
+        } else {
+            // Create the parent directory if it doesn't exist
+            if (!propsFile.getParentFile().exists()) {
+                propsFile.getParentFile().mkdirs()
+            }
+            
+            // Initialize with default values if no file exists
+            props.setProperty("lastBuildNumber", "0")
+            props.setProperty("buildNumber", "0")
+        }
+        
+        int lastBuildNumber = (props.getProperty("buildNumber", "0") as String).toInteger()
+        int currentBuildNumber = lastBuildNumber + 1
+        
+        // Store both current and last build numbers
+        props.setProperty("lastBuildNumber", lastBuildNumber.toString())
+        props.setProperty("buildNumber", currentBuildNumber.toString())
+        
+        propsFile.withOutputStream { stream ->
+            props.store(stream, "Build number updated") 
+<<<<<<< HEAD
+=======
+// Get the build number from buildnumber.properties
+def getBuildNumber() {
+    def propsFile = file("buildnumber.properties")
+    if (!propsFile.exists()) {
+        propsFile.text = "buildNumber=1"
+        return 1
+=======
+>>>>>>> 14c315a (feat: Improve build number handling and remove legacy multi-project configuration)
+    }
+}
+
+// Get the build number using a configuration-cache compatible provider
+def buildNumber = providers.of(BuildNumberProvider) { 
+    parameters.propertiesFile.set(file("buildnumber.properties"))
+}.get()
+
+// Update the version to include the build number
+version = "${mod_version}.${buildNumber}"
+println "Building NeoEssentials version: ${version}"
+
+// Task to increment build number compatible with configuration cache
+abstract class IncrementBuildNumberTask extends DefaultTask {
+    @InputFile
+    @Optional
+    abstract RegularFileProperty getPropertiesFile()
+    
+    @OutputFile
+    abstract RegularFileProperty getOutputFile()
+    
+    @TaskAction
+    def increment() {
+        File propsFile = getPropertiesFile().getAsFile().getOrNull() ?: getOutputFile().getAsFile().get()
+        Properties props = new Properties()
+        
+        if (propsFile.exists()) {
+            propsFile.withInputStream { stream ->
+                props.load(stream)
+            }
+        }
+        
+        int currentBuildNumber = (props.getProperty("buildNumber", "0") as String).toInteger() + 1
+        props.setProperty("buildNumber", currentBuildNumber.toString())
+        
+<<<<<<< HEAD
+<<<<<<< HEAD
+        propsFile.withOutputStream { 
+            props.store(it, "Build number updated") 
+>>>>>>> 4338242 (feat: Add build number management and update mod metadata in gradle.properties)
+=======
+        propsFile.withOutputStream { stream ->
+=======
+        getOutputFile().getAsFile().get().withOutputStream { stream ->
+>>>>>>> 14c315a (feat: Improve build number handling and remove legacy multi-project configuration)
+            props.store(stream, "Build number updated") 
+>>>>>>> d6a7fa7 (feat: Enhance build number management with configuration cache compatibility)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+        }
+        
+        println "Build number incremented from: ${lastBuildNumber} to: ${currentBuildNumber}"
+    }
+}
+
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+// Register the task
+tasks.register('incrementBuildNumber', IncrementBuildNumberTask) {
+    description = 'Increments the build number'
+    
+    // Configure the properties file, but don't require it to exist initially
+    def propsFile = file("buildnumber.properties")
+    if (propsFile.exists()) {
+        propertiesFile.set(propsFile)
+    }
+    
+    outputFile.set(file("buildnumber.properties"))
+}
+
+// Make sure the build number is incremented when we build
+tasks.named('build').configure {
+    finalizedBy tasks.named('incrementBuildNumber')
+}
+<<<<<<< HEAD
+=======
+>>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
+=======
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
+// IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
+>>>>>>> a4862da (fix: Update NeoForge configurations and project settings for version 1.21.1)
+=======
+// Jar configuration
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'     : 'NeoEssentials',
+            'Specification-Vendor'    : 'ZeroG',
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : project.version,
+            'Implementation-Vendor'   : 'ZeroG',
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+>>>>>>> 5b56a18 (Add multi-version support for NeoEssentials mod)
+=======
+// Make sure the build number is incremented when we build
+build.finalizedBy tasks.incrementBuildNumber
+>>>>>>> 4338242 (feat: Add build number management and update mod metadata in gradle.properties)
+=======
+// Register the task
+tasks.register('incrementBuildNumber', IncrementBuildNumberTask) {
+    description = 'Increments the build number'
+    propertiesFile.set(file("buildnumber.properties"))
+    outputFile.set(file("buildnumber.properties"))
+}
+
+// Make sure the build number is incremented when we build
+tasks.named('build').configure {
+    finalizedBy tasks.named('incrementBuildNumber')
+}
+>>>>>>> d6a7fa7 (feat: Enhance build number management with configuration cache compatibility)
+=======
+>>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+>>>>>>> c39b21b14130226fa8d7bc29cee63dcb88440b58
