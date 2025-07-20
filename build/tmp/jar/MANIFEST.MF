@@ -1,8 +1,0 @@
-Manifest-Version: 1.0
-Specification-Title: NeoEssentials
-Specification-Vendor: ZeroG
-Specification-Version: 1
-Implementation-Title: NeoEssentials
-Implementation-Version: 1.0.2
-Implementation-Vendor: ZeroG
-
