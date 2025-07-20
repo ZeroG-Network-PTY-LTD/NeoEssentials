@@ -154,51 +154,7 @@
       ],
       "vmArgs": [
         "@D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\build\\moddev\\clientRunVmArgs.txt",
-        "-Dfml.modFolders\u003dneoessentials%%D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\bin\\main"
-      ],
-      "cwd": "${workspaceFolder}\\run",
-      "env": {},
-      "console": "internalConsole",
-      "shortenCommandLine": "none"
-    },
-    {
-      "type": "java",
-      "request": "launch",
-      "name": "Data",
-      "presentation": {
-        "group": "Mod Development - NeoEssentials",
-        "order": 1
-      },
-      "projectName": "NeoEssentials",
-      "mainClass": "net.neoforged.devlaunch.Main",
-      "args": [
-        "@D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\build\\moddev\\dataRunProgramArgs.txt"
-      ],
-      "vmArgs": [
-        "@D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\build\\moddev\\dataRunVmArgs.txt",
-        "-Dfml.modFolders\u003dneoessentials%%D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\bin\\main"
-      ],
-      "cwd": "${workspaceFolder}\\run",
-      "env": {},
-      "console": "internalConsole",
-      "shortenCommandLine": "none"
-    },
-    {
-      "type": "java",
-      "request": "launch",
-      "name": "GameTestServer",
-      "presentation": {
-        "group": "Mod Development - NeoEssentials",
-        "order": 2
-      },
-      "projectName": "NeoEssentials",
-      "mainClass": "net.neoforged.devlaunch.Main",
-      "args": [
-        "@D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\build\\moddev\\gameTestServerRunProgramArgs.txt"
-      ],
-      "vmArgs": [
-        "@D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\build\\moddev\\gameTestServerRunVmArgs.txt",
-        "-Dfml.modFolders\u003dneoessentials%%D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\bin\\main"
+        "-Dfml.modFolders\u003d${mod_id}%%D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},
@@ -211,7 +167,7 @@
       "name": "Server",
       "presentation": {
         "group": "Mod Development - NeoEssentials",
-        "order": 3
+        "order": 1
       },
       "projectName": "NeoEssentials",
       "mainClass": "net.neoforged.devlaunch.Main",
@@ -220,7 +176,7 @@
       ],
       "vmArgs": [
         "@D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\build\\moddev\\serverRunVmArgs.txt",
-        "-Dfml.modFolders\u003dneoessentials%%D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\bin\\main"
+        "-Dfml.modFolders\u003d${mod_id}%%D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},
