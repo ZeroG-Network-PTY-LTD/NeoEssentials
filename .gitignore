@@ -1,18 +1,9 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9085b7b (Documentation improvements for release - Enhanced README, command documentation, and JavaDoc comments)
-=======
->>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+
+
 # IDE files
 .idea/
 .vscode/
 *.iml
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
 *.ipr
 *.iws
 .settings/
@@ -48,152 +39,49 @@ out/
 *.rar
 hs_err_pid*
 
-# Development-only files
+# Development files
 *.log
 *~
 *.bak
 *.swp
 *.tmp
-/repo/
 *.launch
 .DS_Store
-Thumbs.bin
+Thumbs.db
 desktop.ini
 
-# Development documentation (not needed in release branch)
-README_DEV.md
-docs/*
-!docs/wiki/
-!docs/images/
-docs/images/tablist-update.gif
-!docs/README.md
+# Local repositories
+/repo/
 
-# Development build files
+# Build files
 buildnumber.properties
 build_log*.txt
-build.gradle.multi
-build.gradle.new
-build.gradle.original
+build.gradle.*
 *.sh
 temp_*
 *_backup/
+*_copy/
+*_Copy/
+*-Copy/
 temp-extract/
 mdk-downloads/
 
-# Test files
+# Documentation files (development only)
 TEST_*.md
 *_SUMMARY.md
 *_TASKS.md
+*_COMPLETE_*.md
 CLEANUP_*.md
 MIGRATION_*.md
 MULTIVERSION_*.md
 IMPLEMENTATION_*.md
 REVERSION_*.md
-<<<<<<< HEAD
-=======
-# eclipse
-bin
-*.launch
-.settings
-.metadata
-.classpath
-.project
-
-# idea
-out
-=======
->>>>>>> 9085b7b (Documentation improvements for release - Enhanced README, command documentation, and JavaDoc comments)
-*.ipr
-*.iws
-.settings/
-.classpath
-.project
-.metadata/
-bin/
-*.launch
-
-# Gradle files
-.gradle/
-build/
-!gradle-wrapper.jar
-!gradle-wrapper.properties
-
-# Minecraft/NeoForge generated files
-run/
-runs/
-run-data/
-logs/
-eclipse/
-out/
-
-<<<<<<< HEAD
-repo
->>>>>>> eab9ffa (feat: Implement core event handling for NeoEssentials mod)
-=======
-# Compiled files
-*.class
-*.jar
-!libs/*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-hs_err_pid*
-
-# Development-only files
-*.log
-*~
-*.bak
-*.swp
-*.tmp
-/repo/
-*.launch
-.DS_Store
-Thumbs.bin
-desktop.ini
-
-# Development documentation (not needed in release branch)
-README_DEV.md
-docs/*
-!docs/COMMANDS.md
-!docs/PERMISSIONS.md
-!docs/STORAGE.md
-
-# Development build files
-buildnumber.properties
-build_log*.txt
-build.gradle.multi
-build.gradle.new
-build.gradle.original
-*.sh
-temp_*
-*_backup/
-temp-extract/
-mdk-downloads/
-
-# Test files
-TEST_*.md
-*_SUMMARY.md
-*_TASKS.md
-CLEANUP_*.md
-MIGRATION_*.md
-MULTIVERSION_*.md
-IMPLEMENTATION_*.md
-REVERSION_*.md
->>>>>>> 9085b7b (Documentation improvements for release - Enhanced README, command documentation, and JavaDoc comments)
-=======
 TODO.md
-Plugins commands.md
-ADMIN_SHOP_MANAGEMENT_COMPLETE_v1.0.2.168.md
-COMPLETION_SUMMARY_v1.0.2.158.md
-ECONOMY_SYSTEM_IMPROVEMENTS_v1.0.2.170.md
-SHOP_GUI_BALANCE_FIX_v1.0.2.162.md
-SHOP_GUI_FIX_COMPLETE_v1.0.2.167.md
-SHOP_SYSTEM_COMPLETE_OVERHAUL_v1.0.2.171.md
-SHOP_SYSTEM_ENHANCEMENT_v1.0.2.160.md
-GUI_ONLY_SHOP_MANAGEMENT_COMPLETE_v1.0.2.173.md
-FINAL_REFACTOR_COMPLETION_v1.0.2.175.md
-SHOP_SYSTEM_FIXES_v1.0.2.177.md
->>>>>>> 4fee73b0b24b6301947b09da0d1e52696e353f1d
+README_DEV.md
+README_RELEASE.md
+MODPLATFORM_DESCRIPTION*.md
+DOCUMENTATION_PLAN*.md
+docs/TESTING_PHASE_COMMENCE_v1.0.2.154.md
+
+# Plugin reference files
+Plugins\ commands.md
