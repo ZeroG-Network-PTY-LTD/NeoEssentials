@@ -10,8 +10,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.List;
-
 /**
  * Complete home system implementation - EssentialsX style
  * Commands: /home, /sethome, /delhome, /homes
@@ -67,7 +65,7 @@ public class HomeCommand {
     
     private int teleportToHome(CommandContext<CommandSourceStack> context, String homeName) {
         if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
-            context.getSource().sendFailure(languageManager.getMessage(null, "general.must_be_player"));
+            context.getSource().sendFailure(Component.literal("§cThis command can only be used by players."));
             return 0;
         }
         
@@ -89,7 +87,7 @@ public class HomeCommand {
     
     private int setHome(CommandContext<CommandSourceStack> context, String homeName) {
         if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
-            context.getSource().sendFailure(languageManager.getMessage(null, "general.must_be_player"));
+            context.getSource().sendFailure(Component.literal("§cThis command can only be used by players."));
             return 0;
         }
         
@@ -102,7 +100,7 @@ public class HomeCommand {
     
     private int deleteHome(CommandContext<CommandSourceStack> context) {
         if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
-            context.getSource().sendFailure(languageManager.getMessage(null, "general.must_be_player"));
+            context.getSource().sendFailure(Component.literal("§cThis command can only be used by players."));
             return 0;
         }
         
@@ -117,7 +115,7 @@ public class HomeCommand {
     
     private int listHomes(CommandContext<CommandSourceStack> context) {
         if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
-            context.getSource().sendFailure(languageManager.getMessage(null, "general.must_be_player"));
+            context.getSource().sendFailure(Component.literal("§cThis command can only be used by players."));
             return 0;
         }
         
