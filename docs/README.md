@@ -1,71 +1,24 @@
-# NeoEssentials
+# NeoEssentials Documentation
 
-![NeoEssentials Logo](https://raw.githubusercontent.com/zerog-project/neoessentials/main/Logo.png)
+## Overview
+NeoEssentials is a comprehensive server management mod for NeoForge, providing essential commands and utilities for server administrators and players.
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen.svg)](https://www.minecraft.net/)
-[![NeoForge](https://img.shields.io/badge/NeoForge-52.1.1+-blue.svg)](https://neoforged.net/)
-[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT)
+## Features
+- **Player Commands**: Home, spawn, teleportation, and utility commands
+- **Admin Tools**: Moderation commands, server management utilities
+- **Economy System**: Player economy with configurable settings
+- **Teleportation**: Homes, warps, and spawn management
+- **Configuration**: Flexible JSON-based configuration system
 
-## 🌟 Overview
-
-NeoEssentials is a comprehensive server management and quality-of-life mod for Minecraft NeoForge servers. It provides essential commands, utilities, and features to enhance the multiplayer experience for both players and administrators.
-
-## ✨ Key Features
-
-- **Enhanced Tablist System**: Customizable headers, footers, and boss bars with animations
-- **Home & Warp System**: Player homes and server teleportation points
-- **Economy System**: Complete player economy with transactions and shop integration
-- **Kit System**: Configurable item kits for players with cooldowns
-- **Moderation Tools**: Advanced tools for server moderation and administration
-- **Permission Integration**: Works with popular permission systems (LuckPerms, FTB Ranks)
-- **Performance Optimized**: Designed for minimal server impact
-- **Extensive Configuration**: JSON-based configuration for maximum flexibility
-
-## 📋 Requirements
-
-- Minecraft 1.21.1+
-- NeoForge 52.1.1+
-
-## 🚀 Installation
-
-1. Download the latest version from [CurseForge](https://www.curseforge.com/minecraft/mc-mods/neoessentials) or [Modrinth](https://modrinth.com/mod/neoessentials)
+## Installation
+1. Download the latest release from GitHub
 2. Place the JAR file in your server's `mods` folder
-3. Start or restart your server
-4. Configure the mod in `config/neoessentials/` and `neoessentials/` directories
+3. Start the server to generate configuration files
+4. Configure the mod according to your needs
 
-## 📚 Documentation
+## Support
+For support, please visit our GitHub repository or join our Discord community.
 
-Comprehensive documentation is available:
-
-- [Wiki](https://github.com/zerog-project/neoessentials/wiki) - Complete usage guides
-- [Commands](https://github.com/zerog-project/neoessentials/wiki/Commands) - Command reference
-- [Permissions](https://github.com/zerog-project/neoessentials/wiki/Permissions) - Permission list
-- [Configuration](https://github.com/zerog-project/neoessentials/wiki/Configuration) - Config guide
-- [JSON Templates](https://github.com/zerog-project/neoessentials/wiki/JSON-Templates) - Template system guide
-
-## 🛠️ Configuration
-
-NeoEssentials uses both TOML for basic configuration and JSON for complex templates:
-
-- **TOML Configs**: Located in `config/neoessentials/` directory
-- **JSON Templates**: Located in `neoessentials/` directory (server root)
-
-The mod will generate default configurations on first startup.
-
-## 📢 Support & Community
-
-- [Discord](https://discord.gg/zerogproject) - Get help and chat with other users
-- [GitHub Issues](https://github.com/zerog-project/neoessentials/issues) - Report bugs and suggest features
-- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/neoessentials) - Leave reviews and comments
-
-## 🔄 Compatibility
-
-NeoEssentials works with:
-
-- Most permission mods (LuckPerms, FTB Ranks)
-- Popular placeholder APIs
-- Other utility and management mods
-
-## 📜 License
-
-NeoEssentials is licensed under the MIT License. See the LICENSE file for details.
+## Version
+Current Version: 2.0.0 (Released Branch)
+Target: NeoForge 1.21.1

@@ -1,0 +1,93 @@
+
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.settings/
+.classpath
+.project
+.metadata/
+bin/
+*.launch
+
+# Gradle files
+.gradle/
+build/
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# Minecraft/NeoForge generated files
+run/
+runs/
+run-data/
+logs/
+eclipse/
+out/
+
+# Compiled files
+*.class
+*.jar
+!libs/*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# Development files
+*.log
+*~
+*.bak
+*.swp
+*.tmp
+*.launch
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local repositories
+/repo/
+
+# Build files
+buildnumber.properties
+build_log*.txt
+build.gradle.*
+*.sh
+temp_*
+*_backup/
+*_copy/
+*_Copy/
+*-Copy/
+temp-extract/
+mdk-downloads/
+
+# Documentation files (development only - excluded from release)
+docs/*
+!docs/README.md
+!docs/COMMANDS.md
+!docs/INSTALLATION.md
+!docs/CHANGELOG.md
+
+# All development documentation
+TEST_*.md
+*_SUMMARY.md
+*_TASKS.md
+*_COMPLETE_*.md
+CLEANUP_*.md
+MIGRATION_*.md
+MULTIVERSION_*.md
+IMPLEMENTATION_*.md
+REVERSION_*.md
+TODO.md
+README_DEV.md
+README_RELEASE.md
+MODPLATFORM_DESCRIPTION*.md
+DOCUMENTATION_PLAN*.md
+
+# Plugin reference files
+Plugins\ commands.md
