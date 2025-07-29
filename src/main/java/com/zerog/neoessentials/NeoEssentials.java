@@ -3,6 +3,11 @@ package com.zerog.neoessentials;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
+import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.managers.*;
+import com.zerog.neoessentials.storage.PlayerDataManager;
+
+import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -16,6 +21,7 @@ import net.neoforged.bus.api.SubscribeEvent;
  * @author ZeroG
  * @version 2.0.0
  */
+@Mod("neoessentials")
 public class NeoEssentials {
     public static final Logger LOGGER = LogUtils.getLogger();
     
@@ -39,7 +45,24 @@ public class NeoEssentials {
         LOGGER.info("NeoEssentials server starting setup...");
         
         try {
-            // TODO: Initialize managers and configuration
+            // Initialize configuration manager
+            ConfigManager.getInstance();
+            LOGGER.info("Configuration loaded successfully");
+            
+            // Initialize storage systems
+            PlayerDataManager.getInstance();
+            LOGGER.info("Player data manager initialized");
+            
+            // Initialize all managers
+            EconomyManager.getInstance();
+            HomeManager.getInstance();
+            WarpManager.getInstance();
+            KitManager.getInstance();
+            ModerationManager.getInstance();
+            MessagingManager.getInstance();
+            SpawnManager.getInstance();
+            LOGGER.info("All managers initialized successfully");
+            
             LOGGER.info("NeoEssentials server setup completed successfully!");
             
         } catch (Exception e) {

@@ -73,32 +73,32 @@ public class WarpConfig {
     public MessagesConfig messages = new MessagesConfig();
     
     public static class MessagesConfig {
-        public String warpCreated = "&aWarp '{WARP}' created successfully!";
-        public String warpDeleted = "&cWarp '{WARP}' deleted!";
-        public String warpNotFound = "&cWarp '{WARP}' not found!";
-        public String warpTeleporting = "&aTeleporting to warp '{WARP}'...";
+        public String warpCreated = "&aWarp '{0}' created successfully!";
+        public String warpDeleted = "&cWarp '{0}' deleted!";
+        public String warpNotFound = "&cWarp '{0}' not found!";
+        public String warpTeleporting = "&aTeleporting to warp '{0}'...";
         public String warpTeleportCancelled = "&cTeleport cancelled due to movement!";
-        public String maxWarpsReached = "&cMaximum number of warps reached ({MAX})!";
-        public String warpAlreadyExists = "&cWarp '{WARP}' already exists!";
+        public String maxWarpsReached = "&cMaximum number of warps reached ({0})!";
+        public String warpAlreadyExists = "&cWarp '{0}' already exists!";
         public String invalidWarpName = "&cInvalid warp name! Use only letters and numbers.";
         public String warpListHeader = "&6Available warps:";
-        public String warpListEntry = "&7- &a{WARP} &7({OWNER}) [{CATEGORY}] &8({WORLD} {X}, {Y}, {Z})";
+        public String warpListEntry = "&7- &a{0} &7({1}) [{2}] &8({3} {4}, {5}, {6})";
         public String warpListEmpty = "&cNo warps available!";
         public String unsafeLocation = "&cUnsafe location! Teleport cancelled.";
         public String restrictedWorld = "&cYou cannot create warps in this world!";
         public String noTeleportWorld = "&cYou cannot teleport to this world!";
-        public String insufficientFunds = "&cYou need {COST} to create/use this warp!";
-        public String cooldownActive = "&cYou must wait {TIME} before using this command again!";
+        public String insufficientFunds = "&cYou need {0} to create/use this warp!";
+        public String cooldownActive = "&cYou must wait {0} before using this command again!";
         public String warpNoPermission = "&cYou don't have permission to access this warp!";
         public String warpPrivate = "&cThis is a private warp!";
-        public String warpSignCreated = "&aWarp sign created for '{WARP}'!";
+        public String warpSignCreated = "&aWarp sign created for '{0}'!";
         public String warpSignUsed = "&aTeleporting via warp sign...";
         
         // Category messages
-        public String categoryNotFound = "&cCategory '{CATEGORY}' not found!";
+        public String categoryNotFound = "&cCategory '{0}' not found!";
         public String categoryListHeader = "&6Warp categories:";
-        public String categoryListEntry = "&7- &a{CATEGORY} &7({COUNT} warps)";
-        public String categoryWarpsHeader = "&6Warps in category '{CATEGORY}':";
+        public String categoryListEntry = "&7- &a{0} &7({1} warps)";
+        public String categoryWarpsHeader = "&6Warps in category '{0}':";
     }
     
     /**
