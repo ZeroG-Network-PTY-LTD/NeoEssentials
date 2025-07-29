@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -263,7 +262,7 @@ public class EconomyManager {
      */
     public double getCommandCost(String command) {
         EconomyConfig config = configManager.getEconomyConfig();
-        return config.commandCosts.getOrDefault(command.toLowerCase(), 0.0);
+        return config.commandCosts.getOrDefault(command.toLowerCase(), BigDecimal.ZERO).doubleValue();
     }
     
     /**
@@ -309,7 +308,7 @@ public class EconomyManager {
             return;
         }
         
-        long currentTime = System.currentTimeMillis();
+        // Process interest for all accounts
         double interestRate = config.bank.interestRate / 100.0;
         
         for (UUID playerUUID : balanceCache.keySet()) {
