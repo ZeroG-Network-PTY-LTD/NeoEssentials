@@ -63,7 +63,7 @@ public class LocationUtil {
      * Check if a location is safe for teleportation
      */
     public static boolean isSafeLocation(Location location) {
-        // Basic safety checks - would be enhanced with actual world access
+        // Basic safety checks - would be improved with actual world access
         if (location.y < 0 || location.y > 256) {
             return false;
         }

@@ -6,7 +6,6 @@ import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -222,14 +221,17 @@ public class HomeManager {
             return Integer.MAX_VALUE;
         }
         
-        // Check permission-based limits
-        for (HomeConfig.PermissionLimit limit : config.permissionLimits) {
-            if (PermissionUtil.hasPermission(player, limit.permission)) {
-                return limit.maxHomes;
-            }
+        // Check for admin permission
+        if (PermissionUtil.hasPermission(player, "essentials.sethome.admin")) {
+            return config.maxHomesAdmin;
         }
         
-        return config.defaultMaxHomes;
+        // Check for VIP permission
+        if (PermissionUtil.hasPermission(player, "essentials.sethome.vip")) {
+            return config.maxHomesVip;
+        }
+        
+        return config.maxHomes;
     }
     
     /**
@@ -237,7 +239,7 @@ public class HomeManager {
      */
     public boolean isOnCooldown(ServerPlayer player) {
         HomeConfig config = configManager.getHomeConfig();
-        if (!config.cooldown.enabled || config.cooldown.homeCooldownSeconds <= 0) {
+        if (config.teleportHomeCooldown <= 0) {
             return false;
         }
         
@@ -246,7 +248,7 @@ public class HomeManager {
             return false;
         }
         
-        long cooldownTime = config.cooldown.homeCooldownSeconds * 1000L;
+        long cooldownTime = config.teleportHomeCooldown * 1000L;
         return System.currentTimeMillis() - lastTeleport < cooldownTime;
     }
     
@@ -260,7 +262,7 @@ public class HomeManager {
             return 0;
         }
         
-        long cooldownTime = config.cooldown.homeCooldownSeconds * 1000L;
+        long cooldownTime = config.teleportHomeCooldown * 1000L;
         long elapsed = System.currentTimeMillis() - lastTeleport;
         return Math.max(0, cooldownTime - elapsed);
     }
@@ -274,12 +276,10 @@ public class HomeManager {
         // Cancel existing warmup
         cancelWarmup(player);
         
-        MessageUtil.sendMessage(player, config.messages.homeWarmupStarted
-            .replace("{TIME}", String.valueOf(config.warmup.homeWarmupSeconds))
-            .replace("{NAME}", homeName));
+        MessageUtil.sendMessage(player, "&aStarting teleport in " + config.teleportWarmup + " seconds...");
         
         // Store warmup task
-        long warmupEnd = System.currentTimeMillis() + (config.warmup.homeWarmupSeconds * 1000L);
+        long warmupEnd = System.currentTimeMillis() + (config.teleportWarmup * 1000L);
         warmupTasks.put(player.getUUID(), warmupEnd);
         
         // Schedule teleport (this would need to be implemented with server's scheduler)
@@ -300,18 +300,22 @@ public class HomeManager {
         HomeConfig config = configManager.getHomeConfig();
         
         try {
-            // Find the target world
-            ServerLevel targetWorld = player.getServer().getLevel(Level.OVERWORLD); // Placeholder - would need proper world lookup
+            // Find the target world - simplified version
+            var server = player.getServer();
+            if (server == null) {
+                return false;
+            }
+            ServerLevel targetWorld = server.getLevel(Level.OVERWORLD); // Placeholder - would need proper world lookup
             
             if (targetWorld == null) {
-                MessageUtil.sendMessage(player, config.messages.worldNotFound.replace("{WORLD}", home.world));
+                MessageUtil.sendMessage(player, "&cTarget world not found!");
                 return false;
             }
             
             // Charge cost after successful teleport
-            if (config.costs.teleportCost > 0) {
+            if (config.teleportHomeCost.compareTo(BigDecimal.ZERO) > 0) {
                 EconomyManager economyManager = EconomyManager.getInstance();
-                economyManager.withdrawBalance(player.getUUID(), config.costs.teleportCost, "Home teleport: " + homeName);
+                economyManager.withdrawBalance(player.getUUID(), config.teleportHomeCost, "Home teleport: " + homeName);
             }
             
             // Set cooldown
@@ -320,7 +324,7 @@ public class HomeManager {
             // Perform teleport
             player.teleportTo(targetWorld, home.x, home.y, home.z, home.yaw, home.pitch);
             
-            MessageUtil.sendMessage(player, config.messages.homeTeleported.replace("{NAME}", homeName));
+            MessageUtil.sendMessage(player, config.messages.homeTeleporting.replace("{HOME}", homeName));
             
             LOGGER.info("Player {} teleported to home '{}' at {}, {}, {} in {}", 
                 player.getName().getString(), homeName, home.x, home.y, home.z, home.world);
@@ -328,7 +332,7 @@ public class HomeManager {
             return true;
         } catch (Exception e) {
             LOGGER.error("Failed to teleport player {} to home '{}'", player.getName().getString(), homeName, e);
-            MessageUtil.sendMessage(player, config.messages.teleportFailed);
+            MessageUtil.sendMessage(player, "&cTeleportation failed!");
             return false;
         }
     }
@@ -337,41 +341,35 @@ public class HomeManager {
      * Validate home name
      */
     private boolean isValidHomeName(String homeName) {
-        HomeConfig config = configManager.getHomeConfig();
-        
         if (homeName == null || homeName.trim().isEmpty()) {
             return false;
         }
         
         String trimmed = homeName.trim();
         
-        if (trimmed.length() < config.minHomeNameLength || trimmed.length() > config.maxHomeNameLength) {
+        // Basic validation - check length
+        if (trimmed.length() < 1 || trimmed.length() > 16) {
             return false;
         }
         
-        // Check allowed characters
-        return trimmed.matches(config.allowedHomeNamePattern);
+        // Check allowed characters - only letters, numbers, and underscores
+        return trimmed.matches("[a-zA-Z0-9_]+");
     }
     
     /**
      * Check if location is safe for teleportation
      */
     private boolean isLocationSafe(LocationUtil.Location location) {
-        // This would implement safety checks like:
-        // - Not in solid blocks
-        // - Not over void
-        // - Not in lava
-        // - Has solid ground below
-        // Placeholder implementation
+        // Placeholder implementation - would implement proper safety checks
         return location.y > 0 && location.y < 256;
     }
     
     /**
      * Find a safe location near the given location
      */
+    @SuppressWarnings("unused")
     private LocationUtil.Location findSafeLocation(LocationUtil.Location original) {
-        // This would implement safe location finding algorithm
-        // Placeholder implementation
+        // Placeholder implementation - would implement safe location finding
         return original;
     }
     
@@ -384,7 +382,7 @@ public class HomeManager {
         // Clean up expired cooldowns
         teleportCooldowns.entrySet().removeIf(entry -> {
             HomeConfig config = configManager.getHomeConfig();
-            long cooldownTime = config.cooldown.homeCooldownSeconds * 1000L;
+            long cooldownTime = config.teleportHomeCooldown * 1000L;
             return currentTime - entry.getValue() > cooldownTime;
         });
         

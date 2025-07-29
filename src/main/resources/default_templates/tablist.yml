@@ -120,8 +120,8 @@ bossbar:
       - "Server TPS: {TPS}"
       - "Players: {ONLINE}/{MAX_PLAYERS}"
 
-# Advanced features
-advanced:
+# Custom features
+custom:
   # Maximum packet frequency (limit outgoing packets)
   maxPacketFrequency: 5
   
