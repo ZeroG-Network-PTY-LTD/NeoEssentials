@@ -23,7 +23,7 @@ import net.neoforged.bus.api.SubscribeEvent;
  * @version 2.0.0
  */
 public class NeoEssentialsCompat {
-    public static final Logger LOGGER = LogUtils.getLogger("NeoEssentials-Compat");
+    public static final Logger LOGGER = LogUtils.getLogger();
     
     private EssentialsCommandManager commandManager;
     

@@ -1,8 +1,9 @@
 package com.zerog.neoessentials.lang;
 
-import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -18,6 +19,8 @@ import java.io.IOException;
  * @since 2.0.0
  */
 public class LanguageManager {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(LanguageManager.class);
     
     private final Map<String, Properties> languageFiles = new HashMap<>();
     private String defaultLocale = "en_us";
@@ -37,12 +40,12 @@ public class LanguageManager {
                     props.load(stream);
                     languageFiles.put(locale, props);
                     stream.close();
-                    NeoEssentials.LOGGER.debug("Loaded language file: {}", locale);
+                    LOGGER.debug("Loaded language file: {}", locale);
                 } else {
-                    NeoEssentials.LOGGER.warn("Language file not found: {}", locale);
+                    LOGGER.warn("Language file not found: {}", locale);
                 }
             } catch (IOException e) {
-                NeoEssentials.LOGGER.error("Failed to load language file: {}", locale, e);
+                LOGGER.error("Failed to load language file: {}", locale, e);
             }
         }
     }

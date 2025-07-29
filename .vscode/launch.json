@@ -154,7 +154,7 @@
       ],
       "vmArgs": [
         "@D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\build\\moddev\\clientRunVmArgs.txt",
-        "-Dfml.modFolders\u003d${mod_id}%%D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\bin\\main"
+        "-Dfml.modFolders\u003dneoessentials%%D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},
@@ -176,7 +176,7 @@
       ],
       "vmArgs": [
         "@D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\build\\moddev\\serverRunVmArgs.txt",
-        "-Dfml.modFolders\u003d${mod_id}%%D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\bin\\main"
+        "-Dfml.modFolders\u003dneoessentials%%D:\\ADrive_minecraft\\Minecraft Mod Development\\NeoEssentials\\bin\\main"
       ],
       "cwd": "${workspaceFolder}\\run",
       "env": {},

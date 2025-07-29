@@ -47,7 +47,7 @@ neoForge {
     }
 
     mods {
-        '\${mod_id}' {
+        neoessentials {
             sourceSet(sourceSets.main)
         }
     }
