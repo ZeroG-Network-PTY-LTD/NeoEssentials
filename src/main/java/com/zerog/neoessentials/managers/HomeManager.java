@@ -60,8 +60,7 @@ public class HomeManager {
         
         // Validate home name
         if (!isValidHomeName(homeName)) {
-            MessageUtil.sendMessage(player, config.messages.invalidHomeName
-                .replace("{HOME}", homeName));
+            MessageUtil.sendMessage(player, config.messages.invalidHomeName, homeName);
             return false;
         }
         
@@ -71,8 +70,7 @@ public class HomeManager {
         
         boolean isNewHome = !playerDataManager.hasHome(player.getUUID(), homeName);
         if (isNewHome && currentHomes >= maxHomes) {
-            MessageUtil.sendMessage(player, config.messages.maxHomesReached
-                .replace("{MAX}", String.valueOf(maxHomes)));
+            MessageUtil.sendMessage(player, config.messages.maxHomesReached, maxHomes);
             return false;
         }
         
@@ -87,8 +85,8 @@ public class HomeManager {
         if (config.setHomeCost.compareTo(BigDecimal.ZERO) > 0) {
             EconomyManager economyManager = EconomyManager.getInstance();
             if (!economyManager.hasBalance(player.getUUID(), config.setHomeCost)) {
-                MessageUtil.sendMessage(player, config.messages.insufficientFunds
-                    .replace("{COST}", economyManager.formatCurrency(config.setHomeCost)));
+                MessageUtil.sendMessage(player, config.messages.insufficientFunds,
+                    economyManager.formatCurrency(config.setHomeCost));
                 return false;
             }
             economyManager.withdrawBalance(player.getUUID(), config.setHomeCost, "Home creation: " + homeName);
@@ -109,7 +107,7 @@ public class HomeManager {
         playerDataManager.setHome(player.getUUID(), homeName, homeLocation);
         
         String message = isNewHome ? config.messages.homeSet : config.messages.homeSet;
-        MessageUtil.sendMessage(player, message.replace("{HOME}", homeName));
+        MessageUtil.sendMessage(player, message, homeName);
         
         LOGGER.info("Player {} {} home '{}' at {} in {}", 
             player.getName().getString(),
@@ -133,12 +131,12 @@ public class HomeManager {
         }
         
         if (!playerDataManager.hasHome(player.getUUID(), homeName)) {
-            MessageUtil.sendMessage(player, config.messages.homeNotFound.replace("{HOME}", homeName));
+            MessageUtil.sendMessage(player, config.messages.homeNotFound, homeName);
             return false;
         }
         
         playerDataManager.deleteHome(player.getUUID(), homeName);
-        MessageUtil.sendMessage(player, config.messages.homeDeleted.replace("{HOME}", homeName));
+        MessageUtil.sendMessage(player, config.messages.homeDeleted, homeName);
         
         LOGGER.info("Player {} deleted home '{}'", player.getName().getString(), homeName);
         return true;
@@ -158,15 +156,15 @@ public class HomeManager {
         // Check if home exists
         LocationUtil.Location home = playerDataManager.getHome(player.getUUID(), homeName);
         if (home == null) {
-            MessageUtil.sendMessage(player, config.messages.homeNotFound.replace("{HOME}", homeName));
+            MessageUtil.sendMessage(player, config.messages.homeNotFound, homeName);
             return false;
         }
         
         // Check cooldown
         if (isOnCooldown(player)) {
             long remainingTime = getRemainingCooldown(player);
-            MessageUtil.sendMessage(player, config.messages.cooldownActive
-                .replace("{TIME}", MessageUtil.formatTime(remainingTime)));
+            MessageUtil.sendMessage(player, config.messages.cooldownActive,
+                MessageUtil.formatTime(remainingTime));
             return false;
         }
         
@@ -174,8 +172,8 @@ public class HomeManager {
         if (config.teleportHomeCost.compareTo(BigDecimal.ZERO) > 0) {
             EconomyManager economyManager = EconomyManager.getInstance();
             if (!economyManager.hasBalance(player.getUUID(), config.teleportHomeCost)) {
-                MessageUtil.sendMessage(player, config.messages.insufficientFunds
-                    .replace("{COST}", economyManager.formatCurrency(config.teleportHomeCost)));
+                MessageUtil.sendMessage(player, config.messages.insufficientFunds,
+                    economyManager.formatCurrency(config.teleportHomeCost));
                 return false;
             }
         }
@@ -324,7 +322,7 @@ public class HomeManager {
             // Perform teleport
             player.teleportTo(targetWorld, home.x, home.y, home.z, home.yaw, home.pitch);
             
-            MessageUtil.sendMessage(player, config.messages.homeTeleporting.replace("{HOME}", homeName));
+            MessageUtil.sendMessage(player, config.messages.homeTeleporting, homeName);
             
             LOGGER.info("Player {} teleported to home '{}' at {}, {}, {} in {}", 
                 player.getName().getString(), homeName, home.x, home.y, home.z, home.world);

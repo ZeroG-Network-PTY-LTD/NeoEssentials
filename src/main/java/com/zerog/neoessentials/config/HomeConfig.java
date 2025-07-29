@@ -61,21 +61,21 @@ public class HomeConfig {
     public MessagesConfig messages = new MessagesConfig();
     
     public static class MessagesConfig {
-        public String homeSet = "&aHome '{HOME}' set successfully!";
-        public String homeDeleted = "&cHome '{HOME}' deleted!";
-        public String homeNotFound = "&cHome '{HOME}' not found!";
-        public String homeTeleporting = "&aTeleporting to home '{HOME}'...";
+        public String homeSet = "&aHome '{0}' set successfully!";
+        public String homeDeleted = "&cHome '{0}' deleted!";
+        public String homeNotFound = "&cHome '{0}' not found!";
+        public String homeTeleporting = "&aTeleporting to home '{0}'...";
         public String homeTeleportCancelled = "&cTeleport cancelled due to movement!";
-        public String maxHomesReached = "&cYou have reached the maximum number of homes ({MAX})!";
-        public String homeAlreadyExists = "&cHome '{HOME}' already exists!";
+        public String maxHomesReached = "&cYou have reached the maximum number of homes ({0})!";
+        public String homeAlreadyExists = "&cHome '{0}' already exists!";
         public String invalidHomeName = "&cInvalid home name! Use only letters and numbers.";
         public String homeListHeader = "&6Your homes:";
-        public String homeListEntry = "&7- &a{HOME} &7({WORLD} {X}, {Y}, {Z})";
+        public String homeListEntry = "&7- &a{0} &7({1} {2}, {3}, {4})";
         public String homeListEmpty = "&cYou don't have any homes set!";
         public String unsafeLocation = "&cUnsafe location! Teleport cancelled.";
         public String restrictedWorld = "&cYou cannot set homes in this world!";
-        public String insufficientFunds = "&cYou need {COST} to set a home!";
-        public String cooldownActive = "&cYou must wait {TIME} before using this command again!";
+        public String insufficientFunds = "&cYou need {0} to set a home!";
+        public String cooldownActive = "&cYou must wait {0} before using this command again!";
     }
     
     /**

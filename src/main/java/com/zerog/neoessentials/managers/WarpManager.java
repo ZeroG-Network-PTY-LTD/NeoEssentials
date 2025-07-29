@@ -89,8 +89,8 @@ public class WarpManager {
         // Check economy cost
         if (config.createWarpCost.doubleValue() > 0) {
             if (!economyManager.hasBalance(player.getUUID(), config.createWarpCost.doubleValue())) {
-                MessageUtil.sendMessage(player, config.messages.insufficientFunds
-                    .replace("{COST}", economyManager.formatCurrency(config.createWarpCost.doubleValue())));
+                MessageUtil.sendMessage(player, config.messages.insufficientFunds,
+                    economyManager.formatCurrency(config.createWarpCost.doubleValue()));
                 return false;
             }
             economyManager.withdrawBalance(player.getUUID(), config.createWarpCost.doubleValue(), "Warp creation: " + warpName);

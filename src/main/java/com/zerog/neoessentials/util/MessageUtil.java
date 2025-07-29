@@ -21,6 +21,32 @@ public class MessageUtil {
     private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
     
     /**
+     * Send a formatted message to a player with placeholder replacement
+     */
+    public static void sendMessage(ServerPlayer player, String message, Object... placeholders) {
+        if (player == null || message == null || message.isEmpty()) {
+            return;
+        }
+        
+        String processedMessage = replacePlaceholders(message, placeholders);
+        Component formattedMessage = formatMessage(processedMessage);
+        player.sendSystemMessage(formattedMessage);
+    }
+    
+    /**
+     * Send a formatted message to multiple players with placeholder replacement
+     */
+    public static void sendMessage(Iterable<ServerPlayer> players, String message, Object... placeholders) {
+        String processedMessage = replacePlaceholders(message, placeholders);
+        Component formattedMessage = formatMessage(processedMessage);
+        for (ServerPlayer player : players) {
+            if (player != null) {
+                player.sendSystemMessage(formattedMessage);
+            }
+        }
+    }
+    
+    /**
      * Send a formatted message to a player
      */
     public static void sendMessage(ServerPlayer player, String message) {
@@ -42,6 +68,42 @@ public class MessageUtil {
                 player.sendSystemMessage(formattedMessage);
             }
         }
+    }
+    
+    /**
+     * Replace placeholders in message with actual values
+     * Supports both {0}, {1}, {2}... and %s formatting
+     */
+    public static String replacePlaceholders(String message, Object... placeholders) {
+        if (message == null || placeholders == null || placeholders.length == 0) {
+            return message;
+        }
+        
+        String result = message;
+        
+        // Replace {0}, {1}, {2}, etc. placeholders
+        for (int i = 0; i < placeholders.length; i++) {
+            String placeholder = "{" + i + "}";
+            String value = placeholders[i] != null ? placeholders[i].toString() : "null";
+            result = result.replace(placeholder, value);
+        }
+        
+        // Also support %s formatting for compatibility
+        try {
+            if (result.contains("%s") && placeholders.length > 0) {
+                // Convert all arguments to strings
+                String[] stringArgs = new String[placeholders.length];
+                for (int i = 0; i < placeholders.length; i++) {
+                    stringArgs[i] = placeholders[i] != null ? placeholders[i].toString() : "null";
+                }
+                result = String.format(result, (Object[]) stringArgs);
+            }
+        } catch (Exception e) {
+            // If formatting fails, return the original message with {i} replacements
+            // This prevents crashes from malformed format strings
+        }
+        
+        return result;
     }
     
     /**
@@ -71,7 +133,6 @@ public class MessageUtil {
         Matcher hexMatcher = HEX_PATTERN.matcher(message);
         StringBuffer hexBuffer = new StringBuffer();
         while (hexMatcher.find()) {
-            String hex = hexMatcher.group(1);
             // For now, just replace with closest color (in a real implementation, you'd handle RGB)
             hexMatcher.appendReplacement(hexBuffer, ChatFormatting.WHITE.toString());
         }
