@@ -1,5 +1,3 @@
-
-
 # IDE files
 .idea/
 .vscode/
@@ -20,7 +18,12 @@ build/
 !gradle-wrapper.properties
 
 # Minecraft/NeoForge generated files
+.run/
 run/
+run/logs/
+*.log
+*.gz
+*.log.gz
 runs/
 run-data/
 logs/

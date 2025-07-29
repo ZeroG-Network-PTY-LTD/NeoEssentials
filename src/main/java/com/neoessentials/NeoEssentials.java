@@ -6,6 +6,7 @@ import com.neoessentials.config.EssentialsConfig;
 import com.neoessentials.language.LanguageManager;
 import com.neoessentials.network.NetworkHandler;
 import com.neoessentials.util.ServerSideUtil;
+import com.zerog.neoessentials.NeoEssentialsCompat;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -42,12 +43,21 @@ public class NeoEssentials {
     // Command handlers
     private HomeCommand homeCommand;
     
+    // Compatibility layer
+    private NeoEssentialsCompat compatLayer;
+    
     public NeoEssentials(IEventBus modEventBus, ModContainer modContainer) {
+        // Log compatibility status
+        ServerSideUtil.logCompatibilityStatus();
+        
         // Only initialize on the server side
         if (FMLEnvironment.dist.isClient()) {
             LOGGER.warn("NeoEssentials is a server-side only mod and should not be installed on clients!");
             return;
         }
+        
+        // Initialize network handler (server-side safe)
+        NetworkHandler.init();
         
         // Register for server setup events only
         modEventBus.addListener(this::onServerSetup);
@@ -56,6 +66,7 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(this);
         
         LOGGER.info("NeoEssentials mod loading - Server-side utilities initializing...");
+        LOGGER.info("This mod is designed to work without client installation - Server-side only!");
     }
     
     /**
@@ -82,6 +93,11 @@ public class NeoEssentials {
             // Initialize commands
             homeCommand = new HomeCommand(homeService, languageManager);
             LOGGER.info("Command system initialized");
+            
+            // Initialize compatibility layer for EssentialsX-style commands
+            compatLayer = new NeoEssentialsCompat();
+            compatLayer.initialize();
+            LOGGER.info("Compatibility layer initialized");
             
             LOGGER.info("NeoEssentials server setup complete - All systems ready!");
             

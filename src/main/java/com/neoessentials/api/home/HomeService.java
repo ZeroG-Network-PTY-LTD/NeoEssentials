@@ -85,6 +85,11 @@ public class HomeService {
      */
     public CompletableFuture<TeleportHomeResult> teleportToHome(ServerPlayer player, String homeName) {
         return CompletableFuture.supplyAsync(() -> {
+            // Validate server-side player
+            if (player.level().isClientSide()) {
+                return TeleportHomeResult.ERROR;
+            }
+            
             try {
                 UUID playerUUID = player.getUUID();
                 HomeData home = dataManager.loadHome(playerUUID, homeName).get();
@@ -99,7 +104,7 @@ public class HomeService {
                     return TeleportHomeResult.DIMENSION_NOT_FOUND;
                 }
                 
-                // Schedule teleportation on main thread
+                // Schedule teleportation on main thread (server-side safe)
                 player.getServer().execute(() -> {
                     player.teleportTo(targetLevel, home.getX(), home.getY(), home.getZ(), 
                                     home.getYaw(), home.getPitch());
