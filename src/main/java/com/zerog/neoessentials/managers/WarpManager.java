@@ -2,7 +2,6 @@ package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.config.WarpConfig;
-import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
@@ -26,14 +25,12 @@ public class WarpManager {
     private static WarpManager instance;
     
     private final ConfigManager configManager;
-    private final PlayerDataManager playerDataManager;
     private final EconomyManager economyManager;
     private final Map<String, WarpData> warps; // All server warps
     private final Map<UUID, Long> warpCooldowns;
     
     private WarpManager() {
         this.configManager = ConfigManager.getInstance();
-        this.playerDataManager = PlayerDataManager.getInstance();
         this.economyManager = EconomyManager.getInstance();
         this.warps = new ConcurrentHashMap<>();
         this.warpCooldowns = new ConcurrentHashMap<>();
