@@ -70,20 +70,21 @@ public class ModerationManager {
         
         String finalReason = reason != null && !reason.isEmpty() ? reason : config.kick.defaultKickReason;
         
+        // Create kick message using MessageUtil for proper formatting
+        String kickMessage = MessageUtil.replacePlaceholders(config.messages.youAreKicked, 
+            finalReason, moderator.getName().getString());
+        
         // Kick the player
-        target.connection.disconnect(Component.literal(config.messages.youAreKicked
-            .replace("{REASON}", finalReason)
-            .replace("{ADMIN}", moderator.getName().getString())));
+        target.connection.disconnect(Component.literal(kickMessage));
         
         // Log action
         logModerationAction("KICK", moderator, target, finalReason, 0);
         
         // Broadcast if enabled
         if (config.broadcastActions) {
-            broadcastAction(config.messages.playerKicked
-                .replace("{PLAYER}", target.getName().getString())
-                .replace("{ADMIN}", moderator.getName().getString())
-                .replace("{REASON}", finalReason));
+            String broadcastMessage = MessageUtil.replacePlaceholders(config.messages.playerKicked,
+                target.getName().getString(), moderator.getName().getString(), finalReason);
+            broadcastAction(broadcastMessage);
         }
         
         MessageUtil.sendMessage(moderator, "&aSuccessfully kicked " + target.getName().getString() + " for: " + finalReason);
@@ -138,12 +139,9 @@ public class ModerationManager {
         ServerPlayer target = getPlayerByUuid(targetUuid);
         if (target != null) {
             String muteMessage = duration > 0 ? 
-                config.messages.playerTempMuted
-                    .replace("{DURATION}", MessageUtil.formatTime(duration * 1000))
-                    .replace("{ADMIN}", moderator.getName().getString())
-                    .replace("{REASON}", finalReason) :
-                config.messages.youAreMuted
-                    .replace("{REASON}", finalReason);
+                MessageUtil.replacePlaceholders(config.messages.playerTempMuted,
+                    MessageUtil.formatTime(duration * 1000), moderator.getName().getString(), finalReason) :
+                MessageUtil.replacePlaceholders(config.messages.youAreMuted, finalReason);
             
             MessageUtil.sendMessage(target, muteMessage);
         }
@@ -154,15 +152,10 @@ public class ModerationManager {
         // Broadcast if enabled
         if (config.broadcastActions) {
             String broadcastMessage = duration > 0 ?
-                config.messages.playerTempMuted
-                    .replace("{PLAYER}", targetName)
-                    .replace("{ADMIN}", moderator.getName().getString())
-                    .replace("{DURATION}", MessageUtil.formatTime(duration * 1000))
-                    .replace("{REASON}", finalReason) :
-                config.messages.playerMuted
-                    .replace("{PLAYER}", targetName)
-                    .replace("{ADMIN}", moderator.getName().getString())
-                    .replace("{REASON}", finalReason);
+                MessageUtil.replacePlaceholders(config.messages.playerTempMuted,
+                    targetName, moderator.getName().getString(), MessageUtil.formatTime(duration * 1000), finalReason) :
+                MessageUtil.replacePlaceholders(config.messages.playerMuted,
+                    targetName, moderator.getName().getString(), finalReason);
             
             broadcastAction(broadcastMessage);
         }
@@ -285,12 +278,9 @@ public class ModerationManager {
         
         // Notify target
         String jailMessage = duration > 0 ?
-            config.messages.playerJailed
-                .replace("{REASON}", finalReason)
-                .replace("{DURATION}", MessageUtil.formatTime(duration * 1000))
-                .replace("{ADMIN}", moderator.getName().getString()) :
-            config.messages.youAreJailed
-                .replace("{TIME}", "indefinite");
+            MessageUtil.replacePlaceholders(config.messages.playerJailed,
+                finalReason, MessageUtil.formatTime(duration * 1000), moderator.getName().getString()) :
+            MessageUtil.replacePlaceholders(config.messages.youAreJailed, "indefinite");
         
         MessageUtil.sendMessage(target, jailMessage);
         

@@ -144,42 +144,42 @@ public class ModerationConfig {
     
     public static class MessagesConfig {
         // Ban messages
-        public String playerBanned = "&c{PLAYER} has been banned by {ADMIN}. Reason: {REASON}";
-        public String playerTempBanned = "&c{PLAYER} has been temporarily banned for {DURATION} by {ADMIN}. Reason: {REASON}";
-        public String playerUnbanned = "&a{PLAYER} has been unbanned by {ADMIN}";
-        public String youAreBanned = "&cYou are banned from this server!\n&cReason: {REASON}\n&cBanned by: {ADMIN}\n&cExpires: {EXPIRES}";
+        public String playerBanned = "&c{0} has been banned by {1}. Reason: {2}";
+        public String playerTempBanned = "&c{0} has been temporarily banned for {1} by {2}. Reason: {3}";
+        public String playerUnbanned = "&a{0} has been unbanned by {1}";
+        public String youAreBanned = "&cYou are banned from this server!\n&cReason: {0}\n&cBanned by: {1}\n&cExpires: {2}";
         
         // Kick messages
-        public String playerKicked = "&c{PLAYER} has been kicked by {ADMIN}. Reason: {REASON}";
-        public String youAreKicked = "&cYou have been kicked!\n&cReason: {REASON}\n&cKicked by: {ADMIN}";
+        public String playerKicked = "&c{0} has been kicked by {1}. Reason: {2}";
+        public String youAreKicked = "&cYou have been kicked!\n&cReason: {0}\n&cKicked by: {1}";
         
         // Mute messages
-        public String playerMuted = "&c{PLAYER} has been muted by {ADMIN}. Reason: {REASON}";
-        public String playerTempMuted = "&c{PLAYER} has been muted for {DURATION} by {ADMIN}. Reason: {REASON}";
-        public String playerUnmuted = "&a{PLAYER} has been unmuted by {ADMIN}";
-        public String youAreMuted = "&cYou are muted! Reason: {REASON}";
+        public String playerMuted = "&c{0} has been muted by {1}. Reason: {2}";
+        public String playerTempMuted = "&c{0} has been muted for {1} by {2}. Reason: {3}";
+        public String playerUnmuted = "&a{0} has been unmuted by {1}";
+        public String youAreMuted = "&cYou are muted! Reason: {0}";
         public String muteExpired = "&aYour mute has expired!";
         
         // Jail messages
-        public String playerJailed = "&c{PLAYER} has been jailed by {ADMIN} for {DURATION}. Reason: {REASON}";
-        public String playerUnjailed = "&a{PLAYER} has been released from jail by {ADMIN}";
-        public String youAreJailed = "&cYou are in jail! Time remaining: {TIME}";
+        public String playerJailed = "&c{0} has been jailed by {1} for {2}. Reason: {3}";
+        public String playerUnjailed = "&a{0} has been released from jail by {1}";
+        public String youAreJailed = "&cYou are in jail! Time remaining: {0}";
         public String jailReleased = "&aYou have been released from jail!";
         
         // Info messages
-        public String whoisHeader = "&6Player info for {PLAYER}:";
-        public String whoisEntry = "&7{KEY}: &f{VALUE}";
-        public String seenOnline = "&a{PLAYER} is currently online!";
-        public String seenOffline = "&7{PLAYER} was last seen {TIME} ago";
-        public String seenNever = "&c{PLAYER} has never been on this server";
-        public String playerNotFound = "&cPlayer {PLAYER} not found!";
+        public String whoisHeader = "&6Player info for {0}:";
+        public String whoisEntry = "&7{0}: &f{1}";
+        public String seenOnline = "&a{0} is currently online!";
+        public String seenOffline = "&7{0} was last seen {1} ago";
+        public String seenNever = "&c{0} has never been on this server";
+        public String playerNotFound = "&cPlayer {0} not found!";
         
         // Error messages
         public String noPermission = "&cYou don't have permission to do that!";
         public String playerExempt = "&cYou cannot punish this player!";
         public String invalidDuration = "&cInvalid duration format!";
-        public String alreadyPunished = "&cPlayer is already {PUNISHMENT}!";
-        public String notPunished = "&cPlayer is not {PUNISHMENT}!";
+        public String alreadyPunished = "&cPlayer is already {0}!";
+        public String notPunished = "&cPlayer is not {0}!";
     }
     
     /**

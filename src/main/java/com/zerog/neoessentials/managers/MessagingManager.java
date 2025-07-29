@@ -63,33 +63,30 @@ public class MessagingManager {
         // Find target player
         ServerPlayer target = getPlayerByName(targetName);
         if (target == null) {
-            MessageUtil.sendMessage(sender, config.messages.playerNotFound
-                .replace("{PLAYER}", targetName));
+            MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.playerNotFound, targetName));
             return false;
         }
         
         // Check if target is ignoring sender
         if (isPlayerIgnored(target.getUUID(), sender.getUUID())) {
-            MessageUtil.sendMessage(sender, config.messages.playerIgnoringYou
-                .replace("{PLAYER}", target.getName().getString()));
+            MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.playerIgnoringYou, 
+                target.getName().getString()));
             return false;
         }
         
         // Check cooldown
         if (isOnMessageCooldown(sender)) {
-            MessageUtil.sendMessage(sender, config.messages.messageCooldown
-                .replace("{TIME}", String.valueOf(getRemainingCooldown(sender))));
+            MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.messageCooldown,
+                String.valueOf(getRemainingCooldown(sender))));
             return false;
         }
         
         // Send messages
-        String senderFormat = config.messages.pmFormatSender
-            .replace("{PLAYER}", target.getName().getString())
-            .replace("{MESSAGE}", message);
+        String senderFormat = MessageUtil.replacePlaceholders(config.messages.pmFormatSender,
+            target.getName().getString(), message);
         
-        String receiverFormat = config.messages.pmFormatReceiver
-            .replace("{PLAYER}", sender.getName().getString())
-            .replace("{MESSAGE}", message);
+        String receiverFormat = MessageUtil.replacePlaceholders(config.messages.pmFormatReceiver,
+            sender.getName().getString(), message);
         
         MessageUtil.sendMessage(sender, senderFormat);
         MessageUtil.sendMessage(target, receiverFormat);
@@ -151,16 +148,14 @@ public class MessagingManager {
         // Get target UUID (could be offline player)
         UUID targetUuid = getPlayerUuidByName(targetName);
         if (targetUuid == null) {
-            MessageUtil.sendMessage(sender, config.messages.playerNotFound
-                .replace("{PLAYER}", targetName));
+            MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.playerNotFound, targetName));
             return false;
         }
         
         // Check mail limit
         int mailCount = getMailCount(targetUuid);
         if (mailCount >= config.mail.maxMailsPerPlayer) {
-            MessageUtil.sendMessage(sender, config.messages.mailFull
-                .replace("{PLAYER}", targetName));
+            MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.mailFull, targetName));
             return false;
         }
         
@@ -180,9 +175,7 @@ public class MessagingManager {
         saveMail(targetUuid, mail);
         
         // Notify sender
-        MessageUtil.sendMessage(sender, config.messages.mailSent
-            .replace("{PLAYER}", targetName)
-            .replace("{MESSAGE}", message));
+        MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.mailSent, targetName, message));
         
         // Notify target if online
         ServerPlayer target = getPlayerByUuid(targetUuid);
@@ -214,18 +207,15 @@ public class MessagingManager {
             return;
         }
         
-        MessageUtil.sendMessage(player, config.messages.mailListHeader
-            .replace("{COUNT}", String.valueOf(mails.size()))
-            .replace("{MAX}", String.valueOf(config.mail.maxMailsPerPlayer)));
+        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.mailListHeader,
+            String.valueOf(mails.size()), String.valueOf(config.mail.maxMailsPerPlayer)));
         
         for (int i = 0; i < mails.size(); i++) {
             MailEntry mail = mails.get(i);
             String timeStr = MessageUtil.formatTime(System.currentTimeMillis() - mail.timestamp);
             
-            MessageUtil.sendMessage(player, config.messages.mailRead
-                .replace("{DATE}", timeStr)
-                .replace("{SENDER}", mail.senderName)
-                .replace("{MESSAGE}", mail.message));
+            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.mailRead,
+                timeStr, mail.senderName, mail.message));
             
             // Mark as read
             if (!mail.read) {
@@ -249,8 +239,8 @@ public class MessagingManager {
         
         clearPlayerMail(player.getUUID());
         
-        MessageUtil.sendMessage(player, config.messages.mailClear
-            .replace("{COUNT}", String.valueOf(mails.size())));
+        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.mailClear,
+            String.valueOf(mails.size())));
         
         return true;
     }
@@ -266,8 +256,7 @@ public class MessagingManager {
             return;
         }
         
-        String broadcastMessage = config.messages.broadcastReceived
-            .replace("{MESSAGE}", message);
+        String broadcastMessage = MessageUtil.replacePlaceholders(config.messages.broadcastReceived, message);
         
         broadcastToAll(broadcastMessage);
         

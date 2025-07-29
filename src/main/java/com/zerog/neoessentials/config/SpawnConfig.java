@@ -204,36 +204,36 @@ public class SpawnConfig {
         public String safeLocationNotFound = "&cCould not find a safe spawn location!";
         
         // World spawn messages
-        public String worldSpawnSet = "&aWorld spawn for {WORLD} has been set!";
-        public String worldSpawnNotSet = "&cWorld spawn for {WORLD} is not set!";
-        public String worldSpawnDeleted = "&cWorld spawn for {WORLD} has been deleted!";
-        public String worldNotFound = "&cWorld {WORLD} not found!";
+        public String worldSpawnSet = "&aWorld spawn for {0} has been set!";
+        public String worldSpawnNotSet = "&cWorld spawn for {0} is not set!";
+        public String worldSpawnDeleted = "&cWorld spawn for {0} has been deleted!";
+        public String worldNotFound = "&cWorld {0} not found!";
         
         // Group spawn messages
-        public String groupSpawnSet = "&aGroup spawn for {GROUP} has been set!";
-        public String groupSpawnNotSet = "&cGroup spawn for {GROUP} is not set!";
-        public String groupSpawnDeleted = "&cGroup spawn for {GROUP} has been deleted!";
-        public String groupNotFound = "&cGroup {GROUP} not found!";
+        public String groupSpawnSet = "&aGroup spawn for {0} has been set!";
+        public String groupSpawnNotSet = "&cGroup spawn for {0} is not set!";
+        public String groupSpawnDeleted = "&cGroup spawn for {0} has been deleted!";
+        public String groupNotFound = "&cGroup {0} not found!";
         
         // Random spawn messages
         public String randomSpawnTeleporting = "&aFinding a random spawn location...";
         public String randomSpawnFound = "&aRandom spawn location found!";
         public String randomSpawnFailed = "&cCould not find a suitable random spawn location!";
-        public String randomSpawnCooldown = "&cYou must wait {TIME} before using random spawn again!";
+        public String randomSpawnCooldown = "&cYou must wait {0} before using random spawn again!";
         
         // First join messages
-        public String welcomeMessage = "&eWelcome to our server, {PLAYER}!";
-        public String firstJoinBroadcast = "&e{PLAYER} joined the server for the first time! Welcome!";
+        public String welcomeMessage = "&eWelcome to our server, {0}!";
+        public String firstJoinBroadcast = "&e{0} joined the server for the first time! Welcome!";
         public String kitGiven = "&aYou have been given the starter kit!";
-        public String pvpProtection = "&aYou are protected from PvP for {TIME}!";
-        public String invulnerability = "&aYou are invulnerable for {TIME}!";
+        public String pvpProtection = "&aYou are protected from PvP for {0}!";
+        public String invulnerability = "&aYou are invulnerable for {0}!";
         
         // Error messages
         public String noPermission = "&cYou don't have permission to do that!";
-        public String invalidUsage = "&cInvalid usage! Use: {USAGE}";
-        public String playerNotFound = "&cPlayer {PLAYER} not found!";
-        public String playerOffline = "&cPlayer {PLAYER} is offline!";
-        public String teleportCooldown = "&cYou must wait {TIME} before teleporting again!";
+        public String invalidUsage = "&cInvalid usage! Use: {0}";
+        public String playerNotFound = "&cPlayer {0} not found!";
+        public String playerOffline = "&cPlayer {0} is offline!";
+        public String teleportCooldown = "&cYou must wait {0} before teleporting again!";
         public String cannotTeleportHere = "&cYou cannot teleport here!";
         public String teleportBlocked = "&cTeleportation is blocked in this area!";
         

@@ -118,7 +118,7 @@ public class WarpManager {
         saveWarpData();
         
         String message = isNewWarp ? config.messages.warpCreated : "&aWarp updated successfully!";
-        MessageUtil.sendMessage(player, message.replace("{WARP}", warpName));
+        MessageUtil.sendMessage(player, message, warpName);
         
         LOGGER.info("Warp '{}' {} by {}", warpName, isNewWarp ? "created" : "updated", player.getName().getString());
         
@@ -138,7 +138,7 @@ public class WarpManager {
         
         WarpData warpData = warps.get(warpName.toLowerCase());
         if (warpData == null) {
-            MessageUtil.sendMessage(player, config.messages.warpNotFound.replace("{WARP}", warpName));
+            MessageUtil.sendMessage(player, config.messages.warpNotFound, warpName);
             return false;
         }
         
@@ -151,7 +151,7 @@ public class WarpManager {
         warps.remove(warpName.toLowerCase());
         saveWarpData();
         
-        MessageUtil.sendMessage(player, config.messages.warpDeleted.replace("{WARP}", warpName));
+        MessageUtil.sendMessage(player, config.messages.warpDeleted, warpName);
         
         LOGGER.info("Warp '{}' deleted by {}", warpName, player.getName().getString());
         
@@ -171,7 +171,7 @@ public class WarpManager {
         
         WarpData warpData = warps.get(warpName.toLowerCase());
         if (warpData == null) {
-            MessageUtil.sendMessage(player, config.messages.warpNotFound.replace("{WARP}", warpName));
+            MessageUtil.sendMessage(player, config.messages.warpNotFound, warpName);
             return false;
         }
         
@@ -185,16 +185,16 @@ public class WarpManager {
         // Check cooldown
         if (hasWarpCooldown(player.getUUID())) {
             long remainingTime = getWarpCooldownRemaining(player.getUUID());
-            MessageUtil.sendMessage(player, config.messages.cooldownActive
-                .replace("{TIME}", MessageUtil.formatTime(remainingTime)));
+            MessageUtil.sendMessage(player, config.messages.cooldownActive,
+                MessageUtil.formatTime(remainingTime));
             return false;
         }
         
         // Check teleport cost
         if (config.teleportWarpCost.doubleValue() > 0) {
             if (!economyManager.hasBalance(player.getUUID(), config.teleportWarpCost.doubleValue())) {
-                MessageUtil.sendMessage(player, config.messages.insufficientFunds
-                    .replace("{COST}", economyManager.formatCurrency(config.teleportWarpCost.doubleValue())));
+                MessageUtil.sendMessage(player, config.messages.insufficientFunds,
+                    economyManager.formatCurrency(config.teleportWarpCost.doubleValue()));
                 return false;
             }
             economyManager.withdrawBalance(player.getUUID(), config.teleportWarpCost.doubleValue(), "Warp teleport: " + warpName);
@@ -222,7 +222,7 @@ public class WarpManager {
         // Set cooldown
         setWarpCooldown(player.getUUID());
         
-        MessageUtil.sendMessage(player, config.messages.warpTeleporting.replace("{WARP}", warpName));
+        MessageUtil.sendMessage(player, config.messages.warpTeleporting, warpName);
         
         LOGGER.info("Player {} teleporting to warp '{}'", player.getName().getString(), warpName);
         
@@ -250,16 +250,9 @@ public class WarpManager {
         MessageUtil.sendMessage(player, config.messages.warpListHeader);
         
         for (WarpData warp : availableWarps) {
-            String message = config.messages.warpListEntry
-                .replace("{WARP}", warp.name)
-                .replace("{OWNER}", warp.ownerName)
-                .replace("{CATEGORY}", warp.category)
-                .replace("{WORLD}", warp.location.world)
-                .replace("{X}", String.valueOf((int) warp.location.x))
-                .replace("{Y}", String.valueOf((int) warp.location.y))
-                .replace("{Z}", String.valueOf((int) warp.location.z));
-            
-            MessageUtil.sendMessage(player, message);
+            MessageUtil.sendMessage(player, config.messages.warpListEntry,
+                warp.name, warp.ownerName, warp.category, warp.location.world,
+                (int) warp.location.x, (int) warp.location.y, (int) warp.location.z);
         }
         
         return true;

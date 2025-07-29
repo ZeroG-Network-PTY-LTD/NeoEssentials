@@ -75,11 +75,8 @@ public class SpawnManager {
         config.mainSpawn.yaw = location.yaw;
         config.mainSpawn.pitch = location.pitch;
         
-        MessageUtil.sendMessage(player, config.messages.spawnSet
-            .replace("{WORLD}", location.world)
-            .replace("{X}", String.valueOf((int) location.x))
-            .replace("{Y}", String.valueOf((int) location.y))
-            .replace("{Z}", String.valueOf((int) location.z)));
+        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.spawnSet,
+            location.world, String.valueOf((int) location.x), String.valueOf((int) location.y), String.valueOf((int) location.z)));
         
         LOGGER.info("Spawn location set by {} at {}", player.getName().getString(), 
             formatLocation(location));
@@ -205,8 +202,8 @@ public class SpawnManager {
             teleportToLocation(player, spawnLocation);
             
             if (config.newPlayer.giveWelcomeMessage && !config.messages.welcomeMessage.isEmpty()) {
-                MessageUtil.sendMessage(player, config.messages.welcomeMessage
-                    .replace("{PLAYER}", player.getName().getString()));
+                MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.welcomeMessage,
+                    player.getName().getString()));
             }
             
             LOGGER.info("Player {} teleported to spawn on first join", player.getName().getString());

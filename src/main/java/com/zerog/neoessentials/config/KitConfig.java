@@ -127,13 +127,13 @@ public class KitConfig {
     }
     
     public static class MessagesConfig {
-        public String kitGiven = "&aYou received the {KIT} kit!";
-        public String kitNotFound = "&cKit '{KIT}' not found!";
+        public String kitGiven = "&aYou received the {0} kit!";
+        public String kitNotFound = "&cKit '{0}' not found!";
         public String kitNoPermission = "&cYou don't have permission to use this kit!";
-        public String kitCooldown = "&cYou must wait {TIME} before using this kit again!";
-        public String kitCost = "&cThis kit costs {COST}! You need {NEEDED} more.";
+        public String kitCooldown = "&cYou must wait {0} before using this kit again!";
+        public String kitCost = "&cThis kit costs {0}! You need {1} more.";
         public String kitListHeader = "&6Available kits:";
-        public String kitListEntry = "&7- &a{KIT} &7({DESCRIPTION}) &8[Delay: {DELAY}] [Cost: {COST}]";
+        public String kitListEntry = "&7- &a{0} &7({1}) &8[Delay: {2}] [Cost: {3}]";
         public String kitListEmpty = "&cNo kits available!";
         public String inventoryFull = "&cYour inventory is full! Some items were dropped.";
         public String firstJoinKit = "&aWelcome! You received the starter kit!";

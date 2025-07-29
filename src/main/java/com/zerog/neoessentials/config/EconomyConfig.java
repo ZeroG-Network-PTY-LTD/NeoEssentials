@@ -110,9 +110,9 @@ public class EconomyConfig {
     }
     
     public static class MessagesConfig {
-        public String insufficientFunds = "&cYou don't have enough money! You need {COST} but only have {BALANCE}.";
-        public String commandCostCharged = "&aYou were charged {COST} for using /{COMMAND}.";
-        public String balanceUpdated = "&aYour balance has been updated to {BALANCE}.";
+        public String insufficientFunds = "&cYou don't have enough money! You need {0} but only have {1}.";
+        public String commandCostCharged = "&aYou were charged {0} for using /{1}.";
+        public String balanceUpdated = "&aYour balance has been updated to {0}.";
         public String transactionComplete = "&aTransaction complete!";
         public String economyDisabled = "&cThe economy system is disabled.";
     }
