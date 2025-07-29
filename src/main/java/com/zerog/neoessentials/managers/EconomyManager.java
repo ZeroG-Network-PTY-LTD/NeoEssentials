@@ -277,17 +277,15 @@ public class EconomyManager {
         UUID playerUUID = player.getUUID();
         if (!hasBalance(playerUUID, cost)) {
             EconomyConfig config = configManager.getEconomyConfig();
-            MessageUtil.sendMessage(player, config.messages.insufficientFunds
-                .replace("{COST}", formatCurrency(cost))
-                .replace("{BALANCE}", formatCurrency(getBalance(playerUUID))));
+            MessageUtil.sendMessage(player, config.messages.insufficientFunds,
+                formatCurrency(cost), formatCurrency(getBalance(playerUUID)));
             return false;
         }
         
         withdrawBalance(playerUUID, cost, "Command usage: " + command);
         EconomyConfig config = configManager.getEconomyConfig();
-        MessageUtil.sendMessage(player, config.messages.commandCostCharged
-            .replace("{COST}", formatCurrency(cost))
-            .replace("{COMMAND}", command));
+        MessageUtil.sendMessage(player, config.messages.commandCostCharged,
+            formatCurrency(cost), command);
         
         return true;
     }

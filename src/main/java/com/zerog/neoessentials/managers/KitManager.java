@@ -58,7 +58,7 @@ public class KitManager {
         // Get kit definition
         KitConfig.KitDefinition kit = config.getKit(kitName);
         if (kit == null) {
-            MessageUtil.sendMessage(player, config.messages.kitNotFound.replace("{KIT}", kitName));
+            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.kitNotFound, kitName));
             return false;
         }
         
@@ -71,8 +71,8 @@ public class KitManager {
         // Check cooldown
         if (isOnCooldown(player, kitName)) {
             long remainingTime = getRemainingCooldown(player, kitName);
-            MessageUtil.sendMessage(player, config.messages.kitCooldown
-                .replace("{TIME}", MessageUtil.formatTime(remainingTime)));
+            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.kitCooldown,
+                MessageUtil.formatTime(remainingTime)));
             return false;
         }
         
@@ -80,10 +80,9 @@ public class KitManager {
         if (kit.hasCost()) {
             EconomyManager economyManager = EconomyManager.getInstance();
             if (!economyManager.hasBalance(player.getUUID(), kit.cost)) {
-                MessageUtil.sendMessage(player, config.messages.kitCost
-                    .replace("{COST}", economyManager.formatCurrency(kit.cost))
-                    .replace("{NEEDED}", economyManager.formatCurrency(
-                        kit.cost.subtract(economyManager.getBalance(player.getUUID())))));
+                MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.kitCost,
+                    economyManager.formatCurrency(kit.cost),
+                    economyManager.formatCurrency(kit.cost.subtract(economyManager.getBalance(player.getUUID())))));
                 return false;
             }
         }
@@ -114,7 +113,7 @@ public class KitManager {
         // Execute commands
         executeKitCommands(player, kit);
         
-        MessageUtil.sendMessage(player, config.messages.kitGiven.replace("{KIT}", kit.displayName));
+        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.kitGiven, kit.displayName));
         
         LOGGER.info("Player {} received kit '{}' with {} items", 
             player.getName().getString(), kitName, kit.items.size());
@@ -343,7 +342,7 @@ public class KitManager {
         for (String command : kit.commands) {
             try {
                 // Replace placeholders
-                String processedCommand = command.replace("{PLAYER}", player.getName().getString());
+                String processedCommand = MessageUtil.replacePlaceholders(command, player.getName().getString());
                 
                 // Execute command (this would need proper command execution)
                 LOGGER.debug("Would execute command: {}", processedCommand);

@@ -97,27 +97,27 @@ public class MessagingConfig {
     
     public static class MessagesConfig {
         // Private message formats
-        public String pmFormatSender = "&7[&6me &7-> &6{PLAYER}&7] &f{MESSAGE}";
-        public String pmFormatReceiver = "&7[&6{PLAYER} &7-> &6me&7] &f{MESSAGE}";
-        public String pmFormatSocialSpy = "&8[SocialSpy] &7{SENDER} -> {RECEIVER}: &f{MESSAGE}";
-        public String replyFormatSender = "&7[&6me &7-> &6{PLAYER}&7] &f{MESSAGE}";
-        public String replyFormatReceiver = "&7[&6{PLAYER} &7-> &6me&7] &f{MESSAGE}";
+        public String pmFormatSender = "&7[&6me &7-> &6{0}&7] &f{1}";
+        public String pmFormatReceiver = "&7[&6{0} &7-> &6me&7] &f{1}";
+        public String pmFormatSocialSpy = "&8[SocialSpy] &7{0} -> {1}: &f{2}";
+        public String replyFormatSender = "&7[&6me &7-> &6{0}&7] &f{1}";
+        public String replyFormatReceiver = "&7[&6{0} &7-> &6me&7] &f{1}";
         
         // Status messages
-        public String messageSent = "&7Message sent to {PLAYER}";
+        public String messageSent = "&7Message sent to {0}";
         public String noReplyTarget = "&cNo one to reply to!";
-        public String playerNotFound = "&cPlayer {PLAYER} not found!";
-        public String playerOffline = "&cPlayer {PLAYER} is offline!";
+        public String playerNotFound = "&cPlayer {0} not found!";
+        public String playerOffline = "&cPlayer {0} is offline!";
         public String messagesToggleOff = "&cYou have disabled private messages!";
         public String messagesToggleOn = "&aYou have enabled private messages!";
-        public String targetMessagesDisabled = "&c{PLAYER} has disabled private messages!";
-        public String messageCooldown = "&cYou must wait {TIME} before sending another message!";
+        public String targetMessagesDisabled = "&c{0} has disabled private messages!";
+        public String messageCooldown = "&cYou must wait {0} before sending another message!";
         public String socialSpyOn = "&aSocial spy enabled!";
         public String socialSpyOff = "&cSocial spy disabled!";
         
         // Mail messages
-        public String mailSent = "&aMail sent to {PLAYER}!";
-        public String mailReceived = "&aYou have {COUNT} new mail(s)! Use /mail read to view them.";
+        public String mailSent = "&aMail sent to {0}!";
+        public String mailReceived = "&aYou have {0} new mail(s)! Use /mail read to view them.";
         public String mailNotification = "&e[Mail] {SENDER}: {PREVIEW}...";
         public String mailRead = "&7[{DATE}] &6{SENDER}&7: &f{MESSAGE}";
         public String mailDeleted = "&cMail deleted!";
