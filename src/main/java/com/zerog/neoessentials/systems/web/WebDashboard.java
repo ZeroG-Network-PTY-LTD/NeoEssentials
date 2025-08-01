@@ -4,6 +4,7 @@ import com.zerog.neoessentials.systems.analytics.DataAnalyticsSystem;
 import com.zerog.neoessentials.systems.automation.CommandScheduler;
 import com.zerog.neoessentials.systems.compatibility.PluginCompatibilityManager;
 import com.zerog.neoessentials.systems.status.SystemStatusMonitor;
+import com.zerog.neoessentials.systems.notifications.AlertNotificationSystem;
 import com.zerog.neoessentials.utils.PerformanceMonitor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,6 +44,7 @@ public class WebDashboard {
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
     private final PluginCompatibilityManager compatibility = PluginCompatibilityManager.getInstance();
     private final SystemStatusMonitor statusMonitor = SystemStatusMonitor.getInstance();
+    private final AlertNotificationSystem alertSystem = AlertNotificationSystem.getInstance();
     private final PerformanceMonitor performance = PerformanceMonitor.getInstance();
     
     // JSON serialization
@@ -166,12 +168,16 @@ public class WebDashboard {
         server.createContext("/api/status/health", new SystemHealthStatusHandler());
         server.createContext("/api/status/history", new SystemStatusHistoryHandler());
         
+        // Alert and notification system
+        server.createContext("/api/alerts/status", new AlertStatusHandler());
+        server.createContext("/api/alerts/config", new AlertConfigHandler());
+        
         // Server management
         server.createContext("/api/server/info", new ServerInfoHandler());
         server.createContext("/api/server/command", new ServerCommandHandler());
         server.createContext("/api/server/config", new ConfigurationHandler());
         
-        LOGGER.info("Registered {} API endpoints", 23);
+        LOGGER.info("Registered {} API endpoints", 25);
     }
     
     /**
@@ -889,5 +895,50 @@ public class WebDashboard {
         public boolean canManageTasks() { return canManageTasks; }
         public boolean canExecuteCommands() { return canExecuteCommands; }
         public boolean canManageUsers() { return canManageUsers; }
+    }
+    
+    // Alert System Handlers
+    private class AlertStatusHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                var alertStats = alertSystem.getAlertStatistics();
+                sendJsonResponse(exchange, alertStats, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in alert status", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class AlertConfigHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                Map<String, Object> config = Map.of(
+                    "isRunning", alertSystem.isRunning(),
+                    "healthThreshold", alertSystem.getHealthThreshold(),
+                    "criticalThreshold", alertSystem.getCriticalThreshold(),
+                    "monitoringInterval", alertSystem.getMonitoringInterval(),
+                    "statistics", alertSystem.getAlertStatistics()
+                );
+                sendJsonResponse(exchange, config, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in alert config", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
     }
 }
