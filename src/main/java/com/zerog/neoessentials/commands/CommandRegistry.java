@@ -3,6 +3,7 @@ package com.zerog.neoessentials.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.commands.admin.NeoEssentialsCommand;
 import com.zerog.neoessentials.commands.admin.EnhancedAdminCommand;
+import com.zerog.neoessentials.commands.status.StatusCommand;
 import net.minecraft.commands.CommandSourceStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,10 @@ public class CommandRegistry {
             // Enhanced admin commands
             EnhancedAdminCommand.register(dispatcher);
             LOGGER.info("Registered enhanced admin commands");
+            
+            // Status monitoring commands
+            StatusCommand.register(dispatcher);
+            LOGGER.info("Registered status monitoring commands");
             
             LOGGER.info("All NeoEssentials commands registered successfully!");
             

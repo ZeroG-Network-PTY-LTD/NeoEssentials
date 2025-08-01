@@ -3,6 +3,7 @@ package com.zerog.neoessentials.systems.web;
 import com.zerog.neoessentials.systems.analytics.DataAnalyticsSystem;
 import com.zerog.neoessentials.systems.automation.CommandScheduler;
 import com.zerog.neoessentials.systems.compatibility.PluginCompatibilityManager;
+import com.zerog.neoessentials.systems.status.SystemStatusMonitor;
 import com.zerog.neoessentials.utils.PerformanceMonitor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,8 +16,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -43,6 +42,7 @@ public class WebDashboard {
     private final DataAnalyticsSystem analytics = DataAnalyticsSystem.getInstance();
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
     private final PluginCompatibilityManager compatibility = PluginCompatibilityManager.getInstance();
+    private final SystemStatusMonitor statusMonitor = SystemStatusMonitor.getInstance();
     private final PerformanceMonitor performance = PerformanceMonitor.getInstance();
     
     // JSON serialization
@@ -159,12 +159,19 @@ public class WebDashboard {
         server.createContext("/api/plugins/status", new PluginStatusHandler());
         server.createContext("/api/plugins/compatibility", new PluginCompatibilityHandler());
         
+        // System status monitoring
+        server.createContext("/api/status/overview", new SystemStatusOverviewHandler());
+        server.createContext("/api/status/resources", new SystemResourceStatusHandler());
+        server.createContext("/api/status/components", new SystemComponentStatusHandler());
+        server.createContext("/api/status/health", new SystemHealthStatusHandler());
+        server.createContext("/api/status/history", new SystemStatusHistoryHandler());
+        
         // Server management
         server.createContext("/api/server/info", new ServerInfoHandler());
         server.createContext("/api/server/command", new ServerCommandHandler());
         server.createContext("/api/server/config", new ConfigurationHandler());
         
-        LOGGER.info("Registered {} API endpoints", 18);
+        LOGGER.info("Registered {} API endpoints", 23);
     }
     
     /**
@@ -665,6 +672,147 @@ public class WebDashboard {
             
             // Implementation would handle configuration management
             sendJsonResponse(exchange, Map.of("success", true, "message", "Configuration management not implemented"), 200);
+        }
+    }
+    
+    // System Status Monitoring Handlers
+    private class SystemStatusOverviewHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                var systemStatus = statusMonitor.getSystemStatus();
+                Map<String, Object> overview = Map.of(
+                    "active", systemStatus.isSystemActive(),
+                    "healthScore", systemStatus.getHealthScore(),
+                    "health", systemStatus.getHealth(),
+                    "uptime", systemStatus.getUptime(),
+                    "lastUpdate", systemStatus.getLastUpdate().toString(),
+                    "resourceStatus", systemStatus.getResourceStatus(),
+                    "componentCount", systemStatus.getComponentStatuses().size(),
+                    "activeComponents", systemStatus.getComponentStatuses().values().stream()
+                        .mapToLong(comp -> comp.getState() == SystemStatusMonitor.ComponentState.ACTIVE ? 1 : 0)
+                        .sum()
+                );
+                sendJsonResponse(exchange, overview, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in system status overview", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class SystemResourceStatusHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                var resourceStatus = statusMonitor.getSystemResourceStatus();
+                sendJsonResponse(exchange, resourceStatus, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in resource status", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class SystemComponentStatusHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                var componentStatus = statusMonitor.getEnterpriseComponentStatus();
+                sendJsonResponse(exchange, componentStatus, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in component status", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class SystemHealthStatusHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                var systemStatus = statusMonitor.getSystemStatus();
+                Map<String, Object> healthData = Map.of(
+                    "healthScore", systemStatus.getHealthScore(),
+                    "health", systemStatus.getHealth(),
+                    "recommendations", generateHealthRecommendations(systemStatus.getHealthScore()),
+                    "factors", Map.of(
+                        "memory", calculateMemoryHealthScore(systemStatus.getResourceStatus().getMemoryUsagePercent()),
+                        "heap", calculateMemoryHealthScore(systemStatus.getResourceStatus().getHeapUsagePercent()),
+                        "components", (double) systemStatus.getComponentStatuses().values().stream()
+                            .mapToLong(comp -> comp.getState() == SystemStatusMonitor.ComponentState.ACTIVE ? 1 : 0)
+                            .sum() / systemStatus.getComponentStatuses().size() * 100.0
+                    )
+                );
+                sendJsonResponse(exchange, healthData, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in health status", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+        
+        private double calculateMemoryHealthScore(double usagePercent) {
+            if (usagePercent < 50) return 100.0;
+            if (usagePercent < 70) return 90.0;
+            if (usagePercent < 85) return 70.0;
+            if (usagePercent < 95) return 40.0;
+            return 10.0;
+        }
+        
+        private String generateHealthRecommendations(double healthScore) {
+            if (healthScore >= 95) return "System is operating at optimal levels";
+            if (healthScore >= 80) return "System performance is good but could be optimized";
+            if (healthScore >= 65) return "System performance needs attention";
+            return "Critical system issues detected - immediate investigation recommended";
+        }
+    }
+    
+    private class SystemStatusHistoryHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                var history = statusMonitor.getStatusHistory();
+                Map<String, Object> historyData = Map.of(
+                    "snapshots", history.size(),
+                    "history", history.stream().limit(50).toArray(), // Limit to last 50 entries
+                    "oldestSnapshot", history.isEmpty() ? null : history.get(0).getTimestamp().toString(),
+                    "newestSnapshot", history.isEmpty() ? null : history.get(history.size() - 1).getTimestamp().toString()
+                );
+                sendJsonResponse(exchange, historyData, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in status history", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
         }
     }
     
