@@ -202,6 +202,28 @@ public class HomeManager {
     }
     
     /**
+     * List all homes for a player
+     */
+    public boolean listHomes(ServerPlayer player) {
+        HomeConfig config = configManager.getHomeConfig();
+        
+        List<String> homes = getPlayerHomes(player.getUUID());
+        if (homes.isEmpty()) {
+            MessageUtil.sendMessage(player, config.messages.homeListEmpty);
+            return false;
+        }
+        
+        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.homeListHeader, 
+            String.valueOf(homes.size()), String.valueOf(getMaxHomes(player))));
+        
+        for (String homeName : homes) {
+            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.homeListEntry, homeName));
+        }
+        
+        return true;
+    }
+    
+    /**
      * Get player's home count
      */
     public int getHomeCount(UUID playerUUID) {

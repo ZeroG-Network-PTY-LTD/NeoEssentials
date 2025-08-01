@@ -180,8 +180,8 @@ public class MessagingManager {
         // Notify target if online
         ServerPlayer target = getPlayerByUuid(targetUuid);
         if (target != null) {
-            MessageUtil.sendMessage(target, config.messages.mailReceived
-                .replace("{PLAYER}", sender.getName().getString()));
+            MessageUtil.sendMessage(target, MessageUtil.replacePlaceholders(config.messages.mailReceived,
+                sender.getName().getString()));
         }
         
         LOGGER.info("Mail sent from {} to {}: {}", 
@@ -294,8 +294,7 @@ public class MessagingManager {
         
         ServerPlayer target = getPlayerByName(targetName);
         if (target == null) {
-            MessageUtil.sendMessage(player, config.messages.playerNotFound
-                .replace("{PLAYER}", targetName));
+            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.playerNotFound, targetName));
             return false;
         }
         
@@ -306,16 +305,16 @@ public class MessagingManager {
         
         // Check if already ignoring
         if (isPlayerIgnored(player.getUUID(), target.getUUID())) {
-            MessageUtil.sendMessage(player, config.messages.alreadyIgnoring
-                .replace("{PLAYER}", target.getName().getString()));
+            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.alreadyIgnoring, 
+                target.getName().getString()));
             return false;
         }
         
         // Add to ignore list
         addToIgnoreList(player.getUUID(), target.getUUID());
         
-        MessageUtil.sendMessage(player, config.messages.ignoreAdded
-            .replace("{PLAYER}", target.getName().getString()));
+        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.ignoreAdded,
+            target.getName().getString()));
         
         return true;
     }
@@ -328,22 +327,19 @@ public class MessagingManager {
         
         UUID targetUuid = getPlayerUuidByName(targetName);
         if (targetUuid == null) {
-            MessageUtil.sendMessage(player, config.messages.playerNotFound
-                .replace("{PLAYER}", targetName));
+            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.playerNotFound, targetName));
             return false;
         }
         
         if (!isPlayerIgnored(player.getUUID(), targetUuid)) {
-            MessageUtil.sendMessage(player, config.messages.notIgnoring
-                .replace("{PLAYER}", targetName));
+            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.notIgnoring, targetName));
             return false;
         }
         
         // Remove from ignore list
         removeFromIgnoreList(player.getUUID(), targetUuid);
         
-        MessageUtil.sendMessage(player, config.messages.ignoreRemoved
-            .replace("{PLAYER}", targetName));
+        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.ignoreRemoved, targetName));
         
         return true;
     }
@@ -398,10 +394,8 @@ public class MessagingManager {
     private void sendToSocialSpy(ServerPlayer sender, ServerPlayer target, String message) {
         MessagingConfig config = configManager.getMessagingConfig();
         
-        String spyMessage = config.messages.pmFormatSocialSpy
-            .replace("{SENDER}", sender.getName().getString())
-            .replace("{RECEIVER}", target.getName().getString())
-            .replace("{MESSAGE}", message);
+        String spyMessage = MessageUtil.replacePlaceholders(config.messages.pmFormatSocialSpy,
+            sender.getName().getString(), target.getName().getString(), message);
         
         for (Map.Entry<UUID, Boolean> entry : socialSpyEnabled.entrySet()) {
             if (entry.getValue()) {

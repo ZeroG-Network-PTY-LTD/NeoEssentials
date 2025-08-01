@@ -88,3 +88,24 @@ docs/TESTING_PHASE_COMMENCE_v1.0.2.154.md
 
 # Plugin reference files
 Plugins\ commands.md
+run/server.properties
+run/logs/debug-1.log.gz
+run/logs/debug-2.log.gz
+run/logs/debug-3.log.gz
+run/logs/debug-4.log.gz
+run/logs/debug-5.log.gz
+run/logs/debug.log
+run/logs/latest.log
+run/world/level.dat
+run/world/level.dat_old
+run/world/data/raids.dat
+run/world/DIM-1/data/raids.dat
+run/world/DIM1/data/raids_end.dat
+run/world/entities/r.-1.-1.mca
+run/world/entities/r.-1.0.mca
+run/world/entities/r.0.-1.mca
+run/world/entities/r.0.0.mca
+run/world/region/r.-1.-1.mca
+run/world/region/r.-1.0.mca
+run/world/region/r.0.-1.mca
+run/world/region/r.0.0.mca
