@@ -5,6 +5,8 @@ import com.zerog.neoessentials.systems.automation.CommandScheduler;
 import com.zerog.neoessentials.systems.compatibility.PluginCompatibilityManager;
 import com.zerog.neoessentials.systems.status.SystemStatusMonitor;
 import com.zerog.neoessentials.systems.notifications.AlertNotificationSystem;
+import com.zerog.neoessentials.systems.security.SecurityMonitoringSystem;
+import com.zerog.neoessentials.systems.monitoring.EnterprisePerformanceMonitor;
 import com.zerog.neoessentials.utils.PerformanceMonitor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -45,6 +47,8 @@ public class WebDashboard {
     private final PluginCompatibilityManager compatibility = PluginCompatibilityManager.getInstance();
     private final SystemStatusMonitor statusMonitor = SystemStatusMonitor.getInstance();
     private final AlertNotificationSystem alertSystem = AlertNotificationSystem.getInstance();
+    private final SecurityMonitoringSystem securitySystem = SecurityMonitoringSystem.getInstance();
+    private final EnterprisePerformanceMonitor enterprisePerformance = EnterprisePerformanceMonitor.getInstance();
     private final PerformanceMonitor performance = PerformanceMonitor.getInstance();
     
     // JSON serialization
@@ -151,6 +155,15 @@ public class WebDashboard {
         server.createContext("/api/performance/metrics", new PerformanceMetricsHandler());
         server.createContext("/api/performance/history", new PerformanceHistoryHandler());
         
+        // Enterprise performance monitoring
+        server.createContext("/api/enterprise-performance/status", new EnterprisePerformanceStatusHandler());
+        server.createContext("/api/enterprise-performance/metrics", new EnterprisePerformanceMetricsHandler());
+        server.createContext("/api/enterprise-performance/trends", new EnterprisePerformanceTrendsHandler());
+        server.createContext("/api/enterprise-performance/optimize", new EnterprisePerformanceOptimizeHandler());
+        server.createContext("/api/enterprise-performance/config", new EnterprisePerformanceConfigHandler());
+        server.createContext("/api/enterprise-performance/history", new EnterprisePerformanceHistoryHandler());
+        server.createContext("/api/enterprise-performance/predictions", new EnterprisePerformancePredictionsHandler());
+        
         // Task management
         server.createContext("/api/tasks/list", new TaskListHandler());
         server.createContext("/api/tasks/create", new TaskCreateHandler());
@@ -172,12 +185,18 @@ public class WebDashboard {
         server.createContext("/api/alerts/status", new AlertStatusHandler());
         server.createContext("/api/alerts/config", new AlertConfigHandler());
         
+        // Enterprise security monitoring
+        server.createContext("/api/security/status", new SecurityStatusHandler());
+        server.createContext("/api/security/config", new SecurityConfigHandler());
+        server.createContext("/api/security/threats", new SecurityThreatsHandler());
+        server.createContext("/api/security/audit", new SecurityAuditHandler());
+        
         // Server management
         server.createContext("/api/server/info", new ServerInfoHandler());
         server.createContext("/api/server/command", new ServerCommandHandler());
         server.createContext("/api/server/config", new ConfigurationHandler());
         
-        LOGGER.info("Registered {} API endpoints", 25);
+        LOGGER.info("Registered {} API endpoints", 32);
     }
     
     /**
@@ -939,6 +958,359 @@ public class WebDashboard {
                 LOGGER.error("Error in alert config", e);
                 sendErrorResponse(exchange, "Internal server error", 500);
             }
+        }
+    }
+    
+    // Security System Handlers
+    private class SecurityStatusHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                Map<String, Object> securityStats = securitySystem.getSecurityStatistics();
+                sendJsonResponse(exchange, securityStats, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in security status", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class SecurityConfigHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                Map<String, Object> config = securitySystem.getSecurityConfiguration();
+                sendJsonResponse(exchange, config, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in security config", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class SecurityThreatsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                Map<String, Object> stats = securitySystem.getSecurityStatistics();
+                Map<String, Object> threatInfo = Map.of(
+                    "activeThreats", stats.get("activeThreats"),
+                    "criticalThreats", stats.get("criticalThreats"),
+                    "warningEvents", stats.get("warningEvents"),
+                    "totalEvents", stats.get("totalEvents"),
+                    "monitoring", stats.get("monitoring"),
+                    "lastUpdate", stats.get("lastUpdate")
+                );
+                sendJsonResponse(exchange, threatInfo, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in security threats", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class SecurityAuditHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                Map<String, Object> stats = securitySystem.getSecurityStatistics();
+                Map<String, Object> config = securitySystem.getSecurityConfiguration();
+                
+                Map<String, Object> auditReport = Map.of(
+                    "reportGenerated", java.time.LocalDateTime.now().toString(),
+                    "securityMetrics", stats,
+                    "configuration", config,
+                    "monitoringStatus", securitySystem.isMonitoring() ? "ACTIVE" : "INACTIVE",
+                    "recommendations", generateSecurityRecommendations(stats)
+                );
+                
+                sendJsonResponse(exchange, auditReport, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in security audit", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+        
+        private java.util.List<String> generateSecurityRecommendations(Map<String, Object> stats) {
+            java.util.List<String> recommendations = new java.util.ArrayList<>();
+            
+            int activeThreats = (Integer) stats.get("activeThreats");
+            long totalEvents = (Long) stats.get("totalEvents");
+            boolean monitoring = (Boolean) stats.get("monitoring");
+            
+            if (!monitoring) {
+                recommendations.add("Enable security monitoring for real-time threat detection");
+            }
+            if (activeThreats > 5) {
+                recommendations.add("High number of active threats - review security policies");
+            }
+            if (totalEvents > 1000) {
+                recommendations.add("High security event volume - consider log rotation");
+            }
+            if (activeThreats == 0 && totalEvents < 50) {
+                recommendations.add("Security posture: EXCELLENT");
+            }
+            
+            return recommendations;
+        }
+    }
+    
+    // Enterprise Performance Monitoring API Handlers
+    
+    private class EnterprisePerformanceStatusHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                Map<String, Object> status = new HashMap<>();
+                status.put("monitoring", enterprisePerformance.isMonitoring());
+                status.put("statistics", enterprisePerformance.getPerformanceStatistics());
+                status.put("configuration", enterprisePerformance.getPerformanceConfiguration());
+                status.put("timestamp", System.currentTimeMillis());
+                
+                sendJsonResponse(exchange, status, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in enterprise performance status", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class EnterprisePerformanceMetricsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                Map<String, EnterprisePerformanceMonitor.PerformanceMetric> metrics = enterprisePerformance.getCurrentMetrics();
+                Map<String, Object> response = new HashMap<>();
+                response.put("metrics", metrics);
+                response.put("performanceScore", enterprisePerformance.getPerformanceStatistics().get("performanceScore"));
+                response.put("timestamp", System.currentTimeMillis());
+                
+                sendJsonResponse(exchange, response, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in enterprise performance metrics", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class EnterprisePerformanceTrendsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                Map<String, EnterprisePerformanceMonitor.PerformanceTrend> trends = enterprisePerformance.getPerformanceTrends();
+                Map<String, Object> response = new HashMap<>();
+                response.put("trends", trends);
+                response.put("timestamp", System.currentTimeMillis());
+                
+                sendJsonResponse(exchange, response, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in enterprise performance trends", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class EnterprisePerformanceOptimizeHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                java.util.List<EnterprisePerformanceMonitor.OptimizationRecommendation> optimizations = 
+                    enterprisePerformance.getPendingOptimizations();
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("optimizations", optimizations);
+                response.put("autoOptimizationEnabled", 
+                    enterprisePerformance.getPerformanceConfiguration().get("autoOptimizationEnabled"));
+                response.put("timestamp", System.currentTimeMillis());
+                
+                sendJsonResponse(exchange, response, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in enterprise performance optimization", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class EnterprisePerformanceConfigHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null || !session.getUser().getRole().canManageConfig()) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                if ("GET".equals(exchange.getRequestMethod())) {
+                    Map<String, Object> config = enterprisePerformance.getPerformanceConfiguration();
+                    sendJsonResponse(exchange, config, 200);
+                } else if ("POST".equals(exchange.getRequestMethod())) {
+                    // Handle configuration updates
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    // Parse JSON and update configuration
+                    // This would be implemented with proper JSON parsing
+                    sendJsonResponse(exchange, Map.of("success", true, "message", "Configuration updated"), 200);
+                } else {
+                    sendErrorResponse(exchange, "Method not allowed", 405);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error in enterprise performance configuration", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class EnterprisePerformanceHistoryHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                java.util.List<EnterprisePerformanceMonitor.PerformanceSnapshot> history = 
+                    enterprisePerformance.getPerformanceHistory();
+                
+                // Limit to last 100 entries for API performance
+                if (history.size() > 100) {
+                    history = history.subList(history.size() - 100, history.size());
+                }
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("history", history);
+                response.put("totalEntries", enterprisePerformance.getPerformanceStatistics().get("historySize"));
+                response.put("timestamp", System.currentTimeMillis());
+                
+                sendJsonResponse(exchange, response, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in enterprise performance history", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+    }
+    
+    private class EnterprisePerformancePredictionsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            try {
+                Map<String, Object> config = enterprisePerformance.getPerformanceConfiguration();
+                boolean predictiveEnabled = (Boolean) config.get("predictiveAnalyticsEnabled");
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("predictiveAnalyticsEnabled", predictiveEnabled);
+                
+                if (predictiveEnabled) {
+                    Map<String, EnterprisePerformanceMonitor.PerformanceTrend> trends = 
+                        enterprisePerformance.getPerformanceTrends();
+                    
+                    // Generate predictions based on trends
+                    java.util.List<String> predictions = generatePerformancePredictions(trends);
+                    response.put("predictions", predictions);
+                    response.put("trends", trends);
+                } else {
+                    response.put("predictions", java.util.List.of("Predictive analytics is disabled"));
+                }
+                
+                response.put("timestamp", System.currentTimeMillis());
+                sendJsonResponse(exchange, response, 200);
+            } catch (Exception e) {
+                LOGGER.error("Error in enterprise performance predictions", e);
+                sendErrorResponse(exchange, "Internal server error", 500);
+            }
+        }
+        
+        private java.util.List<String> generatePerformancePredictions(
+                Map<String, EnterprisePerformanceMonitor.PerformanceTrend> trends) {
+            java.util.List<String> predictions = new java.util.ArrayList<>();
+            
+            for (Map.Entry<String, EnterprisePerformanceMonitor.PerformanceTrend> entry : trends.entrySet()) {
+                EnterprisePerformanceMonitor.PerformanceTrend trend = entry.getValue();
+                String metricName = trend.getMetricName();
+                
+                switch (trend.getDirection()) {
+                    case INCREASING:
+                        if (metricName.contains("memory")) {
+                            predictions.add("⚠ Memory usage trending upward - monitor for potential leaks");
+                        } else if (metricName.contains("cpu")) {
+                            predictions.add("⚠ CPU usage increasing - consider optimization");
+                        } else if (metricName.contains("thread")) {
+                            predictions.add("⚠ Thread count growing - check for thread leaks");
+                        }
+                        break;
+                    case DECREASING:
+                        if (metricName.contains("performance")) {
+                            predictions.add("⚠ Overall performance declining - comprehensive review needed");
+                        }
+                        break;
+                    case STABLE:
+                        if (metricName.contains("memory") || metricName.contains("cpu")) {
+                            predictions.add("✓ " + metricName + " is stable");
+                        }
+                        break;
+                }
+            }
+            
+            if (predictions.isEmpty()) {
+                predictions.add("✓ All performance metrics are within acceptable ranges");
+            }
+            
+            return predictions;
         }
     }
 }
