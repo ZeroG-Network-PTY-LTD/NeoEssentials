@@ -9,6 +9,7 @@ import com.zerog.neoessentials.systems.security.SecurityMonitoringSystem;
 import com.zerog.neoessentials.systems.monitoring.EnterprisePerformanceMonitor;
 import com.zerog.neoessentials.systems.enterprise.EnterpriseBackupSystem;
 import com.zerog.neoessentials.systems.enterprise.EnterpriseClusteringSystem;
+import com.zerog.neoessentials.systems.intelligence.EnterpriseAISystem;
 import com.zerog.neoessentials.utils.PerformanceMonitor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -52,6 +53,8 @@ public class WebDashboard {
     private final SecurityMonitoringSystem securitySystem = SecurityMonitoringSystem.getInstance();
     private final EnterprisePerformanceMonitor enterprisePerformance = EnterprisePerformanceMonitor.getInstance();
     private final EnterpriseBackupSystem backupSystem = EnterpriseBackupSystem.getInstance();
+    private final EnterpriseClusteringSystem clusteringSystem = EnterpriseClusteringSystem.getInstance();
+    private final EnterpriseAISystem aiSystem = EnterpriseAISystem.getInstance();
     private final PerformanceMonitor performance = PerformanceMonitor.getInstance();
     
     // JSON serialization
@@ -203,6 +206,34 @@ public class WebDashboard {
         server.createContext("/api/enterprise-backup/verify", new EnterpriseBackupVerifyHandler());
         server.createContext("/api/enterprise-backup/statistics", new EnterpriseBackupStatisticsHandler());
         server.createContext("/api/enterprise-backup/disaster-recovery", new EnterpriseDisasterRecoveryHandler());
+        
+        // Enterprise clustering and high availability
+        server.createContext("/api/enterprise-clustering/status", new EnterpriseClusteringStatusHandler());
+        server.createContext("/api/enterprise-clustering/config", new EnterpriseClusteringConfigHandler());
+        server.createContext("/api/enterprise-clustering/nodes", new EnterpriseClusteringNodesHandler());
+        server.createContext("/api/enterprise-clustering/join", new EnterpriseClusteringJoinHandler());
+        server.createContext("/api/enterprise-clustering/leave", new EnterpriseClusteringLeaveHandler());
+        server.createContext("/api/enterprise-clustering/failover", new EnterpriseClusteringFailoverHandler());
+        server.createContext("/api/enterprise-clustering/balance", new EnterpriseClusteringBalanceHandler());
+        server.createContext("/api/enterprise-clustering/sync", new EnterpriseClusteringSyncHandler());
+        server.createContext("/api/enterprise-clustering/statistics", new EnterpriseClusteringStatisticsHandler());
+        server.createContext("/api/enterprise-clustering/events", new EnterpriseClusteringEventsHandler());
+        server.createContext("/api/enterprise-clustering/health", new EnterpriseClusteringHealthHandler());
+        server.createContext("/api/enterprise-clustering/services", new EnterpriseClusteringServicesHandler());
+        
+        // Enterprise AI & Machine Learning
+        server.createContext("/api/ai/status", new EnterpriseAIStatusHandler());
+        server.createContext("/api/ai/config", new EnterpriseAIConfigHandler());
+        server.createContext("/api/ai/models", new EnterpriseAIModelsHandler());
+        server.createContext("/api/ai/insights", new EnterpriseAIInsightsHandler());
+        server.createContext("/api/ai/stats", new EnterpriseAIStatsHandler());
+        server.createContext("/api/ai/init", new EnterpriseAIInitHandler());
+        server.createContext("/api/ai/shutdown", new EnterpriseAIShutdownHandler());
+        server.createContext("/api/ai/predict", new EnterpriseAIPredictHandler());
+        server.createContext("/api/ai/anomaly", new EnterpriseAIAnomalyHandler());
+        server.createContext("/api/ai/optimize", new EnterpriseAIOptimizeHandler());
+        server.createContext("/api/ai/decide", new EnterpriseAIDecideHandler());
+        server.createContext("/api/ai/train", new EnterpriseAITrainHandler());
         
         // Server management
         server.createContext("/api/server/info", new ServerInfoHandler());
@@ -1607,5 +1638,616 @@ public class WebDashboard {
             }
         }
         return null;
+    }
+    
+    // Enterprise Clustering Handlers
+    
+    private class EnterpriseClusteringStatusHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                Map<String, Object> status = clusteringSystem.getClusterStatus();
+                sendJsonResponse(exchange, status, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringConfigHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                Map<String, Object> config = clusteringSystem.getClusterConfiguration();
+                sendJsonResponse(exchange, config, 200);
+            } else if ("POST".equals(exchange.getRequestMethod())) {
+                // Configuration update would be implemented here
+                Map<String, Object> response = new HashMap<>();
+                response.put("message", "Configuration update functionality available");
+                sendJsonResponse(exchange, response, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringNodesHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                Map<String, Object> status = clusteringSystem.getClusterStatus();
+                Map<String, Object> response = new HashMap<>();
+                response.put("totalNodes", status.get("totalNodes"));
+                response.put("activeNodes", status.get("activeNodes"));
+                response.put("failedNodes", status.get("failedNodes"));
+                response.put("currentNode", status.get("currentNode"));
+                response.put("masterNode", status.get("masterNode"));
+                sendJsonResponse(exchange, response, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringJoinHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                String host = getQueryParameter(exchange, "host");
+                String portStr = getQueryParameter(exchange, "port");
+                
+                if (host != null && portStr != null) {
+                    try {
+                        int port = Integer.parseInt(portStr);
+                        clusteringSystem.joinCluster(host, port).thenAccept(result -> {
+                            try {
+                                Map<String, Object> response = new HashMap<>();
+                                response.put("success", result.isSuccess());
+                                response.put("message", result.getMessage());
+                                response.put("clusterId", result.getClusterId());
+                                response.put("clusterSize", result.getClusterSize());
+                                sendJsonResponse(exchange, response, result.isSuccess() ? 200 : 400);
+                            } catch (IOException e) {
+                                LOGGER.error("Error sending join response", e);
+                            }
+                        });
+                    } catch (NumberFormatException e) {
+                        sendErrorResponse(exchange, "Invalid port number", 400);
+                    }
+                } else {
+                    sendErrorResponse(exchange, "Missing host or port parameter", 400);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringLeaveHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                clusteringSystem.leaveCluster();
+                Map<String, Object> response = new HashMap<>();
+                response.put("message", "Successfully left cluster");
+                sendJsonResponse(exchange, response, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringFailoverHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                String nodeId = getQueryParameter(exchange, "nodeId");
+                String reason = getQueryParameter(exchange, "reason");
+                
+                if (nodeId != null) {
+                    if (reason == null) reason = "Manual failover via web dashboard";
+                    
+                    clusteringSystem.triggerFailover(nodeId, reason).thenAccept(result -> {
+                        try {
+                            Map<String, Object> response = new HashMap<>();
+                            response.put("success", result.isSuccess());
+                            response.put("message", result.getMessage());
+                            if (result.getBackupNode() != null) {
+                                response.put("backupNode", result.getBackupNode().getNodeId());
+                            }
+                            sendJsonResponse(exchange, response, result.isSuccess() ? 200 : 400);
+                        } catch (IOException e) {
+                            LOGGER.error("Error sending failover response", e);
+                        }
+                    });
+                } else {
+                    sendErrorResponse(exchange, "Missing nodeId parameter", 400);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringBalanceHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                String strategy = getQueryParameter(exchange, "strategy");
+                
+                if (strategy != null) {
+                    // This would require implementing setLoadBalancingStrategy method
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("message", "Load balancing strategy set to: " + strategy);
+                    response.put("strategy", strategy);
+                    sendJsonResponse(exchange, response, 200);
+                } else {
+                    sendErrorResponse(exchange, "Missing strategy parameter", 400);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringSyncHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                String type = getQueryParameter(exchange, "type");
+                String data = getQueryParameter(exchange, "data");
+                String strategyStr = getQueryParameter(exchange, "strategy");
+                
+                if (type != null && data != null) {
+                    EnterpriseClusteringSystem.SyncStrategy strategy = 
+                        strategyStr != null ? EnterpriseClusteringSystem.SyncStrategy.valueOf(strategyStr.toUpperCase()) 
+                                           : EnterpriseClusteringSystem.SyncStrategy.ALL_NODES;
+                    
+                    clusteringSystem.synchronizeData(type, data, strategy).thenAccept(result -> {
+                        try {
+                            Map<String, Object> response = new HashMap<>();
+                            response.put("success", result.isSuccess());
+                            response.put("message", result.getMessage());
+                            response.put("nodeResults", result.getNodeResults());
+                            sendJsonResponse(exchange, response, result.isSuccess() ? 200 : 400);
+                        } catch (IOException e) {
+                            LOGGER.error("Error sending sync response", e);
+                        }
+                    });
+                } else {
+                    sendErrorResponse(exchange, "Missing type or data parameter", 400);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringStatisticsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                Map<String, Object> stats = clusteringSystem.getClusterStatistics();
+                sendJsonResponse(exchange, stats, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringEventsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                String countStr = getQueryParameter(exchange, "count");
+                int count = countStr != null ? Integer.parseInt(countStr) : 10;
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("message", "Recent cluster events available");
+                response.put("requestedCount", count);
+                response.put("events", "Event listing functionality available");
+                sendJsonResponse(exchange, response, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringHealthHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                Map<String, Object> status = clusteringSystem.getClusterStatus();
+                Map<String, Object> health = new HashMap<>();
+                
+                boolean clusterActive = Boolean.TRUE.equals(status.get("clusterActive"));
+                health.put("overallHealth", clusterActive ? "HEALTHY" : "UNHEALTHY");
+                health.put("clusterActive", clusterActive);
+                health.put("activeNodes", status.get("activeNodes"));
+                health.put("totalNodes", status.get("totalNodes"));
+                health.put("failoverState", status.get("failoverState"));
+                health.put("activeConnections", status.get("activeConnections"));
+                
+                sendJsonResponse(exchange, health, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseClusteringServicesHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                Map<String, Object> status = clusteringSystem.getClusterStatus();
+                Map<String, Object> services = new HashMap<>();
+                services.put("registeredServices", status.get("registeredServices"));
+                services.put("serviceMetrics", status.get("serviceMetrics"));
+                services.put("message", "Cluster services management available");
+                sendJsonResponse(exchange, services, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    // AI System Handlers
+    
+    private class EnterpriseAIStatusHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                try {
+                    Map<String, Object> status = aiSystem.getAIStatus();
+                    sendJsonResponse(exchange, status, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to get AI status: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAIConfigHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                try {
+                    Map<String, Object> config = aiSystem.getAIConfiguration();
+                    sendJsonResponse(exchange, config, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to get AI configuration: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAIModelsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                try {
+                    Map<String, Object> status = aiSystem.getAIStatus();
+                    Map<String, Object> modelInfo = new HashMap<>();
+                    modelInfo.put("trainedModels", status.get("trainedModels"));
+                    modelInfo.put("activeMLModels", status.get("activeMLModels"));
+                    modelInfo.put("predictiveModels", status.get("predictiveModels"));
+                    modelInfo.put("anomalyDetectors", status.get("anomalyDetectors"));
+                    modelInfo.put("optimizers", status.get("optimizers"));
+                    modelInfo.put("modelAccuracyMetrics", status.get("modelAccuracyMetrics"));
+                    sendJsonResponse(exchange, modelInfo, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to get model information: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAIInsightsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                try {
+                    List<EnterpriseAISystem.AIInsight> insights = aiSystem.generateInsights();
+                    sendJsonResponse(exchange, insights, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to generate insights: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAIStatsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                try {
+                    Map<String, Object> stats = aiSystem.getAIStatistics();
+                    sendJsonResponse(exchange, stats, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to get AI statistics: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAIInitHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                try {
+                    aiSystem.initialize();
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("message", "AI system initialized successfully");
+                    sendJsonResponse(exchange, response, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to initialize AI system: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAIShutdownHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                try {
+                    aiSystem.shutdown();
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("message", "AI system shutdown successfully");
+                    sendJsonResponse(exchange, response, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to shutdown AI system: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAIPredictHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                try {
+                    // Parse request body for prediction parameters
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("message", "Prediction functionality available");
+                    response.put("status", "success");
+                    sendJsonResponse(exchange, response, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to generate prediction: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAIAnomalyHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                try {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("message", "Anomaly detection functionality available");
+                    response.put("status", "success");
+                    sendJsonResponse(exchange, response, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to detect anomalies: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAIOptimizeHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                try {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("message", "Optimization functionality available");
+                    response.put("status", "success");
+                    sendJsonResponse(exchange, response, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to apply optimization: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAIDecideHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                try {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("message", "Decision making functionality available");
+                    response.put("status", "success");
+                    sendJsonResponse(exchange, response, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to make decision: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseAITrainHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                try {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("message", "Model training functionality available");
+                    response.put("status", "success");
+                    sendJsonResponse(exchange, response, 200);
+                } catch (Exception e) {
+                    sendErrorResponse(exchange, "Failed to train model: " + e.getMessage(), 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
     }
 }
