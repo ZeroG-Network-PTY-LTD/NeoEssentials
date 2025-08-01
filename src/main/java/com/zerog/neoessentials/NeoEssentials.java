@@ -3,12 +3,14 @@ package com.zerog.neoessentials;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
+import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.managers.*;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 
@@ -68,6 +70,15 @@ public class NeoEssentials {
         } catch (Exception e) {
             LOGGER.error("Failed to setup NeoEssentials on server start", e);
         }
+    }
+    
+    /**
+     * Command registration event handler
+     */
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event) {
+        LOGGER.info("Registering NeoEssentials commands...");
+        CommandRegistry.registerCommands(event.getDispatcher());
     }
     
     /**

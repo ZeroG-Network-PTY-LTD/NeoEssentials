@@ -118,7 +118,7 @@ public class WarpManager {
         saveWarpData();
         
         String message = isNewWarp ? config.messages.warpCreated : "&aWarp updated successfully!";
-        MessageUtil.sendMessage(player, message, warpName);
+        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(message, warpName));
         
         LOGGER.info("Warp '{}' {} by {}", warpName, isNewWarp ? "created" : "updated", player.getName().getString());
         
@@ -138,7 +138,7 @@ public class WarpManager {
         
         WarpData warpData = warps.get(warpName.toLowerCase());
         if (warpData == null) {
-            MessageUtil.sendMessage(player, config.messages.warpNotFound, warpName);
+            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.warpNotFound, warpName));
             return false;
         }
         
@@ -151,7 +151,7 @@ public class WarpManager {
         warps.remove(warpName.toLowerCase());
         saveWarpData();
         
-        MessageUtil.sendMessage(player, config.messages.warpDeleted, warpName);
+        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.warpDeleted, warpName));
         
         LOGGER.info("Warp '{}' deleted by {}", warpName, player.getName().getString());
         
