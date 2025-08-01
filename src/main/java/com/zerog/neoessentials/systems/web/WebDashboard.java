@@ -7,6 +7,8 @@ import com.zerog.neoessentials.systems.status.SystemStatusMonitor;
 import com.zerog.neoessentials.systems.notifications.AlertNotificationSystem;
 import com.zerog.neoessentials.systems.security.SecurityMonitoringSystem;
 import com.zerog.neoessentials.systems.monitoring.EnterprisePerformanceMonitor;
+import com.zerog.neoessentials.systems.enterprise.EnterpriseBackupSystem;
+import com.zerog.neoessentials.systems.enterprise.EnterpriseClusteringSystem;
 import com.zerog.neoessentials.utils.PerformanceMonitor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -49,6 +51,7 @@ public class WebDashboard {
     private final AlertNotificationSystem alertSystem = AlertNotificationSystem.getInstance();
     private final SecurityMonitoringSystem securitySystem = SecurityMonitoringSystem.getInstance();
     private final EnterprisePerformanceMonitor enterprisePerformance = EnterprisePerformanceMonitor.getInstance();
+    private final EnterpriseBackupSystem backupSystem = EnterpriseBackupSystem.getInstance();
     private final PerformanceMonitor performance = PerformanceMonitor.getInstance();
     
     // JSON serialization
@@ -191,12 +194,22 @@ public class WebDashboard {
         server.createContext("/api/security/threats", new SecurityThreatsHandler());
         server.createContext("/api/security/audit", new SecurityAuditHandler());
         
+        // Enterprise backup and disaster recovery
+        server.createContext("/api/enterprise-backup/status", new EnterpriseBackupStatusHandler());
+        server.createContext("/api/enterprise-backup/config", new EnterpriseBackupConfigHandler());
+        server.createContext("/api/enterprise-backup/list", new EnterpriseBackupListHandler());
+        server.createContext("/api/enterprise-backup/create", new EnterpriseBackupCreateHandler());
+        server.createContext("/api/enterprise-backup/restore", new EnterpriseBackupRestoreHandler());
+        server.createContext("/api/enterprise-backup/verify", new EnterpriseBackupVerifyHandler());
+        server.createContext("/api/enterprise-backup/statistics", new EnterpriseBackupStatisticsHandler());
+        server.createContext("/api/enterprise-backup/disaster-recovery", new EnterpriseDisasterRecoveryHandler());
+        
         // Server management
         server.createContext("/api/server/info", new ServerInfoHandler());
         server.createContext("/api/server/command", new ServerCommandHandler());
         server.createContext("/api/server/config", new ConfigurationHandler());
         
-        LOGGER.info("Registered {} API endpoints", 32);
+        LOGGER.info("Registered {} API endpoints", 40);
     }
     
     /**
@@ -1312,5 +1325,287 @@ public class WebDashboard {
             
             return predictions;
         }
+    }
+    
+    // Enterprise Backup API Handlers
+    
+    private class EnterpriseBackupStatusHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                Map<String, Object> status = backupSystem.getBackupStatus();
+                sendJsonResponse(exchange, status, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseBackupConfigHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                Map<String, Object> config = backupSystem.getBackupConfiguration();
+                sendJsonResponse(exchange, config, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseBackupListHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                int days = 7; // Default 7 days
+                String daysParam = getQueryParameter(exchange, "days");
+                if (daysParam != null) {
+                    try {
+                        days = Integer.parseInt(daysParam);
+                    } catch (NumberFormatException e) {
+                        sendErrorResponse(exchange, "Invalid days parameter", 400);
+                        return;
+                    }
+                }
+                
+                List<EnterpriseBackupSystem.BackupRecord> backups = backupSystem.getRecentBackups(days);
+                sendJsonResponse(exchange, backups, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseBackupCreateHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                Map<String, Object> response = new HashMap<>();
+                
+                // Parse request to determine backup type
+                String backupType = getQueryParameter(exchange, "type");
+                if (backupType == null) backupType = "incremental";
+                
+                try {
+                    if ("full".equals(backupType)) {
+                        backupSystem.performFullBackup();
+                        response.put("message", "Full backup started");
+                    } else {
+                        backupSystem.performIncrementalBackup();
+                        response.put("message", "Incremental backup started");
+                    }
+                    response.put("success", true);
+                    sendJsonResponse(exchange, response, 200);
+                } catch (Exception e) {
+                    response.put("success", false);
+                    response.put("error", e.getMessage());
+                    sendJsonResponse(exchange, response, 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseBackupRestoreHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("POST".equals(exchange.getRequestMethod())) {
+                String backupId = getQueryParameter(exchange, "backupId");
+                if (backupId == null) {
+                    sendErrorResponse(exchange, "Missing backupId parameter", 400);
+                    return;
+                }
+                
+                Map<String, Object> response = new HashMap<>();
+                try {
+                    EnterpriseBackupSystem.RestoreOptions options = new EnterpriseBackupSystem.RestoreOptions();
+                    backupSystem.restoreFromBackup(backupId, options);
+                    response.put("message", "Restore started for backup: " + backupId);
+                    response.put("success", true);
+                    sendJsonResponse(exchange, response, 200);
+                } catch (Exception e) {
+                    response.put("success", false);
+                    response.put("error", e.getMessage());
+                    sendJsonResponse(exchange, response, 500);
+                }
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseBackupVerifyHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                String backupId = getQueryParameter(exchange, "backupId");
+                Map<String, Object> response = new HashMap<>();
+                
+                if (backupId != null) {
+                    // Verify specific backup
+                    List<EnterpriseBackupSystem.BackupRecord> backups = backupSystem.getRecentBackups(365);
+                    EnterpriseBackupSystem.BackupRecord backup = backups.stream()
+                        .filter(b -> b.getJobId().equals(backupId))
+                        .findFirst()
+                        .orElse(null);
+                    
+                    if (backup != null) {
+                        boolean integrity = backupSystem.verifyBackupIntegrity(backup);
+                        response.put("backupId", backupId);
+                        response.put("verified", integrity);
+                        response.put("message", integrity ? "Backup integrity verified" : "Backup integrity check failed");
+                    } else {
+                        response.put("error", "Backup not found");
+                        sendJsonResponse(exchange, response, 404);
+                        return;
+                    }
+                } else {
+                    // Verify all recent backups
+                    List<EnterpriseBackupSystem.BackupRecord> backups = backupSystem.getRecentBackups(7);
+                    int verified = 0;
+                    int passed = 0;
+                    
+                    for (EnterpriseBackupSystem.BackupRecord backup : backups) {
+                        if (backup.getStatus() == EnterpriseBackupSystem.BackupStatus.SUCCESS) {
+                            verified++;
+                            if (backupSystem.verifyBackupIntegrity(backup)) {
+                                passed++;
+                            }
+                        }
+                    }
+                    
+                    response.put("totalBackups", backups.size());
+                    response.put("verified", verified);
+                    response.put("passed", passed);
+                    response.put("successRate", verified > 0 ? (double) passed / verified * 100.0 : 0.0);
+                }
+                
+                sendJsonResponse(exchange, response, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseBackupStatisticsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                Map<String, Object> statistics = backupSystem.getBackupStatistics();
+                sendJsonResponse(exchange, statistics, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private class EnterpriseDisasterRecoveryHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            DashboardSession session = validateSession(exchange.getRequestHeaders().getFirst("X-Session-ID"));
+            if (session == null) {
+                sendErrorResponse(exchange, "Unauthorized", 401);
+                return;
+            }
+            
+            if ("GET".equals(exchange.getRequestMethod())) {
+                // Return available disaster recovery plans
+                Map<String, Object> response = new HashMap<>();
+                response.put("availablePlans", Arrays.asList("immediate", "scheduled", "manual"));
+                response.put("activeStrategy", "immediate");
+                sendJsonResponse(exchange, response, 200);
+            } else if ("POST".equals(exchange.getRequestMethod())) {
+                // Create or test disaster recovery plan
+                String action = getQueryParameter(exchange, "action");
+                String planName = getQueryParameter(exchange, "planName");
+                
+                Map<String, Object> response = new HashMap<>();
+                
+                if ("create".equals(action) && planName != null) {
+                    try {
+                        backupSystem.createDisasterRecoveryPlan(planName, EnterpriseBackupSystem.RecoveryStrategy.IMMEDIATE);
+                        response.put("message", "Disaster recovery plan created: " + planName);
+                        response.put("success", true);
+                    } catch (Exception e) {
+                        response.put("success", false);
+                        response.put("error", e.getMessage());
+                    }
+                } else if ("test".equals(action) && planName != null) {
+                    try {
+                        backupSystem.testDisasterRecoveryPlan(planName);
+                        response.put("message", "Disaster recovery test started for plan: " + planName);
+                        response.put("success", true);
+                    } catch (Exception e) {
+                        response.put("success", false);
+                        response.put("error", e.getMessage());
+                    }
+                } else {
+                    response.put("error", "Invalid action or missing planName parameter");
+                    sendJsonResponse(exchange, response, 400);
+                    return;
+                }
+                
+                sendJsonResponse(exchange, response, 200);
+            } else {
+                sendErrorResponse(exchange, "Method not allowed", 405);
+            }
+        }
+    }
+    
+    private String getQueryParameter(HttpExchange exchange, String paramName) {
+        String query = exchange.getRequestURI().getQuery();
+        if (query != null) {
+            String[] pairs = query.split("&");
+            for (String pair : pairs) {
+                String[] keyValue = pair.split("=");
+                if (keyValue.length == 2 && keyValue[0].equals(paramName)) {
+                    return keyValue[1];
+                }
+            }
+        }
+        return null;
     }
 }
