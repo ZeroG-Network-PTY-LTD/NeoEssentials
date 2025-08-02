@@ -541,8 +541,7 @@ public class RealTimeServerMonitor {
                     AlertSeverity.WARNING,
                     "High heap memory usage detected",
                     snapshot.heapUsagePercent,
-                    85.0,
-                    LocalDateTime.now()
+                    85.0
                 ));
             }
             
@@ -553,8 +552,7 @@ public class RealTimeServerMonitor {
                     AlertSeverity.WARNING,
                     "High thread count detected",
                     snapshot.threadCount,
-                    150.0,
-                    LocalDateTime.now()
+                    150.0
                 ));
             }
             

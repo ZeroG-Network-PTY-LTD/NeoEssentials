@@ -56,6 +56,10 @@ public class MetricTimeSeries {
         dataPoints.clear();
     }
     
+    public void cleanup(LocalDateTime cutoffTime) {
+        dataPoints.removeIf(dp -> dp.timestamp.isBefore(cutoffTime));
+    }
+    
     public int size() {
         return dataPoints.size();
     }

@@ -340,11 +340,13 @@ public class SecurityManager {
             // Process violations
             for (SecurityViolation violation : violations) {
                 SecurityAlert alert = new SecurityAlert(
-                    violation.getType(),
-                    violation.getSeverity(),
+                    java.util.UUID.randomUUID().toString(),
+                    SecurityEventType.SECURITY_VIOLATION,
+                    SecurityLevel.valueOf(violation.getSeverity().toUpperCase()),
+                    "Security Violation Detected",
                     violation.getDescription(),
-                    violation.getDetails(),
-                    LocalDateTime.now()
+                    violation.getUser(),
+                    "SecurityManager"
                 );
                 
                 activeAlerts.add(alert);
@@ -354,7 +356,7 @@ public class SecurityManager {
                     violation.getUser(),
                     violation.getDescription(),
                     SecurityLevel.WARNING,
-                    violation.getDetails()
+                    violation.getMetadata()
                 );
             }
             

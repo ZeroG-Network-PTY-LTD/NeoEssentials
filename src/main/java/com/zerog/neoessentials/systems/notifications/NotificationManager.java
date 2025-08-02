@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.Map;
 
 /**
  * Enterprise Notification Manager for NeoEssentials
@@ -109,6 +110,7 @@ public class NotificationManager {
             NotificationPriority.HIGH,
             "Enterprise Notification Manager",
             "Notification system initialized successfully",
+            "SYSTEM",
             Map.of(
                 "start_time", LocalDateTime.now().toString(),
                 "enabled_channels", enabledChannels.toString(),
@@ -135,6 +137,7 @@ public class NotificationManager {
             NotificationPriority.HIGH,
             "Enterprise Notification Manager",
             "Notification system shutting down",
+            "SYSTEM",
             Map.of("shutdown_time", LocalDateTime.now().toString())
         ));
         
@@ -203,6 +206,7 @@ public class NotificationManager {
             NotificationPriority.NORMAL,
             title,
             message,
+            "SYSTEM",
             Map.of()
         ));
     }
@@ -216,6 +220,7 @@ public class NotificationManager {
             NotificationPriority.HIGH,
             title,
             message,
+            "SYSTEM",
             Map.of()
         ));
     }
@@ -229,6 +234,7 @@ public class NotificationManager {
             NotificationPriority.CRITICAL,
             title,
             message,
+            "SYSTEM",
             Map.of()
         ));
     }
@@ -242,6 +248,7 @@ public class NotificationManager {
             NotificationPriority.HIGH,
             "Performance Alert",
             String.format("Metric '%s' exceeded threshold: %.2f > %.2f", metric, value, threshold),
+            "SYSTEM",
             Map.of(
                 "metric", metric,
                 "value", value,
