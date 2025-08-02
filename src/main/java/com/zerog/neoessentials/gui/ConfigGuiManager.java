@@ -118,7 +118,7 @@ public class ConfigGuiManager {
             
             // Home settings
             ItemStack homeItem = new ItemStack(Items.RED_BED);
-            homeItem.setHoverName(Component.literal("§2Home Settings"));
+            homeItem.set(DataComponents.CUSTOM_NAME, Component.literal("§2Home Settings"));
             setLore(homeItem, Arrays.asList(
                 "§7Configure home system",
                 "§7• Maximum homes per player",
@@ -131,7 +131,7 @@ public class ConfigGuiManager {
             
             // Warp settings
             ItemStack warpItem = new ItemStack(Items.ENDER_PEARL);
-            warpItem.setHoverName(Component.literal("§5Warp Settings"));
+            warpItem.set(DataComponents.CUSTOM_NAME, Component.literal("§5Warp Settings"));
             setLore(warpItem, Arrays.asList(
                 "§7Configure warp system",
                 "§7• Warp categories",
@@ -144,7 +144,7 @@ public class ConfigGuiManager {
             
             // Kit settings
             ItemStack kitItem = new ItemStack(Items.CHEST);
-            kitItem.setHoverName(Component.literal("§9Kit Settings"));
+            kitItem.set(DataComponents.CUSTOM_NAME, Component.literal("§9Kit Settings"));
             setLore(kitItem, Arrays.asList(
                 "§7Configure kit system",
                 "§7• Kit contents",
@@ -157,7 +157,7 @@ public class ConfigGuiManager {
             
             // Messaging settings
             ItemStack messagingItem = new ItemStack(Items.WRITABLE_BOOK);
-            messagingItem.setHoverName(Component.literal("§bMessaging Settings"));
+            messagingItem.set(DataComponents.CUSTOM_NAME, Component.literal("§bMessaging Settings"));
             setLore(messagingItem, Arrays.asList(
                 "§7Configure messaging system",
                 "§7• Mail system",
@@ -170,7 +170,7 @@ public class ConfigGuiManager {
             
             // Spawn settings
             ItemStack spawnItem = new ItemStack(Items.COMPASS);
-            spawnItem.setHoverName(Component.literal("§aSpawn Settings"));
+            spawnItem.set(DataComponents.CUSTOM_NAME, Component.literal("§aSpawn Settings"));
             setLore(spawnItem, Arrays.asList(
                 "§7Configure spawn system",
                 "§7• Spawn location",
@@ -183,7 +183,7 @@ public class ConfigGuiManager {
             
             // Moderation settings
             ItemStack moderationItem = new ItemStack(Items.IRON_SWORD);
-            moderationItem.setHoverName(Component.literal("§cModeration Settings"));
+            moderationItem.set(DataComponents.CUSTOM_NAME, Component.literal("§cModeration Settings"));
             setLore(moderationItem, Arrays.asList(
                 "§7Configure moderation tools",
                 "§7• Jail locations",
@@ -196,7 +196,7 @@ public class ConfigGuiManager {
             
             // Performance monitoring
             ItemStack performanceItem = new ItemStack(Items.REDSTONE);
-            performanceItem.setHoverName(Component.literal("§6Performance Monitor"));
+            performanceItem.set(DataComponents.CUSTOM_NAME, Component.literal("§6Performance Monitor"));
             setLore(performanceItem, Arrays.asList(
                 "§7View performance metrics",
                 "§7• Command execution times",
@@ -209,7 +209,7 @@ public class ConfigGuiManager {
             
             // Placeholder settings
             ItemStack placeholderItem = new ItemStack(Items.NAME_TAG);
-            placeholderItem.setHoverName(Component.literal("§dPlaceholder Settings"));
+            placeholderItem.set(DataComponents.CUSTOM_NAME, Component.literal("§dPlaceholder Settings"));
             setLore(placeholderItem, Arrays.asList(
                 "§7Configure placeholders",
                 "§7• Custom placeholders",
@@ -222,7 +222,7 @@ public class ConfigGuiManager {
             
             // Reload configuration
             ItemStack reloadItem = new ItemStack(Items.STRUCTURE_VOID);
-            reloadItem.setHoverName(Component.literal("§cReload Configuration"));
+            reloadItem.set(DataComponents.CUSTOM_NAME, Component.literal("§cReload Configuration"));
             setLore(reloadItem, Arrays.asList(
                 "§7Reload all configuration files",
                 "§7This will apply changes made",
@@ -234,7 +234,7 @@ public class ConfigGuiManager {
             
             // Fill empty slots with glass panes
             ItemStack glassPane = new ItemStack(Items.GRAY_STAINED_GLASS_PANE);
-            glassPane.setHoverName(Component.literal(" "));
+            glassPane.set(DataComponents.CUSTOM_NAME, Component.literal(" "));
             for (int i = 0; i < 54; i++) {
                 if (container.getItem(i).isEmpty()) {
                     container.setItem(i, glassPane);
@@ -261,7 +261,7 @@ public class ConfigGuiManager {
             
             // Starting balance setting
             ItemStack startingBalanceItem = new ItemStack(Items.EMERALD);
-            startingBalanceItem.setHoverName(Component.literal("§aStarting Balance"));
+            startingBalanceItem.set(DataComponents.CUSTOM_NAME, Component.literal("§aStarting Balance"));
             setLore(startingBalanceItem, Arrays.asList(
                 "§7Current: §e" + configManager.getEconomyConfig().startingBalance,
                 "§7The amount new players start with",
@@ -274,7 +274,7 @@ public class ConfigGuiManager {
             
             // Currency symbol setting
             ItemStack currencyItem = new ItemStack(Items.GOLD_NUGGET);
-            currencyItem.setHoverName(Component.literal("§eCurrency Symbol"));
+            currencyItem.set(DataComponents.CUSTOM_NAME, Component.literal("§eCurrency Symbol"));
             setLore(currencyItem, Arrays.asList(
                 "§7Current: §e" + configManager.getEconomyConfig().currencySymbol,
                 "§7The symbol used for currency",
@@ -285,7 +285,7 @@ public class ConfigGuiManager {
             
             // Command costs
             ItemStack costsItem = new ItemStack(Items.PAPER);
-            costsItem.setHoverName(Component.literal("§6Command Costs"));
+            costsItem.set(DataComponents.CUSTOM_NAME, Component.literal("§6Command Costs"));
             setLore(costsItem, Arrays.asList(
                 "§7Configure costs for commands",
                 "§7• Home teleportation",
@@ -298,7 +298,7 @@ public class ConfigGuiManager {
             
             // Back button
             ItemStack backItem = new ItemStack(Items.ARROW);
-            backItem.setHoverName(Component.literal("§7Back to Main Menu"));
+            backItem.set(DataComponents.CUSTOM_NAME, Component.literal("§7Back to Main Menu"));
             container.setItem(22, backItem);
             
             return new ChestMenu(MenuType.GENERIC_9x3, containerId, playerInventory, container, 3);
@@ -321,7 +321,7 @@ public class ConfigGuiManager {
             
             // Max homes setting
             ItemStack maxHomesItem = new ItemStack(Items.RED_BED);
-            maxHomesItem.setHoverName(Component.literal("§aMaximum Homes"));
+            maxHomesItem.set(DataComponents.CUSTOM_NAME, Component.literal("§aMaximum Homes"));
             setLore(maxHomesItem, Arrays.asList(
                 "§7Current default: §e" + configManager.getHomeConfig().defaultMaxHomes,
                 "§7Maximum homes per player",
@@ -334,10 +334,10 @@ public class ConfigGuiManager {
             
             // Home costs
             ItemStack costItem = new ItemStack(Items.GOLD_INGOT);
-            costItem.setHoverName(Component.literal("§6Home Costs"));
+            costItem.set(DataComponents.CUSTOM_NAME, Component.literal("§6Home Costs"));
             setLore(costItem, Arrays.asList(
                 "§7Set home cost: §e" + configManager.getHomeConfig().setHomeCost,
-                "§7Teleport cost: §e" + configManager.getHomeConfig().teleportCost,
+                "§7Teleport cost: §e" + configManager.getHomeConfig().getTeleportCost(),
                 "",
                 "§eClick to modify"
             ));
@@ -345,7 +345,7 @@ public class ConfigGuiManager {
             
             // Restricted worlds
             ItemStack restrictedItem = new ItemStack(Items.BARRIER);
-            restrictedItem.setHoverName(Component.literal("§cRestricted Worlds"));
+            restrictedItem.set(DataComponents.CUSTOM_NAME, Component.literal("§cRestricted Worlds"));
             setLore(restrictedItem, Arrays.asList(
                 "§7Worlds where homes are disabled",
                 "§7Current: §e" + String.join(", ", configManager.getHomeConfig().restrictedWorlds),
@@ -356,7 +356,7 @@ public class ConfigGuiManager {
             
             // Back button
             ItemStack backItem = new ItemStack(Items.ARROW);
-            backItem.setHoverName(Component.literal("§7Back to Main Menu"));
+            backItem.set(DataComponents.CUSTOM_NAME, Component.literal("§7Back to Main Menu"));
             container.setItem(22, backItem);
             
             return new ChestMenu(MenuType.GENERIC_9x3, containerId, playerInventory, container, 3);
@@ -364,20 +364,21 @@ public class ConfigGuiManager {
     }
     
     /**
+     * Utility method to set custom name on an item
+     */
+    private void setCustomName(ItemStack item, String name) {
+        item.set(DataComponents.CUSTOM_NAME, Component.literal(name));
+    }
+    
+    /**
      * Utility method to set lore on an item
      */
     private void setLore(ItemStack item, List<String> lore) {
-        CompoundTag tag = item.getOrCreateTag();
-        CompoundTag display = tag.getCompound("display");
-        
         List<Component> loreComponents = new ArrayList<>();
         for (String line : lore) {
             loreComponents.add(Component.literal(line));
         }
-        
-        // This is a simplified approach - in a real implementation,
-        // you'd need to properly serialize the lore to NBT
-        // For now, we'll just set the hover name
+        item.set(DataComponents.LORE, new net.minecraft.world.item.component.ItemLore(loreComponents));
     }
     
     /**
@@ -442,7 +443,7 @@ public class ConfigGuiManager {
     
     private void reloadConfiguration(ServerPlayer player) {
         try {
-            configManager.reloadConfigs();
+            configManager.reloadAll();
             player.sendSystemMessage(Component.literal("§aConfiguration reloaded successfully!"));
             LOGGER.info("Configuration reloaded by player {}", player.getName().getString());
         } catch (Exception e) {

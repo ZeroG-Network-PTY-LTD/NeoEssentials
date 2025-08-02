@@ -4,11 +4,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-// Temporarily disabled security system imports
-// import com.zerog.neoessentials.systems.security.SecurityManager;
-// import com.zerog.neoessentials.systems.security.SecurityEventType;
-// import com.zerog.neoessentials.systems.security.SecurityLevel;
-// import com.zerog.neoessentials.systems.monitoring.RealTimeServerMonitor;
+import com.zerog.neoessentials.systems.security.SecurityManager;
+import com.zerog.neoessentials.systems.security.SecurityEventType;
+import com.zerog.neoessentials.systems.security.SecurityLevel;
+import com.zerog.neoessentials.systems.monitoring.RealTimeServerMonitor;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -37,9 +36,9 @@ import java.util.Map;
 public class EnterpriseCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(EnterpriseCommand.class);
     
-    // Enterprise system references - temporarily disabled during compilation fix
-    // private static final SecurityManager securityManager = SecurityManager.getInstance();
-    // private static final RealTimeServerMonitor monitor = RealTimeServerMonitor.getInstance();
+    // Enterprise system references
+    private static final SecurityManager securityManager = SecurityManager.getInstance();
+    private static final RealTimeServerMonitor monitor = RealTimeServerMonitor.getInstance();
     
     /**
      * Register enterprise management commands
