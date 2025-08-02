@@ -18,6 +18,7 @@ public class HomeConfig {
     public int maxHomes = 3;
     public int maxHomesVip = 5;
     public int maxHomesAdmin = 10;
+    public int defaultMaxHomes = 3;
     
     // Home costs
     public BigDecimal setHomeCost = new BigDecimal("50.00");
@@ -120,5 +121,12 @@ public class HomeConfig {
         }
         
         return true;
+    }
+    
+    /**
+     * Get teleport cost (alias for compatibility)
+     */
+    public BigDecimal getTeleportCost() {
+        return teleportHomeCost;
     }
 }
