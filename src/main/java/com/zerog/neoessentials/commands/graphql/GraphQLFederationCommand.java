@@ -675,17 +675,17 @@ public class GraphQLFederationCommand {
     
     // Placeholder implementations for remaining commands that aren't implemented yet
     @SuppressWarnings("unused")
-    private int showFederationStatus(CommandContext<CommandSourceStack> context) { return showSystemStatus(context); }
+    private int showFederationStatus(CommandContext<CommandSourceStack> context) throws CommandSyntaxException { return showSystemStatus(context); }
     @SuppressWarnings("unused")
-    private int showGatewayStatus(CommandContext<CommandSourceStack> context) { return showSystemStatus(context); }
+    private int showGatewayStatus(CommandContext<CommandSourceStack> context) throws CommandSyntaxException { return showSystemStatus(context); }
     @SuppressWarnings("unused")
-    private int showGatewayConfig(CommandContext<CommandSourceStack> context) { return showConfig(context); }
+    private int showGatewayConfig(CommandContext<CommandSourceStack> context) throws CommandSyntaxException { return showConfig(context); }
     @SuppressWarnings("unused")
-    private int showSubgraphs(CommandContext<CommandSourceStack> context) { return listSchemas(context); }
+    private int showSubgraphs(CommandContext<CommandSourceStack> context) throws CommandSyntaxException { return listSchemas(context); }
     @SuppressWarnings("unused")
     private int showRouting(CommandContext<CommandSourceStack> context) { return 1; }
     @SuppressWarnings("unused")
-    private int showQueryPerformance(CommandContext<CommandSourceStack> context) { return showPerformanceMetrics(context); }
+    private int showQueryPerformance(CommandContext<CommandSourceStack> context) throws CommandSyntaxException { return showPerformanceMetrics(context); }
     @SuppressWarnings("unused")
     private int showLatencyMetrics(CommandContext<CommandSourceStack> context) { return 1; }
     @SuppressWarnings("unused")
@@ -697,7 +697,7 @@ public class GraphQLFederationCommand {
     @SuppressWarnings("unused")
     private int generatePerformanceReport(CommandContext<CommandSourceStack> context) { return 1; }
     @SuppressWarnings("unused")
-    private int showCacheStats(CommandContext<CommandSourceStack> context) { return showCacheStatus(context); }
+    private int showCacheStats(CommandContext<CommandSourceStack> context) throws CommandSyntaxException { return showCacheStatus(context); }
     @SuppressWarnings("unused")
     private int warmupCache(CommandContext<CommandSourceStack> context) { return 1; }
     @SuppressWarnings("unused")
@@ -743,7 +743,7 @@ public class GraphQLFederationCommand {
     @SuppressWarnings("unused")
     private int generateAnalyticsReport(CommandContext<CommandSourceStack> context) { return 1; }
     @SuppressWarnings("unused")
-    private int performDetailedHealthCheck(CommandContext<CommandSourceStack> context) { return performHealthCheck(context); }
+    private int performDetailedHealthCheck(CommandContext<CommandSourceStack> context) throws CommandSyntaxException { return performHealthCheck(context); }
     @SuppressWarnings("unused")
     private int checkComponentHealth(CommandContext<CommandSourceStack> context) { return 1; }
     @SuppressWarnings("unused")
