@@ -109,6 +109,25 @@ public class ModerationCommands {
                 .executes(context -> unjailPlayer(context, EntityArgument.getPlayer(context, "player")))
             )
         );
+        
+        // /tempban <player> <duration> [reason] - Temporarily ban player
+        dispatcher.register(Commands.literal("tempban")
+            .requires(source -> source.hasPermission(3))
+            .then(Commands.argument("player", EntityArgument.player())
+                .then(Commands.argument("duration", IntegerArgumentType.integer(1))
+                    .executes(context -> tempBanPlayer(context,
+                        EntityArgument.getPlayer(context, "player"),
+                        IntegerArgumentType.getInteger(context, "duration"),
+                        "Temporarily banned by admin"))
+                    .then(Commands.argument("reason", StringArgumentType.greedyString())
+                        .executes(context -> tempBanPlayer(context,
+                            EntityArgument.getPlayer(context, "player"),
+                            IntegerArgumentType.getInteger(context, "duration"),
+                            StringArgumentType.getString(context, "reason")))
+                    )
+                )
+            )
+        );
     }
     
     private static int kickPlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, String reason) throws CommandSyntaxException {
@@ -169,6 +188,31 @@ public class ModerationCommands {
         ModerationManager moderationManager = ModerationManager.getInstance();
         
         boolean success = moderationManager.unjailPlayer(target.getUUID(), target.getName().getString(), admin);
+        return success ? 1 : 0;
+    }
+    
+    private static int tempBanPlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, int durationMinutes, String reason) throws CommandSyntaxException {
+        ServerPlayer admin = context.getSource().getPlayerOrException();
+        ModerationManager moderationManager = ModerationManager.getInstance();
+        
+        // Validate duration
+        if (durationMinutes < 1) {
+            MessageUtil.sendMessage(admin, "&cDuration must be at least 1 minute!");
+            return 0;
+        }
+        
+        if (durationMinutes > 525600) { // 1 year in minutes
+            MessageUtil.sendMessage(admin, "&cDuration cannot exceed 1 year!");
+            return 0;
+        }
+        
+        // Check if trying to ban themselves
+        if (target.getUUID().equals(admin.getUUID())) {
+            MessageUtil.sendMessage(admin, "&cYou cannot ban yourself!");
+            return 0;
+        }
+        
+        boolean success = moderationManager.tempBanPlayer(target, admin, reason, durationMinutes);
         return success ? 1 : 0;
     }
 }

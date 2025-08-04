@@ -335,6 +335,92 @@ public class ModerationManager {
     }
     
     /**
+     * Temporarily ban a player for a specified duration
+     */
+    public boolean tempBanPlayer(ServerPlayer target, ServerPlayer moderator, String reason, long durationMinutes) {
+        ModerationConfig config = configManager.getModerationConfig();
+        
+        if (!config.enabled || !config.ban.enabled || !config.ban.enableTempBan) {
+            MessageUtil.sendMessage(moderator, "&cTemporary ban system is disabled.");
+            return false;
+        }
+        
+        // Check permission
+        if (!PermissionUtil.hasPermission(moderator, "essentials.tempban")) {
+            MessageUtil.sendMessage(moderator, config.messages.noPermission);
+            return false;
+        }
+        
+        // Check if target is exempt
+        if (PermissionUtil.hasPermission(target, "essentials.ban.exempt")) {
+            MessageUtil.sendMessage(moderator, config.messages.playerExempt);
+            return false;
+        }
+        
+        // Get server instance safely
+        net.minecraft.server.MinecraftServer server = target.getServer();
+        if (server == null) {
+            MessageUtil.sendMessage(moderator, "&cFailed to access server instance for ban.");
+            return false;
+        }
+        
+        // Check if player is already banned
+        if (server.getPlayerList().getBans().isBanned(target.getGameProfile())) {
+            MessageUtil.sendMessage(moderator, "&c" + target.getName().getString() + " is already banned!");
+            return false;
+        }
+        
+        String finalReason = reason != null && !reason.isEmpty() ? reason : config.ban.defaultBanReason;
+        long durationMs = durationMinutes * 60 * 1000; // Convert to milliseconds
+        long expiryTime = System.currentTimeMillis() + durationMs;
+        
+        try {
+            // Create temporary ban entry
+            java.util.Date expiryDate = new java.util.Date(expiryTime);
+            net.minecraft.server.players.UserBanListEntry banEntry = new net.minecraft.server.players.UserBanListEntry(
+                target.getGameProfile(),
+                new java.util.Date(),
+                moderator.getName().getString(),
+                expiryDate,
+                finalReason
+            );
+            
+            // Add to ban list
+            server.getPlayerList().getBans().add(banEntry);
+            
+            // Disconnect the player
+            String banMessage = MessageUtil.replacePlaceholders(config.messages.youAreBanned,
+                finalReason, moderator.getName().getString(), MessageUtil.formatTime(durationMs));
+            target.connection.disconnect(net.minecraft.network.chat.Component.literal(banMessage));
+            
+            // Log action
+            logModerationAction("TEMPBAN", moderator, target, finalReason, durationMinutes * 60);
+            
+            // Broadcast if enabled
+            if (config.broadcastActions) {
+                String broadcastMessage = MessageUtil.replacePlaceholders(config.messages.playerTempBanned,
+                    target.getName().getString(), MessageUtil.formatTime(durationMs), 
+                    moderator.getName().getString(), finalReason);
+                broadcastAction(broadcastMessage);
+            }
+            
+            String successMessage = "&aSuccessfully temp-banned " + target.getName().getString() + 
+                " for " + MessageUtil.formatTime(durationMs) + ": " + finalReason;
+            MessageUtil.sendMessage(moderator, successMessage);
+            
+            LOGGER.info("Player {} temp-banned by {} for {} minutes: {}", 
+                target.getName().getString(), moderator.getName().getString(), durationMinutes, finalReason);
+            
+            return true;
+            
+        } catch (Exception e) {
+            MessageUtil.sendMessage(moderator, "&cFailed to temp-ban player: " + e.getMessage());
+            LOGGER.error("Failed to temp-ban player {}", target.getName().getString(), e);
+            return false;
+        }
+    }
+    
+    /**
      * Check if a player is muted
      */
     public boolean isPlayerMuted(UUID playerUuid) {
