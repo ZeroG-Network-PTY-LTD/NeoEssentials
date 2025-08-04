@@ -25,6 +25,7 @@ public class ConfigManager {
     private static ConfigManager instance;
     private final Gson gson;
     private final Path configPath;
+    private final ConfigStatus configStatus = new ConfigStatus();
     
     // Configuration instances
     private MainConfig mainConfig;
@@ -238,20 +239,30 @@ public class ConfigManager {
     // Generic configuration loading
     private <T> T loadConfig(String fileName, Class<T> configClass) {
         File configFile = configPath.resolve(fileName).toFile();
+        String configName = fileName.replace(".json", "");
+        
+        // Update modification time
+        configStatus.updateModified(configName, configFile.lastModified());
         
         if (!configFile.exists()) {
             LOGGER.info("Creating default configuration: {}", fileName);
             T defaultConfig = createDefaultConfig(configClass);
             saveConfig(fileName, defaultConfig);
+            configStatus.markLoaded(configName, true);
+            configStatus.markValid(configName, true, null);
             return defaultConfig;
         }
         
         try (FileReader reader = new FileReader(configFile)) {
             T config = gson.fromJson(reader, configClass);
             LOGGER.debug("Loaded configuration: {}", fileName);
+            configStatus.markLoaded(configName, true);
+            configStatus.markValid(configName, true, null);
             return config;
         } catch (IOException e) {
             LOGGER.error("Failed to load configuration: {}", fileName, e);
+            configStatus.markLoaded(configName, false);
+            configStatus.markValid(configName, false, e.getMessage());
             return createDefaultConfig(configClass);
         }
     }
@@ -300,27 +311,39 @@ public class ConfigManager {
      * Check if all critical configurations are valid
      */
     public boolean validateConfigurations() {
-        boolean valid = true;
+        boolean allValid = true;
         
-        // Validate main config
-        if (mainConfig == null) {
-            LOGGER.error("Main configuration is null!");
-            valid = false;
+        for (String fileName : getAllConfigFiles()) {
+            String configName = fileName.replace(".json", "");
+            File configFile = getConfigFile(fileName);
+            
+            ConfigValidator.ValidationResult result = ConfigValidator.validateConfigFile(configFile, configName);
+            
+            if (!result.isValid()) {
+                allValid = false;
+                configStatus.markValid(configName, false, 
+                    String.join("; ", result.getErrors()));
+                LOGGER.warn("Configuration validation failed for {}: {}", 
+                    configName, String.join(", ", result.getErrors()));
+            } else {
+                configStatus.markValid(configName, true, null);
+                if (result.hasWarnings()) {
+                    LOGGER.warn("Configuration warnings for {}: {}", 
+                        configName, String.join(", ", result.getWarnings()));
+                }
+            }
         }
         
-        // Validate economy config if economy is enabled
-        if (mainConfig != null && mainConfig.modules.economy && economyConfig != null) {
-            // Basic validation - just check if it exists
-            LOGGER.debug("Economy configuration is present");
-        }
-        
-        // Validate Discord config if Discord is enabled
-        if (discordConfig != null && !discordConfig.isValid()) {
-            LOGGER.error("Discord configuration is invalid!");
-            valid = false;
-        }
-        
-        return valid;
+        return allValid;
+    }
+    
+    /**
+     * Validate a specific configuration
+     */
+    public ConfigValidator.ValidationResult validateConfiguration(String configName) {
+        String fileName = configName + ".json";
+        File configFile = getConfigFile(fileName);
+        return ConfigValidator.validateConfigFile(configFile, configName);
     }
     
     /**
@@ -338,9 +361,64 @@ public class ConfigManager {
     }
     
     /**
+     * Get configuration status tracker
+     */
+    public ConfigStatus getConfigStatus() {
+        return configStatus;
+    }
+    
+    /**
      * Check if configuration file exists
      */
     public boolean configExists(String fileName) {
         return configPath.resolve(fileName).toFile().exists();
+    }
+    
+    /**
+     * Get all configuration file names
+     */
+    public String[] getAllConfigFiles() {
+        return new String[]{
+            "main.json", "economy.json", "homes.json", "kits.json", 
+            "warps.json", "moderation.json", "messaging.json", 
+            "discord.json", "tablist.json", "spawn.json"
+        };
+    }
+    
+    /**
+     * Force reload a specific configuration
+     */
+    public boolean reloadConfig(String configName) {
+        try {
+            switch (configName.toLowerCase()) {
+                case "main" -> loadMainConfig();
+                case "economy" -> loadEconomyConfig();
+                case "homes" -> loadHomeConfig();
+                case "kits" -> loadKitConfig();
+                case "warps" -> loadWarpConfig();
+                case "moderation" -> loadModerationConfig();
+                case "messaging" -> loadMessagingConfig();
+                case "discord" -> loadDiscordConfig();
+                case "tablist" -> loadTablistConfig();
+                case "spawn" -> loadSpawnConfig();
+                default -> {
+                    LOGGER.warn("Unknown configuration: {}", configName);
+                    return false;
+                }
+            }
+            LOGGER.info("Reloaded configuration: {}", configName);
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to reload configuration: {}", configName, e);
+            return false;
+        }
+    }
+    
+    /**
+     * Get configuration file modification time
+     */
+    public long getConfigModificationTime(String fileName) {
+        File configFile = getConfigFile(fileName);
+        return configFile.exists() ? configFile.lastModified() : 0;
     }
 }
