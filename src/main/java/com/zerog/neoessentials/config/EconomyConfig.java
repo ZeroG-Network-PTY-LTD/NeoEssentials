@@ -52,6 +52,15 @@ public class EconomyConfig {
     public EconomyConfig() {
         initializeDefaults();
     }
+
+    /**
+     * Load configuration from file or initialize defaults
+     */
+    public void load() {
+        // Load configuration from file if it exists
+        // For now, just ensure defaults are initialized
+        initializeDefaults();
+    }
     
     private void initializeDefaults() {
         // Default command costs
@@ -165,5 +174,30 @@ public class EconomyConfig {
         if (currencyFormat == null || currencyFormat.isEmpty()) return false;
         
         return true;
+    }
+    
+    // Additional methods for advanced economy features
+    public BigDecimal getStartingBalance() {
+        return BigDecimal.valueOf(startingBalance);
+    }
+    
+    public BigDecimal getTransferFeeRate() {
+        return BigDecimal.valueOf(transferFeePercent / 100.0);
+    }
+    
+    public BigDecimal getMaxTransferFee() {
+        return BigDecimal.valueOf(maxBalance * 0.1); // 10% of max balance
+    }
+    
+    public int getInterestUpdateInterval() {
+        return 3600; // 1 hour in seconds
+    }
+    
+    public int getMarketUpdateInterval() {
+        return 1800; // 30 minutes in seconds
+    }
+    
+    public int getTransactionRetentionDays() {
+        return 90; // 90 days
     }
 }

@@ -80,6 +80,22 @@ public class EconomyCommands {
                 )
             )
         );
+        
+        // /baltop [limit] - Economy leaderboard
+        dispatcher.register(Commands.literal("baltop")
+            .executes(EconomyCommands::showLeaderboard)
+            .then(Commands.argument("limit", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 50))
+                .executes(context -> showLeaderboard(context, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "limit")))
+            )
+        );
+        
+        // /balancetop [limit] - Alias for /baltop
+        dispatcher.register(Commands.literal("balancetop")
+            .executes(EconomyCommands::showLeaderboard)
+            .then(Commands.argument("limit", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 50))
+                .executes(context -> showLeaderboard(context, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "limit")))
+            )
+        );
     }
     
     private static int checkBalance(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -170,6 +186,62 @@ public class EconomyCommands {
         String formattedAmount = economyManager.formatCurrency(setAmount);
         MessageUtil.sendMessage(admin, "&aSet " + target.getName().getString() + "'s balance to &e" + formattedAmount);
         MessageUtil.sendMessage(target, "&aYour balance has been set to &e" + formattedAmount);
+        
+        return 1;
+    }
+    
+    private static int showLeaderboard(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        return showLeaderboard(context, 10); // Default to top 10
+    }
+    
+    private static int showLeaderboard(CommandContext<CommandSourceStack> context, int limit) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        EconomyManager economyManager = EconomyManager.getInstance();
+        
+        var topBalances = economyManager.getTopBalances(limit);
+        
+        if (topBalances.isEmpty()) {
+            MessageUtil.sendMessage(player, "&cNo economy data available");
+            return 0;
+        }
+        
+        MessageUtil.sendMessage(player, "&6&l=== Economy Leaderboard ===");
+        MessageUtil.sendMessage(player, "&7Showing top " + Math.min(limit, topBalances.size()) + " players:");
+        MessageUtil.sendMessage(player, "");
+        
+        int position = 1;
+        for (var entry : topBalances) {
+            java.util.UUID playerUUID = entry.getKey();
+            java.math.BigDecimal balance = entry.getValue();
+            
+            // Get player name from server
+            net.minecraft.server.MinecraftServer server = player.getServer();
+            String playerName = "Unknown Player";
+            if (server != null) {
+                net.minecraft.server.level.ServerPlayer targetPlayer = server.getPlayerList().getPlayer(playerUUID);
+                if (targetPlayer != null) {
+                    playerName = targetPlayer.getName().getString();
+                } else {
+                    // Try to get from game profile cache
+                    var profileCache = server.getProfileCache();
+                    if (profileCache != null) {
+                        com.mojang.authlib.GameProfile profile = profileCache.get(playerUUID).orElse(null);
+                        if (profile != null) {
+                            playerName = profile.getName();
+                        }
+                    }
+                }
+            }
+            
+            String formattedBalance = economyManager.formatCurrency(balance);
+            String positionColor = position <= 3 ? "&6" : "&f"; // Gold for top 3, white for others
+            
+            MessageUtil.sendMessage(player, positionColor + "#" + position + " &a" + playerName + " &7- &e" + formattedBalance);
+            position++;
+        }
+        
+        MessageUtil.sendMessage(player, "");
+        MessageUtil.sendMessage(player, "&7Use &a/baltop <number> &7to see more entries (1-50)");
         
         return 1;
     }

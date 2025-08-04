@@ -39,6 +39,9 @@ public class EssentialsConfig {
     // Language Settings
     public LanguageConfig language = new LanguageConfig();
     
+    // Notification Settings
+    public NotificationConfig notifications = new NotificationConfig();
+    
     public static class ModuleConfig {
         public boolean antiBuild = true;
         public boolean chat = true;
@@ -115,5 +118,30 @@ public class EssentialsConfig {
         public String defaultLocale = "en_us";
         public boolean autoDetectPlayerLocale = true;
         public String[] supportedLocales = {"en_us", "de_de", "es_es", "fr_fr", "it_it", "pt_br", "ru_ru", "zh_cn"};
+    }
+    
+    public static class NotificationConfig {
+        public boolean enabled = true;
+        public boolean logCommands = false; // Log command executions
+        public DiscordConfig discord = new DiscordConfig();
+        public EmailConfig email = new EmailConfig();
+        
+        public static class DiscordConfig {
+            public boolean enabled = false;
+            public String webhookUrl = "";
+            public String username = "NeoEssentials";
+            public String avatarUrl = "";
+        }
+        
+        public static class EmailConfig {
+            public boolean enabled = false;
+            public String smtpHost = "smtp.gmail.com";
+            public int smtpPort = 587;
+            public String username = "";
+            public String password = "";
+            public String fromAddress = "";
+            public String[] toAddresses = {};
+            public boolean useTLS = true;
+        }
     }
 }

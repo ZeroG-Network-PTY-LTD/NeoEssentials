@@ -1,25 +1,26 @@
 package com.zerog.neoessentials.systems.security;
 
 /**
- * Security level classification
+ * Security level enumeration
  */
 public enum SecurityLevel {
-    TRACE(0),
-    DEBUG(1),
-    INFO(2),
-    WARNING(3),
-    ERROR(4),
-    CRITICAL(5);
+    LOW("Low"),
+    MEDIUM("Medium"),
+    HIGH("High"),
+    CRITICAL("Critical");
     
-    private final int priority;
+    private final String displayName;
     
-    SecurityLevel(int priority) {
-        this.priority = priority;
+    SecurityLevel(String displayName) {
+        this.displayName = displayName;
     }
     
-    public int getPriority() { return priority; }
+    public String getDisplayName() {
+        return displayName;
+    }
     
-    public boolean isMoreSevereThan(SecurityLevel other) {
-        return this.priority > other.priority;
+    @Override
+    public String toString() {
+        return displayName;
     }
 }

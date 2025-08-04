@@ -1,8 +1,8 @@
 package com.zerog.neoessentials.systems.monitoring;
 
-import com.zerog.neoessentials.systems.security.SecurityManager;
-import com.zerog.neoessentials.systems.security.SecurityEventType;
-import com.zerog.neoessentials.systems.security.SecurityLevel;
+import com.zerog.neoessentials.security.SecurityManager;
+import com.zerog.neoessentials.security.SecurityEventType;
+import com.zerog.neoessentials.security.SecurityLevel;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -133,14 +133,8 @@ public class RealTimeServerMonitor {
         // Log to security system
         SecurityManager.getInstance().logSecurityEvent(
             SecurityEventType.SYSTEM_STARTUP,
-            "SYSTEM",
             "Real-Time Server Monitor initialized",
-            SecurityLevel.INFO,
-            Map.of(
-                "component", "RealTimeServerMonitor",
-                "startup_time", LocalDateTime.now().toString(),
-                "monitoring_interval", config.getCollectionInterval() + "ms"
-            )
+            SecurityLevel.INFO
         );
         
         LOGGER.info("Real-Time Server Monitor initialized successfully");
@@ -348,15 +342,8 @@ public class RealTimeServerMonitor {
                     // Log to security system
                     SecurityManager.getInstance().logSecurityEvent(
                         SecurityEventType.SYSTEM_STARTUP, // Could add PERFORMANCE_ALERT type
-                        "SYSTEM",
                         "Performance alert generated: " + alert.getMessage(),
-                        alert.getSeverity() == AlertSeverity.CRITICAL ? SecurityLevel.CRITICAL : SecurityLevel.WARNING,
-                        Map.of(
-                            "alert_type", alert.getType().toString(),
-                            "severity", alert.getSeverity().toString(),
-                            "metric_value", alert.getMetricValue(),
-                            "threshold", alert.getThreshold()
-                        )
+                        alert.getSeverity() == AlertSeverity.CRITICAL ? SecurityLevel.CRITICAL : SecurityLevel.WARNING
                     );
                 }
             }
@@ -404,14 +391,8 @@ public class RealTimeServerMonitor {
                     // Log optimization to security system
                     SecurityManager.getInstance().logSecurityEvent(
                         SecurityEventType.SYSTEM_STARTUP, // Could add PERFORMANCE_OPTIMIZATION type
-                        "SYSTEM",
                         "Automatic performance optimization completed",
-                        SecurityLevel.INFO,
-                        Map.of(
-                            "optimizations_applied", result.getOptimizationsApplied(),
-                            "performance_improvement", result.getPerformanceImprovement() + "%",
-                            "memory_freed", result.getMemoryFreed() + " bytes"
-                        )
+                        SecurityLevel.INFO
                     );
                 }
             }

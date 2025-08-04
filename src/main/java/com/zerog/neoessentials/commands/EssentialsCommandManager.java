@@ -2,6 +2,9 @@ package com.zerog.neoessentials.commands;
 
 import com.zerog.neoessentials.NeoEssentialsCompat;
 import com.zerog.neoessentials.commands.essentials.*;
+import com.zerog.neoessentials.commands.discord.DiscordCommand;
+import com.zerog.neoessentials.commands.GuiCommand;
+import com.zerog.neoessentials.commands.NeoEssentialsCommand;
 import com.zerog.neoessentials.config.EssentialsConfig;
 import com.neoessentials.api.home.HomeService;
 import com.neoessentials.language.LanguageManager;
@@ -50,6 +53,7 @@ public class EssentialsCommandManager {
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         var dispatcher = event.getDispatcher();
+        var context = event.getBuildContext();
         
         LOGGER.info("Registering essentials commands...");
         
@@ -60,6 +64,11 @@ public class EssentialsCommandManager {
         TpaCommand.register(dispatcher);
         TeleportCommand.register(dispatcher);
         BackCommand.register(dispatcher);
+        
+        // Essential admin commands
+        ItemCommand.register(dispatcher, context);
+        RepairCommand.register(dispatcher, context);
+        NotificationCommand.register(dispatcher);
         
         // Kit system
         KitCommand.register(dispatcher);
@@ -95,12 +104,32 @@ public class EssentialsCommandManager {
         NickCommand.register(dispatcher);
         FeedCommand.register(dispatcher);
         HealCommand.register(dispatcher);
+        GodCommand.register(dispatcher);
+        VanishCommand.register(dispatcher);
+        FlyCommand.register(dispatcher);
+        SpeedCommand.register(dispatcher);
+        GiveCommand.register(dispatcher, context);
+        TimeCommand.register(dispatcher);
+        WeatherCommand.register(dispatcher);
+        WorkbenchCommand.register(dispatcher);
+        AnvilCommand.register(dispatcher);
+        EnderChestCommand.register(dispatcher);
+        InvSeeCommand.register(dispatcher);
         
         // Text file commands
         MotdCommand.register(dispatcher);
         RulesCommand.register(dispatcher);
         HelpCommand.register(dispatcher);
         InfoCommand.register(dispatcher);
+        
+        // Discord integration commands
+        DiscordCommand.register(dispatcher);
+        
+        // GUI commands
+        GuiCommand.register(dispatcher);
+        
+        // Main info command
+        NeoEssentialsCommand.register(dispatcher);
         
         LOGGER.info("Registered {} essentials commands", 
             dispatcher.getRoot().getChildren().size());
