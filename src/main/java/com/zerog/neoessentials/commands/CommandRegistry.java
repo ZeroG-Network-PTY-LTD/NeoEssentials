@@ -110,6 +110,18 @@ public class CommandRegistry {
             NickCommand.register(dispatcher);
             LOGGER.info("Registered nick command");
             
+            // Economy admin commands
+            EconomyCommand.register(dispatcher);
+            LOGGER.info("Registered economy admin commands");
+            
+            // Mail system
+            MailCommand.register(dispatcher);
+            LOGGER.info("Registered mail system");
+            
+            // Discord integration
+            DiscordCommand.register(dispatcher);
+            LOGGER.info("Registered Discord integration commands");
+            
             // Admin teleportation commands
             TeleportCommand.register(dispatcher);
             LOGGER.info("Registered teleport commands");
