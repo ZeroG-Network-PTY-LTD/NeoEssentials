@@ -77,6 +77,16 @@ public class CommandRegistry {
             MuteCommand.register(dispatcher);
             LOGGER.info("Registered mute command");
             
+            // Player utility commands
+            ListCommand.register(dispatcher);
+            LOGGER.info("Registered list command");
+            
+            WhoisCommand.register(dispatcher);
+            LOGGER.info("Registered whois command");
+            
+            SeenCommand.register(dispatcher);
+            LOGGER.info("Registered seen command");
+            
             // Back command (teleportation utility)
             BackCommand.register(dispatcher);
             LOGGER.info("Registered back command");
