@@ -87,6 +87,37 @@ public class CommandRegistry {
             SeenCommand.register(dispatcher);
             LOGGER.info("Registered seen command");
             
+            // Help command
+            HelpCommand.register(dispatcher);
+            LOGGER.info("Registered help command");
+            
+            // Info command
+            InfoCommand.register(dispatcher);
+            LOGGER.info("Registered info command");
+            
+            // Message commands
+            MessageCommand.register(dispatcher);
+            LOGGER.info("Registered message command");
+            
+            ReplyCommand.register(dispatcher);
+            LOGGER.info("Registered reply command");
+            
+            // MOTD command
+            MotdCommand.register(dispatcher);
+            LOGGER.info("Registered motd command");
+            
+            // Nickname command
+            NickCommand.register(dispatcher);
+            LOGGER.info("Registered nick command");
+            
+            // Admin teleportation commands
+            TeleportCommand.register(dispatcher);
+            LOGGER.info("Registered teleport commands");
+            
+            // Server information commands
+            RulesCommand.register(dispatcher);
+            LOGGER.info("Registered rules command");
+            
             // Back command (teleportation utility)
             BackCommand.register(dispatcher);
             LOGGER.info("Registered back command");
@@ -112,7 +143,7 @@ public class CommandRegistry {
             LOGGER.info("Registered kit commands");
             
             // Spawn commands
-            SpawnCommands.register(dispatcher);
+            SpawnCommand.register(dispatcher);
             LOGGER.info("Registered spawn commands");
             
             // Messaging commands
