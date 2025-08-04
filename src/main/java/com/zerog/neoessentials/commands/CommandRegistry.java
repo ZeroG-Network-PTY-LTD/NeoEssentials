@@ -11,6 +11,7 @@ import com.zerog.neoessentials.commands.notifications.AlertCommand;
 import com.zerog.neoessentials.commands.placeholders.PlaceholderCommand;
 import com.zerog.neoessentials.commands.BossbarCommand;
 import com.zerog.neoessentials.commands.essentials.*;
+import com.zerog.neoessentials.commands.essentials.ConfigCommand;
 // import com.zerog.neoessentials.managers.PluginCompatibilityManager; // DISABLED - Compilation issues
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandBuildContext;
@@ -201,6 +202,10 @@ public class CommandRegistry {
             // GUI system commands
             GuiCommand.register(dispatcher);
             LOGGER.info("Registered GUI system commands");
+            
+            // Configuration management commands
+            ConfigCommand.register(dispatcher);
+            LOGGER.info("Registered configuration management commands");
             
             // Bossbar management commands
             BossbarCommand.register(dispatcher);
