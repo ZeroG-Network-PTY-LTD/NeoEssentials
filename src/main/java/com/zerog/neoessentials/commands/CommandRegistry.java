@@ -10,6 +10,9 @@ import com.zerog.neoessentials.commands.notifications.AlertCommand;
 // import com.zerog.neoessentials.commands.enterprise.BackupCommand; // DISABLED - Over-engineered
 import com.zerog.neoessentials.commands.placeholders.PlaceholderCommand;
 import com.zerog.neoessentials.commands.BossbarCommand;
+import com.zerog.neoessentials.commands.player.PlaytimeCommand;
+import com.zerog.neoessentials.commands.player.AchievementsCommand;
+import com.zerog.neoessentials.commands.player.PreferencesCommand;
 import com.zerog.neoessentials.commands.essentials.*;
 import com.zerog.neoessentials.commands.essentials.ConfigCommand;
 // import com.zerog.neoessentials.managers.PluginCompatibilityManager; // DISABLED - Compilation issues
@@ -115,6 +118,14 @@ public class CommandRegistry {
             EconomyCommand.register(dispatcher);
             LOGGER.info("Registered economy admin commands");
             
+            // Transaction history command  
+            com.zerog.neoessentials.commands.economy.TransactionHistoryCommand.register(dispatcher);
+            LOGGER.info("Registered transaction history command");
+            
+            // Economy analytics command
+            com.zerog.neoessentials.commands.economy.EconomyAnalyticsCommand.register(dispatcher);
+            LOGGER.info("Registered economy analytics command");
+            
             // Mail system
             MailCommand.register(dispatcher);
             LOGGER.info("Registered mail system");
@@ -210,6 +221,16 @@ public class CommandRegistry {
             // Bossbar management commands
             BossbarCommand.register(dispatcher);
             LOGGER.info("Registered bossbar management commands");
+
+            // Advanced Player Features Commands
+            PlaytimeCommand.register(dispatcher);
+            LOGGER.info("Registered playtime tracking commands");
+            
+            AchievementsCommand.register(dispatcher);
+            LOGGER.info("Registered achievement system commands");
+            
+            PreferencesCommand.register(dispatcher);
+            LOGGER.info("Registered player preference commands");
             
             // Enhanced security commands - DISABLED (Missing dependencies)
             // Enterprise performance monitoring commands - DISABLED (Over-engineered for Minecraft mod)

@@ -279,6 +279,20 @@ public class DiscordManager {
     }
     
     /**
+     * Get webhook URL
+     */
+    public String getWebhookUrl() {
+        return webhookUrl;
+    }
+    
+    /**
+     * Check if Discord integration is enabled
+     */
+    public boolean isEnabled() {
+        return enabled;
+    }
+    
+    /**
      * Get configuration status
      */
     public Map<String, Object> getStatus() {
