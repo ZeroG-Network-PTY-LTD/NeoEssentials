@@ -1,10 +1,11 @@
 package com.zerog.neoessentials.util;
 
+import com.zerog.neoessentials.permissions.CustomPermissionsManager;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Utility class for handling permissions
- * Integrates with various permission systems
+ * Integrates with the Custom Permissions Manager
  * 
  * @author ZeroG
  * @since 2.0.0
@@ -13,20 +14,30 @@ public class PermissionUtil {
     
     /**
      * Check if player has a specific permission
-     * This is a placeholder implementation - would integrate with LuckPerms, etc.
+     * Integrates with the Custom Permissions Manager
      */
     public static boolean hasPermission(ServerPlayer player, String permission) {
         if (player == null || permission == null) {
             return false;
         }
         
+        // Use Custom Permissions Manager
+        try {
+            return CustomPermissionsManager.getInstance().hasPermission(player, permission);
+        } catch (Exception e) {
+            // Fallback to basic permission check if Custom Permissions Manager fails
+            return fallbackPermissionCheck(player, permission);
+        }
+    }
+    
+    /**
+     * Fallback permission check using vanilla system
+     */
+    private static boolean fallbackPermissionCheck(ServerPlayer player, String permission) {
         // Check if player is OP (default fallback)
         if (player.hasPermissions(4)) {
             return true;
         }
-        
-        // Placeholder for permission system integration
-        // In a real implementation, this would check with LuckPerms, PermissionsEx, etc.
         
         // Default permissions for basic functionality
         if (permission.startsWith("essentials.")) {
@@ -139,81 +150,70 @@ public class PermissionUtil {
     }
     
     /**
-     * Get player's group/rank (placeholder)
+     * Get player's group/rank using Custom Permissions Manager
      */
     public static String getPlayerGroup(ServerPlayer player) {
         if (player == null) {
             return "default";
         }
         
-        if (isAdmin(player)) {
-            return "admin";
-        } else if (isModerator(player)) {
-            return "moderator";
-        } else if (hasPermission(player, "essentials.vip")) {
-            return "vip";
-        } else {
-            return "default";
-        }
-    }
-    
-    /**
-     * Check permission with wildcards
-     */
-    public static boolean hasWildcardPermission(ServerPlayer player, String permission) {
-        if (hasPermission(player, permission)) {
-            return true;
-        }
-        
-        // Check for wildcard permissions
-        String[] parts = permission.split("\\.");
-        StringBuilder wildcard = new StringBuilder();
-        
-        for (int i = 0; i < parts.length - 1; i++) {
-            wildcard.append(parts[i]).append(".");
-            if (hasPermission(player, wildcard + "*")) {
-                return true;
+        try {
+            return CustomPermissionsManager.getInstance().getPlayerGroup(player.getUUID());
+        } catch (Exception e) {
+            // Fallback to basic group detection
+            if (isAdmin(player)) {
+                return "admin";
+            } else if (isModerator(player)) {
+                return "moderator";
+            } else if (hasPermission(player, "essentials.vip")) {
+                return "vip";
+            } else {
+                return "default";
             }
         }
-        
-        return false;
     }
     
     /**
-     * Get permission prefix for messages
+     * Get permission prefix for messages using Custom Permissions Manager
      */
     public static String getPermissionPrefix(ServerPlayer player) {
         if (player == null) {
             return "";
         }
         
-        // This would integrate with permission system to get prefixes
-        String group = getPlayerGroup(player);
-        
-        return switch (group) {
-            case "admin" -> "&c[ADMIN] ";
-            case "moderator" -> "&6[MOD] ";
-            case "vip" -> "&b[VIP] ";
-            default -> "";
-        };
+        try {
+            return CustomPermissionsManager.getInstance().getPlayerPrefix(player.getUUID());
+        } catch (Exception e) {
+            // Fallback to basic prefixes
+            String group = getPlayerGroup(player);
+            return switch (group) {
+                case "admin" -> "&c[ADMIN] ";
+                case "moderator" -> "&6[MOD] ";
+                case "vip" -> "&b[VIP] ";
+                default -> "";
+            };
+        }
     }
     
     /**
-     * Get permission suffix for messages
+     * Get permission suffix for messages using Custom Permissions Manager
      */
     public static String getPermissionSuffix(ServerPlayer player) {
         if (player == null) {
             return "";
         }
         
-        // This would integrate with permission system to get suffixes
-        String group = getPlayerGroup(player);
-        
-        return switch (group) {
-            case "admin" -> " &c⚡";
-            case "moderator" -> " &6★";
-            case "vip" -> " &b♦";
-            default -> "";
-        };
+        try {
+            return CustomPermissionsManager.getInstance().getPlayerSuffix(player.getUUID());
+        } catch (Exception e) {
+            // Fallback to basic suffixes
+            String group = getPlayerGroup(player);
+            return switch (group) {
+                case "admin" -> " &c⚡";
+                case "moderator" -> " &6★";
+                case "vip" -> " &b♦";
+                default -> "";
+            };
+        }
     }
 }

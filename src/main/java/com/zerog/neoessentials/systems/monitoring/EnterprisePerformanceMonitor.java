@@ -2,7 +2,6 @@ package com.zerog.neoessentials.systems.monitoring;
 
 import com.zerog.neoessentials.systems.notifications.AlertNotificationSystem;
 import com.zerog.neoessentials.systems.status.SystemStatusMonitor;
-import com.zerog.neoessentials.systems.security.SecurityMonitoringSystem;
 import com.zerog.neoessentials.systems.analytics.DataAnalyticsSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +51,6 @@ public class EnterprisePerformanceMonitor {
     // Core system integrations
     private final AlertNotificationSystem alertSystem;
     private final SystemStatusMonitor statusMonitor;
-    private final SecurityMonitoringSystem securitySystem;
     private final DataAnalyticsSystem analyticsSystem;
     
     // Performance monitoring state
@@ -97,7 +95,6 @@ public class EnterprisePerformanceMonitor {
     private EnterprisePerformanceMonitor() {
         this.alertSystem = AlertNotificationSystem.getInstance();
         this.statusMonitor = SystemStatusMonitor.getInstance();
-        this.securitySystem = SecurityMonitoringSystem.getInstance();
         this.analyticsSystem = DataAnalyticsSystem.getInstance();
         this.optimizationExecutor = Executors.newScheduledThreadPool(2, r -> {
             Thread t = new Thread(r, "PerformanceOptimizer-" + System.currentTimeMillis());

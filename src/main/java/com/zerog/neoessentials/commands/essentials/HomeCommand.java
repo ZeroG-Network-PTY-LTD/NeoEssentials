@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.zerog.neoessentials.managers.HomeManager;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -45,8 +46,8 @@ public class HomeCommand {
     private static int teleportToDefaultHome(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         
-        // TODO: Implement home teleportation logic
-        player.sendSystemMessage(Component.literal("§6[NeoEssentials] §eTeleporting to home..."));
+        HomeManager homeManager = HomeManager.getInstance();
+        homeManager.teleportToHome(player, "home");
         
         return 1;
     }
@@ -55,8 +56,8 @@ public class HomeCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String homeName = StringArgumentType.getString(context, "name");
         
-        // TODO: Implement named home teleportation logic
-        player.sendSystemMessage(Component.literal("§6[NeoEssentials] §eTeleporting to home: " + homeName));
+        HomeManager homeManager = HomeManager.getInstance();
+        homeManager.teleportToHome(player, homeName);
         
         return 1;
     }
@@ -64,8 +65,8 @@ public class HomeCommand {
     private static int setDefaultHome(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         
-        // TODO: Implement home setting logic
-        player.sendSystemMessage(Component.literal("§6[NeoEssentials] §aHome set!"));
+        HomeManager homeManager = HomeManager.getInstance();
+        homeManager.setHome(player, "home");
         
         return 1;
     }
@@ -74,8 +75,8 @@ public class HomeCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String homeName = StringArgumentType.getString(context, "name");
         
-        // TODO: Implement named home setting logic
-        player.sendSystemMessage(Component.literal("§6[NeoEssentials] §aHome '" + homeName + "' set!"));
+        HomeManager homeManager = HomeManager.getInstance();
+        homeManager.setHome(player, homeName);
         
         return 1;
     }
@@ -84,8 +85,8 @@ public class HomeCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String homeName = StringArgumentType.getString(context, "name");
         
-        // TODO: Implement home deletion logic
-        player.sendSystemMessage(Component.literal("§6[NeoEssentials] §cHome '" + homeName + "' deleted!"));
+        HomeManager homeManager = HomeManager.getInstance();
+        homeManager.deleteHome(player, homeName);
         
         return 1;
     }
@@ -93,8 +94,8 @@ public class HomeCommand {
     private static int listHomes(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         
-        // TODO: Implement home listing logic
-        player.sendSystemMessage(Component.literal("§6[NeoEssentials] §eYour homes: §7(none set)"));
+        HomeManager homeManager = HomeManager.getInstance();
+        homeManager.listHomes(player);
         
         return 1;
     }

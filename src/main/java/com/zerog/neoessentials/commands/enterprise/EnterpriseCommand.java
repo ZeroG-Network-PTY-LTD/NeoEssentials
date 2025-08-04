@@ -4,9 +4,9 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.zerog.neoessentials.systems.security.SecurityManager;
-import com.zerog.neoessentials.systems.security.SecurityEventType;
-import com.zerog.neoessentials.systems.security.SecurityLevel;
+import com.zerog.neoessentials.security.SecurityManager;
+import com.zerog.neoessentials.security.SecurityEventType;
+import com.zerog.neoessentials.security.SecurityLevel;
 import com.zerog.neoessentials.systems.monitoring.RealTimeServerMonitor;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -604,10 +604,8 @@ public class EnterpriseCommand {
             
             SecurityManager.getInstance().logSecurityEvent(
                 SecurityEventType.COMMAND_EXECUTED,
-                username,
-                description,
-                SecurityLevel.INFO,
-                eventDetails
+                "Enterprise command executed: " + command + " by " + username,
+                SecurityLevel.INFO
             );
         } catch (Exception e) {
             LOGGER.warn("Failed to log command usage", e);

@@ -5,7 +5,12 @@ import com.mojang.logging.LogUtils;
 
 import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.features.CustomBossbarManager;
+import com.zerog.neoessentials.listeners.NotificationEventListener;
+import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.managers.*;
+import com.zerog.neoessentials.notifications.NotificationManager;
+import com.zerog.neoessentials.permissions.CustomPermissionsManager;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 
 import net.neoforged.fml.common.Mod;
@@ -63,6 +68,32 @@ public class NeoEssentials {
             ModerationManager.getInstance();
             MessagingManager.getInstance();
             SpawnManager.getInstance();
+            
+            // Initialize Language Manager
+            LanguageManager.getInstance().initialize();
+            
+            // Initialize Plugin Compatibility Manager
+            PluginCompatibilityManager.getInstance().initialize();
+            
+            // Initialize Custom Permissions Manager
+            CustomPermissionsManager.getInstance();
+            LOGGER.info("Custom Permissions Manager initialized");
+            
+            // Initialize Placeholder System
+            com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
+            LOGGER.info("Placeholder System initialized");
+            
+            // Initialize Custom Bossbar Manager
+            CustomBossbarManager.getInstance();
+            LOGGER.info("Custom Bossbar Manager initialized");
+            
+            // Initialize Notification Manager
+            NotificationManager notificationManager = NotificationManager.getInstance(ConfigManager.getInstance().getMainConfig());
+            notificationManager.notifyServerStart();
+            
+            // Initialize notification event listener
+            NotificationEventListener.getInstance();
+            
             LOGGER.info("All managers initialized successfully");
             
             LOGGER.info("NeoEssentials server setup completed successfully!");
@@ -78,7 +109,7 @@ public class NeoEssentials {
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         LOGGER.info("Registering NeoEssentials commands...");
-        CommandRegistry.registerCommands(event.getDispatcher());
+        CommandRegistry.registerCommands(event.getDispatcher(), event.getBuildContext());
     }
     
     /**

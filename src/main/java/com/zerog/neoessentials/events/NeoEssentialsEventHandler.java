@@ -6,6 +6,9 @@ import com.zerog.neoessentials.storage.StorageManager;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.utils.PlaceholderManager;
+import com.zerog.neoessentials.features.TablistScoreboardManager;
+import com.zerog.neoessentials.commands.essentials.GodCommand;
+import com.zerog.neoessentials.commands.essentials.VanishCommand;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -52,6 +55,9 @@ public class NeoEssentialsEventHandler {
             
             // Initialize placeholder system
             PlaceholderManager.getInstance();
+            
+            // Initialize tablist and scoreboard system
+            TablistScoreboardManager.getInstance();
             
             LOGGER.info("NeoEssentials successfully initialized all systems");
             
@@ -129,6 +135,12 @@ public class NeoEssentialsEventHandler {
         LOGGER.info("Player {} left the server", player.getName().getString());
         
         try {
+            // Clean up god mode status
+            GodCommand.removePlayer(player.getUUID());
+            
+            // Clean up vanish status if exists
+            VanishCommand.removePlayer(player.getUUID());
+            
             // Update last seen time
             PlayerDataManager playerDataManager = PlayerDataManager.getInstance();
             PlayerDataManager.PlayerData playerData = playerDataManager.getPlayerData(player.getUUID());

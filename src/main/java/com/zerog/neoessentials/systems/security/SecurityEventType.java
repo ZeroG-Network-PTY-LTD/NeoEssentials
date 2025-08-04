@@ -1,41 +1,30 @@
 package com.zerog.neoessentials.systems.security;
 
 /**
- * Types of security events
+ * Security event type enumeration
  */
 public enum SecurityEventType {
-    // System events
-    SYSTEM_STARTUP,
-    SYSTEM_SHUTDOWN,
-    CONFIG_CHANGE,
+    LOGIN_ATTEMPT("Login Attempt"),
+    PERMISSION_DENIED("Permission Denied"),
+    SUSPICIOUS_ACTIVITY("Suspicious Activity"),
+    COMMAND_EXECUTION("Command Execution"),
+    DATA_ACCESS("Data Access"),
+    SYSTEM_BREACH("System Breach"),
+    AUTHENTICATION_FAILURE("Authentication Failure"),
+    UNAUTHORIZED_ACCESS("Unauthorized Access");
     
-    // Authentication events
-    LOGIN_SUCCESS,
-    LOGIN_FAILURE,
-    LOGOUT,
-    SESSION_EXPIRED,
-    PASSWORD_CHANGE,
+    private final String displayName;
     
-    // Authorization events
-    PERMISSION_GRANTED,
-    PERMISSION_REVOKED,
-    ACCESS_DENIED,
-    PRIVILEGE_ESCALATION,
+    SecurityEventType(String displayName) {
+        this.displayName = displayName;
+    }
     
-    // Administrative events
-    COMMAND_EXECUTED,
-    FILE_ACCESS,
-    DATA_EXPORT,
-    BACKUP_CREATED,
+    public String getDisplayName() {
+        return displayName;
+    }
     
-    // Security events
-    SECURITY_VIOLATION,
-    SUSPICIOUS_ACTIVITY,
-    THREAT_DETECTED,
-    INTRUSION_ATTEMPT,
-    
-    // Audit events
-    REPORT_GENERATED,
-    AUDIT_LOG_ROTATED,
-    SECURITY_SCAN_COMPLETED
+    @Override
+    public String toString() {
+        return displayName;
+    }
 }

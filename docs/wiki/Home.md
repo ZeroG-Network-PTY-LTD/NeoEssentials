@@ -1,75 +1,111 @@
 # NeoEssentials Wiki
 
-Welcome to the official NeoEssentials wiki! NeoEssentials is a comprehensive server enhancement mod for NeoForge 1.21.1+ that provides essential features including advanced tablist customization, economy systems, teleportation, and much more.
+Welcome to the comprehensive documentation for **NeoEssentials** - a modern Minecraft server administration mod for NeoForge.
 
-## 🚀 Latest Features (v1.0.2)
+## 🏠 Quick Navigation
 
-* **🏦 Advanced Economy System** - Complete multi-currency banking with loans, shops, and auctions
-* **💰 Multi-Currency Support** - Standard, resource-backed, and token currencies
-* **🏪 Dynamic Shop System** - Player shops with dynamic pricing and taxation
-* **📊 Economic Analytics** - Real-time monitoring with automated reporting
-* **🔄 YAML Configuration** - Modern YAML-based configuration system
-* **Ultra-Smooth Animations** - 25ms frame updates for professional tablist animations
-* **Multiple Animation Placeholders** - Use unlimited `<anim:name>` placeholders simultaneously  
-* **Three-Tier Update System** - Optimized performance architecture
-* **Advanced Tablist System** - TAB-like interface with group-specific templates
+### 📚 Getting Started
+- [Installation Guide](Installation.md) - How to install and set up NeoEssentials
+- [Configuration](Configuration.md) - Complete configuration guide
+- [Permissions](Permissions.md) - Permission system documentation
+- [Quick Start](Quick-Start.md) - Get up and running in 5 minutes
 
-## 📖 Getting Started
+### 🎮 Commands & Features
+- [Essential Commands](Essential-Commands.md) - Core utility commands
+- [Teleportation System](Teleportation.md) - Home, warp, and teleport commands
+- [Player Management](Player-Management.md) - Moderation and player tools
+- [Server Administration](Server-Administration.md) - Admin utilities
+- [Economy System](Economy.md) - Currency and transaction management
 
-* [Installation Guide](Installation-Guide) - Complete setup instructions
-* [Server Setup](Server-Setup) - Deploy NeoEssentials on your server
-* [Configuration Guide](Configuration-Guide) - Basic configuration tutorial
-* [Troubleshooting](Troubleshooting) - Common issues and solutions
+### 🛠️ Advanced Features
+- [Custom Bossbar System](Bossbar.md) - Dynamic bossbar management
+- [Placeholder System](Placeholders.md) - Dynamic content replacement
+- [Notification System](Notifications.md) - Multi-channel notifications
+- [Language System](Language.md) - Multi-language support
+- [Security Features](Security.md) - Server security and monitoring
 
-## 🎯 Core Systems
+### 🔧 Technical Documentation
+- [API Reference](API.md) - Developer API documentation
+- [Events System](Events.md) - Custom event handling
+- [Data Storage](Storage.md) - Player data and configuration
+- [Performance](Performance.md) - Optimization and monitoring
 
-* [**Tablist System**](Tablist-System) - Advanced tablist with animations and group templates
-* [**Animation System**](Animation-System) - Ultra-smooth 25ms animations with unlimited placeholders
-* [**🏦 Economy System**](Economy-System) - **NEW!** Complete multi-currency economy with banking, loans, shops & auctions
-  * [💡 Economy Quick Reference](Economy-Quick-Reference) - Commands, rates, and common operations
-* [Home System](Home-System) - Multiple home teleportation
-* [Warp System](Warp-System) - Public and private warp points
-* [Kit System](Kit-System) - Customizable item packages with cooldowns
-* [Permission System](Permission-System) - Comprehensive permission management
+### 🎨 Customization
+- [GUI System](GUI.md) - Custom user interfaces
+- [Themes and Styling](Themes.md) - Visual customization
+- [Custom Commands](Custom-Commands.md) - Creating custom commands
 
-## ⚙️ Configuration
+## 📊 Current Implementation Status
 
-* [YML Configuration](YML-Configuration) - Modern YAML configuration format
-* [JSON Templates](JSON-Templates) - Advanced template system
-* [Custom Placeholders](Custom-Placeholders) - Create dynamic content
-* [Text Formatting](Text-Formatting) - Colors, gradients, and formatting
-* [Performance Optimization](Performance-Optimization) - Server optimization tips
+**NeoEssentials** is actively developed with the following features currently implemented:
 
-## 🔧 Commands & Permissions
+### ✅ Fully Implemented Features
+- **Essential Commands** - 20+ core utility commands
+- **Player Management** - Comprehensive moderation tools
+- **Teleportation System** - Home, warp, and teleport functionality
+- **Bossbar System** - Advanced template-based bossbars
+- **Placeholder System** - 50+ built-in placeholders
+- **Notification System** - Multi-channel notification support
+- **Security Framework** - Player and IP security monitoring
 
-* [Commands Reference](Commands-Reference) - Complete command list
-* [Permissions Guide](Permissions-Guide) - Permission system overview
-* [LuckPerms Integration](LuckPerms-Integration) - Integration with LuckPerms
+### 🚧 In Development
+- **Economy System** - Advanced currency management
+- **Language System** - Multi-language support
+- **Plugin Compatibility** - Integration with other mods
 
-## 🔨 Advanced Features
+## 🎯 Key Features
 
-* [API Documentation](API-Documentation) - Developer API reference
-* [Custom Templates](Custom-Templates) - Create custom tablist templates
-* [Database Integration](Database-Integration) - Database configuration
-* [Multi-Server Configuration](Multi-Server-Configuration) - Multi-server setups
-* [Mod Compatibility](Mod-Compatibility) - Compatible mods and integrations
+### 🎮 Player Commands
+- `/heal` - Restore health and remove harmful effects
+- `/feed` - Restore hunger and saturation
+- `/fly` - Toggle flight mode
+- `/god` - Toggle invincibility
+- `/vanish` - Toggle invisibility
+- `/speed` - Adjust movement speed
+- `/home` - Teleport to set homes
+- `/warp` - Teleport to server warps
 
-## 🆘 Support & Development
+### 🛠️ Admin Tools
+- `/heal <player>` - Heal other players
+- `/gamemode <mode>` - Change game modes
+- `/time <set/add>` - Control world time
+- `/weather <type>` - Control weather
+- `/give <player> <item>` - Give items to players
+- `/repair` - Repair items and equipment
 
-* [Troubleshooting](Troubleshooting) - Common issues and solutions
-* [FAQ](Frequently-Asked-Questions) - Frequently asked questions
-* [Contributing Guide](Contributing-Guide) - How to contribute to NeoEssentials
-* [Changelog](Changelog) - Version history and updates
+### 🎨 Advanced Features
+- **Custom Bossbar Templates** - Welcome, server info, events, warnings
+- **Dynamic Placeholders** - Player stats, server info, time/date
+- **Multi-Channel Notifications** - Discord, email, log files
+- **Security Monitoring** - Threat detection and player profiling
 
-## 📈 Performance & Optimization
+## 🚀 Getting Started
 
-NeoEssentials v1.0.1.89 features a revolutionary **three-tier update system**:
-- **Template Switching**: 3000ms (template variety)
-- **Placeholder Updates**: 250ms (dynamic data)  
-- **Animation Frames**: 25ms (ultra-smooth animations)
+1. **[Install NeoEssentials](Installation.md)** - Download and install the mod
+2. **[Configure Settings](Configuration.md)** - Set up your server preferences
+3. **[Set Permissions](Permissions.md)** - Configure player access levels
+4. **[Learn Commands](Essential-Commands.md)** - Master the essential commands
 
-**Result**: 4x smoother animations with 3x better efficiency!
+## 🤝 Community & Support
+
+- **GitHub Repository**: [NeoEssentials](https://github.com/ZeroG-Network-Org/NeoEssentials)
+- **Issues & Bug Reports**: Use GitHub Issues
+- **Feature Requests**: Submit via GitHub Discussions
+
+## 📝 Contributing
+
+NeoEssentials is open-source and welcomes contributions:
+- **Bug Reports** - Help us identify and fix issues
+- **Feature Requests** - Suggest new functionality
+- **Code Contributions** - Submit pull requests
+- **Documentation** - Improve this wiki
+
+## 📄 License
+
+NeoEssentials is released under the MIT License. See the [LICENSE](../LICENSE) file for details.
 
 ---
 
-*NeoEssentials is actively developed for NeoForge 1.21.1+. Join our community for support and updates!*
+**Version**: 1.0.2 | **Minecraft**: 1.21.3 | **NeoForge**: 21.3.53+
+
+*Last Updated: August 3, 2025*

@@ -1,6 +1,5 @@
 package com.zerog.neoessentials.systems.monitoring;
 
-import com.zerog.neoessentials.systems.security.SecurityMonitoringSystem;
 import com.zerog.neoessentials.systems.enterprise.EnterpriseBackupSystem;
 import com.zerog.neoessentials.systems.enterprise.EnterpriseClusteringSystem;
 import com.zerog.neoessentials.systems.intelligence.EnterpriseAISystem;
@@ -96,7 +95,6 @@ public class EnterpriseMonitoringDashboard {
     private final ExecutorService reportingExecutor = Executors.newFixedThreadPool(3);
     
     // System integrations
-    private final SecurityMonitoringSystem securitySystem = SecurityMonitoringSystem.getInstance();
     private final EnterpriseBackupSystem backupSystem = EnterpriseBackupSystem.getInstance();
     private final EnterpriseClusteringSystem clusteringSystem = EnterpriseClusteringSystem.getInstance();
     private final EnterpriseAISystem aiSystem = EnterpriseAISystem.getInstance();
@@ -1063,11 +1061,11 @@ public class EnterpriseMonitoringDashboard {
         public Map<String, Object> collectMetrics() {
             Map<String, Object> metrics = new HashMap<>();
             try {
-                Map<String, Object> securityStats = securitySystem.getSecurityStatistics();
-                metrics.put("failed_logins", securityStats.getOrDefault("failedLogins", 0));
-                metrics.put("suspicious_activity", securityStats.getOrDefault("suspiciousActivities", 0));
-                metrics.put("threat_level", securityStats.getOrDefault("currentThreatLevel", 0));
-                metrics.put("vulnerability_count", securityStats.getOrDefault("vulnerabilities", 0));
+                // Security system removed - providing default security metrics
+                metrics.put("failed_logins", 0);
+                metrics.put("suspicious_activity", 0);
+                metrics.put("threat_level", 0);
+                metrics.put("vulnerability_count", 0);
             } catch (Exception e) {
                 LOGGER.debug("Error collecting security metrics", e);
                 metrics.put("failed_logins", 0);

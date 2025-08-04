@@ -1,44 +1,39 @@
 package com.zerog.neoessentials.systems.security;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.UUID;
-
 /**
- * Represents a security event in the audit trail
+ * Security event data class
  */
 public class SecurityEvent {
-    private final String id;
-    private final SecurityEventType type;
-    private final String user;
-    private final String action;
+    private final String eventType;
+    private final String details;
     private final SecurityLevel level;
-    private final Map<String, Object> details;
-    private final LocalDateTime timestamp;
-    private final String sourceIP;
-    private final String userAgent;
+    private final long timestamp;
     
-    public SecurityEvent(SecurityEventType type, String user, String action, 
-                        SecurityLevel level, Map<String, Object> details) {
-        this.id = UUID.randomUUID().toString();
-        this.type = type;
-        this.user = user;
-        this.action = action;
-        this.level = level;
+    public SecurityEvent(String eventType, String details, SecurityLevel level, long timestamp) {
+        this.eventType = eventType;
         this.details = details;
-        this.timestamp = LocalDateTime.now();
-        this.sourceIP = "127.0.0.1"; // TODO: Get real IP
-        this.userAgent = "NeoEssentials"; // TODO: Get real user agent
+        this.level = level;
+        this.timestamp = timestamp;
     }
     
-    // Getters
-    public String getId() { return id; }
-    public SecurityEventType getType() { return type; }
-    public String getUser() { return user; }
-    public String getAction() { return action; }
-    public SecurityLevel getLevel() { return level; }
-    public Map<String, Object> getDetails() { return details; }
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public String getSourceIP() { return sourceIP; }
-    public String getUserAgent() { return userAgent; }
+    public String getEventType() {
+        return eventType;
+    }
+    
+    public String getDetails() {
+        return details;
+    }
+    
+    public SecurityLevel getLevel() {
+        return level;
+    }
+    
+    public long getTimestamp() {
+        return timestamp;
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("[%s] %s: %s", level, eventType, details);
+    }
 }
