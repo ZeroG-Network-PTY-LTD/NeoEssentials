@@ -4,8 +4,7 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 import com.zerog.neoessentials.commands.CommandRegistry;
-import com.zerog.neoessentials.config.ConfigManager;
-import com.zerog.neoessentials.config.EnhancedConfigManager;
+import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.localization.EnhancedLanguageManager;
 
 import java.nio.file.Path;
@@ -56,20 +55,16 @@ public class NeoEssentials {
         LOGGER.info("NeoEssentials server starting setup...");
         
         try {
-            // Initialize configuration manager
-            ConfigManager.getInstance();
-            LOGGER.info("Configuration loaded successfully");
+            // Initialize unified configuration system (Phase 5 Fix)
+            ConfigurationUnifier.getInstance().initialize();
+            LOGGER.info("Unified Configuration System initialized successfully");
             
             // Initialize storage systems
             PlayerDataManager.getInstance();
             LOGGER.info("Player data manager initialized");
 
-            // Initialize Enhanced Configuration System (Phase 4)
-            EnhancedConfigManager.getInstance();
-            LOGGER.info("Enhanced Configuration System initialized");
-
             // Initialize Enhanced Language System (Phase 4)  
-            Path configPath = ConfigManager.getInstance().getConfigPath();
+            Path configPath = ConfigurationUnifier.getInstance().getConfigPath();
             EnhancedLanguageManager.getInstance(configPath).initialize();
             LOGGER.info("Enhanced Language System initialized");
             
@@ -101,7 +96,7 @@ public class NeoEssentials {
             LOGGER.info("Custom Bossbar Manager initialized");
             
             // Initialize Notification Manager
-            NotificationManager notificationManager = NotificationManager.getInstance(ConfigManager.getInstance().getMainConfig());
+            NotificationManager notificationManager = NotificationManager.getInstance(ConfigurationUnifier.getInstance().getConfigManager().getMainConfig());
             notificationManager.notifyServerStart();
             
             // Initialize notification event listener

@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.managers;
 
-import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.KitConfig;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -27,12 +27,12 @@ public class KitManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(KitManager.class);
     private static KitManager instance;
     
-    private final ConfigManager configManager;
+    private final ConfigurationUnifier configUnifier;
     private final PlayerDataManager playerDataManager;
     private final Map<UUID, Map<String, Long>> kitCooldowns;
     
     private KitManager() {
-        this.configManager = ConfigManager.getInstance();
+        this.configUnifier = ConfigurationUnifier.getInstance();
         this.playerDataManager = PlayerDataManager.getInstance();
         this.kitCooldowns = new ConcurrentHashMap<>();
     }
@@ -48,7 +48,7 @@ public class KitManager {
      * Give a kit to a player
      */
     public boolean giveKit(ServerPlayer player, String kitName) {
-        KitConfig config = configManager.getKitConfig();
+        KitConfig config = configUnifier.getConfigManager().getKitConfig();
         
         if (!config.enabled) {
             MessageUtil.sendMessage(player, "&cKit system is disabled.");
@@ -125,7 +125,7 @@ public class KitManager {
      * Get available kits for a player
      */
     public List<String> getAvailableKits(ServerPlayer player) {
-        KitConfig config = configManager.getKitConfig();
+        KitConfig config = configUnifier.getConfigManager().getKitConfig();
         List<String> availableKits = new ArrayList<>();
         
         for (String kitName : config.getKitNames()) {
@@ -152,7 +152,7 @@ public class KitManager {
      * Check if player is on cooldown for kit
      */
     public boolean isOnCooldown(ServerPlayer player, String kitName) {
-        KitConfig config = configManager.getKitConfig();
+        KitConfig config = configUnifier.getConfigManager().getKitConfig();
         if (!config.enableCooldowns) {
             return false;
         }
@@ -185,7 +185,7 @@ public class KitManager {
      * Get remaining cooldown time in milliseconds
      */
     public long getRemainingCooldown(ServerPlayer player, String kitName) {
-        KitConfig config = configManager.getKitConfig();
+        KitConfig config = configUnifier.getConfigManager().getKitConfig();
         Map<String, Long> playerCooldowns = kitCooldowns.get(player.getUUID());
         if (playerCooldowns == null) {
             return 0;
@@ -356,7 +356,7 @@ public class KitManager {
      * Give first join kit if enabled
      */
     public void giveFirstJoinKit(ServerPlayer player) {
-        KitConfig config = configManager.getKitConfig();
+        KitConfig config = configUnifier.getConfigManager().getKitConfig();
         
         if (!config.giveKitOnFirstJoin || config.firstJoinKit.isEmpty()) {
             return;

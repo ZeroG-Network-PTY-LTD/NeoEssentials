@@ -32,6 +32,7 @@ public class TablistScoreboardManager {
     private MinecraftServer server;
     private final Map<UUID, PlayerStats> playerStats = new ConcurrentHashMap<>();
     private final Timer updateTimer = new Timer("TablistScoreboardUpdater", true);
+    private boolean updateTaskStarted = false;
     
     private static final String SIDEBAR_OBJECTIVE = "neoessentials_sidebar";
     
@@ -49,18 +50,42 @@ public class TablistScoreboardManager {
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event) {
         this.server = event.getServer();
+        LOGGER.info("TablistScoreboardManager initialized with server instance");
         setupScoreboards();
         startUpdateTask();
-        LOGGER.info("Tablist and Scoreboard Manager initialized");
+    }
+    
+    /**
+     * Manually set the server instance (fallback method)
+     */
+    public void setServer(MinecraftServer server) {
+        if (this.server == null && server != null) {
+            this.server = server;
+            LOGGER.info("Server instance manually set for TablistScoreboardManager");
+            setupScoreboards();
+            startUpdateTask();
+        }
     }
     
     @SubscribeEvent
     public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            initializePlayerStats(player);
-            updatePlayerTablist(player);
-            updatePlayerScoreboard(player);
-            LOGGER.debug("Initialized tablist/scoreboard for player: {}", player.getDisplayName().getString());
+            try {
+                // Initialize server reference if not set yet
+                if (this.server == null && player.getServer() != null) {
+                    this.server = player.getServer();
+                    LOGGER.info("Server instance set from player join event");
+                    setupScoreboards();
+                    startUpdateTask();
+                }
+                
+                initializePlayerStats(player);
+                updatePlayerTablist(player);
+                updatePlayerScoreboard(player);
+                LOGGER.debug("Initialized tablist/scoreboard for player: {}", player.getDisplayName().getString());
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize tablist/scoreboard for player: {}", player.getDisplayName().getString(), e);
+            }
         }
     }
     
@@ -115,6 +140,13 @@ public class TablistScoreboardManager {
      */
     public void updatePlayerTablist(ServerPlayer player) {
         try {
+            // Get server instance from player if our reference is null
+            MinecraftServer serverInstance = this.server != null ? this.server : player.getServer();
+            if (serverInstance == null) {
+                LOGGER.warn("Cannot update tablist for player {} - server instance is null", player.getDisplayName().getString());
+                return;
+            }
+            
             // Create custom header
             MutableComponent header = Component.literal("")
                 .append(Component.literal("§6§l◆ ").withStyle(ChatFormatting.GOLD))
@@ -126,8 +158,8 @@ public class TablistScoreboardManager {
             
             // Create custom footer with server info
             String timeString = new SimpleDateFormat("HH:mm:ss").format(new Date());
-            int onlinePlayers = server.getPlayerCount();
-            int maxPlayers = server.getMaxPlayers();
+            int onlinePlayers = serverInstance.getPlayerCount();
+            int maxPlayers = serverInstance.getMaxPlayers();
             
             MutableComponent footer = Component.literal("")
                 .append(Component.literal("§7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n").withStyle(ChatFormatting.GRAY))
@@ -152,7 +184,14 @@ public class TablistScoreboardManager {
      */
     public void updatePlayerScoreboard(ServerPlayer player) {
         try {
-            Scoreboard scoreboard = server.getScoreboard();
+            // Get server instance from player if our reference is null
+            MinecraftServer serverInstance = this.server != null ? this.server : player.getServer();
+            if (serverInstance == null) {
+                LOGGER.warn("Cannot update scoreboard for player {} - server instance is null", player.getDisplayName().getString());
+                return;
+            }
+            
+            Scoreboard scoreboard = serverInstance.getScoreboard();
             Objective objective = scoreboard.getObjective(SIDEBAR_OBJECTIVE);
             if (objective == null) return;
             
@@ -165,7 +204,7 @@ public class TablistScoreboardManager {
             // Server info section
             updateScoreboardLine(scoreboard, objective, "§7━━━━━━━━━━━━━━━━━━━━━", 15);
             updateScoreboardLine(scoreboard, objective, "§6§lServer Info", 14);
-            updateScoreboardLine(scoreboard, objective, "§fOnline: §a" + server.getPlayerCount() + "/" + server.getMaxPlayers(), 13);
+            updateScoreboardLine(scoreboard, objective, "§fOnline: §a" + serverInstance.getPlayerCount() + "/" + serverInstance.getMaxPlayers(), 13);
             updateScoreboardLine(scoreboard, objective, "§fTPS: §a" + String.format("%.1f", getServerTPS()), 12);
             updateScoreboardLine(scoreboard, objective, " ", 11); // Empty line
             
@@ -257,6 +296,10 @@ public class TablistScoreboardManager {
      * Start the update task
      */
     private void startUpdateTask() {
+        if (updateTaskStarted) {
+            return; // Task already started
+        }
+        
         updateTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -265,12 +308,20 @@ public class TablistScoreboardManager {
                 }
             }
         }, 1000, 5000); // Update every 5 seconds
+        
+        updateTaskStarted = true;
+        LOGGER.debug("Update task started for TablistScoreboardManager");
     }
     
     /**
      * Update all online players
      */
     private void updateAllPlayers() {
+        if (server == null) {
+            LOGGER.warn("Cannot update all players - server instance is null");
+            return;
+        }
+        
         try {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 updatePlayerTablist(player);

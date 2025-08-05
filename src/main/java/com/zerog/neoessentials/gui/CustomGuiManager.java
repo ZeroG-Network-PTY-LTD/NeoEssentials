@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.zerog.neoessentials.managers.EconomyManager;
 import com.zerog.neoessentials.managers.KitManager;
 import com.zerog.neoessentials.managers.WarpManager;
-import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.KitConfig;
 import com.zerog.neoessentials.util.MessageUtil;
 
@@ -40,7 +40,7 @@ public class CustomGuiManager {
     
     // Manager instances
     private final EconomyManager economyManager;
-    private final ConfigManager configManager;
+    private final ConfigurationUnifier configUnifier;
     
     // Shop item prices (item -> price)
     private static final Map<net.minecraft.world.item.Item, Double> SHOP_PRICES = new HashMap<>();
@@ -84,7 +84,7 @@ public class CustomGuiManager {
     
     private CustomGuiManager() {
         this.economyManager = EconomyManager.getInstance();
-        this.configManager = ConfigManager.getInstance();
+        this.configUnifier = ConfigurationUnifier.getInstance();
     }
     
     public static CustomGuiManager getInstance() {
@@ -550,7 +550,7 @@ public class CustomGuiManager {
         List<GuiItem> items = new ArrayList<>();
         
         KitManager kitManager = KitManager.getInstance();
-        KitConfig kitConfig = ConfigManager.getInstance().getKitConfig();
+        KitConfig kitConfig = ConfigurationUnifier.getInstance().getConfigManager().getKitConfig();
         EconomyManager economyManager = EconomyManager.getInstance();
         
         if (!kitConfig.enabled) {
@@ -628,7 +628,7 @@ public class CustomGuiManager {
         ItemStack warpItem = new ItemStack(iconItem);
         
         // Get warp cost and cooldown info
-        double warpCost = configManager.getWarpConfig().teleportWarpCost.doubleValue();
+        double warpCost = configUnifier.getConfigManager().getWarpConfig().teleportWarpCost.doubleValue();
         long cooldownRemaining = 0; // Simplified - would need proper cooldown tracking
         boolean canAfford = playerBalance >= warpCost;
         boolean onCooldown = cooldownRemaining > 0;

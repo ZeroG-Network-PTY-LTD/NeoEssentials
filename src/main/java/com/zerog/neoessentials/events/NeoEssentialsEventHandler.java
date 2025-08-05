@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import java.math.BigDecimal;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -104,6 +105,14 @@ public class NeoEssentialsEventHandler {
             // Load player data
             PlayerDataManager playerDataManager = PlayerDataManager.getInstance();
             playerDataManager.loadPlayerData(player.getUUID());
+            
+            // Initialize economy for new players
+            EconomyManager economyManager = EconomyManager.getInstance();
+            if (economyManager.isEnabled()) {
+                // This will check if player needs starting balance and set it
+                BigDecimal balance = economyManager.getBalance(player.getUUID());
+                LOGGER.debug("Player {} has balance: {}", player.getName().getString(), economyManager.formatCurrency(balance));
+            }
             
             // Update last seen
             PlayerDataManager.PlayerData playerData = playerDataManager.getPlayerData(player.getUUID());

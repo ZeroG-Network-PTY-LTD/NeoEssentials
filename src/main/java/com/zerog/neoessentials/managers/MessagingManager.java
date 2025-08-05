@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.managers;
 
-import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.MessagingConfig;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -24,13 +24,13 @@ public class MessagingManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessagingManager.class);
     private static MessagingManager instance;
     
-    private final ConfigManager configManager;
+    private final ConfigurationUnifier configUnifier;
     private final PlayerDataManager playerDataManager;
     private final Map<UUID, UUID> lastMessaged;
     private final Map<UUID, Boolean> socialSpyEnabled;
     
     private MessagingManager() {
-        this.configManager = ConfigManager.getInstance();
+        this.configUnifier = ConfigurationUnifier.getInstance();
         this.playerDataManager = PlayerDataManager.getInstance();
         this.lastMessaged = new ConcurrentHashMap<>();
         this.socialSpyEnabled = new ConcurrentHashMap<>();
@@ -47,7 +47,7 @@ public class MessagingManager {
      * Send a private message between players
      */
     public boolean sendPrivateMessage(ServerPlayer sender, String targetName, String message) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         if (!config.arePrivateMessagesEnabled()) {
             MessageUtil.sendMessage(sender, "&cPrivate messaging is disabled.");
@@ -111,7 +111,7 @@ public class MessagingManager {
      * Reply to the last received private message
      */
     public boolean replyToMessage(ServerPlayer sender, String message) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         UUID lastSenderUuid = lastMessaged.get(sender.getUUID());
         if (lastSenderUuid == null) {
@@ -132,7 +132,7 @@ public class MessagingManager {
      * Send mail to a player
      */
     public boolean sendMail(ServerPlayer sender, String targetName, String message) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         if (!config.isMailEnabled()) {
             MessageUtil.sendMessage(sender, "&cMail system is disabled.");
@@ -194,7 +194,7 @@ public class MessagingManager {
      * Read player's mail
      */
     public void readMail(ServerPlayer player) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         if (!config.enabled || !config.enableMail) {
             MessageUtil.sendMessage(player, "&cMail system is disabled.");
@@ -229,7 +229,7 @@ public class MessagingManager {
      * Clear player's mail
      */
     public boolean clearMail(ServerPlayer player) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         List<MailEntry> mails = getPlayerMail(player.getUUID());
         if (mails.isEmpty()) {
@@ -249,7 +249,7 @@ public class MessagingManager {
      * Broadcast a message to all players
      */
     public void broadcast(ServerPlayer sender, String message) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         if (!PermissionUtil.hasPermission(sender, "essentials.broadcast")) {
             MessageUtil.sendMessage(sender, config.messages.noPermission);
@@ -267,7 +267,7 @@ public class MessagingManager {
      * Toggle social spy for a player
      */
     public boolean toggleSocialSpy(ServerPlayer player) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         if (!PermissionUtil.hasPermission(player, "essentials.socialspy")) {
             MessageUtil.sendMessage(player, config.messages.noPermission);
@@ -290,7 +290,7 @@ public class MessagingManager {
      * Ignore a player
      */
     public boolean ignorePlayer(ServerPlayer player, String targetName) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         ServerPlayer target = getPlayerByName(targetName);
         if (target == null) {
@@ -323,7 +323,7 @@ public class MessagingManager {
      * Unignore a player
      */
     public boolean unignorePlayer(ServerPlayer player, String targetName) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         UUID targetUuid = getPlayerUuidByName(targetName);
         if (targetUuid == null) {
@@ -348,7 +348,7 @@ public class MessagingManager {
      * Check if player is on message cooldown
      */
     private boolean isOnMessageCooldown(ServerPlayer player) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         if (config.privateMessages.cooldownSeconds <= 0) {
             return false;
         }
@@ -370,7 +370,7 @@ public class MessagingManager {
      * Get remaining cooldown time in seconds
      */
     private long getRemainingCooldown(ServerPlayer player) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         Object lastMessageTime = playerDataManager.getSetting(player.getUUID(), "last_message_time");
         if (lastMessageTime == null) {
             return 0;
@@ -392,7 +392,7 @@ public class MessagingManager {
      * Send message to social spy users
      */
     private void sendToSocialSpy(ServerPlayer sender, ServerPlayer target, String message) {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         String spyMessage = MessageUtil.replacePlaceholders(config.messages.pmFormatSocialSpy,
             sender.getName().getString(), target.getName().getString(), message);
@@ -575,7 +575,7 @@ public class MessagingManager {
      * Process automatic announcements
      */
     public void processAnnouncements() {
-        MessagingConfig config = configManager.getMessagingConfig();
+        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
         // For now, announcements are handled through broadcast system
         // This method would be improved with announcement-specific configuration
