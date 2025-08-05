@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.managers;
 
-import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.HomeConfig;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.LocationUtil;
@@ -28,13 +28,13 @@ public class HomeManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(HomeManager.class);
     private static HomeManager instance;
     
-    private final ConfigManager configManager;
+    private final ConfigurationUnifier configUnifier;
     private final PlayerDataManager playerDataManager;
     private final Map<UUID, Long> teleportCooldowns;
     private final Map<UUID, Long> warmupTasks;
     
     private HomeManager() {
-        this.configManager = ConfigManager.getInstance();
+        this.configUnifier = ConfigurationUnifier.getInstance();
         this.playerDataManager = PlayerDataManager.getInstance();
         this.teleportCooldowns = new ConcurrentHashMap<>();
         this.warmupTasks = new ConcurrentHashMap<>();
@@ -51,7 +51,7 @@ public class HomeManager {
      * Create or update a home for a player
      */
     public boolean setHome(ServerPlayer player, String homeName) {
-        HomeConfig config = configManager.getHomeConfig();
+        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
         
         if (!config.enabled) {
             MessageUtil.sendMessage(player, "&cHome system is disabled.");
@@ -123,7 +123,7 @@ public class HomeManager {
      * Delete a home for a player
      */
     public boolean deleteHome(ServerPlayer player, String homeName) {
-        HomeConfig config = configManager.getHomeConfig();
+        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
         
         if (!config.enabled) {
             MessageUtil.sendMessage(player, "&cHome system is disabled.");
@@ -146,7 +146,7 @@ public class HomeManager {
      * Teleport player to their home
      */
     public boolean teleportToHome(ServerPlayer player, String homeName) {
-        HomeConfig config = configManager.getHomeConfig();
+        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
         
         if (!config.enabled) {
             MessageUtil.sendMessage(player, "&cHome system is disabled.");
@@ -205,7 +205,7 @@ public class HomeManager {
      * List all homes for a player
      */
     public boolean listHomes(ServerPlayer player) {
-        HomeConfig config = configManager.getHomeConfig();
+        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
         
         List<String> homes = getPlayerHomes(player.getUUID());
         if (homes.isEmpty()) {
@@ -234,7 +234,7 @@ public class HomeManager {
      * Get max homes for player based on permissions
      */
     public int getMaxHomes(ServerPlayer player) {
-        HomeConfig config = configManager.getHomeConfig();
+        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
         
         // Check for unlimited homes permission
         if (PermissionUtil.hasPermission(player, "essentials.sethome.unlimited")) {
@@ -258,7 +258,7 @@ public class HomeManager {
      * Check if player is on teleport cooldown
      */
     public boolean isOnCooldown(ServerPlayer player) {
-        HomeConfig config = configManager.getHomeConfig();
+        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
         if (config.teleportHomeCooldown <= 0) {
             return false;
         }
@@ -276,7 +276,7 @@ public class HomeManager {
      * Get remaining cooldown time in milliseconds
      */
     public long getRemainingCooldown(ServerPlayer player) {
-        HomeConfig config = configManager.getHomeConfig();
+        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
         Long lastTeleport = teleportCooldowns.get(player.getUUID());
         if (lastTeleport == null) {
             return 0;
@@ -291,7 +291,7 @@ public class HomeManager {
      * Start warmup process for teleportation
      */
     private void startWarmup(ServerPlayer player, LocationUtil.Location home, String homeName) {
-        HomeConfig config = configManager.getHomeConfig();
+        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
         
         // Cancel existing warmup
         cancelWarmup(player);
@@ -317,7 +317,7 @@ public class HomeManager {
      * Perform the actual teleportation
      */
     private boolean performTeleport(ServerPlayer player, LocationUtil.Location home, String homeName) {
-        HomeConfig config = configManager.getHomeConfig();
+        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
         
         try {
             // Find the target world - simplified version
@@ -401,7 +401,7 @@ public class HomeManager {
         
         // Clean up expired cooldowns
         teleportCooldowns.entrySet().removeIf(entry -> {
-            HomeConfig config = configManager.getHomeConfig();
+            HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
             long cooldownTime = config.teleportHomeCooldown * 1000L;
             return currentTime - entry.getValue() > cooldownTime;
         });

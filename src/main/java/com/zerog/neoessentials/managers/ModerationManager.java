@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.managers;
 
-import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.ModerationConfig;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.LocationUtil;
@@ -26,13 +26,13 @@ public class ModerationManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModerationManager.class);
     private static ModerationManager instance;
     
-    private final ConfigManager configManager;
+    private final ConfigurationUnifier configUnifier;
     private final PlayerDataManager playerDataManager;
     private final Map<UUID, MuteData> activeMutes;
     private final Map<UUID, JailData> activeJails;
     
     private ModerationManager() {
-        this.configManager = ConfigManager.getInstance();
+        this.configUnifier = ConfigurationUnifier.getInstance();
         this.playerDataManager = PlayerDataManager.getInstance();
         this.activeMutes = new ConcurrentHashMap<>();
         this.activeJails = new ConcurrentHashMap<>();
@@ -49,7 +49,7 @@ public class ModerationManager {
      * Kick a player from the server
      */
     public boolean kickPlayer(ServerPlayer target, ServerPlayer moderator, String reason) {
-        ModerationConfig config = configManager.getModerationConfig();
+        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         
         if (!config.enabled) {
             MessageUtil.sendMessage(moderator, "&cModeration system is disabled.");
@@ -99,7 +99,7 @@ public class ModerationManager {
      * Mute a player
      */
     public boolean mutePlayer(UUID targetUuid, String targetName, ServerPlayer moderator, String reason, long duration) {
-        ModerationConfig config = configManager.getModerationConfig();
+        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         
         if (!config.enabled) {
             MessageUtil.sendMessage(moderator, "&cModeration system is disabled.");
@@ -176,7 +176,7 @@ public class ModerationManager {
      * Unmute a player
      */
     public boolean unmutePlayer(UUID targetUuid, String targetName, ServerPlayer moderator) {
-        ModerationConfig config = configManager.getModerationConfig();
+        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         
         if (!PermissionUtil.hasPermission(moderator, "essentials.unmute")) {
             MessageUtil.sendMessage(moderator, config.messages.noPermission);
@@ -208,7 +208,7 @@ public class ModerationManager {
      * Jail a player
      */
     public boolean jailPlayer(UUID targetUuid, String targetName, ServerPlayer moderator, String jailName, String reason, long duration) {
-        ModerationConfig config = configManager.getModerationConfig();
+        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         
         if (!config.enabled || !config.jail.enabled) {
             MessageUtil.sendMessage(moderator, "&cJail system is disabled.");
@@ -303,7 +303,7 @@ public class ModerationManager {
      * Unjail a player
      */
     public boolean unjailPlayer(UUID targetUuid, String targetName, ServerPlayer moderator) {
-        ModerationConfig config = configManager.getModerationConfig();
+        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         
         if (!PermissionUtil.hasPermission(moderator, "essentials.unjail")) {
             MessageUtil.sendMessage(moderator, config.messages.noPermission);
@@ -338,7 +338,7 @@ public class ModerationManager {
      * Temporarily ban a player for a specified duration
      */
     public boolean tempBanPlayer(ServerPlayer target, ServerPlayer moderator, String reason, long durationMinutes) {
-        ModerationConfig config = configManager.getModerationConfig();
+        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         
         if (!config.enabled || !config.ban.enabled || !config.ban.enableTempBan) {
             MessageUtil.sendMessage(moderator, "&cTemporary ban system is disabled.");
@@ -487,7 +487,7 @@ public class ModerationManager {
      * Get jail location
      */
     private LocationUtil.Location getJailLocation(String jailName) {
-        ModerationConfig config = configManager.getModerationConfig();
+        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         // Return the default jail location
         return new LocationUtil.Location(
             config.jail.jailWorld, 

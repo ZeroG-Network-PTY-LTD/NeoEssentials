@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.managers;
 
-import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.SpawnConfig;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.LocationUtil;
@@ -27,12 +27,12 @@ public class SpawnManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpawnManager.class);
     private static SpawnManager instance;
     
-    private final ConfigManager configManager;
+    private final ConfigurationUnifier configUnifier;
     private final PlayerDataManager playerDataManager;
     private final Map<UUID, Long> spawnCooldowns;
     
     private SpawnManager() {
-        this.configManager = ConfigManager.getInstance();
+        this.configUnifier = ConfigurationUnifier.getInstance();
         this.playerDataManager = PlayerDataManager.getInstance();
         this.spawnCooldowns = new ConcurrentHashMap<>();
     }
@@ -48,7 +48,7 @@ public class SpawnManager {
      * Set the main spawn location
      */
     public boolean setSpawn(ServerPlayer player, LocationUtil.Location location) {
-        SpawnConfig config = configManager.getSpawnConfig();
+        SpawnConfig config = configUnifier.getConfigManager().getSpawnConfig();
         
         if (!config.enabled) {
             MessageUtil.sendMessage(player, "&cSpawn system is disabled.");
@@ -101,7 +101,7 @@ public class SpawnManager {
      * Teleport player to spawn
      */
     public boolean teleportToSpawn(ServerPlayer player) {
-        SpawnConfig config = configManager.getSpawnConfig();
+        SpawnConfig config = configUnifier.getConfigManager().getSpawnConfig();
         
         if (!config.enabled) {
             MessageUtil.sendMessage(player, "&cSpawn system is disabled.");
@@ -137,7 +137,7 @@ public class SpawnManager {
      * Get the spawn location for a world
      */
     public LocationUtil.Location getSpawnLocation(String world) {
-        SpawnConfig config = configManager.getSpawnConfig();
+        SpawnConfig config = configUnifier.getConfigManager().getSpawnConfig();
         
         // Check for world-specific spawn
         SpawnConfig.WorldSpawnConfig.WorldSpawnDefinition worldSpawn = config.getWorldSpawn(world);
@@ -166,7 +166,7 @@ public class SpawnManager {
      * Get the main spawn location
      */
     public LocationUtil.Location getSpawnLocation() {
-        SpawnConfig config = configManager.getSpawnConfig();
+        SpawnConfig config = configUnifier.getConfigManager().getSpawnConfig();
         
         if (config.mainSpawn.world != null) {
             return new LocationUtil.Location(
@@ -184,7 +184,7 @@ public class SpawnManager {
      * Handle first join spawn
      */
     public void handleFirstJoin(ServerPlayer player) {
-        SpawnConfig config = configManager.getSpawnConfig();
+        SpawnConfig config = configUnifier.getConfigManager().getSpawnConfig();
         
         if (!config.enabled || !config.setSpawnOnFirstJoin) {
             return;
@@ -217,7 +217,7 @@ public class SpawnManager {
      * Handle respawn
      */
     public void handleRespawn(ServerPlayer player) {
-        SpawnConfig config = configManager.getSpawnConfig();
+        SpawnConfig config = configUnifier.getConfigManager().getSpawnConfig();
         
         if (!config.enabled || !config.setSpawnOnRespawn) {
             return;
@@ -300,7 +300,7 @@ public class SpawnManager {
      * Check spawn protection
      */
     public boolean isInSpawnProtection(LocationUtil.Location location) {
-        SpawnConfig config = configManager.getSpawnConfig();
+        SpawnConfig config = configUnifier.getConfigManager().getSpawnConfig();
         
         if (!config.enabled || !config.safety.enabled) {
             return false;
