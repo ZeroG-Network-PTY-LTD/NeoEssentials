@@ -106,6 +106,14 @@ public class NeoEssentials {
             // Enhanced Bossbar Manager already initialized
             LOGGER.info("Enhanced Bossbar Manager ready");
             
+            // Initialize GUI System
+            com.zerog.neoessentials.gui.CustomGuiManager.getInstance();
+            LOGGER.info("Custom GUI Manager initialized");
+            
+            // Initialize Configuration GUI System
+            com.zerog.neoessentials.gui.ConfigGuiManager.getInstance();
+            LOGGER.info("Configuration GUI Manager initialized");
+            
             // Initialize Notification Manager
             NotificationManager notificationManager = NotificationManager.getInstance(ConfigurationUnifier.getInstance().getConfigManager().getMainConfig());
             notificationManager.notifyServerStart();

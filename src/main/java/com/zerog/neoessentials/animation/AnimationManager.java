@@ -168,8 +168,113 @@ public class AnimationManager {
     }
     
     private void createDefaultConfig() {
-        // The default config was already created by the create_file call
-        LOGGER.info("Default animations.json configuration created");
+        try {
+            // Ensure parent directories exist
+            configFile.getParentFile().mkdirs();
+            
+            // Create comprehensive default animations.json
+            JsonObject root = new JsonObject();
+            
+            // Global settings
+            JsonObject globalSettings = new JsonObject();
+            globalSettings.addProperty("enable_animations", true);
+            globalSettings.addProperty("max_fps", 20);
+            globalSettings.addProperty("cache_animations", true);
+            globalSettings.addProperty("debug_mode", false);
+            globalSettings.addProperty("auto_reload", true);
+            root.add("global_settings", globalSettings);
+            
+            // Animation definitions
+            JsonObject animations = new JsonObject();
+            
+            // Server name animation
+            JsonObject serverNameAnimation = new JsonObject();
+            serverNameAnimation.addProperty("type", "sequence");
+            serverNameAnimation.addProperty("interval", 100);
+            serverNameAnimation.addProperty("loop", true);
+            JsonArray serverFrames = new JsonArray();
+            serverFrames.add("§6§lNeo§e§lEssentials");
+            serverFrames.add("§e§lNeo§6§lEssentials");
+            serverFrames.add("§6§lN§e§le§6§lo§e§lE§6§ls§e§ls§6§le§e§ln§6§lt§e§li§6§la§e§ll§6§ls");
+            serverFrames.add("§e§lNeo§6§lEssentials");
+            serverNameAnimation.add("frames", serverFrames);
+            animations.add("server_name", serverNameAnimation);
+            
+            // Player count animation
+            JsonObject playerCountAnimation = new JsonObject();
+            playerCountAnimation.addProperty("type", "counter");
+            playerCountAnimation.addProperty("interval", 50);
+            playerCountAnimation.addProperty("format", "§a{value}§7/§c{max}");
+            animations.add("player_count", playerCountAnimation);
+            
+            // Time animation
+            JsonObject timeAnimation = new JsonObject();
+            timeAnimation.addProperty("type", "time");
+            timeAnimation.addProperty("format", "§7{hour}:§f{minute}:§8{second}");
+            timeAnimation.addProperty("interval", 20);
+            animations.add("server_time", timeAnimation);
+            
+            // TPS animation with color coding
+            JsonObject tpsAnimation = new JsonObject();
+            tpsAnimation.addProperty("type", "tps");
+            tpsAnimation.addProperty("interval", 40);
+            JsonObject tpsColors = new JsonObject();
+            tpsColors.addProperty("excellent", "§a"); // >19.5 TPS
+            tpsColors.addProperty("good", "§e");      // >15 TPS  
+            tpsColors.addProperty("poor", "§6");      // >10 TPS
+            tpsColors.addProperty("bad", "§c");       // <=10 TPS
+            tpsAnimation.add("colors", tpsColors);
+            animations.add("server_tps", tpsAnimation);
+            
+            // Loading bar animation
+            JsonObject loadingAnimation = new JsonObject();
+            loadingAnimation.addProperty("type", "sequence");
+            loadingAnimation.addProperty("interval", 150);
+            loadingAnimation.addProperty("loop", true);
+            JsonArray loadingFrames = new JsonArray();
+            loadingFrames.add("§7[§c■§8■■■■■■■§7]");
+            loadingFrames.add("§7[§6■■§8■■■■■■§7]");
+            loadingFrames.add("§7[§e■■■§8■■■■■§7]");
+            loadingFrames.add("§7[§a■■■■§8■■■■§7]");
+            loadingFrames.add("§7[§b■■■■■§8■■■§7]");
+            loadingFrames.add("§7[§d■■■■■■§8■■§7]");
+            loadingFrames.add("§7[§5■■■■■■■§8■§7]");
+            loadingFrames.add("§7[§a■■■■■■■■§8■§7]");
+            loadingFrames.add("§7[§2■■■■■■■■■§7]");
+            loadingAnimation.add("frames", loadingFrames);
+            animations.add("loading_bar", loadingAnimation);
+            
+            // Rainbow text animation
+            JsonObject rainbowAnimation = new JsonObject();
+            rainbowAnimation.addProperty("type", "rainbow");
+            rainbowAnimation.addProperty("interval", 80);
+            rainbowAnimation.addProperty("text", "NeoEssentials");
+            animations.add("rainbow_text", rainbowAnimation);
+            
+            root.add("animations", animations);
+            
+            // Placeholder mappings
+            JsonObject placeholderMappings = new JsonObject();
+            placeholderMappings.addProperty("{server_name}", "server_name");
+            placeholderMappings.addProperty("{animated_server}", "server_name");
+            placeholderMappings.addProperty("{players_online}", "player_count");
+            placeholderMappings.addProperty("{server_time}", "server_time");
+            placeholderMappings.addProperty("{server_tps}", "server_tps");
+            placeholderMappings.addProperty("{loading}", "loading_bar");
+            placeholderMappings.addProperty("{rainbow_server}", "rainbow_text");
+            root.add("placeholder_mappings", placeholderMappings);
+            
+            // Write to file
+            try (java.io.FileWriter writer = new java.io.FileWriter(configFile)) {
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                gson.toJson(root, writer);
+            }
+            
+            LOGGER.info("Created default animations.json configuration with {} animations", animations.size());
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to create default animations.json configuration", e);
+        }
     }
     
     /**

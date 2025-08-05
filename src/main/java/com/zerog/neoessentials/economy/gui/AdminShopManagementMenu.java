@@ -20,12 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.math.BigDecimal;
 import java.util.*;
 
 /**
  * Admin Shop Management Menu
- * Provides comprehensive shop administration tools for server operators
+ * Comprehensive administration interface for economy shop management
  * 
  * @author ZeroG
  * @since 2.0.0
@@ -34,15 +33,28 @@ public class AdminShopManagementMenu {
     private static final Logger LOGGER = LoggerFactory.getLogger(AdminShopManagementMenu.class);
     private static AdminShopManagementMenu instance;
     
-    private final EconomyManager economyManager;
-    
-    // Shop management data
+    // Price management data
     private static final Map<String, Double> globalPriceMultipliers = new HashMap<>();
     private static final Map<String, Boolean> categoryEnabled = new HashMap<>();
-    private static final List<String> recentTransactions = new ArrayList<>();
     
     static {
-        // Initialize default settings
+        initializePriceData();
+    }
+    
+    private AdminShopManagementMenu() {
+    }
+    
+    public static AdminShopManagementMenu getInstance() {
+        if (instance == null) {
+            instance = new AdminShopManagementMenu();
+        }
+        return instance;
+    }
+    
+    /**
+     * Initialize default price multipliers and category states
+     */
+    private static void initializePriceData() {
         globalPriceMultipliers.put("weapons", 1.0);
         globalPriceMultipliers.put("armor", 1.0);
         globalPriceMultipliers.put("food", 1.0);
@@ -58,47 +70,32 @@ public class AdminShopManagementMenu {
         categoryEnabled.put("rare", true);
     }
     
-    private AdminShopManagementMenu() {
-        this.economyManager = EconomyManager.getInstance();
-    }
-    
-    public static AdminShopManagementMenu getInstance() {
-        if (instance == null) {
-            instance = new AdminShopManagementMenu();
-        }
-        return instance;
-    }
-    
     /**
-     * Open the main admin shop management menu
+     * Open the main admin shop management interface
      */
-    public void openMainMenu(ServerPlayer player) {
+    public void openAdminShopMenu(ServerPlayer player) {
         if (!player.hasPermissions(3)) {
-            MessageUtil.sendMessage(player, "&cYou don't have permission to access shop management!");
+            MessageUtil.sendMessage(player, "&cYou need admin permissions to access shop management!");
             return;
         }
         
         List<GuiItem> items = new ArrayList<>();
         
-        // Shop Statistics (top row)
-        items.add(createInfoItem(Items.EMERALD, "§a💰 Shop Statistics", 
-            "§7Total transactions today: §e" + getTotalTransactions(),
-            "§7Total revenue today: §2" + getTotalRevenue(),
-            "§7Active shoppers: §b" + getActiveShoppers(),
-            "§7Most purchased: §6" + getMostPurchasedItem()));
+        // Economy overview (row 1)
+        items.add(createInfoItem(Items.EMERALD_BLOCK, "§2§l💎 Economy Overview",
+            "§7Server economy statistics:",
+            "§7• Total transactions today: §e" + getTodayTransactions(),
+            "§7• Daily revenue: §2$" + getDailyRevenue(),
+            "§7• Active players: §a" + getActivePlayers(),
+            "§7• Shop status: §a" + getShopStatus(),
+            "§7• Economy health: §a" + getEconomyHealth()));
         
-        items.add(createInfoItem(Items.BOOK, "§9📊 Sales Report", 
-            "§7Weekly sales summary:",
-            "§7• Weapons: §e" + getCategorySales("weapons") + " sales",
-            "§7• Armor: §e" + getCategorySales("armor") + " sales",
-            "§7• Food: §e" + getCategorySales("food") + " sales",
-            "§7• Blocks: §e" + getCategorySales("blocks") + " sales"));
-        
-        items.add(createInfoItem(Items.GOLD_INGOT, "§6💸 Economy Health", 
-            "§7Server money supply: §2" + getServerMoneySupply(),
-            "§7Average player balance: §2" + getAveragePlayerBalance(),
-            "§7Inflation rate: §e" + getInflationRate() + "%",
-            "§7Economy status: §a" + getEconomyStatus()));
+        items.add(createInfoItem(Items.GOLD_BLOCK, "§6📊 Market Analytics",
+            "§7Current market statistics:",
+            "§7• Most popular item: §e" + getMostPopularItem(),
+            "§7• Average transaction: §2$" + getAverageTransaction(),
+            "§7• Inflation rate: §e" + getInflationRate() + "%",
+            "§7• Economy status: §a" + getEconomyStatus()));
         
         // Price Management (row 2)
         items.add(createActionItem(Items.COMPARATOR, "§c⚙ Price Controls", 
@@ -125,355 +122,95 @@ public class AdminShopManagementMenu {
             "",
             "§eClick to manage custom items"));
         
-        // Player Management (row 3)
+        // Management Tools (row 3)
         items.add(createActionItem(Items.PLAYER_HEAD, "§b👥 Player Management", 
             "§7Manage player shop access",
             "§7• View player purchase history",
             "§7• Set individual discounts",
             "§7• Manage shop permissions",
             "§7• Reset player data",
-            "§eClick to manage players",
-            p -> openPlayerManagementMenu(p)));
+            "§eClick to manage players"));
         
         items.add(createActionItem(Items.CLOCK, "§e⏰ Shop Hours", 
             "§7Configure shop operating hours",
             "§7Current status: §a" + (isShopOpen() ? "Open 24/7" : "Scheduled"),
             "§7Open time: §e" + getShopOpenTime(),
             "§7Close time: §e" + getShopCloseTime(),
-            "§eClick to configure schedule",
-            p -> openShopScheduleMenu(p)));
+            "§eClick to configure schedule"));
         
         items.add(createActionItem(Items.CHEST, "§6📦 Inventory Manager", 
             "§7Manage shop stock levels",
-            "§7• Set item stock limits",
-            "§7• Configure auto-restock",
-            "§7• View low stock alerts",
-            "§7Current alerts: §c" + getLowStockAlerts(),
-            "§eClick to manage inventory",
-            p -> openInventoryManagementMenu(p)));
+            "§7• Current stock: §a" + getTotalStockLevel() + " items",
+            "§7• Low stock alerts: §e" + getLowStockCount() + " items",
+            "§7• Auto-restock: " + (isAutoRestockEnabled() ? "§aEnabled" : "§cDisabled"),
+            "§7• Stock value: §2$" + String.format("%.2f", getTotalStockValue()),
+            "§eClick to manage inventory"));
         
-        // Logs and Reports (row 4)
-        items.add(createActionItem(Items.MAP, "§9📋 Transaction Logs", 
+        // Analytics and Logs (row 4)
+        items.add(createActionItem(Items.MAP, "§9📋 Transaction Logs",
             "§7View detailed transaction history",
-            "§7• All player purchases",
-            "§7• Admin modifications",
-            "§7• Price changes",
-            "§7Recent entries: §e" + recentTransactions.size(),
-            "§eClick to view logs",
-            p -> openTransactionLogsMenu(p)));
+            "§7• Recent purchases: §e" + getRecentTransactions(),
+            "§7• Daily revenue: §2$" + getDailyRevenue(),
+            "§7• Top customers",
+            "§7• Failed transactions",
+            "§eClick to view logs"));
         
-        items.add(createActionItem(Items.PAPER, "§a📈 Analytics", 
+        items.add(createActionItem(Items.PAPER, "§a📈 Analytics",
             "§7Advanced shop analytics",
-            "§7• Sales trends",
-            "§7• Popular items report",
+            "§7• Sales trends and patterns",
+            "§7• Popular items analysis",
             "§7• Revenue forecasting",
-            "§7• Player behavior analysis",
-            "§eClick to view analytics",
-            p -> openAnalyticsMenu(p)));
+            "§7• Customer behavior insights",
+            "§eClick for analytics"));
         
-        items.add(createActionItem(Items.COMMAND_BLOCK, "§c⚡ Quick Actions", 
-            "§7Emergency shop controls",
+        items.add(createActionItem(Items.COMMAND_BLOCK, "§c⚡ Quick Actions",
+            "§7Common administrative actions",
             "§7• Emergency shop closure",
-            "§7• Mass price reset",
-            "§7• Clear all transactions",
-            "§7• Backup shop data",
-            "§cUse with caution!",
-            p -> openQuickActionsMenu(p)));
+            "§7• Bulk price reset",
+            "§7• Clear transaction history",
+            "§7• Restart shop services",
+            "§eClick for quick actions"));
         
-        // Navigation (bottom row)
-        items.add(createActionItem(Items.BARRIER, "§c❌ Close Admin Panel", 
-            "§7Exit shop management", 
-            p -> p.closeContainer()));
+        // Controls (row 5)
+        items.add(createActionItem(Items.BARRIER, "§c❌ Close Admin Panel",
+            "§7Close the admin panel",
+            "§eClick to close"));
         
-        items.add(createActionItem(Items.NETHER_STAR, "§5⭐ Super Admin", 
-            "§7Advanced administrative tools",
-            "§7• Database management",
-            "§7• Configuration editor",
-            "§7• System diagnostics",
-            "§cRequires super admin access",
-            p -> openSuperAdminMenu(p)));
+        items.add(createActionItem(Items.NETHER_STAR, "§5⭐ Super Admin",
+            "§7Advanced server controls",
+            "§7• Global economy settings",
+            "§7• Server-wide price controls",
+            "§7• Economic policy management",
+            "§eClick for super admin tools"));
         
-        MenuProvider gui = createAdminChestGui("§c§l🛠 Shop Administration Panel §c§l🛠", 6, items);
+        MenuProvider gui = createAdminChestGui("§c§l⚙ Shop Management Panel ⚙", 6, items);
         player.openMenu(gui);
         
-        LOGGER.info("Admin {} opened shop management panel", player.getName().getString());
+        LOGGER.info("Admin {} opened shop management interface", player.getName().getString());
     }
     
-    /**
-     * Open price control menu
-     */
-    private void openPriceControlMenu(ServerPlayer player) {
-        List<GuiItem> items = new ArrayList<>();
-        
-        // Price multiplier controls for each category
-        for (String category : Arrays.asList("weapons", "armor", "food", "blocks", "redstone", "rare")) {
-            net.minecraft.world.item.Item icon = getCategoryIcon(category);
-            double currentMultiplier = globalPriceMultipliers.get(category);
-            
-            items.add(createActionItem(icon, "§6" + category.toUpperCase() + " Prices", 
-                "§7Current multiplier: §e" + String.format("%.2f", currentMultiplier) + "x",
-                "§7Example: $10 → $" + String.format("%.2f", 10.0 * currentMultiplier),
-                "",
-                "§aLeft-click: +0.1x",
-                "§cRight-click: -0.1x",
-                "§eShift-click: Reset to 1.0x",
-                p -> adjustPriceMultiplier(p, category, 0.1)));
-        }
-        
-        // Global actions
-        items.add(createActionItem(Items.GOLD_BLOCK, "§6📊 Global Price Adjustment", 
-            "§7Apply changes to all categories",
-            "§7• Increase all by 10%",
-            "§7• Decrease all by 10%",
-            "§7• Apply inflation adjustment",
-            "§eClick for global controls",
-            p -> openGlobalPriceMenu(p)));
-        
-        items.add(createActionItem(Items.ANVIL, "§c⚒ Price Calculator", 
-            "§7Calculate optimal pricing",
-            "§7• Supply/demand analysis",
-            "§7• Competitor pricing",
-            "§7• Profit margin calculator",
-            "§eClick to open calculator",
-            p -> openPriceCalculatorMenu(p)));
-        
-        items.add(createActionItem(Items.ARROW, "§a⬅ Back to Admin Panel", 
-            "§7Return to main admin menu", 
-            p -> openMainMenu(p)));
-        
-        MenuProvider gui = createAdminChestGui("§c§l💰 Price Control Center", 6, items);
-        player.openMenu(gui);
-    }
+    // Placeholder methods for analytics data
+    private String getTodayTransactions() { return "247"; }
+    private String getDailyRevenue() { return "1,234.56"; }
+    private String getActivePlayers() { return "18"; }
+    private String getShopStatus() { return "Online"; }
+    private String getEconomyHealth() { return "Excellent"; }
+    private String getMostPopularItem() { return "Diamond Sword"; }
+    private String getAverageTransaction() { return "45.30"; }
+    private String getInflationRate() { return "2.1"; }
+    private String getEconomyStatus() { return "Stable"; }
+    private int getCustomItemCount() { return 12; }
+    private String getRecentAdditions() { return "3 today"; }
+    private boolean isShopOpen() { return true; }
+    private String getShopOpenTime() { return "00:00"; }
+    private String getShopCloseTime() { return "23:59"; }
+    private int getTotalStockLevel() { return 1456; }
+    private int getLowStockCount() { return 8; }
+    private boolean isAutoRestockEnabled() { return true; }
+    private double getTotalStockValue() { return 12456.78; }
+    private String getRecentTransactions() { return "67"; }
     
-    /**
-     * Open category toggle menu
-     */
-    private void openCategoryToggleMenu(ServerPlayer player) {
-        List<GuiItem> items = new ArrayList<>();
-        
-        for (String category : Arrays.asList("weapons", "armor", "food", "blocks", "redstone", "rare")) {
-            boolean enabled = categoryEnabled.get(category);
-            net.minecraft.world.item.Item icon = enabled ? getCategoryIcon(category) : Items.BARRIER;
-            
-            items.add(createActionItem(icon, 
-                (enabled ? "§a✓ " : "§c✗ ") + category.toUpperCase() + " Category", 
-                "§7Status: " + (enabled ? "§aEnabled" : "§cDisabled"),
-                "§7Items in category: §e" + getCategoryItemCount(category),
-                "§7Recent sales: §e" + getCategorySales(category),
-                "",
-                "§eClick to " + (enabled ? "disable" : "enable"),
-                p -> toggleCategory(p, category)));
-        }
-        
-        items.add(createActionItem(Items.REDSTONE_BLOCK, "§c🔴 Emergency Disable All", 
-            "§7Disable all shop categories",
-            "§7Use in emergency situations",
-            "§cThis will close the entire shop!",
-            p -> emergencyDisableAll(p)));
-        
-        items.add(createActionItem(Items.EMERALD_BLOCK, "§a🟢 Enable All Categories", 
-            "§7Enable all shop categories",
-            "§7Restore normal shop operations",
-            p -> enableAllCategories(p)));
-        
-        items.add(createActionItem(Items.ARROW, "§a⬅ Back to Admin Panel", 
-            "§7Return to main admin menu", 
-            p -> openMainMenu(p)));
-        
-        MenuProvider gui = createAdminChestGui("§c§l🔧 Category Management", 6, items);
-        player.openMenu(gui);
-    }
-    
-    // Helper methods for shop management
-    private int getTotalTransactions() {
-        return 1247; // Placeholder - would track real data
-    }
-    
-    private String getTotalRevenue() {
-        return economyManager.formatCurrency(BigDecimal.valueOf(45230.75));
-    }
-    
-    private int getActiveShoppers() {
-        return 23; // Placeholder - would track active users
-    }
-    
-    private String getMostPurchasedItem() {
-        return "Diamond Sword"; // Placeholder - would track real data
-    }
-    
-    private int getCategorySales(String category) {
-        return switch (category) {
-            case "weapons" -> 342;
-            case "armor" -> 298;
-            case "food" -> 567;
-            case "blocks" -> 834;
-            case "redstone" -> 123;
-            case "rare" -> 45;
-            default -> 0;
-        };
-    }
-    
-    private String getServerMoneySupply() {
-        return economyManager.formatCurrency(BigDecimal.valueOf(2340567.89));
-    }
-    
-    private String getAveragePlayerBalance() {
-        return economyManager.formatCurrency(BigDecimal.valueOf(1250.45));
-    }
-    
-    private String getInflationRate() {
-        return "2.3"; // Placeholder
-    }
-    
-    private String getEconomyStatus() {
-        return "Healthy"; // Placeholder - would calculate based on metrics
-    }
-    
-    private int getCustomItemCount() {
-        return 15; // Placeholder
-    }
-    
-    private String getRecentAdditions() {
-        return "Magic Sword, Healing Potion"; // Placeholder
-    }
-    
-    private boolean isShopOpen() {
-        return true; // Placeholder - would check schedule
-    }
-    
-    private String getShopOpenTime() {
-        return "Always Open"; // Placeholder
-    }
-    
-    private String getShopCloseTime() {
-        return "Never"; // Placeholder
-    }
-    
-    private int getLowStockAlerts() {
-        return 3; // Placeholder
-    }
-    
-    private net.minecraft.world.item.Item getCategoryIcon(String category) {
-        return switch (category) {
-            case "weapons" -> Items.DIAMOND_SWORD;
-            case "armor" -> Items.DIAMOND_CHESTPLATE;
-            case "food" -> Items.COOKED_BEEF;
-            case "blocks" -> Items.STONE_BRICKS;
-            case "redstone" -> Items.REDSTONE;
-            case "rare" -> Items.NETHER_STAR;
-            default -> Items.CHEST;
-        };
-    }
-    
-    private int getCategoryItemCount(String category) {
-        return switch (category) {
-            case "weapons" -> 15;
-            case "armor" -> 12;
-            case "food" -> 8;
-            case "blocks" -> 20;
-            case "redstone" -> 10;
-            case "rare" -> 5;
-            default -> 0;
-        };
-    }
-    
-    private void adjustPriceMultiplier(ServerPlayer player, String category, double adjustment) {
-        double current = globalPriceMultipliers.get(category);
-        double newValue = Math.max(0.1, Math.min(10.0, current + adjustment));
-        globalPriceMultipliers.put(category, newValue);
-        
-        MessageUtil.sendMessage(player, "&aAdjusted " + category + " price multiplier to " + 
-            String.format("%.2f", newValue) + "x");
-        
-        LOGGER.info("Admin {} adjusted {} price multiplier to {}x", 
-            player.getName().getString(), category, newValue);
-        
-        // Refresh the menu
-        openPriceControlMenu(player);
-    }
-    
-    private void toggleCategory(ServerPlayer player, String category) {
-        boolean current = categoryEnabled.get(category);
-        categoryEnabled.put(category, !current);
-        
-        MessageUtil.sendMessage(player, "&a" + category + " category " + 
-            (!current ? "enabled" : "disabled"));
-        
-        LOGGER.info("Admin {} {} {} category", 
-            player.getName().getString(), (!current ? "enabled" : "disabled"), category);
-        
-        // Refresh the menu
-        openCategoryToggleMenu(player);
-    }
-    
-    private void emergencyDisableAll(ServerPlayer player) {
-        for (String category : categoryEnabled.keySet()) {
-            categoryEnabled.put(category, false);
-        }
-        
-        MessageUtil.sendMessage(player, "&cEmergency shutdown: All shop categories disabled!");
-        LOGGER.warn("EMERGENCY: Admin {} disabled all shop categories", player.getName().getString());
-        
-        openCategoryToggleMenu(player);
-    }
-    
-    private void enableAllCategories(ServerPlayer player) {
-        for (String category : categoryEnabled.keySet()) {
-            categoryEnabled.put(category, true);
-        }
-        
-        MessageUtil.sendMessage(player, "&aAll shop categories enabled!");
-        LOGGER.info("Admin {} enabled all shop categories", player.getName().getString());
-        
-        openCategoryToggleMenu(player);
-    }
-    
-    // Placeholder methods for unimplemented menus
-    private void openCustomItemMenu(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&eCustom item management coming soon!");
-    }
-    
-    private void openPlayerManagementMenu(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&ePlayer management coming soon!");
-    }
-    
-    private void openShopScheduleMenu(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&eShop schedule management coming soon!");
-    }
-    
-    private void openInventoryManagementMenu(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&eInventory management coming soon!");
-    }
-    
-    private void openTransactionLogsMenu(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&eTransaction logs coming soon!");
-    }
-    
-    private void openAnalyticsMenu(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&eAnalytics dashboard coming soon!");
-    }
-    
-    private void openQuickActionsMenu(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&eQuick actions menu coming soon!");
-    }
-    
-    private void openSuperAdminMenu(ServerPlayer player) {
-        if (!player.hasPermissions(4)) {
-            MessageUtil.sendMessage(player, "&cSuper admin access required!");
-            return;
-        }
-        MessageUtil.sendMessage(player, "&eSuper admin panel coming soon!");
-    }
-    
-    private void openGlobalPriceMenu(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&eGlobal price controls coming soon!");
-    }
-    
-    private void openPriceCalculatorMenu(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&ePrice calculator coming soon!");
-    }
-    
-    // Helper methods for creating GUI items
+    // Helper methods
     private GuiItem createInfoItem(net.minecraft.world.item.Item icon, String name, String... lore) {
         ItemStack item = new ItemStack(icon);
         item.set(DataComponents.CUSTOM_NAME, Component.literal(name));
@@ -499,22 +236,7 @@ public class AdminShopManagementMenu {
         
         item.set(DataComponents.LORE, new ItemLore(loreComponents));
         
-        return new GuiItem(item, null); // Actions would be implemented separately
-    }
-    
-    private GuiItem createMultiLineActionItem(net.minecraft.world.item.Item icon, String name, 
-                                            CustomGuiManager.GuiClickAction action, String... lore) {
-        ItemStack item = new ItemStack(icon);
-        item.set(DataComponents.CUSTOM_NAME, Component.literal(name));
-        
-        List<Component> loreComponents = new ArrayList<>();
-        for (String line : lore) {
-            loreComponents.add(Component.literal(line));
-        }
-        
-        item.set(DataComponents.LORE, new ItemLore(loreComponents));
-        
-        return new GuiItem(item, action);
+        return new GuiItem(item, null);
     }
     
     /**
@@ -526,23 +248,17 @@ public class AdminShopManagementMenu {
                 SimpleContainer container = new SimpleContainer(rows * 9);
                 AbstractContainerMenu menu = new ChestMenu(MenuType.GENERIC_9x6, windowId, playerInventory, container, rows);
                 
-                // Prepare click actions for registration
-                Map<Integer, CustomGuiManager.GuiClickAction> clickActions = new HashMap<>();
-                
-                // Add items to the container and register click actions
+                // Add items to the container
                 for (int i = 0; i < items.size() && i < rows * 9; i++) {
                     GuiItem item = items.get(i);
                     if (item != null) {
                         container.setItem(i, item.getItemStack());
-                        if (item.getClickAction() != null) {
-                            clickActions.put(i, item.getClickAction());
-                        }
                     }
                 }
                 
-                // Register GUI session for click handling
+                // Register GUI session
                 if (player instanceof ServerPlayer serverPlayer) {
-                    GuiClickHandler.registerSession(serverPlayer, CustomGuiManager.GuiType.ECONOMY_MANAGEMENT, clickActions);
+                    GuiClickHandler.registerSession(serverPlayer, CustomGuiManager.GuiType.ECONOMY_MANAGEMENT, new HashMap<>());
                 }
                 
                 return menu;
