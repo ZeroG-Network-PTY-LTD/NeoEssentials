@@ -5,6 +5,10 @@ import com.mojang.logging.LogUtils;
 
 import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.config.EnhancedConfigManager;
+import com.zerog.neoessentials.localization.EnhancedLanguageManager;
+
+import java.nio.file.Path;
 import com.zerog.neoessentials.features.CustomBossbarManager;
 import com.zerog.neoessentials.listeners.NotificationEventListener;
 import com.zerog.neoessentials.localization.LanguageManager;
@@ -59,6 +63,15 @@ public class NeoEssentials {
             // Initialize storage systems
             PlayerDataManager.getInstance();
             LOGGER.info("Player data manager initialized");
+
+            // Initialize Enhanced Configuration System (Phase 4)
+            EnhancedConfigManager.getInstance();
+            LOGGER.info("Enhanced Configuration System initialized");
+
+            // Initialize Enhanced Language System (Phase 4)  
+            Path configPath = ConfigManager.getInstance().getConfigPath();
+            EnhancedLanguageManager.getInstance(configPath).initialize();
+            LOGGER.info("Enhanced Language System initialized");
             
             // Initialize all managers
             EconomyManager.getInstance();

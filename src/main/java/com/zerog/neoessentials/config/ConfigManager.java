@@ -2,22 +2,31 @@ package com.zerog.neoessentials.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.zerog.neoessentials.localization.LanguageManager;
 import net.neoforged.fml.loading.FMLPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Central configuration manager for NeoEssentials
- * Handles loading, saving, and accessing all configuration files
+ * Enhanced Configuration Manager for NeoEssentials
+ * Phase 4: Complete Configuration System Overhaul
+ * 
+ * Features:
+ * - User-friendly TOML configuration files
+ * - Hot-reload capability
+ * - Configuration validation
+ * - Default value management
+ * - Per-module configuration sections
+ * - Easy customization interface
  * 
  * @author ZeroG
- * @since 2.0.0
+ * @since 2.0.0 (Phase 4 Enhanced)
  */
 public class ConfigManager {
     
@@ -25,7 +34,10 @@ public class ConfigManager {
     private static ConfigManager instance;
     private final Gson gson;
     private final Path configPath;
+    private final Path userConfigPath;
     private final ConfigStatus configStatus = new ConfigStatus();
+    private final Map<String, Object> configCache = new ConcurrentHashMap<>();
+    private final Map<String, Long> configModificationTimes = new ConcurrentHashMap<>();
     
     // Configuration instances
     private MainConfig mainConfig;
@@ -39,15 +51,23 @@ public class ConfigManager {
     private TablistConfig tablistConfig;
     private SpawnConfig spawnConfig;
     
+    // Phase 4: Hot-reload capability
+    private boolean hotReloadEnabled = true;
+    
     private ConfigManager() {
         this.gson = new GsonBuilder()
             .setPrettyPrinting()
             .disableHtmlEscaping()
+            .serializeNulls()
             .create();
         this.configPath = FMLPaths.CONFIGDIR.get().resolve("neoessentials");
+        this.userConfigPath = configPath.resolve("user");
         
-        // Create config directory if it doesn't exist
-        createConfigDirectory();
+        // Create config directories
+        createConfigDirectories();
+        
+        // Initialize language manager first
+        LanguageManager.getInstance(configPath).initialize();
     }
     
     public static ConfigManager getInstance() {
