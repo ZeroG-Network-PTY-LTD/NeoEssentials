@@ -312,7 +312,7 @@ public class EnhancedConfigManager {
                 boolean valid = key.reset();
                 if (!valid) {
                     LOGGER.warn("Config directory watch key became invalid");
-                    break;
+                    return; // Exit method if key becomes invalid
                 }
             }
             

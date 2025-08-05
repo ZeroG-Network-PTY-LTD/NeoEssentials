@@ -3,6 +3,7 @@ package com.zerog.neoessentials.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.commands.admin.NeoEssentialsCommand;
 import com.zerog.neoessentials.commands.admin.EnhancedAdminCommand;
+import com.zerog.neoessentials.commands.admin.StatusCommand;
 import com.zerog.neoessentials.commands.permissions.PermissionsCommand;
 // import com.zerog.neoessentials.commands.status.StatusCommand; // DISABLED - Missing dependencies
 // import com.zerog.neoessentials.commands.notifications.AlertCommand; // DISABLED - Missing dependencies
@@ -190,6 +191,10 @@ public class CommandRegistry {
             // Enhanced admin commands
             EnhancedAdminCommand.register(dispatcher);
             LOGGER.info("Registered enhanced admin commands");
+            
+            // System status monitoring commands (Phase 5)
+            StatusCommand.register(dispatcher);
+            LOGGER.info("Registered system status monitoring commands");
             
             // Status monitoring commands - DISABLED (Missing enterprise dependencies)
             // StatusCommand.register(dispatcher);
