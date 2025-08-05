@@ -74,17 +74,7 @@ TEST_*.md
 *_SUMMARY.md
 *_TASKS.md
 *_COMPLETE_*.md
-CLEANUP_*.md
-MIGRATION_*.md
-MULTIVERSION_*.md
-IMPLEMENTATION_*.md
-REVERSION_*.md
-TODO.md
-README_DEV.md
-README_RELEASE.md
-MODPLATFORM_DESCRIPTION*.md
-DOCUMENTATION_PLAN*.md
-docs/TESTING_PHASE_COMMENCE_v1.0.2.154.md
+docs/Example configs/ 
 
 # Plugin reference files
 Plugins\ commands.md
