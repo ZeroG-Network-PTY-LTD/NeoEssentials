@@ -53,6 +53,15 @@ Many placeholders support parameters for formatting:
 | `{player_saturation}` | Saturation level | `20.0` |
 | `{player_air}` | Air level | `300` |
 
+### Enhanced Display Placeholders
+| Placeholder | Description | Example Output |
+|-------------|-------------|----------------|
+| `{animated_title}` | Cycling animated title | `Welcome to Server!` |
+| `{animated_subtitle}` | Cycling animated subtitle | `Enjoy your stay!` |
+| `{tablist_theme}` | Current tablist theme | `modern` |
+| `{scoreboard_theme}` | Current scoreboard theme | `stats` |
+| `{player_ping_color}` | Color-coded ping | `§a42ms` |
+
 ### Experience & Levels
 | Placeholder | Description | Example Output |
 |-------------|-------------|----------------|
@@ -401,16 +410,35 @@ prefix = "custom_"
 
 ## 🔧 Integration Examples
 
-### In Bossbar Templates
+### In Enhanced Bossbar Templates
 
 ```yaml
-welcome_bossbar:
-  text: "{color_green}Welcome {player_name}!{reset} Server: {server_players} players"
-  duration: 5
+multi_bossbar_welcome:
+  text: "{color_green}{animated_title}!{reset} Health: {player_health}/{player_max_health}"
+  theme: "modern"
+  duration: 10
 
-server_info:
-  text: "TPS: {server_tps:1} | Memory: {server_memory_percent}% | Time: {time}"
-  updateInterval: 2
+health_monitor:
+  text: "Health: {player_health_percent}% | Theme: {tablist_theme}"
+  updateInterval: 1
+
+animated_server_info:
+  text: "{animated_subtitle} | TPS: {server_tps:1} | Players: {server_players}"
+  updateInterval: 3
+```
+
+### In Enhanced Tablist & Scoreboard
+
+```yaml
+tablist_header: "{color_aqua}{animated_title}{reset}"
+tablist_footer: "Theme: {tablist_theme} | Health: {player_health_percent}%"
+
+scoreboard_lines:
+  - "§fPlayer: §a{player_name}"
+  - "§fTheme: §e{scoreboard_theme}"
+  - "§fHealth: §c{player_health}§f/§c{player_max_health}"
+  - "§fPing: {player_ping_color}"
+  - "§f{animated_subtitle}"
 ```
 
 ### In Language Files

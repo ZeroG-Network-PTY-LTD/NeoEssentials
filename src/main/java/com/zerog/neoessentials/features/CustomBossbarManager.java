@@ -189,46 +189,83 @@ public class CustomBossbarManager {
     }
     
     /**
-     * Show a bossbar to a player
+     * Show a bossbar to a player with optional theme
      */
     public void showBossbar(ServerPlayer player, String templateName, int durationSeconds) {
+        showBossbar(player, templateName, null, durationSeconds);
+    }
+    
+    /**
+     * Show a bossbar to a player with specified theme
+     */
+    public void showBossbar(ServerPlayer player, String templateName, String themeName, int durationSeconds) {
         BossbarTemplate template = templates.get(templateName);
         if (template == null) {
             LOGGER.warn("Unknown bossbar template: {}", templateName);
             return;
         }
         
-        showBossbar(player, template, durationSeconds);
+        BossbarTheme theme = null;
+        if (themeName != null) {
+            theme = themes.get(themeName);
+            if (theme == null) {
+                LOGGER.warn("Unknown bossbar theme: {}, using default", themeName);
+                theme = themes.get("default");
+            }
+        }
+        
+        showBossbar(player, template, theme, durationSeconds);
     }
     
     /**
-     * Show a custom bossbar to a player
+     * Show a custom bossbar to a player with optional theme
      */
     public void showBossbar(ServerPlayer player, BossbarTemplate template, int durationSeconds) {
+        showBossbar(player, template, null, durationSeconds);
+    }
+    
+    /**
+     * Show a custom bossbar to a player with theme (consolidated method)
+     */
+    public void showBossbar(ServerPlayer player, BossbarTemplate template, BossbarTheme theme, int durationSeconds) {
         try {
             UUID bossbarId = UUID.randomUUID();
-            String processedText = processPlaceholders(template.getText(), player);
+            
+            String processedText;
+            if (theme != null) {
+                // Apply theme formatting to template text
+                String themedTitle = theme.formatTitle(template.getTitle());
+                String themedSubtitle = theme.formatSubtitle(template.getText());
+                processedText = processPlaceholders(themedTitle + " " + themedSubtitle, player);
+            } else {
+                // Use template text directly
+                processedText = processPlaceholders(template.getText(), player);
+            }
             
             CustomBossbar bossbar = new CustomBossbar(
                 bossbarId,
                 Component.literal(processedText),
-                template.getColor(),
-                template.getOverlay(),
+                theme != null ? theme.getColor() : template.getColor(),
+                theme != null ? theme.getOverlay() : template.getOverlay(),
                 template.getProgress(),
                 template.isDarkenScreen(),
                 template.isPlayBossMusic(),
                 System.currentTimeMillis() + (durationSeconds * 1000L)
             );
             
-            // Remove existing bossbar if any
-            removeBossbar(player);
-            
-            // Store and send new bossbar
+            // Add to player's bossbar list (support multiple bossbars)
             activeBossbars.computeIfAbsent(player.getUUID(), k -> new ArrayList<>()).add(bossbar);
             sendBossbarPacket(player, bossbar, "ADD");
             
-            LOGGER.debug("Showing bossbar '{}' to player {} for {} seconds", 
-                template.getTitle(), player.getDisplayName().getString(), durationSeconds);
+            String logMessage = theme != null ? 
+                "Showing themed bossbar '{}' with theme '{}' to player {} for {} seconds" :
+                "Showing bossbar '{}' to player {} for {} seconds";
+            
+            if (theme != null) {
+                LOGGER.debug(logMessage, template.getTitle(), theme.getName(), player.getDisplayName().getString(), durationSeconds);
+            } else {
+                LOGGER.debug(logMessage, template.getTitle(), player.getDisplayName().getString(), durationSeconds);
+            }
             
         } catch (Exception e) {
             LOGGER.error("Failed to show bossbar to player: " + player.getDisplayName().getString(), e);
@@ -310,61 +347,6 @@ public class CustomBossbarManager {
      */
     public Set<String> getTemplateNames() {
         return new HashSet<>(templates.keySet());
-    }
-    
-    /**
-     * Show bossbar with theme
-     */
-    public void showBossbarWithTheme(ServerPlayer player, String templateName, String themeName, int durationSeconds) {
-        BossbarTemplate template = templates.get(templateName);
-        BossbarTheme theme = themes.get(themeName);
-        
-        if (template == null) {
-            LOGGER.warn("Unknown bossbar template: {}", templateName);
-            return;
-        }
-        
-        if (theme == null) {
-            LOGGER.warn("Unknown bossbar theme: {}, using default", themeName);
-            theme = themes.get("default");
-        }
-        
-        showBossbarWithTheme(player, template, theme, durationSeconds);
-    }
-    
-    /**
-     * Show custom bossbar with theme
-     */
-    public void showBossbarWithTheme(ServerPlayer player, BossbarTemplate template, BossbarTheme theme, int durationSeconds) {
-        try {
-            UUID bossbarId = UUID.randomUUID();
-            
-            // Apply theme formatting to template text
-            String themedTitle = theme.formatTitle(template.getTitle());
-            String themedSubtitle = theme.formatSubtitle(template.getText());
-            String processedText = processPlaceholders(themedTitle + " " + themedSubtitle, player);
-            
-            CustomBossbar bossbar = new CustomBossbar(
-                bossbarId,
-                Component.literal(processedText),
-                theme.getColor(),
-                theme.getOverlay(),
-                template.getProgress(),
-                template.isDarkenScreen(),
-                template.isPlayBossMusic(),
-                System.currentTimeMillis() + (durationSeconds * 1000L)
-            );
-            
-            // Add to player's bossbar list
-            activeBossbars.computeIfAbsent(player.getUUID(), k -> new ArrayList<>()).add(bossbar);
-            sendBossbarPacket(player, bossbar, "ADD");
-            
-            LOGGER.debug("Showing themed bossbar '{}' with theme '{}' to player {} for {} seconds", 
-                template.getTitle(), theme.getName(), player.getDisplayName().getString(), durationSeconds);
-            
-        } catch (Exception e) {
-            LOGGER.error("Failed to show themed bossbar to player: " + player.getDisplayName().getString(), e);
-        }
     }
     
     /**

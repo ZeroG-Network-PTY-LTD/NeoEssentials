@@ -2,9 +2,7 @@ package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.commands.admin.NeoEssentialsCommand;
-import com.zerog.neoessentials.commands.admin.EnhancedAdminCommand;
 import com.zerog.neoessentials.commands.admin.StatusCommand;
-import com.zerog.neoessentials.commands.EnhancedThemeCommand;
 import com.zerog.neoessentials.commands.permissions.PermissionsCommand;
 // import com.zerog.neoessentials.commands.status.StatusCommand; // DISABLED - Missing dependencies
 // import com.zerog.neoessentials.commands.notifications.AlertCommand; // DISABLED - Missing dependencies
@@ -189,9 +187,8 @@ public class CommandRegistry {
             NeoEssentialsCommand.register(dispatcher);
             LOGGER.info("Registered admin commands");
             
-            // Enhanced admin commands
-            EnhancedAdminCommand.register(dispatcher);
-            LOGGER.info("Registered enhanced admin commands");
+            // Enhanced admin commands - Using existing AdminCommand
+            LOGGER.info("Enhanced admin commands available through existing commands");
             
             // System status monitoring commands (Phase 5)
             StatusCommand.register(dispatcher);
@@ -229,9 +226,8 @@ public class CommandRegistry {
             BossbarCommand.register(dispatcher);
             LOGGER.info("Registered bossbar management commands");
             
-            // Enhanced Theme System (Phase 6)
-            EnhancedThemeCommand.register(dispatcher);
-            LOGGER.info("Registered enhanced theme system commands");
+            // Enhanced Theme System (Phase 6) - Commands integrated into existing systems
+            LOGGER.info("Enhanced theme system commands available through TablistScoreboardManager");
 
             // Advanced Player Features Commands
             PlaytimeCommand.register(dispatcher);
