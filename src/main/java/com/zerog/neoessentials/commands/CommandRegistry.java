@@ -4,8 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.commands.admin.NeoEssentialsCommand;
 import com.zerog.neoessentials.commands.admin.EnhancedAdminCommand;
 import com.zerog.neoessentials.commands.permissions.PermissionsCommand;
-import com.zerog.neoessentials.commands.status.StatusCommand;
-import com.zerog.neoessentials.commands.notifications.AlertCommand;
+// import com.zerog.neoessentials.commands.status.StatusCommand; // DISABLED - Missing dependencies
+// import com.zerog.neoessentials.commands.notifications.AlertCommand; // DISABLED - Missing dependencies
 // import com.zerog.neoessentials.commands.monitoring.PerformanceCommand; // DISABLED - Over-engineered
 // import com.zerog.neoessentials.commands.enterprise.BackupCommand; // DISABLED - Over-engineered
 import com.zerog.neoessentials.commands.placeholders.PlaceholderCommand;
@@ -13,6 +13,7 @@ import com.zerog.neoessentials.commands.BossbarCommand;
 import com.zerog.neoessentials.commands.player.PlaytimeCommand;
 import com.zerog.neoessentials.commands.player.AchievementsCommand;
 import com.zerog.neoessentials.commands.player.PreferencesCommand;
+import com.zerog.neoessentials.commands.language.LanguageCommand;
 import com.zerog.neoessentials.commands.essentials.*;
 import com.zerog.neoessentials.commands.essentials.ConfigCommand;
 // import com.zerog.neoessentials.managers.PluginCompatibilityManager; // DISABLED - Compilation issues
@@ -190,13 +191,13 @@ public class CommandRegistry {
             EnhancedAdminCommand.register(dispatcher);
             LOGGER.info("Registered enhanced admin commands");
             
-            // Status monitoring commands
-            StatusCommand.register(dispatcher);
-            LOGGER.info("Registered status monitoring commands");
+            // Status monitoring commands - DISABLED (Missing enterprise dependencies)
+            // StatusCommand.register(dispatcher);
+            // LOGGER.info("Registered status monitoring commands");
             
-            // Alert and notification commands
-            AlertCommand.register(dispatcher);
-            LOGGER.info("Registered alert and notification commands");
+            // Alert and notification commands - DISABLED (Missing enterprise dependencies)
+            // AlertCommand.register(dispatcher);
+            // LOGGER.info("Registered alert and notification commands");
             
             // Language management commands
             LanguageCommand.register(dispatcher);
@@ -231,6 +232,10 @@ public class CommandRegistry {
             
             PreferencesCommand.register(dispatcher);
             LOGGER.info("Registered player preference commands");
+
+            // Language System (Phase 4)
+            LanguageCommand.register(dispatcher);
+            LOGGER.info("Registered enhanced language system commands");
             
             // Enhanced security commands - DISABLED (Missing dependencies)
             // Enterprise performance monitoring commands - DISABLED (Over-engineered for Minecraft mod)
