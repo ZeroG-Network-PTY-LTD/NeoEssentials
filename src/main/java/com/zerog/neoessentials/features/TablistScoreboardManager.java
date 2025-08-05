@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.features;
 
+import com.zerog.neoessentials.animation.AnimationManager;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -14,6 +15,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +35,7 @@ public class TablistScoreboardManager {
     private final Map<UUID, PlayerStats> playerStats = new ConcurrentHashMap<>();
     private final Timer updateTimer = new Timer("TablistScoreboardUpdater", true);
     private boolean updateTaskStarted = false;
+    private AnimationManager animationManager;
     
     private static final String SIDEBAR_OBJECTIVE = "neoessentials_sidebar";
     
@@ -58,6 +61,19 @@ public class TablistScoreboardManager {
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event) {
         this.server = event.getServer();
+        
+        // Initialize animation manager
+        try {
+            File configDir = new File("config/neoessentials");
+            if (!configDir.exists()) {
+                configDir.mkdirs();
+            }
+            this.animationManager = new AnimationManager(configDir);
+            LOGGER.info("Animation system initialized for tablist/scoreboard");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize animation system", e);
+        }
+        
         LOGGER.info("TablistScoreboardManager initialized with server instance");
         setupScoreboards();
         startUpdateTask();
@@ -101,6 +117,12 @@ public class TablistScoreboardManager {
     public void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             playerStats.remove(player.getUUID());
+            
+            // Clean up player animations
+            if (animationManager != null) {
+                animationManager.cleanupPlayer(player.getUUID());
+            }
+            
             LOGGER.debug("Cleaned up player data for: {}", player.getDisplayName().getString());
         }
     }
@@ -480,10 +502,15 @@ public class TablistScoreboardManager {
     }
     
     /**
-     * Process placeholders in text
+     * Process placeholders in text with animation support
      */
     private String processPlaceholders(String text, ServerPlayer player) {
         if (text == null) return "";
+        
+        // First process animated placeholders if animation manager is available
+        if (animationManager != null && animationManager.isEnabled()) {
+            text = animationManager.processAnimatedText(text, player);
+        }
         
         long sessionTime = 0;
         PlayerStats stats = playerStats.get(player.getUUID());
@@ -511,7 +538,7 @@ public class TablistScoreboardManager {
             .replace("{uptime}", getServerUptime())
             .replace("{ram_used}", getUsedRAM())
             .replace("{ram_max}", getMaxRAM())
-            .replace("&", "§"); // Color code conversion
+            .replace("&", "§"); // Color code conversion (legacy support)
     }
     
     /**
@@ -592,5 +619,44 @@ public class TablistScoreboardManager {
             this.title = title;
             this.lines = new ArrayList<>(lines);
         }
+    }
+    
+    // Animation Management Methods
+    
+    /**
+     * Reload animation configurations
+     */
+    public void reloadAnimations() {
+        if (animationManager != null) {
+            animationManager.reload();
+            LOGGER.info("Tablist/Scoreboard animations reloaded");
+        }
+    }
+    
+    /**
+     * Get animation statistics
+     */
+    public String getAnimationStats() {
+        if (animationManager != null) {
+            return animationManager.getStats();
+        }
+        return "Animation manager not available";
+    }
+    
+    /**
+     * Check if animations are enabled
+     */
+    public boolean areAnimationsEnabled() {
+        return animationManager != null && animationManager.isEnabled();
+    }
+    
+    /**
+     * Get available animation names
+     */
+    public Set<String> getAvailableAnimations() {
+        if (animationManager != null) {
+            return animationManager.getAnimationNames();
+        }
+        return new HashSet<>();
     }
 }

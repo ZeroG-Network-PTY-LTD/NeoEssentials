@@ -226,6 +226,10 @@ public class CommandRegistry {
             BossbarCommand.register(dispatcher);
             LOGGER.info("Registered bossbar management commands");
             
+            // Animation management commands
+            AnimationCommands.register(dispatcher);
+            LOGGER.info("Registered animation management commands");
+            
             // Enhanced Theme System (Phase 6) - Commands integrated into existing systems
             LOGGER.info("Enhanced theme system commands available through TablistScoreboardManager");
 

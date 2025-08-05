@@ -1,7 +1,9 @@
 package com.zerog.neoessentials.features;
 
+import com.zerog.neoessentials.animation.AnimationManager;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBossEventPacket;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.BossEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -11,6 +13,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,6 +32,8 @@ public class CustomBossbarManager {
     private final Map<String, BossbarTemplate> templates = new ConcurrentHashMap<>();
     private final Map<String, BossbarTheme> themes = new ConcurrentHashMap<>();
     private final Timer updateTimer = new Timer("BossbarUpdater", true);
+    private AnimationManager animationManager;
+    private MinecraftServer server;
     private int animationFrame = 0;
     
     private CustomBossbarManager() {
@@ -46,6 +51,20 @@ public class CustomBossbarManager {
     
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event) {
+        this.server = event.getServer();
+        
+        // Initialize animation manager
+        try {
+            File configDir = new File("config/neoessentials");
+            if (!configDir.exists()) {
+                configDir.mkdirs();
+            }
+            this.animationManager = new AnimationManager(configDir);
+            LOGGER.info("Animation system initialized for bossbars");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize animation system for bossbars", e);
+        }
+        
         startUpdateTask();
         LOGGER.info("Custom Bossbar Manager initialized");
     }
@@ -62,6 +81,11 @@ public class CustomBossbarManager {
     public void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             removeBossbar(player);
+            
+            // Clean up player animations
+            if (animationManager != null) {
+                animationManager.cleanupPlayer(player.getUUID());
+            }
         }
     }
     
@@ -367,20 +391,37 @@ public class CustomBossbarManager {
     /**
      * Process placeholders in text
      */
+    /**
+     * Process placeholders in text with animation support
+     */
     private String processPlaceholders(String text, ServerPlayer player) {
         if (text == null) return "";
+        
+        // First process animated placeholders if animation manager is available
+        if (animationManager != null && animationManager.isEnabled()) {
+            text = animationManager.processAnimatedText(text, player);
+        }
+        
+        // Get server stats
+        String onlineCount = "1";
+        String maxCount = "20";
+        if (server != null) {
+            onlineCount = String.valueOf(server.getPlayerCount());
+            maxCount = String.valueOf(server.getMaxPlayers());
+        }
         
         // Enhanced placeholder processing with animations
         String processed = text
             .replace("{player}", player.getDisplayName().getString())
-            .replace("{online}", "1") // Placeholder - would need server reference
-            .replace("{max}", "20")   // Placeholder - would need server reference
+            .replace("{online}", onlineCount)
+            .replace("{max}", maxCount)
             .replace("{tps}", "20.0") // Placeholder - would need TPS calculation
             .replace("{world}", player.level().dimension().location().getPath())
             .replace("{health}", String.valueOf((int)player.getHealth()))
             .replace("{maxhealth}", String.valueOf((int)player.getMaxHealth()))
             .replace("{animated_title}", getAnimatedTitle())
-            .replace("{animated_subtitle}", getAnimatedSubtitle());
+            .replace("{animated_subtitle}", getAnimatedSubtitle())
+            .replace("&", "§"); // Color code conversion
         
         return processed;
     }
@@ -554,5 +595,44 @@ public class CustomBossbarManager {
         public String getSubtitleFormat() { return subtitleFormat; }
         public BossEvent.BossBarColor getColor() { return color; }
         public BossEvent.BossBarOverlay getOverlay() { return overlay; }
+    }
+    
+    // Animation Management Methods
+    
+    /**
+     * Reload animation configurations
+     */
+    public void reloadAnimations() {
+        if (animationManager != null) {
+            animationManager.reload();
+            LOGGER.info("Bossbar animations reloaded");
+        }
+    }
+    
+    /**
+     * Get animation statistics
+     */
+    public String getAnimationStats() {
+        if (animationManager != null) {
+            return animationManager.getStats();
+        }
+        return "Animation manager not available";
+    }
+    
+    /**
+     * Check if animations are enabled
+     */
+    public boolean areAnimationsEnabled() {
+        return animationManager != null && animationManager.isEnabled();
+    }
+    
+    /**
+     * Get available animation names
+     */
+    public Set<String> getAvailableAnimations() {
+        if (animationManager != null) {
+            return animationManager.getAnimationNames();
+        }
+        return new HashSet<>();
     }
 }
