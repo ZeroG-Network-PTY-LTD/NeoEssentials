@@ -5,6 +5,8 @@ import com.mojang.logging.LogUtils;
 
 import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigurationUnifier;
+import com.zerog.neoessentials.features.EnhancedTablistManager;
+import com.zerog.neoessentials.features.EnhancedMultiBossbarManager;
 import com.zerog.neoessentials.localization.EnhancedLanguageManager;
 
 import java.nio.file.Path;
@@ -43,6 +45,10 @@ public class NeoEssentials {
         
         // Register for server events
         NeoForge.EVENT_BUS.register(this);
+        
+        // Register enhanced theme system event handlers (Phase 6)
+        NeoForge.EVENT_BUS.register(EnhancedTablistManager.getInstance());
+        NeoForge.EVENT_BUS.register(EnhancedMultiBossbarManager.getInstance());
         
         LOGGER.info("NeoEssentials initialized successfully!");
     }
@@ -94,6 +100,13 @@ public class NeoEssentials {
             // Initialize Custom Bossbar Manager
             CustomBossbarManager.getInstance();
             LOGGER.info("Custom Bossbar Manager initialized");
+            
+            // Initialize Enhanced Theme System (Phase 6)
+            EnhancedTablistManager.getInstance();
+            LOGGER.info("Enhanced Tablist Manager initialized");
+            
+            EnhancedMultiBossbarManager.getInstance();
+            LOGGER.info("Enhanced Multi-Bossbar Manager initialized");
             
             // Initialize Notification Manager
             NotificationManager notificationManager = NotificationManager.getInstance(ConfigurationUnifier.getInstance().getConfigManager().getMainConfig());

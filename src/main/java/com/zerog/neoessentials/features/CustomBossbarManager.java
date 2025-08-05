@@ -25,13 +25,16 @@ public class CustomBossbarManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomBossbarManager.class);
     private static CustomBossbarManager instance;
     
-    private final Map<UUID, CustomBossbar> activeBossbars = new ConcurrentHashMap<>();
+    private final Map<UUID, List<CustomBossbar>> activeBossbars = new ConcurrentHashMap<>();
     private final Map<String, BossbarTemplate> templates = new ConcurrentHashMap<>();
+    private final Map<String, BossbarTheme> themes = new ConcurrentHashMap<>();
     private final Timer updateTimer = new Timer("BossbarUpdater", true);
+    private int animationFrame = 0;
     
     private CustomBossbarManager() {
         NeoForge.EVENT_BUS.register(this);
         initializeDefaultTemplates();
+        initializeDefaultThemes();
     }
     
     public static CustomBossbarManager getInstance() {
@@ -121,7 +124,68 @@ public class CustomBossbarManager {
             true
         ));
         
+        // Health bossbar
+        templates.put("health", new BossbarTemplate(
+            "§c§lHealth Status",
+            "§fHealth: §a{health}§f/§a{maxhealth}",
+            BossEvent.BossBarColor.RED,
+            BossEvent.BossBarOverlay.PROGRESS,
+            1.0f,
+            false,
+            false
+        ));
+        
+        // Animated welcome bossbar
+        templates.put("animated_welcome", new BossbarTemplate(
+            "§6§l{animated_title}",
+            "§7{animated_subtitle}",
+            BossEvent.BossBarColor.YELLOW,
+            BossEvent.BossBarOverlay.PROGRESS,
+            1.0f,
+            false,
+            false
+        ));
+        
         LOGGER.info("Initialized {} default bossbar templates", templates.size());
+    }
+    
+    /**
+     * Initialize default bossbar themes
+     */
+    private void initializeDefaultThemes() {
+        // Default theme
+        themes.put("default", new BossbarTheme(
+            "§f§l{title}",
+            "§7{subtitle}",
+            BossEvent.BossBarColor.WHITE,
+            BossEvent.BossBarOverlay.PROGRESS
+        ));
+        
+        // Modern theme
+        themes.put("modern", new BossbarTheme(
+            "§b§l► {title} §b§l◄",
+            "§f{subtitle}",
+            BossEvent.BossBarColor.BLUE,
+            BossEvent.BossBarOverlay.NOTCHED_10
+        ));
+        
+        // Classic theme
+        themes.put("classic", new BossbarTheme(
+            "§6§l═══ {title} ═══",
+            "§e{subtitle}",
+            BossEvent.BossBarColor.YELLOW,
+            BossEvent.BossBarOverlay.NOTCHED_6
+        ));
+        
+        // Minimalist theme
+        themes.put("minimalist", new BossbarTheme(
+            "§f{title}",
+            "§8{subtitle}",
+            BossEvent.BossBarColor.WHITE,
+            BossEvent.BossBarOverlay.PROGRESS
+        ));
+        
+        LOGGER.info("Initialized {} default bossbar themes", themes.size());
     }
     
     /**
@@ -160,7 +224,7 @@ public class CustomBossbarManager {
             removeBossbar(player);
             
             // Store and send new bossbar
-            activeBossbars.put(player.getUUID(), bossbar);
+            activeBossbars.computeIfAbsent(player.getUUID(), k -> new ArrayList<>()).add(bossbar);
             sendBossbarPacket(player, bossbar, "ADD");
             
             LOGGER.debug("Showing bossbar '{}' to player {} for {} seconds", 
@@ -175,10 +239,12 @@ public class CustomBossbarManager {
      * Update bossbar for a player
      */
     public void updateBossbar(ServerPlayer player, String newText, float newProgress) {
-        CustomBossbar bossbar = activeBossbars.get(player.getUUID());
-        if (bossbar == null) return;
+        List<CustomBossbar> bossbars = activeBossbars.get(player.getUUID());
+        if (bossbars == null || bossbars.isEmpty()) return;
         
         try {
+            // Update the most recent bossbar
+            CustomBossbar bossbar = bossbars.get(bossbars.size() - 1);
             bossbar.setName(Component.literal(processPlaceholders(newText, player)));
             bossbar.setProgress(Math.max(0.0f, Math.min(1.0f, newProgress)));
             
@@ -194,12 +260,14 @@ public class CustomBossbarManager {
      * Remove bossbar from a player
      */
     public void removeBossbar(ServerPlayer player) {
-        CustomBossbar bossbar = activeBossbars.remove(player.getUUID());
-        if (bossbar == null) return;
+        List<CustomBossbar> bossbars = activeBossbars.remove(player.getUUID());
+        if (bossbars == null || bossbars.isEmpty()) return;
         
         try {
-            sendBossbarPacket(player, bossbar, "REMOVE");
-            LOGGER.debug("Removed bossbar from player: {}", player.getDisplayName().getString());
+            for (CustomBossbar bossbar : bossbars) {
+                sendBossbarPacket(player, bossbar, "REMOVE");
+            }
+            LOGGER.debug("Removed {} bossbars from player: {}", bossbars.size(), player.getDisplayName().getString());
         } catch (Exception e) {
             LOGGER.error("Failed to remove bossbar from player: " + player.getDisplayName().getString(), e);
         }
@@ -245,20 +313,122 @@ public class CustomBossbarManager {
     }
     
     /**
+     * Show bossbar with theme
+     */
+    public void showBossbarWithTheme(ServerPlayer player, String templateName, String themeName, int durationSeconds) {
+        BossbarTemplate template = templates.get(templateName);
+        BossbarTheme theme = themes.get(themeName);
+        
+        if (template == null) {
+            LOGGER.warn("Unknown bossbar template: {}", templateName);
+            return;
+        }
+        
+        if (theme == null) {
+            LOGGER.warn("Unknown bossbar theme: {}, using default", themeName);
+            theme = themes.get("default");
+        }
+        
+        showBossbarWithTheme(player, template, theme, durationSeconds);
+    }
+    
+    /**
+     * Show custom bossbar with theme
+     */
+    public void showBossbarWithTheme(ServerPlayer player, BossbarTemplate template, BossbarTheme theme, int durationSeconds) {
+        try {
+            UUID bossbarId = UUID.randomUUID();
+            
+            // Apply theme formatting to template text
+            String themedTitle = theme.formatTitle(template.getTitle());
+            String themedSubtitle = theme.formatSubtitle(template.getText());
+            String processedText = processPlaceholders(themedTitle + " " + themedSubtitle, player);
+            
+            CustomBossbar bossbar = new CustomBossbar(
+                bossbarId,
+                Component.literal(processedText),
+                theme.getColor(),
+                theme.getOverlay(),
+                template.getProgress(),
+                template.isDarkenScreen(),
+                template.isPlayBossMusic(),
+                System.currentTimeMillis() + (durationSeconds * 1000L)
+            );
+            
+            // Add to player's bossbar list
+            activeBossbars.computeIfAbsent(player.getUUID(), k -> new ArrayList<>()).add(bossbar);
+            sendBossbarPacket(player, bossbar, "ADD");
+            
+            LOGGER.debug("Showing themed bossbar '{}' with theme '{}' to player {} for {} seconds", 
+                template.getTitle(), theme.getName(), player.getDisplayName().getString(), durationSeconds);
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to show themed bossbar to player: " + player.getDisplayName().getString(), e);
+        }
+    }
+    
+    /**
+     * Add or update a bossbar theme
+     */
+    public void addTheme(String name, BossbarTheme theme) {
+        themes.put(name, theme);
+        LOGGER.info("Added/updated bossbar theme: {}", name);
+    }
+    
+    /**
+     * Get all theme names
+     */
+    public Set<String> getThemeNames() {
+        return new HashSet<>(themes.keySet());
+    }
+    
+    /**
      * Process placeholders in text
      */
     private String processPlaceholders(String text, ServerPlayer player) {
         if (text == null) return "";
         
-        // Basic placeholder processing
+        // Enhanced placeholder processing with animations
         String processed = text
             .replace("{player}", player.getDisplayName().getString())
             .replace("{online}", "1") // Placeholder - would need server reference
             .replace("{max}", "20")   // Placeholder - would need server reference
             .replace("{tps}", "20.0") // Placeholder - would need TPS calculation
-            .replace("{world}", player.level().dimension().location().getPath());
+            .replace("{world}", player.level().dimension().location().getPath())
+            .replace("{health}", String.valueOf((int)player.getHealth()))
+            .replace("{maxhealth}", String.valueOf((int)player.getMaxHealth()))
+            .replace("{animated_title}", getAnimatedTitle())
+            .replace("{animated_subtitle}", getAnimatedSubtitle());
         
         return processed;
+    }
+    
+    /**
+     * Get animated title based on current frame
+     */
+    private String getAnimatedTitle() {
+        String[] titles = {
+            "Welcome to the Server!",
+            "§6Welcome to the Server!",
+            "§e§lWelcome to the Server!",
+            "§6§lWelcome to the Server!",
+            "Welcome to the Server!"
+        };
+        return titles[animationFrame % titles.length];
+    }
+    
+    /**
+     * Get animated subtitle based on current frame
+     */
+    private String getAnimatedSubtitle() {
+        String[] subtitles = {
+            "Enjoy your stay!",
+            "Have fun and follow the rules!",
+            "Welcome aboard, adventurer!",
+            "Ready for an epic journey?",
+            "Let the adventure begin!"
+        };
+        return subtitles[animationFrame % subtitles.length];
     }
     
     /**
@@ -290,14 +460,12 @@ public class CustomBossbarManager {
             @Override
             public void run() {
                 long currentTime = System.currentTimeMillis();
+                animationFrame = (animationFrame + 1) % 20; // 20-frame animation cycle
                 
                 activeBossbars.entrySet().removeIf(entry -> {
-                    CustomBossbar bossbar = entry.getValue();
-                    if (currentTime >= bossbar.getExpireTime()) {
-                        // Bossbar expired - would need to remove from player
-                        return true;
-                    }
-                    return false;
+                    List<CustomBossbar> bossbars = entry.getValue();
+                    bossbars.removeIf(bossbar -> currentTime >= bossbar.getExpireTime());
+                    return bossbars.isEmpty();
                 });
             }
         }, 1000, 1000); // Check every second
@@ -364,5 +532,45 @@ public class CustomBossbarManager {
         public float getProgress() { return progress; }
         public boolean isDarkenScreen() { return darkenScreen; }
         public boolean isPlayBossMusic() { return playBossMusic; }
+    }
+    
+    /**
+     * Bossbar theme for consistent styling across different bossbars
+     */
+    public static class BossbarTheme {
+        private final String name;
+        private final String titleFormat;
+        private final String subtitleFormat;
+        private final BossEvent.BossBarColor color;
+        private final BossEvent.BossBarOverlay overlay;
+        
+        public BossbarTheme(String titleFormat, String subtitleFormat, 
+                           BossEvent.BossBarColor color, BossEvent.BossBarOverlay overlay) {
+            this("default", titleFormat, subtitleFormat, color, overlay);
+        }
+        
+        public BossbarTheme(String name, String titleFormat, String subtitleFormat, 
+                           BossEvent.BossBarColor color, BossEvent.BossBarOverlay overlay) {
+            this.name = name;
+            this.titleFormat = titleFormat;
+            this.subtitleFormat = subtitleFormat;
+            this.color = color;
+            this.overlay = overlay;
+        }
+        
+        public String formatTitle(String title) {
+            return titleFormat.replace("{title}", title);
+        }
+        
+        public String formatSubtitle(String subtitle) {
+            return subtitleFormat.replace("{subtitle}", subtitle);
+        }
+        
+        // Getters
+        public String getName() { return name; }
+        public String getTitleFormat() { return titleFormat; }
+        public String getSubtitleFormat() { return subtitleFormat; }
+        public BossEvent.BossBarColor getColor() { return color; }
+        public BossEvent.BossBarOverlay getOverlay() { return overlay; }
     }
 }
