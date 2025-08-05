@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collection;
-import java.util.UUID;
 
 /**
  * Custom GUI Manager for NeoEssentials
@@ -136,13 +135,16 @@ public class CustomGuiManager {
             }
             
         } catch (Exception e) {
-            LOGGER.error("Failed to open GUI {} for player {}", type, player.getName().getString(), e);
-            MessageUtil.sendMessage(player, "&cFailed to open interface. Please contact an administrator.");
+            LOGGER.error("Failed to open GUI {} for player {}", type, 
+                player != null ? player.getName().getString() : "null", e);
+            if (player != null) {
+                MessageUtil.sendMessage(player, "&cFailed to open interface. Please contact an administrator.");
+            }
         }
     }
     
     /**
-     * Create a simple chest-based GUI
+     * Create a simple chest-based GUI with click action registration
      */
     private MenuProvider createChestGui(String title, int rows, List<GuiItem> items) {
         return new SimpleMenuProvider(
@@ -150,12 +152,23 @@ public class CustomGuiManager {
                 AbstractContainerMenu menu = new ChestMenu(MenuType.GENERIC_9x3, windowId, playerInventory, 
                     new SimpleContainer(rows * 9), rows);
                 
-                // Add items to the container
+                // Prepare click actions for registration
+                Map<Integer, GuiClickAction> clickActions = new HashMap<>();
+                
+                // Add items to the container and register click actions
                 for (int i = 0; i < items.size() && i < rows * 9; i++) {
                     GuiItem item = items.get(i);
                     if (item != null) {
                         menu.getSlot(i).set(item.getItemStack());
+                        if (item.getClickAction() != null) {
+                            clickActions.put(i, item.getClickAction());
+                        }
                     }
+                }
+                
+                // Register GUI session for click handling (if player is ServerPlayer)
+                if (player instanceof ServerPlayer serverPlayer) {
+                    GuiClickHandler.registerSession(serverPlayer, GuiType.SHOP_MAIN, clickActions);
                 }
                 
                 return menu;
@@ -616,7 +629,7 @@ public class CustomGuiManager {
         
         // Get warp cost and cooldown info
         double warpCost = configManager.getWarpConfig().teleportWarpCost.doubleValue();
-        long cooldownRemaining = getRemainingWarpCooldown(player.getUUID(), warpManager);
+        long cooldownRemaining = 0; // Simplified - would need proper cooldown tracking
         boolean canAfford = playerBalance >= warpCost;
         boolean onCooldown = cooldownRemaining > 0;
         
@@ -669,58 +682,6 @@ public class CustomGuiManager {
             new net.minecraft.world.item.component.ItemLore(lore));
         
         return warpItem;
-    }
-
-    /**
-     * Handle warp teleportation - simplified for GUI system
-     */
-    private void handleWarpTeleport(ServerPlayer player, String warpName) {
-        WarpManager warpManager = WarpManager.getInstance();
-        
-        // Check cooldown
-        long cooldownRemaining = getRemainingWarpCooldown(player.getUUID(), warpManager);
-        if (cooldownRemaining > 0) {
-            String timeLeft = MessageUtil.formatTime(cooldownRemaining);
-            MessageUtil.sendMessage(player, "&cYou must wait " + timeLeft + " before using warps again!");
-            return;
-        }
-        
-        // Check cost and balance
-        double warpCost = configManager.getWarpConfig().teleportWarpCost.doubleValue();
-        if (!economyManager.hasBalance(player.getUUID(), BigDecimal.valueOf(warpCost))) {
-            MessageUtil.sendMessage(player, "&cYou need $" + String.format("%.2f", warpCost) + " to use this warp!");
-            return;
-        }
-        
-        // Withdraw cost
-        if (!economyManager.withdrawBalance(player.getUUID(), warpCost, "Warp teleport: " + warpName)) {
-            MessageUtil.sendMessage(player, "&cFailed to process payment for warp!");
-            return;
-        }
-        
-        // Teleport
-        boolean success = warpManager.teleportToWarp(player, warpName);
-        if (success) {
-            MessageUtil.sendMessage(player, "&aTeleported to " + warpName + "! &7(Cost: $" + String.format("%.2f", warpCost) + ")");
-            player.closeContainer();
-        } else {
-            // Refund on failure
-            economyManager.depositBalance(player.getUUID(), warpCost, "Warp teleport refund: " + warpName);
-            MessageUtil.sendMessage(player, "&cFailed to teleport to " + warpName + "! Payment refunded.");
-        }
-    }
-
-    /**
-     * Get remaining warp cooldown for player
-     */
-    private long getRemainingWarpCooldown(UUID playerId, WarpManager warpManager) {
-        // Access private method through reflection or add public method to WarpManager
-        // For now, return a simplified cooldown based on config
-        int cooldownSeconds = configManager.getWarpConfig().teleportWarpCooldown;
-        if (cooldownSeconds <= 0) return 0;
-        
-        // This would need proper cooldown tracking - simplified for now
-        return 0; // Would need access to WarpManager's internal cooldown tracking
     }
 
     /**
