@@ -96,24 +96,48 @@ public class CustomGuiManager {
     }
     
     /**
-     * Open a custom GUI for a player
+     * Open a custom GUI for a player with enhanced error handling
      */
     public void openGui(ServerPlayer player, GuiType type, Object... args) {
         try {
-            switch (type) {
-                case SHOP_MAIN -> openShopMainGui(player);
-                case SHOP_CATEGORY -> openShopCategoryGui(player, (String) args[0]);
-                case PLAYER_STATS -> openPlayerStatsGui(player);
-                case SERVER_INFO -> openServerInfoGui(player);
-                case ECONOMY_MANAGEMENT -> openEconomyManagementGui(player);
-                case KIT_SELECTOR -> openKitSelectorGui(player);
-                case WARP_SELECTOR -> openWarpSelectorGui(player);
-                case TELEPORT_MENU -> openTeleportMenuGui(player);
-                default -> LOGGER.warn("Unknown GUI type: " + type);
+            // Validate player state
+            if (player == null || !player.isAlive()) {
+                LOGGER.warn("Attempted to open GUI for invalid player");
+                return;
             }
+            
+            // Close any existing menus first for clean state
+            player.closeContainer();
+            
+            // Small delay to ensure clean state
+            var server = player.getServer();
+            if (server != null) {
+                server.execute(() -> {
+                    try {
+                        switch (type) {
+                            case SHOP_MAIN -> openShopMainGui(player);
+                            case SHOP_CATEGORY -> openShopCategoryGui(player, (String) args[0]);
+                            case PLAYER_STATS -> openPlayerStatsGui(player);
+                            case SERVER_INFO -> openServerInfoGui(player);
+                            case ECONOMY_MANAGEMENT -> openEconomyManagementGui(player);
+                            case KIT_SELECTOR -> openKitSelectorGui(player);
+                            case WARP_SELECTOR -> openWarpSelectorGui(player);
+                            case TELEPORT_MENU -> openTeleportMenuGui(player);
+                            default -> {
+                                LOGGER.warn("Unknown GUI type: {}", type);
+                                MessageUtil.sendMessage(player, "&cUnsupported GUI type requested");
+                            }
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Error opening GUI {} for player {}", type, player.getName().getString(), e);
+                        MessageUtil.sendMessage(player, "&cAn error occurred while opening the interface. Please try again.");
+                    }
+                });
+            }
+            
         } catch (Exception e) {
-            LOGGER.error("Failed to open GUI for player: " + player.getDisplayName().getString(), e);
-            player.sendSystemMessage(Component.literal("§cFailed to open GUI: " + e.getMessage()));
+            LOGGER.error("Failed to open GUI {} for player {}", type, player.getName().getString(), e);
+            MessageUtil.sendMessage(player, "&cFailed to open interface. Please contact an administrator.");
         }
     }
     

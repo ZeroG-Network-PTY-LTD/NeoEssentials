@@ -8,10 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Enhanced Configuration Manager for NeoEssentials
@@ -57,6 +60,8 @@ public class EnhancedConfigManager {
     // Phase 4: Enhanced features
     private boolean hotReloadEnabled = true;
     private boolean autoBackupEnabled = true;
+    private ScheduledExecutorService hotReloadExecutor;
+    private WatchService configWatcher;
     
     private EnhancedConfigManager() {
         this.gson = new GsonBuilder()
@@ -240,8 +245,107 @@ public class EnhancedConfigManager {
      * Setup hot-reload monitoring
      */
     private void setupHotReload() {
-        // TODO: Implement file watching for hot-reload
-        LOGGER.info("Hot-reload monitoring enabled");
+        if (!hotReloadEnabled) {
+            LOGGER.info("Hot-reload is disabled");
+            return;
+        }
+        
+        try {
+            // Initialize file system watcher
+            configWatcher = FileSystems.getDefault().newWatchService();
+            
+            // Watch the config directory for modifications
+            configPath.register(configWatcher, 
+                StandardWatchEventKinds.ENTRY_MODIFY,
+                StandardWatchEventKinds.ENTRY_CREATE);
+            
+            // Start background thread for file watching
+            hotReloadExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "NeoEssentials-HotReload");
+                t.setDaemon(true);
+                return t;
+            });
+            
+            // Check for file changes every 2 seconds
+            hotReloadExecutor.scheduleAtFixedRate(this::checkForConfigChanges, 2, 2, TimeUnit.SECONDS);
+            
+            LOGGER.info("Hot-reload monitoring enabled - watching directory: {}", configPath);
+            
+        } catch (IOException e) {
+            LOGGER.error("Failed to setup hot-reload monitoring", e);
+            hotReloadEnabled = false;
+        }
+    }
+    
+    /**
+     * Check for configuration file changes and reload them
+     */
+    private void checkForConfigChanges() {
+        if (configWatcher == null) return;
+        
+        try {
+            WatchKey key = configWatcher.poll();
+            if (key != null) {
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    WatchEvent.Kind<?> kind = event.kind();
+                    
+                    if (kind == StandardWatchEventKinds.OVERFLOW) {
+                        continue;
+                    }
+                    
+                    @SuppressWarnings("unchecked")
+                    WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
+                    Path filename = pathEvent.context();
+                    
+                    if (filename.toString().endsWith(".json")) {
+                        String fileName = filename.toString();
+                        
+                        // Add small delay to ensure file write is complete
+                        Thread.sleep(100);
+                        
+                        if (hotReloadIfChanged(fileName)) {
+                            LOGGER.info("Auto-reloaded configuration file: {}", fileName);
+                        }
+                    }
+                }
+                
+                boolean valid = key.reset();
+                if (!valid) {
+                    LOGGER.warn("Config directory watch key became invalid");
+                    break;
+                }
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("Error during hot-reload file watching", e);
+        }
+    }
+    
+    /**
+     * Shutdown hot-reload monitoring
+     */
+    public void shutdownHotReload() {
+        if (hotReloadExecutor != null) {
+            hotReloadExecutor.shutdown();
+            try {
+                if (!hotReloadExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    hotReloadExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                hotReloadExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
+        
+        if (configWatcher != null) {
+            try {
+                configWatcher.close();
+            } catch (IOException e) {
+                LOGGER.error("Error closing config watcher", e);
+            }
+        }
+        
+        LOGGER.info("Hot-reload monitoring shutdown");
     }
     
     /**
@@ -578,5 +682,13 @@ public class EnhancedConfigManager {
     public void setAutoBackupEnabled(boolean enabled) {
         this.autoBackupEnabled = enabled;
         LOGGER.info("Auto-backup {}", enabled ? "enabled" : "disabled");
+    }
+    
+    /**
+     * Cleanup resources when shutting down
+     */
+    public void shutdown() {
+        shutdownHotReload();
+        LOGGER.info("Enhanced Configuration Manager shutdown complete");
     }
 }
