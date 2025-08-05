@@ -70,6 +70,18 @@ public class ConfigManager {
         LanguageManager.getInstance(configPath).initialize();
     }
     
+    /**
+     * Create configuration directories
+     */
+    private void createConfigDirectories() {
+        try {
+            Files.createDirectories(configPath);
+            LOGGER.info("Created config directories");
+        } catch (Exception e) {
+            LOGGER.error("Failed to create config directories", e);
+        }
+    }
+    
     public static ConfigManager getInstance() {
         if (instance == null) {
             instance = new ConfigManager();
