@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.commands.admin.NeoEssentialsCommand;
 import com.zerog.neoessentials.commands.admin.EnhancedAdminCommand;
 import com.zerog.neoessentials.commands.admin.StatusCommand;
+import com.zerog.neoessentials.commands.EnhancedThemeCommand;
 import com.zerog.neoessentials.commands.permissions.PermissionsCommand;
 // import com.zerog.neoessentials.commands.status.StatusCommand; // DISABLED - Missing dependencies
 // import com.zerog.neoessentials.commands.notifications.AlertCommand; // DISABLED - Missing dependencies
@@ -227,6 +228,10 @@ public class CommandRegistry {
             // Bossbar management commands
             BossbarCommand.register(dispatcher);
             LOGGER.info("Registered bossbar management commands");
+            
+            // Enhanced Theme System (Phase 6)
+            EnhancedThemeCommand.register(dispatcher);
+            LOGGER.info("Registered enhanced theme system commands");
 
             // Advanced Player Features Commands
             PlaytimeCommand.register(dispatcher);
