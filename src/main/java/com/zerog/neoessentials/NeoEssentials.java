@@ -5,12 +5,10 @@ import com.mojang.logging.LogUtils;
 
 import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigurationUnifier;
-import com.zerog.neoessentials.features.EnhancedTablistManager;
-import com.zerog.neoessentials.features.EnhancedMultiBossbarManager;
-import com.zerog.neoessentials.localization.EnhancedLanguageManager;
 
 import java.nio.file.Path;
 import com.zerog.neoessentials.features.CustomBossbarManager;
+import com.zerog.neoessentials.features.TablistScoreboardManager;
 import com.zerog.neoessentials.listeners.NotificationEventListener;
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.managers.*;
@@ -47,8 +45,8 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(this);
         
         // Register enhanced theme system event handlers (Phase 6)
-        NeoForge.EVENT_BUS.register(EnhancedTablistManager.getInstance());
-        NeoForge.EVENT_BUS.register(EnhancedMultiBossbarManager.getInstance());
+        NeoForge.EVENT_BUS.register(TablistScoreboardManager.getInstance());
+        NeoForge.EVENT_BUS.register(CustomBossbarManager.getInstance());
         
         LOGGER.info("NeoEssentials initialized successfully!");
     }
@@ -71,8 +69,8 @@ public class NeoEssentials {
 
             // Initialize Enhanced Language System (Phase 4)  
             Path configPath = ConfigurationUnifier.getInstance().getConfigPath();
-            EnhancedLanguageManager.getInstance(configPath).initialize();
-            LOGGER.info("Enhanced Language System initialized");
+            LanguageManager.getInstance(configPath).initialize();
+            LOGGER.info("Language System initialized");
             
             // Initialize all managers
             EconomyManager.getInstance();
@@ -102,11 +100,11 @@ public class NeoEssentials {
             LOGGER.info("Custom Bossbar Manager initialized");
             
             // Initialize Enhanced Theme System (Phase 6)
-            EnhancedTablistManager.getInstance();
-            LOGGER.info("Enhanced Tablist Manager initialized");
+            TablistScoreboardManager.getInstance();
+            LOGGER.info("Enhanced Tablist & Scoreboard Manager initialized");
             
-            EnhancedMultiBossbarManager.getInstance();
-            LOGGER.info("Enhanced Multi-Bossbar Manager initialized");
+            // Enhanced Bossbar Manager already initialized
+            LOGGER.info("Enhanced Bossbar Manager ready");
             
             // Initialize Notification Manager
             NotificationManager notificationManager = NotificationManager.getInstance(ConfigurationUnifier.getInstance().getConfigManager().getMainConfig());

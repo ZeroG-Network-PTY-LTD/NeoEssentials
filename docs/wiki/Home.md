@@ -18,8 +18,9 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - [Economy System](Economy.md) - Currency and transaction management
 
 ### 🛠️ Advanced Features
-- [Custom Bossbar System](Bossbar.md) - Dynamic bossbar management
-- [Placeholder System](Placeholders.md) - Dynamic content replacement
+- [Enhanced Bossbar System](Bossbar.md) - Multi-bossbar management with themes
+- [Enhanced Tablist & Scoreboard](Tablist-Scoreboard.md) - Dynamic player lists and scoreboards
+- [Enhanced Placeholder System](Placeholders.md) - 50+ placeholders with animations
 - [Notification System](Notifications.md) - Multi-channel notifications
 - [Language System](Language.md) - Multi-language support
 - [Security Features](Security.md) - Server security and monitoring
@@ -43,8 +44,9 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - **Essential Commands** - 20+ core utility commands
 - **Player Management** - Comprehensive moderation tools
 - **Teleportation System** - Home, warp, and teleport functionality
-- **Bossbar System** - Advanced template-based bossbars
-- **Placeholder System** - 50+ built-in placeholders
+- **Enhanced Bossbar System** - Multi-bossbar templates with theme support
+- **Enhanced Tablist & Scoreboard** - Dynamic displays with multiple themes
+- **Enhanced Placeholder System** - 50+ placeholders with animation support
 - **Notification System** - Multi-channel notification support
 - **Security Framework** - Player and IP security monitoring
 
@@ -74,8 +76,9 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - `/repair` - Repair items and equipment
 
 ### 🎨 Advanced Features
-- **Custom Bossbar Templates** - Welcome, server info, events, warnings
-- **Dynamic Placeholders** - Player stats, server info, time/date
+- **Enhanced Multi-Bossbar Templates** - Welcome, server info, health monitoring, events
+- **Theme-Based Tablist & Scoreboard** - Multiple simultaneous themes per player
+- **Animated Placeholder System** - Player stats, server info, animated content
 - **Multi-Channel Notifications** - Discord, email, log files
 - **Security Monitoring** - Threat detection and player profiling
 

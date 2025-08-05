@@ -1,19 +1,93 @@
-# Bossbar System
+# Enhanced Bossbar System
 
-The NeoEssentials Bossbar System provides dynamic, template-based bossbar management with real-time updates and comprehensive customization options.
+The NeoEssentials Enhanced Bossbar System provides dynamic, multi-bossbar management with theme support, animations, and comprehensive customization options.
 
 ## 🎯 Overview
 
-The bossbar system allows administrators to:
-- Display informational messages to players
-- Show server statistics and real-time data
-- Create custom progress indicators
-- Send server-wide announcements
-- Use pre-defined templates or create custom ones
+The enhanced bossbar system allows administrators to:
+- Display multiple bossbars simultaneously per player
+- Use theme-based styling for consistent visual design
+- Show animated content with 20-frame animation cycles
+- Display real-time server statistics and player data
+- Create custom progress indicators with advanced placeholders
+- Send server-wide announcements with visual effects
+- Use pre-defined templates or create custom themed bossbars
 
-## 🎨 Bossbar Templates
+## 🎨 Enhanced Bossbar Features
 
-### Pre-defined Templates
+### Multi-Bossbar Support
+- **Multiple Simultaneous Bossbars**: Players can have multiple bossbars displayed at once
+- **Layered Display**: Bossbars stack visually without interfering with each other
+- **Individual Management**: Each bossbar can be updated, styled, and removed independently
+
+### Theme System
+The enhanced bossbar system includes 4 built-in themes for consistent styling:
+
+#### Default Theme
+```yaml
+default:
+  title_format: "§f§l{title}"
+  subtitle_format: "§7{subtitle}"
+  color: "WHITE"
+  style: "PROGRESS"
+```
+
+#### Modern Theme
+```yaml
+modern:
+  title_format: "§b§l► {title} §b§l◄"
+  subtitle_format: "§f{subtitle}"
+  color: "BLUE"
+  style: "NOTCHED_10"
+```
+
+#### Classic Theme
+```yaml
+classic:
+  title_format: "§6§l═══ {title} ═══"
+  subtitle_format: "§e{subtitle}"
+  color: "YELLOW"
+  style: "NOTCHED_6"
+```
+
+#### Minimalist Theme
+```yaml
+minimalist:
+  title_format: "§f{title}"
+  subtitle_format: "§8{subtitle}"
+  color: "WHITE"
+  style: "PROGRESS"
+```
+
+### Advanced Templates
+
+#### Enhanced Welcome Template
+**Purpose**: Animated welcome experience for new players
+```yaml
+animated_welcome:
+  title: "{animated_title}"
+  text: "{animated_subtitle}"
+  color: "YELLOW"
+  style: "PROGRESS"
+  duration: 15
+  progress: 100
+  animation_frames: 5
+```
+
+#### Health Status Template
+**Purpose**: Real-time health monitoring
+```yaml
+health:
+  title: "§c§lHealth Status"
+  text: "§fHealth: §a{player_health}§f/§a{player_max_health}"
+  color: "RED"
+  style: "PROGRESS"
+  duration: 30
+  progress: "{player_health_percent}"
+  update_interval: 1
+```
+
+### Enhanced Pre-defined Templates
 
 #### Welcome Template
 **Purpose**: Welcome new players to the server
@@ -71,9 +145,60 @@ progress:
   progress: "{progress_percent}"
 ```
 
-## 🎮 Commands
+## 🎮 Enhanced Commands
 
-### Display Commands
+### Theme-Based Display Commands
+
+#### `/bossbar show <template> [theme] [player] [duration]`
+Display a bossbar using a predefined template with optional theme styling.
+
+**Examples**:
+```bash
+# Show welcome bossbar with default theme
+/bossbar show welcome
+
+# Show server info with modern theme to specific player
+/bossbar show serverinfo modern Steve 30
+
+# Show health status with classic theme
+/bossbar show health classic 60
+```
+
+**Permissions**: `neoessentials.bossbar.show`, `neoessentials.bossbar.show.others`, `neoessentials.bossbar.theme.use`
+
+---
+
+#### `/bossbar themed <template> <theme> [player] [duration]`
+Display a themed bossbar with enhanced styling options.
+
+**Examples**:
+```bash
+# Show themed welcome with modern styling
+/bossbar themed welcome modern
+
+# Broadcast themed announcement with classic styling
+/bossbar themed event classic @a 45
+```
+
+**Permission**: `neoessentials.bossbar.themed`
+
+---
+
+#### `/bossbar multi <template1> <template2> [template3] [player]`
+Display multiple bossbars simultaneously to a player.
+
+**Examples**:
+```bash
+# Show welcome and server info together
+/bossbar multi welcome serverinfo
+
+# Show health, progress, and event info
+/bossbar multi health progress event Steve
+```
+
+**Permission**: `neoessentials.bossbar.multi`
+
+---
 
 #### `/bossbar show <template> [player] [duration]`
 Display a bossbar using a predefined template.
@@ -225,13 +350,29 @@ custom_template:
 
 ### Built-in Placeholders
 
-#### Player Placeholders
-- `{player_name}` - Player's name
-- `{player_health}` - Player's current health
-- `{player_max_health}` - Player's maximum health
-- `{player_food}` - Player's hunger level
-- `{player_level}` - Player's experience level
-- `{player_world}` - Player's current world
+#### Enhanced Placeholders
+- `{player_health}` - Player's current health (20.0)
+- `{player_max_health}` - Player's maximum health (20.0)  
+- `{player_health_percent}` - Health as percentage (100)
+- `{animated_title}` - Cycling animated title text
+- `{animated_subtitle}` - Cycling animated subtitle text
+
+#### Animation Placeholders
+The enhanced system supports animated placeholders that cycle through different values:
+
+**Animated Title Frames**:
+1. "Welcome to the Server!"
+2. "§6Welcome to the Server!"
+3. "§e§lWelcome to the Server!"
+4. "§6§lWelcome to the Server!"
+5. "Welcome to the Server!"
+
+**Animated Subtitle Frames**:
+1. "Enjoy your stay!"
+2. "Have fun and follow the rules!"
+3. "Welcome aboard, adventurer!"
+4. "Ready for an epic journey?"
+5. "Let the adventure begin!"
 
 #### Server Placeholders
 - `{server_name}` - Server name
