@@ -1,0 +1,78 @@
+{
+  "gui_settings": {
+    "enable_sound_effects": true,
+    "enable_animations": true,
+    "default_gui_size": 54,
+    "auto_refresh_interval": 30,
+    "enable_gui_history": true,
+    "max_gui_history": 10,
+    "enable_hover_effects": true,
+    "enable_tooltips": true,
+    "tooltip_delay_ms": 500,
+    "close_on_click_outside": true,
+    "enable_confirmation_dialogs": true,
+    "enable_gui_permissions": true
+  },
+  "themes": {
+    "default": {
+      "name": "Default Theme",
+      "primary_color": "§6",
+      "secondary_color": "§7",
+      "success_color": "§a",
+      "error_color": "§c",
+      "warning_color": "§e",
+      "info_color": "§b",
+      "background_item": "minecraft:gray_stained_glass_pane",
+      "border_item": "minecraft:black_stained_glass_pane",
+      "button_item": "minecraft:lime_stained_glass_pane"
+    },
+    "dark": {
+      "name": "Dark Theme",
+      "primary_color": "§8",
+      "secondary_color": "§7",
+      "success_color": "§2",
+      "error_color": "§4",
+      "warning_color": "§6",
+      "info_color": "§9",
+      "background_item": "minecraft:black_stained_glass_pane",
+      "border_item": "minecraft:gray_stained_glass_pane",
+      "button_item": "minecraft:green_stained_glass_pane"
+    },
+    "ocean": {
+      "name": "Ocean Theme",
+      "primary_color": "§b",
+      "secondary_color": "§3",
+      "success_color": "§a",
+      "error_color": "§c",
+      "warning_color": "§e",
+      "info_color": "§f",
+      "background_item": "minecraft:cyan_stained_glass_pane",
+      "border_item": "minecraft:blue_stained_glass_pane",
+      "button_item": "minecraft:light_blue_stained_glass_pane"
+    }
+  },
+  "sounds": {
+    "gui_open": "minecraft:ui.button.click",
+    "gui_close": "minecraft:ui.button.click",
+    "button_click": "minecraft:ui.button.click",
+    "purchase_success": "minecraft:entity.experience_orb.pickup",
+    "purchase_fail": "minecraft:entity.villager.no",
+    "sell_success": "minecraft:block.note_block.chime",
+    "navigation": "minecraft:item.book.page_turn",
+    "error": "minecraft:entity.enderman.teleport",
+    "positive": "minecraft:entity.player.levelup",
+    "negative": "minecraft:entity.item.break"
+  },
+  "permissions": {
+    "require_permissions": false,
+    "gui_permissions": {
+      "shop": "neoessentials.gui.shop",
+      "stats": "neoessentials.gui.stats",
+      "admin": "neoessentials.gui.admin",
+      "economy": "neoessentials.gui.economy",
+      "kits": "neoessentials.gui.kits",
+      "warps": "neoessentials.gui.warps",
+      "teleport": "neoessentials.gui.teleport"
+    }
+  }
+}

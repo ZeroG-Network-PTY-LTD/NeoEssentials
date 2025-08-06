@@ -5,8 +5,6 @@ This guide will walk you through installing and setting up NeoEssentials on your
 ## 📋 Requirements
 
 ### Server Requirements
-- **Minecraft Version**: 1.21.3
-- **Mod Loader**: NeoForge 21.3.53 or higher
 - **Java Version**: Java 21 or higher
 - **RAM**: Minimum 2GB allocated to server
 
@@ -32,8 +30,8 @@ Development builds are available from the `Dev-Builds` branch:
 ## 🛠️ Installation Steps
 
 ### Step 1: Prepare Your Server
-1. Ensure your server is running NeoForge 21.3.53+
-2. Stop your Minecraft server
+1. Ensure your server is properly configured
+2. Stop your server
 3. Create a backup of your server files
 
 ### Step 2: Install NeoEssentials
@@ -42,7 +40,7 @@ Development builds are available from the `Dev-Builds` branch:
 3. If the `mods/` folder doesn't exist, create it
 
 ### Step 3: First Startup
-1. Start your Minecraft server
+1. Start your server
 2. NeoEssentials will create default configuration files
 3. Check the console for any error messages
 
@@ -54,6 +52,15 @@ your-server/
 ├── config/
 │   ├── neoessentials-common.toml
 │   ├── neoessentials-general.toml
+│   ├── gui/                    # New GUI System configurations
+│   │   ├── main_config.json    # Main GUI settings & themes
+│   │   ├── shop_gui.json       # Shop interface configuration
+│   │   ├── kits_gui.json       # Kit selection menu
+│   │   ├── stats_gui.json      # Player statistics GUI
+│   │   ├── economy_gui.json    # Economy management
+│   │   ├── warps_gui.json      # Warp destinations
+│   │   ├── admin_gui.json      # Admin control panel
+│   │   └── teleport_gui.json   # Teleport hub
 │   └── neoessentials/
 │       ├── language/
 │       ├── templates/
@@ -90,6 +97,7 @@ your-server/
 essentialCommands = true
 teleportation = true
 bossbarSystem = true
+guiSystem = true      # Enable new GUI system
 notifications = true
 security = true
 
@@ -102,6 +110,13 @@ maxHomesStaff = 20
 teleportDelay = 3
 teleportCooldown = 30
 enableBack = true
+
+[gui]
+# GUI system will auto-generate JSON configs
+enableShop = true
+enableKits = true
+enableStats = true
+enableThemes = true
 ```
 
 ## 🔑 Permissions Setup
@@ -117,6 +132,13 @@ NeoEssentials includes a built-in permission system:
 /permissions group create vip "&6[VIP] " 100
 /permissions group permission add vip essentials.fly
 /permissions group permission add vip essentials.heal
+
+# GUI system permissions
+/permissions group permission add default neoessentials.gui.shop
+/permissions group permission add default neoessentials.gui.kits
+/permissions group permission add default neoessentials.gui.stats
+/permissions group permission add vip neoessentials.gui.theme.change
+/permissions group permission add admin neoessentials.gui.admin
 ```
 
 ### Using External Permission Mods
@@ -135,14 +157,22 @@ Test these commands to ensure proper installation:
 /feed
 /fly
 
+# GUI system commands
+/shop           # Open shop interface
+/kits           # Open kits menu
+/stats          # View statistics
+/gui theme list # List available themes
+
 # Admin commands (requires permissions)
 /gamemode creative
 /time set day
 /weather clear
+/admin          # Open admin GUI panel
 
 # System commands
 /neoessentials info
 /neoessentials reload
+/neoessentials gui reload  # Reload GUI configurations
 ```
 
 ### Check Console Output
@@ -151,6 +181,8 @@ Look for these messages in your server console:
 [INFO] NeoEssentials: Successfully loaded
 [INFO] NeoEssentials: Registered 23 essential commands
 [INFO] NeoEssentials: Bossbar system initialized
+[INFO] NeoEssentials: GUI system loaded - 8 configurations ready
+[INFO] NeoEssentials: ConfigurableGuiManager initialized successfully
 [INFO] NeoEssentials: Security framework loaded
 ```
 
@@ -247,6 +279,6 @@ chmod -R 755 neoessentials/
 
 ---
 
-**Next Steps**: [Configuration Guide](Configuration.md) | [Quick Start](Quick-Start.md)
+**Next Steps**: [Configuration Guide](Configuration) | [Quick Start](Quick-Start)
 
-*Last Updated: August 3, 2025*
+*Last Updated: August 6, 2025*

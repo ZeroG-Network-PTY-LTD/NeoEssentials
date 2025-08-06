@@ -675,6 +675,6 @@ Use the built-in configuration validation:
 
 ---
 
-**Related Documentation**: [Installation](Installation.md) | [Essential Commands](Essential-Commands.md) | [Permissions](Permissions.md)
+**Related Documentation**: [Installation](Installation) | [Essential Commands](Essential-Commands) | [Permissions](Permissions)
 
 *Last Updated: August 3, 2025*

@@ -4,10 +4,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.slf4j.Logger;
@@ -17,9 +13,9 @@ import com.zerog.neoessentials.managers.KitManager;
 import com.zerog.neoessentials.managers.WarpManager;
 import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.KitConfig;
+import com.zerog.neoessentials.config.ShopConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
-
-import javax.annotation.Nonnull;
+import com.zerog.neoessentials.util.SoundUtil;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -122,6 +118,7 @@ public class CustomGuiManager {
                             case KIT_SELECTOR -> openKitSelectorGui(player);
                             case WARP_SELECTOR -> openWarpSelectorGui(player);
                             case TELEPORT_MENU -> openTeleportMenuGui(player);
+                            case QUANTITY_SELECTOR -> openQuantitySelectorGui(player, (ItemStack) args[0], (BigDecimal) args[1]);
                             default -> {
                                 LOGGER.warn("Unknown GUI type: {}", type);
                                 MessageUtil.sendMessage(player, "&cUnsupported GUI type requested");
@@ -144,13 +141,13 @@ public class CustomGuiManager {
     }
     
     /**
-     * Create a simple chest-based GUI with click action registration
+     * Create a custom GUI with proper click action handling
      */
     private MenuProvider createChestGui(String title, int rows, List<GuiItem> items) {
         return new SimpleMenuProvider(
             (windowId, playerInventory, player) -> {
-                AbstractContainerMenu menu = new ChestMenu(MenuType.GENERIC_9x3, windowId, playerInventory, 
-                    new SimpleContainer(rows * 9), rows);
+                // Create container for GUI items
+                net.minecraft.world.SimpleContainer container = new net.minecraft.world.SimpleContainer(rows * 9);
                 
                 // Prepare click actions for registration
                 Map<Integer, GuiClickAction> clickActions = new HashMap<>();
@@ -159,19 +156,15 @@ public class CustomGuiManager {
                 for (int i = 0; i < items.size() && i < rows * 9; i++) {
                     GuiItem item = items.get(i);
                     if (item != null) {
-                        menu.getSlot(i).set(item.getItemStack());
+                        container.setItem(i, item.getItemStack());
                         if (item.getClickAction() != null) {
                             clickActions.put(i, item.getClickAction());
                         }
                     }
                 }
                 
-                // Register GUI session for click handling (if player is ServerPlayer)
-                if (player instanceof ServerPlayer serverPlayer) {
-                    GuiClickHandler.registerSession(serverPlayer, GuiType.SHOP_MAIN, clickActions);
-                }
-                
-                return menu;
+                // Create our custom menu that handles clicks properly
+                return new CustomMenu(windowId, playerInventory, container, rows, clickActions, GuiType.SHOP_MAIN);
             },
             Component.literal(title)
         );
@@ -225,54 +218,80 @@ public class CustomGuiManager {
         List<GuiItem> items = new ArrayList<>();
         
         EconomyManager economyManager = EconomyManager.getInstance();
+        ShopConfigManager shopConfig = ShopConfigManager.getInstance();
         BigDecimal balance = economyManager.getBalance(player.getUUID());
         
-        switch (category.toLowerCase()) {
-            case "weapons" -> {
-                items.add(createShopItem(Items.WOODEN_SWORD, "§fWooden Sword", player));
-                items.add(createShopItem(Items.STONE_SWORD, "§fStone Sword", player));
-                items.add(createShopItem(Items.IRON_SWORD, "§fIron Sword", player));
-                items.add(createShopItem(Items.DIAMOND_SWORD, "§bDiamond Sword", player));
-                items.add(createShopItem(Items.NETHERITE_SWORD, "§4Netherite Sword", player));
-                
-                items.add(createShopItem(Items.WOODEN_PICKAXE, "§fWooden Pickaxe", player));
-                items.add(createShopItem(Items.STONE_PICKAXE, "§fStone Pickaxe", player));
-                items.add(createShopItem(Items.IRON_PICKAXE, "§fIron Pickaxe", player));
-                items.add(createShopItem(Items.DIAMOND_PICKAXE, "§bDiamond Pickaxe", player));
-            }
-            case "armor" -> {
-                items.add(createShopItem(Items.LEATHER_HELMET, "§6Leather Helmet", player));
-                items.add(createShopItem(Items.IRON_HELMET, "§fIron Helmet", player));
-                items.add(createShopItem(Items.DIAMOND_HELMET, "§bDiamond Helmet", player));
-                
-                items.add(createShopItem(Items.LEATHER_CHESTPLATE, "§6Leather Chestplate", player));
-                items.add(createShopItem(Items.IRON_CHESTPLATE, "§fIron Chestplate", player));
-                items.add(createShopItem(Items.DIAMOND_CHESTPLATE, "§bDiamond Chestplate", player));
-            }
-            case "food" -> {
-                items.add(createShopItem(Items.BREAD, "§6Bread", player));
-                items.add(createShopItem(Items.COOKED_BEEF, "§cCooked Beef", player));
-                items.add(createShopItem(Items.GOLDEN_APPLE, "§6Golden Apple", player));
-                items.add(createShopItem(Items.ENCHANTED_GOLDEN_APPLE, "§5Enchanted Golden Apple", player));
-            }
-            case "blocks" -> {
-                items.add(createShopItem(Items.COBBLESTONE, "§8Cobblestone", player));
-                items.add(createShopItem(Items.STONE, "§8Stone", player));
-                items.add(createShopItem(Items.STONE_BRICKS, "§8Stone Bricks", player));
-                items.add(createShopItem(Items.OAK_PLANKS, "§6Oak Planks", player));
-                items.add(createShopItem(Items.OAK_LOG, "§6Oak Log", player));
+        // Load items from config
+        for (String itemId : shopConfig.getCategoryItems(category)) {
+            ItemStack itemStack = shopConfig.getItemStack(itemId);
+            if (!itemStack.isEmpty()) {
+                items.add(createEnhancedShopItem(itemStack, itemId, shopConfig, player));
             }
         }
         
-        // Add balance display
-        String formattedBalance = economyManager.formatCurrency(balance);
-        items.add(new GuiItem(createItem(Items.EMERALD, "§aYour Balance", "§7Current balance: §6" + formattedBalance), null));
+        // If no config items found, fall back to legacy system
+        if (items.isEmpty()) {
+            switch (category.toLowerCase()) {
+                case "weapons" -> {
+                    items.add(createShopItem(Items.WOODEN_SWORD, "§fWooden Sword", player));
+                    items.add(createShopItem(Items.STONE_SWORD, "§fStone Sword", player));
+                    items.add(createShopItem(Items.IRON_SWORD, "§fIron Sword", player));
+                    items.add(createShopItem(Items.DIAMOND_SWORD, "§bDiamond Sword", player));
+                    items.add(createShopItem(Items.NETHERITE_SWORD, "§4Netherite Sword", player));
+                    
+                    items.add(createShopItem(Items.WOODEN_PICKAXE, "§fWooden Pickaxe", player));
+                    items.add(createShopItem(Items.STONE_PICKAXE, "§fStone Pickaxe", player));
+                    items.add(createShopItem(Items.IRON_PICKAXE, "§fIron Pickaxe", player));
+                    items.add(createShopItem(Items.DIAMOND_PICKAXE, "§bDiamond Pickaxe", player));
+                }
+                case "armor" -> {
+                    items.add(createShopItem(Items.LEATHER_HELMET, "§6Leather Helmet", player));
+                    items.add(createShopItem(Items.IRON_HELMET, "§fIron Helmet", player));
+                    items.add(createShopItem(Items.DIAMOND_HELMET, "§bDiamond Helmet", player));
+                    
+                    items.add(createShopItem(Items.LEATHER_CHESTPLATE, "§6Leather Chestplate", player));
+                    items.add(createShopItem(Items.IRON_CHESTPLATE, "§fIron Chestplate", player));
+                    items.add(createShopItem(Items.DIAMOND_CHESTPLATE, "§bDiamond Chestplate", player));
+                }
+                case "food" -> {
+                    items.add(createShopItem(Items.BREAD, "§6Bread", player));
+                    items.add(createShopItem(Items.COOKED_BEEF, "§cCooked Beef", player));
+                    items.add(createShopItem(Items.GOLDEN_APPLE, "§6Golden Apple", player));
+                    items.add(createShopItem(Items.ENCHANTED_GOLDEN_APPLE, "§5Enchanted Golden Apple", player));
+                }
+                case "blocks" -> {
+                    items.add(createShopItem(Items.COBBLESTONE, "§8Cobblestone", player));
+                    items.add(createShopItem(Items.STONE, "§8Stone", player));
+                    items.add(createShopItem(Items.STONE_BRICKS, "§8Stone Bricks", player));
+                    items.add(createShopItem(Items.OAK_PLANKS, "§6Oak Planks", player));
+                    items.add(createShopItem(Items.OAK_LOG, "§6Oak Log", player));
+                }
+            }
+        }
+        
+        // Add enhanced shop controls
+        items.add(new GuiItem(createItem(Items.EMERALD, "§aYour Balance", 
+            "§7Current balance: §6" + economyManager.formatCurrency(balance)), null));
+        
+        // Add sell mode toggle if sell system is enabled
+        if (shopConfig.isSellSystemEnabled()) {
+            items.add(new GuiItem(createItem(Items.CHEST, "§6Sell Items", 
+                "§7Click to open sell interface",
+                "§7Sell items from your inventory"), 
+                p -> openSellGui(p, category)));
+        }
         
         // Add back button
         items.add(new GuiItem(createItem(Items.ARROW, "§aBack to Shop", "§7Return to main shop"), 
             p -> openGui(p, GuiType.SHOP_MAIN)));
         
-        MenuProvider gui = createChestGui("§6" + category.substring(0, 1).toUpperCase() + category.substring(1), 3, items);
+        // Create enhanced category title
+        String categoryTitle = shopConfig.getCategoryDisplayName(category);
+        MenuProvider gui = createChestGui("§6" + categoryTitle, 6, items);
+        
+        // Play GUI open sound
+        SoundUtil.playGuiOpen(player);
+        
         player.openMenu(gui);
     }
     
@@ -793,6 +812,9 @@ public class CustomGuiManager {
                 MessageUtil.sendMessage(player, "&aPurchase successful! Bought " + quantity + "x " + item.getDescription().getString());
             }
             
+            // Play success sound
+            SoundUtil.playPurchaseSuccess(player);
+            
             String formattedCost = economyManager.formatCurrency(totalCost);
             String newBalance = economyManager.formatCurrency(economyManager.getBalance(player.getUUID()));
             MessageUtil.sendMessage(player, "&7Spent: &c" + formattedCost + " &7| New balance: &a" + newBalance);
@@ -813,6 +835,8 @@ public class CustomGuiManager {
             }
         } else {
             MessageUtil.sendMessage(player, "&cFailed to process purchase. Please try again.");
+            // Play failure sound
+            SoundUtil.playPurchaseFailure(player);
         }
     }
     
@@ -969,74 +993,6 @@ public class CustomGuiManager {
     }
     
     /**
-     * Simple container implementation
-     */
-    private static class SimpleContainer implements net.minecraft.world.Container {
-        private final ItemStack[] items;
-        
-        public SimpleContainer(int size) {
-            this.items = new ItemStack[size];
-            for (int i = 0; i < size; i++) {
-                items[i] = ItemStack.EMPTY;
-            }
-        }
-        
-        @Override
-        public int getContainerSize() {
-            return items.length;
-        }
-        
-        @Override
-        public boolean isEmpty() {
-            for (ItemStack item : items) {
-                if (!item.isEmpty()) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        
-        @Override
-        public ItemStack getItem(int index) {
-            return index >= 0 && index < items.length ? items[index] : ItemStack.EMPTY;
-        }
-        
-        @Override
-        public ItemStack removeItem(int index, int count) {
-            return ItemStack.EMPTY; // Read-only for GUI
-        }
-        
-        @Override
-        public ItemStack removeItemNoUpdate(int index) {
-            return ItemStack.EMPTY; // Read-only for GUI
-        }
-        
-        @Override
-        public void setItem(int index, @Nonnull ItemStack stack) {
-            if (index >= 0 && index < items.length) {
-                items[index] = stack;
-            }
-        }
-        
-        @Override
-        public void setChanged() {
-            // No-op for GUI
-        }
-        
-        @Override
-        public boolean stillValid(@Nonnull Player player) {
-            return true;
-        }
-        
-        @Override
-        public void clearContent() {
-            for (int i = 0; i < items.length; i++) {
-                items[i] = ItemStack.EMPTY;
-            }
-        }
-    }
-    
-    /**
      * GUI types enum
      */
     public enum GuiType {
@@ -1047,6 +1003,216 @@ public class CustomGuiManager {
         ECONOMY_MANAGEMENT,
         KIT_SELECTOR,
         WARP_SELECTOR,
-        TELEPORT_MENU
+        TELEPORT_MENU,
+        QUANTITY_SELECTOR
+    }
+    
+    /**
+     * Create enhanced shop item with config-based pricing and descriptions
+     */
+    private GuiItem createEnhancedShopItem(ItemStack itemStack, String itemId, ShopConfigManager shopConfig, ServerPlayer player) {
+        EconomyManager economyManager = EconomyManager.getInstance();
+        BigDecimal buyPrice = shopConfig.getBuyPrice(itemId);
+        BigDecimal sellPrice = shopConfig.getSellPrice(itemId);
+        List<String> description = shopConfig.getItemDescription(itemId);
+        String displayName = shopConfig.getItemDisplayName(itemId);
+        
+        // Create lore array
+        List<String> lore = new ArrayList<>();
+        if (!description.isEmpty()) {
+            lore.addAll(description);
+            lore.add("");
+        }
+        
+        lore.add("§6Buy Price: §f" + economyManager.formatCurrency(buyPrice));
+        if (shopConfig.canSellItem(itemId)) {
+            lore.add("§aSell Price: §f" + economyManager.formatCurrency(sellPrice));
+        }
+        
+        BigDecimal balance = economyManager.getBalance(player.getUUID());
+        if (balance.compareTo(buyPrice) >= 0) {
+            lore.add("");
+            lore.add("§7Left-click to buy 1");
+            if (shopConfig.isQuantitySelectionEnabled()) {
+                lore.add("§7Right-click for quantity selection");
+            }
+        } else {
+            lore.add("");
+            lore.add("§cInsufficient funds!");
+        }
+        
+        // Use the existing createItem method
+        ItemStack displayItem = createItem(itemStack.getItem(), displayName, lore.toArray(new String[0]));
+        
+        return new GuiItem(displayItem, p -> {
+            // Convert BigDecimal to double for existing purchase method
+            double price = buyPrice.doubleValue();
+            purchaseItem(p, itemStack.getItem(), price, 1);
+        });
+    }
+    
+    /**
+     * Open sell GUI for a specific category
+     */
+    private void openSellGui(ServerPlayer player, String category) {
+        List<GuiItem> items = new ArrayList<>();
+        ShopConfigManager shopConfig = ShopConfigManager.getInstance();
+        EconomyManager economyManager = EconomyManager.getInstance();
+        
+        // Scan player inventory for sellable items
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (!stack.isEmpty()) {
+                String itemId = shopConfig.getItemId(stack);
+                if (shopConfig.canSellItem(itemId)) {
+                    // Check if item belongs to this category
+                    if (shopConfig.getCategoryItems(category).contains(itemId)) {
+                        items.add(createSellItem(stack, itemId, shopConfig, player));
+                    }
+                }
+            }
+        }
+        
+        if (items.isEmpty()) {
+            items.add(new GuiItem(createItem(Items.BARRIER, "§cNo Sellable Items", 
+                "§7You don't have any items",
+                "§7that can be sold in this category"), null));
+        }
+        
+        // Add balance display
+        BigDecimal balance = economyManager.getBalance(player.getUUID());
+        items.add(new GuiItem(createItem(Items.EMERALD, "§aYour Balance", 
+            "§7Current balance: §6" + economyManager.formatCurrency(balance)), null));
+        
+        // Add back button
+        items.add(new GuiItem(createItem(Items.ARROW, "§aBack to Shop", 
+            "§7Return to shop category"), 
+            p -> openGui(p, GuiType.SHOP_CATEGORY, category)));
+        
+        String categoryTitle = shopConfig.getCategoryDisplayName(category);
+        MenuProvider gui = createChestGui("§eSell " + categoryTitle, 6, items);
+        player.openMenu(gui);
+    }
+    
+    /**
+     * Create sell item for sell GUI
+     */
+    private GuiItem createSellItem(ItemStack itemStack, String itemId, ShopConfigManager shopConfig, ServerPlayer player) {
+        EconomyManager economyManager = EconomyManager.getInstance();
+        BigDecimal sellPrice = shopConfig.getSellPrice(itemId);
+        String displayName = shopConfig.getItemDisplayName(itemId);
+        
+        String[] lore = {
+            "§7Sell Price: §6" + economyManager.formatCurrency(sellPrice),
+            "§7Amount in inventory: §f" + itemStack.getCount(),
+            "",
+            "§7Left-click to sell 1",
+            "§7Right-click to sell all"
+        };
+        
+        // Use the existing createItem method
+        ItemStack displayItem = createItem(itemStack.getItem(), displayName, lore);
+        
+        return new GuiItem(displayItem, p -> sellItem(p, itemStack, sellPrice));
+    }
+    
+    /**
+     * Handle item selling
+     */
+    private void sellItem(ServerPlayer player, ItemStack itemStack, BigDecimal sellPrice) {
+        EconomyManager economyManager = EconomyManager.getInstance();
+        
+        // Count how many of this item the player has
+        int totalAmount = 0;
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (ItemStack.isSameItemSameComponents(stack, itemStack)) {
+                totalAmount += stack.getCount();
+            }
+        }
+        
+        if (totalAmount <= 0) {
+            MessageUtil.sendMessage(player, "&cYou don't have any of this item to sell!");
+            return;
+        }
+        
+        // Remove 1 item from inventory
+        int removed = 0;
+        for (int i = 0; i < player.getInventory().getContainerSize() && removed < 1; i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (ItemStack.isSameItemSameComponents(stack, itemStack)) {
+                stack.shrink(1);
+                removed++;
+            }
+        }
+        
+        if (removed > 0) {
+            // Add money to player using deposit method
+            double sellAmount = sellPrice.doubleValue();
+            economyManager.depositBalance(player.getUUID(), sellAmount, "Item sale");
+            
+            // Play success sound
+            SoundUtil.playSellSuccess(player);
+            
+            String itemName = itemStack.getHoverName().getString();
+            MessageUtil.sendMessage(player, "&aSuccessfully sold 1x " + itemName + " for " + 
+                economyManager.formatCurrency(sellPrice) + "!");
+            
+            // Refresh the sell GUI
+            player.closeContainer();
+        } else {
+            MessageUtil.sendMessage(player, "&cFailed to sell item!");
+            // Play failure sound
+            SoundUtil.playPurchaseFailure(player);
+        }
+    }
+    
+    /**
+     * Open quantity selector GUI for purchasing multiple items
+     */
+    private void openQuantitySelectorGui(ServerPlayer player, ItemStack itemStack, BigDecimal unitPrice) {
+        List<GuiItem> items = new ArrayList<>();
+        EconomyManager economyManager = EconomyManager.getInstance();
+        BigDecimal balance = economyManager.getBalance(player.getUUID());
+        
+        String itemName = itemStack.getHoverName().getString();
+        
+        // Add quantity options
+        int[] quantities = {1, 4, 8, 16, 32, 64};
+        for (int quantity : quantities) {
+            BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+            
+            boolean canAfford = balance.compareTo(totalPrice) >= 0;
+            String priceColor = canAfford ? "§a" : "§c";
+            String statusText = canAfford ? "§7Click to purchase" : "§cInsufficient funds";
+            
+            ItemStack displayItem = createItem(itemStack.getItem(), 
+                "§f" + quantity + "x " + itemName,
+                "§7Total Price: " + priceColor + economyManager.formatCurrency(totalPrice),
+                "",
+                statusText);
+            
+            displayItem.setCount(Math.min(quantity, 64)); // Visual stack size
+            
+            if (canAfford) {
+                items.add(new GuiItem(displayItem, p -> {
+                    purchaseItem(p, itemStack.getItem(), totalPrice.doubleValue(), quantity);
+                    p.closeContainer();
+                }));
+            } else {
+                items.add(new GuiItem(displayItem, null)); // No action if can't afford
+            }
+        }
+        
+        // Add balance display
+        items.add(new GuiItem(createItem(Items.EMERALD, "§aYour Balance", 
+            "§7Current balance: §6" + economyManager.formatCurrency(balance)), null));
+        
+        // Add back button
+        items.add(new GuiItem(createItem(Items.ARROW, "§aBack", "§7Return to shop"), 
+            p -> p.closeContainer()));
+        
+        MenuProvider gui = createChestGui("§6Select Quantity - " + itemName, 3, items);
+        player.openMenu(gui);
     }
 }

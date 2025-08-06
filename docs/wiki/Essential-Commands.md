@@ -496,6 +496,6 @@ Commands can be restricted to specific worlds through configuration.
 
 ---
 
-**Related Documentation**: [Teleportation System](Teleportation.md) | [Permissions](Permissions.md) | [Configuration](Configuration.md)
+**Related Documentation**: [Teleportation System](Teleportation) | [Permissions](Permissions) | [Configuration](Configuration)
 
 *Last Updated: August 3, 2025*

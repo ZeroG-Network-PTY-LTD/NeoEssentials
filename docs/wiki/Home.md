@@ -6,9 +6,10 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 
 ### 📚 Getting Started
 - [Installation Guide](Installation.md) - How to install and set up NeoEssentials
+- [Quick Start](Quick-Start.md) - Get up and running in 5 minutes
+- [Features Overview](Features.md) - Complete overview of all available features
 - [Configuration](Configuration.md) - Complete configuration guide
 - [Permissions](Permissions.md) - Permission system documentation
-- [Quick Start](Quick-Start.md) - Get up and running in 5 minutes
 
 ### 🎮 Commands & Features
 - [Essential Commands](Essential-Commands.md) - Core utility commands
@@ -32,7 +33,7 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - [Performance](Performance.md) - Optimization and monitoring
 
 ### 🎨 Customization
-- [GUI System](GUI.md) - Custom user interfaces
+- [GUI System](GUI-System.md) - Advanced config-based user interfaces
 - [Themes and Styling](Themes.md) - Visual customization
 - [Custom Commands](Custom-Commands.md) - Creating custom commands
 
@@ -44,6 +45,7 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - **Essential Commands** - 20+ core utility commands
 - **Player Management** - Comprehensive moderation tools
 - **Teleportation System** - Home, warp, and teleport functionality
+- **Advanced GUI System** - Config-based customizable interfaces with themes
 - **Enhanced Bossbar System** - Multi-bossbar templates with theme support
 - **Enhanced Tablist & Scoreboard** - Dynamic displays with multiple themes
 - **Enhanced Placeholder System** - 50+ placeholders with animation support
@@ -66,6 +68,9 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - `/speed` - Adjust movement speed
 - `/home` - Teleport to set homes
 - `/warp` - Teleport to server warps
+- `/shop` - Open server shop GUI
+- `/kits` - Access kit selection interface
+- `/stats` - View player statistics GUI
 
 ### 🛠️ Admin Tools
 - `/heal <player>` - Heal other players
@@ -74,6 +79,8 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - `/weather <type>` - Control weather
 - `/give <player> <item>` - Give items to players
 - `/repair` - Repair items and equipment
+- `/admin` - Access admin control panel GUI
+- `/economy` - Open economy management interface
 
 ### 🎨 Advanced Features
 - **Enhanced Multi-Bossbar Templates** - Welcome, server info, health monitoring, events
@@ -81,6 +88,7 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - **Animated Placeholder System** - Player stats, server info, animated content
 - **Multi-Channel Notifications** - Discord, email, log files
 - **Security Monitoring** - Threat detection and player profiling
+- **Config-Based GUI System** - Fully customizable interfaces with JSON configuration
 
 ## 🚀 Getting Started
 
@@ -109,6 +117,4 @@ NeoEssentials is released under the MIT License. See the [LICENSE](../LICENSE) f
 
 ---
 
-**Version**: 1.0.2 | **Minecraft**: 1.21.3 | **NeoForge**: 21.3.53+
-
-*Last Updated: August 3, 2025*
+*Last Updated: August 6, 2025*

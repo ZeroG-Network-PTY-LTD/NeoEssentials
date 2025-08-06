@@ -1158,4 +1158,4 @@ testing.removeTestPlayer(testPlayer);
 
 **Related Documentation**: [Installation](Installation.md) | [Configuration](Configuration.md) | [Essential Commands](Essential-Commands.md)
 
-*Last Updated: August 3, 2025*
+*Last Updated: August 6, 2025*
