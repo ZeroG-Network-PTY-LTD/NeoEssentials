@@ -1,0 +1,264 @@
+{
+  "player_stats_gui": {
+    "enabled": true,
+    "title": "§b§lPlayer Statistics",
+    "size": 54,
+    "theme": "default",
+    "auto_refresh": true,
+    "refresh_interval": 10
+  },
+  "layout": {
+    "title": "§b§lPlayer Statistics - {player_name}",
+    "size": 54,
+    "slots": {
+      "0-8": {
+        "type": "border",
+        "item": "minecraft:blue_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "9": {
+        "type": "stat",
+        "item": "minecraft:player_head",
+        "name": "§6👤 Player Information",
+        "lore": [
+          "§7Name: §f{player_name}",
+          "§7UUID: §f{player_uuid_short}",
+          "§7First Join: §f{first_join}",
+          "§7Last Seen: §f{last_seen}",
+          "§7Playtime: §f{total_playtime}",
+          "§7Current Session: §f{session_time}"
+        ],
+        "action": "none"
+      },
+      "10": {
+        "type": "stat",
+        "item": "minecraft:emerald",
+        "name": "§a💰 Economy Statistics",
+        "lore": [
+          "§7Current Balance: §2{balance}",
+          "§7Total Earned: §2{total_earned}",
+          "§7Total Spent: §c{total_spent}",
+          "§7Net Worth: §6{net_worth}",
+          "§7Transactions: §f{transaction_count}",
+          "§7Economy Rank: §e{economy_rank}"
+        ],
+        "action": "show_detailed_economy"
+      },
+      "11": {
+        "type": "stat",
+        "item": "minecraft:diamond_sword",
+        "name": "§c⚔ Combat Statistics",
+        "lore": [
+          "§7Player Kills: §c{player_kills}",
+          "§7Mob Kills: §c{mob_kills}",
+          "§7Deaths: §c{deaths}",
+          "§7K/D Ratio: §c{kd_ratio}",
+          "§7Damage Dealt: §c{damage_dealt}",
+          "§7Damage Taken: §c{damage_taken}"
+        ],
+        "action": "show_detailed_combat"
+      },
+      "12": {
+        "type": "stat",
+        "item": "minecraft:diamond_pickaxe",
+        "name": "§8⛏ Mining Statistics",
+        "lore": [
+          "§7Blocks Mined: §8{blocks_mined}",
+          "§7Ores Found: §8{ores_found}",
+          "§7Distance Mined: §8{distance_mined}m",
+          "§7Tools Broken: §8{tools_broken}",
+          "§7Favorite Tool: §8{favorite_tool}",
+          "§7Mining Level: §8{mining_level}"
+        ],
+        "action": "show_detailed_mining"
+      },
+      "13": {
+        "type": "stat",
+        "item": "minecraft:bread",
+        "name": "§6🍞 Survival Statistics",
+        "lore": [
+          "§7Food Eaten: §6{food_eaten}",
+          "§7Health Regenerated: §c{health_regen}",
+          "§7Times Slept: §6{times_slept}",
+          "§7Potions Consumed: §5{potions_consumed}",
+          "§7Fall Damage: §c{fall_damage}",
+          "§7Survival Score: §6{survival_score}"
+        ],
+        "action": "show_detailed_survival"
+      },
+      "14": {
+        "type": "stat",
+        "item": "minecraft:crafting_table",
+        "name": "§e🔨 Crafting Statistics",
+        "lore": [
+          "§7Items Crafted: §e{items_crafted}",
+          "§7Recipes Known: §e{recipes_known}",
+          "§7Favorite Recipe: §e{favorite_recipe}",
+          "§7Workbenches Used: §e{workbenches_used}",
+          "§7Crafting Level: §e{crafting_level}",
+          "§7Unique Items: §e{unique_crafted}"
+        ],
+        "action": "show_detailed_crafting"
+      },
+      "15": {
+        "type": "stat",
+        "item": "minecraft:ender_pearl",
+        "name": "§5✈ Travel Statistics",
+        "lore": [
+          "§7Distance Walked: §5{distance_walked}m",
+          "§7Distance Flown: §5{distance_flown}m",
+          "§7Times Teleported: §5{teleports}",
+          "§7Boats Used: §5{boat_distance}m",
+          "§7Horse Distance: §5{horse_distance}m",
+          "§7Explorer Level: §5{explorer_level}"
+        ],
+        "action": "show_detailed_travel"
+      },
+      "16": {
+        "type": "stat",
+        "item": "minecraft:experience_bottle",
+        "name": "§a📈 Experience Statistics",
+        "lore": [
+          "§7Current Level: §a{current_level}",
+          "§7Total XP: §a{total_xp}",
+          "§7XP to Next Level: §a{xp_to_next}",
+          "§7XP Progress: §a{xp_progress}%",
+          "§7XP per Hour: §a{xp_per_hour}",
+          "§7Highest Level: §a{highest_level}"
+        ],
+        "action": "show_detailed_xp"
+      },
+      "17": {
+        "type": "stat",
+        "item": "minecraft:chest",
+        "name": "§7📦 Inventory Statistics",
+        "lore": [
+          "§7Items Collected: §7{items_collected}",
+          "§7Items Dropped: §7{items_dropped}",
+          "§7Inventory Full: §7{inventory_full_count}x",
+          "§7Chests Opened: §7{chests_opened}",
+          "§7Items Traded: §7{items_traded}",
+          "§7Collector Level: §7{collector_level}"
+        ],
+        "action": "show_detailed_inventory"
+      },
+      "18-26": {
+        "type": "border",
+        "item": "minecraft:blue_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "27": {
+        "type": "achievement",
+        "item": "minecraft:golden_apple",
+        "name": "§6🏆 Recent Achievements",
+        "lore": [
+          "§7Latest achievements:",
+          "§a• {recent_achievement_1}",
+          "§a• {recent_achievement_2}",
+          "§a• {recent_achievement_3}",
+          "",
+          "§eClick to view all achievements!"
+        ],
+        "action": "show_achievements"
+      },
+      "28": {
+        "type": "ranking",
+        "item": "minecraft:gold_ingot",
+        "name": "§e🥇 Server Rankings",
+        "lore": [
+          "§7Your server rankings:",
+          "§7Playtime: §e#{playtime_rank}",
+          "§7Economy: §e#{economy_rank}",
+          "§7Combat: §e#{combat_rank}",
+          "§7Mining: §e#{mining_rank}",
+          "",
+          "§eClick to view leaderboards!"
+        ],
+        "action": "show_leaderboards"
+      },
+      "29": {
+        "type": "social",
+        "item": "minecraft:player_head",
+        "name": "§d👥 Social Statistics",
+        "lore": [
+          "§7Friends Online: §d{friends_online}",
+          "§7Messages Sent: §d{messages_sent}",
+          "§7Commands Used: §d{commands_used}",
+          "§7Votes Cast: §d{votes_cast}",
+          "§7Reputation: §d{reputation}",
+          "",
+          "§eClick for social details!"
+        ],
+        "action": "show_social"
+      },
+      "30-35": {
+        "type": "empty",
+        "action": "none"
+      },
+      "36": {
+        "type": "function",
+        "item": "minecraft:clock",
+        "name": "§6⏱ Session Information",
+        "lore": [
+          "§7Session Start: §f{session_start}",
+          "§7Session Duration: §f{session_duration}",
+          "§7Session XP Gained: §a{session_xp}",
+          "§7Session Money Earned: §2{session_money}",
+          "§7Session Blocks Mined: §8{session_blocks}",
+          "",
+          "§7Real-time session tracking!"
+        ],
+        "action": "none"
+      },
+      "37": {
+        "type": "function",
+        "item": "minecraft:writable_book",
+        "name": "§6📊 Export Statistics",
+        "lore": [
+          "§7Export your statistics",
+          "§7Generate detailed report",
+          "§7Share with friends",
+          "",
+          "§eClick to export!"
+        ],
+        "action": "export_stats"
+      },
+      "38": {
+        "type": "function",
+        "item": "minecraft:comparator",
+        "name": "§6⚙ Statistics Settings",
+        "lore": [
+          "§7Configure statistics tracking",
+          "§7Privacy settings",
+          "§7Display preferences",
+          "",
+          "§eClick to configure!"
+        ],
+        "action": "stats_settings"
+      },
+      "39-43": {
+        "type": "empty",
+        "action": "none"
+      },
+      "44": {
+        "type": "close",
+        "item": "minecraft:barrier",
+        "name": "§c✖ Close Statistics",
+        "lore": [
+          "§7Close statistics interface",
+          "",
+          "§cClick to close!"
+        ],
+        "action": "close_gui"
+      },
+      "45-53": {
+        "type": "border",
+        "item": "minecraft:blue_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      }
+    }
+  }
+}

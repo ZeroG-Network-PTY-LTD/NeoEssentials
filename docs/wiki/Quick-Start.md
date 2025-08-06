@@ -7,8 +7,6 @@ Get NeoEssentials up and running on your server in minutes! This guide covers th
 Before installing NeoEssentials, ensure you have:
 
 ### Server Requirements
-- **Minecraft Version**: 1.21.3
-- **Mod Loader**: NeoForge 21.3.x or later
 - **Java Version**: Java 21 or higher
 - **Server RAM**: Minimum 2GB (4GB+ recommended)
 - **Operating System**: Windows, Linux, or macOS
@@ -75,6 +73,15 @@ When NeoEssentials first starts, it creates default configuration files:
 config/
 ├── neoessentials-common.toml     # Server-wide settings
 ├── neoessentials-general.toml    # General configuration
+├── gui/                         # GUI System configurations
+│   ├── main_config.json         # Main GUI settings
+│   ├── shop_gui.json           # Shop interface
+│   ├── kits_gui.json           # Kit selection menu
+│   ├── stats_gui.json          # Player statistics
+│   ├── economy_gui.json        # Economy management
+│   ├── warps_gui.json          # Warp destinations
+│   ├── admin_gui.json          # Admin control panel
+│   └── teleport_gui.json       # Teleport hub
 └── neoessentials/               # Detailed configurations
     ├── commands.toml            # Command-specific settings
     ├── permissions.toml         # Permission system
@@ -95,6 +102,10 @@ serverName = "My Minecraft Server"
 enableEssentialCommands = true
 enableTeleportation = true
 enableModeration = false  # Set to true for moderation features
+
+[features]
+# Enable the new GUI system
+guiSystem = true
 
 # Basic permissions
 [permissions]
@@ -156,6 +167,18 @@ Try these basic commands to get started:
 /sethome       # Set your home location
 ```
 
+#### GUI System Commands 🎮
+```bash
+/shop          # Open the server shop interface
+/kits          # Open kit selection menu
+/stats         # View your player statistics
+/warps         # Open warp destinations menu
+/gui teleport  # Open teleportation hub
+/gui theme dark    # Change to dark theme
+/gui theme ocean   # Change to ocean theme
+/gui theme default # Return to default theme
+```
+
 #### Utility
 ```bash
 /repair        # Repair item in hand
@@ -172,6 +195,14 @@ For server administrators:
 /heal PlayerName        # Heal another player
 /feed PlayerName        # Feed another player
 /god PlayerName         # Toggle god mode for player
+```
+
+#### GUI Management 🎛️
+```bash
+/admin                 # Open admin control panel
+/economy               # Economy management interface (if enabled)
+/neoessentials gui reload     # Reload GUI configurations
+/neoessentials gui reload shop # Reload specific GUI config
 ```
 
 #### Server Management
@@ -227,6 +258,85 @@ For server administrators:
    ```
 
 Players can then use `/warp mall` to teleport to warps.
+
+## 🎮 GUI System Quick Setup
+
+### Opening GUI Menus
+
+The new GUI system provides intuitive interfaces for common server functions:
+
+1. **Shop Interface**:
+   ```bash
+   /shop
+   ```
+   Opens a categorized shop where players can buy and sell items with visual categories and pricing.
+
+2. **Kit Selection**:
+   ```bash
+   /kits
+   ```
+   Browse available kits with descriptions, cooldowns, and requirements.
+
+3. **Player Statistics**:
+   ```bash
+   /stats
+   ```
+   View comprehensive player stats including playtime, deaths, kills, and more.
+
+4. **Warp Destinations**:
+   ```bash
+   /warps
+   ```
+   Visual warp browser with descriptions and quick teleportation.
+
+### Personalizing Your Experience
+
+Players can customize their GUI experience with themes:
+
+```bash
+/gui theme list        # Show available themes
+/gui theme dark        # Switch to dark theme  
+/gui theme ocean       # Switch to ocean theme
+/gui theme default     # Return to default theme
+```
+
+### Quick Shop Configuration (Admin)
+
+1. **Add items to shop** by editing `config/gui/shop_gui.json`:
+   ```json
+   "diamond_sword": {
+     "item": "minecraft:diamond_sword",
+     "name": "§b💎 Diamond Sword",
+     "price": 500,
+     "category": "weapons",
+     "lore": [
+       "§7A powerful diamond sword",
+       "§6Price: §f500 coins"
+     ]
+   }
+   ```
+
+2. **Reload shop configuration**:
+   ```bash
+   /neoessentials gui reload shop
+   ```
+
+### GUI Permissions
+
+Grant GUI access permissions:
+
+```yaml
+# Basic GUI permissions
+neoessentials.gui.shop      # Access to shop
+neoessentials.gui.kits      # Access to kits
+neoessentials.gui.stats     # View statistics
+neoessentials.gui.warps     # Access warps GUI
+
+# Advanced permissions  
+neoessentials.gui.theme.change  # Change themes
+neoessentials.gui.admin         # Admin panel access
+neoessentials.gui.economy       # Economy management
+```
 
 ## 📊 Bossbar System
 
@@ -310,20 +420,30 @@ enabled = true
 - [ ] `/spawn` teleports to spawn
 - [ ] `/fly` toggles flight
 
+**✅ GUI System Working**:
+- [ ] `/shop` opens shop interface
+- [ ] `/kits` displays available kits  
+- [ ] `/stats` shows player statistics
+- [ ] `/warps` opens warp browser
+- [ ] `/gui theme dark` changes to dark theme
+
 **✅ Permissions Working**:
 - [ ] Default players can use basic commands
 - [ ] Admins can use all commands
 - [ ] VIP players have enhanced permissions
+- [ ] GUI access permissions work correctly
 
 **✅ Teleportation Working**:
 - [ ] `/sethome` and `/home` work
 - [ ] `/back` returns to previous location
 - [ ] Warps can be created and used
+- [ ] GUI warp browser functions
 
 **✅ Features Working**:
 - [ ] Bossbar displays correctly
 - [ ] Security monitoring active
 - [ ] Configuration loads without errors
+- [ ] GUI configurations load properly
 
 ### Common Test Commands
 
@@ -336,6 +456,14 @@ Run these to verify everything works:
 /speed 2
 /fly
 
+# Test GUI system
+/shop              # Open shop interface
+/kits              # Open kits menu
+/stats             # View player stats  
+/warps             # Open warp browser
+/gui theme dark    # Test theme changing
+/gui theme default # Return to default
+
 # Test teleportation
 /sethome test
 /spawn
@@ -344,6 +472,10 @@ Run these to verify everything works:
 
 # Test bossbar
 /bossbar show test "Testing: {player_name}" RED SOLID 5
+
+# Test GUI admin functions (as admin)
+/admin             # Open admin panel
+/neoessentials gui reload  # Reload GUI configs
 
 # Test permissions (as admin)
 /permissions info
@@ -460,12 +592,13 @@ For troubleshooting:
 
 Once you have the basics working:
 
-1. **[Essential Commands](Essential-Commands.md)**: Learn all available commands
-2. **[Configuration](Configuration.md)**: Detailed configuration options
-3. **[Permissions](Permissions.md)**: Advanced permission management
-4. **[Bossbar System](Bossbar.md)**: Create advanced bossbar displays
-5. **[Security Features](Security.md)**: Set up comprehensive server protection
-6. **[Teleportation](Teleportation.md)**: Advanced teleportation features
+1. **[GUI System](GUI-System)**: Complete GUI customization and configuration
+2. **[Essential Commands](Essential-Commands)**: Learn all available commands
+3. **[Configuration](Configuration)**: Detailed configuration options
+4. **[Permissions](Permissions)**: Advanced permission management
+5. **[Bossbar System](Bossbar)**: Create advanced bossbar displays
+6. **[Security Features](Security)**: Set up comprehensive server protection
+7. **[Teleportation](Teleportation)**: Advanced teleportation features
 
 ### Customize for Your Server
 
@@ -486,6 +619,6 @@ Once you have the basics working:
 
 **Congratulations!** 🎉 You now have NeoEssentials running on your server. Your players can enjoy essential commands, teleportation, and enhanced server features while you benefit from comprehensive administration tools and security features.
 
-**Related Documentation**: [Installation](Installation.md) | [Essential Commands](Essential-Commands.md) | [Configuration](Configuration.md)
+**Related Documentation**: [Installation](Installation) | [Essential Commands](Essential-Commands) | [Configuration](Configuration)
 
-*Last Updated: August 3, 2025*
+*Last Updated: August 6, 2025*

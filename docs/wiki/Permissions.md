@@ -696,6 +696,6 @@ Permission changes are logged for security:
 
 ---
 
-**Related Documentation**: [Essential Commands](Essential-Commands.md) | [Configuration](Configuration.md) | [Security Features](Security.md)
+**Related Documentation**: [Essential Commands](Essential-Commands) | [Configuration](Configuration) | [Security Features](Security)
 
-*Last Updated: August 3, 2025*
+*Last Updated: August 6, 2025*

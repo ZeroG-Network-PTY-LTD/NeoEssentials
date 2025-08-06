@@ -1,0 +1,676 @@
+{
+  "teleport_gui": {
+    "enabled": true,
+    "title": "§5§lTeleportation Hub",
+    "size": 45,
+    "theme": "default",
+    "auto_refresh": true,
+    "show_coordinates": true
+  },
+  "layout": {
+    "title": "§5§lTeleportation Hub",
+    "size": 45,
+    "slots": {
+      "0-8": {
+        "type": "border",
+        "item": "minecraft:purple_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "9": {
+        "type": "category",
+        "item": "minecraft:ender_pearl",
+        "name": "§5🔮 Player Teleport",
+        "lore": [
+          "§7Teleport to other players",
+          "§7Send teleport requests",
+          "§7Accept/deny requests",
+          "",
+          "§eClick for player teleport!"
+        ],
+        "action": "open_player_teleport"
+      },
+      "10": {
+        "type": "category",
+        "item": "minecraft:compass",
+        "name": "§3🧭 Coordinate Teleport",
+        "lore": [
+          "§7Teleport to specific coordinates",
+          "§7Input X, Y, Z coordinates",
+          "§7Cross-dimensional travel",
+          "",
+          "§eClick for coordinate teleport!"
+        ],
+        "action": "open_coordinate_teleport"
+      },
+      "11": {
+        "type": "category",
+        "item": "minecraft:bed",
+        "name": "§c🏠 Home Teleport",
+        "lore": [
+          "§7Teleport to your homes",
+          "§7Multiple home support",
+          "§7Set/delete homes",
+          "",
+          "§eClick for home management!"
+        ],
+        "action": "open_home_teleport"
+      },
+      "12": {
+        "type": "category",
+        "item": "minecraft:oak_sign",
+        "name": "§6🗺 Warp Teleport",
+        "lore": [
+          "§7Quick access to warps",
+          "§7Public destinations",
+          "§7Fast travel system",
+          "",
+          "§eClick for warp teleport!"
+        ],
+        "action": "open_warp_teleport"
+      },
+      "13": {
+        "type": "category",
+        "item": "minecraft:recovery_compass",
+        "name": "§e↩ Back/Return",
+        "lore": [
+          "§7Return to previous location",
+          "§7Death point teleport",
+          "§7Location history",
+          "",
+          "§eClick for return options!"
+        ],
+        "action": "open_return_teleport"
+      },
+      "14": {
+        "type": "category",
+        "item": "minecraft:ender_eye",
+        "name": "§d🎲 Random Teleport",
+        "lore": [
+          "§7Random safe location",
+          "§7Exploration tool",
+          "§7Adventure teleport",
+          "",
+          "§eClick for random teleport!"
+        ],
+        "action": "open_random_teleport"
+      },
+      "15": {
+        "type": "category",
+        "item": "minecraft:nether_star",
+        "name": "§f✨ Special Teleports",
+        "lore": [
+          "§7Special teleport functions",
+          "§7Admin teleports",
+          "§7Event locations",
+          "",
+          "§eClick for special teleports!"
+        ],
+        "action": "open_special_teleports"
+      },
+      "16": {
+        "type": "settings",
+        "item": "minecraft:redstone",
+        "name": "§c⚙ Teleport Settings",
+        "lore": [
+          "§7Configure teleport preferences",
+          "§7Cooldowns and costs",
+          "§7Sound effects",
+          "",
+          "§eClick to configure!"
+        ],
+        "action": "open_teleport_settings"
+      },
+      "17": {
+        "type": "history",
+        "item": "minecraft:clock",
+        "name": "§e⏰ Teleport History",
+        "lore": [
+          "§7Your recent teleports",
+          "§7Location history",
+          "§7Quick revisit",
+          "",
+          "§eClick for history!"
+        ],
+        "action": "open_teleport_history"
+      },
+      "18-26": {
+        "type": "border",
+        "item": "minecraft:purple_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "27": {
+        "type": "quick_teleport",
+        "item": "minecraft:grass_block",
+        "name": "§2🌱 Spawn",
+        "lore": [
+          "§7Teleport to server spawn",
+          "§7Safe return point",
+          "§7Always available",
+          "",
+          "§a✓ Available",
+          "§eClick to teleport!"
+        ],
+        "action": "teleport_spawn"
+      },
+      "28": {
+        "type": "quick_teleport",
+        "item": "minecraft:bed",
+        "name": "§c🏠 Home",
+        "lore": [
+          "§7Teleport to your home",
+          "§7Personal safe point",
+          "§7Set with /sethome",
+          "",
+          "§7Home: §f{home_location}",
+          "§eClick to go home!"
+        ],
+        "action": "teleport_home"
+      },
+      "29": {
+        "type": "quick_teleport",
+        "item": "minecraft:skeleton_skull",
+        "name": "§8💀 Death Point",
+        "lore": [
+          "§7Teleport to death location",
+          "§7Retrieve your items",
+          "§7Last death point",
+          "",
+          "§7Death location: §f{death_location}",
+          "§eClick to teleport!"
+        ],
+        "action": "teleport_death"
+      },
+      "30": {
+        "type": "quick_teleport",
+        "item": "minecraft:recovery_compass",
+        "name": "§e↩ Previous",
+        "lore": [
+          "§7Return to previous location",
+          "§7Before last teleport",
+          "§7Quick way back",
+          "",
+          "§7Previous: §f{previous_location}",
+          "§eClick to return!"
+        ],
+        "action": "teleport_back"
+      },
+      "31": {
+        "type": "tpa_request",
+        "item": "minecraft:paper",
+        "name": "§f📨 TPA Requests",
+        "lore": [
+          "§7Manage teleport requests",
+          "§7Pending requests: §f{pending_requests}",
+          "§7Accept/deny requests",
+          "",
+          "§eClick to manage!"
+        ],
+        "action": "manage_tpa_requests"
+      },
+      "32": {
+        "type": "player_list",
+        "item": "minecraft:player_head",
+        "name": "§f👥 Online Players",
+        "lore": [
+          "§7Teleport to online players",
+          "§7Send TPA requests",
+          "§7Player list: §f{online_players}",
+          "",
+          "§eClick to view players!"
+        ],
+        "action": "show_online_players"
+      },
+      "33": {
+        "type": "coordinate_input",
+        "item": "minecraft:compass",
+        "name": "§3🧭 Coordinates",
+        "lore": [
+          "§7Enter specific coordinates",
+          "§7X, Y, Z teleportation",
+          "§7Cross-world support",
+          "",
+          "§eClick to input coordinates!"
+        ],
+        "action": "input_coordinates"
+      },
+      "34": {
+        "type": "random_teleport",
+        "item": "minecraft:ender_eye",
+        "name": "§d🎲 Random TP",
+        "lore": [
+          "§7Teleport to random location",
+          "§7Safe destination guaranteed",
+          "§7Adventure awaits!",
+          "",
+          "§7Cooldown: §f{random_tp_cooldown}",
+          "§eClick for adventure!"
+        ],
+        "action": "random_teleport"
+      },
+      "35": {
+        "type": "world_teleport",
+        "item": "minecraft:nether_star",
+        "name": "§5🌌 World Travel",
+        "lore": [
+          "§7Travel between worlds",
+          "§7Overworld, Nether, End",
+          "§7Cross-dimensional portals",
+          "",
+          "§eClick for world travel!"
+        ],
+        "action": "open_world_travel"
+      },
+      "36": {
+        "type": "close",
+        "item": "minecraft:barrier",
+        "name": "§c✖ Close",
+        "lore": [
+          "§7Close teleportation hub",
+          "",
+          "§cClick to close!"
+        ],
+        "action": "close_gui"
+      },
+      "37": {
+        "type": "help",
+        "item": "minecraft:book",
+        "name": "§b📖 Teleport Help",
+        "lore": [
+          "§7Learn about teleportation",
+          "§7Commands and usage",
+          "§7Safety guidelines",
+          "",
+          "§eClick for help!"
+        ],
+        "action": "show_teleport_help"
+      },
+      "38": {
+        "type": "refresh",
+        "item": "minecraft:lime_dye",
+        "name": "§a🔄 Refresh",
+        "lore": [
+          "§7Refresh teleport data",
+          "§7Update player list",
+          "§7Check cooldowns",
+          "",
+          "§eClick to refresh!"
+        ],
+        "action": "refresh_gui"
+      },
+      "39-44": {
+        "type": "border",
+        "item": "minecraft:purple_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      }
+    }
+  },
+  "tpa_gui": {
+    "enabled": true,
+    "title": "§f§lTeleport Requests",
+    "size": 36,
+    "auto_refresh": true,
+    "show_timestamps": true,
+    "slots": {
+      "0-8": {
+        "type": "border",
+        "item": "minecraft:light_blue_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "9": {
+        "type": "send_tpa",
+        "item": "minecraft:ender_pearl",
+        "name": "§5📤 Send TPA Request",
+        "lore": [
+          "§7Send teleport request to player",
+          "§7Request to teleport to them",
+          "§7Choose from online players",
+          "",
+          "§eClick to send request!"
+        ],
+        "action": "send_tpa_request"
+      },
+      "10": {
+        "type": "send_tpahere",
+        "item": "minecraft:fishing_rod",
+        "name": "§2📥 Send TPA Here",
+        "lore": [
+          "§7Request player to teleport to you",
+          "§7Invite them to your location",
+          "§7Choose from online players",
+          "",
+          "§eClick to send invitation!"
+        ],
+        "action": "send_tpahere_request"
+      },
+      "11": {
+        "type": "pending_incoming",
+        "item": "minecraft:paper",
+        "name": "§e📨 Incoming Requests",
+        "lore": [
+          "§7Pending requests to you",
+          "§7Count: §f{incoming_requests}",
+          "§7Accept or deny requests",
+          "",
+          "§eClick to manage!"
+        ],
+        "action": "manage_incoming_requests"
+      },
+      "12": {
+        "type": "pending_outgoing",
+        "item": "minecraft:writable_book",
+        "name": "§6📮 Outgoing Requests",
+        "lore": [
+          "§7Requests you sent",
+          "§7Count: §f{outgoing_requests}",
+          "§7Cancel pending requests",
+          "",
+          "§eClick to manage!"
+        ],
+        "action": "manage_outgoing_requests"
+      },
+      "13": {
+        "type": "tpa_settings",
+        "item": "minecraft:redstone",
+        "name": "§c⚙ TPA Settings",
+        "lore": [
+          "§7Configure TPA preferences",
+          "§7Auto-accept from friends",
+          "§7Block requests",
+          "§7Request timeouts",
+          "",
+          "§eClick to configure!"
+        ],
+        "action": "open_tpa_settings"
+      },
+      "14": {
+        "type": "tpa_history",
+        "item": "minecraft:clock",
+        "name": "§e⏰ TPA History",
+        "lore": [
+          "§7Recent teleport requests",
+          "§7Accepted/denied history",
+          "§7Player interactions",
+          "",
+          "§eClick for history!"
+        ],
+        "action": "show_tpa_history"
+      },
+      "15": {
+        "type": "blocked_players",
+        "item": "minecraft:barrier",
+        "name": "§c🚫 Blocked Players",
+        "lore": [
+          "§7Players blocked from TPA",
+          "§7Manage block list",
+          "§7Unblock players",
+          "",
+          "§cClick to manage blocks!"
+        ],
+        "action": "manage_blocked_players"
+      },
+      "16": {
+        "type": "friends_list",
+        "item": "minecraft:nether_star",
+        "name": "§a👥 Friends List",
+        "lore": [
+          "§7Trusted players for TPA",
+          "§7Auto-accept from friends",
+          "§7Manage friend list",
+          "",
+          "§eClick to manage friends!"
+        ],
+        "action": "manage_friends_list"
+      },
+      "17": {
+        "type": "online_players",
+        "item": "minecraft:player_head",
+        "name": "§f👤 Online Players",
+        "lore": [
+          "§7View all online players",
+          "§7Send quick TPA requests",
+          "§7Player status indicators",
+          "",
+          "§eClick to view players!"
+        ],
+        "action": "show_online_players_tpa"
+      },
+      "18-26": {
+        "type": "border",
+        "item": "minecraft:light_blue_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "27": {
+        "type": "close",
+        "item": "minecraft:barrier",
+        "name": "§c✖ Close",
+        "lore": [
+          "§7Close TPA menu",
+          "",
+          "§cClick to close!"
+        ],
+        "action": "close_gui"
+      },
+      "28": {
+        "type": "help",
+        "item": "minecraft:book",
+        "name": "§b📖 TPA Help",
+        "lore": [
+          "§7Learn about TPA system",
+          "§7Commands and usage",
+          "§7Request etiquette",
+          "",
+          "§eClick for help!"
+        ],
+        "action": "show_tpa_help"
+      },
+      "29": {
+        "type": "refresh",
+        "item": "minecraft:lime_dye",
+        "name": "§a🔄 Refresh",
+        "lore": [
+          "§7Refresh request status",
+          "§7Update player list",
+          "§7Check new requests",
+          "",
+          "§eClick to refresh!"
+        ],
+        "action": "refresh_tpa_gui"
+      },
+      "30-35": {
+        "type": "border",
+        "item": "minecraft:light_blue_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      }
+    }
+  },
+  "coordinate_teleport_gui": {
+    "enabled": true,
+    "title": "§3§lCoordinate Teleport",
+    "size": 27,
+    "require_permission": "neoessentials.teleport.coordinate",
+    "slots": {
+      "0-8": {
+        "type": "border",
+        "item": "minecraft:cyan_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "9": {
+        "type": "input_x",
+        "item": "minecraft:red_concrete",
+        "name": "§c📍 X Coordinate",
+        "lore": [
+          "§7Current X: §f{current_x}",
+          "§7Target X: §f{target_x}",
+          "§7Click to set X coordinate",
+          "",
+          "§eClick to input X!"
+        ],
+        "action": "input_x_coordinate"
+      },
+      "10": {
+        "type": "input_y",
+        "item": "minecraft:lime_concrete",
+        "name": "§a📍 Y Coordinate",
+        "lore": [
+          "§7Current Y: §f{current_y}",
+          "§7Target Y: §f{target_y}",
+          "§7Click to set Y coordinate",
+          "",
+          "§eClick to input Y!"
+        ],
+        "action": "input_y_coordinate"
+      },
+      "11": {
+        "type": "input_z",
+        "item": "minecraft:blue_concrete",
+        "name": "§9📍 Z Coordinate",
+        "lore": [
+          "§7Current Z: §f{current_z}",
+          "§7Target Z: §f{target_z}",
+          "§7Click to set Z coordinate",
+          "",
+          "§eClick to input Z!"
+        ],
+        "action": "input_z_coordinate"
+      },
+      "12": {
+        "type": "select_world",
+        "item": "minecraft:compass",
+        "name": "§5🌍 Select World",
+        "lore": [
+          "§7Current world: §f{current_world}",
+          "§7Target world: §f{target_world}",
+          "§7Choose destination world",
+          "",
+          "§eClick to select world!"
+        ],
+        "action": "select_target_world"
+      },
+      "13": {
+        "type": "safety_check",
+        "item": "minecraft:shield",
+        "name": "§6🛡 Safety Check",
+        "lore": [
+          "§7Check destination safety",
+          "§7Verify solid ground",
+          "§7Avoid dangerous locations",
+          "",
+          "§7Safety: §a{safety_status}",
+          "§eClick to check safety!"
+        ],
+        "action": "check_destination_safety"
+      },
+      "14": {
+        "type": "teleport_preview",
+        "item": "minecraft:spyglass",
+        "name": "§f👁 Preview Location",
+        "lore": [
+          "§7Preview destination",
+          "§7See target location",
+          "§7Before teleporting",
+          "",
+          "§eClick to preview!"
+        ],
+        "action": "preview_destination"
+      },
+      "15": {
+        "type": "saved_coordinates",
+        "item": "minecraft:book",
+        "name": "§6📖 Saved Locations",
+        "lore": [
+          "§7Your saved coordinates",
+          "§7Quick location access",
+          "§7Manage saved locations",
+          "",
+          "§eClick to view saved!"
+        ],
+        "action": "show_saved_coordinates"
+      },
+      "16": {
+        "type": "coordinate_history",
+        "item": "minecraft:clock",
+        "name": "§e⏰ Coordinate History",
+        "lore": [
+          "§7Recent coordinate teleports",
+          "§7Previously visited locations",
+          "§7Quick revisit",
+          "",
+          "§eClick for history!"
+        ],
+        "action": "show_coordinate_history"
+      },
+      "17": {
+        "type": "calculate_distance",
+        "item": "minecraft:map",
+        "name": "§f📏 Calculate Distance",
+        "lore": [
+          "§7Distance to target:",
+          "§7From current position",
+          "§7Travel calculation",
+          "",
+          "§7Distance: §f{calculated_distance}m",
+          "§eClick to calculate!"
+        ],
+        "action": "calculate_distance"
+      },
+      "18-21": {
+        "type": "border",
+        "item": "minecraft:cyan_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "22": {
+        "type": "teleport_execute",
+        "item": "minecraft:ender_pearl",
+        "name": "§5🔮 Teleport",
+        "lore": [
+          "§7Execute coordinate teleport",
+          "§7Target: §f{target_coordinates}",
+          "§7World: §f{target_world}",
+          "",
+          "§a✓ Ready to teleport",
+          "§eClick to teleport!"
+        ],
+        "action": "execute_coordinate_teleport"
+      },
+      "23": {
+        "type": "save_location",
+        "item": "minecraft:writable_book",
+        "name": "§2💾 Save Location",
+        "lore": [
+          "§7Save current coordinates",
+          "§7Add to saved locations",
+          "§7Quick access later",
+          "",
+          "§eClick to save!"
+        ],
+        "action": "save_current_location"
+      },
+      "24": {
+        "type": "cancel",
+        "item": "minecraft:barrier",
+        "name": "§c❌ Cancel",
+        "lore": [
+          "§7Cancel coordinate teleport",
+          "§7Return to main menu",
+          "",
+          "§cClick to cancel!"
+        ],
+        "action": "cancel_coordinate_teleport"
+      },
+      "25-26": {
+        "type": "border",
+        "item": "minecraft:cyan_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      }
+    }
+  }
+}

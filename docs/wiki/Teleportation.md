@@ -833,6 +833,6 @@ TeleportRequestManager.createRequest(requester, target, RequestType.TPA);
 
 ---
 
-**Related Documentation**: [Essential Commands](Essential-Commands.md) | [Configuration](Configuration.md) | [Permissions](Permissions.md)
+**Related Documentation**: [Essential Commands](Essential-Commands) | [Configuration](Configuration) | [Permissions](Permissions)
 
 *Last Updated: August 3, 2025*

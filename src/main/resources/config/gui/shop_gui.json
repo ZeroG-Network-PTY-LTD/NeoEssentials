@@ -1,0 +1,571 @@
+{
+  "shop_gui": {
+    "enabled": true,
+    "title": "§6§lNeoEssentials Shop",
+    "size": 54,
+    "theme": "default",
+    "auto_refresh": true,
+    "show_balance": true,
+    "show_player_info": true,
+    "enable_sell_mode": true,
+    "enable_quantity_selector": true,
+    "enable_favorites": true,
+    "enable_search": false,
+    "enable_history": true,
+    "max_items_per_page": 45,
+    "enable_pagination": true
+  },
+  "main_shop_layout": {
+    "title": "§6§lMain Shop",
+    "size": 54,
+    "slots": {
+      "0-8": {
+        "type": "border",
+        "item": "minecraft:gray_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "9-17": {
+        "type": "border",
+        "item": "minecraft:gray_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "18": {
+        "type": "category",
+        "category": "weapons",
+        "item": "minecraft:diamond_sword",
+        "name": "§6⚔ Weapons & Tools",
+        "lore": [
+          "§7Browse weapons and tools",
+          "§7Click to open category",
+          "",
+          "§eClick to open!"
+        ],
+        "action": "open_category"
+      },
+      "19": {
+        "type": "category",
+        "category": "armor",
+        "item": "minecraft:diamond_chestplate",
+        "name": "§6🛡 Armor & Protection",
+        "lore": [
+          "§7Browse armor and protection",
+          "§7Click to open category",
+          "",
+          "§eClick to open!"
+        ],
+        "action": "open_category"
+      },
+      "20": {
+        "type": "category",
+        "category": "food",
+        "item": "minecraft:cooked_beef",
+        "name": "§6🍞 Food & Consumables",
+        "lore": [
+          "§7Browse food and consumables",
+          "§7Click to open category",
+          "",
+          "§eClick to open!"
+        ],
+        "action": "open_category"
+      },
+      "21": {
+        "type": "category",
+        "category": "blocks",
+        "item": "minecraft:stone_bricks",
+        "name": "§6🧱 Building Blocks",
+        "lore": [
+          "§7Browse building materials",
+          "§7Click to open category",
+          "",
+          "§eClick to open!"
+        ],
+        "action": "open_category"
+      },
+      "22": {
+        "type": "category",
+        "category": "redstone",
+        "item": "minecraft:redstone",
+        "name": "§6⚡ Redstone & Electronics",
+        "lore": [
+          "§7Browse redstone components",
+          "§7Click to open category",
+          "",
+          "§eClick to open!"
+        ],
+        "action": "open_category"
+      },
+      "23": {
+        "type": "category",
+        "category": "decorative",
+        "item": "minecraft:painting",
+        "name": "§6🎨 Decorative Items",
+        "lore": [
+          "§7Browse decorative items",
+          "§7Click to open category",
+          "",
+          "§eClick to open!"
+        ],
+        "action": "open_category"
+      },
+      "24": {
+        "type": "special",
+        "item": "minecraft:chest",
+        "name": "§6📦 Special Items",
+        "lore": [
+          "§7Browse special and rare items",
+          "§7Click to open category",
+          "",
+          "§eClick to open!"
+        ],
+        "action": "open_special"
+      },
+      "25": {
+        "type": "info",
+        "item": "minecraft:book",
+        "name": "§6📚 Shop Information",
+        "lore": [
+          "§7Learn about the shop system",
+          "§7View purchase history",
+          "",
+          "§eClick for info!"
+        ],
+        "action": "show_info"
+      },
+      "26": {
+        "type": "border",
+        "item": "minecraft:gray_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "27-35": {
+        "type": "border",
+        "item": "minecraft:gray_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "36": {
+        "type": "player_info",
+        "item": "minecraft:emerald",
+        "name": "§a💰 Your Balance",
+        "lore": [
+          "§7Current balance: §6{balance}",
+          "§7Total spent: §c{total_spent}",
+          "§7Total earned: §a{total_earned}",
+          "",
+          "§7Click to view economy stats!"
+        ],
+        "action": "show_economy_stats"
+      },
+      "37": {
+        "type": "function",
+        "item": "minecraft:chest_minecart",
+        "name": "§6🛒 Sell Items",
+        "lore": [
+          "§7Sell items from your inventory",
+          "§7Get money for unwanted items",
+          "",
+          "§eClick to sell items!"
+        ],
+        "action": "open_sell_gui"
+      },
+      "38": {
+        "type": "function",
+        "item": "minecraft:gold_ingot",
+        "name": "§6⭐ Favorites",
+        "lore": [
+          "§7View your favorite items",
+          "§7Quick access to commonly bought items",
+          "",
+          "§eClick to view favorites!"
+        ],
+        "action": "open_favorites"
+      },
+      "39": {
+        "type": "function",
+        "item": "minecraft:clock",
+        "name": "§6📜 Purchase History",
+        "lore": [
+          "§7View your recent purchases",
+          "§7Track your spending patterns",
+          "",
+          "§eClick to view history!"
+        ],
+        "action": "open_history"
+      },
+      "40": {
+        "type": "function",
+        "item": "minecraft:compass",
+        "name": "§6🔍 Search Items",
+        "lore": [
+          "§7Search for specific items",
+          "§7Find items across all categories",
+          "",
+          "§eClick to search!"
+        ],
+        "action": "open_search"
+      },
+      "41-43": {
+        "type": "empty",
+        "action": "none"
+      },
+      "44": {
+        "type": "close",
+        "item": "minecraft:barrier",
+        "name": "§c✖ Close Shop",
+        "lore": [
+          "§7Close the shop interface",
+          "",
+          "§cClick to close!"
+        ],
+        "action": "close_gui"
+      },
+      "45-53": {
+        "type": "border",
+        "item": "minecraft:gray_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      }
+    }
+  },
+  "category_shop_layout": {
+    "title": "§6{category_name}",
+    "size": 54,
+    "slots": {
+      "0-8": {
+        "type": "border",
+        "item": "minecraft:cyan_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "9-44": {
+        "type": "items",
+        "action": "purchase"
+      },
+      "45": {
+        "type": "navigation",
+        "item": "minecraft:arrow",
+        "name": "§a⬅ Back to Main Shop",
+        "lore": [
+          "§7Return to the main shop",
+          "",
+          "§eClick to go back!"
+        ],
+        "action": "back_to_main"
+      },
+      "46": {
+        "type": "function",
+        "item": "minecraft:emerald",
+        "name": "§a💰 Your Balance",
+        "lore": [
+          "§7Current balance: §6{balance}",
+          "",
+          "§7Updated in real-time!"
+        ],
+        "action": "none"
+      },
+      "47": {
+        "type": "function",
+        "item": "minecraft:chest",
+        "name": "§6🛒 Sell Mode",
+        "lore": [
+          "§7Switch to selling items",
+          "§7Sell items from this category",
+          "",
+          "§eClick to sell!"
+        ],
+        "action": "toggle_sell_mode"
+      },
+      "48": {
+        "type": "function",
+        "item": "minecraft:writable_book",
+        "name": "§6📋 Sort Options",
+        "lore": [
+          "§7Sort items by:",
+          "§7• Price (Low to High)",
+          "§7• Price (High to Low)",
+          "§7• Name (A-Z)",
+          "§7• Popularity",
+          "",
+          "§eClick to sort!"
+        ],
+        "action": "open_sort"
+      },
+      "49": {
+        "type": "function",
+        "item": "minecraft:hopper",
+        "name": "§6🔍 Filter Items",
+        "lore": [
+          "§7Filter items by:",
+          "§7• Price range",
+          "§7• Availability",
+          "§7• Enchantments",
+          "",
+          "§eClick to filter!"
+        ],
+        "action": "open_filter"
+      },
+      "50": {
+        "type": "pagination",
+        "item": "minecraft:spectral_arrow",
+        "name": "§e⬅ Previous Page",
+        "lore": [
+          "§7Page {current_page} of {total_pages}",
+          "",
+          "§eClick for previous page!"
+        ],
+        "action": "previous_page"
+      },
+      "51": {
+        "type": "pagination",
+        "item": "minecraft:tipped_arrow",
+        "name": "§e➡ Next Page",
+        "lore": [
+          "§7Page {current_page} of {total_pages}",
+          "",
+          "§eClick for next page!"
+        ],
+        "action": "next_page"
+      },
+      "52": {
+        "type": "function",
+        "item": "minecraft:gold_nugget",
+        "name": "§6⭐ Add to Favorites",
+        "lore": [
+          "§7Add items to your favorites",
+          "§7Right-click items to favorite them",
+          "",
+          "§7Favorites: {favorite_count}"
+        ],
+        "action": "none"
+      },
+      "53": {
+        "type": "close",
+        "item": "minecraft:barrier",
+        "name": "§c✖ Close",
+        "lore": [
+          "§7Close this category",
+          "",
+          "§cClick to close!"
+        ],
+        "action": "close_gui"
+      }
+    }
+  },
+  "sell_gui_layout": {
+    "title": "§6Sell Items - {category_name}",
+    "size": 54,
+    "slots": {
+      "0-8": {
+        "type": "border",
+        "item": "minecraft:yellow_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "9-44": {
+        "type": "sell_items",
+        "action": "sell"
+      },
+      "45": {
+        "type": "navigation",
+        "item": "minecraft:arrow",
+        "name": "§a⬅ Back to Shop",
+        "lore": [
+          "§7Return to the shop category",
+          "",
+          "§eClick to go back!"
+        ],
+        "action": "back_to_category"
+      },
+      "46": {
+        "type": "function",
+        "item": "minecraft:emerald",
+        "name": "§a💰 Your Balance",
+        "lore": [
+          "§7Current balance: §6{balance}",
+          "§7Estimated value: §a{estimated_value}",
+          "",
+          "§7Updated in real-time!"
+        ],
+        "action": "none"
+      },
+      "47": {
+        "type": "function",
+        "item": "minecraft:hopper",
+        "name": "§6📤 Sell All",
+        "lore": [
+          "§7Sell all sellable items",
+          "§7from this category",
+          "§7Total value: §a{total_value}",
+          "",
+          "§eClick to sell all!"
+        ],
+        "action": "sell_all"
+      },
+      "48": {
+        "type": "function",
+        "item": "minecraft:comparator",
+        "name": "§6⚖ Price Check",
+        "lore": [
+          "§7Check sell prices",
+          "§7for all your items",
+          "",
+          "§eClick to check prices!"
+        ],
+        "action": "price_check"
+      },
+      "49-52": {
+        "type": "empty",
+        "action": "none"
+      },
+      "53": {
+        "type": "close",
+        "item": "minecraft:barrier",
+        "name": "§c✖ Close",
+        "lore": [
+          "§7Close sell interface",
+          "",
+          "§cClick to close!"
+        ],
+        "action": "close_gui"
+      }
+    }
+  },
+  "quantity_selector_layout": {
+    "title": "§6Select Quantity - {item_name}",
+    "size": 27,
+    "slots": {
+      "0-8": {
+        "type": "border",
+        "item": "minecraft:light_blue_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "9": {
+        "type": "quantity",
+        "quantity": 1,
+        "item": "{item}",
+        "name": "§f1x {item_name}",
+        "lore": [
+          "§7Price: §6{price}",
+          "§7Total: §6{total}",
+          "",
+          "§eClick to buy 1!"
+        ],
+        "action": "buy_quantity"
+      },
+      "10": {
+        "type": "quantity",
+        "quantity": 4,
+        "item": "{item}",
+        "name": "§f4x {item_name}",
+        "lore": [
+          "§7Price each: §6{price}",
+          "§7Total: §6{total}",
+          "",
+          "§eClick to buy 4!"
+        ],
+        "action": "buy_quantity"
+      },
+      "11": {
+        "type": "quantity",
+        "quantity": 8,
+        "item": "{item}",
+        "name": "§f8x {item_name}",
+        "lore": [
+          "§7Price each: §6{price}",
+          "§7Total: §6{total}",
+          "",
+          "§eClick to buy 8!"
+        ],
+        "action": "buy_quantity"
+      },
+      "12": {
+        "type": "quantity",
+        "quantity": 16,
+        "item": "{item}",
+        "name": "§f16x {item_name}",
+        "lore": [
+          "§7Price each: §6{price}",
+          "§7Total: §6{total}",
+          "",
+          "§eClick to buy 16!"
+        ],
+        "action": "buy_quantity"
+      },
+      "13": {
+        "type": "quantity",
+        "quantity": 32,
+        "item": "{item}",
+        "name": "§f32x {item_name}",
+        "lore": [
+          "§7Price each: §6{price}",
+          "§7Total: §6{total}",
+          "",
+          "§eClick to buy 32!"
+        ],
+        "action": "buy_quantity"
+      },
+      "14": {
+        "type": "quantity",
+        "quantity": 64,
+        "item": "{item}",
+        "name": "§f64x {item_name}",
+        "lore": [
+          "§7Price each: §6{price}",
+          "§7Total: §6{total}",
+          "",
+          "§eClick to buy 64!"
+        ],
+        "action": "buy_quantity"
+      },
+      "15": {
+        "type": "function",
+        "item": "minecraft:writable_book",
+        "name": "§6✏ Custom Amount",
+        "lore": [
+          "§7Enter a custom quantity",
+          "§7Type in chat after clicking",
+          "",
+          "§eClick to enter custom amount!"
+        ],
+        "action": "custom_quantity"
+      },
+      "16": {
+        "type": "info",
+        "item": "minecraft:emerald",
+        "name": "§a💰 Your Balance",
+        "lore": [
+          "§7Current balance: §6{balance}",
+          "",
+          "§7Make sure you have enough!"
+        ],
+        "action": "none"
+      },
+      "17": {
+        "type": "border",
+        "item": "minecraft:light_blue_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "18-25": {
+        "type": "border",
+        "item": "minecraft:light_blue_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "26": {
+        "type": "close",
+        "item": "minecraft:arrow",
+        "name": "§a⬅ Back",
+        "lore": [
+          "§7Return to shop",
+          "",
+          "§eClick to go back!"
+        ],
+        "action": "back"
+      }
+    }
+  }
+}

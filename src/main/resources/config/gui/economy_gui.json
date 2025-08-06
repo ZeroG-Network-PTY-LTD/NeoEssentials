@@ -1,0 +1,307 @@
+{
+  "economy_gui": {
+    "enabled": true,
+    "title": "§2§lEconomy Management",
+    "size": 54,
+    "theme": "default",
+    "require_admin": true,
+    "auto_refresh": true,
+    "show_live_data": true
+  },
+  "layout": {
+    "title": "§2§lEconomy Management Panel",
+    "size": 54,
+    "slots": {
+      "0-8": {
+        "type": "border",
+        "item": "minecraft:green_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "9": {
+        "type": "function",
+        "item": "minecraft:emerald_block",
+        "name": "§2💎 Server Economy Overview",
+        "lore": [
+          "§7Total Money in Circulation: §2{total_money}",
+          "§7Average Player Balance: §2{avg_balance}",
+          "§7Richest Player: §6{richest_player}",
+          "§7Poorest Player: §c{poorest_player}",
+          "§7Daily Transactions: §f{daily_transactions}",
+          "§7Economy Health: §a{economy_health}",
+          "",
+          "§eClick for detailed overview!"
+        ],
+        "action": "show_economy_overview"
+      },
+      "10": {
+        "type": "function",
+        "item": "minecraft:gold_block",
+        "name": "§6🏦 Player Management",
+        "lore": [
+          "§7Manage player accounts",
+          "§7Add/Remove money",
+          "§7View transaction history",
+          "§7Set account limits",
+          "§7Reset balances",
+          "",
+          "§eClick to manage players!"
+        ],
+        "action": "open_player_management"
+      },
+      "11": {
+        "type": "function",
+        "item": "minecraft:chest",
+        "name": "§6🛒 Shop Management",
+        "lore": [
+          "§7Configure shop prices",
+          "§7Manage shop categories",
+          "§7View sales statistics",
+          "§7Add/Remove items",
+          "§7Set buy/sell rates",
+          "",
+          "§eClick to manage shop!"
+        ],
+        "action": "open_shop_management"
+      },
+      "12": {
+        "type": "function",
+        "item": "minecraft:redstone",
+        "name": "§c⚙ Economy Settings",
+        "lore": [
+          "§7Starting balance: §2{starting_balance}",
+          "§7Maximum balance: §2{max_balance}",
+          "§7Transaction fees: §6{transaction_fees}%",
+          "§7Currency symbol: §f{currency_symbol}",
+          "§7Interest rates: §a{interest_rate}%",
+          "",
+          "§eClick to modify settings!"
+        ],
+        "action": "open_economy_settings"
+      },
+      "13": {
+        "type": "function",
+        "item": "minecraft:book",
+        "name": "§6📈 Transaction Logs",
+        "lore": [
+          "§7View transaction history",
+          "§7Search by player/amount",
+          "§7Export transaction data",
+          "§7Monitor suspicious activity",
+          "§7Generate reports",
+          "",
+          "§eClick to view logs!"
+        ],
+        "action": "open_transaction_logs"
+      },
+      "14": {
+        "type": "function",
+        "item": "minecraft:diamond",
+        "name": "§b💠 Rewards System",
+        "lore": [
+          "§7Configure daily rewards",
+          "§7Set up vote rewards",
+          "§7Playtime bonuses",
+          "§7Achievement rewards",
+          "§7Special event rewards",
+          "",
+          "§eClick to configure rewards!"
+        ],
+        "action": "open_rewards_config"
+      },
+      "15": {
+        "type": "function",
+        "item": "minecraft:iron_bars",
+        "name": "§8🔒 Economy Security",
+        "lore": [
+          "§7Anti-duplication measures",
+          "§7Fraud detection",
+          "§7Account locks",
+          "§7Security logs",
+          "§7Emergency controls",
+          "",
+          "§eClick for security panel!"
+        ],
+        "action": "open_security_panel"
+      },
+      "16": {
+        "type": "function",
+        "item": "minecraft:nether_star",
+        "name": "§5✨ Special Functions",
+        "lore": [
+          "§7Mass balance operations",
+          "§7Economy reset tools",
+          "§7Backup/Restore",
+          "§7Import/Export data",
+          "§7Emergency mode",
+          "",
+          "§c⚠ Use with caution!",
+          "§eClick for special tools!"
+        ],
+        "action": "open_special_functions"
+      },
+      "17": {
+        "type": "function",
+        "item": "minecraft:map",
+        "name": "§6📊 Statistics & Reports",
+        "lore": [
+          "§7Economic growth charts",
+          "§7Player wealth distribution",
+          "§7Transaction volume trends",
+          "§7Popular items report",
+          "§7Performance metrics",
+          "",
+          "§eClick for detailed reports!"
+        ],
+        "action": "open_statistics"
+      },
+      "18-26": {
+        "type": "border",
+        "item": "minecraft:green_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "27": {
+        "type": "live_data",
+        "item": "minecraft:clock",
+        "name": "§6⏱ Real-Time Data",
+        "lore": [
+          "§7Last Transaction: §f{last_transaction}",
+          "§7Transactions/min: §f{transactions_per_minute}",
+          "§7Active Players: §f{active_players}",
+          "§7Shop Activity: §f{shop_activity}",
+          "§7System Load: §f{system_load}%",
+          "",
+          "§7Updated every 5 seconds"
+        ],
+        "action": "none"
+      },
+      "28": {
+        "type": "quick_action",
+        "item": "minecraft:emerald",
+        "name": "§a💰 Quick Add Money",
+        "lore": [
+          "§7Quickly add money to a player",
+          "§7Enter player name in chat",
+          "",
+          "§eClick to start!"
+        ],
+        "action": "quick_add_money"
+      },
+      "29": {
+        "type": "quick_action",
+        "item": "minecraft:redstone_torch",
+        "name": "§c💸 Quick Remove Money",
+        "lore": [
+          "§7Quickly remove money from a player",
+          "§7Enter player name in chat",
+          "",
+          "§eClick to start!"
+        ],
+        "action": "quick_remove_money"
+      },
+      "30": {
+        "type": "quick_action",
+        "item": "minecraft:ender_eye",
+        "name": "§5🔍 Quick Player Lookup",
+        "lore": [
+          "§7Quickly lookup player economy data",
+          "§7Enter player name in chat",
+          "",
+          "§eClick to start!"
+        ],
+        "action": "quick_player_lookup"
+      },
+      "31": {
+        "type": "quick_action",
+        "item": "minecraft:paper",
+        "name": "§f📄 Quick Transaction",
+        "lore": [
+          "§7Record a manual transaction",
+          "§7Between two players",
+          "",
+          "§eClick to start!"
+        ],
+        "action": "quick_transaction"
+      },
+      "32": {
+        "type": "emergency",
+        "item": "minecraft:tnt",
+        "name": "§4🚨 Emergency Stop",
+        "lore": [
+          "§7Stop all economy transactions",
+          "§7Disable shop operations",
+          "§7Emergency lockdown mode",
+          "",
+          "§c⚠ Emergency use only!",
+          "§cClick to activate!"
+        ],
+        "action": "emergency_stop"
+      },
+      "33": {
+        "type": "backup",
+        "item": "minecraft:shulker_box",
+        "name": "§3💾 Quick Backup",
+        "lore": [
+          "§7Create economy data backup",
+          "§7Saves all balances and transactions",
+          "§7Timestamp: {backup_timestamp}",
+          "",
+          "§eClick to backup now!"
+        ],
+        "action": "create_backup"
+      },
+      "34": {
+        "type": "notification",
+        "item": "minecraft:bell",
+        "name": "§e🔔 Notifications",
+        "lore": [
+          "§7Economy alerts and warnings:",
+          "§a• {notification_1}",
+          "§e• {notification_2}",
+          "§c• {notification_3}",
+          "",
+          "§eClick to manage notifications!"
+        ],
+        "action": "manage_notifications"
+      },
+      "35": {
+        "type": "help",
+        "item": "minecraft:enchanted_book",
+        "name": "§b📚 Help & Documentation",
+        "lore": [
+          "§7Economy management guide",
+          "§7Best practices",
+          "§7Troubleshooting",
+          "§7Video tutorials",
+          "",
+          "§eClick for help!"
+        ],
+        "action": "show_help"
+      },
+      "36-43": {
+        "type": "border",
+        "item": "minecraft:green_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      },
+      "44": {
+        "type": "close",
+        "item": "minecraft:barrier",
+        "name": "§c✖ Close Panel",
+        "lore": [
+          "§7Close economy management",
+          "",
+          "§cClick to close!"
+        ],
+        "action": "close_gui"
+      },
+      "45-53": {
+        "type": "border",
+        "item": "minecraft:green_stained_glass_pane",
+        "name": " ",
+        "action": "none"
+      }
+    }
+  }
+}

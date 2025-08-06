@@ -203,9 +203,7 @@ Many placeholders support parameters for formatting:
 ### System Information
 | Placeholder | Description | Example Output |
 |-------------|-------------|----------------|
-| `{neoessentials_version}` | Mod version | `1.0.2` |
-| `{minecraft_version}` | Minecraft version | `1.21.3` |
-| `{neoforge_version}` | NeoForge version | `21.3.53` |
+| `{neoessentials_version}` | Mod version | Current version |
 | `{java_version}` | Java version | `21.0.1` |
 
 ## 🎮 Commands
@@ -541,4 +539,4 @@ leave_message = "{color_yellow}- {player_name} left"
 
 **Related Documentation**: [Bossbar System](Bossbar.md) | [Language System](Language.md) | [Configuration](Configuration.md)
 
-*Last Updated: August 3, 2025*
+*Last Updated: August 6, 2025*
