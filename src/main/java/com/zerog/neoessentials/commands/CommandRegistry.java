@@ -231,10 +231,6 @@ public class CommandRegistry {
             PlaceholderCommand.register(dispatcher);
             LOGGER.info("Registered placeholder system commands");
             
-            // GUI system commands
-            GuiCommand.register(dispatcher);
-            LOGGER.info("Registered GUI system commands");
-            
             // Configuration management commands
             ConfigCommand.register(dispatcher);
             LOGGER.info("Registered configuration management commands");
