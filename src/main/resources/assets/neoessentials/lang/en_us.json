@@ -51,6 +51,7 @@
   "neoessentials.shop.sell.payment_failed": "§cPayment failed! Items and money returned.",
   "neoessentials.shop.sell.insufficient_items": "§cYou don't have enough items to sell!",
   "neoessentials.shop.sell.shop_full": "§cShop storage is full! Cannot accept more items.",
+  "neoessentials.shop.sell.chest_full": "§cShop chest is full! Cannot store items.",
 
   "neoessentials.shop.error.not_player_shop": "§cThis is not a player shop!",
   "neoessentials.shop.error.economy_disabled": "§cEconomy system is not available!",

@@ -426,7 +426,9 @@ public class EconomyManager {
      */
     private boolean hasBeenInitialized(UUID playerUUID) {
         Object initialized = playerDataManager.getSetting(playerUUID, "economy.initialized");
-        return initialized != null && Boolean.parseBoolean(initialized.toString());
+        boolean result = initialized != null && Boolean.parseBoolean(initialized.toString());
+        LOGGER.info("Checking initialization for player {}: {}", playerUUID, result);
+        return result;
     }
     
     /**
@@ -434,6 +436,7 @@ public class EconomyManager {
      */
     private void markAsInitialized(UUID playerUUID) {
         playerDataManager.setSetting(playerUUID, "economy.initialized", "true");
+        LOGGER.info("Marked player {} as initialized in economy system", playerUUID);
     }
     
     /**

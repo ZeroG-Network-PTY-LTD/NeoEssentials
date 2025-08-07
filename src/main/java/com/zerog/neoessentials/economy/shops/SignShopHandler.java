@@ -277,6 +277,13 @@ public class SignShopHandler {
             return InteractionResult.FAIL;
         }
         
+        // Check if chest has space for the items
+        if (!chestHasSpace(player.level(), signShop)) {
+            MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
+                "neoessentials.shop.sell.chest_full");
+            return InteractionResult.FAIL;
+        }
+
         // Remove items from player inventory
         int toRemove = quantityToSell;
         for (ItemStack stack : player.getInventory().items) {
@@ -286,24 +293,19 @@ public class SignShopHandler {
                 toRemove -= removeFromStack;
             }
         }
-        
+
         // Add items to the shop's connected chest
-        ItemStack itemsToStore = shopItem.copy();
-        itemsToStore.setCount(quantityToSell);
-        
-        boolean storedInChest = shopManager.addItemsToShopChest(player.level(), signShop, itemsToStore);
-        if (!storedInChest) {
-            // If chest is full, give items back to player
+        if (!addItemsToChest(player.level(), signShop)) {
+            // If we can't add items to chest, give items back to player
             ItemStack itemToReturn = shopItem.copy();
             itemToReturn.setCount(quantityToSell);
             if (!player.getInventory().add(itemToReturn)) {
                 player.spawnAtLocation(itemToReturn);
             }
-            player.sendSystemMessage(Component.literal("§cShop chest is full! Items returned."));
+            MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
+                "neoessentials.shop.sell.chest_full");
             return InteractionResult.FAIL;
-        }
-        
-        // Player-to-player transaction: Shop owner pays seller for items
+        }        // Player-to-player transaction: Shop owner pays seller for items
         double earnings = signShop.getSellPrice() * quantityToSell;
         
         // Get the economy manager
