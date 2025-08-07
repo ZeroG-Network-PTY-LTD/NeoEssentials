@@ -3,8 +3,8 @@ package com.zerog.neoessentials.commands.essentials;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -92,35 +92,47 @@ public class GameModeCommand {
         );
     }
     
-    private static int setGameMode(CommandContext<CommandSourceStack> context, String modeStr, ServerPlayer targetPlayer) throws CommandSyntaxException {
-        ServerPlayer player = targetPlayer != null ? targetPlayer : context.getSource().getPlayerOrException();
-        GameType gameType = parseGameMode(modeStr);
+    private static int setGameMode(CommandContext<CommandSourceStack> context, String modeStr, ServerPlayer targetPlayer) {
+        String permissionAction = targetPlayer != null ? "change gamemode for others" : "change gamemode";
+        String permission = targetPlayer != null ? "neoessentials.gamemode.others" : "neoessentials.gamemode";
         
-        if (gameType == null) {
-            context.getSource().sendFailure(Component.literal("§cInvalid game mode: " + modeStr));
-            return 0;
-        }
-        
-        if (player.gameMode.getGameModeForPlayer() == gameType) {
-            if (targetPlayer != null && targetPlayer != context.getSource().getPlayerOrException()) {
-                context.getSource().sendFailure(Component.literal("§c" + player.getName().getString() + " is already in " + gameType.getName() + " mode!"));
-            } else {
-                context.getSource().sendFailure(Component.literal("§cYou are already in " + gameType.getName() + " mode!"));
+        return ErrorHandlingIntegration.executeWithPermission(
+            context.getSource(),
+            permissionAction,
+            permission, 
+            (source) -> {
+                ServerPlayer player = targetPlayer != null ? targetPlayer : source.getPlayerOrException();
+                GameType gameType = parseGameMode(modeStr);
+                
+                if (gameType == null) {
+                    source.sendFailure(Component.literal("§c❌ Invalid game mode: " + modeStr + ". Valid options: survival, creative, adventure, spectator"));
+                    return 0;
+                }
+                
+                if (player.gameMode.getGameModeForPlayer() == gameType) {
+                    if (targetPlayer != null && targetPlayer != source.getPlayerOrException()) {
+                        source.sendFailure(Component.literal("§c🎮 " + player.getName().getString() + " is already in " + gameType.getName() + " mode!"));
+                    } else {
+                        source.sendFailure(Component.literal("§c🎮 You are already in " + gameType.getName() + " mode!"));
+                    }
+                    return 0;
+                }
+                
+                // Change the game mode
+                player.setGameMode(gameType);
+                
+                String modeIcon = getGameModeIcon(gameType);
+                
+                if (targetPlayer != null && targetPlayer != source.getPlayerOrException()) {
+                    source.sendSuccess(() -> Component.literal("§a" + modeIcon + " Set " + player.getName().getString() + "'s game mode to " + gameType.getName()), true);
+                    targetPlayer.sendSystemMessage(Component.literal("§a" + modeIcon + " Your game mode has been changed to " + gameType.getName() + " by " + source.getPlayerOrException().getName().getString()));
+                } else {
+                    source.sendSuccess(() -> Component.literal("§a" + modeIcon + " Set your game mode to " + gameType.getName()), true);
+                }
+                
+                return 1;
             }
-            return 0;
-        }
-        
-        // Change the game mode
-        player.setGameMode(gameType);
-        
-        if (targetPlayer != null && targetPlayer != context.getSource().getPlayerOrException()) {
-            context.getSource().sendSuccess(() -> Component.literal("§aSet " + player.getName().getString() + "'s game mode to " + gameType.getName()), true);
-            targetPlayer.sendSystemMessage(Component.literal("§aYour game mode has been changed to " + gameType.getName()));
-        } else {
-            context.getSource().sendSuccess(() -> Component.literal("§aSet your game mode to " + gameType.getName()), true);
-        }
-        
-        return 1;
+        );
     }
     
     private static GameType parseGameMode(String mode) {
@@ -130,6 +142,15 @@ public class GameModeCommand {
             case "adventure", "a", "2" -> GameType.ADVENTURE;
             case "spectator", "sp", "3" -> GameType.SPECTATOR;
             default -> null;
+        };
+    }
+    
+    private static String getGameModeIcon(GameType gameType) {
+        return switch (gameType) {
+            case SURVIVAL -> "⚔️";
+            case CREATIVE -> "🎨";
+            case ADVENTURE -> "🗺️";
+            case SPECTATOR -> "👻";
         };
     }
 }

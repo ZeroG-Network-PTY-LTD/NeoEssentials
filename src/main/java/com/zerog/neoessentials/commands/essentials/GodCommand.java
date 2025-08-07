@@ -2,7 +2,7 @@ package com.zerog.neoessentials.commands.essentials;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -40,38 +40,52 @@ public class GodCommand {
     /**
      * Toggle god mode for the command executor
      */
-    private static int toggleGodSelf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        boolean isGodMode = toggleGodMode(player);
-        
-        if (isGodMode) {
-            context.getSource().sendSuccess(() -> Component.literal("§aGod mode enabled! You are now invincible."), false);
-        } else {
-            context.getSource().sendSuccess(() -> Component.literal("§cGod mode disabled! You are no longer invincible."), false);
-        }
-        
-        return 1;
+    private static int toggleGodSelf(CommandContext<CommandSourceStack> context) {
+        return ErrorHandlingIntegration.executeWithPermission(
+            context.getSource(),
+            "toggle god mode",
+            "neoessentials.god", 
+            (source) -> {
+                ServerPlayer player = source.getPlayerOrException();
+                boolean isGodMode = toggleGodMode(player);
+                
+                if (isGodMode) {
+                    source.sendSuccess(() -> Component.literal("§a⚡ God mode enabled! You are now invincible and untouchable."), false);
+                } else {
+                    source.sendSuccess(() -> Component.literal("§c🛡️ God mode disabled! You are now mortal again."), false);
+                }
+                
+                return 1;
+            }
+        );
     }
     
     /**
      * Toggle god mode for another player
      */
-    private static int toggleGodOther(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer target = EntityArgument.getPlayer(context, "player");
-        ServerPlayer executor = context.getSource().getPlayerOrException();
-        
-        boolean isGodMode = toggleGodMode(target);
-        
-        // Send confirmation to both players
-        if (isGodMode) {
-            context.getSource().sendSuccess(() -> Component.literal("§aGod mode enabled for " + target.getName().getString() + "!"), true);
-            target.sendSystemMessage(Component.literal("§aGod mode enabled by " + executor.getName().getString() + "! You are now invincible."));
-        } else {
-            context.getSource().sendSuccess(() -> Component.literal("§cGod mode disabled for " + target.getName().getString() + "!"), true);
-            target.sendSystemMessage(Component.literal("§cGod mode disabled by " + executor.getName().getString() + "! You are no longer invincible."));
-        }
-        
-        return 1;
+    private static int toggleGodOther(CommandContext<CommandSourceStack> context) {
+        return ErrorHandlingIntegration.executeWithPermission(
+            context.getSource(),
+            "toggle god mode for others",
+            "neoessentials.god.others", 
+            (source) -> {
+                ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                ServerPlayer executor = source.getPlayerOrException();
+                
+                boolean isGodMode = toggleGodMode(target);
+                
+                // Send confirmation to both players
+                if (isGodMode) {
+                    source.sendSuccess(() -> Component.literal("§a⚡ God mode enabled for " + target.getName().getString() + "!"), true);
+                    target.sendSystemMessage(Component.literal("§a⚡ God mode enabled by " + executor.getName().getString() + "! You are now invincible and untouchable."));
+                } else {
+                    source.sendSuccess(() -> Component.literal("§c🛡️ God mode disabled for " + target.getName().getString() + "!"), true);
+                    target.sendSystemMessage(Component.literal("§c🛡️ God mode disabled by " + executor.getName().getString() + "! You are now mortal again."));
+                }
+                
+                return 1;
+            }
+        );
     }
     
     /**

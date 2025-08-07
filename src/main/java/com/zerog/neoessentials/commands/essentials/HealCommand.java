@@ -2,7 +2,8 @@ package com.zerog.neoessentials.commands.essentials;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
+import com.zerog.neoessentials.performance.PerformanceCommandWrapper;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -34,28 +35,45 @@ public class HealCommand {
     /**
      * Heal the command executor
      */
-    private static int healSelf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        healPlayer(player);
-        
-        context.getSource().sendSuccess(() -> Component.literal("§aYou have been healed!"), false);
-        return 1;
+    private static int healSelf(CommandContext<CommandSourceStack> context) {
+        return PerformanceCommandWrapper.executeWithTracking(
+            context.getSource(),
+            "heal_self",
+            (source) -> ErrorHandlingIntegration.executeWithPermission(
+                source,
+                "heal self", 
+                "neoessentials.heal.self",
+                (src) -> {
+                    ServerPlayer player = src.getPlayerOrException();
+                    healPlayer(player);
+                    src.sendSuccess(() -> Component.literal("§a✨ You have been healed! Full health and hunger restored."), false);
+                    return 1;
+                }
+            )
+        );
     }
     
     /**
      * Heal another player
      */
-    private static int healOther(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer target = EntityArgument.getPlayer(context, "player");
-        ServerPlayer executor = context.getSource().getPlayerOrException();
-        
-        healPlayer(target);
-        
-        // Send confirmation to both players
-        context.getSource().sendSuccess(() -> Component.literal("§aYou have healed " + target.getName().getString() + "!"), true);
-        target.sendSystemMessage(Component.literal("§aYou have been healed by " + executor.getName().getString() + "!"));
-        
-        return 1;
+    private static int healOther(CommandContext<CommandSourceStack> context) {
+        return ErrorHandlingIntegration.executeWithPermission(
+            context.getSource(),
+            "heal other",
+            "neoessentials.heal.others", 
+            (source) -> {
+                ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                ServerPlayer executor = source.getPlayerOrException();
+                
+                healPlayer(target);
+                
+                // Send confirmation to both players
+                source.sendSuccess(() -> Component.literal("§a✨ You have healed " + target.getName().getString() + "!"), true);
+                target.sendSystemMessage(Component.literal("§a✨ You have been healed by " + executor.getName().getString() + "! Full health and hunger restored."));
+                
+                return 1;
+            }
+        );
     }
     
     /**

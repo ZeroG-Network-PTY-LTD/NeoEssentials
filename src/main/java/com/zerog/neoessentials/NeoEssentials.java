@@ -81,6 +81,30 @@ public class NeoEssentials {
             MessagingManager.getInstance();
             SpawnManager.getInstance();
             
+            // Initialize additional critical managers
+            TeleportRequestManager.getInstance();
+            LOGGER.info("Teleport Request Manager initialized");
+            
+            com.zerog.neoessentials.storage.StorageManager.getInstance();
+            LOGGER.info("Storage Manager initialized");
+            
+            com.zerog.neoessentials.security.SecurityManager.getInstance();
+            LOGGER.info("Security Manager initialized");
+            
+            WebDashboardManager.getInstance();
+            LOGGER.info("Web Dashboard Manager initialized");
+            
+            // Initialize performance monitoring managers
+            com.zerog.neoessentials.performance.PerformanceManager.getInstance();
+            LOGGER.info("Performance Manager initialized");
+            
+            com.zerog.neoessentials.performance.AsyncOperationManager.getInstance();
+            LOGGER.info("Async Operation Manager initialized");
+            
+            // Initialize Discord Manager
+            com.zerog.neoessentials.discord.DiscordManager.getInstance();
+            LOGGER.info("Discord Manager initialized");
+            
             // Initialize Language Manager
             LanguageManager.getInstance().initialize();
             
@@ -103,6 +127,9 @@ public class NeoEssentials {
             TablistScoreboardManager.getInstance();
             LOGGER.info("Enhanced Tablist & Scoreboard Manager initialized");
             
+            // Note: TablistScoreboardManager handles all tablist functionality
+            LOGGER.info("Tablist theme management ready");
+            
             // Enhanced Bossbar Manager already initialized
             LOGGER.info("Enhanced Bossbar Manager ready");
             
@@ -120,6 +147,10 @@ public class NeoEssentials {
             
             // Initialize notification event listener
             NotificationEventListener.getInstance();
+            
+            // Initialize Playtime Tracker
+            com.zerog.neoessentials.player.PlaytimeTracker.getInstance();
+            LOGGER.info("Playtime Tracker initialized");
             
             LOGGER.info("All managers initialized successfully");
             

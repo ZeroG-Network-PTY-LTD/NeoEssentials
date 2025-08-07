@@ -2,7 +2,7 @@ package com.zerog.neoessentials.commands.essentials;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -41,38 +41,52 @@ public class FlyCommand {
     /**
      * Toggle fly mode for the command executor
      */
-    private static int toggleFlySelf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        boolean canFly = toggleFly(player);
-        
-        if (canFly) {
-            context.getSource().sendSuccess(() -> Component.literal("§aFlight enabled! You can now fly."), false);
-        } else {
-            context.getSource().sendSuccess(() -> Component.literal("§cFlight disabled! You can no longer fly."), false);
-        }
-        
-        return 1;
+    private static int toggleFlySelf(CommandContext<CommandSourceStack> context) {
+        return ErrorHandlingIntegration.executeWithPermission(
+            context.getSource(),
+            "toggle fly",
+            "neoessentials.fly", 
+            (source) -> {
+                ServerPlayer player = source.getPlayerOrException();
+                boolean canFly = toggleFly(player);
+                
+                if (canFly) {
+                    source.sendSuccess(() -> Component.literal("§a✈️ Flight enabled! You can now soar through the skies."), false);
+                } else {
+                    source.sendSuccess(() -> Component.literal("§c🚫 Flight disabled! Your feet are back on the ground."), false);
+                }
+                
+                return 1;
+            }
+        );
     }
     
     /**
      * Toggle fly mode for another player
      */
-    private static int toggleFlyOther(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer target = EntityArgument.getPlayer(context, "player");
-        ServerPlayer executor = context.getSource().getPlayerOrException();
-        
-        boolean canFly = toggleFly(target);
-        
-        // Send confirmation to both players
-        if (canFly) {
-            context.getSource().sendSuccess(() -> Component.literal("§aFlight enabled for " + target.getName().getString() + "!"), true);
-            target.sendSystemMessage(Component.literal("§aFlight enabled by " + executor.getName().getString() + "! You can now fly."));
-        } else {
-            context.getSource().sendSuccess(() -> Component.literal("§cFlight disabled for " + target.getName().getString() + "!"), true);
-            target.sendSystemMessage(Component.literal("§cFlight disabled by " + executor.getName().getString() + "! You can no longer fly."));
-        }
-        
-        return 1;
+    private static int toggleFlyOther(CommandContext<CommandSourceStack> context) {
+        return ErrorHandlingIntegration.executeWithPermission(
+            context.getSource(),
+            "toggle fly for others",
+            "neoessentials.fly.others", 
+            (source) -> {
+                ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                ServerPlayer executor = source.getPlayerOrException();
+                
+                boolean canFly = toggleFly(target);
+                
+                // Send confirmation to both players
+                if (canFly) {
+                    source.sendSuccess(() -> Component.literal("§a✈️ Flight enabled for " + target.getName().getString() + "!"), true);
+                    target.sendSystemMessage(Component.literal("§a✈️ Flight enabled by " + executor.getName().getString() + "! You can now soar through the skies."));
+                } else {
+                    source.sendSuccess(() -> Component.literal("§c🚫 Flight disabled for " + target.getName().getString() + "!"), true);
+                    target.sendSystemMessage(Component.literal("§c🚫 Flight disabled by " + executor.getName().getString() + "! Your feet are back on the ground."));
+                }
+                
+                return 1;
+            }
+        );
     }
     
     /**
