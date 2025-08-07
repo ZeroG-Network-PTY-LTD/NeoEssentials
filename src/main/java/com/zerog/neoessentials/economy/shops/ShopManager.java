@@ -1,6 +1,5 @@
 package com.zerog.neoessentials.economy.shops;
 
-import com.zerog.neoessentials.managers.EconomyManager;
 import com.zerog.neoessentials.web.WebDashboardManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
@@ -20,7 +19,7 @@ public class ShopManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ShopManager.class);
     private static ShopManager instance;
     
-    private final EconomyManager economyManager;
+    private final com.zerog.neoessentials.managers.EconomyManager economyManager;
     private final WebDashboardManager webDashboard;
     
     // Shop storage
@@ -33,7 +32,7 @@ public class ShopManager {
     private double dailyRevenue = 0.0;
     private final Map<String, Integer> categoryStats = new ConcurrentHashMap<>();
     
-    private ShopManager(EconomyManager economyManager) {
+    private ShopManager(com.zerog.neoessentials.managers.EconomyManager economyManager) {
         this.economyManager = economyManager;
         this.webDashboard = WebDashboardManager.getInstance();
     }
@@ -42,7 +41,7 @@ public class ShopManager {
         return instance;
     }
     
-    public static void createInstance(EconomyManager economyManager) {
+    public static void createInstance(com.zerog.neoessentials.managers.EconomyManager economyManager) {
         if (instance == null) {
             instance = new ShopManager(economyManager);
         }

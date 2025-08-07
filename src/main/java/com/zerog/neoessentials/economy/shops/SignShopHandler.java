@@ -244,14 +244,14 @@ public class SignShopHandler {
         double earnings = signShop.getSellPrice() * quantityToSell;
         
         // Get the economy manager and add money to player
-        com.zerog.neoessentials.economy.EconomyManager economyManager = 
-            com.zerog.neoessentials.economy.EconomyManager.getInstance();
+        com.zerog.neoessentials.managers.EconomyManager economyManager = 
+            com.zerog.neoessentials.managers.EconomyManager.getInstance();
         
         if (economyManager != null && economyManager.isEnabled()) {
-            boolean success = economyManager.addBalance(
+            boolean success = economyManager.depositBalance(
                 player.getUUID(), 
-                economyManager.getCurrencyManager().getPrimaryCurrency(), 
-                java.math.BigDecimal.valueOf(earnings)
+                java.math.BigDecimal.valueOf(earnings),
+                "Shop sale: " + quantityToSell + "x " + shopItem.getDisplayName().getString()
             );
             
             if (success) {
