@@ -153,6 +153,15 @@ public class CommandRegistry {
             com.zerog.neoessentials.commands.discord.InteractiveChatCommands.register(dispatcher);
             LOGGER.info("Registered InteractiveChat-style commands (/ic, /interactivechat)");
             
+            // Interactive Discord Integration (advanced features for item/inventory sharing)
+            // TODO: Re-enable when Discord integration is fully working
+            // try {
+            //     com.zerog.neoessentials.discord.InteractiveChatDiscordIntegration.register(dispatcher);
+            //     LOGGER.info("Registered InteractiveChat Discord Integration commands (/interactivediscord)");
+            // } catch (Exception e) {
+            //     LOGGER.warn("Failed to register InteractiveChat Discord Integration: " + e.getMessage());
+            // }
+            
             // Teleport commands
             TeleportCommand.register(dispatcher);
             LOGGER.info("Registered teleport commands");
