@@ -8,7 +8,7 @@ import com.zerog.neoessentials.economy.market.MarketManager;
 // import com.zerog.neoessentials.economy.shops.ShopManager; // Now uses managers.EconomyManager
 import com.zerog.neoessentials.economy.auction.AuctionManager;
 import com.zerog.neoessentials.config.EconomyConfig;
-import com.zerog.neoessentials.storage.DataManager;
+import com.zerog.neoessentials.storage.StorageManager;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +40,7 @@ public class EconomyManager {
     
     // Configuration and data
     private final EconomyConfig config;
-    private final DataManager dataManager;
+    private final StorageManager storageManager;
     
     // Player balances and economy data
     private final Map<UUID, PlayerEconomyData> playerData;
@@ -53,7 +53,7 @@ public class EconomyManager {
     
     public EconomyManager() {
         this.config = new EconomyConfig();
-        this.dataManager = DataManager.getInstance();
+        this.storageManager = StorageManager.getInstance();
         this.playerData = new ConcurrentHashMap<>();
         this.serverConnections = new ConcurrentHashMap<>();
         
@@ -286,7 +286,28 @@ public class EconomyManager {
     
     private PlayerEconomyData loadPlayerDataFromStorage(UUID playerId) {
         try {
-            return dataManager.loadPlayerEconomyData(playerId);
+            // Load from StorageManager (returns Map<String, Object>)
+            Map<String, Object> rawData = storageManager.loadPlayerEconomy(playerId).get();
+            
+            if (rawData != null && !rawData.isEmpty()) {
+                // Convert raw data to PlayerEconomyData
+                PlayerEconomyData playerData = new PlayerEconomyData(playerId);
+                
+                // Extract balance data
+                if (rawData.containsKey("balances")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> balances = (Map<String, Object>) rawData.get("balances");
+                    for (Map.Entry<String, Object> entry : balances.entrySet()) {
+                        String currency = entry.getKey();
+                        double balance = ((Number) entry.getValue()).doubleValue();
+                        playerData.setBalance(currency, BigDecimal.valueOf(balance));
+                    }
+                }
+                
+                return playerData;
+            }
+            
+            return null;
         } catch (Exception e) {
             NeoEssentialsMod.LOGGER.error("Failed to load player economy data for " + playerId, e);
             return null;
@@ -297,7 +318,27 @@ public class EconomyManager {
         PlayerEconomyData data = playerData.get(playerId);
         if (data != null) {
             try {
-                dataManager.savePlayerEconomyData(data);
+                // Convert PlayerEconomyData to Map<String, Object> for StorageManager
+                Map<String, Object> rawData = new HashMap<>();
+                Map<String, Object> balances = new HashMap<>();
+                
+                // Convert all balances to the raw format
+                Map<String, BigDecimal> allBalances = data.getAllBalances();
+                for (Map.Entry<String, BigDecimal> entry : allBalances.entrySet()) {
+                    balances.put(entry.getKey(), entry.getValue().doubleValue());
+                }
+                
+                rawData.put("balances", balances);
+                rawData.put("lastSaved", System.currentTimeMillis());
+                
+                // Save asynchronously
+                storageManager.savePlayerEconomy(playerId, rawData).thenRun(() -> {
+                    NeoEssentialsMod.LOGGER.debug("Saved economy data for player " + playerId);
+                }).exceptionally(throwable -> {
+                    NeoEssentialsMod.LOGGER.error("Failed to save player economy data for " + playerId, throwable);
+                    return null;
+                });
+                
             } catch (Exception e) {
                 NeoEssentialsMod.LOGGER.error("Failed to save player economy data for " + playerId, e);
             }
@@ -306,11 +347,12 @@ public class EconomyManager {
     
     private void loadPlayerData() {
         try {
-            Map<UUID, PlayerEconomyData> loadedData = dataManager.loadAllPlayerEconomyData();
-            playerData.putAll(loadedData);
-            NeoEssentialsMod.LOGGER.info("Loaded economy data for " + playerData.size() + " players");
+            // For now, we'll load data on-demand as players join
+            // The StorageManager doesn't have a "load all" method 
+            // so we'll rely on individual player data loading
+            NeoEssentialsMod.LOGGER.info("Economy data will be loaded on-demand as players join the server");
         } catch (Exception e) {
-            NeoEssentialsMod.LOGGER.error("Failed to load player economy data", e);
+            NeoEssentialsMod.LOGGER.error("Error initializing economy data loading", e);
         }
     }
     

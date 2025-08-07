@@ -76,6 +76,12 @@ public class NeoEssentialsEventHandler {
         LOGGER.info("NeoEssentials server shutdown - saving data...");
         
         try {
+            // Save economy data first
+            EconomyManager economyManager = EconomyManager.getInstance();
+            if (economyManager != null) {
+                economyManager.shutdown();
+            }
+            
             // Create backup before shutdown
             StorageManager storageManager = StorageManager.getInstance();
             storageManager.createBackup().join(); // Wait for backup to complete

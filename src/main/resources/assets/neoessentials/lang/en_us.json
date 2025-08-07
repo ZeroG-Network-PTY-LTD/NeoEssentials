@@ -40,6 +40,24 @@
   "neoessentials.economy.invalid_amount": "§cInvalid amount.",
   "neoessentials.economy.cannot_pay_self": "§cYou cannot pay yourself.",
 
+  "neoessentials.shop.buy.success": "§aPurchased %sx %s for $%.2f from %s's shop",
+  "neoessentials.shop.buy.insufficient_funds": "§cInsufficient funds! Need $%.2f",
+  "neoessentials.shop.buy.shop_empty": "§cShop is out of stock!",
+  "neoessentials.shop.buy.payment_failed": "§cPayment failed! Purchase cancelled.",
+  "neoessentials.shop.buy.inventory_full": "§cInventory full! Items dropped on ground.",
+
+  "neoessentials.shop.sell.success": "§aSold %sx %s to %s's shop for $%.2f",
+  "neoessentials.shop.sell.shop_owner_broke": "§cShop owner doesn't have enough money! Items returned.",
+  "neoessentials.shop.sell.payment_failed": "§cPayment failed! Items and money returned.",
+  "neoessentials.shop.sell.insufficient_items": "§cYou don't have enough items to sell!",
+  "neoessentials.shop.sell.shop_full": "§cShop storage is full! Cannot accept more items.",
+
+  "neoessentials.shop.error.not_player_shop": "§cThis is not a player shop!",
+  "neoessentials.shop.error.economy_disabled": "§cEconomy system is not available!",
+  "neoessentials.shop.error.transaction_error": "§cUnexpected transaction error!",
+  "neoessentials.shop.error.chest_not_found": "§cShop storage chest not found!",
+  "neoessentials.shop.error.invalid_shop": "§cInvalid shop configuration!",
+
   "neoessentials.teleport.request_sent": "§aTeleport request sent to %s.",
   "neoessentials.teleport.request_received": "§e%s wants to teleport to you. Type /tpaccept or /tpdeny.",
   "neoessentials.teleport.request_accepted": "§aTeleport request accepted.",

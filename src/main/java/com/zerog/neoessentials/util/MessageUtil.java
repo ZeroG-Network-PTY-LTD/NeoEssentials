@@ -34,6 +34,18 @@ public class MessageUtil {
     }
     
     /**
+     * Send a translatable message to a player with arguments
+     */
+    public static void sendTranslatedMessage(ServerPlayer player, String translationKey, Object... args) {
+        if (player == null || translationKey == null || translationKey.isEmpty()) {
+            return;
+        }
+        
+        Component translatableMessage = Component.translatable(translationKey, args);
+        player.sendSystemMessage(translatableMessage);
+    }
+    
+    /**
      * Send a formatted message to multiple players with placeholder replacement
      */
     public static void sendMessage(Iterable<ServerPlayer> players, String message, Object... placeholders) {
