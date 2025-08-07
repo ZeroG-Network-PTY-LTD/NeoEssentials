@@ -97,6 +97,7 @@ public class NeoEssentials {
             // Initialize performance monitoring managers
             com.zerog.neoessentials.performance.PerformanceManager.getInstance();
             LOGGER.info("Performance Manager initialized");
+
             
             com.zerog.neoessentials.performance.AsyncOperationManager.getInstance();
             LOGGER.info("Async Operation Manager initialized");
