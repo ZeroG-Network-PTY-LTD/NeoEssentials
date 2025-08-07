@@ -132,12 +132,11 @@ public class NeoEssentials {
             // Enhanced Bossbar Manager already initialized
             LOGGER.info("Enhanced Bossbar Manager ready");
             
-            // Initialize GUI System
-            com.zerog.neoessentials.gui.CustomGuiManager.getInstance();
-            LOGGER.info("Custom GUI Manager initialized");
+            // GUI System removed - not needed for sign shops
+            LOGGER.info("GUI system skipped - using sign-based shops only");
             
-            // Initialize Configuration GUI System
-            com.zerog.neoessentials.gui.ConfigGuiManager.getInstance();
+            // Configuration GUI System removed
+            LOGGER.info("Config GUI system skipped - using command-based configuration");
             LOGGER.info("Configuration GUI Manager initialized");
             
             // Initialize Notification Manager
