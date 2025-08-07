@@ -6,9 +6,11 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.network.chat.Component;
@@ -17,8 +19,11 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
+
+import javax.annotation.Nonnull;
+
+import javax.annotation.Nonnull;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
@@ -147,12 +152,18 @@ public class ConfigurableGuiManager {
             
             // Open GUI for player
             if (gui != null) {
-                player.openMenu(gui);
-                
-                // Play sound if configured
-                playGuiSound(player, config, "open");
-                
-                LOGGER.debug("Opened configured GUI '{}' for player '{}'", guiType, player.getName().getString());
+                // Create MenuProvider wrapper for ConfigurableGui
+                MenuProvider menuProvider = createConfigurableMenuProvider(gui, config);
+                if (player instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.openMenu(menuProvider);
+                    
+                    // Play sound if configured
+                    playGuiSound(player, config, "open");
+                    
+                    LOGGER.debug("Opened configured GUI '{}' for player '{}'", guiType, player.getName().getString());
+                } else {
+                    LOGGER.warn("Cannot open GUI for non-server player: {}", player.getName().getString());
+                }
             }
             
         } catch (Exception e) {
@@ -282,8 +293,8 @@ public class ConfigurableGuiManager {
             // Set display name
             if (slotConfig.has("name")) {
                 String displayName = resolveStringWithPlaceholders(slotConfig.get("name").getAsString(), player);
-                // Note: Setting display name requires NBT manipulation in modern Minecraft versions
-                // itemStack.setDisplayName(Component.literal(displayName));
+                // Set custom name using components (modern Minecraft approach)
+                itemStack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal(displayName));
             }
             
             // Set lore
@@ -458,6 +469,28 @@ public class ConfigurableGuiManager {
         } catch (Exception e) {
             LOGGER.error("Failed to load player preferences", e);
         }
+    }
+    
+    /**
+     * Create MenuProvider wrapper for ConfigurableGui
+     */
+    private MenuProvider createConfigurableMenuProvider(ConfigurableGui configurableGui, JsonObject config) {
+        return new MenuProvider() {
+            @Override
+            public Component getDisplayName() {
+                // Extract title from config or use default
+                String title = "Custom GUI";
+                if (config.has("layout") && config.getAsJsonObject("layout").has("title")) {
+                    title = config.getAsJsonObject("layout").get("title").getAsString();
+                }
+                return Component.literal(title);
+            }
+            
+            @Override
+            public AbstractContainerMenu createMenu(int containerId, @Nonnull Inventory playerInventory, @Nonnull Player player) {
+                return configurableGui;
+            }
+        };
     }
     
     /**

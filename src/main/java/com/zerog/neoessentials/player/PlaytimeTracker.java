@@ -3,6 +3,7 @@ package com.zerog.neoessentials.player;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,10 @@ public class PlaytimeTracker {
             t.setDaemon(true);
             return t;
         });
+        
+        // Register for events
+        NeoForge.EVENT_BUS.register(this);
+        LOGGER.info("PlaytimeTracker registered for events");
         
         // Auto-save playtime every 5 minutes
         scheduler.scheduleAtFixedRate(this::saveAllPlaytime, 5, 5, TimeUnit.MINUTES);

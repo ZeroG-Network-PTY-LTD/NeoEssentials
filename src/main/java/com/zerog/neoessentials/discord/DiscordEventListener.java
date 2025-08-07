@@ -5,6 +5,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
  * @author ZeroG
  * @since 2.0.0
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class DiscordEventListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiscordEventListener.class);
     

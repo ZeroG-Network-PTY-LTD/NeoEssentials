@@ -28,7 +28,7 @@ public class ConfigurationUnifier {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationUnifier.class);
     private static ConfigurationUnifier instance;
     
-    private EnhancedConfigManager enhancedConfigManager;
+    private ConfigManager configManager;
     private boolean isInitialized = false;
     
     private ConfigurationUnifier() {
@@ -55,9 +55,9 @@ public class ConfigurationUnifier {
         LOGGER.info("Initializing Unified Configuration System...");
         
         try {
-            // Use EnhancedConfigManager as the primary system
-            enhancedConfigManager = EnhancedConfigManager.getInstance();
-            enhancedConfigManager.initialize();
+            // Use ConfigManager as the primary system
+            configManager = ConfigManager.getInstance();
+            configManager.initialize();
             
             // Generate all configuration files if they don't exist
             generateAllConfigurationFiles();
@@ -81,19 +81,19 @@ public class ConfigurationUnifier {
         LOGGER.info("Generating configuration files...");
         
         // Force creation of all config files with proper defaults
-        enhancedConfigManager.getMainConfig();
-        enhancedConfigManager.getEconomyConfig();
-        enhancedConfigManager.getHomeConfig();
-        enhancedConfigManager.getKitConfig();
-        enhancedConfigManager.getWarpConfig();
-        enhancedConfigManager.getModerationConfig();
-        enhancedConfigManager.getMessagingConfig();
-        enhancedConfigManager.getDiscordConfig();
-        enhancedConfigManager.getTablistConfig();
-        enhancedConfigManager.getSpawnConfig();
+        configManager.getMainConfig();
+        configManager.getEconomyConfig();
+        configManager.getHomeConfig();
+        configManager.getKitConfig();
+        configManager.getWarpConfig();
+        configManager.getModerationConfig();
+        configManager.getMessagingConfig();
+        configManager.getDiscordConfig();
+        configManager.getTablistConfig();
+        configManager.getSpawnConfig();
         
         // Save all configurations to ensure files are created
-        enhancedConfigManager.saveAll();
+        configManager.saveAll();
         
         LOGGER.info("All configuration files generated successfully!");
     }
@@ -104,12 +104,12 @@ public class ConfigurationUnifier {
     private void validateConfigurationIntegrity() {
         LOGGER.info("Validating configuration integrity...");
         
-        String[] requiredFiles = enhancedConfigManager.getAllConfigFiles();
+        String[] requiredFiles = configManager.getAllConfigFiles();
         int validFiles = 0;
         int totalFiles = requiredFiles.length;
         
         for (String fileName : requiredFiles) {
-            if (enhancedConfigManager.configExists(fileName)) {
+            if (configManager.configExists(fileName)) {
                 validFiles++;
                 LOGGER.debug("✓ Configuration file exists: {}", fileName);
             } else {
@@ -130,11 +130,11 @@ public class ConfigurationUnifier {
      * Get the unified configuration manager
      * This method should be used by all managers instead of ConfigManager.getInstance()
      */
-    public EnhancedConfigManager getConfigManager() {
+    public ConfigManager getConfigManager() {
         if (!isInitialized) {
             throw new IllegalStateException("Configuration system not initialized. Call initialize() first.");
         }
-        return enhancedConfigManager;
+        return configManager;
     }
     
     /**
@@ -154,7 +154,7 @@ public class ConfigurationUnifier {
         }
         
         LOGGER.info("Reloading all configurations...");
-        enhancedConfigManager.reloadAll();
+        configManager.reloadAll();
         LOGGER.info("Configuration reload completed!");
     }
     
@@ -167,14 +167,14 @@ public class ConfigurationUnifier {
             return;
         }
         
-        enhancedConfigManager.saveAll();
+        configManager.saveAll();
     }
     
     /**
      * Get configuration status for monitoring
      */
     public ConfigStatus getConfigStatus() {
-        return enhancedConfigManager.getConfigStatus();
+        return configManager.getConfigStatus();
     }
     
     /**
@@ -188,10 +188,10 @@ public class ConfigurationUnifier {
      * Shutdown the configuration system gracefully
      */
     public void shutdown() {
-        if (isInitialized && enhancedConfigManager != null) {
+        if (isInitialized && configManager != null) {
             LOGGER.info("Shutting down configuration system...");
-            enhancedConfigManager.shutdownHotReload();
-            enhancedConfigManager.saveAll();
+            configManager.shutdownHotReload();
+            configManager.saveAll();
             isInitialized = false;
             LOGGER.info("Configuration system shutdown completed");
         }

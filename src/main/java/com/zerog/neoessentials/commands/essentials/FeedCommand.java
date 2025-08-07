@@ -2,7 +2,7 @@ package com.zerog.neoessentials.commands.essentials;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -34,28 +34,42 @@ public class FeedCommand {
     /**
      * Feed the command executor
      */
-    private static int feedSelf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        feedPlayer(player);
-        
-        context.getSource().sendSuccess(() -> Component.literal("§aYour hunger has been satisfied!"), false);
-        return 1;
+    private static int feedSelf(CommandContext<CommandSourceStack> context) {
+        return ErrorHandlingIntegration.executeWithPermission(
+            context.getSource(),
+            "feed self",
+            "neoessentials.feed", 
+            (source) -> {
+                ServerPlayer player = source.getPlayerOrException();
+                feedPlayer(player);
+                
+                source.sendSuccess(() -> Component.literal("§a🍖 Your hunger has been satisfied! You feel full and energized."), false);
+                return 1;
+            }
+        );
     }
     
     /**
      * Feed another player
      */
-    private static int feedOther(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer target = EntityArgument.getPlayer(context, "player");
-        ServerPlayer executor = context.getSource().getPlayerOrException();
-        
-        feedPlayer(target);
-        
-        // Send confirmation to both players
-        context.getSource().sendSuccess(() -> Component.literal("§aYou have fed " + target.getName().getString() + "!"), true);
-        target.sendSystemMessage(Component.literal("§aYour hunger has been satisfied by " + executor.getName().getString() + "!"));
-        
-        return 1;
+    private static int feedOther(CommandContext<CommandSourceStack> context) {
+        return ErrorHandlingIntegration.executeWithPermission(
+            context.getSource(),
+            "feed other",
+            "neoessentials.feed.others", 
+            (source) -> {
+                ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                ServerPlayer executor = source.getPlayerOrException();
+                
+                feedPlayer(target);
+                
+                // Send confirmation to both players
+                source.sendSuccess(() -> Component.literal("§a🍖 You have fed " + target.getName().getString() + "! They are now fully satisfied."), true);
+                target.sendSystemMessage(Component.literal("§a🍖 Your hunger has been satisfied by " + executor.getName().getString() + "! You feel full and energized."));
+                
+                return 1;
+            }
+        );
     }
     
     /**

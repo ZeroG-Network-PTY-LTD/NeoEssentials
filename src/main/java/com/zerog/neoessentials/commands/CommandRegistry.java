@@ -135,9 +135,31 @@ public class CommandRegistry {
             DiscordCommand.register(dispatcher);
             LOGGER.info("Registered Discord integration commands");
             
-            // Admin teleportation commands
+            // Interactive Discord commands for sharing items/inventory/enderchest
+            com.zerog.neoessentials.commands.discord.DiscordItemCommand.register(dispatcher);
+            LOGGER.info("Registered Discord item sharing command (/ditem)");
+            
+            com.zerog.neoessentials.commands.discord.DiscordInventoryCommand.register(dispatcher);
+            LOGGER.info("Registered Discord inventory sharing command (/dinv)");
+            
+            com.zerog.neoessentials.commands.discord.DiscordEnderChestCommand.register(dispatcher);
+            LOGGER.info("Registered Discord ender chest sharing command (/dender)");
+            
+            // Internal interactive commands for clickable Discord chat
+            com.zerog.neoessentials.commands.discord.InternalInteractiveCommands.register(dispatcher);
+            LOGGER.info("Registered Discord Interactive Chat internal commands");
+            
+            // InteractiveChat-style commands and system
+            com.zerog.neoessentials.commands.discord.InteractiveChatCommands.register(dispatcher);
+            LOGGER.info("Registered InteractiveChat-style commands (/ic, /interactivechat)");
+            
+            // Teleport commands
             TeleportCommand.register(dispatcher);
             LOGGER.info("Registered teleport commands");
+            
+            // TPA (Teleport Request) commands
+            com.zerog.neoessentials.commands.essentials.TpaCommand.register(dispatcher);
+            LOGGER.info("Registered TPA teleport request commands");
             
             // Server information commands
             RulesCommand.register(dispatcher);
@@ -189,6 +211,14 @@ public class CommandRegistry {
             
             // Enhanced admin commands - Using existing AdminCommand
             LOGGER.info("Enhanced admin commands available through existing commands");
+            
+            // Security management commands
+            com.zerog.neoessentials.commands.security.SecurityCommand.register(dispatcher);
+            LOGGER.info("Registered security management commands");
+            
+            // Web Dashboard management commands
+            com.zerog.neoessentials.commands.WebDashboardCommand.register(dispatcher);
+            LOGGER.info("Registered web dashboard management commands");
             
             // System status monitoring commands (Phase 5)
             StatusCommand.register(dispatcher);
@@ -248,9 +278,9 @@ public class CommandRegistry {
             LOGGER.info("Registered enhanced language system commands");
             
             // Enhanced security commands - DISABLED (Missing dependencies)
-            // Enterprise performance monitoring commands - DISABLED (Over-engineered for Minecraft mod)
-            // PerformanceCommand.register(dispatcher);
-            // LOGGER.info("Registered enterprise performance monitoring commands");
+            // Enterprise performance monitoring commands - uses @SubscribeEvent pattern
+            // com.zerog.neoessentials.performance.PerformanceCommand.register(event);
+            LOGGER.info("Performance commands available via @SubscribeEvent registration");
             
             // Enterprise backup and disaster recovery commands - DISABLED (Over-engineered for Minecraft mod)
             // BackupCommand.register(dispatcher);
