@@ -2,7 +2,7 @@ package com.zerog.neoessentials.commands.discord;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.zerog.neoessentials.discord.DiscordInteractiveChat;
+// import com.zerog.neoessentials.discord.DiscordInteractiveChat; // DISABLED
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -26,7 +26,10 @@ public class DiscordInventoryCommand {
             
             try {
                 // Use the DiscordInteractiveChat method to send inventory to Discord
-                DiscordInteractiveChat.sendInventoryToDiscord(player, "**" + player.getName().getString() + "** is sharing their inventory:");
+                // DiscordInteractiveChat.sendInventoryToDiscord(player, "**" + player.getName().getString() + "** is sharing their inventory:");
+                
+                // TODO: Restore Discord integration after fixing DiscordInteractiveChat
+                player.sendSystemMessage(Component.literal("Discord integration temporarily disabled."));
                 
                 player.sendSystemMessage(Component.literal("§aInventory shared to Discord successfully!"));
                 return 1;

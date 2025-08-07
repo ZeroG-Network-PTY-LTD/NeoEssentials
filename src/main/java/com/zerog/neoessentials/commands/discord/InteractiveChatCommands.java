@@ -2,7 +2,7 @@ package com.zerog.neoessentials.commands.discord;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.zerog.neoessentials.discord.DiscordInteractiveChat;
+// import com.zerog.neoessentials.discord.DiscordInteractiveChat; // DISABLED
 import com.zerog.neoessentials.error.ErrorHandler;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -138,7 +138,10 @@ public class InteractiveChatCommands {
                                 var viewer = context.getSource().getPlayerOrException();
                                 var target = EntityArgument.getPlayer(context, "target");
                                 
-                                DiscordInteractiveChat.showPlayerInventory(viewer, target);
+                                // DiscordInteractiveChat.showPlayerInventory(viewer, target);
+                                
+                                // TODO: Restore Discord integration after fixing DiscordInteractiveChat
+                                viewer.sendSystemMessage(Component.literal("Discord integration temporarily disabled."));
                                 return 1;
                             } catch (Exception e) {
                                 ErrorHandler.handleSystemError("InteractiveChat Commands", "viewinv", e);
@@ -155,7 +158,10 @@ public class InteractiveChatCommands {
                                 var viewer = context.getSource().getPlayerOrException();
                                 var target = EntityArgument.getPlayer(context, "target");
                                 
-                                DiscordInteractiveChat.showPlayerEnderChest(viewer, target);
+                                // DiscordInteractiveChat.showPlayerEnderChest(viewer, target);
+                                
+                                // TODO: Restore Discord integration after fixing DiscordInteractiveChat
+                                viewer.sendSystemMessage(Component.literal("Discord integration temporarily disabled."));
                                 return 1;
                             } catch (Exception e) {
                                 ErrorHandler.handleSystemError("InteractiveChat Commands", "viewender", e);
@@ -171,7 +177,10 @@ public class InteractiveChatCommands {
                                 var viewer = context.getSource().getPlayerOrException();
                                 var target = EntityArgument.getPlayer(context, "target");
                                 
-                                DiscordInteractiveChat.showPlayerItem(viewer, target);
+                                // DiscordInteractiveChat.showPlayerItem(viewer, target);
+                                
+                                // TODO: Restore Discord integration after fixing DiscordInteractiveChat
+                                viewer.sendSystemMessage(Component.literal("Discord integration temporarily disabled."));
                                 return 1;
                             } catch (Exception e) {
                                 ErrorHandler.handleSystemError("InteractiveChat Commands", "viewitem", e);

@@ -464,6 +464,27 @@ public class LanguageManager {
     }
     
     /**
+     * Get a display name for a language code
+     */
+    public String getLanguageDisplayName(String languageCode) {
+        switch (languageCode) {
+            case "en_US": return "English (US)";
+            case "es_ES": return "Español (España)";
+            case "fr_FR": return "Français (France)";
+            case "de_DE": return "Deutsch (Deutschland)";
+            case "it_IT": return "Italiano (Italia)";
+            case "pt_BR": return "Português (Brasil)";
+            case "ru_RU": return "Русский (Россия)";
+            case "ja_JP": return "日本語 (日本)";
+            case "ko_KR": return "한국어 (대한민국)";
+            case "zh_CN": return "中文 (中国)";
+            case "zh_TW": return "中文 (台灣)";
+            case "nl_NL": return "Nederlands (Nederland)";
+            default: return languageCode;
+        }
+    }
+    
+    /**
      * Get statistics about the language system
      */
     public Map<String, Object> getLanguageStats() {
