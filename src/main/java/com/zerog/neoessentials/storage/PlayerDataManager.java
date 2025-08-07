@@ -21,9 +21,11 @@ public class PlayerDataManager {
     private static PlayerDataManager instance;
     
     private final Map<UUID, PlayerData> playerDataCache;
+    private final StorageManager storageManager;
     
     private PlayerDataManager() {
         this.playerDataCache = new ConcurrentHashMap<>();
+        this.storageManager = StorageManager.getInstance();
     }
     
     public static PlayerDataManager getInstance() {
@@ -34,6 +36,13 @@ public class PlayerDataManager {
     }
     
     /**
+     * Check if player data is already loaded in cache
+     */
+    public boolean isPlayerDataLoaded(UUID playerUUID) {
+        return playerDataCache.containsKey(playerUUID);
+    }
+
+    /**
      * Get or create player data
      */
     public PlayerData getPlayerData(UUID playerUUID) {
@@ -41,26 +50,195 @@ public class PlayerDataManager {
     }
     
     /**
-     * Save player data (placeholder - would save to file/database)
+     * Save player data to disk
      */
     public void savePlayerData(UUID playerUUID) {
         PlayerData data = playerDataCache.get(playerUUID);
         if (data != null) {
-            // Placeholder for actual saving logic
-            LOGGER.debug("Saved data for player {}", playerUUID);
+            // Create a serializable map of the player data
+            Map<String, Object> playerDataMap = new HashMap<>();
+            playerDataMap.put("uuid", playerUUID.toString());
+            playerDataMap.put("balance", data.balance.toString());
+            playerDataMap.put("lastSeen", data.lastSeen);
+            playerDataMap.put("nickname", data.nickname);
+            playerDataMap.put("afk", data.afk);
+            playerDataMap.put("vanished", data.vanished);
+            playerDataMap.put("godMode", data.godMode);
+            playerDataMap.put("muted", data.muted);
+            playerDataMap.put("jailed", data.jailed);
+            playerDataMap.put("afkTime", data.afkTime);
+            playerDataMap.put("muteExpiry", data.muteExpiry);
+            playerDataMap.put("jailExpiry", data.jailExpiry);
+            playerDataMap.put("settings", data.settings);
+            
+            // Convert homes to serializable format
+            Map<String, Map<String, Object>> homesData = new HashMap<>();
+            for (Map.Entry<String, LocationUtil.Location> entry : data.homes.entrySet()) {
+                LocationUtil.Location loc = entry.getValue();
+                Map<String, Object> locationData = new HashMap<>();
+                locationData.put("world", loc.world);
+                locationData.put("x", loc.x);
+                locationData.put("y", loc.y);
+                locationData.put("z", loc.z);
+                locationData.put("yaw", loc.yaw);
+                locationData.put("pitch", loc.pitch);
+                locationData.put("timestamp", loc.timestamp);
+                homesData.put(entry.getKey(), locationData);
+            }
+            playerDataMap.put("homes", homesData);
+            
+            // Convert last location to serializable format
+            if (data.lastLocation != null) {
+                Map<String, Object> lastLocData = new HashMap<>();
+                lastLocData.put("world", data.lastLocation.world);
+                lastLocData.put("x", data.lastLocation.x);
+                lastLocData.put("y", data.lastLocation.y);
+                lastLocData.put("z", data.lastLocation.z);
+                lastLocData.put("yaw", data.lastLocation.yaw);
+                lastLocData.put("pitch", data.lastLocation.pitch);
+                lastLocData.put("timestamp", data.lastLocation.timestamp);
+                playerDataMap.put("lastLocation", lastLocData);
+            }
+            
+            // Save to storage
+            storageManager.saveDataAsync("players", playerUUID.toString(), playerDataMap);
+            LOGGER.debug("Saved data for player {} to disk", playerUUID);
         }
     }
-    
+
     /**
-     * Load player data (placeholder - would load from file/database)
+     * Load player data from disk
      */
+    @SuppressWarnings("unchecked")
     public void loadPlayerData(UUID playerUUID) {
-        // Placeholder for actual loading logic
-        getPlayerData(playerUUID); // This will create if not exists
-        LOGGER.debug("Loaded data for player {}", playerUUID);
+        storageManager.loadDataAsync("players", playerUUID.toString(), Map.class)
+            .thenAccept(dataMap -> {
+                if (dataMap != null) {
+                    PlayerData data = getPlayerData(playerUUID);
+                    
+                    // Load basic data
+                    if (dataMap.get("balance") != null) {
+                        data.balance = new BigDecimal(dataMap.get("balance").toString());
+                    }
+                    if (dataMap.get("lastSeen") != null) {
+                        data.lastSeen = ((Number) dataMap.get("lastSeen")).longValue();
+                    }
+                    if (dataMap.get("nickname") != null) {
+                        data.nickname = dataMap.get("nickname").toString();
+                    }
+                    if (dataMap.get("afk") != null) {
+                        data.afk = Boolean.parseBoolean(dataMap.get("afk").toString());
+                    }
+                    if (dataMap.get("vanished") != null) {
+                        data.vanished = Boolean.parseBoolean(dataMap.get("vanished").toString());
+                    }
+                    if (dataMap.get("godMode") != null) {
+                        data.godMode = Boolean.parseBoolean(dataMap.get("godMode").toString());
+                    }
+                    if (dataMap.get("muted") != null) {
+                        data.muted = Boolean.parseBoolean(dataMap.get("muted").toString());
+                    }
+                    if (dataMap.get("jailed") != null) {
+                        data.jailed = Boolean.parseBoolean(dataMap.get("jailed").toString());
+                    }
+                    if (dataMap.get("afkTime") != null) {
+                        data.afkTime = ((Number) dataMap.get("afkTime")).longValue();
+                    }
+                    if (dataMap.get("muteExpiry") != null) {
+                        data.muteExpiry = ((Number) dataMap.get("muteExpiry")).longValue();
+                    }
+                    if (dataMap.get("jailExpiry") != null) {
+                        data.jailExpiry = ((Number) dataMap.get("jailExpiry")).longValue();
+                    }
+                    
+                    // Load settings
+                    if (dataMap.get("settings") != null) {
+                        Map<String, Object> settingsData = (Map<String, Object>) dataMap.get("settings");
+                        data.settings.clear();
+                        data.settings.putAll(settingsData);
+                    }
+                    
+                    // Load homes
+                    if (dataMap.get("homes") != null) {
+                        Map<String, Map<String, Object>> homesData = (Map<String, Map<String, Object>>) dataMap.get("homes");
+                        data.homes.clear();
+                        for (Map.Entry<String, Map<String, Object>> entry : homesData.entrySet()) {
+                            Map<String, Object> locData = entry.getValue();
+                            LocationUtil.Location location = new LocationUtil.Location(
+                                locData.get("world").toString(),
+                                ((Number) locData.get("x")).doubleValue(),
+                                ((Number) locData.get("y")).doubleValue(),
+                                ((Number) locData.get("z")).doubleValue(),
+                                ((Number) locData.get("yaw")).floatValue(),
+                                ((Number) locData.get("pitch")).floatValue(),
+                                ((Number) locData.get("timestamp")).longValue()
+                            );
+                            data.homes.put(entry.getKey(), location);
+                        }
+                    }
+                    
+                    // Load last location
+                    if (dataMap.get("lastLocation") != null) {
+                        Map<String, Object> lastLocData = (Map<String, Object>) dataMap.get("lastLocation");
+                        data.lastLocation = new LocationUtil.Location(
+                            lastLocData.get("world").toString(),
+                            ((Number) lastLocData.get("x")).doubleValue(),
+                            ((Number) lastLocData.get("y")).doubleValue(),
+                            ((Number) lastLocData.get("z")).doubleValue(),
+                            ((Number) lastLocData.get("yaw")).floatValue(),
+                            ((Number) lastLocData.get("pitch")).floatValue(),
+                            ((Number) lastLocData.get("timestamp")).longValue()
+                        );
+                    }
+                    
+                    LOGGER.debug("Loaded data for player {} from disk", playerUUID);
+                } else {
+                    // No saved data - this is a new player, create default data
+                    getPlayerData(playerUUID); // This creates default data
+                    LOGGER.debug("Created new data for player {} (first time)", playerUUID);
+                }
+            })
+            .exceptionally(throwable -> {
+                LOGGER.error("Failed to load data for player {}", playerUUID, throwable);
+                return null;
+            });
     }
-    
+
     /**
+     * Load player data from disk synchronously (for immediate use)
+     */
+    @SuppressWarnings("unchecked")
+    public void loadPlayerDataSync(UUID playerUUID) {
+        try {
+            Map<String, Object> dataMap = storageManager.loadDataAsync("players", playerUUID.toString(), Map.class).get();
+            if (dataMap != null) {
+                PlayerData data = getPlayerData(playerUUID);
+                
+                // Load basic data
+                if (dataMap.get("balance") != null) {
+                    data.balance = new BigDecimal(dataMap.get("balance").toString());
+                }
+                if (dataMap.get("lastSeen") != null) {
+                    data.lastSeen = ((Number) dataMap.get("lastSeen")).longValue();
+                }
+                if (dataMap.get("settings") != null) {
+                    Map<String, Object> settingsData = (Map<String, Object>) dataMap.get("settings");
+                    data.settings.clear();
+                    data.settings.putAll(settingsData);
+                }
+                
+                LOGGER.debug("Loaded data for player {} from disk (sync)", playerUUID);
+            } else {
+                // No saved data - this is a new player, create default data
+                getPlayerData(playerUUID); // This creates default data
+                LOGGER.debug("Created new data for player {} (first time, sync)", playerUUID);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to synchronously load data for player {}", playerUUID, e);
+            // Create default data on error
+            getPlayerData(playerUUID);
+        }
+    }    /**
      * Remove player data from cache
      */
     public void unloadPlayerData(UUID playerUUID) {

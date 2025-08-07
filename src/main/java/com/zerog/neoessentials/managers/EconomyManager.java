@@ -79,6 +79,11 @@ public class EconomyManager {
             return cachedBalance;
         }
         
+        // Ensure player data is loaded (only if not already in cache)
+        if (!playerDataManager.isPlayerDataLoaded(playerUUID)) {
+            playerDataManager.loadPlayerDataSync(playerUUID);
+        }
+        
         // Load from storage
         BigDecimal balance = playerDataManager.getBalance(playerUUID);
         
