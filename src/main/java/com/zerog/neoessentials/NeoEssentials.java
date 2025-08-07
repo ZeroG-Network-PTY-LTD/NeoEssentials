@@ -74,8 +74,8 @@ public class NeoEssentials {
             LOGGER.info("Language System initialized");
             
             // Initialize all managers
-            // Use advanced economy manager with full shop system support
-            com.zerog.neoessentials.economy.EconomyManager.getInstance();
+            // Use simple economy manager that works with shop system
+            com.zerog.neoessentials.managers.EconomyManager.getInstance();
             HomeManager.getInstance();
             WarpManager.getInstance();
             KitManager.getInstance();

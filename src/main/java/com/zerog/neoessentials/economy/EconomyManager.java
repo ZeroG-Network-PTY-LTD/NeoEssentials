@@ -5,7 +5,7 @@ import com.zerog.neoessentials.economy.bank.BankManager;
 import com.zerog.neoessentials.economy.currency.CurrencyManager;
 import com.zerog.neoessentials.economy.transactions.TransactionManager;
 import com.zerog.neoessentials.economy.market.MarketManager;
-import com.zerog.neoessentials.economy.shops.ShopManager;
+// import com.zerog.neoessentials.economy.shops.ShopManager; // Now uses managers.EconomyManager
 import com.zerog.neoessentials.economy.auction.AuctionManager;
 import com.zerog.neoessentials.config.EconomyConfig;
 import com.zerog.neoessentials.storage.DataManager;
@@ -35,7 +35,7 @@ public class EconomyManager {
     private final BankManager bankManager;
     private final TransactionManager transactionManager;
     private final MarketManager marketManager;
-    private final ShopManager shopManager;
+    // private final ShopManager shopManager; // Now uses managers.EconomyManager
     private final AuctionManager auctionManager;
     
     // Configuration and data
@@ -62,8 +62,7 @@ public class EconomyManager {
         this.bankManager = new BankManager(this);
         this.transactionManager = new TransactionManager(this);
         this.marketManager = new MarketManager(this);
-        ShopManager.createInstance(this);
-        this.shopManager = ShopManager.getInstance();
+        // ShopManager now uses managers.EconomyManager - removed initialization
         this.auctionManager = new AuctionManager(this);
         
         this.analytics = new EconomyAnalytics();
@@ -99,7 +98,7 @@ public class EconomyManager {
             
             // Initialize market systems
             marketManager.initialize();
-            shopManager.initialize();
+            // shopManager.initialize(); // Now uses managers.EconomyManager
             auctionManager.initialize();
             
             // Start background tasks
@@ -328,7 +327,7 @@ public class EconomyManager {
     public BankManager getBankManager() { return bankManager; }
     public TransactionManager getTransactionManager() { return transactionManager; }
     public MarketManager getMarketManager() { return marketManager; }
-    public ShopManager getShopManager() { return shopManager; }
+    // public ShopManager getShopManager() { return shopManager; } // Now uses managers.EconomyManager
     public AuctionManager getAuctionManager() { return auctionManager; }
     public EconomyAnalytics getAnalytics() { return analytics; }
     public EconomyConfig getConfig() { return config; }

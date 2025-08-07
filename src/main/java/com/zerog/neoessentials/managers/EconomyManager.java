@@ -38,6 +38,16 @@ public class EconomyManager {
         this.balanceCache = new ConcurrentHashMap<>();
         this.bankAccounts = new ConcurrentHashMap<>();
         this.transactionHistory = Collections.synchronizedList(new ArrayList<>());
+        
+        // Initialize ShopManager with this economy manager instance
+        com.zerog.neoessentials.economy.shops.ShopManager.createInstance(this);
+        
+        // Initialize the shop manager to load shops from storage
+        com.zerog.neoessentials.economy.shops.ShopManager shopManager = 
+            com.zerog.neoessentials.economy.shops.ShopManager.getInstance();
+        if (shopManager != null) {
+            shopManager.initialize();
+        }
     }
     
     public static EconomyManager getInstance() {
