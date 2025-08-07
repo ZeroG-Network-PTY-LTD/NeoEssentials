@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
  * Commands:
  * - /theme tablist <theme> [player] - Change tablist theme
  * - /theme scoreboard <theme> [player] - Change scoreboard theme  
- * - /theme bossbar show <template> [animation] [duration] [player] - Show bossbar
- * - /theme bossbar hide <template> [player] - Hide bossbar
+ * - /theme bossbar show <template> [duration] [player] - Show bossbar
+ * - /theme bossbar hide [player] - Hide bossbar
  * - /theme list [type] - List available themes/templates
  * 
  * @author ZeroG
@@ -38,54 +38,49 @@ public class ThemeCommand {
             // Tablist theme commands
             .then(Commands.literal("tablist")
                 .then(Commands.argument("theme", StringArgumentType.string())
-                    .executes(EnhancedThemeCommand::executeSetTablistTheme)
+                    .executes(ThemeCommand::executeSetTablistTheme)
                     .then(Commands.argument("player", EntityArgument.player())
-                        .executes(EnhancedThemeCommand::executeSetTablistThemeOther))))
+                        .executes(ThemeCommand::executeSetTablistThemeOther))))
             
             // Scoreboard theme commands  
             .then(Commands.literal("scoreboard")
                 .then(Commands.argument("theme", StringArgumentType.string())
-                    .executes(EnhancedThemeCommand::executeSetScoreboardTheme)
+                    .executes(ThemeCommand::executeSetScoreboardTheme)
                     .then(Commands.argument("player", EntityArgument.player())
-                        .executes(EnhancedThemeCommand::executeSetScoreboardThemeOther))))
+                        .executes(ThemeCommand::executeSetScoreboardThemeOther))))
             
             // Bossbar commands
             .then(Commands.literal("bossbar")
                 .then(Commands.literal("show")
                     .then(Commands.argument("template", StringArgumentType.string())
-                        .executes(EnhancedThemeCommand::executeShowBossbar)
-                        .then(Commands.argument("animation", StringArgumentType.string())
-                            .executes(EnhancedThemeCommand::executeShowBossbarAnimated)
-                            .then(Commands.argument("duration", IntegerArgumentType.integer(1, 3600))
-                                .executes(EnhancedThemeCommand::executeShowBossbarAnimatedDuration)
-                                .then(Commands.argument("player", EntityArgument.player())
-                                    .executes(EnhancedThemeCommand::executeShowBossbarOther))))))
+                        .executes(ThemeCommand::executeShowBossbar)
+                        .then(Commands.argument("duration", IntegerArgumentType.integer(1, 3600))
+                            .executes(ThemeCommand::executeShowBossbarWithDuration)
+                            .then(Commands.argument("player", EntityArgument.player())
+                                .executes(ThemeCommand::executeShowBossbarOther)))))
                 .then(Commands.literal("hide")
-                    .then(Commands.argument("template", StringArgumentType.string())
-                        .executes(EnhancedThemeCommand::executeHideBossbar)
-                        .then(Commands.argument("player", EntityArgument.player())
-                            .executes(EnhancedThemeCommand::executeHideBossbarOther))))
-                .then(Commands.literal("hideall")
-                    .executes(EnhancedThemeCommand::executeHideAllBossbars)
+                    .executes(ThemeCommand::executeHideBossbar)
                     .then(Commands.argument("player", EntityArgument.player())
-                        .executes(EnhancedThemeCommand::executeHideAllBossbarsOther))))
+                        .executes(ThemeCommand::executeHideBossbarOther)))
+                .then(Commands.literal("hideall")
+                    .executes(ThemeCommand::executeHideAllBossbars)
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .executes(ThemeCommand::executeHideAllBossbarsOther))))
             
             // List commands
             .then(Commands.literal("list")
-                .executes(EnhancedThemeCommand::executeListAll)
+                .executes(ThemeCommand::executeListAll)
                 .then(Commands.literal("tablist")
-                    .executes(EnhancedThemeCommand::executeListTablistThemes))
+                    .executes(ThemeCommand::executeListTablistThemes))
                 .then(Commands.literal("scoreboard")
-                    .executes(EnhancedThemeCommand::executeListScoreboardThemes))
+                    .executes(ThemeCommand::executeListScoreboardThemes))
                 .then(Commands.literal("bossbar")
-                    .executes(EnhancedThemeCommand::executeListBossbarTemplates))
-                .then(Commands.literal("animations")
-                    .executes(EnhancedThemeCommand::executeListAnimations)))
+                    .executes(ThemeCommand::executeListBossbarTemplates)))
             
             // Reload command
             .then(Commands.literal("reload")
                 .requires(source -> source.hasPermission(3))
-                .executes(EnhancedThemeCommand::executeReload))
+                .executes(ThemeCommand::executeReload))
         );
     }
     
@@ -97,12 +92,12 @@ public class ThemeCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             String theme = StringArgumentType.getString(context, "theme");
             
-            if (!EnhancedTablistManager.getInstance().getAvailableThemes().contains(theme)) {
+            if (!TablistScoreboardManager.getInstance().getAvailableTablistThemes().contains(theme)) {
                 context.getSource().sendFailure(Component.literal("§cUnknown tablist theme: " + theme));
                 return 0;
             }
             
-            EnhancedTablistManager.getInstance().setPlayerTheme(player, theme);
+            TablistScoreboardManager.getInstance().setPlayerTablistTheme(player, theme);
             context.getSource().sendSuccess(() -> 
                 Component.literal("§aSet your tablist theme to: §6" + theme), false);
             
@@ -122,12 +117,12 @@ public class ThemeCommand {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
             String theme = StringArgumentType.getString(context, "theme");
             
-            if (!EnhancedTablistManager.getInstance().getAvailableThemes().contains(theme)) {
+            if (!TablistScoreboardManager.getInstance().getAvailableTablistThemes().contains(theme)) {
                 context.getSource().sendFailure(Component.literal("§cUnknown tablist theme: " + theme));
                 return 0;
             }
             
-            EnhancedTablistManager.getInstance().setPlayerTheme(targetPlayer, theme);
+            TablistScoreboardManager.getInstance().setPlayerTablistTheme(targetPlayer, theme);
             context.getSource().sendSuccess(() -> 
                 Component.literal("§aSet tablist theme for §6" + targetPlayer.getDisplayName().getString() + " §ato: §6" + theme), false);
             
@@ -147,12 +142,12 @@ public class ThemeCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             String theme = StringArgumentType.getString(context, "theme");
             
-            if (!EnhancedTablistManager.getInstance().getAvailableScoreboardThemes().contains(theme)) {
+            if (!TablistScoreboardManager.getInstance().getAvailableScoreboardThemes().contains(theme)) {
                 context.getSource().sendFailure(Component.literal("§cUnknown scoreboard theme: " + theme));
                 return 0;
             }
             
-            EnhancedTablistManager.getInstance().setPlayerScoreboardTheme(player, theme);
+            TablistScoreboardManager.getInstance().setPlayerScoreboardTheme(player, theme);
             context.getSource().sendSuccess(() -> 
                 Component.literal("§aSet your scoreboard theme to: §6" + theme), false);
             
@@ -172,12 +167,12 @@ public class ThemeCommand {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
             String theme = StringArgumentType.getString(context, "theme");
             
-            if (!EnhancedTablistManager.getInstance().getAvailableScoreboardThemes().contains(theme)) {
+            if (!TablistScoreboardManager.getInstance().getAvailableScoreboardThemes().contains(theme)) {
                 context.getSource().sendFailure(Component.literal("§cUnknown scoreboard theme: " + theme));
                 return 0;
             }
             
-            EnhancedTablistManager.getInstance().setPlayerScoreboardTheme(targetPlayer, theme);
+            TablistScoreboardManager.getInstance().setPlayerScoreboardTheme(targetPlayer, theme);
             context.getSource().sendSuccess(() -> 
                 Component.literal("§aSet scoreboard theme for §6" + targetPlayer.getDisplayName().getString() + " §ato: §6" + theme), false);
             
@@ -197,12 +192,12 @@ public class ThemeCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             String template = StringArgumentType.getString(context, "template");
             
-            if (!EnhancedMultiBossbarManager.getInstance().getAvailableTemplates().contains(template)) {
+            if (!CustomBossbarManager.getInstance().getTemplateNames().contains(template)) {
                 context.getSource().sendFailure(Component.literal("§cUnknown bossbar template: " + template));
                 return 0;
             }
             
-            EnhancedMultiBossbarManager.getInstance().showBossbar(player, template, "auto", 10);
+            CustomBossbarManager.getInstance().showBossbar(player, template, 10);
             context.getSource().sendSuccess(() -> 
                 Component.literal("§aShowing bossbar: §6" + template), false);
             
@@ -215,59 +210,22 @@ public class ThemeCommand {
     }
     
     /**
-     * Show bossbar with animation
+     * Show bossbar with duration
      */
-    private static int executeShowBossbarAnimated(CommandContext<CommandSourceStack> context) {
+    private static int executeShowBossbarWithDuration(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
             String template = StringArgumentType.getString(context, "template");
-            String animation = StringArgumentType.getString(context, "animation");
-            
-            if (!EnhancedMultiBossbarManager.getInstance().getAvailableTemplates().contains(template)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown bossbar template: " + template));
-                return 0;
-            }
-            
-            if (!EnhancedMultiBossbarManager.getInstance().getAvailableAnimations().contains(animation)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown animation: " + animation));
-                return 0;
-            }
-            
-            EnhancedMultiBossbarManager.getInstance().showBossbar(player, template, animation, 10);
-            context.getSource().sendSuccess(() -> 
-                Component.literal("§aShowing bossbar: §6" + template + " §awith animation: §6" + animation), false);
-            
-            return 1;
-        } catch (Exception e) {
-            LOGGER.error("Error executing show animated bossbar command", e);
-            context.getSource().sendFailure(Component.literal("§cFailed to show bossbar: " + e.getMessage()));
-            return 0;
-        }
-    }
-    
-    /**
-     * Show bossbar with animation and duration
-     */
-    private static int executeShowBossbarAnimatedDuration(CommandContext<CommandSourceStack> context) {
-        try {
-            ServerPlayer player = context.getSource().getPlayerOrException();
-            String template = StringArgumentType.getString(context, "template");
-            String animation = StringArgumentType.getString(context, "animation");
             int duration = IntegerArgumentType.getInteger(context, "duration");
             
-            if (!EnhancedMultiBossbarManager.getInstance().getAvailableTemplates().contains(template)) {
+            if (!CustomBossbarManager.getInstance().getTemplateNames().contains(template)) {
                 context.getSource().sendFailure(Component.literal("§cUnknown bossbar template: " + template));
                 return 0;
             }
             
-            if (!EnhancedMultiBossbarManager.getInstance().getAvailableAnimations().contains(animation)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown animation: " + animation));
-                return 0;
-            }
-            
-            EnhancedMultiBossbarManager.getInstance().showBossbar(player, template, animation, duration);
+            CustomBossbarManager.getInstance().showBossbar(player, template, duration);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aShowing bossbar: §6" + template + " §awith animation: §6" + animation + " §afor §6" + duration + " §aseconds"), false);
+                Component.literal("§aShowing bossbar: §6" + template + " §afor §6" + duration + " §aseconds"), false);
             
             return 1;
         } catch (Exception e) {
@@ -284,20 +242,14 @@ public class ThemeCommand {
         try {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
             String template = StringArgumentType.getString(context, "template");
-            String animation = StringArgumentType.getString(context, "animation");
             int duration = IntegerArgumentType.getInteger(context, "duration");
             
-            if (!EnhancedMultiBossbarManager.getInstance().getAvailableTemplates().contains(template)) {
+            if (!CustomBossbarManager.getInstance().getTemplateNames().contains(template)) {
                 context.getSource().sendFailure(Component.literal("§cUnknown bossbar template: " + template));
                 return 0;
             }
             
-            if (!EnhancedMultiBossbarManager.getInstance().getAvailableAnimations().contains(animation)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown animation: " + animation));
-                return 0;
-            }
-            
-            EnhancedMultiBossbarManager.getInstance().showBossbar(targetPlayer, template, animation, duration);
+            CustomBossbarManager.getInstance().showBossbar(targetPlayer, template, duration);
             context.getSource().sendSuccess(() -> 
                 Component.literal("§aShowing bossbar: §6" + template + " §ato §6" + targetPlayer.getDisplayName().getString() + " §afor §6" + duration + " §aseconds"), false);
             
@@ -315,11 +267,10 @@ public class ThemeCommand {
     private static int executeHideBossbar(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            String template = StringArgumentType.getString(context, "template");
             
-            EnhancedMultiBossbarManager.getInstance().hideBossbar(player, template);
+            CustomBossbarManager.getInstance().removeBossbar(player);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aHidden bossbar: §6" + template), false);
+                Component.literal("§aHidden your bossbar"), false);
             
             return 1;
         } catch (Exception e) {
@@ -335,11 +286,10 @@ public class ThemeCommand {
     private static int executeHideBossbarOther(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
-            String template = StringArgumentType.getString(context, "template");
             
-            EnhancedMultiBossbarManager.getInstance().hideBossbar(targetPlayer, template);
+            CustomBossbarManager.getInstance().removeBossbar(targetPlayer);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aHidden bossbar: §6" + template + " §afor §6" + targetPlayer.getDisplayName().getString()), false);
+                Component.literal("§aHidden bossbar for §6" + targetPlayer.getDisplayName().getString()), false);
             
             return 1;
         } catch (Exception e) {
@@ -356,7 +306,7 @@ public class ThemeCommand {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
             
-            EnhancedMultiBossbarManager.getInstance().hideAllBossbars(player);
+            CustomBossbarManager.getInstance().removeBossbar(player);
             context.getSource().sendSuccess(() -> 
                 Component.literal("§aHidden all your bossbars"), false);
             
@@ -375,7 +325,7 @@ public class ThemeCommand {
         try {
             ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
             
-            EnhancedMultiBossbarManager.getInstance().hideAllBossbars(targetPlayer);
+            CustomBossbarManager.getInstance().removeBossbar(targetPlayer);
             context.getSource().sendSuccess(() -> 
                 Component.literal("§aHidden all bossbars for §6" + targetPlayer.getDisplayName().getString()), false);
             
@@ -393,12 +343,12 @@ public class ThemeCommand {
     private static int executeListAll(CommandContext<CommandSourceStack> context) {
         try {
             context.getSource().sendSuccess(() -> 
-                Component.literal("§6§l=== Enhanced Theme System ==="), false);
+                Component.literal("§6§l=== NeoEssentials Theme System ==="), false);
             
             // Tablist themes
             context.getSource().sendSuccess(() -> 
                 Component.literal("§b§lTablist Themes:"), false);
-            for (String theme : EnhancedTablistManager.getInstance().getAvailableThemes()) {
+            for (String theme : TablistScoreboardManager.getInstance().getAvailableTablistThemes()) {
                 context.getSource().sendSuccess(() -> 
                     Component.literal("§7- §a" + theme), false);
             }
@@ -406,7 +356,7 @@ public class ThemeCommand {
             // Scoreboard themes
             context.getSource().sendSuccess(() -> 
                 Component.literal("§e§lScoreboard Themes:"), false);
-            for (String theme : EnhancedTablistManager.getInstance().getAvailableScoreboardThemes()) {
+            for (String theme : TablistScoreboardManager.getInstance().getAvailableScoreboardThemes()) {
                 context.getSource().sendSuccess(() -> 
                     Component.literal("§7- §a" + theme), false);
             }
@@ -414,17 +364,9 @@ public class ThemeCommand {
             // Bossbar templates
             context.getSource().sendSuccess(() -> 
                 Component.literal("§d§lBossbar Templates:"), false);
-            for (String template : EnhancedMultiBossbarManager.getInstance().getAvailableTemplates()) {
+            for (String template : CustomBossbarManager.getInstance().getTemplateNames()) {
                 context.getSource().sendSuccess(() -> 
                     Component.literal("§7- §a" + template), false);
-            }
-            
-            // Animations
-            context.getSource().sendSuccess(() -> 
-                Component.literal("§c§lAnimations:"), false);
-            for (String animation : EnhancedMultiBossbarManager.getInstance().getAvailableAnimations()) {
-                context.getSource().sendSuccess(() -> 
-                    Component.literal("§7- §a" + animation), false);
             }
             
             return 1;
@@ -443,7 +385,7 @@ public class ThemeCommand {
             context.getSource().sendSuccess(() -> 
                 Component.literal("§b§lAvailable Tablist Themes:"), false);
             
-            for (String theme : EnhancedTablistManager.getInstance().getAvailableThemes()) {
+            for (String theme : TablistScoreboardManager.getInstance().getAvailableTablistThemes()) {
                 context.getSource().sendSuccess(() -> 
                     Component.literal("§7- §a" + theme), false);
             }
@@ -464,7 +406,7 @@ public class ThemeCommand {
             context.getSource().sendSuccess(() -> 
                 Component.literal("§e§lAvailable Scoreboard Themes:"), false);
             
-            for (String theme : EnhancedTablistManager.getInstance().getAvailableScoreboardThemes()) {
+            for (String theme : TablistScoreboardManager.getInstance().getAvailableScoreboardThemes()) {
                 context.getSource().sendSuccess(() -> 
                     Component.literal("§7- §a" + theme), false);
             }
@@ -485,7 +427,7 @@ public class ThemeCommand {
             context.getSource().sendSuccess(() -> 
                 Component.literal("§d§lAvailable Bossbar Templates:"), false);
             
-            for (String template : EnhancedMultiBossbarManager.getInstance().getAvailableTemplates()) {
+            for (String template : CustomBossbarManager.getInstance().getTemplateNames()) {
                 context.getSource().sendSuccess(() -> 
                     Component.literal("§7- §a" + template), false);
             }
@@ -499,34 +441,12 @@ public class ThemeCommand {
     }
     
     /**
-     * List animations
-     */
-    private static int executeListAnimations(CommandContext<CommandSourceStack> context) {
-        try {
-            context.getSource().sendSuccess(() -> 
-                Component.literal("§c§lAvailable Animations:"), false);
-            
-            for (String animation : EnhancedMultiBossbarManager.getInstance().getAvailableAnimations()) {
-                context.getSource().sendSuccess(() -> 
-                    Component.literal("§7- §a" + animation), false);
-            }
-            
-            return 1;
-        } catch (Exception e) {
-            LOGGER.error("Error executing list animations command", e);
-            context.getSource().sendFailure(Component.literal("§cFailed to list animations: " + e.getMessage()));
-            return 0;
-        }
-    }
-    
-    /**
      * Reload theme system
      */
     private static int executeReload(CommandContext<CommandSourceStack> context) {
         try {
-            // In a real implementation, this would reload configurations
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aReloaded enhanced theme system configurations"), false);
+                Component.literal("§aReloaded theme system configurations"), false);
             
             return 1;
         } catch (Exception e) {
