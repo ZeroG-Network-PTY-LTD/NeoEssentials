@@ -133,7 +133,6 @@ public class CommandRegistry {
             // Shop system commands
             com.zerog.neoessentials.commands.economy.ShopCommand.register(dispatcher);
             com.zerog.neoessentials.commands.economy.SignShopCommand.register(dispatcher, context);
-            com.zerog.neoessentials.commands.essentials.CreateShopCommand.register(dispatcher);
             LOGGER.info("Registered shop system commands");
             
             // Mail system

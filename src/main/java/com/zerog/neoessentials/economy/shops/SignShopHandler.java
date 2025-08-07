@@ -168,14 +168,22 @@ public class SignShopHandler {
                    economyManager.formatCurrency(totalPrice),
                    signShop.getOwnerId());
         
-        // Player-to-player transaction: Remove money from buyer, give to shop owner
         LOGGER.info("Processing buy transaction: Player {} buying from shop owner {} for {}", 
             player.getName().getString(), signShop.getOwnerId(), economyManager.formatCurrency(totalPrice));
         
         // Check buyer's balance before transaction
         BigDecimal buyerBalanceBefore = economyManager.getBalance(player.getUUID());
         LOGGER.info("Buyer balance before: {}", economyManager.formatCurrency(buyerBalanceBefore));
-        
+
+        // CRITICAL: Remove items from chest FIRST before any money transactions
+        if (!removeItemsFromChest(player.level(), signShop)) {
+            // If we can't remove items from chest, don't proceed with transaction
+            MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
+                "neoessentials.shop.buy.shop_empty");
+            return InteractionResult.FAIL;
+        }
+
+        // Now that we have the items, proceed with money transactions
         boolean withdrawSuccess = economyManager.withdrawBalance(
                 player.getUUID(), 
                 totalPrice,
@@ -185,6 +193,8 @@ public class SignShopHandler {
         LOGGER.info("Withdraw success: {}", withdrawSuccess);
         
         if (!withdrawSuccess) {
+            // Money transaction failed - put items back in chest
+            addItemsToChest(player.level(), signShop);
             player.sendSystemMessage(Component.literal("§cFailed to process payment!"));
             return InteractionResult.FAIL;
         }
@@ -210,24 +220,17 @@ public class SignShopHandler {
             LOGGER.info("Deposit success: {}", depositSuccess);
             
             if (!depositSuccess) {
-                // Refund the buyer if we can't pay the shop owner
+                // Refund the buyer and put items back if we can't pay the shop owner
                 economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Shop payment failed");
+                addItemsToChest(player.level(), signShop);
                 player.sendSystemMessage(Component.literal("§cShop payment failed! Money refunded."));
                 return InteractionResult.FAIL;
             }
         } catch (IllegalArgumentException e) {
-            // Invalid UUID - refund buyer
+            // Invalid UUID - refund buyer and put items back
             economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Invalid shop owner");
+            addItemsToChest(player.level(), signShop);
             player.sendSystemMessage(Component.literal("§cInvalid shop owner! Money refunded."));
-            return InteractionResult.FAIL;
-        }
-        
-        // Transaction successful - take items from chest and give to player
-        if (!removeItemsFromChest(player.level(), signShop)) {
-            // If we can't remove items from chest, refund the money
-            economyManager.depositBalance(player.getUUID(), totalPrice, "Refund for shop stock issue");
-            MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
-                "neoessentials.shop.buy.shop_empty");
             return InteractionResult.FAIL;
         }
         
@@ -305,28 +308,7 @@ public class SignShopHandler {
             return InteractionResult.FAIL;
         }
 
-        // Remove items from player inventory
-        int toRemove = quantityToSell;
-        for (ItemStack stack : player.getInventory().items) {
-            if (ItemStack.isSameItem(stack, shopItem) && toRemove > 0) {
-                int removeFromStack = Math.min(stack.getCount(), toRemove);
-                stack.shrink(removeFromStack);
-                toRemove -= removeFromStack;
-            }
-        }
-
-        // Add items to the shop's connected chest
-        if (!addItemsToChest(player.level(), signShop)) {
-            // If we can't add items to chest, give items back to player
-            ItemStack itemToReturn = shopItem.copy();
-            itemToReturn.setCount(quantityToSell);
-            if (!player.getInventory().add(itemToReturn)) {
-                player.spawnAtLocation(itemToReturn);
-            }
-            MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
-                "neoessentials.shop.sell.chest_full");
-            return InteractionResult.FAIL;
-        }        // Player-to-player transaction: Shop owner pays seller for items
+        // Player-to-player transaction: Shop owner pays seller for items
         double earnings = signShop.getSellPrice() * quantityToSell;
         
         // Get the economy manager
@@ -337,19 +319,39 @@ public class SignShopHandler {
             try {
                 java.util.UUID shopOwnerUUID = java.util.UUID.fromString(signShop.getOwnerId());
                 
-                // Check if shop owner has enough money to buy the items
+                // Check if shop owner has enough money to buy the items BEFORE taking items
                 if (!economyManager.hasBalance(shopOwnerUUID, earnings)) {
-                    // Return items to player since shop owner can't afford them
+                    MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
+                        "neoessentials.shop.sell.shop_owner_broke");
+                    return InteractionResult.FAIL;
+                }
+                
+                // ALL CHECKS PASSED - Now execute the transaction atomically
+                
+                // 1. Remove items from player inventory
+                int toRemove = quantityToSell;
+                for (ItemStack stack : player.getInventory().items) {
+                    if (ItemStack.isSameItem(stack, shopItem) && toRemove > 0) {
+                        int removeFromStack = Math.min(stack.getCount(), toRemove);
+                        stack.shrink(removeFromStack);
+                        toRemove -= removeFromStack;
+                    }
+                }
+
+                // 2. Add items to the shop's connected chest
+                if (!addItemsToChest(player.level(), signShop)) {
+                    // If we can't add items to chest, give items back to player
                     ItemStack itemToReturn = shopItem.copy();
                     itemToReturn.setCount(quantityToSell);
                     if (!player.getInventory().add(itemToReturn)) {
                         player.spawnAtLocation(itemToReturn);
                     }
-                    player.sendSystemMessage(Component.literal("§cShop owner doesn't have enough money! Items returned."));
+                    MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
+                        "neoessentials.shop.sell.chest_full");
                     return InteractionResult.FAIL;
                 }
-                
-                // Remove money from shop owner
+
+                // 3. Remove money from shop owner
                 boolean withdrawSuccess = economyManager.withdrawBalance(
                     shopOwnerUUID,
                     earnings,
