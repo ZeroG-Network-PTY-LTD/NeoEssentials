@@ -240,6 +240,22 @@ public class SignShopHandler {
             }
         }
         
+        // Add items to the shop's connected chest
+        ItemStack itemsToStore = shopItem.copy();
+        itemsToStore.setCount(quantityToSell);
+        
+        boolean storedInChest = shopManager.addItemsToShopChest(player.level(), signShop, itemsToStore);
+        if (!storedInChest) {
+            // If chest is full, give items back to player
+            ItemStack itemToReturn = shopItem.copy();
+            itemToReturn.setCount(quantityToSell);
+            if (!player.getInventory().add(itemToReturn)) {
+                player.spawnAtLocation(itemToReturn);
+            }
+            player.sendSystemMessage(Component.literal("§cShop chest is full! Items returned."));
+            return InteractionResult.FAIL;
+        }
+        
         // Add money to player through economy manager
         double earnings = signShop.getSellPrice() * quantityToSell;
         

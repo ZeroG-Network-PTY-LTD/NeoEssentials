@@ -2,8 +2,12 @@ package com.zerog.neoessentials.economy.shops;
 
 import com.zerog.neoessentials.web.WebDashboardManager;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +107,14 @@ public class ShopManager {
             return false; // Sign shop already exists at this location
         }
         
-        SignShop signShop = new SignShop(player.getStringUUID(), signPos, item, buyPrice, sellPrice, quantity);
+        // Find a nearby chest for the shop
+        BlockPos chestPos = findNearbyChest(player.level(), signPos);
+        if (chestPos == null) {
+            player.sendSystemMessage(Component.literal("§cNo chest found near the sign! Place a chest within 3 blocks."));
+            return false;
+        }
+        
+        SignShop signShop = new SignShop(player.getStringUUID(), signPos, chestPos, item, buyPrice, sellPrice, quantity);
         signShops.put(signPos, signShop);
         
         // Save shops to storage after creating a new one
@@ -349,6 +360,58 @@ public class ShopManager {
         return "general";
     }
     
+    /**
+     * Find a chest within 3 blocks of the given position
+     */
+    private BlockPos findNearbyChest(Level level, BlockPos signPos) {
+        // Search in a 3x3x3 area around the sign
+        for (int x = -3; x <= 3; x++) {
+            for (int y = -3; y <= 3; y++) {
+                for (int z = -3; z <= 3; z++) {
+                    BlockPos checkPos = signPos.offset(x, y, z);
+                    if (level.getBlockState(checkPos).getBlock() instanceof ChestBlock) {
+                        return checkPos;
+                    }
+                }
+            }
+        }
+        return null; // No chest found
+    }
+    
+    /**
+     * Add items to a chest
+     */
+    private boolean addItemsToChest(Level level, BlockPos chestPos, ItemStack items) {
+        if (level.getBlockEntity(chestPos) instanceof ChestBlockEntity chestEntity) {
+            // Try to add items to the chest
+            for (int i = 0; i < chestEntity.getContainerSize(); i++) {
+                ItemStack slotStack = chestEntity.getItem(i);
+                if (slotStack.isEmpty()) {
+                    // Empty slot - put the items here
+                    chestEntity.setItem(i, items.copy());
+                    chestEntity.setChanged();
+                    return true;
+                } else if (ItemStack.isSameItem(slotStack, items) && slotStack.getCount() + items.getCount() <= slotStack.getMaxStackSize()) {
+                    // Same item type and can fit
+                    slotStack.grow(items.getCount());
+                    chestEntity.setChanged();
+                    return true;
+                }
+            }
+        }
+        return false; // Chest is full or couldn't add items
+    }
+    
+    /**
+     * Add items to a shop's connected chest
+     */
+    public boolean addItemsToShopChest(Level level, SignShop signShop, ItemStack items) {
+        if (signShop.getChestPos() == null) {
+            return false; // No chest connected
+        }
+        return addItemsToChest(level, signShop.getChestPos(), items);
+    }
+    
     // Shop classes
     public static class PlayerShop {
         private final String name;
@@ -401,15 +464,17 @@ public class ShopManager {
     public static class SignShop {
         private final String ownerId;
         private final BlockPos signPos;
+        private final BlockPos chestPos; // Connected chest for item storage
         private final ItemStack item;
         private final double buyPrice;
         private final double sellPrice;
         private final int quantity;
         private int stock = 64; // Default stock
         
-        public SignShop(String ownerId, BlockPos signPos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
+        public SignShop(String ownerId, BlockPos signPos, BlockPos chestPos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
             this.ownerId = ownerId;
             this.signPos = signPos;
+            this.chestPos = chestPos;
             this.item = item;
             this.buyPrice = buyPrice;
             this.sellPrice = sellPrice;
@@ -418,6 +483,7 @@ public class ShopManager {
         
         public String getOwnerId() { return ownerId; }
         public BlockPos getSignPos() { return signPos; }
+        public BlockPos getChestPos() { return chestPos; }
         public ItemStack getItem() { return item; }
         public double getBuyPrice() { return buyPrice; }
         public double getSellPrice() { return sellPrice; }
