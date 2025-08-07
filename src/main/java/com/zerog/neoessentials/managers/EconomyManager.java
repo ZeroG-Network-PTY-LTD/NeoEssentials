@@ -81,6 +81,8 @@ public class EconomyManager {
         // Load from storage
         BigDecimal balance = playerDataManager.getBalance(playerUUID);
         
+        LOGGER.info("Loading balance for player {}: {}", playerUUID, balance != null ? formatCurrency(balance) : "null");
+        
         // Check if player needs starting balance initialization
         if (balance == null || (balance.equals(BigDecimal.ZERO) && !hasBeenInitialized(playerUUID))) {
             // New player or uninitialized player - set starting balance from config
@@ -124,7 +126,7 @@ public class EconomyManager {
         balanceCache.put(playerUUID, amount);
         playerDataManager.setBalance(playerUUID, amount);
         
-        LOGGER.debug("Set balance for player {} to {}", playerUUID, formatCurrency(amount));
+        LOGGER.info("Set balance for player {} to {} - saved to storage", playerUUID, formatCurrency(amount));
     }
     
     /**
