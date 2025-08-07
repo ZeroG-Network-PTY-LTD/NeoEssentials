@@ -4,6 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
 import com.zerog.neoessentials.performance.PerformanceCommandWrapper;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -15,6 +17,11 @@ import net.minecraft.world.effect.MobEffects;
  * Heal command implementation - /heal [player]
  * Restores a player's health and hunger to full
  * 
+ * Permission Nodes:
+ * - essentials.heal - Heal yourself
+ * - essentials.heal.others - Heal other players
+ * - essentials.heal.* - All heal permissions
+ * 
  * @author ZeroG
  * @since 2.0.0
  */
@@ -23,10 +30,10 @@ public class HealCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /heal - Heal yourself
         dispatcher.register(Commands.literal("heal")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.HEAL_SELF))
             .executes(HealCommand::healSelf)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.HEAL_OTHERS))
                 .executes(HealCommand::healOther)
             )
         );
@@ -42,7 +49,7 @@ public class HealCommand {
             (source) -> ErrorHandlingIntegration.executeWithPermission(
                 source,
                 "heal self", 
-                "neoessentials.heal.self",
+                PermissionNodes.HEAL_SELF,
                 (src) -> {
                     ServerPlayer player = src.getPlayerOrException();
                     healPlayer(player);
@@ -60,7 +67,7 @@ public class HealCommand {
         return ErrorHandlingIntegration.executeWithPermission(
             context.getSource(),
             "heal other",
-            "neoessentials.heal.others", 
+            PermissionNodes.HEAL_OTHERS, 
             (source) -> {
                 ServerPlayer target = EntityArgument.getPlayer(context, "player");
                 ServerPlayer executor = source.getPlayerOrException();

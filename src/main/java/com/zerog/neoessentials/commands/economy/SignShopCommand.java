@@ -1,0 +1,298 @@
+package com.zerog.neoessentials.commands.economy;
+
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.zerog.neoessentials.economy.shops.ShopManager;
+import com.zerog.neoessentials.economy.shops.SignShopHandler;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.item.ItemArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.SignBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Command for managing sign shops
+ */
+public class SignShopCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SignShopCommand.class);
+    
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+        dispatcher.register(Commands.literal("signshop")
+                .requires(source -> hasPermission(source, PermissionNodes.SHOP_SIGN_USE))
+                .then(Commands.literal("create")
+                        .requires(source -> hasPermission(source, PermissionNodes.SHOP_SIGN_CREATE))
+                        .then(Commands.argument("item", ItemArgument.item(context))
+                                .then(Commands.argument("quantity", IntegerArgumentType.integer(1, 64))
+                                        .then(Commands.argument("buy_price", DoubleArgumentType.doubleArg(0.0))
+                                                .executes(ctx -> createSignShop(ctx, 0.0))
+                                                .then(Commands.argument("sell_price", DoubleArgumentType.doubleArg(0.0))
+                                                        .executes(ctx -> createSignShop(ctx, 
+                                                                DoubleArgumentType.getDouble(ctx, "sell_price")))
+                                                )
+                                        )
+                                )
+                        )
+                )
+                .then(Commands.literal("remove")
+                        .requires(source -> hasPermission(source, PermissionNodes.SHOP_SIGN_ADMIN))
+                        .executes(SignShopCommand::removeSignShop)
+                )
+                .then(Commands.literal("info")
+                        .executes(SignShopCommand::getSignShopInfo)
+                )
+                .then(Commands.literal("list")
+                        .requires(source -> hasPermission(source, PermissionNodes.SHOP_ADMIN))
+                        .executes(SignShopCommand::listSignShops)
+                        .then(Commands.argument("player", StringArgumentType.string())
+                                .executes(SignShopCommand::listPlayerSignShops)
+                        )
+                )
+                .then(Commands.literal("help")
+                        .executes(SignShopCommand::showHelp)
+                )
+        );
+    }
+    
+    /**
+     * Create a new sign shop
+     */
+    private static int createSignShop(CommandContext<CommandSourceStack> context, double sellPrice) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("Only players can create sign shops!"));
+            return 0;
+        }
+        
+        try {
+            // Get command arguments
+            ItemStack item = ItemArgument.getItem(context, "item").createItemStack(1, false);
+            int quantity = IntegerArgumentType.getInteger(context, "quantity");
+            double buyPrice = DoubleArgumentType.getDouble(context, "buy_price");
+            
+            // Get the sign the player is looking at
+            HitResult hitResult = player.pick(5.0, 0.0f, false);
+            if (!(hitResult instanceof BlockHitResult blockHit)) {
+                player.sendSystemMessage(Component.literal("§cYou must be looking at a sign!"));
+                return 0;
+            }
+            
+            BlockPos signPos = blockHit.getBlockPos();
+            BlockState blockState = player.level().getBlockState(signPos);
+            
+            if (!(blockState.getBlock() instanceof SignBlock)) {
+                player.sendSystemMessage(Component.literal("§cYou must be looking at a sign!"));
+                return 0;
+            }
+            
+            // Validate prices
+            if (buyPrice <= 0 && sellPrice <= 0) {
+                player.sendSystemMessage(Component.literal("§cAt least one price (buy or sell) must be greater than 0!"));
+                return 0;
+            }
+            
+            // Create the sign shop
+            ShopManager shopManager = ShopManager.getInstance();
+            SignShopHandler handler = new SignShopHandler(shopManager);
+            
+            boolean success = handler.createSignShop(player, signPos, item, buyPrice, sellPrice, quantity);
+            
+            if (success) {
+                player.sendSystemMessage(Component.literal("§aSign shop created successfully!"));
+                LOGGER.info("Player {} created sign shop at {} for item {}", 
+                           player.getName().getString(), signPos, item.getDisplayName().getString());
+                return 1;
+            } else {
+                player.sendSystemMessage(Component.literal("§cFailed to create sign shop!"));
+                return 0;
+            }
+            
+        } catch (Exception e) {
+            player.sendSystemMessage(Component.literal("§cError creating sign shop: " + e.getMessage()));
+            LOGGER.error("Error creating sign shop for player {}", player.getName().getString(), e);
+            return 0;
+        }
+    }
+    
+    /**
+     * Remove a sign shop
+     */
+    private static int removeSignShop(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("Only players can remove sign shops!"));
+            return 0;
+        }
+        
+        // Get the sign the player is looking at
+        HitResult hitResult = player.pick(5.0, 0.0f, false);
+        if (!(hitResult instanceof BlockHitResult blockHit)) {
+            player.sendSystemMessage(Component.literal("§cYou must be looking at a sign shop!"));
+            return 0;
+        }
+        
+        BlockPos signPos = blockHit.getBlockPos();
+        ShopManager shopManager = ShopManager.getInstance();
+        
+        // Find and remove the sign shop
+        boolean found = shopManager.getSignShops().removeIf(shop -> shop.getSignPos().equals(signPos));
+        
+        if (found) {
+            player.sendSystemMessage(Component.literal("§aSign shop removed successfully!"));
+            LOGGER.info("Player {} removed sign shop at {}", player.getName().getString(), signPos);
+            return 1;
+        } else {
+            player.sendSystemMessage(Component.literal("§cNo sign shop found at this location!"));
+            return 0;
+        }
+    }
+    
+    /**
+     * Get information about a sign shop
+     */
+    private static int getSignShopInfo(CommandContext<CommandSourceStack> context) {
+        if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
+            context.getSource().sendFailure(Component.literal("Only players can check sign shop info!"));
+            return 0;
+        }
+        
+        // Get the sign the player is looking at
+        HitResult hitResult = player.pick(5.0, 0.0f, false);
+        if (!(hitResult instanceof BlockHitResult blockHit)) {
+            player.sendSystemMessage(Component.literal("§cYou must be looking at a sign!"));
+            return 0;
+        }
+        
+        BlockPos signPos = blockHit.getBlockPos();
+        ShopManager shopManager = ShopManager.getInstance();
+        
+        // Find the sign shop
+        ShopManager.SignShop signShop = shopManager.getSignShops().stream()
+                .filter(shop -> shop.getSignPos().equals(signPos))
+                .findFirst()
+                .orElse(null);
+        
+        if (signShop == null) {
+            player.sendSystemMessage(Component.literal("§cNo sign shop found at this location!"));
+            return 0;
+        }
+        
+        // Display shop information
+        player.sendSystemMessage(Component.literal("§6=== Sign Shop Information ==="));
+        player.sendSystemMessage(Component.literal("§eItem: §f" + signShop.getItem().getDisplayName().getString()));
+        player.sendSystemMessage(Component.literal("§eQuantity: §f" + signShop.getQuantity()));
+        player.sendSystemMessage(Component.literal("§eStock: §f" + signShop.getStock()));
+        
+        if (signShop.getBuyPrice() > 0) {
+            player.sendSystemMessage(Component.literal("§eBuy Price: §a$" + String.format("%.2f", signShop.getBuyPrice())));
+        }
+        
+        if (signShop.getSellPrice() > 0) {
+            player.sendSystemMessage(Component.literal("§eSell Price: §c$" + String.format("%.2f", signShop.getSellPrice())));
+        }
+        
+        player.sendSystemMessage(Component.literal("§eOwner: §f" + signShop.getOwnerId()));
+        
+        return 1;
+    }
+    
+    /**
+     * List all sign shops
+     */
+    private static int listSignShops(CommandContext<CommandSourceStack> context) {
+        ShopManager shopManager = ShopManager.getInstance();
+        var signShops = shopManager.getSignShops();
+        
+        context.getSource().sendSuccess(() -> Component.literal("§6=== All Sign Shops ==="), false);
+        context.getSource().sendSuccess(() -> Component.literal("§eTotal Sign Shops: §f" + signShops.size()), false);
+        
+        int count = 0;
+        for (ShopManager.SignShop shop : signShops) {
+            if (count >= 10) {
+                context.getSource().sendSuccess(() -> Component.literal("§7... and " + (signShops.size() - 10) + " more"), false);
+                break;
+            }
+            
+            String info = String.format("§e%d. §f%s §7at §f%s §7(Stock: %d)",
+                    count + 1,
+                    shop.getItem().getDisplayName().getString(),
+                    shop.getSignPos().toShortString(),
+                    shop.getStock()
+            );
+            
+            context.getSource().sendSuccess(() -> Component.literal(info), false);
+            count++;
+        }
+        
+        return signShops.size();
+    }
+    
+    /**
+     * List sign shops for a specific player
+     */
+    private static int listPlayerSignShops(CommandContext<CommandSourceStack> context) {
+        String playerName = StringArgumentType.getString(context, "player");
+        ShopManager shopManager = ShopManager.getInstance();
+        
+        var playerShops = shopManager.getSignShops().stream()
+                .filter(shop -> shop.getOwnerId().equals(playerName))
+                .toList();
+        
+        context.getSource().sendSuccess(() -> Component.literal("§6=== Sign Shops for " + playerName + " ==="), false);
+        context.getSource().sendSuccess(() -> Component.literal("§eShops Found: §f" + playerShops.size()), false);
+        
+        int count = 0;
+        for (ShopManager.SignShop shop : playerShops) {
+            String info = String.format("§e%d. §f%s §7at §f%s §7(Stock: %d)",
+                    count + 1,
+                    shop.getItem().getDisplayName().getString(),
+                    shop.getSignPos().toShortString(),
+                    shop.getStock()
+            );
+            
+            context.getSource().sendSuccess(() -> Component.literal(info), false);
+            count++;
+        }
+        
+        return playerShops.size();
+    }
+    
+    /**
+     * Show help for sign shop commands
+     */
+    private static int showHelp(CommandContext<CommandSourceStack> context) {
+        context.getSource().sendSuccess(() -> Component.literal("§6=== Sign Shop Commands ==="), false);
+        context.getSource().sendSuccess(() -> Component.literal("§e/signshop create <item> <quantity> <buy_price> [sell_price]"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7  Create a new sign shop (look at a sign)"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§e/signshop remove"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7  Remove a sign shop (look at the sign)"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§e/signshop info"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7  Get information about a sign shop"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§e/signshop list [player]"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7  List all sign shops or shops for a player"), false);
+        context.getSource().sendSuccess(() -> Component.literal(""), false);
+        context.getSource().sendSuccess(() -> Component.literal("§6Sign Shop Usage:"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7- Left click to buy from shop"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7- Sneak + left click to sell to shop"), false);
+        
+        return 1;
+    }
+    
+    /**
+     * Check if source has permission
+     */
+    private static boolean hasPermission(CommandSourceStack source, String permission) {
+        // TODO: Implement proper permission checking
+        return true; // For now, allow all operations
+    }
+}

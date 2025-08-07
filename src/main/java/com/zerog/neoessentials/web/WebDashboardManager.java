@@ -75,6 +75,28 @@ public class WebDashboardManager {
         dashboardData.put("player_count", 0);
         dashboardData.put("uptime", System.currentTimeMillis());
         dashboardData.put("version", "1.0.2");
+        
+        // Enhanced shop and economy data
+        dashboardData.put("total_shops", 0);
+        dashboardData.put("active_shops", 0);
+        dashboardData.put("daily_transactions", 0);
+        dashboardData.put("daily_revenue", 0.0);
+        dashboardData.put("total_economy_balance", 0.0);
+        dashboardData.put("active_auctions", 0);
+        dashboardData.put("pending_trades", 0);
+        
+        // Performance metrics
+        dashboardData.put("tps", 20.0);
+        dashboardData.put("memory_usage", 0);
+        dashboardData.put("cpu_usage", 0);
+        dashboardData.put("disk_usage", 0);
+        
+        // Security metrics
+        dashboardData.put("banned_players", 0);
+        dashboardData.put("login_attempts", 0);
+        dashboardData.put("suspicious_activity", 0);
+        
+        LOGGER.info("Enhanced dashboard data initialized with shop and economy metrics");
     }
     
     /**
@@ -159,6 +181,149 @@ public class WebDashboardManager {
      */
     public int getPort() {
         return port;
+    }
+    
+    /**
+     * Get shop analytics data
+     */
+    public Map<String, Object> getShopAnalytics() {
+        Map<String, Object> analytics = new HashMap<>();
+        analytics.put("total_shops", dashboardData.getOrDefault("total_shops", 0));
+        analytics.put("active_shops", dashboardData.getOrDefault("active_shops", 0));
+        analytics.put("daily_transactions", dashboardData.getOrDefault("daily_transactions", 0));
+        analytics.put("daily_revenue", dashboardData.getOrDefault("daily_revenue", 0.0));
+        analytics.put("average_transaction", calculateAverageTransaction());
+        analytics.put("top_selling_category", getTopSellingCategory());
+        analytics.put("most_active_shop", getMostActiveShop());
+        return analytics;
+    }
+    
+    /**
+     * Get economy health metrics
+     */
+    public Map<String, Object> getEconomyHealth() {
+        Map<String, Object> health = new HashMap<>();
+        health.put("total_balance", dashboardData.getOrDefault("total_economy_balance", 0.0));
+        health.put("average_balance", calculateAveragePlayerBalance());
+        health.put("inflation_rate", calculateInflationRate());
+        health.put("money_velocity", calculateMoneyVelocity());
+        health.put("economy_status", getEconomyStatus());
+        return health;
+    }
+    
+    /**
+     * Get server performance data
+     */
+    public Map<String, Object> getServerPerformance() {
+        Map<String, Object> performance = new HashMap<>();
+        performance.put("tps", dashboardData.getOrDefault("tps", 20.0));
+        performance.put("memory_usage", dashboardData.getOrDefault("memory_usage", 0));
+        performance.put("cpu_usage", dashboardData.getOrDefault("cpu_usage", 0));
+        performance.put("disk_usage", dashboardData.getOrDefault("disk_usage", 0));
+        performance.put("network_io", getNetworkIO());
+        performance.put("chunk_loading", getChunkLoadingStats());
+        return performance;
+    }
+    
+    /**
+     * Update shop metrics
+     */
+    public void updateShopMetrics(int totalShops, int activeShops, int dailyTransactions, double dailyRevenue) {
+        dashboardData.put("total_shops", totalShops);
+        dashboardData.put("active_shops", activeShops);
+        dashboardData.put("daily_transactions", dailyTransactions);
+        dashboardData.put("daily_revenue", dailyRevenue);
+        LOGGER.debug("Updated shop metrics: {} total, {} active, {} transactions, ${}", 
+                    totalShops, activeShops, dailyTransactions, dailyRevenue);
+    }
+    
+    /**
+     * Update performance metrics
+     */
+    public void updatePerformanceMetrics(double tps, int memoryUsage, int cpuUsage) {
+        dashboardData.put("tps", tps);
+        dashboardData.put("memory_usage", memoryUsage);
+        dashboardData.put("cpu_usage", cpuUsage);
+    }
+    
+    /**
+     * Add real-time event for dashboard
+     */
+    public void addRealTimeEvent(String eventType, String message, String severity) {
+        Map<String, Object> event = new HashMap<>();
+        event.put("type", eventType);
+        event.put("message", message);
+        event.put("severity", severity);
+        event.put("timestamp", System.currentTimeMillis());
+        
+        // Store recent events (last 50)
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> events = (List<Map<String, Object>>) 
+                dashboardData.computeIfAbsent("recent_events", k -> new ArrayList<>());
+        
+        events.add(0, event); // Add to front
+        if (events.size() > 50) {
+            events.remove(events.size() - 1); // Remove oldest
+        }
+        
+        LOGGER.info("Dashboard event: [{}] {} - {}", severity, eventType, message);
+    }
+    
+    // Helper methods for analytics
+    private double calculateAverageTransaction() {
+        int transactions = (int) dashboardData.getOrDefault("daily_transactions", 0);
+        double revenue = (double) dashboardData.getOrDefault("daily_revenue", 0.0);
+        return transactions > 0 ? revenue / transactions : 0.0;
+    }
+    
+    private String getTopSellingCategory() {
+        // Placeholder - would integrate with shop system
+        return "General Items";
+    }
+    
+    private String getMostActiveShop() {
+        // Placeholder - would integrate with shop system
+        return "Server Economy Hub";
+    }
+    
+    private double calculateAveragePlayerBalance() {
+        // Placeholder - would integrate with economy system
+        return 1500.0;
+    }
+    
+    private double calculateInflationRate() {
+        // Placeholder - would calculate based on price history
+        return 2.3;
+    }
+    
+    private double calculateMoneyVelocity() {
+        // Placeholder - would calculate money circulation speed
+        return 1.2;
+    }
+    
+    private String getEconomyStatus() {
+        double totalBalance = (double) dashboardData.getOrDefault("total_economy_balance", 0.0);
+        if (totalBalance > 100000) return "Healthy";
+        if (totalBalance > 50000) return "Stable";
+        if (totalBalance > 10000) return "Growing";
+        return "New";
+    }
+    
+    private Map<String, Object> getNetworkIO() {
+        Map<String, Object> network = new HashMap<>();
+        network.put("bytes_sent", 0);
+        network.put("bytes_received", 0);
+        network.put("packets_sent", 0);
+        network.put("packets_received", 0);
+        return network;
+    }
+    
+    private Map<String, Object> getChunkLoadingStats() {
+        Map<String, Object> chunks = new HashMap<>();
+        chunks.put("loaded_chunks", 0);
+        chunks.put("generated_chunks", 0);
+        chunks.put("chunk_generation_rate", 0);
+        return chunks;
     }
     
     /**

@@ -10,9 +10,6 @@ import com.zerog.neoessentials.economy.auction.AuctionManager;
 import com.zerog.neoessentials.config.EconomyConfig;
 import com.zerog.neoessentials.storage.DataManager;
 
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
@@ -65,7 +62,8 @@ public class EconomyManager {
         this.bankManager = new BankManager(this);
         this.transactionManager = new TransactionManager(this);
         this.marketManager = new MarketManager(this);
-        this.shopManager = new ShopManager(this);
+        ShopManager.createInstance(this);
+        this.shopManager = ShopManager.getInstance();
         this.auctionManager = new AuctionManager(this);
         
         this.analytics = new EconomyAnalytics();

@@ -3,7 +3,9 @@ package com.zerog.neoessentials.commands.essentials;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -17,7 +19,14 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Teleport command implementation for NeoEssentials
- * Provides basic teleportation functionality for server operators
+ * Provides comprehensive teleportation functionality with proper permission nodes
+ * 
+ * Permission Nodes:
+ * - essentials.tp - Basic teleportation to players
+ * - essentials.tp.others - Teleport other players
+ * - essentials.tp.coords - Teleport to coordinates
+ * - essentials.tphere - Teleport players to you
+ * - essentials.tp.* - All teleport permissions
  * 
  * Commands:
  * - /tp <player> - Teleport to a player
@@ -34,17 +43,20 @@ public class TeleportCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /tp <player> - Teleport to a player
         dispatcher.register(Commands.literal("tp")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_SELF))
             .then(Commands.argument("target", EntityArgument.player())
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_SELF))
                 .executes(ctx -> teleportToPlayer(ctx, EntityArgument.getPlayer(ctx, "target")))
                 // /tp <player1> <player2> - Teleport player1 to player2
                 .then(Commands.argument("destination", EntityArgument.player())
+                    .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_OTHERS))
                     .executes(ctx -> teleportPlayerToPlayer(ctx, 
                         EntityArgument.getPlayer(ctx, "target"), 
                         EntityArgument.getPlayer(ctx, "destination")))
                 )
                 // /tp <player> <x> <y> <z> - Teleport player to coordinates
                 .then(Commands.argument("location", Vec3Argument.vec3())
+                    .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_OTHERS))
                     .executes(ctx -> teleportPlayerToLocation(ctx, 
                         EntityArgument.getPlayer(ctx, "target"), 
                         Vec3Argument.getCoordinates(ctx, "location")))
@@ -52,34 +64,39 @@ public class TeleportCommand {
             )
             // /tp <x> <y> <z> - Teleport to coordinates
             .then(Commands.argument("location", Vec3Argument.vec3())
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_COORDS))
                 .executes(ctx -> teleportToLocation(ctx, Vec3Argument.getCoordinates(ctx, "location")))
             )
         );
         
         // /teleport - Alias for /tp
         dispatcher.register(Commands.literal("teleport")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_SELF))
             .then(Commands.argument("target", EntityArgument.player())
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_SELF))
                 .executes(ctx -> teleportToPlayer(ctx, EntityArgument.getPlayer(ctx, "target")))
                 .then(Commands.argument("destination", EntityArgument.player())
+                    .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_OTHERS))
                     .executes(ctx -> teleportPlayerToPlayer(ctx, 
                         EntityArgument.getPlayer(ctx, "target"), 
                         EntityArgument.getPlayer(ctx, "destination")))
                 )
                 .then(Commands.argument("location", Vec3Argument.vec3())
+                    .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_OTHERS))
                     .executes(ctx -> teleportPlayerToLocation(ctx, 
                         EntityArgument.getPlayer(ctx, "target"), 
                         Vec3Argument.getCoordinates(ctx, "location")))
                 )
             )
             .then(Commands.argument("location", Vec3Argument.vec3())
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_COORDS))
                 .executes(ctx -> teleportToLocation(ctx, Vec3Argument.getCoordinates(ctx, "location")))
             )
         );
         
         // /tphere <player> - Teleport a player to you
         dispatcher.register(Commands.literal("tphere")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.TP_HERE))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(ctx -> teleportPlayerHere(ctx, EntityArgument.getPlayer(ctx, "player")))
             )

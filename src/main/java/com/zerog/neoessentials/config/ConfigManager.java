@@ -592,6 +592,41 @@ public class ConfigManager {
     public ModerationConfig getModerationConfig() { return moderationConfig != null ? moderationConfig : new ModerationConfig(); }
     public MessagingConfig getMessagingConfig() { return messagingConfig != null ? messagingConfig : new MessagingConfig(); }
     public DiscordConfig getDiscordConfig() { return discordConfig != null ? discordConfig : new DiscordConfig(); }
+    
+    /**
+     * Reload Discord configuration and reinitialize integrations
+     */
+    public void reloadDiscordConfig() {
+        loadDiscordConfig();
+        
+        // Reinitialize Discord integrations with new configuration
+        try {
+            com.zerog.neoessentials.discord.DiscordManager discordManager = 
+                com.zerog.neoessentials.discord.DiscordManager.getInstance();
+            
+            // Initialize Discord with webhook configuration
+            if (discordConfig.webhooks.enabled && !discordConfig.webhooks.chatWebhookUrl.isEmpty()) {
+                discordManager.initialize(
+                    discordConfig.webhooks.chatWebhookUrl,
+                    "NeoEssentials Server",
+                    "https://via.placeholder.com/64x64/5865F2/FFFFFF?text=NE"
+                );
+            }
+            
+            // Reinitialize DiscordWebhookIntegration
+            com.zerog.neoessentials.integrations.DiscordWebhookIntegration webhookIntegration = 
+                com.zerog.neoessentials.integrations.DiscordWebhookIntegration.getInstance();
+            if (discordConfig.webhooks.enabled && !discordConfig.webhooks.chatWebhookUrl.isEmpty()) {
+                webhookIntegration.updateConfiguration(discordConfig.webhooks.chatWebhookUrl, true);
+            } else {
+                webhookIntegration.updateConfiguration("", false);
+            }
+            
+            LOGGER.info("Discord configuration reloaded and integrations reinitialized");
+        } catch (Exception e) {
+            LOGGER.error("Failed to reinitialize Discord integrations after config reload", e);
+        }
+    }
     public TablistConfig getTablistConfig() { return tablistConfig != null ? tablistConfig : new TablistConfig(); }
     public SpawnConfig getSpawnConfig() { return spawnConfig != null ? spawnConfig : new SpawnConfig(); }
     
