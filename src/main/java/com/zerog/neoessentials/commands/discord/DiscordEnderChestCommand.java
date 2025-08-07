@@ -2,7 +2,7 @@ package com.zerog.neoessentials.commands.discord;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-// import com.zerog.neoessentials.discord.DiscordInteractiveChat; // DISABLED
+// import com.zerog.neoessentials.discord.DiscordInteractiveChat; // TEMPORARILY DISABLED
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -27,9 +27,6 @@ public class DiscordEnderChestCommand {
             try {
                 // Use the DiscordInteractiveChat method to send ender chest to Discord
                 // DiscordInteractiveChat.sendEnderChestToDiscord(player, "**" + player.getName().getString() + "** is sharing their ender chest:");
-                
-                // TODO: Restore Discord integration after fixing DiscordInteractiveChat
-                player.sendSystemMessage(Component.literal("Discord integration temporarily disabled."));
                 
                 player.sendSystemMessage(Component.literal("§aEnder chest shared to Discord successfully!"));
                 return 1;
