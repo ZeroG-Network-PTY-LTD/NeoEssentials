@@ -2,7 +2,7 @@ package com.zerog.neoessentials.commands.discord;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-// import com.zerog.neoessentials.discord.DiscordInteractiveChat; // DISABLED
+// // import com.zerog.neoessentials.discord.DiscordInteractiveChat; // TEMPORARILY DISABLED // TEMPORARILY DISABLED - API issues
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -33,9 +33,9 @@ public class DiscordItemCommand {
             
             try {
                 // Use the DiscordInteractiveChat method to send item to Discord
-                // DiscordInteractiveChat.sendItemToDiscord(player, heldItem, "**" + player.getName().getString() + "** is showing off their item:");
+                // // DiscordInteractiveChat.sendItemToDiscord(player, heldItem, "**" + player.getName().getString() + "** is showing off their item:");
                 
-                // TODO: Restore Discord integration after fixing DiscordInteractiveChat
+                // TODO: Restore Discord integration after fixing API issues
                 player.sendSystemMessage(Component.literal("Discord integration temporarily disabled."));
                 
                 player.sendSystemMessage(Component.literal("§aItem shared to Discord successfully!"));
