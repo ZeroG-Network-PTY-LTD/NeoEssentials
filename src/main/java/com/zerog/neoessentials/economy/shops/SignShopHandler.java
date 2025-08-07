@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.SignBlock;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.ChatFormatting;
+import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,25 +169,45 @@ public class SignShopHandler {
                    signShop.getOwnerId());
         
         // Player-to-player transaction: Remove money from buyer, give to shop owner
+        LOGGER.info("Processing buy transaction: Player {} buying from shop owner {} for {}", 
+            player.getName().getString(), signShop.getOwnerId(), economyManager.formatCurrency(totalPrice));
+        
+        // Check buyer's balance before transaction
+        BigDecimal buyerBalanceBefore = economyManager.getBalance(player.getUUID());
+        LOGGER.info("Buyer balance before: {}", economyManager.formatCurrency(buyerBalanceBefore));
+        
         boolean withdrawSuccess = economyManager.withdrawBalance(
                 player.getUUID(), 
                 totalPrice,
                 "Shop purchase: " + signShop.getQuantity() + "x " + signShop.getItem().getDisplayName().getString()
         );
         
+        LOGGER.info("Withdraw success: {}", withdrawSuccess);
+        
         if (!withdrawSuccess) {
             player.sendSystemMessage(Component.literal("§cFailed to process payment!"));
             return InteractionResult.FAIL;
         }
         
+        // Check buyer's balance after withdrawal
+        BigDecimal buyerBalanceAfter = economyManager.getBalance(player.getUUID());
+        LOGGER.info("Buyer balance after withdrawal: {}", economyManager.formatCurrency(buyerBalanceAfter));
+
         // Give money to shop owner
         try {
             java.util.UUID shopOwnerUUID = java.util.UUID.fromString(signShop.getOwnerId());
+            
+            // Check shop owner's balance before transaction
+            BigDecimal ownerBalanceBefore = economyManager.getBalance(shopOwnerUUID);
+            LOGGER.info("Shop owner balance before: {}", economyManager.formatCurrency(ownerBalanceBefore));
+            
             boolean depositSuccess = economyManager.depositBalance(
                     shopOwnerUUID,
                     totalPrice,
                     "Shop sale: " + signShop.getQuantity() + "x " + signShop.getItem().getDisplayName().getString() + " to " + player.getName().getString()
             );
+            
+            LOGGER.info("Deposit success: {}", depositSuccess);
             
             if (!depositSuccess) {
                 // Refund the buyer if we can't pay the shop owner

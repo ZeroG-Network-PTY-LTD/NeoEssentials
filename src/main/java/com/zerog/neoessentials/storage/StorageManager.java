@@ -10,6 +10,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,6 +67,7 @@ public class StorageManager {
             Files.createDirectories(dataDirectory.resolve("economy"));
             Files.createDirectories(dataDirectory.resolve("kits"));
             Files.createDirectories(dataDirectory.resolve("mail"));
+            Files.createDirectories(dataDirectory.resolve("shops"));
             Files.createDirectories(dataDirectory.resolve("backups"));
             
             LOGGER.info("Storage system initialized at: {}", dataDirectory.toAbsolutePath());
@@ -86,10 +89,30 @@ public class StorageManager {
                 Path filePath = categoryPath.resolve(filename + ".json");
                 String jsonData = gson.toJson(data);
                 
-                // Write to temp file first, then rename for atomic operation
-                Path tempFile = categoryPath.resolve(filename + ".tmp");
-                Files.write(tempFile, jsonData.getBytes());
-                Files.move(tempFile, filePath);
+                // Try atomic approach first
+                try {
+                    // Write to temp file first, then rename for atomic operation
+                    Path tempFile = categoryPath.resolve(filename + ".tmp");
+                    
+                    // Ensure temp file is created successfully
+                    Files.write(tempFile, jsonData.getBytes());
+                    
+                    // Verify temp file exists before moving
+                    if (!Files.exists(tempFile)) {
+                        throw new IOException("Temp file was not created: " + tempFile);
+                    }
+                    
+                    // Ensure target directory still exists
+                    Files.createDirectories(categoryPath);
+                    
+                    // Move with replace existing (without atomic move to avoid filesystem issues)
+                    Files.move(tempFile, filePath, StandardCopyOption.REPLACE_EXISTING);
+                    
+                } catch (IOException atomicError) {
+                    // If atomic approach fails, try direct write as fallback
+                    LOGGER.warn("Atomic save failed for {}/{}, trying direct write: {}", category, filename, atomicError.getMessage());
+                    Files.write(filePath, jsonData.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+                }
                 
                 // Update cache
                 cache.put(category + "/" + filename, data);
