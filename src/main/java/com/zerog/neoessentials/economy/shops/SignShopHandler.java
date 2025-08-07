@@ -136,23 +136,33 @@ public class SignShopHandler {
         double totalPrice = signShop.getBuyPrice() * signShop.getQuantity();
         
         // Get the economy manager and check if economy is enabled
-        com.zerog.neoessentials.economy.EconomyManager economyManager = 
-            com.zerog.neoessentials.economy.EconomyManager.getInstance();
+        com.zerog.neoessentials.managers.EconomyManager economyManager = 
+            com.zerog.neoessentials.managers.EconomyManager.getInstance();
         
-        if (economyManager == null || !economyManager.isEnabled()) {
+        if (economyManager == null) {
             player.sendSystemMessage(Component.literal("§cEconomy system is not available!"));
             return InteractionResult.FAIL;
         }
         
         // Check if player has enough money
         if (!economyManager.hasBalance(player.getUUID(), totalPrice)) {
+            double currentBalance = economyManager.getBalance(player.getUUID()).doubleValue();
+            LOGGER.warn("Player {} has insufficient funds. Required: {}, Has: {}", 
+                       player.getName().getString(), totalPrice, currentBalance);
+            
             player.sendSystemMessage(Component.literal(String.format(
                     "§cInsufficient funds! You need %s but have %s",
                     economyManager.formatCurrency(totalPrice),
-                    economyManager.formatCurrency(economyManager.getBalance(player.getUUID()).doubleValue())
+                    economyManager.formatCurrency(currentBalance)
             )));
             return InteractionResult.FAIL;
         }
+        
+        LOGGER.info("Player {} attempting to buy {}x {} for {} (has {})", 
+                   player.getName().getString(), signShop.getQuantity(), 
+                   signShop.getItem().getDisplayName().getString(),
+                   economyManager.formatCurrency(totalPrice),
+                   economyManager.formatCurrency(economyManager.getBalance(player.getUUID()).doubleValue()));
         
         // Process the transaction through the shop manager (which handles economy deduction)
         boolean success = shopManager.processTransaction(
@@ -172,8 +182,9 @@ public class SignShopHandler {
                 player.spawnAtLocation(itemToGive);
             }
             
-            // Reduce shop stock
-            signShop.setStock(signShop.getStock() - signShop.getQuantity());
+            // Reduce shop stock and save to storage
+            int newStock = signShop.getStock() - signShop.getQuantity();
+            shopManager.updateSignShopStock(signShop.getSignPos(), newStock);
             
             player.sendSystemMessage(Component.literal(String.format(
                     "§aPurchased %dx %s for %s",
