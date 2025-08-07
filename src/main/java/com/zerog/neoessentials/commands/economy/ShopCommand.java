@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.commands.economy;
 
-import com.zerog.neoessentials.economy.gui.EnhancedShopMenu;
-import com.zerog.neoessentials.economy.gui.EnhancedShopInterface;
+import com.zerog.neoessentials.economy.gui.ShopMenu;
+import com.zerog.neoessentials.economy.gui.ShopInterface;
 import com.zerog.neoessentials.economy.gui.ShopCreationInterface;
 import com.zerog.neoessentials.economy.gui.AdminShopManagementMenu;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -174,19 +174,19 @@ public class ShopCommand {
     }
     
     private static void openMainShop(ServerPlayer player) {
-        EnhancedShopMenu shopMenu = EnhancedShopMenu.getInstance();
+        ShopMenu shopMenu = ShopMenu.getInstance();
         shopMenu.openMainMenu(player);
-        MessageUtil.sendMessage(player, "&aWelcome to the Enhanced Shop! Browse categories or search for items.");
+        MessageUtil.sendMessage(player, "&aWelcome to the Shop! Browse categories or search for items.");
     }
     
     private static void openShopBrowser(ServerPlayer player) {
-        EnhancedShopInterface shopInterface = EnhancedShopInterface.getInstance();
+        ShopInterface shopInterface = ShopInterface.getInstance();
         shopInterface.openShopBrowser(player);
         MessageUtil.sendMessage(player, "&eBrowse all available player and admin shops!");
     }
     
     private static void openShopCategory(ServerPlayer player, String category) {
-        EnhancedShopMenu shopMenu = EnhancedShopMenu.getInstance();
+        ShopMenu shopMenu = ShopMenu.getInstance();
         shopMenu.openCategoryMenu(player, category);
         MessageUtil.sendMessage(player, "&aOpened " + category + " shop category!");
     }

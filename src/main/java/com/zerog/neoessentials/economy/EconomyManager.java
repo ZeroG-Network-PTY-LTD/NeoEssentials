@@ -333,6 +333,38 @@ public class EconomyManager {
     public EconomyAnalytics getAnalytics() { return analytics; }
     public EconomyConfig getConfig() { return config; }
     
+    // Compatibility methods for GUI classes (using default currency)
+    public BigDecimal getBalance(UUID playerId) {
+        return getBalance(playerId, currencyManager.getPrimaryCurrency());
+    }
+    
+    public boolean hasBalance(UUID playerId, BigDecimal amount) {
+        BigDecimal balance = getBalance(playerId);
+        return balance.compareTo(amount) >= 0;
+    }
+    
+    public boolean hasBalance(UUID playerId, double amount) {
+        return hasBalance(playerId, BigDecimal.valueOf(amount));
+    }
+    
+    public boolean withdrawBalance(UUID playerId, BigDecimal amount, String reason) {
+        return removeBalance(playerId, currencyManager.getPrimaryCurrency(), amount);
+    }
+    
+    public boolean withdrawBalance(UUID playerId, double amount, String reason) {
+        return withdrawBalance(playerId, BigDecimal.valueOf(amount), reason);
+    }
+    
+    public String formatCurrency(BigDecimal amount) {
+        com.zerog.neoessentials.economy.currency.Currency primaryCurrency = 
+            currencyManager.getCurrency(currencyManager.getPrimaryCurrency());
+        return primaryCurrency != null ? primaryCurrency.formatAmount(amount) : amount.toString();
+    }
+    
+    public String formatCurrency(double amount) {
+        return formatCurrency(BigDecimal.valueOf(amount));
+    }
+    
     public boolean isEnabled() { return economyEnabled; }
     
     public void shutdown() {

@@ -310,7 +310,6 @@ Add custom placeholders in your configuration:
 [placeholders.custom]
 # Simple static placeholders
 server_website = "https://myserver.com"
-server_discord = "discord.gg/myserver"
 server_rules = "Be respectful and have fun!"
 
 # Dynamic placeholders (requires mod support)

@@ -290,22 +290,6 @@ public final class PermissionNodes {
     public static final String SECURITY_ALL = "neoessentials.security.*";
     
     // ==============================
-    // DISCORD INTEGRATION
-    // ==============================
-    
-    // Discord Commands
-    public static final String DISCORD_LINK = "neoessentials.discord.link";
-    public static final String DISCORD_UNLINK = "neoessentials.discord.unlink";
-    public static final String DISCORD_INFO = "neoessentials.discord.info";
-    
-    // Discord Interactive Features
-    public static final String DISCORD_ITEM = "neoessentials.discord.item";
-    public static final String DISCORD_INVENTORY = "neoessentials.discord.inventory";
-    public static final String DISCORD_ENDERCHEST = "neoessentials.discord.enderchest";
-    public static final String DISCORD_INTERACTIVE = "neoessentials.discord.interactive";
-    public static final String DISCORD_ALL = "neoessentials.discord.*";
-    
-    // ==============================
     // PERMISSION MANAGEMENT
     // ==============================
     
@@ -413,6 +397,16 @@ public final class PermissionNodes {
     public static final String BYPASS_COST_COMMAND = "essentials.bypass.cost.command";
     
     // ==============================
+    // DISCORD INTEGRATION (DEPRECATED/DISABLED)
+    // ==============================
+    
+    // Discord Commands - kept for config compatibility
+    public static final String DISCORD_LINK = "neoessentials.discord.link";
+    public static final String DISCORD_ITEM = "neoessentials.discord.item";
+    public static final String DISCORD_INVENTORY = "neoessentials.discord.inventory";
+    public static final String DISCORD_ENDERCHEST = "neoessentials.discord.enderchest";
+    
+    // ==============================
     // ADMINISTRATIVE WILDCARD PERMISSIONS
     // ==============================
     
@@ -502,10 +496,6 @@ public final class PermissionNodes {
             PLACEHOLDER_TEST, PLACEHOLDER_LIST, PLACEHOLDER_INFO, PLACEHOLDER_RELOAD, PLACEHOLDER_ALL,
             GUI_OPEN, GUI_ADMIN, GUI_THEMES, GUI_ALL,
             SECURITY_VIEW, SECURITY_ADMIN, SECURITY_ALERTS, SECURITY_ALL,
-            
-            // Discord Integration
-            DISCORD_LINK, DISCORD_UNLINK, DISCORD_INFO,
-            DISCORD_ITEM, DISCORD_INVENTORY, DISCORD_ENDERCHEST, DISCORD_INTERACTIVE, DISCORD_ALL,
             
             // Permission Management
             PERMISSIONS_INFO, PERMISSIONS_CHECK, PERMISSIONS_USER, PERMISSIONS_GROUP,

@@ -169,7 +169,7 @@ snapshotFrequency = 15
 # Notify online staff immediately
 immediateNotification = true
 # Notification methods
-methods = ["chat", "discord", "email"]
+methods = ["chat", "email"]
 # Minimum threat level for notifications
 minThreatLevel = "MEDIUM"
 ```
@@ -664,19 +664,6 @@ investigationRetention = 180
 ### External System Integration
 
 Connect with external security and monitoring systems:
-
-#### Discord Integration
-```toml
-[security.integration.discord]
-enabled = false
-webhookUrl = "https://discord.com/api/webhooks/..."
-# Channels for different alert types
-channels = {
-  high = "security-alerts",
-  medium = "moderation-log",
-  low = "activity-log"
-}
-```
 
 #### Logging Systems
 ```toml
