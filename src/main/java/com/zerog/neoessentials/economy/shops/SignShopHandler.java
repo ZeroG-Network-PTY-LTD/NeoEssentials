@@ -158,52 +158,73 @@ public class SignShopHandler {
             return InteractionResult.FAIL;
         }
         
-        LOGGER.info("Player {} attempting to buy {}x {} for {} (has {})", 
+        LOGGER.info("Player {} attempting to buy {}x {} for {} from shop owned by {}", 
                    player.getName().getString(), signShop.getQuantity(), 
                    signShop.getItem().getDisplayName().getString(),
                    economyManager.formatCurrency(totalPrice),
-                   economyManager.formatCurrency(economyManager.getBalance(player.getUUID()).doubleValue()));
+                   signShop.getOwnerId());
         
-        // Process the transaction through the shop manager (which handles economy deduction)
-        boolean success = shopManager.processTransaction(
-                player.getStringUUID(),
-                "sign_shop_" + signShop.getSignPos().toShortString(),
-                signShop.getItem(),
-                signShop.getQuantity(),
-                totalPrice
+        // Player-to-player transaction: Remove money from buyer, give to shop owner
+        boolean withdrawSuccess = economyManager.withdrawBalance(
+                player.getUUID(), 
+                totalPrice,
+                "Shop purchase: " + signShop.getQuantity() + "x " + signShop.getItem().getDisplayName().getString()
         );
         
-        if (success) {
-            // Give items to player
-            ItemStack itemToGive = signShop.getItem().copy();
-            itemToGive.setCount(signShop.getQuantity());
-            
-            if (!player.getInventory().add(itemToGive)) {
-                player.spawnAtLocation(itemToGive);
-            }
-            
-            // Reduce shop stock and save to storage
-            int newStock = signShop.getStock() - signShop.getQuantity();
-            shopManager.updateSignShopStock(signShop.getSignPos(), newStock);
-            
-            player.sendSystemMessage(Component.literal(String.format(
-                    "§aPurchased %dx %s for %s",
-                    signShop.getQuantity(),
-                    signShop.getItem().getDisplayName().getString(),
-                    economyManager.formatCurrency(totalPrice)
-            )));
-            
-            LOGGER.info("Player {} purchased {}x {} for {} from sign shop at {}", 
-                       player.getName().getString(), signShop.getQuantity(), 
-                       signShop.getItem().getDisplayName().getString(), 
-                       economyManager.formatCurrency(totalPrice),
-                       signShop.getSignPos());
-            
-            return InteractionResult.SUCCESS;
-        } else {
-            player.sendSystemMessage(Component.literal("§cTransaction failed! Please try again."));
+        if (!withdrawSuccess) {
+            player.sendSystemMessage(Component.literal("§cFailed to process payment!"));
             return InteractionResult.FAIL;
         }
+        
+        // Give money to shop owner
+        try {
+            java.util.UUID shopOwnerUUID = java.util.UUID.fromString(signShop.getOwnerId());
+            boolean depositSuccess = economyManager.depositBalance(
+                    shopOwnerUUID,
+                    totalPrice,
+                    "Shop sale: " + signShop.getQuantity() + "x " + signShop.getItem().getDisplayName().getString() + " to " + player.getName().getString()
+            );
+            
+            if (!depositSuccess) {
+                // Refund the buyer if we can't pay the shop owner
+                economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Shop payment failed");
+                player.sendSystemMessage(Component.literal("§cShop payment failed! Money refunded."));
+                return InteractionResult.FAIL;
+            }
+        } catch (IllegalArgumentException e) {
+            // Invalid UUID - refund buyer
+            economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Invalid shop owner");
+            player.sendSystemMessage(Component.literal("§cInvalid shop owner! Money refunded."));
+            return InteractionResult.FAIL;
+        }
+        
+        // Transaction successful - give items to player
+        ItemStack itemToGive = signShop.getItem().copy();
+        itemToGive.setCount(signShop.getQuantity());
+        
+        if (!player.getInventory().add(itemToGive)) {
+            player.spawnAtLocation(itemToGive);
+        }
+        
+        // Reduce shop stock and save to storage
+        int newStock = signShop.getStock() - signShop.getQuantity();
+        shopManager.updateSignShopStock(signShop.getSignPos(), newStock);
+        
+        player.sendSystemMessage(Component.literal(String.format(
+                "§aPurchased %dx %s for %s from %s's shop",
+                signShop.getQuantity(),
+                signShop.getItem().getDisplayName().getString(),
+                economyManager.formatCurrency(totalPrice),
+                signShop.getOwnerId()
+        )));
+        
+        LOGGER.info("Player {} purchased {}x {} for {} from shop owned by {}", 
+                   player.getName().getString(), signShop.getQuantity(), 
+                   signShop.getItem().getDisplayName().getString(), 
+                   economyManager.formatCurrency(totalPrice),
+                   signShop.getOwnerId());
+        
+        return InteractionResult.SUCCESS;
     }
     
     /**
@@ -256,44 +277,109 @@ public class SignShopHandler {
             return InteractionResult.FAIL;
         }
         
-        // Add money to player through economy manager
+        // Player-to-player transaction: Shop owner pays seller for items
         double earnings = signShop.getSellPrice() * quantityToSell;
         
-        // Get the economy manager and add money to player
+        // Get the economy manager
         com.zerog.neoessentials.managers.EconomyManager economyManager = 
             com.zerog.neoessentials.managers.EconomyManager.getInstance();
         
         if (economyManager != null && economyManager.isEnabled()) {
-            boolean success = economyManager.depositBalance(
-                player.getUUID(), 
-                java.math.BigDecimal.valueOf(earnings),
-                "Shop sale: " + quantityToSell + "x " + shopItem.getDisplayName().getString()
-            );
-            
-            if (success) {
-                player.sendSystemMessage(Component.literal(String.format(
-                        "§aSold %dx %s for %s",
-                        quantityToSell,
-                        shopItem.getDisplayName().getString(),
-                        economyManager.formatCurrency(earnings)
-                )));
+            try {
+                java.util.UUID shopOwnerUUID = java.util.UUID.fromString(signShop.getOwnerId());
                 
-                LOGGER.info("Player {} sold {}x {} for {} to sign shop at {}", 
+                // Check if shop owner has enough money to buy the items
+                if (!economyManager.hasBalance(shopOwnerUUID, earnings)) {
+                    // Return items to player since shop owner can't afford them
+                    ItemStack itemToReturn = shopItem.copy();
+                    itemToReturn.setCount(quantityToSell);
+                    if (!player.getInventory().add(itemToReturn)) {
+                        player.spawnAtLocation(itemToReturn);
+                    }
+                    player.sendSystemMessage(Component.literal("§cShop owner doesn't have enough money! Items returned."));
+                    return InteractionResult.FAIL;
+                }
+                
+                // Remove money from shop owner
+                boolean withdrawSuccess = economyManager.withdrawBalance(
+                    shopOwnerUUID,
+                    earnings,
+                    "Shop purchase: " + quantityToSell + "x " + shopItem.getDisplayName().getString() + " from " + player.getName().getString()
+                );
+                
+                if (!withdrawSuccess) {
+                    // Return items to player since payment failed
+                    ItemStack itemToReturn = shopItem.copy();
+                    itemToReturn.setCount(quantityToSell);
+                    if (!player.getInventory().add(itemToReturn)) {
+                        player.spawnAtLocation(itemToReturn);
+                    }
+                    player.sendSystemMessage(Component.literal("§cPayment failed! Items returned."));
+                    return InteractionResult.FAIL;
+                }
+                
+                // Give money to seller
+                boolean depositSuccess = economyManager.depositBalance(
+                    player.getUUID(), 
+                    earnings,
+                    "Shop sale: " + quantityToSell + "x " + shopItem.getDisplayName().getString() + " to " + signShop.getOwnerId() + "'s shop"
+                );
+                
+                if (!depositSuccess) {
+                    // Refund the shop owner since we couldn't pay the seller
+                    economyManager.depositBalance(shopOwnerUUID, earnings, "Refund for failed shop sale");
+                    // Return items to player
+                    ItemStack itemToReturn = shopItem.copy();
+                    itemToReturn.setCount(quantityToSell);
+                    if (!player.getInventory().add(itemToReturn)) {
+                        player.spawnAtLocation(itemToReturn);
+                    }
+                    player.sendSystemMessage(Component.literal("§cPayment failed! Items and money returned."));
+                    return InteractionResult.FAIL;
+                }
+                
+                // Transaction successful
+                String shopOwnerName = "Unknown";
+                try {
+                    net.minecraft.server.MinecraftServer server = player.getServer();
+                    if (server != null) {
+                        net.minecraft.server.level.ServerPlayer shopOwnerPlayer = server.getPlayerList().getPlayer(shopOwnerUUID);
+                        if (shopOwnerPlayer != null) {
+                            shopOwnerName = shopOwnerPlayer.getName().getString();
+                        }
+                    }
+                } catch (Exception e) {
+                    // Keep default name if we can't get the actual name
+                }
+            
+            if (depositSuccess) {
+                player.sendSystemMessage(Component.literal("§aSold " + quantityToSell + "x " + shopItem.getDisplayName().getString() + 
+                    " to " + shopOwnerName + "'s shop for $" + String.format("%.2f", earnings)));
+                
+                LOGGER.info("Player {} sold {}x {} for {} to {} shop at {}", 
                            player.getName().getString(), quantityToSell, 
                            shopItem.getDisplayName().getString(), 
-                           economyManager.formatCurrency(earnings),
+                           String.format("%.2f", earnings),
+                           shopOwnerName,
                            signShop.getSignPos());
                 
                 return InteractionResult.SUCCESS;
             } else {
-                // If adding money failed, give items back
+                // This should not happen since we already checked depositSuccess above
+                // But included for safety
+                player.sendSystemMessage(Component.literal("§cUnexpected transaction error!"));
+                return InteractionResult.FAIL;
+            }
+            
+            } catch (Exception e) {
+                // Return items to player on any error
                 ItemStack itemToReturn = shopItem.copy();
                 itemToReturn.setCount(quantityToSell);
                 if (!player.getInventory().add(itemToReturn)) {
                     player.spawnAtLocation(itemToReturn);
                 }
-                
-                player.sendSystemMessage(Component.literal("§cFailed to process payment! Items returned."));
+                player.sendSystemMessage(Component.literal("§cTransaction failed! Items returned."));
+                LOGGER.error("Error in sell transaction", e);
                 return InteractionResult.FAIL;
             }
         } else {

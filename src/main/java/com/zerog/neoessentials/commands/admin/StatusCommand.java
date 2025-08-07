@@ -4,7 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.config.ConfigManager;
-import com.zerog.neoessentials.gui.CustomGuiManager;
+// GUI system removed - using sign-based shops only
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.localization.LanguageValidator;
 import com.zerog.neoessentials.economy.EconomyManager;
@@ -311,8 +311,8 @@ public class StatusCommand {
                     KitManager.getInstance();
                     return "§aOperational";
                 case "gui":
-                    CustomGuiManager.getInstance();
-                    return "§aOperational";
+                    // GUI system removed - using sign-based shops only
+                    return "§eDisabled (Sign-based shops only)";
                 default:
                     return "§eUnknown";
             }
