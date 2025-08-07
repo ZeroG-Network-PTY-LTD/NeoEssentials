@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 public class SignShopData {
     private String ownerId;
     private BlockPosData signPos;
+    private BlockPosData chestPos; // Connected chest position
     private ItemStackData item;
     private double buyPrice;
     private double sellPrice;
@@ -23,6 +24,7 @@ public class SignShopData {
     public SignShopData(ShopManager.SignShop signShop) {
         this.ownerId = signShop.getOwnerId();
         this.signPos = new BlockPosData(signShop.getSignPos());
+        this.chestPos = signShop.getChestPos() != null ? new BlockPosData(signShop.getChestPos()) : null;
         this.item = new ItemStackData(signShop.getItem());
         this.buyPrice = signShop.getBuyPrice();
         this.sellPrice = signShop.getSellPrice();
@@ -33,10 +35,11 @@ public class SignShopData {
     // Convert back to SignShop
     public ShopManager.SignShop toSignShop() {
         BlockPos pos = signPos.toBlockPos();
+        BlockPos chestPosition = chestPos != null ? chestPos.toBlockPos() : null;
         ItemStack itemStack = item.toItemStack();
         
         ShopManager.SignShop shop = new ShopManager.SignShop(
-            ownerId, pos, itemStack, buyPrice, sellPrice, quantity
+            ownerId, pos, chestPosition, itemStack, buyPrice, sellPrice, quantity
         );
         shop.setStock(stock);
         return shop;
