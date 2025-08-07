@@ -135,7 +135,26 @@ public class SignShopHandler {
         
         double totalPrice = signShop.getBuyPrice() * signShop.getQuantity();
         
-        // Process the transaction through the shop manager
+        // Get the economy manager and check if economy is enabled
+        com.zerog.neoessentials.economy.EconomyManager economyManager = 
+            com.zerog.neoessentials.economy.EconomyManager.getInstance();
+        
+        if (economyManager == null || !economyManager.isEnabled()) {
+            player.sendSystemMessage(Component.literal("§cEconomy system is not available!"));
+            return InteractionResult.FAIL;
+        }
+        
+        // Check if player has enough money
+        if (!economyManager.hasBalance(player.getUUID(), totalPrice)) {
+            player.sendSystemMessage(Component.literal(String.format(
+                    "§cInsufficient funds! You need %s but have %s",
+                    economyManager.formatCurrency(totalPrice),
+                    economyManager.formatCurrency(economyManager.getBalance(player.getUUID()).doubleValue())
+            )));
+            return InteractionResult.FAIL;
+        }
+        
+        // Process the transaction through the shop manager (which handles economy deduction)
         boolean success = shopManager.processTransaction(
                 player.getStringUUID(),
                 "sign_shop_" + signShop.getSignPos().toShortString(),
@@ -157,15 +176,21 @@ public class SignShopHandler {
             signShop.setStock(signShop.getStock() - signShop.getQuantity());
             
             player.sendSystemMessage(Component.literal(String.format(
-                    "§aPurchased %dx %s for $%.2f",
+                    "§aPurchased %dx %s for %s",
                     signShop.getQuantity(),
                     signShop.getItem().getDisplayName().getString(),
-                    totalPrice
+                    economyManager.formatCurrency(totalPrice)
             )));
+            
+            LOGGER.info("Player {} purchased {}x {} for {} from sign shop at {}", 
+                       player.getName().getString(), signShop.getQuantity(), 
+                       signShop.getItem().getDisplayName().getString(), 
+                       economyManager.formatCurrency(totalPrice),
+                       signShop.getSignPos());
             
             return InteractionResult.SUCCESS;
         } else {
-            player.sendSystemMessage(Component.literal("§cInsufficient funds!"));
+            player.sendSystemMessage(Component.literal("§cTransaction failed! Please try again."));
             return InteractionResult.FAIL;
         }
     }
@@ -204,17 +229,58 @@ public class SignShopHandler {
             }
         }
         
-        // Add money to player (TODO: implement through economy manager)
+        // Add money to player through economy manager
         double earnings = signShop.getSellPrice() * quantityToSell;
         
-        player.sendSystemMessage(Component.literal(String.format(
-                "§aSold %dx %s for $%.2f",
-                quantityToSell,
-                shopItem.getDisplayName().getString(),
-                earnings
-        )));
+        // Get the economy manager and add money to player
+        com.zerog.neoessentials.economy.EconomyManager economyManager = 
+            com.zerog.neoessentials.economy.EconomyManager.getInstance();
         
-        return InteractionResult.SUCCESS;
+        if (economyManager != null && economyManager.isEnabled()) {
+            boolean success = economyManager.addBalance(
+                player.getUUID(), 
+                economyManager.getCurrencyManager().getPrimaryCurrency(), 
+                java.math.BigDecimal.valueOf(earnings)
+            );
+            
+            if (success) {
+                player.sendSystemMessage(Component.literal(String.format(
+                        "§aSold %dx %s for %s",
+                        quantityToSell,
+                        shopItem.getDisplayName().getString(),
+                        economyManager.formatCurrency(earnings)
+                )));
+                
+                LOGGER.info("Player {} sold {}x {} for {} to sign shop at {}", 
+                           player.getName().getString(), quantityToSell, 
+                           shopItem.getDisplayName().getString(), 
+                           economyManager.formatCurrency(earnings),
+                           signShop.getSignPos());
+                
+                return InteractionResult.SUCCESS;
+            } else {
+                // If adding money failed, give items back
+                ItemStack itemToReturn = shopItem.copy();
+                itemToReturn.setCount(quantityToSell);
+                if (!player.getInventory().add(itemToReturn)) {
+                    player.spawnAtLocation(itemToReturn);
+                }
+                
+                player.sendSystemMessage(Component.literal("§cFailed to process payment! Items returned."));
+                return InteractionResult.FAIL;
+            }
+        } else {
+            player.sendSystemMessage(Component.literal("§cEconomy system is not available!"));
+            
+            // Give items back since economy is disabled
+            ItemStack itemToReturn = shopItem.copy();
+            itemToReturn.setCount(quantityToSell);
+            if (!player.getInventory().add(itemToReturn)) {
+                player.spawnAtLocation(itemToReturn);
+            }
+            
+            return InteractionResult.FAIL;
+        }
     }
     
     /**

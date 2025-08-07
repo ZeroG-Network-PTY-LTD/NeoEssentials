@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import com.zerog.neoessentials.features.CustomBossbarManager;
 import com.zerog.neoessentials.features.TablistScoreboardManager;
 import com.zerog.neoessentials.listeners.NotificationEventListener;
+import com.zerog.neoessentials.listeners.ShopSignEventListener;
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.managers.*;
 import com.zerog.neoessentials.notifications.NotificationManager;
@@ -73,7 +74,8 @@ public class NeoEssentials {
             LOGGER.info("Language System initialized");
             
             // Initialize all managers
-            EconomyManager.getInstance();
+            // Use advanced economy manager with full shop system support
+            com.zerog.neoessentials.economy.EconomyManager.getInstance();
             HomeManager.getInstance();
             WarpManager.getInstance();
             KitManager.getInstance();
@@ -101,29 +103,6 @@ public class NeoEssentials {
             
             com.zerog.neoessentials.performance.AsyncOperationManager.getInstance();
             LOGGER.info("Async Operation Manager initialized");
-            
-            // Initialize Discord Manager with configuration
-            com.zerog.neoessentials.discord.DiscordManager discordManager = com.zerog.neoessentials.discord.DiscordManager.getInstance();
-            com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
-            com.zerog.neoessentials.config.DiscordConfig discordConfig = configManager.getDiscordConfig();
-            
-            // Initialize Discord with webhook configuration
-            if (discordConfig.webhooks.enabled && !discordConfig.webhooks.chatWebhookUrl.isEmpty()) {
-                discordManager.initialize(
-                    discordConfig.webhooks.chatWebhookUrl,
-                    "NeoEssentials Server",
-                    "https://via.placeholder.com/64x64/5865F2/FFFFFF?text=NE"
-                );
-            }
-            
-            // Initialize DiscordWebhookIntegration
-            com.zerog.neoessentials.integrations.DiscordWebhookIntegration webhookIntegration = 
-                com.zerog.neoessentials.integrations.DiscordWebhookIntegration.getInstance();
-            if (discordConfig.webhooks.enabled && !discordConfig.webhooks.chatWebhookUrl.isEmpty()) {
-                webhookIntegration.updateConfiguration(discordConfig.webhooks.chatWebhookUrl, true);
-            }
-            
-            LOGGER.info("Discord Manager initialized");
             
             // Initialize Language Manager
             LanguageManager.getInstance().initialize();
@@ -167,6 +146,14 @@ public class NeoEssentials {
             
             // Initialize notification event listener
             NotificationEventListener.getInstance();
+            
+            // Initialize shop sign event listener for preventing edit mode
+            ShopSignEventListener shopSignListener = 
+                new ShopSignEventListener(
+                    com.zerog.neoessentials.economy.shops.ShopManager.getInstance()
+                );
+            NeoForge.EVENT_BUS.register(shopSignListener);
+            LOGGER.info("Shop Sign Event Listener initialized");
             
             // Initialize Playtime Tracker
             com.zerog.neoessentials.player.PlaytimeTracker.getInstance();

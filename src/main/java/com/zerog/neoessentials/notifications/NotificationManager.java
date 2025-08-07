@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Central notification management system for NeoEssentials
- * Supports multiple notification channels: Discord, Email, SMS, Log
+ * Supports multiple notification channels: Email, SMS, Log
  * 
  * @author ZeroG
  * @since 2.0.0
@@ -53,9 +53,6 @@ public class NotificationManager {
     private void initializeChannels() {
         // Always enable log notifications
         channels.put("log", new LogNotificationChannel());
-        
-        // Discord webhook integration (disabled by default - configure via config)
-        // TODO: Add Discord webhook configuration to MainConfig
         
         // Email notifications (disabled by default - configure via config)  
         // TODO: Add Email configuration to MainConfig

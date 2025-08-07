@@ -12,7 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.ItemLore;
-import com.zerog.neoessentials.managers.EconomyManager;
+import com.zerog.neoessentials.economy.EconomyManager;
 import com.zerog.neoessentials.gui.GuiClickHandler;
 import com.zerog.neoessentials.gui.CustomGuiManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -24,15 +24,15 @@ import java.math.BigDecimal;
 import java.util.*;
 
 /**
- * Enhanced Shop Menu with advanced features
+ * Shop Menu with advanced features
  * Provides categorized shopping, search functionality, and admin controls
  * 
  * @author ZeroG
  * @since 2.0.0
  */
-public class EnhancedShopMenu {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EnhancedShopMenu.class);
-    private static EnhancedShopMenu instance;
+public class ShopMenu {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShopMenu.class);
+    private static ShopMenu instance;
     
     private final EconomyManager economyManager;
     
@@ -67,13 +67,13 @@ public class EnhancedShopMenu {
         initializeShopItems();
     }
     
-    private EnhancedShopMenu() {
+    private ShopMenu() {
         this.economyManager = EconomyManager.getInstance();
     }
     
-    public static EnhancedShopMenu getInstance() {
+    public static ShopMenu getInstance() {
         if (instance == null) {
-            instance = new EnhancedShopMenu();
+            instance = new ShopMenu();
         }
         return instance;
     }
@@ -163,7 +163,7 @@ public class EnhancedShopMenu {
     }
     
     /**
-     * Open the enhanced shop main menu
+     * Open the shop main menu
      */
     public void openMainMenu(ServerPlayer player) {
         List<GuiItem> items = new ArrayList<>();
@@ -205,7 +205,7 @@ public class EnhancedShopMenu {
             "§e§lComing Soon!"));
         
         items.add(createInfoItem(Items.BOOK, "§d📖 Shop Guide", 
-            "§7How to use the enhanced shop:",
+            "§7How to use the shop:",
             "§7• Click categories to browse",
             "§7• Left-click to buy 1 item",
             "§7• Right-click to buy 10 items",
@@ -215,7 +215,7 @@ public class EnhancedShopMenu {
             "§7Shop management tools",
             player.hasPermissions(3) ? "§aClick to access admin panel" : "§cAdmin access required"));
         
-        MenuProvider gui = createEnhancedChestGui("§6§l🏪 Enhanced Shop §6§l🏪", 6, items, CustomGuiManager.GuiType.SHOP_MAIN);
+        MenuProvider gui = createShopChestGui("§6§l🏪 Shop §6§l🏪", 6, items, CustomGuiManager.GuiType.SHOP_MAIN);
         player.openMenu(gui);
     }
     
@@ -251,7 +251,7 @@ public class EnhancedShopMenu {
             p -> openMainMenu(p)));
         
         String categoryTitle = "§6§l🏪 " + category.substring(0, 1).toUpperCase() + category.substring(1) + " Shop";
-        MenuProvider gui = createEnhancedChestGui(categoryTitle, 6, items, CustomGuiManager.GuiType.SHOP_CATEGORY);
+        MenuProvider gui = createShopChestGui(categoryTitle, 6, items, CustomGuiManager.GuiType.SHOP_CATEGORY);
         player.openMenu(gui);
     }
     
@@ -367,7 +367,7 @@ public class EnhancedShopMenu {
         
         // Process the purchase
         if (economyManager.withdrawBalance(player.getUUID(), totalCost, 
-                "Enhanced shop purchase: " + quantity + "x " + shopItem.displayName)) {
+                "Shop purchase: " + quantity + "x " + shopItem.displayName)) {
             
             // Give the item to the player
             ItemStack purchasedItem = new ItemStack(shopItem.item, quantity);
@@ -383,7 +383,7 @@ public class EnhancedShopMenu {
             String newBalance = economyManager.formatCurrency(economyManager.getBalance(player.getUUID()));
             MessageUtil.sendMessage(player, "&7Spent: &c" + formattedCost + " &7| New balance: &a" + newBalance);
             
-            LOGGER.info("Enhanced shop purchase: {} bought {}x {} for {} (new balance: {})", 
+            LOGGER.info("Shop purchase: {} bought {}x {} for {} (new balance: {})", 
                 player.getName().getString(), quantity, shopItem.displayName, 
                 formattedCost, newBalance);
             
@@ -396,9 +396,9 @@ public class EnhancedShopMenu {
     }
     
     /**
-     * Create enhanced chest GUI with click handling
+     * Create shop chest GUI with click handling
      */
-    private MenuProvider createEnhancedChestGui(String title, int rows, List<GuiItem> items, 
+    private MenuProvider createShopChestGui(String title, int rows, List<GuiItem> items, 
                                               CustomGuiManager.GuiType guiType) {
         return new SimpleMenuProvider(
             (windowId, playerInventory, player) -> {

@@ -12,7 +12,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.ItemLore;
-import com.zerog.neoessentials.managers.EconomyManager;
 import com.zerog.neoessentials.gui.GuiClickHandler;
 import com.zerog.neoessentials.gui.CustomGuiManager;
 import com.zerog.neoessentials.util.MessageUtil;

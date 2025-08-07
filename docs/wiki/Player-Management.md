@@ -335,7 +335,6 @@ Create custom player management commands:
 ```
 
 ### Integration Features
-- **Discord Integration** - Send moderation logs to Discord
 - **Database Logging** - Store actions in database
 - **Webhook Support** - Send events to external systems
 - **API Access** - Programmatic player management

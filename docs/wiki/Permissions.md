@@ -622,24 +622,6 @@ neoessentials.security.alerts     # Receive security alerts
 neoessentials.security.*           # All security permissions
 ```
 
-### Discord Integration
-
-#### Basic Discord Features
-```
-neoessentials.discord.link         # /discord link command - link Discord account
-neoessentials.discord.unlink       # /discord unlink command - unlink account
-neoessentials.discord.info         # /discord info command - view Discord info
-```
-
-#### Interactive Discord Features
-```
-neoessentials.discord.item         # /ditem command - share items to Discord
-neoessentials.discord.inventory    # /dinv command - share inventory to Discord
-neoessentials.discord.enderchest   # /dender command - share enderchest to Discord
-neoessentials.discord.interactive  # Advanced interactive Discord features
-neoessentials.discord.*            # All Discord permissions
-```
-
 ### Permission Management
 
 #### Permission Commands

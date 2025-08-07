@@ -163,9 +163,7 @@ public class PermissionUtil {
                 permission.equals(PermissionNodes.PLAYTIME_VIEW) ||
                 permission.equals(PermissionNodes.ACHIEVEMENTS_VIEW) ||
                 permission.equals(PermissionNodes.PREFERENCES_SET) ||
-                permission.equals(PermissionNodes.PREFERENCES_VIEW) ||
-                permission.equals(PermissionNodes.DISCORD_LINK) ||
-                permission.equals(PermissionNodes.DISCORD_ITEM)) {
+                permission.equals(PermissionNodes.PREFERENCES_VIEW)) {
                 return true;
             }
             

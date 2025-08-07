@@ -105,8 +105,6 @@ public class CustomPermissionsManager {
         defaultGroup.addPermission(PermissionNodes.ACHIEVEMENTS_VIEW);
         defaultGroup.addPermission(PermissionNodes.PREFERENCES_SET);
         defaultGroup.addPermission(PermissionNodes.PREFERENCES_VIEW);
-        defaultGroup.addPermission(PermissionNodes.DISCORD_LINK);
-        defaultGroup.addPermission(PermissionNodes.DISCORD_ITEM);
         groups.put(DEFAULT_GROUP, defaultGroup);
         
         // VIP group - enhanced permissions using comprehensive permission nodes
@@ -124,8 +122,6 @@ public class CustomPermissionsManager {
         vipGroup.addPermission(PermissionNodes.NICK);
         vipGroup.addPermission(PermissionNodes.NICK_COLOR);
         vipGroup.addPermission(PermissionNodes.BOSSBAR_SHOW);
-        vipGroup.addPermission(PermissionNodes.DISCORD_INVENTORY);
-        vipGroup.addPermission(PermissionNodes.DISCORD_ENDERCHEST);
         vipGroup.addPermission(PermissionNodes.BYPASS_COOLDOWN_TELEPORT);
         groups.put(VIP_GROUP, vipGroup);
         

@@ -12,10 +12,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.ItemLore;
-import com.zerog.neoessentials.managers.EconomyManager;
 import com.zerog.neoessentials.gui.GuiClickHandler;
 import com.zerog.neoessentials.gui.CustomGuiManager;
-import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,15 +21,15 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 /**
- * Enhanced Shop Interface
+ * Shop Interface
  * Advanced shop browsing and interaction system
  * 
  * @author ZeroG
  * @since 2.0.0
  */
-public class EnhancedShopInterface {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EnhancedShopInterface.class);
-    private static EnhancedShopInterface instance;
+public class ShopInterface {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShopInterface.class);
+    private static ShopInterface instance;
     
     // Shop data storage
     private static final Map<String, ShopData> availableShops = new HashMap<>();
@@ -41,12 +39,12 @@ public class EnhancedShopInterface {
         initializeShopData();
     }
     
-    private EnhancedShopInterface() {
+    private ShopInterface() {
     }
     
-    public static EnhancedShopInterface getInstance() {
+    public static ShopInterface getInstance() {
         if (instance == null) {
-            instance = new EnhancedShopInterface();
+            instance = new ShopInterface();
         }
         return instance;
     }
@@ -83,7 +81,7 @@ public class EnhancedShopInterface {
         items.add(createActionItem(Items.COMPASS, "§6🔍 Search & Filter",
             "§7Filter shops by:",
             "§7• Category",
-            "§7• Distance",
+            "§7• Distance", 
             "§7• Rating",
             "§7• Online status",
             "§eClick to set filters"));
@@ -178,109 +176,6 @@ public class EnhancedShopInterface {
         player.openMenu(gui);
     }
     
-    /**
-     * Open individual shop interface
-     */
-    public void openShopInterface(ServerPlayer player, String shopId) {
-        ShopData shop = availableShops.get(shopId);
-        if (shop == null) {
-            MessageUtil.sendMessage(player, "&cShop not found!");
-            return;
-        }
-        
-        List<GuiItem> items = new ArrayList<>();
-        
-        // Shop information
-        items.add(createInfoItem(Items.EMERALD_BLOCK, "§6§l" + shop.getName(),
-            "§7Owner: §e" + shop.getOwner(),
-            "§7Category: §e" + shop.getCategory(),
-            "§7Location: §e" + shop.getLocation(),
-            "§7Rating: §e" + shop.getRating() + "★ §7(" + shop.getTransactions() + " sales)",
-            "§7Status: " + (shop.isOnline() ? "§aOnline" : "§cOffline"),
-            "§7Avg price: §2$" + String.format("%.2f", shop.getAveragePrice())));
-        
-        // Shop actions
-        items.add(createActionItem(Items.CHEST, "§a🛒 Browse Items",
-            "§7View shop inventory",
-            "§7• Available items: §e" + shop.getItemCount(),
-            "§7• In stock: §a" + shop.getInStockCount(),
-            "§7• Categories: §e" + shop.getCategoryCount(),
-            "§eClick to browse"));
-        
-        items.add(createActionItem(Items.GOLD_INGOT, "§6💰 Quick Buy",
-            "§7Popular items:",
-            "§7• Most sold item",
-            "§7• Featured deals",
-            "§7• Bulk discounts",
-            "§eClick for quick purchase"));
-        
-        items.add(createActionItem(Items.COMPASS, "§c🗺 Get Directions",
-            "§7Navigate to shop",
-            "§7Distance: §e" + getDistanceToShop(player, shop) + " blocks",
-            "§7Estimated travel: §e" + getEstimatedTravelTime(player, shop),
-            "§eClick for directions"));
-        
-        items.add(createActionItem(Items.WRITABLE_BOOK, "§d📝 Leave Review",
-            "§7Rate this shop",
-            "§7Current rating: §e" + shop.getRating() + "★",
-            "§7Your last rating: §e" + getPlayerRating(player, shopId),
-            "§eClick to rate"));
-        
-        // Shop statistics
-        items.add(createInfoItem(Items.BOOK, "§9📊 Shop Statistics",
-            "§7Performance data:",
-            "§7• Daily visitors: §e" + shop.getDailyVisitors(),
-            "§7• Weekly sales: §e" + shop.getWeeklySales(),
-            "§7• Customer satisfaction: §a" + shop.getSatisfactionRate() + "%",
-            "§7• Response time: §e" + shop.getResponseTime()));
-        
-        // Owner communication
-        if (shop.isOnline()) {
-            items.add(createActionItem(Items.PLAYER_HEAD, "§a💬 Contact Owner",
-                "§7Communicate with " + shop.getOwner(),
-                "§7• Send message",
-                "§7• Trade request",
-                "§7• Bulk order inquiry",
-                "§aOwner is online"));
-        } else {
-            items.add(createInfoItem(Items.SKELETON_SKULL, "§c💬 Owner Offline",
-                "§7" + shop.getOwner() + " is currently offline",
-                "§7• Leave a message",
-                "§7• Schedule appointment",
-                "§7Last seen: §e" + shop.getLastSeen()));
-        }
-        
-        // Comparison tools
-        items.add(createActionItem(Items.COMPARATOR, "§e📈 Price Comparison",
-            "§7Compare with other shops",
-            "§7• Similar items",
-            "§7• Market averages",
-            "§7• Best deals",
-            "§eClick to compare"));
-        
-        items.add(createActionItem(Items.BELL, "§6🔔 Notifications",
-            "§7Get notified about:",
-            "§7• New items",
-            "§7• Price changes",
-            "§7• Special sales",
-            "§eClick to subscribe"));
-        
-        // Favorites and history
-        items.add(createActionItem(Items.HEART_OF_THE_SEA, "§c❤ Add to Favorites",
-            "§7Save to favorites",
-            "§7Quick access from shop browser"));
-        
-        items.add(createActionItem(Items.CLOCK, "§9⏰ Purchase History",
-            "§7Your history with this shop",
-            "§7• Last purchase: §e" + getLastPurchase(player, shopId),
-            "§7• Total spent: §2$" + getTotalSpent(player, shopId),
-            "§7• Items bought: §e" + getItemsBought(player, shopId)));
-        
-        String title = "§6§l🏪 " + shop.getName() + " §6§l🏪";
-        MenuProvider gui = createChestGui(title, 6, items);
-        player.openMenu(gui);
-    }
-    
     // Helper methods
     private int getShopCountByCategory(String category) {
         return (int) availableShops.values().stream()
@@ -320,30 +215,6 @@ public class EnhancedShopInterface {
             case "rare" -> "Rare Items";
             default -> category;
         };
-    }
-    
-    private String getDistanceToShop(ServerPlayer player, ShopData shop) {
-        return "125"; // Placeholder
-    }
-    
-    private String getEstimatedTravelTime(ServerPlayer player, ShopData shop) {
-        return "2 minutes"; // Placeholder
-    }
-    
-    private String getPlayerRating(ServerPlayer player, String shopId) {
-        return "Not rated"; // Placeholder
-    }
-    
-    private String getLastPurchase(ServerPlayer player, String shopId) {
-        return "3 days ago"; // Placeholder
-    }
-    
-    private String getTotalSpent(ServerPlayer player, String shopId) {
-        return "156.78"; // Placeholder
-    }
-    
-    private int getItemsBought(ServerPlayer player, String shopId) {
-        return 23; // Placeholder
     }
     
     // GUI Helper methods
@@ -465,16 +336,6 @@ public class EnhancedShopInterface {
         public int getTransactions() { return transactions; }
         public boolean isOnline() { return online; }
         public double getAveragePrice() { return averagePrice; }
-        
-        // Additional placeholder methods
-        public int getItemCount() { return 25; }
-        public int getInStockCount() { return 20; }
-        public int getCategoryCount() { return 4; }
-        public int getDailyVisitors() { return 45; }
-        public int getWeeklySales() { return 234; }
-        public int getSatisfactionRate() { return 96; }
-        public String getResponseTime() { return "< 5 min"; }
-        public String getLastSeen() { return "2 hours ago"; }
     }
     
     /**

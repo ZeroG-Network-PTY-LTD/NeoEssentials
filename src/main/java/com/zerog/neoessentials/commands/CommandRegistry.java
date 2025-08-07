@@ -122,13 +122,13 @@ public class CommandRegistry {
             EconomyCommand.register(dispatcher);
             LOGGER.info("Registered economy admin commands");
             
-            // Transaction history command  
-            com.zerog.neoessentials.commands.economy.TransactionHistoryCommand.register(dispatcher);
-            LOGGER.info("Registered transaction history command");
+            // Transaction history command - TEMPORARILY DISABLED (API compatibility issues)
+            // com.zerog.neoessentials.commands.economy.TransactionHistoryCommand.register(dispatcher);
+            // LOGGER.info("Registered transaction history command");
             
-            // Economy analytics command
-            com.zerog.neoessentials.commands.economy.EconomyAnalyticsCommand.register(dispatcher);
-            LOGGER.info("Registered economy analytics command");
+            // Economy analytics command - TEMPORARILY DISABLED (API compatibility issues)
+            // com.zerog.neoessentials.commands.economy.EconomyAnalyticsCommand.register(dispatcher);
+            // LOGGER.info("Registered economy analytics command");
             
             // Shop system commands
             com.zerog.neoessentials.commands.economy.ShopCommand.register(dispatcher);
@@ -138,37 +138,6 @@ public class CommandRegistry {
             // Mail system
             MailCommand.register(dispatcher);
             LOGGER.info("Registered mail system");
-            
-            // Discord integration
-            DiscordCommand.register(dispatcher);
-            LOGGER.info("Registered Discord integration commands");
-            
-            // Interactive Discord commands for sharing items/inventory/enderchest
-            com.zerog.neoessentials.commands.discord.DiscordItemCommand.register(dispatcher);
-            LOGGER.info("Registered Discord item sharing command (/ditem)");
-            
-            com.zerog.neoessentials.commands.discord.DiscordInventoryCommand.register(dispatcher);
-            LOGGER.info("Registered Discord inventory sharing command (/dinv)");
-            
-            com.zerog.neoessentials.commands.discord.DiscordEnderChestCommand.register(dispatcher);
-            LOGGER.info("Registered Discord ender chest sharing command (/dender)");
-            
-            // Internal interactive commands for clickable Discord chat
-            com.zerog.neoessentials.commands.discord.InternalInteractiveCommands.register(dispatcher);
-            LOGGER.info("Registered Discord Interactive Chat internal commands");
-            
-            // InteractiveChat-style commands and system
-            com.zerog.neoessentials.commands.discord.InteractiveChatCommands.register(dispatcher);
-            LOGGER.info("Registered InteractiveChat-style commands (/ic, /interactivechat)");
-            
-            // Interactive Discord Integration (advanced features for item/inventory sharing)
-            // TODO: Re-enable when Discord integration is fully working
-            // try {
-            //     com.zerog.neoessentials.discord.InteractiveChatDiscordIntegration.register(dispatcher);
-            //     LOGGER.info("Registered InteractiveChat Discord Integration commands (/interactivediscord)");
-            // } catch (Exception e) {
-            //     LOGGER.warn("Failed to register InteractiveChat Discord Integration: " + e.getMessage());
-            // }
             
             // Teleport commands
             TeleportCommand.register(dispatcher);
@@ -238,9 +207,6 @@ public class CommandRegistry {
             LOGGER.info("Registered web dashboard management commands");
             
             // Discord Management commands (comprehensive)
-            com.zerog.neoessentials.commands.admin.DiscordManagementCommand.register(dispatcher);
-            LOGGER.info("Registered Discord management commands");
-            
             // System status monitoring commands (Phase 5)
             StatusCommand.register(dispatcher);
             LOGGER.info("Registered system status monitoring commands");

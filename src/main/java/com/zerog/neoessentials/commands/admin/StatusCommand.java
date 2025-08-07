@@ -7,7 +7,7 @@ import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.gui.CustomGuiManager;
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.localization.LanguageValidator;
-import com.zerog.neoessentials.managers.EconomyManager;
+import com.zerog.neoessentials.economy.EconomyManager;
 import com.zerog.neoessentials.managers.HomeManager;
 import com.zerog.neoessentials.managers.KitManager;
 import com.zerog.neoessentials.managers.WarpManager;

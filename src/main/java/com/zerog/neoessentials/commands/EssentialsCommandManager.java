@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.commands;
 
 import com.zerog.neoessentials.commands.essentials.*;
-import com.zerog.neoessentials.commands.discord.DiscordCommand;
 import com.zerog.neoessentials.config.EssentialsConfig;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -99,9 +98,6 @@ public class EssentialsCommandManager {
         RulesCommand.register(dispatcher);
         HelpCommand.register(dispatcher);
         InfoCommand.register(dispatcher);
-        
-        // Discord integration commands
-        DiscordCommand.register(dispatcher);
         
         LOGGER.info("Registered {} essentials commands", 
             dispatcher.getRoot().getChildren().size());
