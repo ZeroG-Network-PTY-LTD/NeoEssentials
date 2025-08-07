@@ -74,78 +74,108 @@ public class CustomPermissionsManager {
      * Create default permission groups
      */
     private void createDefaultGroups() {
-        // Default group - basic permissions for all players
+        // Default group - basic permissions for all players using comprehensive permission nodes
         PermissionGroup defaultGroup = new PermissionGroup(DEFAULT_GROUP, "&7[Player]", "", 0);
-        defaultGroup.addPermission("essentials.home");
-        defaultGroup.addPermission("essentials.sethome");
-        defaultGroup.addPermission("essentials.delhome");
-        defaultGroup.addPermission("essentials.warp");
-        defaultGroup.addPermission("essentials.spawn");
-        defaultGroup.addPermission("essentials.back");
-        defaultGroup.addPermission("essentials.msg");
-        defaultGroup.addPermission("essentials.reply");
-        defaultGroup.addPermission("essentials.mail");
-        defaultGroup.addPermission("essentials.balance");
-        defaultGroup.addPermission("essentials.pay");
-        defaultGroup.addPermission("essentials.kit");
-        defaultGroup.addPermission("essentials.tpa");
-        defaultGroup.addPermission("essentials.tpaccept");
-        defaultGroup.addPermission("essentials.tpdeny");
+        defaultGroup.addPermission(PermissionNodes.HOME);
+        defaultGroup.addPermission(PermissionNodes.HOME_SET);
+        defaultGroup.addPermission(PermissionNodes.HOME_DELETE);
+        defaultGroup.addPermission(PermissionNodes.HOME_LIST);
+        defaultGroup.addPermission(PermissionNodes.WARP);
+        defaultGroup.addPermission(PermissionNodes.WARP_LIST);
+        defaultGroup.addPermission(PermissionNodes.SPAWN);
+        defaultGroup.addPermission(PermissionNodes.BACK);
+        defaultGroup.addPermission(PermissionNodes.TPA_REQUEST);
+        defaultGroup.addPermission(PermissionNodes.TPA_ACCEPT);
+        defaultGroup.addPermission(PermissionNodes.TPA_DENY);
+        defaultGroup.addPermission(PermissionNodes.TPA_CANCEL);
+        defaultGroup.addPermission(PermissionNodes.MSG);
+        defaultGroup.addPermission(PermissionNodes.REPLY);
+        defaultGroup.addPermission(PermissionNodes.MAIL_SEND);
+        defaultGroup.addPermission(PermissionNodes.MAIL_READ);
+        defaultGroup.addPermission(PermissionNodes.ECO_BALANCE);
+        defaultGroup.addPermission(PermissionNodes.ECO_PAY);
+        defaultGroup.addPermission(PermissionNodes.KIT);
+        defaultGroup.addPermission(PermissionNodes.KIT_LIST);
+        defaultGroup.addPermission(PermissionNodes.LIST);
+        defaultGroup.addPermission(PermissionNodes.WHOIS);
+        defaultGroup.addPermission(PermissionNodes.SEEN);
+        defaultGroup.addPermission(PermissionNodes.PLACEHOLDER_TEST);
+        defaultGroup.addPermission(PermissionNodes.GUI_OPEN);
+        defaultGroup.addPermission(PermissionNodes.PLAYTIME_VIEW);
+        defaultGroup.addPermission(PermissionNodes.ACHIEVEMENTS_VIEW);
+        defaultGroup.addPermission(PermissionNodes.PREFERENCES_SET);
+        defaultGroup.addPermission(PermissionNodes.PREFERENCES_VIEW);
+        defaultGroup.addPermission(PermissionNodes.DISCORD_LINK);
+        defaultGroup.addPermission(PermissionNodes.DISCORD_ITEM);
         groups.put(DEFAULT_GROUP, defaultGroup);
         
-        // VIP group - enhanced permissions
+        // VIP group - enhanced permissions using comprehensive permission nodes
         PermissionGroup vipGroup = new PermissionGroup(VIP_GROUP, "&b[VIP]", " &b♦", 10);
         vipGroup.setInheritance(DEFAULT_GROUP);
-        vipGroup.addPermission("essentials.fly");
-        vipGroup.addPermission("essentials.heal");
-        vipGroup.addPermission("essentials.feed");
-        vipGroup.addPermission("essentials.workbench");
-        vipGroup.addPermission("essentials.enderchest");
-        vipGroup.addPermission("essentials.repair");
-        vipGroup.addPermission("essentials.hat");
+        vipGroup.addPermission(PermissionNodes.FLY_SELF);
+        vipGroup.addPermission(PermissionNodes.HEAL_SELF);
+        vipGroup.addPermission(PermissionNodes.FEED_SELF);
+        vipGroup.addPermission(PermissionNodes.WORKBENCH);
+        vipGroup.addPermission(PermissionNodes.ANVIL);
+        vipGroup.addPermission(PermissionNodes.ENDERCHEST);
+        vipGroup.addPermission(PermissionNodes.REPAIR_HAND);
+        vipGroup.addPermission(PermissionNodes.SPEED_WALK);
+        vipGroup.addPermission(PermissionNodes.HOME_MULTIPLE);
+        vipGroup.addPermission(PermissionNodes.NICK);
+        vipGroup.addPermission(PermissionNodes.NICK_COLOR);
+        vipGroup.addPermission(PermissionNodes.BOSSBAR_SHOW);
+        vipGroup.addPermission(PermissionNodes.DISCORD_INVENTORY);
+        vipGroup.addPermission(PermissionNodes.DISCORD_ENDERCHEST);
+        vipGroup.addPermission(PermissionNodes.BYPASS_COOLDOWN_TELEPORT);
         groups.put(VIP_GROUP, vipGroup);
         
-        // Moderator group - moderation permissions
+        // Moderator group - moderation permissions using comprehensive permission nodes
         PermissionGroup modGroup = new PermissionGroup(MODERATOR_GROUP, "&6[MOD]", " &6★", 50);
         modGroup.setInheritance(VIP_GROUP);
-        modGroup.addPermission("essentials.kick");
-        modGroup.addPermission("essentials.mute");
-        modGroup.addPermission("essentials.unmute");
-        modGroup.addPermission("essentials.jail");
-        modGroup.addPermission("essentials.unjail");
-        modGroup.addPermission("essentials.tempban");
-        modGroup.addPermission("essentials.vanish");
-        modGroup.addPermission("essentials.socialspy");
-        modGroup.addPermission("essentials.invsee");
-        modGroup.addPermission("essentials.tp");
-        modGroup.addPermission("essentials.tphere");
-        modGroup.addPermission("essentials.teleport.*");
+        modGroup.addPermission(PermissionNodes.KICK);
+        modGroup.addPermission(PermissionNodes.MUTE);
+        modGroup.addPermission(PermissionNodes.UNMUTE);
+        modGroup.addPermission(PermissionNodes.JAIL);
+        modGroup.addPermission(PermissionNodes.UNJAIL);
+        modGroup.addPermission(PermissionNodes.BAN_TEMP);
+        modGroup.addPermission(PermissionNodes.VANISH_SELF);
+        modGroup.addPermission(PermissionNodes.VANISH_SEE);
+        modGroup.addPermission(PermissionNodes.SOCIALSPY);
+        modGroup.addPermission(PermissionNodes.ENDERCHEST_OTHERS);
+        modGroup.addPermission(PermissionNodes.TP_SELF);
+        modGroup.addPermission(PermissionNodes.TP_HERE);
+        modGroup.addPermission(PermissionNodes.TP_COORDS);
+        modGroup.addPermission(PermissionNodes.SPAWN_OTHERS);
+        modGroup.addPermission(PermissionNodes.LIST_HIDDEN);
+        modGroup.addPermission(PermissionNodes.BOSSBAR_BROADCAST);
+        modGroup.addPermission(PermissionNodes.SECURITY_VIEW);
+        modGroup.addPermission(PermissionNodes.PERFORMANCE_VIEW);
+        modGroup.addPermission(PermissionNodes.STATUS_VIEW);
+        modGroup.addPermission(PermissionNodes.PLAYTIME_OTHERS);
+        modGroup.addPermission(PermissionNodes.ACHIEVEMENTS_OTHERS);
+        modGroup.addPermission(PermissionNodes.PERMISSIONS_INFO);
+        modGroup.addPermission(PermissionNodes.PERMISSIONS_CHECK);
         groups.put(MODERATOR_GROUP, modGroup);
         
-        // Admin group - full permissions
+        // Admin group - full permissions using comprehensive permission nodes
         PermissionGroup adminGroup = new PermissionGroup(ADMIN_GROUP, "&c[ADMIN]", " &c⚡", 100);
         adminGroup.setInheritance(MODERATOR_GROUP);
-        adminGroup.addPermission("essentials.*");
-        adminGroup.addPermission("neoessentials.*");
-        adminGroup.addPermission("essentials.ban");
-        adminGroup.addPermission("essentials.unban");
-        adminGroup.addPermission("essentials.banip");
-        adminGroup.addPermission("essentials.unbanip");
-        adminGroup.addPermission("essentials.give");
-        adminGroup.addPermission("essentials.gamemode");
-        adminGroup.addPermission("essentials.time");
-        adminGroup.addPermission("essentials.weather");
-        adminGroup.addPermission("essentials.god");
-        adminGroup.addPermission("essentials.speed");
-        adminGroup.addPermission("essentials.setwarp");
-        adminGroup.addPermission("essentials.delwarp");
-        adminGroup.addPermission("essentials.setspawn");
-        adminGroup.addPermission("essentials.eco");
-        adminGroup.addPermission("essentials.sudo");
-        adminGroup.addPermission("essentials.permissions.*");
+        adminGroup.addPermission(PermissionNodes.ALL_ESSENTIALS);
+        adminGroup.addPermission(PermissionNodes.ALL_NEOESSENTIALS);
+        adminGroup.addPermission(PermissionNodes.BAN);
+        adminGroup.addPermission(PermissionNodes.UNBAN);
+        adminGroup.addPermission(PermissionNodes.BAN_IP);
+        adminGroup.addPermission(PermissionNodes.GIVE_ITEM);
+        adminGroup.addPermission(PermissionNodes.GIVE_UNLIMITED);
+        adminGroup.addPermission(PermissionNodes.TIME_ALL);
+        adminGroup.addPermission(PermissionNodes.WEATHER_ALL);
+        adminGroup.addPermission(PermissionNodes.WARP_SET);
+        adminGroup.addPermission(PermissionNodes.WARP_DELETE);
+        adminGroup.addPermission(PermissionNodes.SPAWN_SET);
+        adminGroup.addPermission(PermissionNodes.ALL_ADMIN);
         groups.put(ADMIN_GROUP, adminGroup);
         
-        LOGGER.info("Created {} default permission groups", groups.size());
+        LOGGER.info("Created default permission groups with comprehensive permission nodes");
     }
     
     /**

@@ -54,6 +54,9 @@ public class CommandRegistry {
             SpeedCommand.register(dispatcher);
             LOGGER.info("Registered speed command");
             
+            GameModeCommand.register(dispatcher);
+            LOGGER.info("Registered gamemode commands (/gamemode, /gm, /gmc, /gms, /gma, /gmsp)");
+            
             RepairCommand.register(dispatcher, context);
             LOGGER.info("Registered repair command");
             
@@ -126,6 +129,11 @@ public class CommandRegistry {
             // Economy analytics command
             com.zerog.neoessentials.commands.economy.EconomyAnalyticsCommand.register(dispatcher);
             LOGGER.info("Registered economy analytics command");
+            
+            // Shop system commands
+            com.zerog.neoessentials.commands.economy.ShopCommand.register(dispatcher);
+            com.zerog.neoessentials.commands.economy.SignShopCommand.register(dispatcher, context);
+            LOGGER.info("Registered shop system commands");
             
             // Mail system
             MailCommand.register(dispatcher);
@@ -228,6 +236,10 @@ public class CommandRegistry {
             // Web Dashboard management commands
             com.zerog.neoessentials.commands.WebDashboardCommand.register(dispatcher);
             LOGGER.info("Registered web dashboard management commands");
+            
+            // Discord Management commands (comprehensive)
+            com.zerog.neoessentials.commands.admin.DiscordManagementCommand.register(dispatcher);
+            LOGGER.info("Registered Discord management commands");
             
             // System status monitoring commands (Phase 5)
             StatusCommand.register(dispatcher);

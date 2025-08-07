@@ -24,7 +24,7 @@ public class DiscordEventListener {
      * Handle player join events
      */
     @SubscribeEvent
-    public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             try {
                 DiscordManager.getInstance().notifyPlayerJoin(player);
@@ -38,7 +38,7 @@ public class DiscordEventListener {
      * Handle player leave events
      */
     @SubscribeEvent
-    public void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             try {
                 DiscordManager.getInstance().notifyPlayerLeave(player);
@@ -52,7 +52,7 @@ public class DiscordEventListener {
      * Handle server start events
      */
     @SubscribeEvent
-    public void onServerStart(ServerStartedEvent event) {
+    public static void onServerStart(ServerStartedEvent event) {
         try {
             DiscordManager.getInstance().notifyServerStart();
             LOGGER.info("Sent Discord server start notification");
@@ -65,7 +65,7 @@ public class DiscordEventListener {
      * Handle server stop events
      */
     @SubscribeEvent
-    public void onServerStop(ServerStoppedEvent event) {
+    public static void onServerStop(ServerStoppedEvent event) {
         try {
             DiscordManager.getInstance().notifyServerStop();
             LOGGER.info("Sent Discord server stop notification");

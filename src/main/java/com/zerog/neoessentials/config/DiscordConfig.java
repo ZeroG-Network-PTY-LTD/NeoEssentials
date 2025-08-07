@@ -212,4 +212,23 @@ public class DiscordConfig {
         
         return true;
     }
+    
+    /**
+     * Configure webhook URL and enable integration
+     */
+    public void configureWebhook(String webhookUrl) {
+        if (webhookUrl != null && !webhookUrl.trim().isEmpty()) {
+            this.webhooks.chatWebhookUrl = webhookUrl.trim();
+            this.webhooks.enabled = true;
+            this.enabled = true;
+        }
+    }
+    
+    /**
+     * Disable Discord integration
+     */
+    public void disable() {
+        this.enabled = false;
+        this.webhooks.enabled = false;
+    }
 }

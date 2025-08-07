@@ -345,93 +345,447 @@ When checking permissions, the system follows this order:
 ## 📋 Permission Nodes
 
 ### Essential Commands
+
+#### Health & Wellness
 ```
-essentials.heal                    # /heal command
+essentials.heal                    # /heal command - heal yourself
 essentials.heal.others             # Heal other players
-essentials.feed                    # /feed command
+essentials.heal.*                  # All heal permissions
+
+essentials.feed                    # /feed command - feed yourself
 essentials.feed.others             # Feed other players
-essentials.god                     # /god command
+essentials.feed.*                  # All feed permissions
+
+essentials.god                     # /god command - toggle god mode for yourself
 essentials.god.others              # Toggle god mode for others
-essentials.fly                     # /fly command
+essentials.god.*                   # All god mode permissions
+```
+
+#### Movement & Visibility
+```
+essentials.fly                     # /fly command - toggle flight for yourself
 essentials.fly.others              # Toggle flight for others
-essentials.vanish                  # /vanish command
-essentials.vanish.others           # Toggle vanish for others
-essentials.speed                   # /speed command
+essentials.fly.*                   # All fly permissions
+
+essentials.speed.walk              # /speed walk command
+essentials.speed.fly               # /speed fly command
 essentials.speed.others            # Change speed for others
-essentials.repair                  # /repair command
+essentials.speed.*                 # All speed permissions
+
+essentials.vanish                  # /vanish command - toggle vanish for yourself
+essentials.vanish.others           # Toggle vanish for others
+essentials.vanish.see              # See vanished players
+essentials.vanish.*                # All vanish permissions
+```
+
+#### Item & Environment Management
+```
+essentials.repair                  # /repair command - repair item in hand
 essentials.repair.all              # Repair all items
-essentials.give                    # /give command
-essentials.gamemode                # /gamemode command
-essentials.gamemode.others         # Change gamemode for others
-essentials.time                    # /time command
-essentials.weather                 # /weather command
-essentials.workbench               # /workbench command
-essentials.anvil                   # /anvil command
-essentials.enderchest              # /enderchest command
+essentials.repair.others           # Repair items for others
+
+essentials.give                    # /give command - give items
+essentials.give.unlimited          # Give items without limits
+essentials.give.*                  # All give permissions
+
+essentials.time.set                # /time set command
+essentials.time.add                # /time add command
+essentials.time.query              # /time query command
+essentials.time.*                  # All time permissions
+
+essentials.weather.set             # /weather command base
+essentials.weather.clear           # Set clear weather
+essentials.weather.rain            # Set rain
+essentials.weather.thunder         # Set thunderstorm
+essentials.weather.*               # All weather permissions
+
+essentials.workbench               # /workbench command - open crafting table
+essentials.anvil                   # /anvil command - open anvil
+essentials.enderchest              # /enderchest command - open your enderchest
 essentials.enderchest.others       # View others' enderchests
-essentials.invsee                  # /invsee command
 ```
 
-### Teleportation
+### Teleportation System
+
+#### Basic Teleportation
 ```
-essentials.home                    # /home command
-essentials.sethome                 # /sethome command
-essentials.delhome                 # /delhome command
-essentials.homes                   # /homes command
-essentials.warp                    # /warp command
-essentials.setwarp                 # /setwarp command (admin)
-essentials.delwarp                 # /delwarp command (admin)
-essentials.warps                   # /warps command
-essentials.spawn                   # /spawn command
-essentials.setspawn                # /setspawn command (admin)
-essentials.back                    # /back command
-essentials.tp                      # /tp command
-essentials.tpa                     # /tpa command
-essentials.tpaccept                # /tpaccept command
-essentials.tpdeny                  # /tpdeny command
+essentials.tp                      # /tp command - teleport to players
+essentials.tp.others               # Teleport other players
+essentials.tp.coords               # Teleport to coordinates
+essentials.tphere                  # /tphere command - teleport players to you
+essentials.tp.*                    # All teleport permissions
 ```
 
-### Moderation
+#### Home System
 ```
-essentials.kick                    # /kick command
-essentials.ban                     # /ban command
-essentials.unban                   # /unban command
-essentials.tempban                 # /tempban command
-essentials.mute                    # /mute command
-essentials.unmute                  # /unmute command
-essentials.jail                    # /jail command
-essentials.unjail                  # /unjail command
+essentials.home                    # /home command - teleport to homes
+essentials.sethome                 # /sethome command - set home locations
+essentials.delhome                 # /delhome command - delete homes
+essentials.homes                   # /homes command - list homes
+essentials.home.others             # Access others' homes
+essentials.home.multiple           # Set multiple homes
+essentials.home.*                  # All home permissions
+```
+
+#### Warp System
+```
+essentials.warp                    # /warp command - teleport to warps
+essentials.setwarp                 # /setwarp command - create warps (admin)
+essentials.delwarp                 # /delwarp command - delete warps (admin)
+essentials.warps                   # /warps command - list warps
+essentials.warp.*                  # All warp permissions
+```
+
+#### TPA (Teleport Request) System
+```
+essentials.tpa                     # /tpa command - send teleport requests
+essentials.tpahere                 # /tpahere command - request player to teleport to you
+essentials.tpaccept                # /tpaccept command - accept teleport requests
+essentials.tpdeny                  # /tpdeny command - deny teleport requests
+essentials.tpcancel                # /tpcancel command - cancel pending requests
+essentials.tpa.*                   # All TPA permissions
+```
+
+#### Spawn System
+```
+essentials.spawn                   # /spawn command - teleport to spawn
+essentials.setspawn                # /setspawn command - set spawn location (admin)
+essentials.spawn.others            # Teleport others to spawn
+essentials.spawn.*                 # All spawn permissions
+```
+
+#### Back System
+```
+essentials.back                    # /back command - return to previous location
+essentials.back.ondeath           # Use /back after death
+essentials.back.onteleport        # Use /back after teleportation
+```
+
+### Moderation Commands
+
+#### Ban System
+```
+essentials.ban                     # /ban command - ban players
+essentials.tempban                 # /tempban command - temporary bans
+essentials.banip                   # /banip command - IP bans
+essentials.unban                   # /unban command - unban players
+essentials.ban.exempt             # Exempt from being banned
+essentials.ban.*                   # All ban permissions
+```
+
+#### Kick & Mute System
+```
+essentials.kick                    # /kick command - kick players
+essentials.kick.exempt             # Exempt from being kicked
+
+essentials.mute                    # /mute command - mute players
+essentials.unmute                  # /unmute command - unmute players
+essentials.mute.exempt             # Exempt from being muted
+essentials.mute.*                  # All mute permissions
+```
+
+#### Jail System
+```
+essentials.jail                    # /jail command - jail players
+essentials.unjail                  # /unjail command - unjail players
+essentials.setjail                 # /setjail command - create jail locations
+essentials.deljail                 # /deljail command - delete jails
+essentials.jail.exempt             # Exempt from being jailed
+essentials.jail.*                  # All jail permissions
+```
+
+### Economy System
+
+#### Basic Economy
+```
+essentials.balance                 # /balance command - view your balance
+essentials.balance.others          # View others' balances
+essentials.pay                     # /pay command - send money to players
+essentials.balancetop              # /balancetop command - view richest players
+```
+
+#### Economy Administration
+```
+essentials.eco.give                # /eco give command - give money
+essentials.eco.take                # /eco take command - take money
+essentials.eco.set                 # /eco set command - set balance
+essentials.eco.reset               # /eco reset command - reset balances
+essentials.eco.*                   # All economy admin permissions
+```
+
+#### Advanced Economy Features
+```
+neoessentials.economy.analytics    # View economy analytics
+neoessentials.economy.transactions # View transaction history
+neoessentials.economy.history      # View detailed economic history
+```
+
+### Messaging System
+
+#### Private Messages
+```
+essentials.msg                     # /msg command - send private messages
+essentials.reply                   # /reply command - reply to messages
+essentials.msgtoggle               # /msgtoggle command - toggle message reception
+essentials.socialspy               # /socialspy command - spy on private messages
+```
+
+#### Mail System
+```
+essentials.mail.send               # /mail send command - send mail
+essentials.mail.read               # /mail read command - read mail
+essentials.mail.clear              # /mail clear command - clear mailbox
+essentials.mail.*                  # All mail permissions
+```
+
+#### Broadcasting
+```
+essentials.broadcast               # /broadcast command - server-wide messages
+essentials.broadcast.world         # /broadcast command - world-specific messages
+```
+
+### Player Information Commands
+
+#### Player Lists & Information
+```
+essentials.list                    # /list command - view online players
+essentials.list.hidden             # See hidden/vanished players in list
+
+essentials.whois                   # /whois command - detailed player info
+essentials.seen                    # /seen command - when player was last online
+essentials.realname                # /realname command - find player by nickname
+```
+
+#### Nickname System
+```
+essentials.nick                    # /nick command - set your nickname
+essentials.nick.others             # Set nicknames for others
+essentials.nick.color              # Use color codes in nicknames
+essentials.nick.magic              # Use magic/obfuscated formatting
+```
+
+### Kit System
+
+#### Kit Usage
+```
+essentials.kit                     # /kit command - use kits
+essentials.kit.list                # /kit list command - list available kits
+essentials.kit.preview             # /kit preview command - preview kit contents
+```
+
+#### Kit Administration
+```
+essentials.kit.create              # /kit create command - create new kits
+essentials.kit.delete              # /kit delete command - delete kits
+essentials.kit.edit                # /kit edit command - modify kits
+essentials.kit.give                # /kit give command - give kits to players
+essentials.kit.*                   # All kit permissions
 ```
 
 ### NeoEssentials Features
+
+#### Bossbar System
 ```
-neoessentials.bossbar.show         # Show bossbars
-neoessentials.bossbar.show.others  # Show bossbars to others
-neoessentials.bossbar.broadcast    # Broadcast bossbars
-neoessentials.bossbar.create       # Create custom bossbars
-neoessentials.bossbar.update       # Update bossbars
+neoessentials.bossbar.show         # Show bossbars to yourself
+neoessentials.bossbar.show.others  # Show bossbars to other players
 neoessentials.bossbar.hide         # Hide bossbars
-neoessentials.bossbar.templates    # List templates
-
-neoessentials.placeholder.test     # Test placeholders
-neoessentials.placeholder.list     # List placeholders
-neoessentials.placeholder.info     # View placeholder info
-neoessentials.placeholder.reload   # Reload placeholders
-
-neoessentials.security.view        # View security events
-neoessentials.security.admin       # Security administration
-
-neoessentials.reload               # Reload configuration
-neoessentials.info                 # View mod information
-neoessentials.debug                # Debug commands
+neoessentials.bossbar.broadcast    # Broadcast bossbars to all players
+neoessentials.bossbar.create       # Create custom bossbars
+neoessentials.bossbar.update       # Update existing bossbars
+neoessentials.bossbar.delete       # Delete bossbars
+neoessentials.bossbar.templates    # Access bossbar templates
+neoessentials.bossbar.*            # All bossbar permissions
 ```
 
-### Administrative
+#### Placeholder System
 ```
-neoessentials.admin                # All admin permissions
-neoessentials.permissions.*        # All permission commands
-essentials.admin                   # All essentials admin permissions
+neoessentials.placeholder.test     # Test placeholder values
+neoessentials.placeholder.list     # List available placeholders
+neoessentials.placeholder.info     # View placeholder information
+neoessentials.placeholder.reload   # Reload placeholder system
+neoessentials.placeholder.*        # All placeholder permissions
 ```
+
+#### GUI System
+```
+neoessentials.gui.open             # Open GUI menus
+neoessentials.gui.admin            # Access admin GUI features
+neoessentials.gui.themes           # Change GUI themes
+neoessentials.gui.*                # All GUI permissions
+```
+
+#### Security System
+```
+neoessentials.security.view        # View security events and logs
+neoessentials.security.admin       # Security system administration
+neoessentials.security.alerts     # Receive security alerts
+neoessentials.security.*           # All security permissions
+```
+
+### Discord Integration
+
+#### Basic Discord Features
+```
+neoessentials.discord.link         # /discord link command - link Discord account
+neoessentials.discord.unlink       # /discord unlink command - unlink account
+neoessentials.discord.info         # /discord info command - view Discord info
+```
+
+#### Interactive Discord Features
+```
+neoessentials.discord.item         # /ditem command - share items to Discord
+neoessentials.discord.inventory    # /dinv command - share inventory to Discord
+neoessentials.discord.enderchest   # /dender command - share enderchest to Discord
+neoessentials.discord.interactive  # Advanced interactive Discord features
+neoessentials.discord.*            # All Discord permissions
+```
+
+### Permission Management
+
+#### Permission Commands
+```
+neoessentials.permissions.info     # /permissions info command
+neoessentials.permissions.check    # /permissions check command
+neoessentials.permissions.user     # User permission management
+neoessentials.permissions.group    # Group permission management
+neoessentials.permissions.reload   # Reload permission system
+neoessentials.permissions.stats    # View permission statistics
+neoessentials.permissions.*        # All permission management commands
+```
+
+### Administration & Configuration
+
+#### Configuration Management
+```
+neoessentials.config.reload        # Reload configuration files
+neoessentials.config.save          # Save current configuration
+neoessentials.config.reset         # Reset configuration to defaults
+neoessentials.config.*             # All configuration permissions
+```
+
+#### Language System
+```
+neoessentials.language.set         # Set language preferences
+neoessentials.language.list        # List available languages
+neoessentials.language.reload      # Reload language files
+neoessentials.language.*           # All language permissions
+```
+
+#### Performance Monitoring
+```
+neoessentials.performance.view     # View performance metrics
+neoessentials.performance.admin    # Performance system administration
+neoessentials.performance.*        # All performance permissions
+```
+
+#### Status Monitoring
+```
+neoessentials.status.view          # View system status
+neoessentials.status.admin         # Status system administration
+neoessentials.status.*             # All status permissions
+```
+
+#### Analytics
+```
+neoessentials.analytics.view       # View analytics data
+neoessentials.analytics.admin      # Analytics system administration
+neoessentials.analytics.*          # All analytics permissions
+```
+
+### Player Features
+
+#### Playtime Tracking
+```
+neoessentials.playtime.view        # View your playtime
+neoessentials.playtime.others      # View others' playtime
+neoessentials.playtime.top         # View playtime leaderboards
+neoessentials.playtime.*           # All playtime permissions
+```
+
+#### Achievement System
+```
+neoessentials.achievements.view    # View your achievements
+neoessentials.achievements.others  # View others' achievements
+neoessentials.achievements.admin   # Achievement system administration
+neoessentials.achievements.*       # All achievement permissions
+```
+
+#### Player Preferences
+```
+neoessentials.preferences.set      # Set your preferences
+neoessentials.preferences.view     # View preference settings
+neoessentials.preferences.*        # All preference permissions
+```
+
+### Animation System
+
+#### Animation Commands
+```
+neoessentials.animation.play       # Play animations
+neoessentials.animation.stop       # Stop animations
+neoessentials.animation.list       # List available animations
+neoessentials.animation.create     # Create custom animations
+neoessentials.animation.delete     # Delete animations
+neoessentials.animation.*          # All animation permissions
+```
+
+### Web Dashboard
+
+#### Web Dashboard Access
+```
+neoessentials.webdash.access       # Access web dashboard
+neoessentials.webdash.admin        # Web dashboard administration
+neoessentials.webdash.*            # All web dashboard permissions
+```
+
+### Bypass Permissions
+
+#### Cooldown Bypasses
+```
+essentials.bypass.cooldown         # Bypass all cooldowns
+essentials.bypass.cooldown.teleport # Bypass teleportation cooldowns
+essentials.bypass.cooldown.command  # Bypass command cooldowns
+```
+
+#### Limit Bypasses
+```
+essentials.bypass.limit.home       # Bypass home limits
+essentials.bypass.limit.warp       # Bypass warp limits
+```
+
+#### Cost Bypasses
+```
+essentials.bypass.cost             # Bypass all costs
+essentials.bypass.cost.teleport    # Bypass teleportation costs
+essentials.bypass.cost.command     # Bypass command costs
+```
+
+### Administrative Wildcard Permissions
+
+#### Category Wildcards
+```
+essentials.*                       # All Essentials permissions
+neoessentials.*                    # All NeoEssentials permissions
+essentials.teleport.*              # All teleportation permissions
+essentials.moderation.*            # All moderation permissions
+essentials.economy.*               # All economy permissions
+essentials.messaging.*             # All messaging permissions
+*.admin                            # All admin permissions across all plugins
+```
+
+#### Ultimate Permission
+```
+*                                  # ALL permissions (use with extreme caution!)
+```
+
+### Permission Node Validation
+
+All permission nodes follow these rules:
+- Only contain letters, numbers, dots, underscores, and hyphens
+- Maximum length of 100 characters
+- Use consistent naming conventions
+- Support wildcard matching with `*`
+- Support negation with `-` prefix
 
 ## ⚙️ Configuration
 

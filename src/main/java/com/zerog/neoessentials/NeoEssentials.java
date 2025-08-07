@@ -101,8 +101,27 @@ public class NeoEssentials {
             com.zerog.neoessentials.performance.AsyncOperationManager.getInstance();
             LOGGER.info("Async Operation Manager initialized");
             
-            // Initialize Discord Manager
-            com.zerog.neoessentials.discord.DiscordManager.getInstance();
+            // Initialize Discord Manager with configuration
+            com.zerog.neoessentials.discord.DiscordManager discordManager = com.zerog.neoessentials.discord.DiscordManager.getInstance();
+            com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+            com.zerog.neoessentials.config.DiscordConfig discordConfig = configManager.getDiscordConfig();
+            
+            // Initialize Discord with webhook configuration
+            if (discordConfig.webhooks.enabled && !discordConfig.webhooks.chatWebhookUrl.isEmpty()) {
+                discordManager.initialize(
+                    discordConfig.webhooks.chatWebhookUrl,
+                    "NeoEssentials Server",
+                    "https://via.placeholder.com/64x64/5865F2/FFFFFF?text=NE"
+                );
+            }
+            
+            // Initialize DiscordWebhookIntegration
+            com.zerog.neoessentials.integrations.DiscordWebhookIntegration webhookIntegration = 
+                com.zerog.neoessentials.integrations.DiscordWebhookIntegration.getInstance();
+            if (discordConfig.webhooks.enabled && !discordConfig.webhooks.chatWebhookUrl.isEmpty()) {
+                webhookIntegration.updateConfiguration(discordConfig.webhooks.chatWebhookUrl, true);
+            }
+            
             LOGGER.info("Discord Manager initialized");
             
             // Initialize Language Manager

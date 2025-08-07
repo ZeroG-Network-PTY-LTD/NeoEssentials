@@ -44,11 +44,20 @@ public class DiscordWebhookIntegration {
      */
     private void loadConfiguration() {
         try {
-            // These would typically come from config files - using simple defaults for now
-            this.enabled = false; // Will be configured via commands
-            this.webhookUrl = "";
+            // Load configuration from ConfigManager
+            com.zerog.neoessentials.config.ConfigManager configManager = 
+                com.zerog.neoessentials.config.ConfigManager.getInstance();
+            com.zerog.neoessentials.config.DiscordConfig discordConfig = configManager.getDiscordConfig();
             
-            LOGGER.info("Discord webhook integration initialized (disabled by default)");
+            if (discordConfig.webhooks.enabled && !discordConfig.webhooks.chatWebhookUrl.isEmpty()) {
+                this.enabled = true;
+                this.webhookUrl = discordConfig.webhooks.chatWebhookUrl;
+                LOGGER.info("Discord webhook integration loaded from configuration - ENABLED");
+            } else {
+                this.enabled = false;
+                this.webhookUrl = "";
+                LOGGER.info("Discord webhook integration initialized (disabled - no webhook configured)");
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to load Discord webhook configuration", e);
             this.enabled = false;
@@ -254,6 +263,13 @@ public class DiscordWebhookIntegration {
         } else {
             LOGGER.info("Discord webhook disabled");
         }
+    }
+    
+    /**
+     * Reload configuration from ConfigManager
+     */
+    public void reloadConfiguration() {
+        loadConfiguration();
     }
     
     /**
