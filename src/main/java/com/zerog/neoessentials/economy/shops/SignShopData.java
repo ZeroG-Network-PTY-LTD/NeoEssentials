@@ -52,6 +52,9 @@ public class SignShopData {
     public BlockPosData getSignPos() { return signPos; }
     public void setSignPos(BlockPosData signPos) { this.signPos = signPos; }
     
+    public BlockPosData getChestPos() { return chestPos; }
+    public void setChestPos(BlockPosData chestPos) { this.chestPos = chestPos; }
+    
     public ItemStackData getItem() { return item; }
     public void setItem(ItemStackData item) { this.item = item; }
     
