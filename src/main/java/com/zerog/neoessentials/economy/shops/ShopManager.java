@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.economy.shops;
 
-import com.zerog.neoessentials.economy.EconomyManager;
+import com.zerog.neoessentials.managers.EconomyManager;
 import com.zerog.neoessentials.web.WebDashboardManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
@@ -107,6 +107,9 @@ public class ShopManager {
         SignShop signShop = new SignShop(player.getStringUUID(), signPos, item, buyPrice, sellPrice, quantity);
         signShops.put(signPos, signShop);
         
+        // Save shops to storage after creating a new one
+        saveShopsToStorage();
+        
         updateWebDashboardMetrics();
         webDashboard.addRealTimeEvent("SHOP", "Sign shop created by " + player.getName().getString() + 
                                      " for " + item.getDisplayName().getString(), "INFO");
@@ -116,11 +119,41 @@ public class ShopManager {
     }
     
     /**
+     * Update sign shop stock and save to storage
+     */
+    public void updateSignShopStock(BlockPos signPos, int newStock) {
+        SignShop signShop = signShops.get(signPos);
+        if (signShop != null) {
+            signShop.setStock(newStock);
+            // Save shops to storage after stock update
+            saveShopsToStorage();
+            LOGGER.debug("Updated stock for sign shop at {} to {}", signPos, newStock);
+        }
+    }
+    
+    /**
+     * Remove a sign shop and save to storage
+     */
+    public boolean removeSignShop(BlockPos signPos) {
+        SignShop removed = signShops.remove(signPos);
+        if (removed != null) {
+            saveShopsToStorage();
+            LOGGER.info("Removed sign shop at {}", signPos);
+            return true;
+        }
+        return false;
+    }
+    
+    /**
      * Process a shop transaction
      */
     public boolean processTransaction(String playerId, String shopId, ItemStack item, int quantity, double totalPrice) {
-        // Process transaction logic here
-        boolean success = economyManager.removeBalance(UUID.fromString(playerId), "NEOESSENTIALS", BigDecimal.valueOf(totalPrice));
+        // Process transaction using the simple EconomyManager API
+        boolean success = economyManager.withdrawBalance(UUID.fromString(playerId), BigDecimal.valueOf(totalPrice), 
+            "Shop purchase: " + quantity + "x " + item.getDisplayName().getString());
+        
+        LOGGER.info("Processing shop transaction: Player {}, Amount: {}, Success: {}", 
+                   playerId, totalPrice, success);
         
         if (success) {
             dailyTransactions++;
@@ -202,15 +235,91 @@ public class ShopManager {
     }
     
     private void loadShopsFromStorage() {
-        // TODO: Implement shop persistence loading
-        // For now, just log that we would load from storage
-        LOGGER.debug("Loading shops from storage (not implemented yet)");
+        LOGGER.info("Loading sign shops from storage...");
+        
+        try {
+            com.zerog.neoessentials.storage.StorageManager storageManager = 
+                com.zerog.neoessentials.storage.StorageManager.getInstance();
+            
+            // Load sign shops asynchronously
+            storageManager.loadDataAsync("shops", "signshops.json", java.util.Map.class)
+                .thenAccept(data -> {
+                    if (data != null) {
+                        try {
+                            // Clear existing sign shops
+                            signShops.clear();
+                            
+                            // Convert the loaded data back to SignShop objects
+                            for (Object entry : data.values()) {
+                                if (entry instanceof java.util.Map<?, ?> shopData) {
+                                    try {
+                                        // Convert Map to SignShopData using Gson
+                                        com.google.gson.Gson gson = new com.google.gson.Gson();
+                                        String json = gson.toJson(shopData);
+                                        SignShopData signShopData = gson.fromJson(json, SignShopData.class);
+                                        
+                                        // Convert to SignShop and add to collection
+                                        ShopManager.SignShop signShop = signShopData.toSignShop();
+                                        signShops.put(signShop.getSignPos(), signShop);
+                                        
+                                        LOGGER.debug("Loaded sign shop at {} for item {}", 
+                                                    signShop.getSignPos(), 
+                                                    signShop.getItem().getDisplayName().getString());
+                                    } catch (Exception e) {
+                                        LOGGER.error("Failed to deserialize sign shop data: {}", e.getMessage());
+                                    }
+                                }
+                            }
+                            
+                            LOGGER.info("Successfully loaded {} sign shops from storage", signShops.size());
+                        } catch (Exception e) {
+                            LOGGER.error("Failed to process loaded sign shop data", e);
+                        }
+                    } else {
+                        LOGGER.info("No existing sign shop data found - starting with empty shop list");
+                    }
+                })
+                .exceptionally(throwable -> {
+                    LOGGER.error("Failed to load sign shops from storage", throwable);
+                    return null;
+                });
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize sign shop loading", e);
+        }
     }
     
     private void saveShopsToStorage() {
-        // TODO: Implement shop persistence saving
-        // For now, just log that we would save to storage
-        LOGGER.debug("Saving shops to storage (not implemented yet)");
+        LOGGER.debug("Saving {} sign shops to storage...", signShops.size());
+        
+        try {
+            com.zerog.neoessentials.storage.StorageManager storageManager = 
+                com.zerog.neoessentials.storage.StorageManager.getInstance();
+            
+            // Convert SignShop objects to serializable data
+            java.util.Map<String, SignShopData> shopDataMap = new java.util.HashMap<>();
+            
+            for (ShopManager.SignShop signShop : signShops.values()) {
+                String key = signShop.getSignPos().toShortString();
+                SignShopData shopData = new SignShopData(signShop);
+                shopDataMap.put(key, shopData);
+            }
+            
+            // Save asynchronously
+            storageManager.saveDataAsync("shops", "signshops.json", shopDataMap)
+                .thenAccept(success -> {
+                    if (success) {
+                        LOGGER.debug("Successfully saved {} sign shops to storage", shopDataMap.size());
+                    } else {
+                        LOGGER.error("Failed to save sign shops to storage");
+                    }
+                })
+                .exceptionally(throwable -> {
+                    LOGGER.error("Exception while saving sign shops to storage", throwable);
+                    return null;
+                });
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize sign shop saving", e);
+        }
     }
     
     private void updateWebDashboardMetrics() {

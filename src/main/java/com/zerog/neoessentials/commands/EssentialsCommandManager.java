@@ -99,6 +99,9 @@ public class EssentialsCommandManager {
         HelpCommand.register(dispatcher);
         InfoCommand.register(dispatcher);
         
+        // Shop commands
+        CreateShopCommand.register(dispatcher);
+        
         LOGGER.info("Registered {} essentials commands", 
             dispatcher.getRoot().getChildren().size());
     }
