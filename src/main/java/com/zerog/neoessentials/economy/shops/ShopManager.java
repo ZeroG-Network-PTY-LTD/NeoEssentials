@@ -252,7 +252,7 @@ public class ShopManager {
                 com.zerog.neoessentials.storage.StorageManager.getInstance();
             
             // Load sign shops asynchronously
-            storageManager.loadDataAsync("shops", "signshops.json", java.util.Map.class)
+            storageManager.loadDataAsync("shops", "signshops", java.util.Map.class)
                 .thenAccept(data -> {
                     if (data != null) {
                         try {
@@ -315,7 +315,7 @@ public class ShopManager {
             }
             
             // Save asynchronously
-            storageManager.saveDataAsync("shops", "signshops.json", shopDataMap)
+            storageManager.saveDataAsync("shops", "signshops", shopDataMap)
                 .thenAccept(success -> {
                     if (success) {
                         LOGGER.debug("Successfully saved {} sign shops to storage", shopDataMap.size());

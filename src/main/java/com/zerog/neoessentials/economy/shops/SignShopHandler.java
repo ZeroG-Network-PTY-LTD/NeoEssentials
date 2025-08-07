@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.economy.shops;
 
 import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -128,8 +129,10 @@ public class SignShopHandler {
      * Handle buying items from a sign shop
      */
     private InteractionResult handleBuyTransaction(Player player, ShopManager.SignShop signShop) {
-        if (!signShop.hasStock()) {
-            player.sendSystemMessage(Component.literal("§cThis shop is out of stock!"));
+        // For player shops, check actual chest contents instead of just stock number
+        if (!hasChestStock(player.level(), signShop)) {
+            MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player, 
+                "neoessentials.shop.buy.shop_empty");
             return InteractionResult.FAIL;
         }
         
@@ -198,7 +201,16 @@ public class SignShopHandler {
             return InteractionResult.FAIL;
         }
         
-        // Transaction successful - give items to player
+        // Transaction successful - take items from chest and give to player
+        if (!removeItemsFromChest(player.level(), signShop)) {
+            // If we can't remove items from chest, refund the money
+            economyManager.depositBalance(player.getUUID(), totalPrice, "Refund for shop stock issue");
+            MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
+                "neoessentials.shop.buy.shop_empty");
+            return InteractionResult.FAIL;
+        }
+        
+        // Give items to player
         ItemStack itemToGive = signShop.getItem().copy();
         itemToGive.setCount(signShop.getQuantity());
         
@@ -210,13 +222,27 @@ public class SignShopHandler {
         int newStock = signShop.getStock() - signShop.getQuantity();
         shopManager.updateSignShopStock(signShop.getSignPos(), newStock);
         
-        player.sendSystemMessage(Component.literal(String.format(
-                "§aPurchased %dx %s for %s from %s's shop",
+        // Get shop owner name for better display
+        String shopOwnerName = signShop.getOwnerId();
+        try {
+            net.minecraft.server.MinecraftServer server = player.getServer();
+            if (server != null) {
+                java.util.UUID ownerUUID = java.util.UUID.fromString(signShop.getOwnerId());
+                net.minecraft.server.level.ServerPlayer ownerPlayer = server.getPlayerList().getPlayer(ownerUUID);
+                if (ownerPlayer != null) {
+                    shopOwnerName = ownerPlayer.getName().getString();
+                }
+            }
+        } catch (Exception e) {
+            // Keep UUID if name lookup fails
+        }
+        
+        MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.buy.success",
                 signShop.getQuantity(),
                 signShop.getItem().getDisplayName().getString(),
-                economyManager.formatCurrency(totalPrice),
-                signShop.getOwnerId()
-        )));
+                totalPrice,
+                shopOwnerName
+        );
         
         LOGGER.info("Player {} purchased {}x {} for {} from shop owned by {}", 
                    player.getName().getString(), signShop.getQuantity(), 
@@ -438,6 +464,138 @@ public class SignShopHandler {
     }
     
     /**
+     * Check if the shop's chest has enough items for a purchase
+     */
+    private boolean hasChestStock(Level level, ShopManager.SignShop signShop) {
+        BlockPos chestPos = signShop.getChestPos();
+        if (chestPos == null) {
+            return false; // No chest connected
+        }
+        
+        if (level.getBlockEntity(chestPos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
+            ItemStack shopItem = signShop.getItem();
+            int requiredQuantity = signShop.getQuantity();
+            int availableCount = 0;
+            
+            // Count matching items in chest
+            for (int i = 0; i < chestEntity.getContainerSize(); i++) {
+                ItemStack stack = chestEntity.getItem(i);
+                if (ItemStack.isSameItem(stack, shopItem)) {
+                    availableCount += stack.getCount();
+                }
+            }
+            
+            return availableCount >= requiredQuantity;
+        }
+        
+        return false; // Chest not found or not a chest
+    }
+    
+    /**
+     * Remove items from the shop's chest for a purchase
+     */
+    private boolean removeItemsFromChest(Level level, ShopManager.SignShop signShop) {
+        BlockPos chestPos = signShop.getChestPos();
+        if (chestPos == null) {
+            return false; // No chest connected
+        }
+        
+        if (level.getBlockEntity(chestPos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
+            ItemStack shopItem = signShop.getItem();
+            int requiredQuantity = signShop.getQuantity();
+            int toRemove = requiredQuantity;
+            
+            // Remove items from chest
+            for (int i = 0; i < chestEntity.getContainerSize() && toRemove > 0; i++) {
+                ItemStack stack = chestEntity.getItem(i);
+                if (ItemStack.isSameItem(stack, shopItem)) {
+                    int removeFromStack = Math.min(stack.getCount(), toRemove);
+                    stack.shrink(removeFromStack);
+                    toRemove -= removeFromStack;
+                }
+            }
+            
+            // Mark chest as changed
+            chestEntity.setChanged();
+            return toRemove == 0; // Success if we removed all required items
+        }
+
+        return false; // Chest not found or not a chest
+    }
+    
+    /**
+     * Check if the shop's chest has space for items being sold
+     */
+    private boolean chestHasSpace(Level level, ShopManager.SignShop signShop) {
+        BlockPos chestPos = signShop.getChestPos();
+        if (chestPos == null) {
+            return false; // No chest connected
+        }
+        
+        if (level.getBlockEntity(chestPos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
+            ItemStack shopItem = signShop.getItem();
+            int quantityToAdd = signShop.getQuantity();
+            int remainingToAdd = quantityToAdd;
+            
+            // Check if chest has space for the items
+            for (int i = 0; i < chestEntity.getContainerSize() && remainingToAdd > 0; i++) {
+                ItemStack stack = chestEntity.getItem(i);
+                if (stack.isEmpty()) {
+                    // Empty slot - can fit full stack
+                    remainingToAdd -= Math.min(remainingToAdd, shopItem.getMaxStackSize());
+                } else if (ItemStack.isSameItem(stack, shopItem)) {
+                    // Same item - check how many more can fit
+                    int spaceInStack = shopItem.getMaxStackSize() - stack.getCount();
+                    remainingToAdd -= Math.min(remainingToAdd, spaceInStack);
+                }
+            }
+            
+            return remainingToAdd <= 0; // Success if all items can fit
+        }
+        
+        return false; // Chest not found or not a chest
+    }
+    
+    /**
+     * Add items to the shop's chest when a player sells
+     */
+    private boolean addItemsToChest(Level level, ShopManager.SignShop signShop) {
+        BlockPos chestPos = signShop.getChestPos();
+        if (chestPos == null) {
+            return false; // No chest connected
+        }
+        
+        if (level.getBlockEntity(chestPos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
+            ItemStack shopItem = signShop.getItem();
+            int quantityToAdd = signShop.getQuantity();
+            int remainingToAdd = quantityToAdd;
+            
+            // Add items to chest
+            for (int i = 0; i < chestEntity.getContainerSize() && remainingToAdd > 0; i++) {
+                ItemStack stack = chestEntity.getItem(i);
+                if (stack.isEmpty()) {
+                    // Empty slot - add items
+                    int toAdd = Math.min(remainingToAdd, shopItem.getMaxStackSize());
+                    ItemStack newStack = shopItem.copy();
+                    newStack.setCount(toAdd);
+                    chestEntity.setItem(i, newStack);
+                    remainingToAdd -= toAdd;
+                } else if (ItemStack.isSameItem(stack, shopItem)) {
+                    // Same item - add to existing stack
+                    int spaceInStack = shopItem.getMaxStackSize() - stack.getCount();
+                    int toAdd = Math.min(remainingToAdd, spaceInStack);
+                    stack.grow(toAdd);
+                    remainingToAdd -= toAdd;
+                }
+            }
+            
+            // Mark chest as changed
+            chestEntity.setChanged();
+            return remainingToAdd == 0; // Success if we added all items
+        }
+
+        return false; // Chest not found or not a chest
+    }    /**
      * Check if player has permission
      */
     private boolean hasPermission(Player player, String permission) {

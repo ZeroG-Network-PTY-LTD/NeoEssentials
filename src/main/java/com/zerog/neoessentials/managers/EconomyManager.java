@@ -3,6 +3,7 @@ package com.zerog.neoessentials.managers;
 import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.EconomyConfig;
 import com.zerog.neoessentials.storage.PlayerDataManager;
+import com.zerog.neoessentials.storage.StorageManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -83,14 +84,19 @@ public class EconomyManager {
         
         LOGGER.info("Loading balance for player {}: {}", playerUUID, balance != null ? formatCurrency(balance) : "null");
         
-        // Check if player needs starting balance initialization
-        if (balance == null || (balance.equals(BigDecimal.ZERO) && !hasBeenInitialized(playerUUID))) {
-            // New player or uninitialized player - set starting balance from config
+        // Check if player needs starting balance initialization (only for truly new players)
+        if (balance == null && !hasBeenInitialized(playerUUID)) {
+            // New player - set starting balance from config
             EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
             balance = BigDecimal.valueOf(config.startingBalance);
             playerDataManager.setBalance(playerUUID, balance);
             markAsInitialized(playerUUID);
-            LOGGER.info("Set starting balance of {} for player {}", formatCurrency(balance), playerUUID);
+            LOGGER.info("Set starting balance of {} for new player {}", formatCurrency(balance), playerUUID);
+        } else if (balance == null) {
+            // Player exists but balance is null (corrupted data) - set to zero, don't reset to starting balance
+            balance = BigDecimal.ZERO;
+            playerDataManager.setBalance(playerUUID, balance);
+            LOGGER.warn("Player {} had null balance, set to zero", playerUUID);
         }
         
         balanceCache.put(playerUUID, balance);
@@ -501,6 +507,45 @@ public class EconomyManager {
         
         public void setLastInterestCalculation(long timestamp) {
             this.lastInterestCalculation = timestamp;
+        }
+    }
+    
+    /**
+     * Shutdown the economy manager and save all data
+     */
+    public void shutdown() {
+        try {
+            LOGGER.info("Shutting down Economy Manager - saving all player data");
+            
+            // Save all player data through the storage manager
+            for (UUID playerUUID : balanceCache.keySet()) {
+                savePlayerData(playerUUID);
+            }
+            
+            LOGGER.info("Economy Manager shutdown completed - saved {} player records", balanceCache.size());
+        } catch (Exception e) {
+            LOGGER.error("Error during economy manager shutdown", e);
+        }
+    }
+    
+    /**
+     * Save individual player data to persistent storage
+     */
+    private void savePlayerData(UUID playerUUID) {
+        try {
+            BigDecimal balance = balanceCache.get(playerUUID);
+            if (balance != null) {
+                // Create a simple data structure for storage
+                Map<String, Object> playerEconomyData = new HashMap<>();
+                playerEconomyData.put("balance", balance.doubleValue());
+                playerEconomyData.put("lastSaved", System.currentTimeMillis());
+                
+                // Save using storage manager
+                StorageManager.getInstance().savePlayerEconomy(playerUUID, playerEconomyData);
+                LOGGER.debug("Saved economy data for player {}: ${}", playerUUID, balance);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to save economy data for player " + playerUUID, e);
         }
     }
 }
