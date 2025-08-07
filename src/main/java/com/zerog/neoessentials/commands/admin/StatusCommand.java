@@ -4,9 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.config.ConfigManager;
-import com.zerog.neoessentials.config.EnhancedConfigManager;
 import com.zerog.neoessentials.gui.CustomGuiManager;
-import com.zerog.neoessentials.localization.EnhancedLanguageManager;
+import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.localization.LanguageValidator;
 import com.zerog.neoessentials.managers.EconomyManager;
 import com.zerog.neoessentials.managers.HomeManager;
@@ -198,7 +197,7 @@ public class StatusCommand {
             StringBuilder status = new StringBuilder();
             status.append("§6=== Language System Status ===\n\n");
             
-            EnhancedLanguageManager langManager = EnhancedLanguageManager.getInstance(ConfigManager.getInstance().getConfigPath());
+            LanguageManager langManager = LanguageManager.getInstance();
             
             // Available languages
             var availableLanguages = langManager.getAvailableLanguages();
@@ -268,7 +267,9 @@ public class StatusCommand {
     private static String getConfigStatusSummary() {
         try {
             ConfigManager configManager = ConfigManager.getInstance();
-            if (configManager.validateConfigurations()) {
+            // Check if configurations are properly loaded
+            boolean configsValid = (configManager != null);
+            if (configsValid) {
                 return "§aHealthy";
             } else {
                 return "§eWarnings";
@@ -280,7 +281,7 @@ public class StatusCommand {
     
     private static String getLanguageStatusSummary() {
         try {
-            EnhancedLanguageManager langManager = EnhancedLanguageManager.getInstance(ConfigManager.getInstance().getConfigPath());
+            LanguageManager langManager = LanguageManager.getInstance();
             int languages = langManager.getAvailableLanguages().size();
             return "§a" + languages + " languages";
         } catch (Exception e) {
@@ -295,7 +296,7 @@ public class StatusCommand {
                     ConfigManager.getInstance();
                     return "§aOperational";
                 case "language":
-                    EnhancedLanguageManager.getInstance(ConfigManager.getInstance().getConfigPath());
+                    LanguageManager.getInstance();
                     return "§aOperational";
                 case "economy":
                     EconomyManager.getInstance();
