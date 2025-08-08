@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.shops;
 
 import com.zerog.neoessentials.permissions.PermissionNodes;
-import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -183,8 +182,11 @@ public class SignShopHandler {
      * Handle buying items from a sign shop
      */
     private InteractionResult handleBuyTransaction(Player player, ShopManager.SignShop signShop) {
+        // Admin shops have unlimited stock and use "SERVER" as owner ID
+        boolean isAdminShop = "SERVER".equals(signShop.getOwnerId());
+        
         // For player shops, check actual chest contents instead of just stock number
-        if (!hasChestStock(player.level(), signShop)) {
+        if (!isAdminShop && !hasChestStock(player.level(), signShop)) {
             player.sendSystemMessage(Component.literal("§cShop is out of stock!"));
             return InteractionResult.FAIL;
         }
@@ -227,14 +229,18 @@ public class SignShopHandler {
         BigDecimal buyerBalanceBefore = economyManager.getBalance(player.getUUID());
         LOGGER.info("Buyer balance before: {}", economyManager.formatCurrency(buyerBalanceBefore));
 
-        // CRITICAL: Remove items from chest FIRST before any money transactions
-        if (!removeItemsFromChest(player.level(), signShop)) {
-            // If we can't remove items from chest, don't proceed with transaction
-            player.sendSystemMessage(Component.literal("§cShop is out of stock!"));
-            return InteractionResult.FAIL;
+        // CRITICAL FIX: For player shops, verify chest stock again and remove items atomically
+        // This prevents duplication when multiple players try to buy from empty shops simultaneously
+        if (!isAdminShop) {
+            // Double-check and remove items atomically to prevent race conditions
+            if (!removeItemsFromChest(player.level(), signShop)) {
+                // If we can't remove items from chest, don't proceed with transaction
+                player.sendSystemMessage(Component.literal("§cShop is out of stock!"));
+                return InteractionResult.FAIL;
+            }
         }
 
-        // Now that we have the items, proceed with money transactions
+        // Now proceed with money transactions
         boolean withdrawSuccess = economyManager.withdrawBalance(
                 player.getUUID(), 
                 totalPrice,
@@ -244,8 +250,10 @@ public class SignShopHandler {
         LOGGER.info("Withdraw success: {}", withdrawSuccess);
         
         if (!withdrawSuccess) {
-            // Money transaction failed - put items back in chest
-            addItemsToChest(player.level(), signShop);
+            // Money transaction failed - put items back in chest (only for player shops)
+            if (!isAdminShop) {
+                addItemsToChest(player.level(), signShop);
+            }
             player.sendSystemMessage(Component.literal("§cFailed to process payment!"));
             return InteractionResult.FAIL;
         }
@@ -254,35 +262,37 @@ public class SignShopHandler {
         BigDecimal buyerBalanceAfter = economyManager.getBalance(player.getUUID());
         LOGGER.info("Buyer balance after withdrawal: {}", economyManager.formatCurrency(buyerBalanceAfter));
 
-        // Give money to shop owner
-        try {
-            java.util.UUID shopOwnerUUID = java.util.UUID.fromString(signShop.getOwnerId());
-            
-            // Check shop owner's balance before transaction
-            BigDecimal ownerBalanceBefore = economyManager.getBalance(shopOwnerUUID);
-            LOGGER.info("Shop owner balance before: {}", economyManager.formatCurrency(ownerBalanceBefore));
-            
-            boolean depositSuccess = economyManager.depositBalance(
-                    shopOwnerUUID,
-                    totalPrice,
-                    "Shop sale: " + signShop.getQuantity() + "x " + signShop.getItem().getDisplayName().getString() + " to " + player.getName().getString()
-            );
-            
-            LOGGER.info("Deposit success: {}", depositSuccess);
-            
-            if (!depositSuccess) {
-                // Refund the buyer and put items back if we can't pay the shop owner
-                economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Shop payment failed");
+        // Give money to shop owner (skip for admin shops)
+        if (!isAdminShop) {
+            try {
+                java.util.UUID shopOwnerUUID = java.util.UUID.fromString(signShop.getOwnerId());
+                
+                // Check shop owner's balance before transaction
+                BigDecimal ownerBalanceBefore = economyManager.getBalance(shopOwnerUUID);
+                LOGGER.info("Shop owner balance before: {}", economyManager.formatCurrency(ownerBalanceBefore));
+                
+                boolean depositSuccess = economyManager.depositBalance(
+                        shopOwnerUUID,
+                        totalPrice,
+                        "Shop sale: " + signShop.getQuantity() + "x " + signShop.getItem().getDisplayName().getString() + " to " + player.getName().getString()
+                );
+                
+                LOGGER.info("Deposit success: {}", depositSuccess);
+                
+                if (!depositSuccess) {
+                    // Refund the buyer and put items back if we can't pay the shop owner
+                    economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Shop payment failed");
+                    addItemsToChest(player.level(), signShop);
+                    player.sendSystemMessage(Component.literal("§cShop payment failed! Money refunded."));
+                    return InteractionResult.FAIL;
+                }
+            } catch (IllegalArgumentException e) {
+                // Invalid UUID - refund buyer and put items back
+                economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Invalid shop owner");
                 addItemsToChest(player.level(), signShop);
-                player.sendSystemMessage(Component.literal("§cShop payment failed! Money refunded."));
+                player.sendSystemMessage(Component.literal("§cInvalid shop owner! Money refunded."));
                 return InteractionResult.FAIL;
             }
-        } catch (IllegalArgumentException e) {
-            // Invalid UUID - refund buyer and put items back
-            economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Invalid shop owner");
-            addItemsToChest(player.level(), signShop);
-            player.sendSystemMessage(Component.literal("§cInvalid shop owner! Money refunded."));
-            return InteractionResult.FAIL;
         }
         
         // Give items to player
@@ -293,28 +303,34 @@ public class SignShopHandler {
             player.spawnAtLocation(itemToGive);
         }
         
-        // Reduce shop stock and save to storage
-        int newStock = signShop.getStock() - signShop.getQuantity();
-        shopManager.updateSignShopStock(signShop.getSignPos(), newStock);
+        // Update shop stock and save to storage (only for player shops with actual stock tracking)
+        if (!isAdminShop) {
+            int newStock = signShop.getStock() - signShop.getQuantity();
+            shopManager.updateSignShopStock(signShop.getSignPos(), newStock);
+        }
         
         // Get shop owner name for better display
         String shopOwnerName = signShop.getOwnerId();
-        try {
-            net.minecraft.server.MinecraftServer server = player.getServer();
-            if (server != null) {
-                java.util.UUID ownerUUID = java.util.UUID.fromString(signShop.getOwnerId());
-                net.minecraft.server.level.ServerPlayer ownerPlayer = server.getPlayerList().getPlayer(ownerUUID);
-                if (ownerPlayer != null) {
-                    shopOwnerName = ownerPlayer.getName().getString();
+        if (!isAdminShop) {
+            try {
+                net.minecraft.server.MinecraftServer server = player.getServer();
+                if (server != null) {
+                    java.util.UUID ownerUUID = java.util.UUID.fromString(signShop.getOwnerId());
+                    net.minecraft.server.level.ServerPlayer ownerPlayer = server.getPlayerList().getPlayer(ownerUUID);
+                    if (ownerPlayer != null) {
+                        shopOwnerName = ownerPlayer.getName().getString();
+                    }
                 }
+            } catch (Exception e) {
+                // Keep UUID if name lookup fails
             }
-        } catch (Exception e) {
-            // Keep UUID if name lookup fails
+        } else {
+            shopOwnerName = "Admin Shop";
         }
         
         player.sendSystemMessage(Component.literal("§aSuccessfully purchased " + 
                 signShop.getQuantity() + "x " + signShop.getItem().getDisplayName().getString() + 
-                " for $" + String.format("%.2f", totalPrice) + " from " + shopOwnerName + "'s shop"));
+                " for $" + String.format("%.2f", totalPrice) + " from " + shopOwnerName));
         
         LOGGER.info("Player {} purchased {}x {} for {} from shop owned by {}", 
                    player.getName().getString(), signShop.getQuantity(), 
