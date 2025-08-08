@@ -1,267 +1,126 @@
 package com.zerog.neoessentials.events;
 
 import com.zerog.neoessentials.managers.*;
-import com.zerog.neoessentials.storage.PlayerDataManager;
-import com.zerog.neoessentials.player.PlaytimeTracker;
-import com.zerog.neoessentials.storage.StorageManager;
-import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
-import com.zerog.neoessentials.utils.PlaceholderManager;
-import com.zerog.neoessentials.features.TablistScoreboardManager;
-import com.zerog.neoessentials.commands.essentials.GodCommand;
-import com.zerog.neoessentials.commands.essentials.VanishCommand;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import java.math.BigDecimal;
-import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
-import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Central event handler for NeoEssentials
- * Manages player events, server events, and feature integration
- * 
- * @author ZeroG
- * @since 2.0.0
- */
 @EventBusSubscriber(modid = "neoessentials")
 public class NeoEssentialsEventHandler {
-    
     private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentialsEventHandler.class);
     
-    /**
-     * Handle server startup - initialize all systems
-     */
-    @SubscribeEvent
-    public static void onServerStarted(ServerStartedEvent event) {
-        LOGGER.info("NeoEssentials server startup - initializing systems...");
-        
-        try {
-            // Initialize storage system
-            StorageManager.getInstance();
-            
-            // Initialize all managers
-            PlayerDataManager.getInstance();
-            EconomyManager.getInstance();
-            HomeManager.getInstance();
-            WarpManager.getInstance();
-            KitManager.getInstance();
-            MessagingManager.getInstance();
-            SpawnManager.getInstance();
-            ModerationManager.getInstance();
-            
-            // Initialize placeholder system
-            PlaceholderManager.getInstance();
-            
-            // Initialize tablist and scoreboard system
-            TablistScoreboardManager.getInstance();
-            
-            LOGGER.info("NeoEssentials successfully initialized all systems");
-            
-        } catch (Exception e) {
-            LOGGER.error("Failed to initialize NeoEssentials systems", e);
-        }
-    }
-    
-    /**
-     * Handle server shutdown - cleanup and save data
-     */
-    @SubscribeEvent
-    public static void onServerStopping(ServerStoppingEvent event) {
-        LOGGER.info("NeoEssentials server shutdown - saving data...");
-        
-        try {
-            // Save economy data first
-            EconomyManager economyManager = EconomyManager.getInstance();
-            if (economyManager != null) {
-                economyManager.shutdown();
-            }
-            
-            // Create backup before shutdown
-            StorageManager storageManager = StorageManager.getInstance();
-            storageManager.createBackup().join(); // Wait for backup to complete
-            
-            // Shutdown storage manager
-            storageManager.shutdown();
-            
-            LOGGER.info("NeoEssentials successfully saved all data");
-            
-        } catch (Exception e) {
-            LOGGER.error("Error during NeoEssentials shutdown", e);
-        }
-    }
-    
-    /**
-     * Handle player joining the server
-     */
-    @SubscribeEvent
-    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-        
-        LOGGER.info("Player {} joined the server", player.getName().getString());
-        
-        try {
-            // Load player data
-            PlayerDataManager playerDataManager = PlayerDataManager.getInstance();
-            playerDataManager.loadPlayerData(player.getUUID());
-            
-            // Initialize economy for new players
-            EconomyManager economyManager = EconomyManager.getInstance();
-            if (economyManager.isEnabled()) {
-                // This will check if player needs starting balance and set it
-                BigDecimal balance = economyManager.getBalance(player.getUUID());
-                LOGGER.debug("Player {} has balance: {}", player.getName().getString(), economyManager.formatCurrency(balance));
-            }
-            
-            // Update last seen
-            PlayerDataManager.PlayerData playerData = playerDataManager.getPlayerData(player.getUUID());
-            playerData.lastSeen = System.currentTimeMillis();
-            
-            // Check for pending mail (would be implemented when needed)
-            // MessagingManager messagingManager = MessagingManager.getInstance();
-            // messagingManager.checkPendingMail(player);
-            
-            // Welcome message with placeholders
-            PlaceholderManager placeholderManager = PlaceholderManager.getInstance();
-            String welcomeMessage = placeholderManager.processPlaceholders(player, 
-                "§6Welcome back, %player%! §eBalance: %balance% | Homes: %homes_count%");
-            MessageUtil.sendMessage(player, welcomeMessage);
-            
-        } catch (Exception e) {
-            LOGGER.error("Error handling player join for {}", player.getName().getString(), e);
-        }
-    }
-    
-    /**
-     * Handle player leaving the server
-     */
-    @SubscribeEvent
-    public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-        
-        LOGGER.info("Player {} left the server", player.getName().getString());
-        
-        try {
-            // Clean up god mode status
-            GodCommand.removePlayer(player.getUUID());
-            
-            // Clean up vanish status if exists
-            VanishCommand.removePlayer(player.getUUID());
-            
-            // Update last seen time
-            PlayerDataManager playerDataManager = PlayerDataManager.getInstance();
-            PlayerDataManager.PlayerData playerData = playerDataManager.getPlayerData(player.getUUID());
-            playerData.lastSeen = System.currentTimeMillis();
-            
-            // Save player data
-            playerDataManager.savePlayerData(player.getUUID());
-            
-        } catch (Exception e) {
-            LOGGER.error("Error handling player leave for {}", player.getName().getString(), e);
-        }
-    }
-    
-    /**
-     * Handle player death
-     */
-    @SubscribeEvent
-    public static void onPlayerDeath(LivingDeathEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-        
-        try {
-            // Record death location for potential /back command
-            LocationUtil.Location deathLocation = LocationUtil.fromServerPlayer(player);
-            
-            LOGGER.info("Player {} died at {}", player.getName().getString(), 
-                LocationUtil.formatLocation(deathLocation));
-            
-        } catch (Exception e) {
-            LOGGER.error("Error handling player death for {}", player.getName().getString(), e);
-        }
-    }
-    
-    /**
-     * Handle player respawn
-     */
-    @SubscribeEvent
-    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-        
-        try {
-            // Check if player should respawn at a custom spawn
-            SpawnManager spawnManager = SpawnManager.getInstance();
-            LocationUtil.Location spawnLocation = spawnManager.getSpawnLocation(player.level().dimension().location().getPath());
-            
-            if (spawnLocation != null) {
-                LOGGER.info("Player {} respawning at custom spawn", player.getName().getString());
-            }
-            
-        } catch (Exception e) {
-            LOGGER.error("Error handling player respawn for {}", player.getName().getString(), e);
-        }
-    }
-    
-    /**
-     * Handle block break events (for protection checks)
-     */
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        if (!(event.getPlayer() instanceof ServerPlayer player)) {
-            return;
-        }
-        
+        if (!(event.getPlayer() instanceof ServerPlayer player)) return;
         try {
-            // Check if player is jailed (jailed players can't break blocks)
             ModerationManager moderationManager = ModerationManager.getInstance();
             if (moderationManager.isPlayerJailed(player.getUUID())) {
                 event.setCanceled(true);
                 MessageUtil.sendMessage(player, "§cYou cannot break blocks while jailed!");
                 return;
             }
-            
-            // Additional protection checks could go here
-            // - Home protection
-            // - Warp protection
-            // - Spawn protection
-            
+            if (handleShopProtection(event)) return;
         } catch (Exception e) {
             LOGGER.error("Error handling block break event", e);
         }
     }
     
-    /**
-     * Handle block place events (for protection checks)
-     */
     @SubscribeEvent
     public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-        
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
         try {
-            // Check if player is jailed (jailed players can't place blocks)
             ModerationManager moderationManager = ModerationManager.getInstance();
             if (moderationManager.isPlayerJailed(player.getUUID())) {
                 event.setCanceled(true);
                 MessageUtil.sendMessage(player, "§cYou cannot place blocks while jailed!");
                 return;
             }
-            
         } catch (Exception e) {
             LOGGER.error("Error handling block place event", e);
         }
+    }
+    
+    private static boolean handleShopProtection(BlockEvent.BreakEvent event) {
+        ServerPlayer player = (ServerPlayer) event.getPlayer();
+        BlockPos pos = event.getPos();
+        Level level = (Level) event.getLevel();
+        if (isShopSign(level, pos)) return handleSignBreak(player, pos, event);
+        if (isShopChest(level, pos)) return handleChestBreak(player, pos, event);
+        return false;
+    }
+    
+    private static boolean handleSignBreak(ServerPlayer player, BlockPos signPos, BlockEvent.BreakEvent event) {
+        com.zerog.neoessentials.economy.shops.ShopManager shopManager = 
+            com.zerog.neoessentials.economy.shops.ShopManager.getInstance();
+        if (shopManager == null) return false;
+        var signShop = shopManager.getSignShops().stream()
+            .filter(shop -> shop.getSignPos().equals(signPos))
+            .findFirst().orElse(null);
+        if (signShop == null) return false;
+        if (!canBreakShop(player, signShop)) {
+            event.setCanceled(true);
+            if ("SERVER".equals(signShop.getOwnerId())) {
+                MessageUtil.sendMessage(player, "§cYou cannot break this admin shop sign! You need admin permissions.");
+            } else {
+                MessageUtil.sendMessage(player, "§cYou cannot break this shop sign! It belongs to another player.");
+            }
+            return true;
+        }
+        shopManager.removeSignShop(signPos);
+        String shopType = "SERVER".equals(signShop.getOwnerId()) ? "Admin shop" : "Shop";
+        MessageUtil.sendMessage(player, "§a" + shopType + " removed successfully!");
+        return false;
+    }
+    
+    private static boolean handleChestBreak(ServerPlayer player, BlockPos chestPos, BlockEvent.BreakEvent event) {
+        com.zerog.neoessentials.economy.shops.ShopManager shopManager = 
+            com.zerog.neoessentials.economy.shops.ShopManager.getInstance();
+        if (shopManager == null) return false;
+        
+        // Find if this chest is connected to any shop
+        var signShop = shopManager.getSignShops().stream()
+            .filter(shop -> chestPos.equals(shop.getChestPos()))
+            .findFirst().orElse(null);
+        if (signShop == null) return false; // Not a shop chest
+        
+        // Admin shops don't need chest protection since they don't rely on chests
+        if ("SERVER".equals(signShop.getOwnerId())) {
+            return false; // Allow breaking chests connected to admin shops
+        }
+        
+        if (!canBreakShop(player, signShop)) {
+            event.setCanceled(true);
+            MessageUtil.sendMessage(player, "§cYou cannot break this chest! It belongs to a shop owned by another player.");
+            return true;
+        }
+        MessageUtil.sendMessage(player, "§eWarning: Breaking this chest will affect the connected shop!");
+        return false;
+    }
+    
+    private static boolean canBreakShop(ServerPlayer player, com.zerog.neoessentials.economy.shops.ShopManager.SignShop signShop) {
+        // Admin shops can only be broken by players with admin permissions
+        if ("SERVER".equals(signShop.getOwnerId())) {
+            return player.hasPermissions(4); // Require OP level for admin shops
+        }
+        // Player shops can be broken by owner or admins
+        return signShop.getOwnerId().equals(player.getStringUUID()) || player.hasPermissions(4);
+    }
+    
+    private static boolean isShopSign(Level level, BlockPos pos) {
+        if (!(level.getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.SignBlock)) return false;
+        if (!(level.getBlockEntity(pos) instanceof net.minecraft.world.level.block.entity.SignBlockEntity signEntity)) return false;
+        net.minecraft.network.chat.Component[] lines = signEntity.getFrontText().getMessages(false);
+        String firstLine = lines.length > 0 ? lines[0].getString() : "";
+        return "[SHOP]".equals(firstLine) || "[Admin Shop]".equals(firstLine);
+    }
+    
+    private static boolean isShopChest(Level level, BlockPos pos) {
+        return level.getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.ChestBlock;
     }
 }
