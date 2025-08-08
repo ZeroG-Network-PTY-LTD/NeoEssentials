@@ -130,7 +130,6 @@ config/neoessentials/
 - 🔌 [API Documentation](docs/wiki/API.md) - Developer API reference
 - 🎯 [Custom Placeholders](docs/wiki/Placeholders.md) - Creating custom placeholders
 - 🔧 [Events System](docs/wiki/Events.md) - Custom event handling
-- 🎮 [GUI System](docs/wiki/GUI-System.md) - Custom GUI creation
 
 ## 🎮 Key Commands
 

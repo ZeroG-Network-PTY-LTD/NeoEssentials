@@ -1,40 +1,61 @@
 # Configuration Guide
 
-This comprehensive guide covers all configuration options available in NeoEssentials. Configuration files are located in the `config/` directory and use TOML format.
+This comprehensive guide covers all configuration options available in NeoEssentials. Configuration files are located in the `config/` directory and use TOML format for most settings, with JSON used for GUI and advanced features.
 
 ## 📁 Configuration Files Overview
 
 ### Main Configuration Files
-- `neoessentials-general.toml` - General mod settings
-- `neoessentials-common.toml` - Common gameplay settings
-- `neoessentials/language/` - Language files
-- `neoessentials/templates/` - Bossbar and message templates
-- `neoessentials/security/` - Security configuration
+- `neoessentials-general.toml` - General mod settings and server information
+- `neoessentials-common.toml` - Common gameplay settings and feature toggles
+- `gui/` - GUI system configurations (JSON format)
+- `neoessentials/` - Advanced feature configurations
 
-### Configuration Directory Structure
+### Complete Configuration Directory Structure
 ```
 config/
-├── neoessentials-general.toml
-├── neoessentials-common.toml
+├── neoessentials-general.toml       # General mod settings
+├── neoessentials-common.toml        # Common configurations
+├── gui/                            # 🎮 GUI System configurations (NEW)
+│   ├── main_config.json            # Main GUI settings & themes
+│   ├── shop_gui.json               # Shop interface configuration
+│   ├── kits_gui.json               # Kit selection menu settings
+│   ├── stats_gui.json              # Player statistics display
+│   ├── economy_gui.json            # Economy management interface
+│   ├── warps_gui.json              # Warp destinations browser
+│   ├── admin_gui.json              # Admin control panel
+│   └── teleport_gui.json           # Teleportation hub interface
 └── neoessentials/
-    ├── language/
-    │   ├── en_US.yml
-    │   ├── es_ES.yml
-    │   └── fr_FR.yml
-    ├── templates/
-    │   ├── bossbar.yml
-    │   └── messages.yml
-    ├── security/
-    │   └── security.toml
-    └── features/
-        ├── economy.toml
-        ├── homes.toml
-        └── warps.toml
+    ├── language/                   # 🌐 Multi-language support
+    │   ├── en_US.properties
+    │   ├── de_DE.properties
+    │   ├── es_ES.properties
+    │   └── fr_FR.properties
+    ├── templates/                  # 📝 Message & GUI templates
+    │   ├── bossbar_templates.yml
+    │   ├── message_templates.yml
+    │   └── gui_themes.yml
+    ├── security/                   # 🔒 Security configurations
+    │   ├── security.toml
+    │   ├── rate_limiting.toml
+    │   └── command_filtering.toml
+    └── features/                   # 🎯 Feature-specific configs
+        ├── commands.toml           # Command-specific settings
+        ├── teleportation.toml      # Teleportation system
+        ├── permissions.toml        # Permission management
+        ├── economy.toml            # Economy system (if enabled)
+        ├── homes.toml              # Home system settings
+        ├── warps.toml              # Warp system settings
+        ├── kits.toml               # Kit system configuration
+        ├── moderation.toml         # Moderation tools
+        ├── messaging.toml          # Chat and messaging
+        └── bossbar.toml            # Bossbar system settings
 ```
 
 ## ⚙️ General Configuration
 
 ### `neoessentials-general.toml`
+
+The main configuration file controlling core mod behavior:
 
 ```toml
 [general]
@@ -47,8 +68,344 @@ defaultLanguage = "en_US"
 # Enable debug mode for troubleshooting
 debugMode = false
 
-# Server display name
+# Server display name (used in messages and GUIs)
 serverName = "My Minecraft Server"
+
+# Server MOTD override (optional)
+serverDescription = "Welcome to our awesome server!"
+
+# Enable update notifications for admins
+updateNotifications = true
+
+# Performance monitoring
+enablePerformanceMonitoring = true
+
+[features]
+# 🎮 GUI System (NEW in v1.2+)
+guiSystem = true
+guiThemes = true
+guiShop = true
+guiKits = true
+guiStats = true
+guiAdmin = true
+
+# 📊 Bossbar System
+bossbarSystem = true
+bossbarTemplates = true
+bossbarAnimations = true
+
+# 🔧 Essential Commands
+essentialCommands = true
+teleportationCommands = true
+moderationCommands = false  # Set to true for moderation servers
+utilityCommands = true
+
+# 🔒 Security Features
+securityFeatures = true
+rateLimiting = true
+commandFiltering = true
+securityLogging = true
+
+# 🌐 Internationalization
+multiLanguageSupport = true
+playerLanguagePreferences = true
+dynamicLanguageSwitching = true
+
+# 🔗 Integration Features
+placeholderSupport = true
+permissionIntegration = true
+economyIntegration = false  # Set to true if using economy plugins
+
+[performance]
+# Async processing for heavy operations
+enableAsyncProcessing = true
+
+# Cache settings for better performance
+cacheSize = 1000
+cacheExpirationMinutes = 30
+
+# Update intervals (in ticks, 20 ticks = 1 second)
+generalUpdateInterval = 20
+bossbarUpdateInterval = 20
+guiUpdateInterval = 40
+
+# Resource limits
+maxConcurrentAsyncTasks = 10
+maxMemoryUsagePercent = 15
+
+[logging]
+# Enable detailed logging
+enableDetailedLogging = false
+
+# Log levels: DEBUG, INFO, WARN, ERROR
+logLevel = "INFO"
+
+# Enable specific logging categories
+commandLogging = true
+securityLogging = true
+performanceLogging = false
+guiInteractionLogging = false
+
+[compatibility]
+# Permission system compatibility
+preferredPermissionSystem = "auto"  # auto, luckperms, ftb_ranks, builtin
+
+# Placeholder integration
+enablePlaceholderAPI = true
+
+# Economy plugin integration
+economyProvider = "auto"  # auto, vault, builtin, none
+
+[gui]
+# 🎮 GUI System Configuration
+defaultTheme = "default"  # default, dark, ocean, custom
+
+# Enable GUI caching for better performance
+enableGuiCaching = true
+guiCacheSize = 100
+
+# Default GUI sizes (inventory slots)
+defaultShopSize = 54    # 6 rows
+defaultKitsSize = 36    # 4 rows
+defaultWarpsSize = 45   # 5 rows
+
+# GUI update frequencies (in ticks)
+shopUpdateInterval = 100     # Update shop every 5 seconds
+statsUpdateInterval = 200    # Update stats every 10 seconds
+
+# GUI sound effects
+enableGuiSounds = true
+guiClickSound = "minecraft:ui.button.click"
+guiSuccessSound = "minecraft:entity.experience_orb.pickup"
+guiErrorSound = "minecraft:block.note_block.bass"
+
+[notifications]
+# Message notification settings
+enableActionBarMessages = true
+enableSoundNotifications = true
+enableParticleEffects = false
+
+# Notification priorities
+criticalNotificationDuration = 10
+normalNotificationDuration = 5
+infoNotificationDuration = 3
+
+# Default sounds for notifications
+successSound = "minecraft:entity.experience_orb.pickup"
+errorSound = "minecraft:block.note_block.bass"
+infoSound = "minecraft:ui.button.click"
+
+[database]
+# Data storage configuration
+storageType = "json"  # json, sqlite, mysql
+
+# Backup settings
+enableAutoBackup = true
+backupInterval = 6  # hours
+maxBackupFiles = 10
+
+# Database connection (for MySQL)
+# mysql_host = "localhost"
+# mysql_port = 3306
+# mysql_database = "neoessentials"
+# mysql_username = "username"
+# mysql_password = "password"
+```
+
+## 🔧 Common Configuration
+
+### `neoessentials-common.toml`
+
+Core gameplay settings and feature toggles:
+
+```toml
+[commands]
+# 🎮 Essential Commands
+enableHeal = true
+enableFeed = true
+enableFly = true
+enableGod = true
+enableSpeed = true
+enableRepair = true
+
+# Teleportation Commands
+enableTeleportation = true
+enableHomes = true
+enableWarps = true
+enableBack = true
+enableSpawn = true
+enableRandomTeleport = true
+
+# Admin Commands
+enableGamemodeCommands = true
+enableTimeCommands = true
+enableWeatherCommands = true
+enableVanish = true
+
+# GUI Commands (NEW)
+enableGuiCommands = true
+enableShopCommand = true
+enableKitsCommand = true
+enableStatsCommand = true
+enableAdminPanelCommand = true
+
+[limits]
+# Player limits
+maxHomesDefault = 5
+maxHomesVIP = 10
+maxHomesStaff = 20
+
+# Teleportation limits
+maxWarpDistance = 10000
+maxRandomTeleportDistance = 5000
+
+# Command usage limits
+maxCommandsPerMinute = 60
+healCooldownSeconds = 30
+feedCooldownSeconds = 30
+
+# GUI interaction limits
+maxGuiActionsPerSecond = 10
+shopTransactionLimit = 1000000  # Maximum transaction value
+
+[teleportation]
+# Teleportation delays and cooldowns
+teleportDelay = 3         # seconds
+teleportCooldown = 30     # seconds
+adminTeleportDelay = 0    # instant for admins
+
+# Safety checks
+enableSafetyCheck = true
+maxTeleportHeight = 256
+minTeleportHeight = 1
+
+# Back command settings
+enableBack = true
+maxBackLocations = 10
+backCooldown = 10
+
+# Spawn settings
+forceSpawnOnFirstJoin = true
+spawnProtectionRadius = 10
+
+# Random teleport settings
+randomTeleportMinDistance = 1000
+randomTeleportMaxDistance = 5000
+randomTeleportMaxAttempts = 10
+
+[permissions]
+# Permission system settings
+useBuiltinPermissions = true
+defaultGroup = "default"
+enableGroupPrefixes = true
+
+# Default permission groups
+[permissions.groups]
+default = "neoessentials.player.*"
+vip = "neoessentials.vip.*"
+moderator = "neoessentials.moderator.*"
+admin = "neoessentials.admin.*"
+
+# GUI-specific permissions (NEW)
+[permissions.gui]
+shop_access = "neoessentials.gui.shop"
+kits_access = "neoessentials.gui.kits"
+stats_access = "neoessentials.gui.stats"
+admin_panel = "neoessentials.gui.admin"
+theme_change = "neoessentials.gui.theme.change"
+
+[economy]
+# Basic economy settings (if enabled)
+enableEconomy = false
+startingBalance = 1000.0
+currencyName = "Coins"
+currencySymbol = "$"
+
+# GUI shop economy integration (NEW)
+enableShopEconomy = false
+shopTaxRate = 0.05  # 5% tax on transactions
+maxShopPrice = 1000000
+
+[messaging]
+# Chat and message formatting
+chatPrefix = "&8[&6NeoEssentials&8]&r"
+useHexColors = true
+enableClickableMessages = true
+
+# Message display preferences
+preferActionBar = true
+enableSoundNotifications = true
+enableTitleMessages = false
+
+# Spam protection
+enableSpamProtection = true
+maxMessagesPerSecond = 3
+spamTimeoutSeconds = 30
+
+[gui_system]
+# 🎮 GUI System Settings (NEW in v1.2+)
+enabled = true
+
+# Default theme for all players
+defaultTheme = "default"
+
+# Available themes
+availableThemes = [
+    "default",
+    "dark", 
+    "ocean",
+    "forest",
+    "nether",
+    "end"
+]
+
+# GUI caching and performance
+enableCaching = true
+cacheRefreshInterval = 300  # 5 minutes
+maxCachedGuis = 50
+
+# Player GUI preferences
+savePlayerThemes = true
+savePlayerLayouts = true
+
+# GUI animations
+enableAnimations = true
+animationSpeed = 500  # milliseconds
+
+[bossbar]
+# 📊 Bossbar System Settings
+enabled = true
+enableTemplates = true
+enableAnimations = true
+
+# Default bossbar settings
+defaultColor = "GREEN"
+defaultStyle = "SOLID"
+defaultDuration = 10
+
+# Bossbar limits
+maxActiveBossbars = 5
+maxBossbarLength = 64
+
+# Animation settings
+animationUpdateInterval = 1000  # 1 second
+enableColorAnimations = true
+enableTextAnimations = true
+
+[security]
+# 🔒 Basic Security Settings
+enabled = true
+enableLogging = true
+enableRateLimiting = true
+
+# Rate limiting
+maxCommandsPerSecond = 5
+rateLimitWindow = 10  # seconds
+
+# Security monitoring
+enablePlayerMonitoring = true
+suspiciousActivityThreshold = 10
+```
 
 # Enable automatic updates check
 checkUpdates = true
