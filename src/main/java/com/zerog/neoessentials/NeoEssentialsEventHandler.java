@@ -4,7 +4,6 @@ import com.zerog.neoessentials.managers.*;
 import com.zerog.neoessentials.economy.shops.ShopManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
-import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ChestBlock;
@@ -75,13 +74,26 @@ public class NeoEssentialsEventHandler {
         
         ServerPlayer player = (ServerPlayer) event.getEntity();
         BlockPos pos = event.getPos();
-        LOGGER.debug("RIGHT CLICK EVENT: Player {} clicked block at {}", player.getName().getString(), pos);
+        Level level = (Level) event.getLevel();
         
         try {
-            // Check for shop chest access protection
-            handleChestAccess(event);
+            // FIRST: Check if this is a shop sign interaction
+            if (isShopSign(level, pos)) {
+                LOGGER.info("SHOP SIGN CLICK: Player {} clicked shop sign at {}", 
+                           player.getName().getString(), pos);
+                handleShopSignInteraction(player, level, pos, event);
+                return; // Don't process further if it's a shop sign
+            }
+            
+            // SECOND: Check for shop chest access protection
+            if (isChest(level, pos)) {
+                LOGGER.debug("CHEST CLICK: Player {} clicked chest at {}", 
+                            player.getName().getString(), pos);
+                handleChestAccess(event);
+            }
+            
         } catch (Exception e) {
-            LOGGER.error("Error handling chest access event", e);
+            LOGGER.error("Error handling right-click event", e);
         }
     }
     
@@ -144,7 +156,8 @@ public class NeoEssentialsEventHandler {
         LOGGER.info("Player {} attempted to break shop sign at {} owned by {}", 
                    player.getName().getString(), signPos, signShop.getOwnerId());
         
-        if (!canBreakShop(player, signShop)) {
+        // Check if player can break this shop
+        if (!canPlayerBreakShop(player, signShop)) {
             event.setCanceled(true);
             if ("SERVER".equals(signShop.getOwnerId())) {
                 MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis admin shop sign is protected!");
@@ -188,7 +201,8 @@ public class NeoEssentialsEventHandler {
             return; // Allow breaking chests connected to admin shops
         }
         
-        if (!canBreakShop(player, signShop)) {
+        // Check if player can break this shop chest
+        if (!canPlayerBreakShop(player, signShop)) {
             event.setCanceled(true);
             MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis shop chest is protected!");
             MessageUtil.sendMessage(player, "§7This chest belongs to another player's shop. Only the owner can break it.");
@@ -246,7 +260,8 @@ public class NeoEssentialsEventHandler {
         LOGGER.warn("SHOP CHEST ACCESS: Player {} attempting to access shop chest at {} owned by {}", 
                    player.getName().getString(), chestPos, signShop.getOwnerId());
         
-        if (!canAccessShop(player, signShop)) {
+        // Check if player can access this shop chest
+        if (!canPlayerBreakShop(player, signShop)) {
             event.setCanceled(true);
             if ("SERVER".equals(signShop.getOwnerId())) {
                 MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis admin shop chest is protected!");
@@ -264,45 +279,6 @@ public class NeoEssentialsEventHandler {
             LOGGER.info("ALLOWED: Player {} successfully accessed shop chest at {} - permission granted", 
                        player.getName().getString(), chestPos);
         }
-    }
-    
-    /**
-     * Check if player can break/remove a shop
-     */
-    private static boolean canBreakShop(ServerPlayer player, ShopManager.SignShop signShop) {
-        // Check for bypass permission first (for admin players)
-        if (PermissionUtil.hasPermission(player, PermissionNodes.SHOP_BYPASS_PROTECTION)) {
-            LOGGER.info("Player {} bypassed shop protection with bypass permission", player.getName().getString());
-            return true;
-        }
-        
-        // Admin shops can only be broken by players with admin permissions
-        if ("SERVER".equals(signShop.getOwnerId())) {
-            return PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);
-        }
-        // Player shops can be broken by owner or admins
-        return signShop.getOwnerId().equals(player.getStringUUID()) || 
-               PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);
-    }
-    
-    /**
-     * Check if player can access shop chest (stricter than breaking)
-     */
-    private static boolean canAccessShop(ServerPlayer player, ShopManager.SignShop signShop) {
-        // Check for bypass permission first (for admin players)
-        if (PermissionUtil.hasPermission(player, PermissionNodes.SHOP_BYPASS_PROTECTION)) {
-            LOGGER.info("Player {} bypassed shop protection with bypass permission", player.getName().getString());
-            return true;
-        }
-        
-        // Admin shops can only be accessed by players with admin permissions
-        if ("SERVER".equals(signShop.getOwnerId())) {
-            return PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);
-        }
-        
-        // Player shops can only be accessed by the owner or admins
-        return signShop.getOwnerId().equals(player.getStringUUID()) || 
-               PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);
     }
     
     /**
@@ -336,5 +312,89 @@ public class NeoEssentialsEventHandler {
         return shopManager.getSignShops().stream()
             .anyMatch(shop -> pos.equals(shop.getChestPos()));
     }
-
+    
+    /**
+     * Check if player can break this shop sign
+     */
+    private static boolean canPlayerBreakShop(ServerPlayer player, ShopManager.SignShop signShop) {
+        String playerUUID = player.getUUID().toString();
+        String shopOwnerUUID = signShop.getOwnerId();
+        
+        LOGGER.info("PERMISSION CHECK: Player {} (UUID: {}) trying to access shop owned by {} (UUID: {})", 
+                   player.getName().getString(), playerUUID, 
+                   shopOwnerUUID.equals("SERVER") ? "SERVER" : "Player", shopOwnerUUID);
+        
+        // Owner can always break their own shop
+        if (shopOwnerUUID.equals(playerUUID)) {
+            LOGGER.info("PERMISSION GRANTED: Player {} is the shop owner", player.getName().getString());
+            return true;
+        }
+        
+        // Admin shops require admin permission
+        if ("SERVER".equals(shopOwnerUUID)) {
+            boolean hasAdminPerm = PermissionUtil.hasPermission(player, "neoessentials.shop.admin");
+            boolean hasBypassPerm = PermissionUtil.hasPermission(player, "neoessentials.shop.bypass.protection");
+            LOGGER.info("ADMIN SHOP ACCESS: Player {} - Admin perm: {}, Bypass perm: {}", 
+                       player.getName().getString(), hasAdminPerm, hasBypassPerm);
+            return hasAdminPerm || hasBypassPerm;
+        }
+        
+        // Other player shops require bypass permission
+        boolean hasBypassPerm = PermissionUtil.hasPermission(player, "neoessentials.shop.bypass.protection");
+        LOGGER.info("PLAYER SHOP ACCESS: Player {} trying to access {}'s shop - Bypass perm: {}", 
+                   player.getName().getString(), shopOwnerUUID, hasBypassPerm);
+        
+        if (hasBypassPerm) {
+            LOGGER.info("PERMISSION GRANTED: Player {} has bypass permission", player.getName().getString());
+        } else {
+            LOGGER.info("PERMISSION DENIED: Player {} does not own this shop and lacks bypass permission", 
+                       player.getName().getString());
+        }
+        
+        return hasBypassPerm;
     }
+    
+    /**
+     * Handle shop sign interaction - consolidated from ShopSignEventListener
+     */
+    private static void handleShopSignInteraction(ServerPlayer player, Level level, BlockPos pos, 
+                                                 net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+        
+        ShopManager shopManager = ShopManager.getInstance();
+        if (shopManager == null) {
+            LOGGER.warn("ShopManager not available for shop sign interaction");
+            return;
+        }
+        
+        // Find the specific shop at this sign position
+        var signShop = shopManager.getSignShops().stream()
+            .filter(shop -> pos.equals(shop.getSignPos()))
+            .findFirst().orElse(null);
+            
+        if (signShop == null) {
+            LOGGER.warn("No shop found at sign position {}", pos);
+            return;
+        }
+        
+        LOGGER.info("SHOP INTERACTION: Player {} interacting with shop at {} owned by {} - ChestPos: {}", 
+                   player.getName().getString(), pos, signShop.getOwnerId(), signShop.getChestPos());
+        
+        // Create SignShopHandler to handle the transaction
+        com.zerog.neoessentials.economy.shops.SignShopHandler shopHandler = 
+            new com.zerog.neoessentials.economy.shops.SignShopHandler(shopManager);
+        
+        // Handle the shop interaction
+        net.minecraft.world.InteractionResult result = shopHandler.handleSignInteraction(
+            player, level, pos, event.getHand()
+        );
+        
+        // If the shop interaction was processed (success or fail), prevent default sign editing
+        if (result != net.minecraft.world.InteractionResult.PASS) {
+            event.setCanceled(true);
+            event.setCancellationResult(result);
+            LOGGER.info("SHOP TRANSACTION: Player {} interaction result: {}", 
+                       player.getName().getString(), result);
+        }
+    }
+
+}

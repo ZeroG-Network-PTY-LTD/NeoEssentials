@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.economy.shops;
 
 import com.zerog.neoessentials.permissions.PermissionNodes;
-import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -18,8 +17,6 @@ import net.minecraft.ChatFormatting;
 import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 /**
  * Handles sign shop interactions and creation
@@ -57,19 +54,13 @@ public class SignShopHandler {
             return InteractionResult.FAIL;
         }
         
-        Optional<ShopManager.SignShop> signShop = shopManager.getSignShops().stream()
-                .filter(shop -> shop.getSignPos().equals(pos))
-                .findFirst();
-        if (signShop.isEmpty()) {
+        // Get the shop directly using the sign position (more efficient and reliable)
+        ShopManager.SignShop signShop = shopManager.getSignShop(pos);
+        if (signShop == null) {
             player.sendSystemMessage(Component.literal("§cThis shop sign is not properly configured!"));
             return InteractionResult.FAIL;
         }
-        // Permission check for shop use
-        if (!com.zerog.neoessentials.util.PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, com.zerog.neoessentials.permissions.PermissionNodes.SHOP_SIGN_USE)) {
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to use sign shops!"));
-            return InteractionResult.FAIL;
-        }
-        return handleShopTransaction(player, signShop.get(), player.isCrouching());
+        return handleShopTransaction(player, signShop, player.isCrouching());
     }
     
     /**
@@ -684,8 +675,12 @@ public class SignShopHandler {
         
         BlockPos chestPos = signShop.getChestPos();
         if (chestPos == null) {
+            LOGGER.warn("STOCK CHECK: Shop at {} has no chest connected!", signShop.getSignPos());
             return false; // No chest connected
         }
+        
+        LOGGER.info("STOCK CHECK: Checking chest at {} for shop at {} owned by {}", 
+                   chestPos, signShop.getSignPos(), signShop.getOwnerId());
         
         if (level.getBlockEntity(chestPos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
             ItemStack shopItem = signShop.getItem();
@@ -700,9 +695,13 @@ public class SignShopHandler {
                 }
             }
             
+            LOGGER.info("STOCK RESULT: Shop needs {} {}, chest has {} - Stock available: {}", 
+                       requiredQuantity, shopItem.getDisplayName().getString(), availableCount, availableCount >= requiredQuantity);
+            
             return availableCount >= requiredQuantity;
         }
         
+        LOGGER.warn("STOCK CHECK: No chest entity found at {}", chestPos);
         return false; // Chest not found or not a chest
     }
     
@@ -712,13 +711,19 @@ public class SignShopHandler {
     private boolean removeItemsFromChest(Level level, ShopManager.SignShop signShop) {
         // Admin shops don't need to remove items - they have unlimited stock
         if ("SERVER".equals(signShop.getOwnerId())) {
+            LOGGER.info("ITEM REMOVAL: Admin shop - unlimited stock, no removal needed");
             return true;
         }
         
         BlockPos chestPos = signShop.getChestPos();
         if (chestPos == null) {
+            LOGGER.warn("ITEM REMOVAL: Shop at {} has no chest connected!", signShop.getSignPos());
             return false; // No chest connected
         }
+        
+        LOGGER.info("ITEM REMOVAL: Removing {} {} from chest at {} for shop at {} owned by {}", 
+                   signShop.getQuantity(), signShop.getItem().getDisplayName().getString(),
+                   chestPos, signShop.getSignPos(), signShop.getOwnerId());
         
         if (level.getBlockEntity(chestPos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
             ItemStack shopItem = signShop.getItem();
@@ -732,14 +737,26 @@ public class SignShopHandler {
                     int removeFromStack = Math.min(stack.getCount(), toRemove);
                     stack.shrink(removeFromStack);
                     toRemove -= removeFromStack;
+                    
+                    LOGGER.debug("ITEM REMOVAL: Removed {} from slot {}, {} remaining to remove", 
+                               removeFromStack, i, toRemove);
                 }
             }
             
             // Mark chest as changed
             chestEntity.setChanged();
-            return toRemove == 0; // Success if we removed all required items
+            boolean success = toRemove == 0;
+            
+            if (success) {
+                LOGGER.info("ITEM REMOVAL: Successfully removed all {} items from chest", requiredQuantity);
+            } else {
+                LOGGER.warn("ITEM REMOVAL: Could not remove all items! {} items still needed", toRemove);
+            }
+            
+            return success; // Success if we removed all required items
         }
 
+        LOGGER.warn("ITEM REMOVAL: No chest entity found at {}", chestPos);
         return false; // Chest not found or not a chest
     }
     
@@ -749,13 +766,19 @@ public class SignShopHandler {
     private boolean chestHasSpace(Level level, ShopManager.SignShop signShop) {
         // Admin shops have unlimited storage space (items are void when sold to them)
         if ("SERVER".equals(signShop.getOwnerId())) {
+            LOGGER.info("SPACE CHECK: Admin shop - unlimited storage space");
             return true;
         }
         
         BlockPos chestPos = signShop.getChestPos();
         if (chestPos == null) {
+            LOGGER.warn("SPACE CHECK: Shop at {} has no chest connected!", signShop.getSignPos());
             return false; // No chest connected
         }
+        
+        LOGGER.info("SPACE CHECK: Checking space in chest at {} for {} {} for shop at {} owned by {}", 
+                   chestPos, signShop.getQuantity(), signShop.getItem().getDisplayName().getString(),
+                   signShop.getSignPos(), signShop.getOwnerId());
         
         if (level.getBlockEntity(chestPos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
             ItemStack shopItem = signShop.getItem();
@@ -775,9 +798,13 @@ public class SignShopHandler {
                 }
             }
             
-            return remainingToAdd <= 0; // Success if all items can fit
+            boolean hasSpace = remainingToAdd <= 0;
+            LOGGER.info("SPACE RESULT: Chest has space for all {} items: {}", quantityToAdd, hasSpace);
+            
+            return hasSpace; // Success if all items can fit
         }
         
+        LOGGER.warn("SPACE CHECK: No chest entity found at {}", chestPos);
         return false; // Chest not found or not a chest
     }
     
@@ -787,13 +814,19 @@ public class SignShopHandler {
     private boolean addItemsToChest(Level level, ShopManager.SignShop signShop) {
         // Admin shops void all items sold to them (unlimited storage)
         if ("SERVER".equals(signShop.getOwnerId())) {
+            LOGGER.info("ITEM ADDITION: Admin shop - items voided, no addition needed");
             return true;
         }
         
         BlockPos chestPos = signShop.getChestPos();
         if (chestPos == null) {
+            LOGGER.warn("ITEM ADDITION: Shop at {} has no chest connected!", signShop.getSignPos());
             return false; // No chest connected
         }
+        
+        LOGGER.info("ITEM ADDITION: Adding {} {} to chest at {} for shop at {} owned by {}", 
+                   signShop.getQuantity(), signShop.getItem().getDisplayName().getString(),
+                   chestPos, signShop.getSignPos(), signShop.getOwnerId());
         
         if (level.getBlockEntity(chestPos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
             ItemStack shopItem = signShop.getItem();
@@ -810,20 +843,35 @@ public class SignShopHandler {
                     newStack.setCount(toAdd);
                     chestEntity.setItem(i, newStack);
                     remainingToAdd -= toAdd;
+                    
+                    LOGGER.debug("ITEM ADDITION: Added {} to empty slot {}, {} remaining to add", 
+                               toAdd, i, remainingToAdd);
                 } else if (ItemStack.isSameItem(stack, shopItem)) {
                     // Same item - add to existing stack
                     int spaceInStack = shopItem.getMaxStackSize() - stack.getCount();
                     int toAdd = Math.min(remainingToAdd, spaceInStack);
                     stack.grow(toAdd);
                     remainingToAdd -= toAdd;
+                    
+                    LOGGER.debug("ITEM ADDITION: Added {} to existing stack in slot {}, {} remaining to add", 
+                               toAdd, i, remainingToAdd);
                 }
             }
             
             // Mark chest as changed
             chestEntity.setChanged();
-            return remainingToAdd == 0; // Success if we added all items
+            boolean success = remainingToAdd == 0;
+            
+            if (success) {
+                LOGGER.info("ITEM ADDITION: Successfully added all {} items to chest", quantityToAdd);
+            } else {
+                LOGGER.warn("ITEM ADDITION: Could not add all items! {} items still need to be added", remainingToAdd);
+            }
+            
+            return success; // Success if we added all items
         }
 
+        LOGGER.warn("ITEM ADDITION: No chest entity found at {}", chestPos);
         return false; // Chest not found or not a chest
     }
     

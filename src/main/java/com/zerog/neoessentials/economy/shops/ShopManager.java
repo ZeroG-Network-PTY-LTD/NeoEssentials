@@ -114,9 +114,12 @@ public class ShopManager {
             chestPos = findNearbyChest(player.level(), signPos);
             if (chestPos == null) {
                 player.sendSystemMessage(Component.literal("§cNo chest found near the sign! Place a chest within 3 blocks."));
-                LOGGER.warn("No chest found near sign at {} for player {}", signPos, player.getName().getString());
+                LOGGER.warn("SHOP CREATION: No chest found near sign at {} for player {}", signPos, player.getName().getString());
                 return false;
             }
+            LOGGER.info("SHOP CREATION: Found chest at {} for shop at {} by {}", chestPos, signPos, player.getName().getString());
+        } else {
+            LOGGER.info("SHOP CREATION: Admin shop at {} - no chest required", signPos);
         }
         
         // Set owner based on shop type
@@ -125,6 +128,9 @@ public class ShopManager {
         try {
             SignShop signShop = new SignShop(ownerId, signPos, chestPos, item, buyPrice, sellPrice, quantity);
             signShops.put(signPos, signShop);
+            
+            LOGGER.info("SHOP STORAGE: Stored shop with key {} -> Owner: {}, Chest: {}, Item: {}", 
+                       signPos, ownerId, chestPos, item.getDisplayName().getString());
             
             // Save shops to storage after creating a new one
             saveShopsToStorage();
@@ -226,6 +232,20 @@ public class ShopManager {
      */
     public Collection<SignShop> getSignShops() {
         return signShops.values();
+    }
+    
+    /**
+     * Get a specific sign shop by position (more efficient than streaming)
+     */
+    public SignShop getSignShop(BlockPos signPos) {
+        SignShop shop = signShops.get(signPos);
+        if (shop != null) {
+            LOGGER.debug("SHOP LOOKUP: Found shop at {} -> Owner: {}, Chest: {}, Item: {}", 
+                        signPos, shop.getOwnerId(), shop.getChestPos(), shop.getItem().getDisplayName().getString());
+        } else {
+            LOGGER.debug("SHOP LOOKUP: No shop found at {}", signPos);
+        }
+        return shop;
     }
     
     /**
@@ -421,18 +441,66 @@ public class ShopManager {
     /**
      * Find a chest within 3 blocks of the given position
      */
+    /**
+     * Generate a unique shop key similar to ChestShop plugin approach
+     * Format: "dimension_name§x§y§z"
+     */
+    private String generateShopKey(Level level, BlockPos pos) {
+        String dimensionName = level.dimension().location().toString();
+        return dimensionName + "§" + pos.getX() + "§" + pos.getY() + "§" + pos.getZ();
+    }
+    
+    /**
+     * Find the chest that this sign is meant to be connected to
+     * This uses a more precise approach similar to ChestShop plugin
+     */
     private BlockPos findNearbyChest(Level level, BlockPos signPos) {
-        // Search in a 3x3x3 area around the sign
-        for (int x = -3; x <= 3; x++) {
-            for (int y = -3; y <= 3; y++) {
-                for (int z = -3; z <= 3; z++) {
+        // First, try to find a chest the sign is directly attached to (for wall signs)
+        net.minecraft.world.level.block.state.BlockState signState = level.getBlockState(signPos);
+        
+        if (signState.getBlock() instanceof net.minecraft.world.level.block.WallSignBlock) {
+            // For wall signs, check the block it's attached to
+            net.minecraft.core.Direction facing = signState.getValue(net.minecraft.world.level.block.WallSignBlock.FACING);
+            BlockPos attachedPos = signPos.relative(facing.getOpposite());
+            
+            LOGGER.info("CHEST DETECTION: Wall sign at {} facing {}, checking attached block at {}", 
+                       signPos, facing, attachedPos);
+            
+            if (level.getBlockState(attachedPos).getBlock() instanceof ChestBlock) {
+                LOGGER.info("CHEST DETECTION: Found chest attached to wall sign at {}", attachedPos);
+                return attachedPos;
+            }
+        }
+        
+        // If not attached to a chest, search for nearby chests in order of proximity
+        // Check directly adjacent blocks first (1 block away in all 6 directions)
+        BlockPos[] adjacentPositions = {
+            signPos.north(), signPos.south(), signPos.east(), signPos.west(), signPos.above(), signPos.below()
+        };
+        
+        for (BlockPos checkPos : adjacentPositions) {
+            if (level.getBlockState(checkPos).getBlock() instanceof ChestBlock) {
+                LOGGER.info("CHEST DETECTION: Found adjacent chest at {} for sign at {}", checkPos, signPos);
+                return checkPos;
+            }
+        }
+        
+        // If no adjacent chest, search in a smaller 2x2x2 area (more precise than before)
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    if (x == 0 && y == 0 && z == 0) continue; // Skip the sign position itself
+                    
                     BlockPos checkPos = signPos.offset(x, y, z);
                     if (level.getBlockState(checkPos).getBlock() instanceof ChestBlock) {
+                        LOGGER.info("CHEST DETECTION: Found nearby chest at {} for sign at {}", checkPos, signPos);
                         return checkPos;
                     }
                 }
             }
         }
+        
+        LOGGER.warn("CHEST DETECTION: No chest found for sign at {}", signPos);
         return null; // No chest found
     }
     

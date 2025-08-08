@@ -413,7 +413,7 @@ public class SignShopCommand {
         
         try {
             // Use the NEW SignShopHandler for refreshing (has proper admin shop logic)
-            int refreshed = com.zerog.neoessentials.shops.SignShopHandler.refreshAllShopSigns(source.getLevel());
+            int refreshed = com.zerog.neoessentials.economy.shops.SignShopHandler.refreshAllShopSigns(source.getLevel());
             source.sendSuccess(() -> Component.literal("§aRefreshed " + refreshed + " shop signs with proper logic!"), true);
             return 1;
         } catch (Exception e) {
