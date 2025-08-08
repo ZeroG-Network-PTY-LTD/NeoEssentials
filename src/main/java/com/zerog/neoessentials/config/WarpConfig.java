@@ -62,7 +62,7 @@ public class WarpConfig {
     
     // Permission-based warps
     public boolean enablePermissionWarps = true;
-    public String permissionPrefix = "essentials.warp.";
+    public String permissionPrefix = "neoessentials.warp.";
     
     // Warp signs
     public boolean enableWarpSigns = true;

@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -22,7 +25,7 @@ public class ModerationCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /kick <player> [reason] - Kick player
         dispatcher.register(Commands.literal("kick")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(context -> kickPlayer(context, EntityArgument.getPlayer(context, "player"), "Kicked by admin"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
@@ -35,7 +38,7 @@ public class ModerationCommands {
         
         // /ban <player> [reason] - Ban player permanently (using vanilla ban)
         dispatcher.register(Commands.literal("ban")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(context -> banPlayer(context,
                     EntityArgument.getPlayer(context, "player"),
@@ -50,7 +53,7 @@ public class ModerationCommands {
         
         // /mute <player> [duration] [reason] - Mute player
         dispatcher.register(Commands.literal("mute")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(context -> mutePlayer(context,
                     EntityArgument.getPlayer(context, "player"),
@@ -73,7 +76,7 @@ public class ModerationCommands {
         
         // /unmute <player> - Unmute player
         dispatcher.register(Commands.literal("unmute")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(context -> unmutePlayer(context, EntityArgument.getPlayer(context, "player")))
             )
@@ -81,7 +84,7 @@ public class ModerationCommands {
         
         // /jail <player> [duration] [reason] - Jail player
         dispatcher.register(Commands.literal("jail")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(context -> jailPlayer(context,
                     EntityArgument.getPlayer(context, "player"),
@@ -104,7 +107,7 @@ public class ModerationCommands {
         
         // /unjail <player> - Unjail player
         dispatcher.register(Commands.literal("unjail")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(context -> unjailPlayer(context, EntityArgument.getPlayer(context, "player")))
             )
@@ -112,7 +115,7 @@ public class ModerationCommands {
         
         // /tempban <player> <duration> [reason] - Temporarily ban player
         dispatcher.register(Commands.literal("tempban")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .then(Commands.argument("duration", IntegerArgumentType.integer(1))
                     .executes(context -> tempBanPlayer(context,

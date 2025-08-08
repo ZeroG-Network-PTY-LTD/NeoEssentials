@@ -12,6 +12,8 @@ import com.zerog.neoessentials.managers.HomeManager;
 import com.zerog.neoessentials.managers.KitManager;
 import com.zerog.neoessentials.managers.WarpManager;
 import com.zerog.neoessentials.performance.PerformanceManager;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -38,7 +40,7 @@ public class StatusCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("neostatus")
-            .requires(source -> source.hasPermission(3)) // Admin only
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.STATUS_ADMIN))
             .executes(StatusCommand::showStatus)
             .then(Commands.literal("detailed")
                 .executes(StatusCommand::showDetailedStatus))

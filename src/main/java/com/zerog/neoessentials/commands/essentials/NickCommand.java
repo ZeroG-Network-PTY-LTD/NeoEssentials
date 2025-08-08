@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -29,16 +32,16 @@ public class NickCommand {
                 .executes(context -> clearNickname(context, null)))
             // Admin commands
             .then(Commands.literal("set")
-                .requires(source -> source.hasPermission(3))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("nickname", StringArgumentType.string())
                         .executes(context -> setNickname(context, EntityArgument.getPlayer(context, "player"))))))
             .then(Commands.literal("clear")
-                .requires(source -> source.hasPermission(3))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
                 .then(Commands.argument("player", EntityArgument.player())
                     .executes(context -> clearNickname(context, EntityArgument.getPlayer(context, "player")))))
             .then(Commands.literal("list")
-                .requires(source -> source.hasPermission(3))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
                 .executes(NickCommand::listNicknames)));
     }
     
@@ -67,7 +70,7 @@ public class NickCommand {
         
         if (nickname.contains("&") || nickname.contains("§")) {
             // Allow color codes for admins
-            if (!source.hasPermission(3)) {
+            if (!PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC)) {
                 sendMessage(source, "§cYou cannot use color codes in nicknames!");
                 return 0;
             }
@@ -77,7 +80,7 @@ public class NickCommand {
         if (nickname.toLowerCase().contains("admin") || 
             nickname.toLowerCase().contains("mod") ||
             nickname.toLowerCase().contains("owner")) {
-            if (!source.hasPermission(4)) {
+            if (!PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_FULL)) {
                 sendMessage(source, "§cYou cannot use staff-related nicknames!");
                 return 0;
             }

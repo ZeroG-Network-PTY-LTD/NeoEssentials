@@ -1,4 +1,4 @@
-package com.zerog.neoessentials.economy.shops;
+package com.zerog.neoessentials.shops;
 
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -39,32 +39,36 @@ public class SignShopHandler {
      */
     public InteractionResult handleSignInteraction(Player player, Level level, BlockPos pos, InteractionHand hand) {
         if (level.isClientSide) return InteractionResult.PASS;
-        
         BlockState blockState = level.getBlockState(pos);
         if (!(blockState.getBlock() instanceof SignBlock)) {
             return InteractionResult.PASS;
         }
-        
         if (!(level.getBlockEntity(pos) instanceof SignBlockEntity signEntity)) {
             return InteractionResult.PASS;
         }
-        
-        // Check if this is a shop sign
         Component[] lines = signEntity.getFrontText().getMessages(false);
-        if (lines.length == 0 || !lines[0].getString().equals(SHOP_HEADER)) {
+        if (lines.length == 0 || (!lines[0].getString().equals(SHOP_HEADER) && !lines[0].getString().equals("[Admin Shop]"))) {
             return InteractionResult.PASS;
         }
         
-        // Find the corresponding shop
+        // Permission check for shop use
+        if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_SIGN_USE)) {
+            player.sendSystemMessage(Component.literal("§cYou don't have permission to use sign shops!"));
+            return InteractionResult.FAIL;
+        }
+        
         Optional<ShopManager.SignShop> signShop = shopManager.getSignShops().stream()
                 .filter(shop -> shop.getSignPos().equals(pos))
                 .findFirst();
-        
         if (signShop.isEmpty()) {
             player.sendSystemMessage(Component.literal("§cThis shop sign is not properly configured!"));
             return InteractionResult.FAIL;
         }
-        
+        // Permission check for shop use
+        if (!com.zerog.neoessentials.util.PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, com.zerog.neoessentials.permissions.PermissionNodes.SHOP_SIGN_USE)) {
+            player.sendSystemMessage(Component.literal("§cYou don't have permission to use sign shops!"));
+            return InteractionResult.FAIL;
+        }
         return handleShopTransaction(player, signShop.get(), player.isCrouching());
     }
     
@@ -72,7 +76,6 @@ public class SignShopHandler {
      * Create a new sign shop
      */
     public boolean createSignShop(Player player, BlockPos signPos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
-        // Check permissions
         if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_SIGN_CREATE)) {
             player.sendSystemMessage(Component.literal("§cYou don't have permission to create sign shops!"));
             return false;
@@ -89,18 +92,23 @@ public class SignShopHandler {
             return false;
         }
         
+        // Validate quantity
+        if (quantity <= 0 || quantity > 64) {
+            player.sendSystemMessage(Component.literal("§cQuantity must be between 1 and 64!"));
+            return false;
+        }
+        
         // Create the shop
         boolean success = shopManager.createSignShop(player, signPos, item, buyPrice, sellPrice, quantity);
-        
         if (success) {
             updateSignText(player.level(), signPos, item, buyPrice, sellPrice, quantity);
             player.sendSystemMessage(Component.literal("§aSign shop created successfully!"));
-            LOGGER.info("Player {} created a sign shop at {} for item {}", 
+            org.slf4j.LoggerFactory.getLogger(SignShopHandler.class).info("Player {} created a sign shop at {} for item {}", 
                        player.getName().getString(), signPos, item.getDisplayName().getString());
         } else {
             player.sendSystemMessage(Component.literal("§cFailed to create sign shop!"));
         }
-        
+        shopManager.saveShopsToStorage();
         return success;
     }
     
@@ -177,8 +185,7 @@ public class SignShopHandler {
     private InteractionResult handleBuyTransaction(Player player, ShopManager.SignShop signShop) {
         // For player shops, check actual chest contents instead of just stock number
         if (!hasChestStock(player.level(), signShop)) {
-            MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player, 
-                "neoessentials.shop.buy.shop_empty");
+            player.sendSystemMessage(Component.literal("§cShop is out of stock!"));
             return InteractionResult.FAIL;
         }
         
@@ -223,8 +230,7 @@ public class SignShopHandler {
         // CRITICAL: Remove items from chest FIRST before any money transactions
         if (!removeItemsFromChest(player.level(), signShop)) {
             // If we can't remove items from chest, don't proceed with transaction
-            MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
-                "neoessentials.shop.buy.shop_empty");
+            player.sendSystemMessage(Component.literal("§cShop is out of stock!"));
             return InteractionResult.FAIL;
         }
 
@@ -306,12 +312,9 @@ public class SignShopHandler {
             // Keep UUID if name lookup fails
         }
         
-        MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.buy.success",
-                signShop.getQuantity(),
-                signShop.getItem().getDisplayName().getString(),
-                totalPrice,
-                shopOwnerName
-        );
+        player.sendSystemMessage(Component.literal("§aSuccessfully purchased " + 
+                signShop.getQuantity() + "x " + signShop.getItem().getDisplayName().getString() + 
+                " for $" + String.format("%.2f", totalPrice) + " from " + shopOwnerName + "'s shop"));
         
         LOGGER.info("Player {} purchased {}x {} for {} from shop owned by {}", 
                    player.getName().getString(), signShop.getQuantity(), 
@@ -348,8 +351,7 @@ public class SignShopHandler {
         
         // Check if chest has space for the items
         if (!chestHasSpace(player.level(), signShop)) {
-            MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
-                "neoessentials.shop.sell.chest_full");
+            player.sendSystemMessage(Component.literal("§cChest is full! Cannot sell items to this shop."));
             return InteractionResult.FAIL;
         }
 
@@ -366,8 +368,7 @@ public class SignShopHandler {
                 
                 // Check if shop owner has enough money to buy the items BEFORE taking items
                 if (!economyManager.hasBalance(shopOwnerUUID, earnings)) {
-                    MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
-                        "neoessentials.shop.sell.shop_owner_broke");
+                    player.sendSystemMessage(Component.literal("§cShop owner doesn't have enough money to buy your items!"));
                     return InteractionResult.FAIL;
                 }
                 
@@ -391,8 +392,7 @@ public class SignShopHandler {
                     if (!player.getInventory().add(itemToReturn)) {
                         player.spawnAtLocation(itemToReturn);
                     }
-                    MessageUtil.sendTranslatedMessage((net.minecraft.server.level.ServerPlayer) player,
-                        "neoessentials.shop.sell.chest_full");
+                    player.sendSystemMessage(Component.literal("§cChest is full! Items returned."));
                     return InteractionResult.FAIL;
                 }
 

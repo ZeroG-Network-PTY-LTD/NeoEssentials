@@ -53,7 +53,7 @@ public class ModerationConfig {
         public boolean enableIPBan = true;
         public boolean broadcastBans = true;
         public String defaultBanReason = "Violating server rules";
-        public List<String> banExemptPermissions = Arrays.asList("essentials.ban.exempt");
+        public List<String> banExemptPermissions = Arrays.asList("neoessentials.ban.exempt");
     }
     
     public static class KickConfig {
@@ -61,7 +61,7 @@ public class ModerationConfig {
         public boolean broadcastKicks = true;
         public String defaultKickReason = "Kicked by an administrator";
         public int kickCooldown = 60; // seconds
-        public List<String> kickExemptPermissions = Arrays.asList("essentials.kick.exempt");
+        public List<String> kickExemptPermissions = Arrays.asList("neoessentials.kick.exempt");
     }
     
     public static class MuteConfig {
@@ -75,7 +75,7 @@ public class ModerationConfig {
         public boolean muteBooks = true;
         public String defaultMuteReason = "Chat violations";
         public List<String> allowedCommandsWhileMuted = Arrays.asList("msg", "reply", "helpop");
-        public List<String> muteExemptPermissions = Arrays.asList("essentials.mute.exempt");
+        public List<String> muteExemptPermissions = Arrays.asList("neoessentials.mute.exempt");
     }
     
     public static class JailConfig {

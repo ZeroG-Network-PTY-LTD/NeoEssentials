@@ -3,6 +3,8 @@ package com.zerog.neoessentials.commands.essentials;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -28,10 +30,10 @@ public class GodCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /god - Toggle god mode for yourself
         dispatcher.register(Commands.literal("god")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GOD_SELF))
             .executes(GodCommand::toggleGodSelf)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GOD_OTHERS))
                 .executes(GodCommand::toggleGodOther)
             )
         );

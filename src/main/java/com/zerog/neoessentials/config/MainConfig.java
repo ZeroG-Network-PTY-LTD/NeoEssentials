@@ -40,7 +40,7 @@ public class MainConfig {
     public WarpConfig warps = new WarpConfig();
     public ModerationConfig moderation = new ModerationConfig();
     public MessagingConfig messaging = new MessagingConfig();
-    public DiscordConfig discord = new DiscordConfig();
+    // Discord integration removed
     public TablistConfig tablist = new TablistConfig();
     public SpawnConfig spawn = new SpawnConfig();
     
@@ -58,6 +58,9 @@ public class MainConfig {
     }
     
     public static class ModulesConfig {
+        // ==============================
+        // CORE MODULES
+        // ==============================
         public boolean antiBuild = true;
         public boolean chat = true;
         public boolean protect = true;
@@ -70,6 +73,188 @@ public class MainConfig {
         public boolean homes = true;
         public boolean messaging = true;
         public boolean moderation = true;
+        
+        // ==============================
+        // ESSENTIAL COMMANDS
+        // ==============================
+        public EssentialCommandsConfig essentialCommands = new EssentialCommandsConfig();
+        
+        // ==============================
+        // TELEPORTATION SYSTEM
+        // ==============================
+        public TeleportationConfig teleportation = new TeleportationConfig();
+        
+        // ==============================
+        // PLAYER MANAGEMENT
+        // ==============================
+        public PlayerManagementConfig playerManagement = new PlayerManagementConfig();
+        
+        // ==============================
+        // ITEM MANAGEMENT
+        // ==============================
+        public ItemManagementConfig itemManagement = new ItemManagementConfig();
+        
+        // ==============================
+        // UTILITY FEATURES
+        // ==============================
+        public UtilityConfig utilities = new UtilityConfig();
+        
+        // ==============================
+        // INTEGRATION FEATURES
+        // ==============================
+        public IntegrationConfig integrations = new IntegrationConfig();
+        
+        public static class EssentialCommandsConfig {
+            // Basic player commands
+            public boolean heal = true;
+            public boolean feed = true;
+            public boolean fly = true;
+            public boolean god = true;
+            public boolean vanish = true;
+            public boolean speed = true;
+            public boolean gamemode = true;
+            
+            // Admin commands
+            public boolean time = true;
+            public boolean weather = true;
+            public boolean give = true;
+            public boolean repair = true;
+            public boolean clear = true;
+            public boolean invsee = true;
+            public boolean enderchest = true;
+            
+            // Utility commands
+            public boolean workbench = true;
+            public boolean anvil = true;
+            public boolean enchantingtable = true;
+            public boolean smithingtable = true;
+            public boolean grindstone = true;
+            public boolean loom = true;
+            public boolean cartographytable = true;
+            public boolean stonecutter = true;
+        }
+        
+        public static class TeleportationConfig {
+            // Basic teleportation
+            public boolean tp = true;
+            public boolean tphere = true;
+            public boolean tpall = true;
+            public boolean tpa = true;
+            public boolean tpaccept = true;
+            public boolean tpdeny = true;
+            public boolean tptoggle = true;
+            
+            // Home system
+            public boolean home = true;
+            public boolean sethome = true;
+            public boolean delhome = true;
+            public boolean homes = true;
+            
+            // Warp system
+            public boolean warp = true;
+            public boolean setwarp = true;
+            public boolean delwarp = true;
+            public boolean warps = true;
+            
+            // Spawn system
+            public boolean spawn = true;
+            public boolean setspawn = true;
+            
+            // Back system
+            public boolean back = true;
+            
+            // Random teleport
+            public boolean rtp = true;
+            public boolean randomtp = true;
+        }
+        
+        public static class PlayerManagementConfig {
+            // Player information
+            public boolean list = true;
+            public boolean whois = true;
+            public boolean seen = true;
+            public boolean realname = true;
+            
+            // Nickname system
+            public boolean nick = true;
+            public boolean delnick = true;
+            
+            // Player states
+            public boolean afk = true;
+            public boolean afkcheck = true;
+            
+            // Player data
+            public boolean playerdata = true;
+            public boolean exp = true;
+            public boolean skull = true;
+        }
+        
+        public static class ItemManagementConfig {
+            // Item commands
+            public boolean give = true;
+            public boolean item = true;
+            public boolean more = true;
+            public boolean repair = true;
+            public boolean enchant = true;
+            
+            // Inventory management
+            public boolean clear = true;
+            public boolean invsee = true;
+            public boolean enderchest = true;
+            
+            // Item utilities
+            public boolean hat = true;
+            public boolean disposal = true;
+            public boolean condense = true;
+        }
+        
+        public static class UtilityConfig {
+            // World editing
+            public boolean fill = true;
+            public boolean clone = true;
+            public boolean setblock = true;
+            
+            // Information commands
+            public boolean coords = true;
+            public boolean depth = true;
+            public boolean getpos = true;
+            public boolean biome = true;
+            
+            // Utility features
+            public boolean jump = true;
+            public boolean top = true;
+            public boolean up = true;
+            public boolean thru = true;
+            
+            // Signs and books
+            public boolean editsign = true;
+            public boolean book = true;
+            
+            // Chat utilities
+            public boolean me = true;
+            public boolean say = true;
+            public boolean broadcast = true;
+        }
+        
+        public static class IntegrationConfig {
+            // External mod compatibility
+            public boolean disableIfEssentialsXFound = true;
+            public boolean disableIfEssentialsFound = true;
+            public boolean disableIfCMIFound = true;
+            public boolean disableIfLuckPermsFound = false;
+            
+            // Feature conflicts
+            public boolean disableEconomyIfVaultFound = false;
+            public boolean disablePermissionsIfLPFound = false;
+            public boolean disableChatIfChatModFound = false;
+            public boolean disableTablistIfTabModFound = false;
+            
+            // Specific mod integrations
+            public boolean enableWorldEditIntegration = true;
+            public boolean enableJEIIntegration = true;
+            public boolean enableJourneyMapIntegration = true;
+            public boolean enableWaystoneIntegration = true;
+        }
     }
     
     public static class ChatConfig {

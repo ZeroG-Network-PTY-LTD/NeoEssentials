@@ -2,6 +2,7 @@ package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.ModerationConfig;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -57,13 +58,13 @@ public class ModerationManager {
         }
         
         // Check permission
-        if (!PermissionUtil.hasPermission(moderator, "essentials.kick")) {
+        if (!PermissionUtil.hasPermission(moderator, PermissionNodes.KICK)) {
             MessageUtil.sendMessage(moderator, config.messages.noPermission);
             return false;
         }
         
         // Check if target is exempt
-        if (PermissionUtil.hasPermission(target, "essentials.kick.exempt")) {
+        if (PermissionUtil.hasPermission(target, PermissionNodes.KICK_EXEMPT)) {
             MessageUtil.sendMessage(moderator, config.messages.playerExempt);
             return false;
         }
@@ -107,7 +108,7 @@ public class ModerationManager {
         }
         
         // Check permission
-        if (!PermissionUtil.hasPermission(moderator, "essentials.mute")) {
+        if (!PermissionUtil.hasPermission(moderator, PermissionNodes.MUTE)) {
             MessageUtil.sendMessage(moderator, config.messages.noPermission);
             return false;
         }
@@ -178,7 +179,7 @@ public class ModerationManager {
     public boolean unmutePlayer(UUID targetUuid, String targetName, ServerPlayer moderator) {
         ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         
-        if (!PermissionUtil.hasPermission(moderator, "essentials.unmute")) {
+        if (!PermissionUtil.hasPermission(moderator, PermissionNodes.UNMUTE)) {
             MessageUtil.sendMessage(moderator, config.messages.noPermission);
             return false;
         }
@@ -216,7 +217,7 @@ public class ModerationManager {
         }
         
         // Check permission
-        if (!PermissionUtil.hasPermission(moderator, "essentials.jail")) {
+        if (!PermissionUtil.hasPermission(moderator, PermissionNodes.JAIL)) {
             MessageUtil.sendMessage(moderator, config.messages.noPermission);
             return false;
         }
@@ -305,7 +306,7 @@ public class ModerationManager {
     public boolean unjailPlayer(UUID targetUuid, String targetName, ServerPlayer moderator) {
         ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         
-        if (!PermissionUtil.hasPermission(moderator, "essentials.unjail")) {
+        if (!PermissionUtil.hasPermission(moderator, PermissionNodes.UNJAIL)) {
             MessageUtil.sendMessage(moderator, config.messages.noPermission);
             return false;
         }
@@ -346,13 +347,13 @@ public class ModerationManager {
         }
         
         // Check permission
-        if (!PermissionUtil.hasPermission(moderator, "essentials.tempban")) {
+        if (!PermissionUtil.hasPermission(moderator, PermissionNodes.BAN_TEMP)) {
             MessageUtil.sendMessage(moderator, config.messages.noPermission);
             return false;
         }
         
         // Check if target is exempt
-        if (PermissionUtil.hasPermission(target, "essentials.ban.exempt")) {
+        if (PermissionUtil.hasPermission(target, PermissionNodes.BAN_EXEMPT)) {
             MessageUtil.sendMessage(moderator, config.messages.playerExempt);
             return false;
         }

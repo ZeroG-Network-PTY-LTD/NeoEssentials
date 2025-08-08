@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -17,7 +20,7 @@ public class InvSeeCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("invsee")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(InvSeeCommand::openPlayerInventory)
             )
@@ -25,14 +28,14 @@ public class InvSeeCommand {
         
         // Alternative commands
         dispatcher.register(Commands.literal("openinv")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(InvSeeCommand::openPlayerInventory)
             )
         );
         
         dispatcher.register(Commands.literal("oi")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(InvSeeCommand::openPlayerInventory)
             )

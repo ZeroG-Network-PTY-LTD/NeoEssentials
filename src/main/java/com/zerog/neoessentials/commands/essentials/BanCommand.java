@@ -4,6 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.GameProfileArgument;
@@ -22,7 +24,7 @@ public class BanCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /ban <player> [reason] - Ban a player from the server
         dispatcher.register(Commands.literal("ban")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.BAN))
             .then(Commands.argument("player", GameProfileArgument.gameProfile())
                 .executes(ctx -> banPlayer(ctx, "Banned by an operator"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
@@ -33,7 +35,7 @@ public class BanCommand {
         
         // /unban <player> - Unban a player
         dispatcher.register(Commands.literal("unban")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.UNBAN))
             .then(Commands.argument("player", GameProfileArgument.gameProfile())
                 .executes(ctx -> unbanPlayer(ctx))
             )
@@ -41,7 +43,7 @@ public class BanCommand {
         
         // /pardon - Alias for unban
         dispatcher.register(Commands.literal("pardon")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.UNBAN))
             .then(Commands.argument("player", GameProfileArgument.gameProfile())
                 .executes(ctx -> unbanPlayer(ctx))
             )

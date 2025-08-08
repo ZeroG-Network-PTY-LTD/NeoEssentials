@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -23,7 +26,7 @@ public class RepairCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
         // /repair [all] [player] - Repair item in hand or all items
         dispatcher.register(Commands.literal("repair")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .executes(ctx -> repairItemInHand(ctx, null))
             .then(Commands.literal("all")
                 .executes(ctx -> repairAllItems(ctx, null))
@@ -38,7 +41,7 @@ public class RepairCommand {
         
         // /fix - Alias for /repair
         dispatcher.register(Commands.literal("fix")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .executes(ctx -> repairItemInHand(ctx, null))
             .then(Commands.literal("all")
                 .executes(ctx -> repairAllItems(ctx, null))

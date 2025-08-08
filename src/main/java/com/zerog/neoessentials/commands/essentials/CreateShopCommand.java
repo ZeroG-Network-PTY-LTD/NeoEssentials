@@ -1,10 +1,13 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-// import com.zerog.neoessentials.economy.shops.ShopManager;
+import com.zerog.neoessentials.economy.shops.ShopManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -26,7 +29,7 @@ public class CreateShopCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("createshop")
-            .requires(source -> source.hasPermission(2)) // Require op level 2
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC)) // Require op level 2
             .then(Commands.argument("buyPrice", DoubleArgumentType.doubleArg(0))
                 .then(Commands.argument("sellPrice", DoubleArgumentType.doubleArg(0))
                     .then(Commands.argument("quantity", IntegerArgumentType.integer(1))
@@ -78,8 +81,6 @@ public class CreateShopCommand {
                 }
             }
             
-            // Temporarily disabled shop functionality (user requested to ignore shop section)
-            /*
             ShopManager shopManager = ShopManager.getInstance();
             if (shopManager != null) {
                 com.zerog.neoessentials.economy.shops.SignShopHandler shopHandler = 
@@ -106,9 +107,6 @@ public class CreateShopCommand {
                 player.sendSystemMessage(Component.literal("§cShop manager is not available!"));
                 return 0;
             }
-            */
-            player.sendSystemMessage(Component.literal("§cShop functionality temporarily disabled."));
-            return 0;
             
         } catch (Exception e) {
             LOGGER.error("Error executing createshop command", e);

@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -15,11 +18,11 @@ public class MotdCommand {
         dispatcher.register(Commands.literal("motd")
             .executes(MotdCommand::showMotd)
             .then(Commands.literal("set")
-                .requires(source -> source.hasPermission(3)) // Admin only
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC)) // Admin only
                 .then(Commands.argument("message", StringArgumentType.greedyString())
                     .executes(MotdCommand::setMotd)))
             .then(Commands.literal("reload")
-                .requires(source -> source.hasPermission(3)) // Admin only
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC)) // Admin only
                 .executes(MotdCommand::reloadMotd)));
     }
     

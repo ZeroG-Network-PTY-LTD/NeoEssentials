@@ -24,59 +24,66 @@ public final class PermissionNodes {
     // ==============================
     
     // Heal Command
-    public static final String HEAL_SELF = "essentials.heal";
-    public static final String HEAL_OTHERS = "essentials.heal.others";
-    public static final String HEAL_ALL = "essentials.heal.*";
+    public static final String HEAL_SELF = "neoessentials.heal";
+    public static final String HEAL_OTHERS = "neoessentials.heal.others";
+    public static final String HEAL_ALL = "neoessentials.heal.*";
+    
+    // CORE PERMISSION LEVELS
+    public static final String PLAYER_DEFAULT = "neoessentials.player.default";
+    public static final String ESSENTIALS_USE = "neoessentials.use";
+    public static final String MODERATION_BASIC = "neoessentials.moderation.basic";
+    public static final String ADMIN_BASIC = "neoessentials.admin.basic";
+    public static final String ADMIN_FULL = "neoessentials.admin.full";
     
     // Feed Command
-    public static final String FEED_SELF = "essentials.feed";
-    public static final String FEED_OTHERS = "essentials.feed.others";
-    public static final String FEED_ALL = "essentials.feed.*";
+    public static final String FEED_SELF = "neoessentials.feed";
+    public static final String FEED_OTHERS = "neoessentials.feed.others";
+    public static final String FEED_ALL = "neoessentials.feed.*";
     
     // God Mode Command
-    public static final String GOD_SELF = "essentials.god";
-    public static final String GOD_OTHERS = "essentials.god.others";
-    public static final String GOD_ALL = "essentials.god.*";
+    public static final String GOD_SELF = "neoessentials.god";
+    public static final String GOD_OTHERS = "neoessentials.god.others";
+    public static final String GOD_ALL = "neoessentials.god.*";
     
     // Vanish Command
-    public static final String VANISH_SELF = "essentials.vanish";
-    public static final String VANISH_OTHERS = "essentials.vanish.others";
-    public static final String VANISH_SEE = "essentials.vanish.see";
-    public static final String VANISH_ALL = "essentials.vanish.*";
+    public static final String VANISH_SELF = "neoessentials.vanish";
+    public static final String VANISH_OTHERS = "neoessentials.vanish.others";
+    public static final String VANISH_SEE = "neoessentials.vanish.see";
+    public static final String VANISH_ALL = "neoessentials.vanish.*";
     
     // Fly Command
-    public static final String FLY_SELF = "essentials.fly";
-    public static final String FLY_OTHERS = "essentials.fly.others";
-    public static final String FLY_ALL = "essentials.fly.*";
+    public static final String FLY_SELF = "neoessentials.fly";
+    public static final String FLY_OTHERS = "neoessentials.fly.others";
+    public static final String FLY_ALL = "neoessentials.fly.*";
     
     // Speed Command
-    public static final String SPEED_WALK = "essentials.speed.walk";
-    public static final String SPEED_FLY = "essentials.speed.fly";
-    public static final String SPEED_OTHERS = "essentials.speed.others";
-    public static final String SPEED_ALL = "essentials.speed.*";
+    public static final String SPEED_WALK = "neoessentials.speed.walk";
+    public static final String SPEED_FLY = "neoessentials.speed.fly";
+    public static final String SPEED_OTHERS = "neoessentials.speed.others";
+    public static final String SPEED_ALL = "neoessentials.speed.*";
     
     // Repair Command
-    public static final String REPAIR_HAND = "essentials.repair";
-    public static final String REPAIR_ALL = "essentials.repair.all";
-    public static final String REPAIR_OTHERS = "essentials.repair.others";
+    public static final String REPAIR_HAND = "neoessentials.repair";
+    public static final String REPAIR_ALL = "neoessentials.repair.all";
+    public static final String REPAIR_OTHERS = "neoessentials.repair.others";
     
     // Time Command
-    public static final String TIME_SET = "essentials.time.set";
-    public static final String TIME_ADD = "essentials.time.add";
-    public static final String TIME_QUERY = "essentials.time.query";
-    public static final String TIME_ALL = "essentials.time.*";
+    public static final String TIME_SET = "neoessentials.time.set";
+    public static final String TIME_ADD = "neoessentials.time.add";
+    public static final String TIME_QUERY = "neoessentials.time.query";
+    public static final String TIME_ALL = "neoessentials.time.*";
     
     // Weather Command
-    public static final String WEATHER_SET = "essentials.weather.set";
-    public static final String WEATHER_CLEAR = "essentials.weather.clear";
-    public static final String WEATHER_RAIN = "essentials.weather.rain";
-    public static final String WEATHER_THUNDER = "essentials.weather.thunder";
-    public static final String WEATHER_ALL = "essentials.weather.*";
+    public static final String WEATHER_SET = "neoessentials.weather.set";
+    public static final String WEATHER_CLEAR = "neoessentials.weather.clear";
+    public static final String WEATHER_RAIN = "neoessentials.weather.rain";
+    public static final String WEATHER_THUNDER = "neoessentials.weather.thunder";
+    public static final String WEATHER_ALL = "neoessentials.weather.*";
     
     // Give Command
-    public static final String GIVE_ITEM = "essentials.give";
-    public static final String GIVE_UNLIMITED = "essentials.give.unlimited";
-    public static final String GIVE_ALL = "essentials.give.*";
+    public static final String GIVE_ITEM = "neoessentials.give";
+    public static final String GIVE_UNLIMITED = "neoessentials.give.unlimited";
+    public static final String GIVE_ALL = "neoessentials.give.*";
     
     // GameMode Command
     public static final String GAMEMODE = "neoessentials.gamemode";
@@ -84,103 +91,103 @@ public final class PermissionNodes {
     public static final String GAMEMODE_ALL = "neoessentials.gamemode.*";
     
     // Workbench & Anvil
-    public static final String WORKBENCH = "essentials.workbench";
-    public static final String ANVIL = "essentials.anvil";
-    public static final String ENDERCHEST = "essentials.enderchest";
-    public static final String ENDERCHEST_OTHERS = "essentials.enderchest.others";
+    public static final String WORKBENCH = "neoessentials.workbench";
+    public static final String ANVIL = "neoessentials.anvil";
+    public static final String ENDERCHEST = "neoessentials.enderchest";
+    public static final String ENDERCHEST_OTHERS = "neoessentials.enderchest.others";
     
     // ==============================
     // TELEPORTATION COMMANDS
     // ==============================
     
     // Basic Teleport
-    public static final String TP_SELF = "essentials.tp";
-    public static final String TP_OTHERS = "essentials.tp.others";
-    public static final String TP_COORDS = "essentials.tp.coords";
-    public static final String TP_HERE = "essentials.tphere";
-    public static final String TP_ALL = "essentials.tp.*";
+    public static final String TP_SELF = "neoessentials.tp";
+    public static final String TP_OTHERS = "neoessentials.tp.others";
+    public static final String TP_COORDS = "neoessentials.tp.coords";
+    public static final String TP_HERE = "neoessentials.tphere";
+    public static final String TP_ALL = "neoessentials.tp.*";
     
     // Home System
-    public static final String HOME = "essentials.home";
-    public static final String HOME_SET = "essentials.sethome";
-    public static final String HOME_DELETE = "essentials.delhome";
-    public static final String HOME_LIST = "essentials.homes";
-    public static final String HOME_OTHERS = "essentials.home.others";
-    public static final String HOME_MULTIPLE = "essentials.home.multiple";
-    public static final String HOME_ALL = "essentials.home.*";
+    public static final String HOME = "neoessentials.home";
+    public static final String HOME_SET = "neoessentials.sethome";
+    public static final String HOME_DELETE = "neoessentials.delhome";
+    public static final String HOME_LIST = "neoessentials.homes";
+    public static final String HOME_OTHERS = "neoessentials.home.others";
+    public static final String HOME_MULTIPLE = "neoessentials.home.multiple";
+    public static final String HOME_ALL = "neoessentials.home.*";
     
     // Warp System
-    public static final String WARP = "essentials.warp";
-    public static final String WARP_SET = "essentials.setwarp";
-    public static final String WARP_DELETE = "essentials.delwarp";
-    public static final String WARP_LIST = "essentials.warps";
-    public static final String WARP_ALL = "essentials.warp.*";
+    public static final String WARP = "neoessentials.warp";
+    public static final String WARP_SET = "neoessentials.setwarp";
+    public static final String WARP_DELETE = "neoessentials.delwarp";
+    public static final String WARP_LIST = "neoessentials.warps";
+    public static final String WARP_ALL = "neoessentials.warp.*";
     
     // TPA System
-    public static final String TPA_REQUEST = "essentials.tpa";
-    public static final String TPA_HERE = "essentials.tpahere";
-    public static final String TPA_ACCEPT = "essentials.tpaccept";
-    public static final String TPA_DENY = "essentials.tpdeny";
-    public static final String TPA_CANCEL = "essentials.tpcancel";
-    public static final String TPA_ALL = "essentials.tpa.*";
+    public static final String TPA_REQUEST = "neoessentials.tpa";
+    public static final String TPA_HERE = "neoessentials.tpahere";
+    public static final String TPA_ACCEPT = "neoessentials.tpaccept";
+    public static final String TPA_DENY = "neoessentials.tpdeny";
+    public static final String TPA_CANCEL = "neoessentials.tpcancel";
+    public static final String TPA_ALL = "neoessentials.tpa.*";
     
     // Spawn System
-    public static final String SPAWN = "essentials.spawn";
-    public static final String SPAWN_SET = "essentials.setspawn";
-    public static final String SPAWN_OTHERS = "essentials.spawn.others";
-    public static final String SPAWN_ALL = "essentials.spawn.*";
+    public static final String SPAWN = "neoessentials.spawn";
+    public static final String SPAWN_SET = "neoessentials.setspawn";
+    public static final String SPAWN_OTHERS = "neoessentials.spawn.others";
+    public static final String SPAWN_ALL = "neoessentials.spawn.*";
     
     // Back Command
-    public static final String BACK = "essentials.back";
-    public static final String BACK_ONDEATH = "essentials.back.ondeath";
-    public static final String BACK_ONTELEPORT = "essentials.back.onteleport";
+    public static final String BACK = "neoessentials.back";
+    public static final String BACK_ONDEATH = "neoessentials.back.ondeath";
+    public static final String BACK_ONTELEPORT = "neoessentials.back.onteleport";
     
     // ==============================
     // MODERATION COMMANDS
     // ==============================
     
     // Ban System
-    public static final String BAN = "essentials.ban";
-    public static final String BAN_TEMP = "essentials.tempban";
-    public static final String BAN_IP = "essentials.banip";
-    public static final String UNBAN = "essentials.unban";
-    public static final String BAN_EXEMPT = "essentials.ban.exempt";
-    public static final String BAN_ALL = "essentials.ban.*";
+    public static final String BAN = "neoessentials.ban";
+    public static final String BAN_TEMP = "neoessentials.tempban";
+    public static final String BAN_IP = "neoessentials.banip";
+    public static final String UNBAN = "neoessentials.unban";
+    public static final String BAN_EXEMPT = "neoessentials.ban.exempt";
+    public static final String BAN_ALL = "neoessentials.ban.*";
     
     // Kick Command
-    public static final String KICK = "essentials.kick";
-    public static final String KICK_EXEMPT = "essentials.kick.exempt";
+    public static final String KICK = "neoessentials.kick";
+    public static final String KICK_EXEMPT = "neoessentials.kick.exempt";
     
     // Mute System
-    public static final String MUTE = "essentials.mute";
-    public static final String UNMUTE = "essentials.unmute";
-    public static final String MUTE_EXEMPT = "essentials.mute.exempt";
-    public static final String MUTE_ALL = "essentials.mute.*";
+    public static final String MUTE = "neoessentials.mute";
+    public static final String UNMUTE = "neoessentials.unmute";
+    public static final String MUTE_EXEMPT = "neoessentials.mute.exempt";
+    public static final String MUTE_ALL = "neoessentials.mute.*";
     
     // Jail System
-    public static final String JAIL = "essentials.jail";
-    public static final String UNJAIL = "essentials.unjail";
-    public static final String JAIL_SET = "essentials.setjail";
-    public static final String JAIL_DELETE = "essentials.deljail";
-    public static final String JAIL_EXEMPT = "essentials.jail.exempt";
-    public static final String JAIL_ALL = "essentials.jail.*";
+    public static final String JAIL = "neoessentials.jail";
+    public static final String UNJAIL = "neoessentials.unjail";
+    public static final String JAIL_SET = "neoessentials.setjail";
+    public static final String JAIL_DELETE = "neoessentials.deljail";
+    public static final String JAIL_EXEMPT = "neoessentials.jail.exempt";
+    public static final String JAIL_ALL = "neoessentials.jail.*";
     
     // ==============================
     // ECONOMY SYSTEM
     // ==============================
     
     // Basic Economy
-    public static final String ECO_BALANCE = "essentials.balance";
-    public static final String ECO_BALANCE_OTHERS = "essentials.balance.others";
-    public static final String ECO_PAY = "essentials.pay";
-    public static final String ECO_TOP = "essentials.balancetop";
+    public static final String ECO_BALANCE = "neoessentials.balance";
+    public static final String ECO_BALANCE_OTHERS = "neoessentials.balance.others";
+    public static final String ECO_PAY = "neoessentials.pay";
+    public static final String ECO_TOP = "neoessentials.balancetop";
     
     // Economy Administration
-    public static final String ECO_GIVE = "essentials.eco.give";
-    public static final String ECO_TAKE = "essentials.eco.take";
-    public static final String ECO_SET = "essentials.eco.set";
-    public static final String ECO_RESET = "essentials.eco.reset";
-    public static final String ECO_ALL = "essentials.eco.*";
+    public static final String ECO_GIVE = "neoessentials.eco.give";
+    public static final String ECO_TAKE = "neoessentials.eco.take";
+    public static final String ECO_SET = "neoessentials.eco.set";
+    public static final String ECO_RESET = "neoessentials.eco.reset";
+    public static final String ECO_ALL = "neoessentials.eco.*";
     
     // Economy Analytics
     public static final String ECO_ANALYTICS = "neoessentials.economy.analytics";
@@ -210,55 +217,55 @@ public final class PermissionNodes {
     // ==============================
     
     // Private Messages
-    public static final String MSG = "essentials.msg";
-    public static final String REPLY = "essentials.reply";
-    public static final String MSGTOGGLE = "essentials.msgtoggle";
-    public static final String SOCIALSPY = "essentials.socialspy";
+    public static final String MSG = "neoessentials.msg";
+    public static final String REPLY = "neoessentials.reply";
+    public static final String MSGTOGGLE = "neoessentials.msgtoggle";
+    public static final String SOCIALSPY = "neoessentials.socialspy";
     
     // Mail System
-    public static final String MAIL_SEND = "essentials.mail.send";
-    public static final String MAIL_READ = "essentials.mail.read";
-    public static final String MAIL_CLEAR = "essentials.mail.clear";
-    public static final String MAIL_ALL = "essentials.mail.*";
+    public static final String MAIL_SEND = "neoessentials.mail.send";
+    public static final String MAIL_READ = "neoessentials.mail.read";
+    public static final String MAIL_CLEAR = "neoessentials.mail.clear";
+    public static final String MAIL_ALL = "neoessentials.mail.*";
     
     // Broadcast
-    public static final String BROADCAST = "essentials.broadcast";
-    public static final String BROADCAST_WORLD = "essentials.broadcast.world";
+    public static final String BROADCAST = "neoessentials.broadcast";
+    public static final String BROADCAST_WORLD = "neoessentials.broadcast.world";
     
     // ==============================
     // PLAYER INFORMATION
     // ==============================
     
     // Player Lists
-    public static final String LIST = "essentials.list";
-    public static final String LIST_HIDDEN = "essentials.list.hidden";
+    public static final String LIST = "neoessentials.list";
+    public static final String LIST_HIDDEN = "neoessentials.list.hidden";
     
     // Player Information
-    public static final String WHOIS = "essentials.whois";
-    public static final String SEEN = "essentials.seen";
-    public static final String REALNAME = "essentials.realname";
+    public static final String WHOIS = "neoessentials.whois";
+    public static final String SEEN = "neoessentials.seen";
+    public static final String REALNAME = "neoessentials.realname";
     
     // Nickname System
-    public static final String NICK = "essentials.nick";
-    public static final String NICK_OTHERS = "essentials.nick.others";
-    public static final String NICK_COLOR = "essentials.nick.color";
-    public static final String NICK_MAGIC = "essentials.nick.magic";
+    public static final String NICK = "neoessentials.nick";
+    public static final String NICK_OTHERS = "neoessentials.nick.others";
+    public static final String NICK_COLOR = "neoessentials.nick.color";
+    public static final String NICK_MAGIC = "neoessentials.nick.magic";
     
     // ==============================
     // KIT SYSTEM
     // ==============================
     
     // Kit Usage
-    public static final String KIT = "essentials.kit";
-    public static final String KIT_LIST = "essentials.kit.list";
-    public static final String KIT_PREVIEW = "essentials.kit.preview";
+    public static final String KIT = "neoessentials.kit";
+    public static final String KIT_LIST = "neoessentials.kit.list";
+    public static final String KIT_PREVIEW = "neoessentials.kit.preview";
     
     // Kit Administration
-    public static final String KIT_CREATE = "essentials.kit.create";
-    public static final String KIT_DELETE = "essentials.kit.delete";
-    public static final String KIT_EDIT = "essentials.kit.edit";
-    public static final String KIT_GIVE = "essentials.kit.give";
-    public static final String KIT_ALL = "essentials.kit.*";
+    public static final String KIT_CREATE = "neoessentials.kit.create";
+    public static final String KIT_DELETE = "neoessentials.kit.delete";
+    public static final String KIT_EDIT = "neoessentials.kit.edit";
+    public static final String KIT_GIVE = "neoessentials.kit.give";
+    public static final String KIT_ALL = "neoessentials.kit.*";
     
     // ==============================
     // NEOESSENTIALS FEATURES
@@ -388,18 +395,18 @@ public final class PermissionNodes {
     // ==============================
     
     // Cooldown Bypasses
-    public static final String BYPASS_COOLDOWN = "essentials.bypass.cooldown";
-    public static final String BYPASS_COOLDOWN_TELEPORT = "essentials.bypass.cooldown.teleport";
-    public static final String BYPASS_COOLDOWN_COMMAND = "essentials.bypass.cooldown.command";
+    public static final String BYPASS_COOLDOWN = "neoessentials.bypass.cooldown";
+    public static final String BYPASS_COOLDOWN_TELEPORT = "neoessentials.bypass.cooldown.teleport";
+    public static final String BYPASS_COOLDOWN_COMMAND = "neoessentials.bypass.cooldown.command";
     
     // Limit Bypasses
-    public static final String BYPASS_LIMIT_HOME = "essentials.bypass.limit.home";
-    public static final String BYPASS_LIMIT_WARP = "essentials.bypass.limit.warp";
+    public static final String BYPASS_LIMIT_HOME = "neoessentials.bypass.limit.home";
+    public static final String BYPASS_LIMIT_WARP = "neoessentials.bypass.limit.warp";
     
     // Cost Bypasses
-    public static final String BYPASS_COST = "essentials.bypass.cost";
-    public static final String BYPASS_COST_TELEPORT = "essentials.bypass.cost.teleport";
-    public static final String BYPASS_COST_COMMAND = "essentials.bypass.cost.command";
+    public static final String BYPASS_COST = "neoessentials.bypass.cost";
+    public static final String BYPASS_COST_TELEPORT = "neoessentials.bypass.cost.teleport";
+    public static final String BYPASS_COST_COMMAND = "neoessentials.bypass.cost.command";
     
     // ==============================
     // DISCORD INTEGRATION (DEPRECATED/DISABLED)
@@ -416,12 +423,12 @@ public final class PermissionNodes {
     // ==============================
     
     // Category Wildcards
-    public static final String ALL_ESSENTIALS = "essentials.*";
+    public static final String ALL_ESSENTIALS = "neoessentials.*";
     public static final String ALL_NEOESSENTIALS = "neoessentials.*";
-    public static final String ALL_TELEPORT = "essentials.teleport.*";
-    public static final String ALL_MODERATION = "essentials.moderation.*";
-    public static final String ALL_ECONOMY = "essentials.economy.*";
-    public static final String ALL_MESSAGING = "essentials.messaging.*";
+    public static final String ALL_TELEPORT = "neoessentials.teleport.*";
+    public static final String ALL_MODERATION = "neoessentials.moderation.*";
+    public static final String ALL_ECONOMY = "neoessentials.economy.*";
+    public static final String ALL_MESSAGING = "neoessentials.messaging.*";
     public static final String ALL_ADMIN = "*.admin";
     
     // Ultimate permissions
@@ -444,6 +451,9 @@ public final class PermissionNodes {
      */
     public static String[] getAllPermissions() {
         return new String[] {
+            // Core Permission Levels
+            PLAYER_DEFAULT, ESSENTIALS_USE, MODERATION_BASIC, ADMIN_BASIC, ADMIN_FULL,
+            
             // Essential Commands
             HEAL_SELF, HEAL_OTHERS, HEAL_ALL,
             FEED_SELF, FEED_OTHERS, FEED_ALL,
@@ -455,6 +465,7 @@ public final class PermissionNodes {
             TIME_SET, TIME_ADD, TIME_QUERY, TIME_ALL,
             WEATHER_SET, WEATHER_CLEAR, WEATHER_RAIN, WEATHER_THUNDER, WEATHER_ALL,
             GIVE_ITEM, GIVE_UNLIMITED, GIVE_ALL,
+            GAMEMODE, GAMEMODE_OTHERS, GAMEMODE_ALL,
             WORKBENCH, ANVIL, ENDERCHEST, ENDERCHEST_OTHERS,
             
             // Teleportation

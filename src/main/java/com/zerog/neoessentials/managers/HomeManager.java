@@ -2,6 +2,7 @@ package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.HomeConfig;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -237,17 +238,17 @@ public class HomeManager {
         HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
         
         // Check for unlimited homes permission
-        if (PermissionUtil.hasPermission(player, "essentials.sethome.unlimited")) {
+        if (PermissionUtil.hasPermission(player, "neoessentials.sethome.unlimited")) {
             return Integer.MAX_VALUE;
         }
         
         // Check for admin permission
-        if (PermissionUtil.hasPermission(player, "essentials.sethome.admin")) {
+        if (PermissionUtil.hasPermission(player, "neoessentials.sethome.admin")) {
             return config.maxHomesAdmin;
         }
         
         // Check for VIP permission
-        if (PermissionUtil.hasPermission(player, "essentials.sethome.vip")) {
+        if (PermissionUtil.hasPermission(player, "neoessentials.sethome.vip")) {
             return config.maxHomesVip;
         }
         

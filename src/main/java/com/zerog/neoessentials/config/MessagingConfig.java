@@ -69,7 +69,7 @@ public class MessagingConfig {
         public boolean defaultEnabled = false; // Auto-enable for staff
         public boolean logToConsole = true;
         public boolean logToFile = true;
-        public List<String> exemptPermissions = Arrays.asList("essentials.socialspy.exempt");
+        public List<String> exemptPermissions = Arrays.asList("neoessentials.socialspy.exempt");
         public boolean showCommands = true;
         public boolean showPrivateMessages = true;
         public boolean showMail = false;
@@ -77,7 +77,7 @@ public class MessagingConfig {
     
     public static class HelpOpConfig {
         public boolean enabled = true;
-        public String targetPermission = "essentials.helpop.receive";
+        public String targetPermission = "neoessentials.helpop.receive";
         public boolean logToConsole = true;
         public boolean logToFile = true;
         public int cooldownSeconds = 60;

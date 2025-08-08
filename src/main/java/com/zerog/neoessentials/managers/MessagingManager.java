@@ -2,6 +2,7 @@ package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.MessagingConfig;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
@@ -55,7 +56,7 @@ public class MessagingManager {
         }
         
         // Check permission
-        if (!PermissionUtil.hasPermission(sender, "essentials.msg")) {
+        if (!PermissionUtil.hasPermission(sender, PermissionNodes.MSG)) {
             MessageUtil.sendMessage(sender, config.messages.noPermission);
             return false;
         }
@@ -140,7 +141,7 @@ public class MessagingManager {
         }
         
         // Check permission
-        if (!PermissionUtil.hasPermission(sender, "essentials.mail.send")) {
+        if (!PermissionUtil.hasPermission(sender, PermissionNodes.MAIL_SEND)) {
             MessageUtil.sendMessage(sender, config.messages.noPermission);
             return false;
         }
@@ -251,7 +252,7 @@ public class MessagingManager {
     public void broadcast(ServerPlayer sender, String message) {
         MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
-        if (!PermissionUtil.hasPermission(sender, "essentials.broadcast")) {
+        if (!PermissionUtil.hasPermission(sender, PermissionNodes.BROADCAST)) {
             MessageUtil.sendMessage(sender, config.messages.noPermission);
             return;
         }
@@ -269,7 +270,7 @@ public class MessagingManager {
     public boolean toggleSocialSpy(ServerPlayer player) {
         MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
         
-        if (!PermissionUtil.hasPermission(player, "essentials.socialspy")) {
+        if (!PermissionUtil.hasPermission(player, PermissionNodes.SOCIALSPY)) {
             MessageUtil.sendMessage(player, config.messages.noPermission);
             return false;
         }
@@ -353,7 +354,7 @@ public class MessagingManager {
             return false;
         }
         
-        if (PermissionUtil.hasPermission(player, "essentials.msg.cooldown.bypass")) {
+        if (PermissionUtil.hasPermission(player, PermissionNodes.BYPASS_COOLDOWN_COMMAND)) {
             return false;
         }
         

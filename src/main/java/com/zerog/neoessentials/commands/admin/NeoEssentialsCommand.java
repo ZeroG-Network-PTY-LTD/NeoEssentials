@@ -8,6 +8,8 @@ import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.utils.PerformanceMonitor;
 import com.zerog.neoessentials.utils.PlaceholderManager;
 import com.zerog.neoessentials.utils.TabCompletionUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -27,7 +29,7 @@ public class NeoEssentialsCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("neoessentials")
-            .requires(source -> source.hasPermission(3)) // Admin only
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.CONFIG_ALL))
             .then(Commands.literal("info")
                 .executes(NeoEssentialsCommand::showInfo))
             .then(Commands.literal("performance")

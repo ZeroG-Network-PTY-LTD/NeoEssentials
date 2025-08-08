@@ -197,14 +197,11 @@ public class ErrorHandlingIntegration {
     }
     
     /**
-     * Simple permission check (placeholder - integrate with actual permission system)
+     * Simple permission check using the proper permission system
      */
     private static boolean hasPermission(CommandSourceStack source, String permission) {
-        // For now, check if source is player with op or console
-        if (source.getEntity() instanceof ServerPlayer player) {
-            return source.hasPermission(2) || player.hasPermissions(2);
-        }
-        return true; // Console has all permissions
+        // Use the proper PermissionUtil which integrates with CustomPermissionsManager
+        return com.zerog.neoessentials.util.PermissionUtil.hasPermission(source, permission);
     }
     
     /**

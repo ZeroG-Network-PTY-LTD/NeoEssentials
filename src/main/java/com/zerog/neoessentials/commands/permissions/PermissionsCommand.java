@@ -44,6 +44,12 @@ public class PermissionsCommand {
                 .then(Commands.argument("player", EntityArgument.player())
                     .executes(PermissionsCommand::executeInfoPlayer)))
             
+            // Debug permission check
+            .then(Commands.literal("check")
+                .then(Commands.argument("player", EntityArgument.player())
+                    .then(Commands.argument("permission", StringArgumentType.greedyString())
+                        .executes(PermissionsCommand::executeCheck))))
+            
             // Group management
             .then(Commands.literal("group")
                 .then(Commands.literal("list")
@@ -89,7 +95,23 @@ public class PermissionsCommand {
                                 CustomPermissionsManager.getInstance().getAllGroups().keySet().forEach(builder::suggest);
                                 return builder.buildFuture();
                             })
-                            .executes(PermissionsCommand::executeGroupSetInheritance)))))
+                            .executes(PermissionsCommand::executeGroupSetInheritance))))
+                .then(Commands.literal("prefix")
+                    .then(Commands.argument("group", StringArgumentType.string())
+                        .suggests((context, builder) -> {
+                            CustomPermissionsManager.getInstance().getAllGroups().keySet().forEach(builder::suggest);
+                            return builder.buildFuture();
+                        })
+                        .then(Commands.argument("prefix", StringArgumentType.greedyString())
+                            .executes(PermissionsCommand::executeGroupSetPrefix))))
+                .then(Commands.literal("suffix")
+                    .then(Commands.argument("group", StringArgumentType.string())
+                        .suggests((context, builder) -> {
+                            CustomPermissionsManager.getInstance().getAllGroups().keySet().forEach(builder::suggest);
+                            return builder.buildFuture();
+                        })
+                        .then(Commands.argument("suffix", StringArgumentType.greedyString())
+                            .executes(PermissionsCommand::executeGroupSetSuffix)))))
             
             // User management
             .then(Commands.literal("user")
@@ -123,6 +145,8 @@ public class PermissionsCommand {
                 .executes(PermissionsCommand::executeReload))
             .then(Commands.literal("stats")
                 .executes(PermissionsCommand::executeStats))
+            .then(Commands.literal("nodes")
+                .executes(PermissionsCommand::executeListNodes))
             .then(Commands.literal("check")
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("permission", StringArgumentType.string())
@@ -311,11 +335,11 @@ public class PermissionsCommand {
                 return 0;
             }
             
-            group.addPermission(permission);
-            manager.clearCache();
+            // Use the manager method to properly save to storage
+            manager.addGroupPermission(groupName, permission);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aAdded permission '" + permission + "' to group '" + groupName + "'"), false);
+                Component.literal("§aAdded permission '" + permission + "' to group '" + groupName + "' (saved to storage)"), false);
             
             return 1;
         } catch (Exception e) {
@@ -338,11 +362,11 @@ public class PermissionsCommand {
                 return 0;
             }
             
-            group.removePermission(permission);
-            manager.clearCache();
+            // Use the manager method to properly save to storage
+            manager.removeGroupPermission(groupName, permission);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aRemoved permission '" + permission + "' from group '" + groupName + "'"), false);
+                Component.literal("§aRemoved permission '" + permission + "' from group '" + groupName + "' (saved to storage)"), false);
             
             return 1;
         } catch (Exception e) {
@@ -543,15 +567,166 @@ public class PermissionsCommand {
             
             CustomPermissionsManager manager = CustomPermissionsManager.getInstance();
             boolean hasPermission = manager.hasPermission(target, permission);
+            String playerGroup = manager.getPlayerGroup(target.getUUID());
+            PermissionGroup group = manager.getGroup(playerGroup);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§ePlayer " + target.getDisplayName().getString() + 
-                (hasPermission ? " §aHAS" : " §cDOES NOT HAVE") + " §epermission: §b" + permission), false);
+                Component.literal("§6§l=== Permission Check Debug ==="), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§ePlayer: §b" + target.getDisplayName().getString()), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§eGroup: §b" + playerGroup), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§ePermission: §b" + permission), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§eResult: " + (hasPermission ? "§a✓ HAS PERMISSION" : "§c✗ DOES NOT HAVE PERMISSION")), false);
+            
+            if (group != null) {
+                // Check direct permissions
+                boolean hasDirectPermission = group.getDirectPermissions().contains(permission);
+                context.getSource().sendSuccess(() -> 
+                    Component.literal("§eDirect Permission: " + (hasDirectPermission ? "§a✓ YES" : "§c✗ NO")), false);
+                
+                // Check wildcard matches in direct permissions
+                boolean hasWildcard = group.getDirectPermissions().stream()
+                    .anyMatch(perm -> perm.endsWith("*") && permission.startsWith(perm.substring(0, perm.length() - 1)));
+                context.getSource().sendSuccess(() -> 
+                    Component.literal("§eWildcard Match: " + (hasWildcard ? "§a✓ YES" : "§c✗ NO")), false);
+                
+                // Check inherited permissions
+                if (group.getInheritance() != null) {
+                    context.getSource().sendSuccess(() -> 
+                        Component.literal("§eInherits From: §b" + group.getInheritance()), false);
+                    
+                    // Check if permission comes from inheritance
+                    Map<String, PermissionGroup> allGroups = manager.getAllGroups();
+                    boolean hasInheritedPermission = group.hasPermission(permission, allGroups) && !hasDirectPermission && !hasWildcard;
+                    context.getSource().sendSuccess(() -> 
+                        Component.literal("§eInherited Permission: " + (hasInheritedPermission ? "§a✓ YES" : "§c✗ NO")), false);
+                }
+                
+                // Show group prefix/suffix
+                context.getSource().sendSuccess(() -> 
+                    Component.literal("§eGroup Prefix: §r" + (group.getPrefix() != null ? group.getPrefix() : "§7None")), false);
+                context.getSource().sendSuccess(() -> 
+                    Component.literal("§eGroup Suffix: §r" + (group.getSuffix() != null ? group.getSuffix() : "§7None")), false);
+                
+                // Show all direct permissions
+                context.getSource().sendSuccess(() -> 
+                    Component.literal("§eDirect Permissions: §b" + group.getDirectPermissions().size()), false);
+            }
             
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error executing check command", e);
             context.getSource().sendFailure(Component.literal("§cFailed to check permission: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int executeGroupSetPrefix(CommandContext<CommandSourceStack> context) {
+        try {
+            String groupName = StringArgumentType.getString(context, "group");
+            String prefix = StringArgumentType.getString(context, "prefix");
+            
+            CustomPermissionsManager manager = CustomPermissionsManager.getInstance();
+            PermissionGroup group = manager.getGroup(groupName);
+            
+            if (group == null) {
+                context.getSource().sendFailure(Component.literal("§cGroup '" + groupName + "' not found"));
+                return 0;
+            }
+            
+            // Use the manager method to properly save to storage
+            manager.setGroupPrefix(groupName, prefix);
+            
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§aSet prefix for group '" + groupName + "' to: " + prefix + " §a(saved to storage)"), false);
+            
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Error executing group set prefix command", e);
+            context.getSource().sendFailure(Component.literal("§cFailed to set prefix: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int executeGroupSetSuffix(CommandContext<CommandSourceStack> context) {
+        try {
+            String groupName = StringArgumentType.getString(context, "group");
+            String suffix = StringArgumentType.getString(context, "suffix");
+            
+            CustomPermissionsManager manager = CustomPermissionsManager.getInstance();
+            PermissionGroup group = manager.getGroup(groupName);
+            
+            if (group == null) {
+                context.getSource().sendFailure(Component.literal("§cGroup '" + groupName + "' not found"));
+                return 0;
+            }
+            
+            // Use the manager method to properly save to storage
+            manager.setGroupSuffix(groupName, suffix);
+            
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§aSet suffix for group '" + groupName + "' to: " + suffix + " §a(saved to storage)"), false);
+            
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Error executing group set suffix command", e);
+            context.getSource().sendFailure(Component.literal("§cFailed to set suffix: " + e.getMessage()));
+            return 0;
+        }
+    }
+    
+    private static int executeListNodes(CommandContext<CommandSourceStack> context) {
+        try {
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§6§l=== Common Permission Nodes ==="), false);
+            
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§e--- Essential Commands ---"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bneoessentials.fly §7- Allow flying"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bneoessentials.fly.others §7- Allow flying others"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bneoessentials.heal §7- Heal self"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bneoessentials.feed §7- Feed self"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bneoessentials.god §7- God mode"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bneoessentials.vanish §7- Vanish mode"), false);
+            
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§e--- Teleportation ---"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bessentials.home §7- Use homes"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bessentials.sethome §7- Set homes"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bessentials.spawn §7- Use spawn"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bessentials.tp §7- Teleport commands"), false);
+            
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§e--- Wildcards ---"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bessentials.* §7- All essentials permissions"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§bneoessentials.* §7- All neoessentials permissions"), false);
+            
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§e--- Usage Examples ---"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§a/permissions group add default neoessentials.fly"), false);
+            context.getSource().sendSuccess(() -> 
+                Component.literal("§a/permissions check <player> neoessentials.fly"), false);
+            
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Error executing list nodes command", e);
+            context.getSource().sendFailure(Component.literal("§cFailed to list nodes: " + e.getMessage()));
             return 0;
         }
     }

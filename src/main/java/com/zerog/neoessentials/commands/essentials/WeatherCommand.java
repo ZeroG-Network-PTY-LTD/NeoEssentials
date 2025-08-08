@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -14,7 +17,7 @@ public class WeatherCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("weather")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .then(Commands.literal("clear")
                 .executes(WeatherCommand::setClear)
                 .then(Commands.argument("duration", IntegerArgumentType.integer(0, MAX_DURATION))
@@ -37,7 +40,7 @@ public class WeatherCommand {
         
         // Alternative commands for convenience
         dispatcher.register(Commands.literal("sun")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(WeatherCommand::setClear)
             .then(Commands.argument("duration", IntegerArgumentType.integer(0, MAX_DURATION))
                 .executes(WeatherCommand::setClearWithDuration)
@@ -45,7 +48,7 @@ public class WeatherCommand {
         );
         
         dispatcher.register(Commands.literal("storm")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(WeatherCommand::setThunder)
             .then(Commands.argument("duration", IntegerArgumentType.integer(0, MAX_DURATION))
                 .executes(WeatherCommand::setThunderWithDuration)

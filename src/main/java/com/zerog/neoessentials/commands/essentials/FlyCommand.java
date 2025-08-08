@@ -3,6 +3,8 @@ package com.zerog.neoessentials.commands.essentials;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -29,10 +31,10 @@ public class FlyCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /fly - Toggle fly mode for yourself
         dispatcher.register(Commands.literal("fly")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.FLY_SELF))
             .executes(FlyCommand::toggleFlySelf)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.FLY_OTHERS))
                 .executes(FlyCommand::toggleFlyOther)
             )
         );
@@ -45,7 +47,7 @@ public class FlyCommand {
         return ErrorHandlingIntegration.executeWithPermission(
             context.getSource(),
             "toggle fly",
-            "neoessentials.fly", 
+            PermissionNodes.FLY_SELF, 
             (source) -> {
                 ServerPlayer player = source.getPlayerOrException();
                 boolean canFly = toggleFly(player);
@@ -68,7 +70,7 @@ public class FlyCommand {
         return ErrorHandlingIntegration.executeWithPermission(
             context.getSource(),
             "toggle fly for others",
-            "neoessentials.fly.others", 
+            PermissionNodes.FLY_OTHERS, 
             (source) -> {
                 ServerPlayer target = EntityArgument.getPlayer(context, "player");
                 ServerPlayer executor = source.getPlayerOrException();

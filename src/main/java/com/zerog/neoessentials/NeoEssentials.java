@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import com.zerog.neoessentials.features.CustomBossbarManager;
 import com.zerog.neoessentials.features.TablistScoreboardManager;
 import com.zerog.neoessentials.listeners.NotificationEventListener;
-// import com.zerog.neoessentials.listeners.ShopSignEventListener; // Temporarily disabled
+import com.zerog.neoessentials.ShopSignEventListener;
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.managers.*;
 import com.zerog.neoessentials.notifications.NotificationManager;
@@ -48,6 +48,10 @@ public class NeoEssentials {
         // Register enhanced theme system event handlers (Phase 6)
         NeoForge.EVENT_BUS.register(TablistScoreboardManager.getInstance());
         NeoForge.EVENT_BUS.register(CustomBossbarManager.getInstance());
+        
+        // Register chat formatting listener for prefix/suffix support
+        com.zerog.neoessentials.listeners.ChatFormattingListener.getInstance();
+        LOGGER.info("Chat formatting system initialized");
         
         LOGGER.info("NeoEssentials initialized successfully!");
     }
@@ -151,15 +155,12 @@ public class NeoEssentials {
             LOGGER.info("Permission Event Listener initialized");
             
             // Initialize shop sign event listener for preventing edit mode
-            // Temporarily disabled shop functionality (user requested to ignore shop section)
-            /*
             ShopSignEventListener shopSignListener = 
                 new ShopSignEventListener(
                     com.zerog.neoessentials.economy.shops.ShopManager.getInstance()
                 );
             NeoForge.EVENT_BUS.register(shopSignListener);
             LOGGER.info("Shop Sign Event Listener initialized");
-            */
             
             // Initialize Playtime Tracker
             com.zerog.neoessentials.player.PlaytimeTracker.getInstance();

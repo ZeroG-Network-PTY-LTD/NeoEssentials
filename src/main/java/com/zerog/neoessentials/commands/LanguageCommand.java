@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -46,7 +49,7 @@ public class LanguageCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("language")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                 .executes(LanguageCommand::showLanguageInfo)
                 .then(Commands.literal("set")
                     .then(Commands.argument("language", StringArgumentType.string())
@@ -55,7 +58,7 @@ public class LanguageCommand {
                 .then(Commands.literal("list")
                     .executes(LanguageCommand::listLanguages))
                 .then(Commands.literal("reload")
-                    .requires(source -> source.hasPermission(3))
+                    .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
                     .executes(LanguageCommand::reloadLanguages))
                 .then(Commands.literal("info")
                     .executes(LanguageCommand::showLanguageStats))
@@ -67,7 +70,7 @@ public class LanguageCommand {
         // Alias commands
         dispatcher.register(
             Commands.literal("lang")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                 .redirect(dispatcher.getRoot().getChild("language"))
         );
         

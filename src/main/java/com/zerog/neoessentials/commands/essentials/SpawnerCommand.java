@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -37,7 +40,7 @@ public class SpawnerCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /spawner <mob> - Set spawner mob type
         dispatcher.register(Commands.literal("spawner")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .then(Commands.argument("mob", StringArgumentType.word())
                 .executes(ctx -> setSpawnerMob(ctx, 20)) // Default delay of 20 ticks (1 second)
                 .then(Commands.argument("delay", IntegerArgumentType.integer(1, 200))

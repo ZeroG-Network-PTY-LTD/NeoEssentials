@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -42,7 +45,7 @@ public class MailCommand {
                     .executes(MailCommand::deleteMail)))
             // Admin commands
             .then(Commands.literal("clearall")
-                .requires(source -> source.hasPermission(3))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
                 .then(Commands.argument("player", EntityArgument.player())
                     .executes(MailCommand::clearAllMail))));
     }

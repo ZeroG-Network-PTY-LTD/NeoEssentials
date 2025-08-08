@@ -5,6 +5,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -24,7 +26,7 @@ public class ItemCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
         // /item <item> [amount] [player] - Give item to player
         dispatcher.register(Commands.literal("item")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GIVE_ITEM))
             .then(Commands.argument("item", ItemArgument.item(context))
                 .executes(ctx -> giveItem(ctx, 1, null))
                 .then(Commands.argument("amount", StringArgumentType.word())
@@ -38,7 +40,7 @@ public class ItemCommand {
         
         // /i - Alias for /item
         dispatcher.register(Commands.literal("i")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GIVE_ITEM))
             .then(Commands.argument("item", ItemArgument.item(context))
                 .executes(ctx -> giveItem(ctx, 1, null))
                 .then(Commands.argument("amount", StringArgumentType.word())

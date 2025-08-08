@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -19,7 +22,7 @@ public class KickCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /kick <player> [reason] - Kick a player from the server
         dispatcher.register(Commands.literal("kick")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(ctx -> kickPlayer(ctx, EntityArgument.getPlayer(ctx, "player"), "Kicked by an operator"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())

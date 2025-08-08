@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.features;
 
 import com.zerog.neoessentials.animation.AnimationManager;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
@@ -188,19 +187,227 @@ public class TablistScoreboardManager {
             int headerIndex = animationFrame % theme.headers.size();
             int footerIndex = animationFrame % theme.footers.size();
             
-            // Process header with placeholders
+            // Process header with placeholders (multiline support)
             String headerText = processPlaceholders(theme.headers.get(headerIndex), player);
-            MutableComponent header = Component.literal(headerText);
+            MutableComponent header = parseMultilineComponent(headerText);
             
-            // Process footer with placeholders
+            // Process footer with placeholders (multiline support)
             String footerText = processPlaceholders(theme.footers.get(footerIndex), player);
-            MutableComponent footer = Component.literal(footerText);
+            MutableComponent footer = parseMultilineComponent(footerText);
             
             // Send tablist update
             player.connection.send(new net.minecraft.network.protocol.game.ClientboundTabListPacket(header, footer));
             
+            // Update player name formatting in tablist
+            updatePlayerTablistName(player, serverInstance);
+            
         } catch (Exception e) {
             LOGGER.error("Failed to update tablist for player: " + player.getDisplayName().getString(), e);
+        }
+    }
+    
+    /**
+     * Update player's name formatting in tablist with prefix/suffix and nickname support
+     */
+    private void updatePlayerTablistName(ServerPlayer player, MinecraftServer server) {
+        try {
+            Scoreboard scoreboard = server.getScoreboard();
+            
+            // Get or create a team for this player
+            String teamName = "neoess_" + player.getUUID().toString().substring(0, 8);
+            PlayerTeam team = scoreboard.getPlayerTeam(teamName);
+            if (team == null) {
+                team = scoreboard.addPlayerTeam(teamName);
+            }
+            
+            // Get player's group and nickname
+            String playerGroup = getPlayerPrimaryGroup(player);
+            String nickname = getPlayerNickname(player);
+            
+            // Build prefix and suffix based on configuration and group
+            String prefix = buildPlayerPrefix(player, playerGroup);
+            String suffix = buildPlayerSuffix(player, playerGroup);
+            
+            // Set team prefix and suffix (with color code support)
+            team.setPlayerPrefix(Component.literal(prefix));
+            team.setPlayerSuffix(Component.literal(suffix));
+            
+            // Determine display name (nickname or real name) - logged for debugging
+            String displayName = nickname != null ? nickname : player.getName().getString();
+            LOGGER.debug("Player {} display name: {}", player.getName().getString(), displayName);
+            
+            // Add player to team if not already in it
+            String playerName = player.getName().getString();
+            if (!team.getPlayers().contains(playerName)) {
+                scoreboard.addPlayerToTeam(playerName, team);
+            }
+            
+            LOGGER.debug("Updated tablist display for player {} with prefix: '{}', suffix: '{}', nickname: '{}'", 
+                        playerName, prefix, suffix, nickname);
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to update player tablist name for: " + player.getName().getString(), e);
+        }
+    }
+    
+    /**
+     * Parse multiline text into a Component with proper line breaks
+     */
+    private MutableComponent parseMultilineComponent(String text) {
+        if (text == null || text.isEmpty()) {
+            return Component.literal("");
+        }
+        
+        // Handle \n literal and actual newlines
+        String[] lines = text.replace("\\n", "\n").split("\n");
+        MutableComponent component = Component.literal("");
+        
+        for (int i = 0; i < lines.length; i++) {
+            if (i > 0) {
+                component.append(Component.literal("\n"));
+            }
+            component.append(Component.literal(translateColorCodes(lines[i])));
+        }
+        
+        return component;
+    }
+    
+    /**
+     * Get player's primary group from permission system
+     */
+    private String getPlayerPrimaryGroup(ServerPlayer player) {
+        try {
+            // Try to get from permission system
+            com.zerog.neoessentials.permissions.CustomPermissionsManager permManager = 
+                com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
+            
+            if (permManager != null) {
+                String playerGroup = permManager.getPlayerGroup(player.getUUID());
+                if (playerGroup != null && !playerGroup.isEmpty()) {
+                    return playerGroup;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Failed to get player group for {}: {}", player.getName().getString(), e.getMessage());
+        }
+        
+        return "default"; // Fallback to default group
+    }
+    
+    /**
+     * Get player's nickname from NickCommand system
+     */
+    private String getPlayerNickname(ServerPlayer player) {
+        try {
+            // Access the static nickname map from NickCommand
+            java.lang.reflect.Field nicknamesField = 
+                com.zerog.neoessentials.commands.essentials.NickCommand.class.getDeclaredField("nicknames");
+            nicknamesField.setAccessible(true);
+            
+            @SuppressWarnings("unchecked")
+            java.util.Map<java.util.UUID, String> nicknames = 
+                (java.util.Map<java.util.UUID, String>) nicknamesField.get(null);
+            
+            return nicknames.get(player.getUUID());
+        } catch (Exception e) {
+            LOGGER.debug("Failed to get nickname for {}: {}", player.getName().getString(), e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Build player prefix based on group configuration
+     */
+    private String buildPlayerPrefix(ServerPlayer player, String group) {
+        try {
+            // Try to get from permission system first (most reliable)
+            com.zerog.neoessentials.permissions.CustomPermissionsManager permManager = 
+                com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
+            
+            if (permManager != null) {
+                String prefix = permManager.getPlayerPrefix(player.getUUID());
+                if (prefix != null && !prefix.isEmpty()) {
+                    return translateColorCodes(prefix);
+                }
+            }
+            
+            // Fallback to tablist configuration
+            com.zerog.neoessentials.config.TablistConfig config = getTablistConfig();
+            if (config != null && config.playerFormat.enabled) {
+                // Look for group-specific prefix in configuration
+                for (var groupDef : config.groups.groups) {
+                    if (groupDef.name.equals(group)) {
+                        return translateColorCodes(groupDef.prefix);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Failed to build prefix for player {}: {}", player.getName().getString(), e.getMessage());
+        }
+        
+        // Fallback to empty prefix
+        return "";
+    }
+    
+    /**
+     * Build player suffix based on group configuration
+     */
+    private String buildPlayerSuffix(ServerPlayer player, String group) {
+        try {
+            // Try to get from permission system first (most reliable)
+            com.zerog.neoessentials.permissions.CustomPermissionsManager permManager = 
+                com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
+            
+            if (permManager != null) {
+                String suffix = permManager.getPlayerSuffix(player.getUUID());
+                if (suffix != null && !suffix.isEmpty()) {
+                    return translateColorCodes(suffix);
+                }
+            }
+            
+            // Fallback to tablist configuration
+            com.zerog.neoessentials.config.TablistConfig config = getTablistConfig();
+            if (config != null && config.playerFormat.enabled) {
+                // Look for group-specific suffix in configuration
+                for (var groupDef : config.groups.groups) {
+                    if (groupDef.name.equals(group)) {
+                        return translateColorCodes(groupDef.suffix);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Failed to build suffix for player {}: {}", player.getName().getString(), e.getMessage());
+        }
+        
+        // Fallback to empty suffix
+        return "";
+    }
+    
+    /**
+     * Get tablist configuration (placeholder - should be injected or retrieved from config system)
+     */
+    private com.zerog.neoessentials.config.TablistConfig getTablistConfig() {
+        try {
+            // This would typically be injected or retrieved from a config manager
+            // For now, return null and use fallback behavior
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
+    /**
+     * Translate color codes in text
+     */
+    private String translateColorCodes(String text) {
+        if (text == null) return "";
+        
+        // Use the existing MessageUtil to translate color codes
+        try {
+            return com.zerog.neoessentials.util.MessageUtil.translateColorCodes(text);
+        } catch (Exception e) {
+            // Fallback to simple & translation
+            return text.replace('&', '§');
         }
     }
     
@@ -658,5 +865,27 @@ public class TablistScoreboardManager {
             return animationManager.getAnimationNames();
         }
         return new HashSet<>();
+    }
+    
+    /**
+     * Refresh player's tablist display (useful when permissions change)
+     */
+    public void refreshPlayerTablist(ServerPlayer player) {
+        if (player != null) {
+            updatePlayerTablist(player);
+            LOGGER.debug("Refreshed tablist display for player: {}", player.getName().getString());
+        }
+    }
+    
+    /**
+     * Refresh all online players' tablist displays
+     */
+    public void refreshAllPlayersTablist() {
+        if (server != null) {
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                refreshPlayerTablist(player);
+            }
+            LOGGER.info("Refreshed tablist display for all online players");
+        }
     }
 }

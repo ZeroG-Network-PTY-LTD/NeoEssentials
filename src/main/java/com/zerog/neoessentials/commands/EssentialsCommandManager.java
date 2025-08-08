@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.commands;
 
 import com.zerog.neoessentials.commands.essentials.*;
+import com.zerog.neoessentials.commands.economy.ShopCommand;
 import com.zerog.neoessentials.config.EssentialsConfig;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -101,6 +102,7 @@ public class EssentialsCommandManager {
         
         // Shop commands
         CreateShopCommand.register(dispatcher);
+        ShopCommand.register(dispatcher);
         
         LOGGER.info("Registered {} essentials commands", 
             dispatcher.getRoot().getChildren().size());

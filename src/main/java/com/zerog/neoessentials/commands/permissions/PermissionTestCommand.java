@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.permissions;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -17,7 +20,7 @@ public class PermissionTestCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("permtest")
-            .requires(source -> source.hasPermission(2)) // Require OP level 2
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC)) // Require OP level 2
             
             // /permtest assign <player> <group>
             .then(Commands.literal("assign")

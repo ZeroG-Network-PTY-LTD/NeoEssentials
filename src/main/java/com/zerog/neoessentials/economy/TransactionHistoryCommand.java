@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.economy;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -24,13 +27,13 @@ public class TransactionHistoryCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("transactions")
-            .requires(source -> source.hasPermission(0)) // All players can view their own
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.PLAYER_DEFAULT)) // All players can view their own
             .executes(context -> showTransactionHistory(context, null, 1))
             .then(Commands.argument("page", IntegerArgumentType.integer(1))
                 .executes(context -> showTransactionHistory(context, null, IntegerArgumentType.getInteger(context, "page")))
             )
             .then(Commands.literal("player")
-                .requires(source -> source.hasPermission(3)) // Admins can view others
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC)) // Admins can view others
                 .then(Commands.argument("target", EntityArgument.player())
                     .executes(context -> showTransactionHistory(context, EntityArgument.getPlayer(context, "target"), 1))
                     .then(Commands.argument("page", IntegerArgumentType.integer(1))
@@ -42,7 +45,7 @@ public class TransactionHistoryCommand {
         
         // Alias commands
         dispatcher.register(Commands.literal("txhistory")
-            .requires(source -> source.hasPermission(0))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.PLAYER_DEFAULT))
             .executes(context -> showTransactionHistory(context, null, 1))
             .then(Commands.argument("page", IntegerArgumentType.integer(1))
                 .executes(context -> showTransactionHistory(context, null, IntegerArgumentType.getInteger(context, "page")))

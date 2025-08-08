@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.zerog.neoessentials.managers.PluginCompatibilityManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -15,7 +18,7 @@ public class CompatibilityCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, PluginCompatibilityManager compatibilityManager) {
         LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("compatibility")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .then(Commands.literal("status")
                 .executes(context -> {
                     showStatus(context.getSource(), compatibilityManager);

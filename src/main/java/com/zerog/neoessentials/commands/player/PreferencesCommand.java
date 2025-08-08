@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.player;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -23,7 +26,7 @@ public class PreferencesCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("preferences")
-            .requires(source -> source.hasPermission(0))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.PLAYER_DEFAULT))
             .executes(PreferencesCommand::showPreferences)
             .then(Commands.literal("set")
                 .then(Commands.argument("key", StringArgumentType.string())
@@ -39,7 +42,7 @@ public class PreferencesCommand {
                 .executes(PreferencesCommand::listPreferences)));
 
         dispatcher.register(Commands.literal("prefs")
-            .requires(source -> source.hasPermission(0))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.PLAYER_DEFAULT))
             .executes(PreferencesCommand::showPreferences)
             .then(Commands.literal("set")
                 .then(Commands.argument("key", StringArgumentType.string())

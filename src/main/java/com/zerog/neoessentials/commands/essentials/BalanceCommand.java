@@ -1,4 +1,6 @@
 package com.zerog.neoessentials.commands.essentials;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
@@ -27,7 +29,7 @@ public class BalanceCommand {
         dispatcher.register(Commands.literal("balance")
             .executes(BalanceCommand::showBalance)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                 .executes(BalanceCommand::showOtherBalance)
             )
         );
@@ -36,7 +38,7 @@ public class BalanceCommand {
         dispatcher.register(Commands.literal("bal")
             .executes(BalanceCommand::showBalance)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                 .executes(BalanceCommand::showOtherBalance)
             )
         );

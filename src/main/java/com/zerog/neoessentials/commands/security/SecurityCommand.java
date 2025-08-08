@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.security;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -47,7 +50,7 @@ public class SecurityCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("security")
-                .requires(source -> source.hasPermission(3))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
                 .executes(SecurityCommand::showSecurityStatus)
                 .then(Commands.literal("status")
                     .executes(SecurityCommand::showSecurityStatus))

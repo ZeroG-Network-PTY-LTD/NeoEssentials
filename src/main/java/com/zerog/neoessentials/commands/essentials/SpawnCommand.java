@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -30,7 +33,7 @@ public class SpawnCommand {
         
         // /setspawn - Set spawn location
         dispatcher.register(Commands.literal("setspawn")
-            .requires(source -> source.hasPermission(3)) // Op level 3
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC)) // Op level 3
             .executes(SpawnCommand::setSpawn)
         );
     }

@@ -137,7 +137,7 @@ public class CommandRegistry {
             // Shop system commands
             // Temporarily disabled shop commands (user requested to ignore shop section)
             // com.zerog.neoessentials.commands.economy.ShopCommand.register(dispatcher);
-            // com.zerog.neoessentials.commands.economy.SignShopCommand.register(dispatcher, context);
+            com.zerog.neoessentials.economy.SignShopCommand.register(dispatcher, context);
             LOGGER.info("Registered shop system commands");
             
             // Mail system
@@ -235,6 +235,10 @@ public class CommandRegistry {
             // Permission management commands
             PermissionsCommand.register(dispatcher);
             LOGGER.info("Registered permission management commands");
+            
+            // Animated prefix commands
+            com.zerog.neoessentials.commands.permissions.AnimatedPrefixCommand.register(dispatcher);
+            LOGGER.info("Registered animated prefix commands");
             
             // Placeholder system commands
             PlaceholderCommand.register(dispatcher);

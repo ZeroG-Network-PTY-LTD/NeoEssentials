@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -21,7 +24,7 @@ public class TempBanCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /tempban <player> <duration> [reason] - Temporarily ban a player
         dispatcher.register(Commands.literal("tempban")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .then(Commands.argument("duration", IntegerArgumentType.integer(1))
                     .executes(context -> tempBanPlayer(context,

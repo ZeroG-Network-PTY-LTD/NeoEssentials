@@ -53,7 +53,8 @@ public class ConfigManager {
     private WarpConfig warpConfig;
     private ModerationConfig moderationConfig;
     private MessagingConfig messagingConfig;
-    private DiscordConfig discordConfig;
+    private ChatConfig chatConfig;
+    // Discord integration removed
     private TablistConfig tablistConfig;
     private SpawnConfig spawnConfig;
     
@@ -146,7 +147,8 @@ public class ConfigManager {
         createConfigurationTemplate("warps.json", new WarpConfig());
         createConfigurationTemplate("moderation.json", new ModerationConfig());
         createConfigurationTemplate("messaging.json", new MessagingConfig());
-        createConfigurationTemplate("discord.json", new DiscordConfig());
+        createConfigurationTemplate("chat.json", new ChatConfig());
+        // Discord integration removed
         createConfigurationTemplate("tablist.json", new TablistConfig());
         createConfigurationTemplate("spawn.json", new SpawnConfig());
         
@@ -234,7 +236,8 @@ public class ConfigManager {
         loadWarpConfig();
         loadModerationConfig();
         loadMessagingConfig();
-        loadDiscordConfig();
+        loadChatConfig();
+        // Discord integration removed
         loadTablistConfig();
         loadSpawnConfig();
         
@@ -358,7 +361,7 @@ public class ConfigManager {
         
         String[] configFiles = {
             "main.json", "economy.json", "homes.json", "kits.json", "warps.json",
-            "moderation.json", "messaging.json", "discord.json", "tablist.json", "spawn.json"
+            "moderation.json", "messaging.json", "chat.json", "tablist.json", "spawn.json"
         };
         
         for (String fileName : configFiles) {
@@ -419,9 +422,11 @@ public class ConfigManager {
         this.messagingConfig = loadConfig("messaging.json", MessagingConfig.class);
     }
     
-    private void loadDiscordConfig() {
-        this.discordConfig = loadConfig("discord.json", DiscordConfig.class);
+    private void loadChatConfig() {
+        this.chatConfig = loadConfig("chat.json", ChatConfig.class);
     }
+    
+    // Discord integration removed
     
     private void loadTablistConfig() {
         this.tablistConfig = loadConfig("tablist.json", TablistConfig.class);
@@ -543,7 +548,8 @@ public class ConfigManager {
             saveWarpConfig();
             saveModerationConfig();
             saveMessagingConfig();
-            saveDiscordConfig();
+            saveChatConfig();
+            // Discord integration removed
             saveTablistConfig();
             saveSpawnConfig();
             
@@ -579,7 +585,8 @@ public class ConfigManager {
     private void saveWarpConfig() { saveConfig("warps.json", warpConfig); }
     private void saveModerationConfig() { saveConfig("moderation.json", moderationConfig); }
     private void saveMessagingConfig() { saveConfig("messaging.json", messagingConfig); }
-    private void saveDiscordConfig() { saveConfig("discord.json", discordConfig); }
+    private void saveChatConfig() { saveConfig("chat.json", chatConfig); }
+    // Discord integration removed
     private void saveTablistConfig() { saveConfig("tablist.json", tablistConfig); }
     private void saveSpawnConfig() { saveConfig("spawn.json", spawnConfig); }
     
@@ -591,42 +598,11 @@ public class ConfigManager {
     public WarpConfig getWarpConfig() { return warpConfig != null ? warpConfig : new WarpConfig(); }
     public ModerationConfig getModerationConfig() { return moderationConfig != null ? moderationConfig : new ModerationConfig(); }
     public MessagingConfig getMessagingConfig() { return messagingConfig != null ? messagingConfig : new MessagingConfig(); }
-    public DiscordConfig getDiscordConfig() { return discordConfig != null ? discordConfig : new DiscordConfig(); }
+    public ChatConfig getChatConfig() { return chatConfig != null ? chatConfig : new ChatConfig(); }
+    // Discord integration removed
     
-    /**
-     * Reload Discord configuration and reinitialize integrations
-     */
-    public void reloadDiscordConfig() {
-        loadDiscordConfig();
-        
-        // Reinitialize Discord integrations with new configuration
-        try {
-            com.zerog.neoessentials.discord.DiscordManager discordManager = 
-                com.zerog.neoessentials.discord.DiscordManager.getInstance();
-            
-            // Initialize Discord with webhook configuration
-            if (discordConfig.webhooks.enabled && !discordConfig.webhooks.chatWebhookUrl.isEmpty()) {
-                discordManager.initialize(
-                    discordConfig.webhooks.chatWebhookUrl,
-                    "NeoEssentials Server",
-                    "https://via.placeholder.com/64x64/5865F2/FFFFFF?text=NE"
-                );
-            }
-            
-            // Reinitialize DiscordWebhookIntegration
-            com.zerog.neoessentials.integrations.DiscordWebhookIntegration webhookIntegration = 
-                com.zerog.neoessentials.integrations.DiscordWebhookIntegration.getInstance();
-            if (discordConfig.webhooks.enabled && !discordConfig.webhooks.chatWebhookUrl.isEmpty()) {
-                webhookIntegration.updateConfiguration(discordConfig.webhooks.chatWebhookUrl, true);
-            } else {
-                webhookIntegration.updateConfiguration("", false);
-            }
-            
-            LOGGER.info("Discord configuration reloaded and integrations reinitialized");
-        } catch (Exception e) {
-            LOGGER.error("Failed to reinitialize Discord integrations after config reload", e);
-        }
-    }
+    // Discord methods removed - Discord integration no longer supported
+    
     public TablistConfig getTablistConfig() { return tablistConfig != null ? tablistConfig : new TablistConfig(); }
     public SpawnConfig getSpawnConfig() { return spawnConfig != null ? spawnConfig : new SpawnConfig(); }
     
@@ -639,7 +615,7 @@ public class ConfigManager {
     public String[] getAllConfigFiles() {
         return new String[] {
             "main.json", "economy.json", "homes.json", "kits.json", "warps.json",
-            "moderation.json", "messaging.json", "discord.json", "tablist.json", "spawn.json"
+            "moderation.json", "messaging.json", "chat.json", "tablist.json", "spawn.json"
         };
     }
     
@@ -675,7 +651,8 @@ public class ConfigManager {
                 case "warps.json": loadWarpConfig(); break;
                 case "moderation.json": loadModerationConfig(); break;
                 case "messaging.json": loadMessagingConfig(); break;
-                case "discord.json": loadDiscordConfig(); break;
+                case "chat.json": loadChatConfig(); break;
+                // Discord integration removed
                 case "tablist.json": loadTablistConfig(); break;
                 case "spawn.json": loadSpawnConfig(); break;
                 default: return false;

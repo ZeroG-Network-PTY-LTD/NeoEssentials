@@ -3,8 +3,10 @@ package com.zerog.neoessentials.permissions;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.player.PlayerDataManager;
 import com.zerog.neoessentials.player.PlayerData;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,9 @@ public class CustomPermissionsManager {
     private final Map<UUID, PlayerPermissions> playerPermissions = new ConcurrentHashMap<>();
     private final Map<UUID, String> playerGroups = new ConcurrentHashMap<>();
     
+    // Persistent storage manager
+    private final PermissionStorageManager storageManager;
+    
     // Default groups
     private static final String DEFAULT_GROUP = "default";
     private static final String ADMIN_GROUP = "admin";
@@ -46,6 +51,7 @@ public class CustomPermissionsManager {
     private final Map<String, Long> cacheTimestamps = new ConcurrentHashMap<>();
     
     private CustomPermissionsManager() {
+        this.storageManager = PermissionStorageManager.getInstance();
         initialize();
     }
     
@@ -176,15 +182,30 @@ public class CustomPermissionsManager {
     }
     
     /**
-     * Load permissions from configuration
+     * Load permissions from persistent storage
      */
     private void loadPermissionsFromConfig() {
         try {
-            // This would load from config files
-            // For now, we'll use the default groups created above
-            LOGGER.info("Loaded permissions configuration");
+            // Load groups from storage
+            Map<String, PermissionGroup> savedGroups = storageManager.loadGroups();
+            
+            if (savedGroups.isEmpty()) {
+                LOGGER.info("No saved groups found, creating default groups");
+                createDefaultGroups();
+                // Save the default groups to storage
+                storageManager.saveGroups(groups);
+            } else {
+                // Load saved groups
+                groups.clear();
+                groups.putAll(savedGroups);
+                LOGGER.info("Loaded {} permission groups from storage", groups.size());
+            }
+            
+            LOGGER.info("Permission configuration loaded successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to load permissions configuration", e);
+            // Fallback to default groups
+            createDefaultGroups();
         }
     }
     
@@ -255,7 +276,20 @@ public class CustomPermissionsManager {
      * Get player's primary group
      */
     public String getPlayerGroup(UUID playerId) {
-        return playerGroups.getOrDefault(playerId, DEFAULT_GROUP);
+        // Check memory cache first
+        String cachedGroup = playerGroups.get(playerId);
+        if (cachedGroup != null) {
+            return cachedGroup;
+        }
+        
+        // Load from persistent storage
+        PermissionStorageManager.PlayerPermissionData data = storageManager.loadPlayerData(playerId);
+        String groupName = data.groupName;
+        
+        // Cache the result
+        playerGroups.put(playerId, groupName);
+        
+        return groupName;
     }
     
     /**
@@ -265,7 +299,11 @@ public class CustomPermissionsManager {
         if (groups.containsKey(groupName)) {
             playerGroups.put(playerId, groupName);
             clearPlayerCache(playerId);
-            LOGGER.info("Set player {} to group {}", playerId, groupName);
+            
+            // Save to persistent storage
+            storageManager.savePlayerGroup(playerId, groupName);
+            
+            LOGGER.info("Set player {} to group {} (saved to storage)", playerId, groupName);
         } else {
             LOGGER.warn("Attempted to set player {} to non-existent group {}", playerId, groupName);
         }
@@ -278,7 +316,11 @@ public class CustomPermissionsManager {
         playerPermissions.computeIfAbsent(playerId, k -> new PlayerPermissions())
                 .addPermission(permission);
         clearPlayerCache(playerId);
-        LOGGER.info("Added permission {} to player {}", permission, playerId);
+        
+        // Save to persistent storage
+        storageManager.savePlayerPermission(playerId, permission, true);
+        
+        LOGGER.info("Added permission {} to player {} (saved to storage)", permission, playerId);
     }
     
     /**
@@ -289,7 +331,11 @@ public class CustomPermissionsManager {
         if (perms != null) {
             perms.removePermission(permission);
             clearPlayerCache(playerId);
-            LOGGER.info("Removed permission {} from player {}", permission, playerId);
+            
+            // Remove from persistent storage
+            storageManager.removePlayerPermission(playerId, permission);
+            
+            LOGGER.info("Removed permission {} from player {} (removed from storage)", permission, playerId);
         }
     }
     
@@ -384,7 +430,11 @@ public class CustomPermissionsManager {
     public void createGroup(String groupName, String prefix, String suffix, int priority) {
         PermissionGroup group = new PermissionGroup(groupName, prefix, suffix, priority);
         groups.put(groupName, group);
-        LOGGER.info("Created permission group: {}", groupName);
+        
+        // Save to persistent storage
+        storageManager.saveGroup(groupName, group);
+        
+        LOGGER.info("Created permission group: {} (saved to storage)", groupName);
     }
     
     /**
@@ -398,15 +448,19 @@ public class CustomPermissionsManager {
         groups.remove(groupName);
         
         // Move players from deleted group to default
-        playerGroups.entrySet().removeIf(entry -> {
+        for (Map.Entry<UUID, String> entry : playerGroups.entrySet()) {
             if (groupName.equals(entry.getValue())) {
+                UUID playerId = entry.getKey();
                 entry.setValue(DEFAULT_GROUP);
-                return false; // Don't remove, just update
+                // Update storage
+                storageManager.savePlayerGroup(playerId, DEFAULT_GROUP);
             }
-            return false;
-        });
+        }
         
-        LOGGER.info("Deleted permission group: {}", groupName);
+        // Remove from persistent storage
+        storageManager.deleteGroup(groupName);
+        
+        LOGGER.info("Deleted permission group: {} (removed from storage)", groupName);
         return true;
     }
     
@@ -418,12 +472,41 @@ public class CustomPermissionsManager {
     }
     
     /**
-     * Get player's prefix
+     * Get player's prefix with animation support
      */
     public String getPlayerPrefix(UUID playerId) {
         String groupName = getPlayerGroup(playerId);
         PermissionGroup group = groups.get(groupName);
-        return group != null ? group.getPrefix() : "";
+        if (group == null) return "";
+        
+        String prefix = group.getPrefix();
+        
+        // Process animated placeholders in prefix if animation manager is available
+        try {
+            // Get the player if available
+            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+                if (player != null) {
+                    // Try to get animation manager instance and process animated text
+                    try {
+                        Class<?> animationManagerClass = Class.forName("com.zerog.neoessentials.animation.AnimationManager");
+                        Object animationManager = animationManagerClass.getDeclaredMethod("getInstance").invoke(null);
+                        if (animationManager != null) {
+                            java.lang.reflect.Method processMethod = animationManagerClass.getDeclaredMethod("processAnimatedText", String.class, ServerPlayer.class);
+                            prefix = (String) processMethod.invoke(animationManager, prefix, player);
+                        }
+                    } catch (Exception e) {
+                        // Animation manager not available, use static prefix
+                        LOGGER.debug("Animation manager not available for prefix processing: {}", e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Error processing animated prefix for player {}: {}", playerId, e.getMessage());
+        }
+        
+        return prefix;
     }
     
     /**
@@ -525,5 +608,147 @@ public class CustomPermissionsManager {
         stats.put("group_distribution", groupDistribution);
         
         return stats;
+    }
+    
+    // =======================
+    // GROUP PERMISSION MANAGEMENT WITH STORAGE
+    // =======================
+    
+    /**
+     * Add permission to a group
+     */
+    public void addGroupPermission(String groupName, String permission) {
+        PermissionGroup group = groups.get(groupName);
+        if (group != null) {
+            group.addPermission(permission);
+            
+            // Save to persistent storage
+            storageManager.saveGroup(groupName, group);
+            
+            LOGGER.info("Added permission {} to group {} (saved to storage)", permission, groupName);
+        } else {
+            LOGGER.warn("Attempted to add permission to non-existent group: {}", groupName);
+        }
+    }
+    
+    /**
+     * Remove permission from a group
+     */
+    public void removeGroupPermission(String groupName, String permission) {
+        PermissionGroup group = groups.get(groupName);
+        if (group != null) {
+            group.removePermission(permission);
+            
+            // Save to persistent storage
+            storageManager.saveGroup(groupName, group);
+            
+            LOGGER.info("Removed permission {} from group {} (saved to storage)", permission, groupName);
+        } else {
+            LOGGER.warn("Attempted to remove permission from non-existent group: {}", groupName);
+        }
+    }
+    
+    /**
+     * Set group inheritance
+     */
+    public void setGroupInheritance(String groupName, String parentGroup) {
+        PermissionGroup group = groups.get(groupName);
+        if (group != null) {
+            if (parentGroup == null || parentGroup.isEmpty() || "none".equalsIgnoreCase(parentGroup)) {
+                group.setInheritance(null);
+            } else if (groups.containsKey(parentGroup)) {
+                group.setInheritance(parentGroup);
+            } else {
+                LOGGER.warn("Parent group {} does not exist", parentGroup);
+                return;
+            }
+            
+            // Save to persistent storage
+            storageManager.saveGroup(groupName, group);
+            
+            LOGGER.info("Set inheritance for group {} to {} (saved to storage)", groupName, parentGroup);
+        } else {
+            LOGGER.warn("Attempted to set inheritance for non-existent group: {}", groupName);
+        }
+    }
+    
+    /**
+     * Modify group prefix
+     */
+    public void setGroupPrefix(String groupName, String prefix) {
+        PermissionGroup group = groups.get(groupName);
+        if (group != null) {
+            group.setPrefix(prefix);
+            
+            // Save to persistent storage
+            storageManager.saveGroup(groupName, group);
+            
+            LOGGER.info("Set prefix for group {} to '{}' (saved to storage)", groupName, prefix);
+        } else {
+            LOGGER.warn("Attempted to set prefix for non-existent group: {}", groupName);
+        }
+    }
+    
+    /**
+     * Modify group suffix
+     */
+    public void setGroupSuffix(String groupName, String suffix) {
+        PermissionGroup group = groups.get(groupName);
+        if (group != null) {
+            group.setSuffix(suffix);
+            
+            // Save to persistent storage
+            storageManager.saveGroup(groupName, group);
+            
+            LOGGER.info("Set suffix for group {} to '{}' (saved to storage)", groupName, suffix);
+        } else {
+            LOGGER.warn("Attempted to set suffix for non-existent group: {}", groupName);
+        }
+    }
+    
+    /**
+     * Modify group priority
+     */
+    public void setGroupPriority(String groupName, int priority) {
+        PermissionGroup group = groups.get(groupName);
+        if (group != null) {
+            group.setPriority(priority);
+            
+            // Save to persistent storage
+            storageManager.saveGroup(groupName, group);
+            
+            LOGGER.info("Set priority for group {} to {} (saved to storage)", groupName, priority);
+        } else {
+            LOGGER.warn("Attempted to set priority for non-existent group: {}", groupName);
+        }
+    }
+    
+    /**
+     * Force save all data to storage
+     */
+    public void saveAll() {
+        try {
+            // Save all groups
+            storageManager.saveGroups(groups);
+            
+            // Save all player data
+            for (Map.Entry<UUID, String> entry : playerGroups.entrySet()) {
+                UUID playerId = entry.getKey();
+                String groupName = entry.getValue();
+                
+                // Get player's individual permissions
+                Map<String, Boolean> permissions = new HashMap<>();
+                PlayerPermissions playerPerms = playerPermissions.get(playerId);
+                if (playerPerms != null) {
+                    permissions = getPlayerPermissionsMap(playerId);
+                }
+                
+                storageManager.savePlayerData(playerId, groupName, permissions);
+            }
+            
+            LOGGER.info("Saved all permission data to storage");
+        } catch (Exception e) {
+            LOGGER.error("Failed to save all permission data", e);
+        }
     }
 }
