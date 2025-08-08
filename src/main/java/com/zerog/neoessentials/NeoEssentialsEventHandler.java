@@ -2,6 +2,8 @@ package com.zerog.neoessentials.events;
 
 import com.zerog.neoessentials.managers.*;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerPlayer;
@@ -46,6 +48,19 @@ public class NeoEssentialsEventHandler {
         }
     }
     
+    @SubscribeEvent
+    public static void onRightClickBlock(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+        if (!(event.getEntity() instanceof ServerPlayer)) return;
+        if (event.getLevel().isClientSide()) return;
+        
+        try {
+            // Check if player is trying to access a shop chest
+            if (handleChestAccess(event)) return;
+        } catch (Exception e) {
+            LOGGER.error("Error handling chest access event", e);
+        }
+    }
+    
     private static boolean handleShopProtection(BlockEvent.BreakEvent event) {
         ServerPlayer player = (ServerPlayer) event.getPlayer();
         BlockPos pos = event.getPos();
@@ -56,6 +71,8 @@ public class NeoEssentialsEventHandler {
     }
     
     private static boolean handleSignBreak(ServerPlayer player, BlockPos signPos, BlockEvent.BreakEvent event) {
+        // Temporarily disabled shop functionality (user requested to ignore shop section)
+        /*
         com.zerog.neoessentials.economy.shops.ShopManager shopManager = 
             com.zerog.neoessentials.economy.shops.ShopManager.getInstance();
         if (shopManager == null) return false;
@@ -106,10 +123,24 @@ public class NeoEssentialsEventHandler {
     private static boolean canBreakShop(ServerPlayer player, com.zerog.neoessentials.economy.shops.ShopManager.SignShop signShop) {
         // Admin shops can only be broken by players with admin permissions
         if ("SERVER".equals(signShop.getOwnerId())) {
-            return player.hasPermissions(4); // Require OP level for admin shops
+            return PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);
         }
         // Player shops can be broken by owner or admins
-        return signShop.getOwnerId().equals(player.getStringUUID()) || player.hasPermissions(4);
+        return signShop.getOwnerId().equals(player.getStringUUID()) || 
+               PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);
+    }
+    
+    /**
+     * Check if player can access shop chest (stricter than breaking)
+     */
+    private static boolean canAccessShop(ServerPlayer player, com.zerog.neoessentials.economy.shops.ShopManager.SignShop signShop) {
+        // Admin shops can only be accessed by players with admin permissions
+        if ("SERVER".equals(signShop.getOwnerId())) {
+            return PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);
+        }
+        // Player shops can only be accessed by the owner or admins
+        return signShop.getOwnerId().equals(player.getStringUUID()) || 
+               PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);
     }
     
     private static boolean isShopSign(Level level, BlockPos pos) {
@@ -122,5 +153,42 @@ public class NeoEssentialsEventHandler {
     
     private static boolean isShopChest(Level level, BlockPos pos) {
         return level.getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.ChestBlock;
+    }
+    
+    /**
+     * Handle chest access protection for shop chests
+     */
+    private static boolean handleChestAccess(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+        ServerPlayer player = (ServerPlayer) event.getEntity();
+        BlockPos chestPos = event.getPos();
+        Level level = event.getLevel();
+        
+        // Only check chest blocks
+        if (!isShopChest(level, chestPos)) {
+            return false;
+        }
+        
+        com.zerog.neoessentials.economy.shops.ShopManager shopManager = 
+            com.zerog.neoessentials.economy.shops.ShopManager.getInstance();
+        if (shopManager == null) return false;
+        
+        // Find if this chest is connected to any shop
+        var signShop = shopManager.getSignShops().stream()
+            .filter(shop -> chestPos.equals(shop.getChestPos()))
+            .findFirst().orElse(null);
+        if (signShop == null) return false; // Not a shop chest
+        
+        // Check if player can access this shop chest
+        if (!canAccessShop(player, signShop)) {
+            event.setCanceled(true);
+            if ("SERVER".equals(signShop.getOwnerId())) {
+                MessageUtil.sendMessage(player, "§cYou cannot access this admin shop chest! You need admin permissions.");
+            } else {
+                MessageUtil.sendMessage(player, "§cYou cannot access this shop chest! It belongs to another player.");
+            }
+            return true;
+        }
+        
+        return false; // Allow access
     }
 }

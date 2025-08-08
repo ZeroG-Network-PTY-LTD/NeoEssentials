@@ -5,6 +5,8 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
 import com.zerog.neoessentials.performance.PerformanceManager;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -22,7 +24,7 @@ public class PerformanceCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("performance")
-            .requires(source -> source.hasPermission(3)) // Admin only
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.PERFORMANCE_ADMIN))
             .then(Commands.literal("stats")
                 .executes(PerformanceCommand::showPerformanceStats))
             .then(Commands.literal("memory")

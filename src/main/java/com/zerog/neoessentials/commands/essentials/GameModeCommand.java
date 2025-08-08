@@ -5,6 +5,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -28,7 +30,7 @@ public class GameModeCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /gamemode <mode> [player] - Change game mode
         dispatcher.register(Commands.literal("gamemode")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GAMEMODE))
             .then(Commands.argument("mode", StringArgumentType.word())
                 .suggests(GAMEMODE_SUGGESTIONS)
                 .executes(ctx -> setGameMode(ctx, StringArgumentType.getString(ctx, "mode"), null))
@@ -40,7 +42,7 @@ public class GameModeCommand {
         
         // /gm - Alias for /gamemode  
         dispatcher.register(Commands.literal("gm")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GAMEMODE))
             .then(Commands.argument("mode", StringArgumentType.word())
                 .suggests(GAMEMODE_SUGGESTIONS)
                 .executes(ctx -> setGameMode(ctx, StringArgumentType.getString(ctx, "mode"), null))
@@ -57,7 +59,7 @@ public class GameModeCommand {
     private static void registerShortcuts(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /gms - Survival mode
         dispatcher.register(Commands.literal("gms")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GAMEMODE))
             .executes(ctx -> setGameMode(ctx, "survival", null))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(ctx -> setGameMode(ctx, "survival", EntityArgument.getPlayer(ctx, "player")))
@@ -66,7 +68,7 @@ public class GameModeCommand {
         
         // /gmc - Creative mode
         dispatcher.register(Commands.literal("gmc")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GAMEMODE))
             .executes(ctx -> setGameMode(ctx, "creative", null))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(ctx -> setGameMode(ctx, "creative", EntityArgument.getPlayer(ctx, "player")))
@@ -75,7 +77,7 @@ public class GameModeCommand {
         
         // /gma - Adventure mode
         dispatcher.register(Commands.literal("gma")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GAMEMODE))
             .executes(ctx -> setGameMode(ctx, "adventure", null))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(ctx -> setGameMode(ctx, "adventure", EntityArgument.getPlayer(ctx, "player")))
@@ -84,7 +86,7 @@ public class GameModeCommand {
         
         // /gmsp - Spectator mode
         dispatcher.register(Commands.literal("gmsp")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GAMEMODE))
             .executes(ctx -> setGameMode(ctx, "spectator", null))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(ctx -> setGameMode(ctx, "spectator", EntityArgument.getPlayer(ctx, "player")))

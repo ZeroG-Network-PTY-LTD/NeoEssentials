@@ -2,6 +2,202 @@
 
 NeoEssentials includes a comprehensive permission system with group-based management, inheritance, wildcards, and temporary permissions. This system can work standalone or integrate with external permission plugins.
 
+## 🛒 Shop System (NEW FEATURE)
+
+NeoEssentials now includes a comprehensive shop system with advanced permissions and security features.
+
+### Shop System Overview
+
+The shop system allows players to create sign-based shops for trading items. It includes:
+- **Player Shops**: Regular shops with limited stock based on chest contents
+- **Admin Shops**: Infinite stock shops for server economy management
+- **Visual Indicators**: Dynamic color coding and clear admin shop identification
+- **Security Protection**: Comprehensive permission-based access control
+
+### Shop Commands
+
+#### `/signshop create <item> <buyPrice> <sellPrice> <quantity> [admin]`
+Create a new shop sign.
+
+**Examples**:
+```bash
+# Create regular shop
+/signshop create minecraft:diamond 10.0 8.0 32
+
+# Create admin shop (infinite stock)
+/signshop create minecraft:diamond 10.0 8.0 32 true
+```
+
+**Required Permissions**:
+- `neoessentials.shop.create` - For regular shops
+- `neoessentials.shop.create.admin` - For admin shops
+
+#### `/signshop refresh`
+Refresh all shop signs on the server.
+
+**Required Permissions**:
+- `neoessentials.shop.refresh`
+
+#### `/signshop list`
+List all shops on the server.
+
+**Required Permissions**:
+- `neoessentials.shop.list`
+
+### Shop Features
+
+#### Admin Shop Identification
+- Admin shops display `[Admin Shop]` on the first line
+- Different color coding to distinguish from player shops
+- Infinite stock - never runs out of items
+
+#### Dynamic Visual Feedback
+- **Green**: Shop has good stock levels
+- **Yellow**: Shop has low stock
+- **Red**: Shop is out of stock
+- **Blue**: Admin shop (infinite stock)
+
+#### Security Protection
+- **Block Breaking**: Only shop owners or admins can break shop signs and chests
+- **Chest Access**: Only shop owners or players with `neoessentials.shop.access.others` can access shop chests
+- **Modification**: Only shop owners or admins can modify shop settings
+
+### Shop Permission Nodes
+
+#### Basic Shop Permissions
+| Permission | Description | Default |
+|------------|-------------|---------|
+| `neoessentials.shop.create` | Create player shops | `true` |
+| `neoessentials.shop.use` | Buy from/sell to shops | `true` |
+| `neoessentials.shop.break` | Break own shops | `true` |
+| `neoessentials.shop.modify` | Modify own shop settings | `true` |
+
+#### Administrative Shop Permissions
+| Permission | Description | Default |
+|------------|-------------|---------|
+| `neoessentials.shop.create.admin` | Create admin shops | `op` |
+| `neoessentials.shop.break.others` | Break other players' shops | `op` |
+| `neoessentials.shop.modify.others` | Modify other players' shops | `op` |
+| `neoessentials.shop.access.others` | Access other players' shop chests | `op` |
+| `neoessentials.shop.admin` | Full shop administration rights | `op` |
+| `neoessentials.shop.bypass` | Bypass all shop restrictions | `op` |
+
+#### Utility Shop Permissions
+| Permission | Description | Default |
+|------------|-------------|---------|
+| `neoessentials.shop.refresh` | Refresh shop signs globally | `op` |
+| `neoessentials.shop.list` | List all shops on server | `op` |
+
+### Shop Usage
+
+#### Creating a Shop
+1. **Place a chest** where you want the shop storage
+2. **Place a sign** adjacent to the chest
+3. **Run the command**: `/signshop create <item> <buyPrice> <sellPrice> <quantity>`
+4. **Stock the chest** with items (not needed for admin shops)
+
+#### Using a Shop
+1. **Right-click the sign** to see shop information
+2. **Left-click** to buy items (if available)
+3. **Right-click with items** to sell to the shop (if shop buys)
+
+#### Managing Your Shop
+- **Access the chest** to add/remove stock
+- **Break the sign** to remove the shop
+- **Use refresh command** to update sign display
+
+### Security Features
+
+#### Protection System
+The shop system includes comprehensive protection:
+
+```java
+// Block breaking protection
+@EventHandler(priority = EventPriority.HIGH)
+public void onBlockBreak(BlockBreakEvent event) {
+    // Checks shop ownership and permissions
+    if (!canBreakShop(player, blockPos)) {
+        event.setCanceled(true);
+        // Send permission denied message
+    }
+}
+
+// Chest access protection  
+@EventHandler(priority = EventPriority.HIGH)
+public void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+    // Checks chest access permissions
+    if (!canAccessShop(player, chestPos)) {
+        event.setCanceled(true);
+        // Send access denied message
+    }
+}
+```
+
+#### Permission Hierarchy
+The system respects permission hierarchy:
+1. **Shop Owner**: Full access to their own shops
+2. **Admin Permission**: `neoessentials.shop.admin` grants full access
+3. **Specific Permissions**: Granular control with specific permission nodes
+4. **Bypass Permission**: `neoessentials.shop.bypass` overrides all restrictions
+
+### Integration Examples
+
+#### With Economy Systems
+```bash
+# Set up shop admin group
+/permissions group ShopAdmin permission add neoessentials.shop.admin
+/permissions group ShopAdmin permission add neoessentials.shop.create.admin
+
+# Give shop owner permissions
+/permissions user Steve permission add neoessentials.shop.create
+/permissions user Steve permission add neoessentials.shop.use
+```
+
+#### With Protection Plugins
+```toml
+[shop.integration]
+# Respect other protection plugins
+respectWorldGuard = true
+respectTowny = true
+respectGriefPrevention = true
+
+# Shop creation limits
+maxShopsPerPlayer = 10
+requireClaimPermission = true
+```
+
+### Troubleshooting Shop Issues
+
+#### Common Problems
+
+**"Permission denied" when creating shop**
+- Check `neoessentials.shop.create` permission
+- For admin shops, verify `neoessentials.shop.create.admin` permission
+
+**"Cannot access shop chest"**
+- Verify you own the shop or have `neoessentials.shop.access.others` permission
+- Check if the chest is properly linked to the shop sign
+
+**"Cannot break shop sign"**
+- Ensure you own the shop or have `neoessentials.shop.break.others` permission
+- Admin shops require special permissions to break
+
+**Shop sign not updating**
+- Use `/signshop refresh` command (requires `neoessentials.shop.refresh`)
+- Check if the chest is accessible and contains items
+
+#### Debug Commands
+```bash
+# Check shop information
+/signshop info
+
+# List player's shops
+/signshop list player <playername>
+
+# Force refresh specific shop
+/signshop refresh <x> <y> <z>
+```
+
 ## 🎯 Overview
 
 The permission system provides:
@@ -32,6 +228,10 @@ essentials.warps
 essentials.spawn
 essentials.back
 neoessentials.placeholder.test
+neoessentials.shop.create
+neoessentials.shop.use
+neoessentials.shop.break
+neoessentials.shop.modify
 ```
 
 #### VIP Group
@@ -76,6 +276,11 @@ neoessentials.security.view
 ```
 essentials.*
 neoessentials.*
+neoessentials.shop.admin
+neoessentials.shop.create.admin
+neoessentials.shop.access.others
+neoessentials.shop.break.others
+neoessentials.shop.modify.others
 ```
 
 ## 🎮 Commands
@@ -584,6 +789,23 @@ essentials.kit.*                   # All kit permissions
 
 ### NeoEssentials Features
 
+#### Shop System (NEW)
+```
+neoessentials.shop.create          # Create player shops
+neoessentials.shop.use             # Use/buy from shops
+neoessentials.shop.break           # Break own shops
+neoessentials.shop.modify          # Modify own shop settings
+neoessentials.shop.create.admin    # Create admin shops (infinite stock)
+neoessentials.shop.break.others    # Break other players' shops
+neoessentials.shop.modify.others   # Modify other players' shops
+neoessentials.shop.access.others   # Access other players' shop chests
+neoessentials.shop.admin           # Full shop administration rights
+neoessentials.shop.bypass          # Bypass all shop restrictions
+neoessentials.shop.refresh         # Refresh shop signs globally
+neoessentials.shop.list            # List all shops on server
+neoessentials.shop.*               # All shop permissions
+```
+
 #### Bossbar System
 ```
 neoessentials.bossbar.show         # Show bossbars to yourself
@@ -825,7 +1047,11 @@ permissions = [
     "essentials.home",
     "essentials.sethome",
     "essentials.spawn",
-    "essentials.back"
+    "essentials.back",
+    "neoessentials.shop.create",
+    "neoessentials.shop.use",
+    "neoessentials.shop.break",
+    "neoessentials.shop.modify"
 ]
 
 [permissions.groups.vip]
@@ -838,6 +1064,20 @@ permissions = [
     "essentials.fly",
     "essentials.heal",
     "essentials.feed"
+]
+
+[permissions.groups.admin]
+name = "Admin"
+priority = 100
+inherits = "Moderator"
+prefix = "&c[Admin] "
+suffix = ""
+permissions = [
+    "essentials.*",
+    "neoessentials.*",
+    "neoessentials.shop.admin",
+    "neoessentials.shop.create.admin",
+    "neoessentials.shop.access.others"
 ]
 ```
 

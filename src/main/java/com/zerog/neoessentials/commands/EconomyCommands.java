@@ -6,6 +6,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.managers.EconomyManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -22,24 +24,27 @@ public class EconomyCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /bal [player] - Check balance
         dispatcher.register(Commands.literal("bal")
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_BALANCE))
             .executes(EconomyCommands::checkBalance)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_BALANCE_OTHERS))
                 .executes(context -> checkOtherBalance(context, EntityArgument.getPlayer(context, "player")))
             )
         );
         
         // /balance [player] - Alias for /bal
         dispatcher.register(Commands.literal("balance")
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_BALANCE))
             .executes(EconomyCommands::checkBalance)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_BALANCE_OTHERS))
                 .executes(context -> checkOtherBalance(context, EntityArgument.getPlayer(context, "player")))
             )
         );
         
         // /pay <player> <amount> - Pay another player
         dispatcher.register(Commands.literal("pay")
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_PAY))
             .then(Commands.argument("player", EntityArgument.player())
                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                     .executes(context -> payPlayer(context, 
@@ -51,8 +56,9 @@ public class EconomyCommands {
         
         // /eco <give|take|set> <player> <amount> - Admin economy commands
         dispatcher.register(Commands.literal("eco")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_ALL))
             .then(Commands.literal("give")
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_GIVE))
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                         .executes(context -> adminGiveMoney(context,
@@ -62,6 +68,7 @@ public class EconomyCommands {
                 )
             )
             .then(Commands.literal("take")
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_TAKE))
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                         .executes(context -> adminTakeMoney(context,
@@ -71,6 +78,7 @@ public class EconomyCommands {
                 )
             )
             .then(Commands.literal("set")
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_SET))
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
                         .executes(context -> adminSetBalance(context,
@@ -83,6 +91,7 @@ public class EconomyCommands {
         
         // /baltop [limit] - Economy leaderboard
         dispatcher.register(Commands.literal("baltop")
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_TOP))
             .executes(EconomyCommands::showLeaderboard)
             .then(Commands.argument("limit", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 50))
                 .executes(context -> showLeaderboard(context, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "limit")))
@@ -91,6 +100,7 @@ public class EconomyCommands {
         
         // /balancetop [limit] - Alias for /baltop
         dispatcher.register(Commands.literal("balancetop")
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.ECO_TOP))
             .executes(EconomyCommands::showLeaderboard)
             .then(Commands.argument("limit", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 50))
                 .executes(context -> showLeaderboard(context, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "limit")))
