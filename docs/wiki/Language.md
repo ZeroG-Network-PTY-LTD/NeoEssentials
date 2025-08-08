@@ -1,54 +1,142 @@
 # Language System
 
-NeoEssentials includes comprehensive multi-language support, allowing server administrators to provide localized experiences for players from different regions. The language system supports dynamic switching, custom translations, and regional formatting.
+NeoEssentials features a robust multi-language system that provides comprehensive internationalization support. Players can seamlessly switch between languages in-game, and server administrators can easily add custom translations and manage language preferences.
 
 ## 🌍 Supported Languages
 
 ### Built-in Language Support
-NeoEssentials comes with built-in support for major languages:
+NeoEssentials includes complete translations for major languages:
 
-- **English (en_US)** - Default language, fully supported
+#### **Fully Supported Languages** ✅
+- **English (en_US)** - Default language, 100% complete
+- **German (de_DE)** - Complete translation with all features ✅
 - **Spanish (es_ES)** - Complete translation
 - **French (fr_FR)** - Complete translation  
-- **German (de_DE)** - Complete translation
-- **Italian (it_IT)** - Complete translation
 - **Portuguese (pt_BR)** - Brazilian Portuguese
 - **Russian (ru_RU)** - Complete translation
 - **Chinese Simplified (zh_CN)** - Complete translation
-- **Chinese Traditional (zh_TW)** - Complete translation
 - **Japanese (ja_JP)** - Complete translation
-- **Korean (ko_KR)** - Complete translation
-- **Dutch (nl_NL)** - Complete translation
 
-### Regional Variants
-Some languages include regional variants:
+#### **Partially Supported Languages** 🔄
+Languages with basic support that can be extended:
+- **Chinese Traditional (zh_TW)**
+- **Korean (ko_KR)**
+- **Dutch (nl_NL)**
+- **Italian (it_IT)**
 
-- **English**: en_US (American), en_GB (British), en_AU (Australian)
-- **Spanish**: es_ES (Spain), es_MX (Mexico), es_AR (Argentina)
-- **Portuguese**: pt_BR (Brazil), pt_PT (Portugal)
-- **Chinese**: zh_CN (Simplified), zh_TW (Traditional)
+### Language File Formats
+
+NeoEssentials supports two language file formats:
+
+#### **Properties Format** (`.properties`)
+```properties
+# Example: en_US.properties
+general.prefix=&6[NeoEssentials]&r
+general.no_permission=&cYou don't have permission to do that!
+command.language.changed=&aLanguage changed to {LANGUAGE}!
+home.set=&aHome '{HOME}' set at your current location!
+```
+
+#### **JSON Format** (`.json`)
+```json
+{
+  "_comment": "NeoEssentials German Language File",
+  "neoessentials.commands.error.no_permission": "Du hast keine Berechtigung, diesen Befehl zu verwenden!",
+  "neoessentials.home.set": "Heimatort '%s' gesetzt!",
+  "neoessentials.spawn.teleported": "Zum Spawn teleportiert!"
+}
+```
 
 ## 🎯 Language Management Commands
 
 ### Player Language Commands
+
+#### `/language` - Show Language Information
 ```bash
-/language                       # Show current language
-/language list                  # List available languages
-/language set <code>            # Set your language
-/lang <code>                    # Alias for language set
-/language info                  # Show language information
-/language help                  # Language system help
+/language                       # Show current language and available options
+```
+**Output Example:**
+```
+=== Language Information ===
+Current Language: English (en_US)
+Available Languages: 8
+Use '/language set <language>' to change your language
+Use '/language list' to see all available languages
+```
+
+#### `/language list` - List Available Languages
+```bash
+/language list                  # List all available languages
+```
+**Output Example:**
+```
+=== Available Languages ===
+► English (en_US) <- Current
+- Deutsch (de_DE)
+- Español (es_ES)
+- Français (fr_FR)
+- Português (pt_BR)
+- Русский (ru_RU)
+- 中文 (zh_CN)
+- 日本語 (ja_JP)
+```
+
+#### `/language set <code>` - Change Language
+```bash
+/language set <language_code>   # Set your language
+/lang <language_code>           # Alias for language set
 ```
 
 **Examples:**
 ```bash
-/language set es_ES             # Switch to Spanish
-/lang fr_FR                     # Switch to French
-/language set zh_CN             # Switch to Chinese Simplified
+/language set de_de             # Switch to German  
+/lang es_es                     # Switch to Spanish
+/language set fr_fr             # Switch to French
+/language set zh_cn             # Switch to Chinese Simplified
+/lang en_us                     # Switch back to English
+```
+
+#### `/language info` - Detailed Language Information
+```bash
+/language info                  # Show detailed language system information
+```
+**Output Example:**
+```
+=== Language System Information ===
+Available Languages: 8
+Default Language: en_US
+Players with Custom Locales: 25
+Current Locale: de_DE (Deutsch)
 ```
 
 ### Admin Language Commands
+
+#### `/language reload` - Reload Language Files
 ```bash
+/language reload                # Reload all language files from disk
+```
+**Permission**: `neoessentials.language.reload`
+
+#### `/language test <key>` - Test Language Keys
+```bash
+/language test <message_key>    # Test a specific language key across languages
+```
+**Examples:**
+```bash
+/language test general.no_permission
+/language test home.set
+/language test command.language.changed
+```
+
+**Output Example:**
+```
+Testing language key: general.no_permission
+Your language (de_DE): Du hast keine Berechtigung, das zu tun!
+Default (en_US): You don't have permission to do that!
+Other languages:
+- es_ES: ¡No tienes permiso para hacer eso!
+- fr_FR: Vous n'avez pas la permission de faire cela!
+```
 /language admin                 # Open language admin panel
 /language reload                # Reload language files
 /language stats                 # Language usage statistics
