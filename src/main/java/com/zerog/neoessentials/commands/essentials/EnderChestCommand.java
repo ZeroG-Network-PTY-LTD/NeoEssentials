@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -16,7 +19,7 @@ public class EnderChestCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("enderchest")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(EnderChestCommand::openEnderChest)
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(EnderChestCommand::openEnderChestForPlayer)
@@ -25,7 +28,7 @@ public class EnderChestCommand {
         
         // Alternative commands
         dispatcher.register(Commands.literal("ec")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(EnderChestCommand::openEnderChest)
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(EnderChestCommand::openEnderChestForPlayer)
@@ -33,7 +36,7 @@ public class EnderChestCommand {
         );
         
         dispatcher.register(Commands.literal("echest")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(EnderChestCommand::openEnderChest)
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(EnderChestCommand::openEnderChestForPlayer)
@@ -64,7 +67,7 @@ public class EnderChestCommand {
     private static int openEnderChestForPlayer(CommandSourceStack source, ServerPlayer opener, ServerPlayer target) {
         try {
             // Check permission for opening other players' ender chests
-            if (opener != target && !source.hasPermission(3)) {
+            if (opener != target && !PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC)) {
                 source.sendFailure(Component.literal("You don't have permission to open other players' ender chests"));
                 return 0;
             }

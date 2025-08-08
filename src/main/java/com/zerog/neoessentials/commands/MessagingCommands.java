@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -67,7 +70,7 @@ public class MessagingCommands {
         
         // /broadcast <message> - Broadcast message (admin only)
         dispatcher.register(Commands.literal("broadcast")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .then(Commands.argument("message", StringArgumentType.greedyString())
                 .executes(context -> broadcastMessage(context, StringArgumentType.getString(context, "message")))
             )

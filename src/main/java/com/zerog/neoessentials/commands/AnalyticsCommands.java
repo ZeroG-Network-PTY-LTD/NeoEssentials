@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -26,7 +29,7 @@ public class AnalyticsCommands {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("analytics")
-            .requires(source -> source.hasPermission(3)) // OP level 3 required
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC)) // OP level 3 required
             .then(Commands.literal("stats")
                 .executes(AnalyticsCommands::showRealtimeStats))
             .then(Commands.literal("report")

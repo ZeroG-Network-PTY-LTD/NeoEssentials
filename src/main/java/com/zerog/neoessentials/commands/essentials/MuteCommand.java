@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -36,7 +39,7 @@ public class MuteCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /mute <player> [duration] [reason] - Mute a player
         dispatcher.register(Commands.literal("mute")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(ctx -> mutePlayer(ctx, EntityArgument.getPlayer(ctx, "player"), 0, "Muted by an operator"))
                 .then(Commands.argument("duration", StringArgumentType.word())
@@ -53,7 +56,7 @@ public class MuteCommand {
         
         // /unmute <player> - Unmute a player
         dispatcher.register(Commands.literal("unmute")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(ctx -> unmutePlayer(ctx, EntityArgument.getPlayer(ctx, "player")))
             )
@@ -61,7 +64,7 @@ public class MuteCommand {
         
         // /mutelist - List all muted players
         dispatcher.register(Commands.literal("mutelist")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(ctx -> listMutedPlayers(ctx))
         );
     }

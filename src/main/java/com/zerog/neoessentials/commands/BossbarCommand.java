@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -33,7 +36,7 @@ public class BossbarCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("bossbar")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             
             // Show bossbar
             .then(Commands.literal("show")

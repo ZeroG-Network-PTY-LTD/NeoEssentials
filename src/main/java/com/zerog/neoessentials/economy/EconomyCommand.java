@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.economy;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.zerog.neoessentials.economy.bank.AccountType;
 import com.zerog.neoessentials.economy.bank.BankAccount;
 import com.zerog.neoessentials.economy.bank.BankManager;
@@ -38,7 +41,7 @@ public class EconomyCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("economy")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             
             // Balance commands
             .then(Commands.literal("balance")

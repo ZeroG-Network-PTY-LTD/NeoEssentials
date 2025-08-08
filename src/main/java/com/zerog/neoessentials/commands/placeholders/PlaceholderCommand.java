@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.placeholders;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -27,7 +30,7 @@ public class PlaceholderCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("placeholder")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(PlaceholderCommand::showHelp)
             .then(Commands.literal("help")
                 .executes(PlaceholderCommand::showHelp))
@@ -47,7 +50,7 @@ public class PlaceholderCommand {
         
         // Alias commands
         dispatcher.register(Commands.literal("placeholders")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(PlaceholderCommand::showHelp)
             .then(Commands.literal("list")
                 .executes(PlaceholderCommand::listPlaceholders))
@@ -56,7 +59,7 @@ public class PlaceholderCommand {
                     .executes(PlaceholderCommand::testPlaceholders))));
                     
         dispatcher.register(Commands.literal("papi")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(PlaceholderCommand::showHelp)
             .then(Commands.literal("test")
                 .then(Commands.argument("text", StringArgumentType.greedyString())

@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.player;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -29,10 +32,10 @@ public class PlaytimeCommand {
         dispatcher.register(Commands.literal("playtime")
             .executes(PlaytimeCommand::getOwnPlaytime)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                 .executes(PlaytimeCommand::getPlayerPlaytime))
             .then(Commands.literal("top")
-                .requires(source -> source.hasPermission(1))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ESSENTIALS_USE))
                 .executes(PlaytimeCommand::getTopPlaytime))
             .then(Commands.literal("session")
                 .executes(PlaytimeCommand::getSessionPlaytime))

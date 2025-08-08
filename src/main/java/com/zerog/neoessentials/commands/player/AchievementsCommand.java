@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.player;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -30,7 +33,7 @@ public class AchievementsCommand {
         dispatcher.register(Commands.literal("achievements")
             .executes(AchievementsCommand::showOwnAchievements)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(1))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ESSENTIALS_USE))
                 .executes(AchievementsCommand::showPlayerAchievements))
             .then(Commands.literal("categories")
                 .executes(AchievementsCommand::showCategories))

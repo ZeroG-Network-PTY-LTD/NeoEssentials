@@ -82,7 +82,7 @@ public class WarpCommands {
         }
         
         WarpManager warpManager = WarpManager.getInstance();
-        boolean success = warpManager.createWarp(player, warpName, category);
+    boolean success = warpManager.createWarp(player, warpName, category);
         return success ? 1 : 0;
     }
     

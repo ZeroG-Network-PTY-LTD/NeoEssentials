@@ -25,7 +25,7 @@ public class PermissionDebugCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("permdebug")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             
             // Test permission for self
             .then(Commands.literal("test")

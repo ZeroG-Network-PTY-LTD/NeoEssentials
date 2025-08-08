@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -17,7 +20,7 @@ public class EconomyCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("eco")
-            .requires(source -> source.hasPermission(3)) // Admin only
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC)) // Admin only
             .then(Commands.literal("give")
                 .then(Commands.argument("player", EntityArgument.player())
                     .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))

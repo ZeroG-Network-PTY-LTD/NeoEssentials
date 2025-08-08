@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -44,7 +47,7 @@ public class NotificationCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /notifications - Main notification management command
         dispatcher.register(Commands.literal("notifications")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .executes(ctx -> showStatus(ctx))
             .then(Commands.literal("status")
                 .executes(ctx -> showStatus(ctx))
@@ -73,7 +76,7 @@ public class NotificationCommand {
         
         // /notify - Alias for notifications
         dispatcher.register(Commands.literal("notify")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .executes(ctx -> showStatus(ctx))
             .then(Commands.literal("test")
                 .executes(ctx -> sendTestNotification(ctx, null))

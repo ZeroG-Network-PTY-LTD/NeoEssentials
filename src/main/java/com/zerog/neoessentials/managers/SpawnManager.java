@@ -2,6 +2,7 @@ package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.SpawnConfig;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -56,7 +57,7 @@ public class SpawnManager {
         }
         
         // Check permission
-        if (!PermissionUtil.hasPermission(player, "essentials.setspawn")) {
+        if (!PermissionUtil.hasPermission(player, PermissionNodes.SPAWN_SET)) {
             MessageUtil.sendMessage(player, config.messages.noPermission);
             return false;
         }
@@ -109,7 +110,7 @@ public class SpawnManager {
         }
         
         // Check permission
-        if (!PermissionUtil.hasPermission(player, "essentials.spawn")) {
+        if (!PermissionUtil.hasPermission(player, PermissionNodes.SPAWN)) {
             MessageUtil.sendMessage(player, config.messages.noPermission);
             return false;
         }
@@ -324,7 +325,7 @@ public class SpawnManager {
         }
         
         // Check permission
-        return PermissionUtil.hasPermission(player, "essentials.spawn.build");
+        return PermissionUtil.hasPermission(player, "neoessentials.spawn.build");
     }
     
     /**

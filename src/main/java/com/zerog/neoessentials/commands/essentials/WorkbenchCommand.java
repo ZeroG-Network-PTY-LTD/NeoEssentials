@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -17,7 +20,7 @@ public class WorkbenchCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("workbench")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(WorkbenchCommand::openWorkbench)
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(WorkbenchCommand::openWorkbenchForPlayer)
@@ -26,7 +29,7 @@ public class WorkbenchCommand {
         
         // Alternative commands
         dispatcher.register(Commands.literal("wb")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(WorkbenchCommand::openWorkbench)
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(WorkbenchCommand::openWorkbenchForPlayer)
@@ -34,7 +37,7 @@ public class WorkbenchCommand {
         );
         
         dispatcher.register(Commands.literal("craft")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(WorkbenchCommand::openWorkbench)
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(WorkbenchCommand::openWorkbenchForPlayer)
@@ -42,7 +45,7 @@ public class WorkbenchCommand {
         );
         
         dispatcher.register(Commands.literal("crafting")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(WorkbenchCommand::openWorkbench)
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(WorkbenchCommand::openWorkbenchForPlayer)

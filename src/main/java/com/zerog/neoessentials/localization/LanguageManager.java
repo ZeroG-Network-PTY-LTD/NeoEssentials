@@ -46,6 +46,19 @@ public class LanguageManager {
     
     private LanguageManager(Path configPath) {
         this.languageDirectory = configPath.resolve("languages");
+        // Also check resources directory for additional language files
+        try {
+            Path resourcesLangPath = Paths.get("src/main/resources/assets/neoessentials/lang");
+            if (!Files.exists(resourcesLangPath)) {
+                // Try relative to working directory
+                resourcesLangPath = Paths.get("../src/main/resources/assets/neoessentials/lang");
+            }
+            if (Files.exists(resourcesLangPath)) {
+                LOGGER.info("Found additional language files in resources directory: {}", resourcesLangPath);
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Could not access resources language directory: {}", e.getMessage());
+        }
         initializeLanguageSystem();
     }
     
@@ -95,20 +108,80 @@ public class LanguageManager {
     }
     
     /**
-     * Load all language files from the language directory
+     * Load all language files from both config and resources directories
      */
     private void loadLanguageFiles() {
         try {
-            if (!Files.exists(languageDirectory)) {
-                return;
+            // Load from config directory (runtime generated)
+            if (Files.exists(languageDirectory)) {
+                Files.list(languageDirectory)
+                    .filter(path -> path.toString().endsWith(".properties"))
+                    .forEach(this::loadLanguageFile);
             }
             
-            Files.list(languageDirectory)
-                .filter(path -> path.toString().endsWith(".properties"))
-                .forEach(this::loadLanguageFile);
+            // Load from resources directory (mod defaults)
+            loadResourceLanguageFiles();
                 
         } catch (IOException e) {
             LOGGER.error("Failed to load language files", e);
+        }
+    }
+    
+    /**
+     * Load language files from resources directory
+     */
+    private void loadResourceLanguageFiles() {
+        try {
+            // Try multiple possible paths for resources
+            Path[] possiblePaths = {
+                Paths.get("src/main/resources/assets/neoessentials/lang"),
+                Paths.get("../src/main/resources/assets/neoessentials/lang"),
+                Paths.get("resources/assets/neoessentials/lang"),
+                Paths.get("assets/neoessentials/lang")
+            };
+            
+            for (Path resourcesLangPath : possiblePaths) {
+                if (Files.exists(resourcesLangPath)) {
+                    LOGGER.info("Loading language files from resources: {}", resourcesLangPath);
+                    Files.list(resourcesLangPath)
+                        .filter(path -> path.toString().endsWith(".properties") || path.toString().endsWith(".json"))
+                        .forEach(this::loadResourceLanguageFile);
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.warn("Could not load resource language files: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Load a language file from resources (could be .properties or .json)
+     */
+    private void loadResourceLanguageFile(Path languageFile) {
+        String fileName = languageFile.getFileName().toString();
+        String language = fileName.replaceAll("\\.(properties|json)$", "");
+        
+        try (InputStream input = Files.newInputStream(languageFile)) {
+            Properties properties = new Properties();
+            
+            if (fileName.endsWith(".json")) {
+                // For JSON files, we'd need to parse JSON and convert to properties
+                // For now, we'll log and skip JSON files or implement simple JSON parsing
+                LOGGER.debug("Found JSON language file (not yet supported): {}", fileName);
+                return;
+            } else {
+                properties.load(new InputStreamReader(input, "UTF-8"));
+            }
+            
+            // Only add if we don't already have this language from config
+            if (!languageFiles.containsKey(language)) {
+                languageFiles.put(language, properties);
+                LOGGER.debug("Loaded resource language file: {}", fileName);
+            } else {
+                LOGGER.debug("Config language file takes precedence over resource file: {}", fileName);
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to load resource language file: {}", fileName, e);
         }
     }
     

@@ -49,7 +49,7 @@ public class KitConfig {
             "minecraft:bread:10",
             "minecraft:apple:5"
         );
-        starter.permission = "essentials.kit.starter";
+        starter.permission = "neoessentials.kit.starter";
         kits.put("starter", starter);
         
         // Tools kit
@@ -65,7 +65,7 @@ public class KitConfig {
             "minecraft:iron_shovel:1",
             "minecraft:iron_hoe:1"
         );
-        tools.permission = "essentials.kit.tools";
+        tools.permission = "neoessentials.kit.tools";
         kits.put("tools", tools);
         
         // Food kit
@@ -80,7 +80,7 @@ public class KitConfig {
             "minecraft:golden_apple:2",
             "minecraft:cake:1"
         );
-        food.permission = "essentials.kit.food";
+        food.permission = "neoessentials.kit.food";
         kits.put("food", food);
         
         // VIP kit
@@ -98,7 +98,7 @@ public class KitConfig {
             "minecraft:diamond_boots:1",
             "minecraft:golden_apple:5"
         );
-        vip.permission = "essentials.kit.vip";
+        vip.permission = "neoessentials.kit.vip";
         kits.put("vip", vip);
     }
     

@@ -41,16 +41,28 @@ public class PermissionEventListener {
             // Load permission data into the permission system
             CustomPermissionsManager permManager = CustomPermissionsManager.getInstance();
             
-            // Set the player's group from saved data
+            // IMPORTANT: Check if player already has a group in the permission manager
+            String existingGroup = permManager.getPlayerGroup(playerUUID);
             String savedGroup = playerData.getPermissionGroup();
-            if (savedGroup != null && !savedGroup.isEmpty()) {
-                permManager.setPlayerGroup(playerUUID, savedGroup);
-                LOGGER.info("Loaded group '{}' for player {}", savedGroup, player.getName().getString());
+            
+            // Use existing group if available, otherwise use saved group
+            String groupToUse = null;
+            if (existingGroup != null && !existingGroup.equals("default") && !existingGroup.isEmpty()) {
+                groupToUse = existingGroup;
+                LOGGER.info("Player {} already has group '{}' in permission manager", player.getName().getString(), existingGroup);
+            } else if (savedGroup != null && !savedGroup.isEmpty()) {
+                groupToUse = savedGroup;
+                LOGGER.info("Loading saved group '{}' for player {}", savedGroup, player.getName().getString());
             } else {
-                // Set default group if none saved
-                permManager.setPlayerGroup(playerUUID, "default");
-                playerData.setPermissionGroup("default");
-                LOGGER.info("Set default group for new player {}", player.getName().getString());
+                groupToUse = "default";
+                LOGGER.info("Setting default group for new player {}", player.getName().getString());
+            }
+            
+            // Only set group if it's different from current
+            if (!groupToUse.equals(existingGroup)) {
+                permManager.setPlayerGroup(playerUUID, groupToUse);
+                playerData.setPermissionGroup(groupToUse);
+                LOGGER.info("Set group '{}' for player {}", groupToUse, player.getName().getString());
             }
             
             // Load individual permissions

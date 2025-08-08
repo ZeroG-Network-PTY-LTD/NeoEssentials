@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -26,7 +29,7 @@ public class ConfigCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("config")
-            .requires(source -> source.hasPermission(4)) // Op level 4 (admin only)
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_FULL)) // Op level 4 (admin only)
             .then(Commands.literal("reload")
                 .executes(ConfigCommand::reloadConfig)
             )

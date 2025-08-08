@@ -1,4 +1,4 @@
-package com.zerog.neoessentials.economy.shops;
+package com.zerog.neoessentials.shops;
 
 import com.zerog.neoessentials.web.WebDashboardManager;
 import net.minecraft.core.BlockPos;
@@ -309,7 +309,7 @@ public class ShopManager {
         }
     }
     
-    private void saveShopsToStorage() {
+    public void saveShopsToStorage() {
         LOGGER.debug("Saving {} sign shops to storage...", signShops.size());
         
         try {
@@ -369,6 +369,41 @@ public class ShopManager {
         }
         
         return "general";
+    }
+    
+    /**
+     * Record a shop transaction for analytics
+     */
+    public void recordShopTransaction(SignShop shop, String transactionType, double amount, int quantity) {
+        try {
+            dailyTransactions++;
+            
+            if ("buy".equals(transactionType)) {
+                dailyRevenue += amount;
+            } else if ("sell".equals(transactionType)) {
+                // For sell transactions, this is money going to the player, not revenue
+                // But we still track it as shop activity
+            }
+            
+            // Update category stats
+            String category = getCategoryForItem(shop.getItem());
+            categoryStats.merge(category, quantity, Integer::sum);
+            
+            // Update web dashboard
+            updateWebDashboardMetrics();
+            
+            // Log real-time event
+            String shopOwner = "SERVER".equals(shop.getOwnerId()) ? "Admin Shop" : "Player Shop";
+            webDashboard.addRealTimeEvent("TRANSACTION", 
+                shopOwner + " " + transactionType + ": " + quantity + "x " + 
+                shop.getItem().getDisplayName().getString() + " for $" + String.format("%.2f", amount), 
+                "INFO");
+            
+            LOGGER.debug("Recorded {} transaction: {}x {} for ${}", 
+                        transactionType, quantity, shop.getItem().getDisplayName().getString(), amount);
+        } catch (Exception e) {
+            LOGGER.error("Failed to record shop transaction", e);
+        }
     }
     
     /**
@@ -503,5 +538,26 @@ public class ShopManager {
         
         public void setStock(int stock) { this.stock = stock; }
         public boolean hasStock() { return stock > 0; }
+        
+        /**
+         * Check if this is an admin shop (owned by SERVER)
+         */
+        public boolean isAdminShop() {
+            return "SERVER".equals(ownerId);
+        }
+        
+        /**
+         * Get owner UUID, returns null for admin shops
+         */
+        public java.util.UUID getOwner() {
+            if (isAdminShop()) {
+                return null;
+            }
+            try {
+                return java.util.UUID.fromString(ownerId);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
     }
 }

@@ -40,8 +40,6 @@ public class EconomyManager {
         this.bankAccounts = new ConcurrentHashMap<>();
         this.transactionHistory = Collections.synchronizedList(new ArrayList<>());
         
-        // Temporarily disabled shop functionality (user requested to ignore shop section)
-        /*
         // Initialize ShopManager with this economy manager instance
         com.zerog.neoessentials.economy.shops.ShopManager.createInstance(this);
         
@@ -51,7 +49,6 @@ public class EconomyManager {
         if (shopManager != null) {
             shopManager.initialize();
         }
-        */
     }
     
     public static EconomyManager getInstance() {

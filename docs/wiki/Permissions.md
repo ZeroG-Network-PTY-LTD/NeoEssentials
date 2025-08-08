@@ -219,14 +219,14 @@ NeoEssentials creates four default permission groups:
 **Priority**: 0
 **Permissions**:
 ```
-essentials.home
-essentials.sethome
-essentials.delhome
-essentials.homes
-essentials.warp
-essentials.warps
-essentials.spawn
-essentials.back
+neoessentials.home
+neoessentials.sethome
+neoessentials.delhome
+neoessentials.homes
+neoessentials.warp
+neoessentials.warps
+neoessentials.spawn
+neoessentials.back
 neoessentials.placeholder.test
 neoessentials.shop.create
 neoessentials.shop.use
@@ -240,13 +240,13 @@ neoessentials.shop.modify
 **Inherits**: Default
 **Additional Permissions**:
 ```
-essentials.fly
-essentials.heal
-essentials.feed
-essentials.workbench
-essentials.anvil
-essentials.enderchest
-essentials.repair
+neoessentials.fly
+neoessentials.heal
+neoessentials.feed
+neoessentials.workbench
+neoessentials.anvil
+neoessentials.enderchest
+neoessentials.repair
 neoessentials.bossbar.show
 ```
 
@@ -256,14 +256,14 @@ neoessentials.bossbar.show
 **Inherits**: VIP
 **Additional Permissions**:
 ```
-essentials.kick
-essentials.mute
-essentials.unmute
-essentials.jail
-essentials.unjail
-essentials.vanish
-essentials.god
-essentials.invsee
+neoessentials.kick
+neoessentials.mute
+neoessentials.unmute
+neoessentials.jail
+neoessentials.unjail
+neoessentials.vanish
+neoessentials.god
+neoessentials.invsee
 neoessentials.bossbar.broadcast
 neoessentials.security.view
 ```
@@ -274,7 +274,6 @@ neoessentials.security.view
 **Inherits**: Moderator
 **Additional Permissions**:
 ```
-essentials.*
 neoessentials.*
 neoessentials.shop.admin
 neoessentials.shop.create.admin
@@ -304,9 +303,9 @@ Display permission information for a player.
 === Permission Info for Steve ===
 Group: VIP (Priority: 10)
 Permissions: 25 total
-- essentials.fly ✓
-- essentials.heal ✓
-- essentials.kick ✗
+- neoessentials.fly ✓
+- neoessentials.heal ✓
+- neoessentials.kick ✗
 Temporary Permissions: 2 active
 ```
 
@@ -316,10 +315,10 @@ Test if a player has a specific permission.
 **Examples**:
 ```bash
 # Check if player has permission
-/permissions check Steve essentials.fly
+/permissions check Steve neoessentials.fly
 
 # Check negative permission
-/permissions check Alex essentials.kick
+/permissions check Alex neoessentials.kick
 ```
 
 ### Group Management
@@ -353,9 +352,9 @@ Prefix: "&6[VIP] "
 Suffix: ""
 Permissions: 8 direct, 20 total
 Direct Permissions:
-- essentials.fly
-- essentials.heal
-- essentials.feed
+- neoessentials.fly
+- neoessentials.heal
+- neoessentials.feed
 [...]
 ```
 
@@ -520,24 +519,23 @@ Last Cleanup: 2 minutes ago
 
 ### Basic Permissions
 ```
-essentials.heal          # Allow /heal command
-essentials.fly           # Allow /fly command
-neoessentials.bossbar.*  # All bossbar permissions
+neoessentials.heal          # Allow /heal command
+neoessentials.fly           # Allow /fly command
+neoessentials.bossbar.*     # All bossbar permissions
 ```
 
 ### Wildcard Permissions
 ```
-essentials.*             # All essentials permissions
-neoessentials.*          # All NeoEssentials permissions
-*.admin                  # All admin permissions across plugins
-*                        # ALL permissions (dangerous!)
+neoessentials.*             # All NeoEssentials permissions
+*.admin                     # All admin permissions across plugins
+*                           # ALL permissions (dangerous!)
 ```
 
 ### Negative Permissions
 ```
--essentials.give         # Deny /give command
--essentials.gamemode.*   # Deny all gamemode commands
--neoessentials.admin     # Deny admin access
+-neoessentials.give         # Deny /give command
+-neoessentials.gamemode.*   # Deny all gamemode commands
+-neoessentials.admin        # Deny admin access
 ```
 
 ### Permission Hierarchy
@@ -585,27 +583,27 @@ essentials.vanish.*                # All vanish permissions
 
 #### Item & Environment Management
 ```
-essentials.repair                  # /repair command - repair item in hand
-essentials.repair.all              # Repair all items
-essentials.repair.others           # Repair items for others
+neoessentials.repair                  # /repair command - repair item in hand
+neoessentials.repair.all              # Repair all items
+neoessentials.repair.others           # Repair items for others
 
-essentials.give                    # /give command - give items
-essentials.give.unlimited          # Give items without limits
-essentials.give.*                  # All give permissions
+neoessentials.give                    # /give command - give items
+neoessentials.give.unlimited          # Give items without limits
+neoessentials.give.*                  # All give permissions
 
-essentials.time.set                # /time set command
-essentials.time.add                # /time add command
-essentials.time.query              # /time query command
-essentials.time.*                  # All time permissions
+neoessentials.time.set                # /time set command
+neoessentials.time.add                # /time add command
+neoessentials.time.query              # /time query command
+neoessentials.time.*                  # All time permissions
 
-essentials.weather.set             # /weather command base
-essentials.weather.clear           # Set clear weather
-essentials.weather.rain            # Set rain
-essentials.weather.thunder         # Set thunderstorm
-essentials.weather.*               # All weather permissions
+neoessentials.weather.set             # /weather command base
+neoessentials.weather.clear           # Set clear weather
+neoessentials.weather.rain            # Set rain
+neoessentials.weather.thunder         # Set thunderstorm
+neoessentials.weather.*               # All weather permissions
 
-essentials.workbench               # /workbench command - open crafting table
-essentials.anvil                   # /anvil command - open anvil
+neoessentials.workbench               # /workbench command - open crafting table
+neoessentials.anvil                   # /anvil command - open anvil
 essentials.enderchest              # /enderchest command - open your enderchest
 essentials.enderchest.others       # View others' enderchests
 ```
@@ -729,44 +727,44 @@ neoessentials.economy.history      # View detailed economic history
 
 #### Private Messages
 ```
-essentials.msg                     # /msg command - send private messages
-essentials.reply                   # /reply command - reply to messages
-essentials.msgtoggle               # /msgtoggle command - toggle message reception
-essentials.socialspy               # /socialspy command - spy on private messages
+neoessentials.msg                     # /msg command - send private messages
+neoessentials.reply                   # /reply command - reply to messages
+neoessentials.msgtoggle               # /msgtoggle command - toggle message reception
+neoessentials.socialspy               # /socialspy command - spy on private messages
 ```
 
 #### Mail System
 ```
-essentials.mail.send               # /mail send command - send mail
-essentials.mail.read               # /mail read command - read mail
-essentials.mail.clear              # /mail clear command - clear mailbox
-essentials.mail.*                  # All mail permissions
+neoessentials.mail.send               # /mail send command - send mail
+neoessentials.mail.read               # /mail read command - read mail
+neoessentials.mail.clear              # /mail clear command - clear mailbox
+neoessentials.mail.*                  # All mail permissions
 ```
 
 #### Broadcasting
 ```
-essentials.broadcast               # /broadcast command - server-wide messages
-essentials.broadcast.world         # /broadcast command - world-specific messages
+neoessentials.broadcast               # /broadcast command - server-wide messages
+neoessentials.broadcast.world         # /broadcast command - world-specific messages
 ```
 
 ### Player Information Commands
 
 #### Player Lists & Information
 ```
-essentials.list                    # /list command - view online players
-essentials.list.hidden             # See hidden/vanished players in list
+neoessentials.list                    # /list command - view online players
+neoessentials.list.hidden             # See hidden/vanished players in list
 
-essentials.whois                   # /whois command - detailed player info
-essentials.seen                    # /seen command - when player was last online
-essentials.realname                # /realname command - find player by nickname
+neoessentials.whois                   # /whois command - detailed player info
+neoessentials.seen                    # /seen command - when player was last online
+neoessentials.realname                # /realname command - find player by nickname
 ```
 
 #### Nickname System
 ```
-essentials.nick                    # /nick command - set your nickname
-essentials.nick.others             # Set nicknames for others
-essentials.nick.color              # Use color codes in nicknames
-essentials.nick.magic              # Use magic/obfuscated formatting
+neoessentials.nick                    # /nick command - set your nickname
+neoessentials.nick.others             # Set nicknames for others
+neoessentials.nick.color              # Use color codes in nicknames
+neoessentials.nick.magic              # Use magic/obfuscated formatting
 ```
 
 ### Kit System
@@ -1106,7 +1104,7 @@ Create group templates for easy setup:
 ```bash
 # Create staff template
 /permissions template create staff "Staff Template" \
-  essentials.kick essentials.mute essentials.vanish
+  neoessentials.kick neoessentials.mute neoessentials.vanish
 
 # Apply template to group
 /permissions group apply Moderator staff
@@ -1117,18 +1115,18 @@ Create group templates for easy setup:
 ```bash
 # Give multiple permissions at once
 /permissions user Steve permission batch add \
-  essentials.fly essentials.heal essentials.feed
+  neoessentials.fly neoessentials.heal neoessentials.feed
 
 # Remove multiple permissions
 /permissions group VIP permission batch remove \
-  essentials.give essentials.gamemode
+  neoessentials.give neoessentials.gamemode
 ```
 
 ### Permission Queries
 
 ```bash
 # List all players with specific permission
-/permissions query has essentials.fly
+/permissions query has neoessentials.fly
 
 # List all players in group
 /permissions query group VIP
@@ -1144,7 +1142,7 @@ Create group templates for easy setup:
 /permissions schedule user Steve group set VIP 7d
 
 # Schedule permission removal
-/permissions schedule user Probation permission remove essentials.build 24h
+/permissions schedule user Probation permission remove neoessentials.build 24h
 ```
 
 ## 🔄 Integration Examples

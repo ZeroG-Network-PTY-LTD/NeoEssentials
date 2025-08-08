@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
@@ -22,10 +25,10 @@ public class FeedCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /feed - Feed yourself
         dispatcher.register(Commands.literal("feed")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(FeedCommand::feedSelf)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                 .executes(FeedCommand::feedOther)
             )
         );

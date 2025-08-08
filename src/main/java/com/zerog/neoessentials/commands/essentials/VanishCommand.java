@@ -3,6 +3,8 @@ package com.zerog.neoessentials.commands.essentials;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -30,20 +32,20 @@ public class VanishCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /vanish - Toggle vanish mode for yourself
         dispatcher.register(Commands.literal("vanish")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.VANISH_SELF))
             .executes(VanishCommand::toggleVanishSelf)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.VANISH_OTHERS))
                 .executes(VanishCommand::toggleVanishOther)
             )
         );
         
         // Alias: /v
         dispatcher.register(Commands.literal("v")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.VANISH_SELF))
             .executes(VanishCommand::toggleVanishSelf)
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.VANISH_OTHERS))
                 .executes(VanishCommand::toggleVanishOther)
             )
         );

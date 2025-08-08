@@ -1,4 +1,4 @@
-package com.zerog.neoessentials.commands.economy;
+package com.zerog.neoessentials.economy;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
@@ -125,6 +125,12 @@ public class SignShopCommand {
             
             // Create the sign shop
             ShopManager shopManager = ShopManager.getInstance();
+            if (shopManager == null) {
+                player.sendSystemMessage(Component.literal("§cShop system is not available!"));
+                LOGGER.error("ShopManager instance is null when trying to create sign shop");
+                return 0;
+            }
+            
             SignShopHandler handler = new SignShopHandler(shopManager);
             
             boolean success = handler.createSignShop(player, signPos, item, buyPrice, sellPrice, quantity, isAdminShop);
@@ -172,6 +178,10 @@ public class SignShopCommand {
         
         BlockPos signPos = blockHit.getBlockPos();
         ShopManager shopManager = ShopManager.getInstance();
+        if (shopManager == null) {
+            player.sendSystemMessage(Component.literal("§cShop system is not available!"));
+            return 0;
+        }
         
         // Find the sign shop first to check ownership
         ShopManager.SignShop signShop = shopManager.getSignShops().stream()
@@ -237,6 +247,10 @@ public class SignShopCommand {
         
         BlockPos signPos = blockHit.getBlockPos();
         ShopManager shopManager = ShopManager.getInstance();
+        if (shopManager == null) {
+            player.sendSystemMessage(Component.literal("§cShop system is not available!"));
+            return 0;
+        }
         
         // Find the sign shop
         ShopManager.SignShop signShop = shopManager.getSignShops().stream()
@@ -273,6 +287,11 @@ public class SignShopCommand {
      */
     private static int listSignShops(CommandContext<CommandSourceStack> context) {
         ShopManager shopManager = ShopManager.getInstance();
+        if (shopManager == null) {
+            context.getSource().sendFailure(Component.literal("§cShop system is not available!"));
+            return 0;
+        }
+        
         var signShops = shopManager.getSignShops();
         
         context.getSource().sendSuccess(() -> Component.literal("§6=== All Sign Shops ==="), false);
@@ -281,11 +300,12 @@ public class SignShopCommand {
         int count = 0;
         for (ShopManager.SignShop shop : signShops) {
             if (count >= 10) {
-                context.getSource().sendSuccess(() -> Component.literal("§7... and " + (signShops.size() - 10) + " more"), false);
+                final int remaining = signShops.size() - 10;
+                context.getSource().sendSuccess(() -> Component.literal("§7... and " + remaining + " more"), false);
                 break;
             }
             
-            String info = String.format("§e%d. §f%s §7at §f%s §7(Stock: %d)",
+            final String info = String.format("§e%d. §f%s §7at §f%s §7(Stock: %d)",
                     count + 1,
                     shop.getItem().getDisplayName().getString(),
                     shop.getSignPos().toShortString(),
@@ -305,9 +325,27 @@ public class SignShopCommand {
     private static int listPlayerSignShops(CommandContext<CommandSourceStack> context) {
         String playerName = StringArgumentType.getString(context, "player");
         ShopManager shopManager = ShopManager.getInstance();
+        if (shopManager == null) {
+            context.getSource().sendFailure(Component.literal("§cShop system is not available!"));
+            return 0;
+        }
         
         var playerShops = shopManager.getSignShops().stream()
-                .filter(shop -> shop.getOwnerId().equals(playerName))
+                .filter(shop -> {
+                    // Check both player name and UUID
+                    try {
+                        // Try to find player by name first
+                        net.minecraft.server.MinecraftServer server = context.getSource().getServer();
+                        net.minecraft.server.level.ServerPlayer player = server.getPlayerList().getPlayerByName(playerName);
+                        if (player != null) {
+                            return shop.getOwnerId().equals(player.getStringUUID());
+                        }
+                        // Fallback: check if the owner ID contains the player name
+                        return shop.getOwnerId().equals(playerName);
+                    } catch (Exception e) {
+                        return shop.getOwnerId().equals(playerName);
+                    }
+                })
                 .toList();
         
         context.getSource().sendSuccess(() -> Component.literal("§6=== Sign Shops for " + playerName + " ==="), false);
@@ -315,7 +353,7 @@ public class SignShopCommand {
         
         int count = 0;
         for (ShopManager.SignShop shop : playerShops) {
-            String info = String.format("§e%d. §f%s §7at §f%s §7(Stock: %d)",
+            final String info = String.format("§e%d. §f%s §7at §f%s §7(Stock: %d)",
                     count + 1,
                     shop.getItem().getDisplayName().getString(),
                     shop.getSignPos().toShortString(),

@@ -2,6 +2,7 @@ package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.WarpConfig;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
@@ -55,7 +56,7 @@ public class WarpManager {
         }
         
         // Check permission
-        if (!PermissionUtil.hasPermission(player, "essentials.setwarp")) {
+        if (!PermissionUtil.hasPermission(player, PermissionNodes.WARP_SET)) {
             MessageUtil.sendMessage(player, "&cYou don't have permission to create warps.");
             return false;
         }
@@ -143,7 +144,7 @@ public class WarpManager {
         }
         
         // Check permission - owner or admin
-        if (!warpData.ownerId.equals(player.getUUID()) && !PermissionUtil.hasPermission(player, "essentials.delwarp.others")) {
+        if (!warpData.ownerId.equals(player.getUUID()) && !PermissionUtil.hasPermission(player, "neoessentials.delwarp.others")) {
             MessageUtil.sendMessage(player, "&cYou can only delete your own warps!");
             return false;
         }
@@ -177,7 +178,7 @@ public class WarpManager {
         
         // Check permission for private warps
         if (!warpData.isPublic && !warpData.ownerId.equals(player.getUUID()) && 
-            !PermissionUtil.hasPermission(player, "essentials.warp." + warpName.toLowerCase())) {
+            !PermissionUtil.hasPermission(player, "neoessentials.warp." + warpName.toLowerCase())) {
             MessageUtil.sendMessage(player, config.messages.warpPrivate);
             return false;
         }
@@ -237,7 +238,7 @@ public class WarpManager {
         
         List<WarpData> availableWarps = warps.values().stream()
             .filter(warp -> warp.isPublic || warp.ownerId.equals(player.getUUID()) || 
-                           PermissionUtil.hasPermission(player, "essentials.warp." + warp.name.toLowerCase()))
+                           PermissionUtil.hasPermission(player, "neoessentials.warp." + warp.name.toLowerCase()))
             .filter(warp -> category == null || warp.category.equalsIgnoreCase(category))
             .sorted(Comparator.comparing(warp -> warp.name))
             .toList();

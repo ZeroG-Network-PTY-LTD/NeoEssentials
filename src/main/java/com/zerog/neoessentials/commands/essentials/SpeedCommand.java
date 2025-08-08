@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -30,12 +33,12 @@ public class SpeedCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /speed <walking/flying> <speed> - Set your own speed
         dispatcher.register(Commands.literal("speed")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .then(Commands.argument("type", StringArgumentType.word())
                 .then(Commands.argument("speed", FloatArgumentType.floatArg(MIN_SPEED, MAX_SPEED))
                     .executes(SpeedCommand::setSpeedSelf)
                     .then(Commands.argument("player", EntityArgument.player())
-                        .requires(source -> source.hasPermission(2))
+                        .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                         .executes(SpeedCommand::setSpeedOther)
                     )
                 )

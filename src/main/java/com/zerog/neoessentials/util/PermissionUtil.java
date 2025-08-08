@@ -106,7 +106,7 @@ public class PermissionUtil {
         }
         
         // Default permissions for basic functionality - using PermissionNodes constants
-        if (permission.startsWith("essentials.")) {
+        if (permission.startsWith("neoessentials.")) {
             // Grant basic essentials permissions to all players by default
             if (permission.equals(PermissionNodes.HOME) ||
                 permission.equals(PermissionNodes.HOME_SET) ||
@@ -386,7 +386,7 @@ public class PermissionUtil {
      * Check if player can bypass limits
      */
     public static boolean canBypassLimit(ServerPlayer player, String limitType) {
-        return hasPermission(player, getCommandPermission("essentials.bypass.limit", limitType));
+        return hasPermission(player, getCommandPermission("neoessentials.bypass.limit", limitType));
     }
     
     /**

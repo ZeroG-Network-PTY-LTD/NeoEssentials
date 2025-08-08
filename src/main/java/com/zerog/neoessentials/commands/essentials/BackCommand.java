@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.essentials;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -27,10 +30,10 @@ public class BackCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /back [player] - Return to last location
         dispatcher.register(Commands.literal("back")
-            .requires(source -> source.hasPermission(1))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.BACK))
             .executes(ctx -> teleportBack(ctx, null))
             .then(Commands.argument("player", EntityArgument.player())
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.BACK))
                 .executes(ctx -> teleportBack(ctx, EntityArgument.getPlayer(ctx, "player")))
             )
         );

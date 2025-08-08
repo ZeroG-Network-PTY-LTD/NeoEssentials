@@ -1,5 +1,8 @@
 package com.zerog.neoessentials.commands.economy;
 
+import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.permissions.PermissionNodes;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -26,7 +29,7 @@ public class EconomyAnalyticsCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("ecoanalytics")
-            .requires(source -> source.hasPermission(3)) // Admin only
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC)) // Admin only
             .executes(context -> showEconomyOverview(context))
             .then(Commands.literal("overview")
                 .executes(context -> showEconomyOverview(context)))
@@ -40,7 +43,7 @@ public class EconomyAnalyticsCommand {
         
         // Alias command
         dispatcher.register(Commands.literal("economyanalytics")
-            .requires(source -> source.hasPermission(3))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
             .executes(context -> showEconomyOverview(context))
             .then(Commands.literal("overview")
                 .executes(context -> showEconomyOverview(context)))

@@ -1,4 +1,4 @@
-package com.zerog.neoessentials.listeners;
+package com.zerog.neoessentials;
 
 import com.zerog.neoessentials.economy.shops.ShopManager;
 import com.zerog.neoessentials.economy.shops.SignShopHandler;
@@ -24,6 +24,7 @@ public class ShopSignEventListener {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ShopSignEventListener.class);
     private static final String SHOP_HEADER = "[SHOP]";
+    private static final String ADMIN_SHOP_HEADER = "[Admin Shop]";
     
     private final ShopManager shopManager;
     private final SignShopHandler signShopHandler;
@@ -91,6 +92,6 @@ public class ShopSignEventListener {
         }
         
         String firstLine = lines[0].getString();
-        return SHOP_HEADER.equals(firstLine);
+        return SHOP_HEADER.equals(firstLine) || ADMIN_SHOP_HEADER.equals(firstLine);
     }
 }

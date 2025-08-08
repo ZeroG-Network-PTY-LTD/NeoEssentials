@@ -2,6 +2,7 @@ package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.KitConfig;
+import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
@@ -158,7 +159,7 @@ public class KitManager {
         }
         
         // Check if player has cooldown bypass
-        if (PermissionUtil.hasPermission(player, "essentials.kit.cooldown.bypass")) {
+        if (PermissionUtil.hasPermission(player, PermissionNodes.BYPASS_COOLDOWN_COMMAND)) {
             return false;
         }
         
