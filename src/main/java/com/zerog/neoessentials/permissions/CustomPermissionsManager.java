@@ -1,7 +1,8 @@
 package com.zerog.neoessentials.permissions;
 
 import com.zerog.neoessentials.config.ConfigManager;
-import com.zerog.neoessentials.storage.PlayerDataManager;
+import com.zerog.neoessentials.player.PlayerDataManager;
+import com.zerog.neoessentials.player.PlayerData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
@@ -325,6 +326,52 @@ public class CustomPermissionsManager {
     }
     
     /**
+     * Get player permissions as a map for storage
+     */
+    public Map<String, Boolean> getPlayerPermissionsMap(UUID playerId) {
+        Map<String, Boolean> permissionMap = new HashMap<>();
+        
+        // Get player-specific permissions only (not group permissions)
+        PlayerPermissions playerPerms = playerPermissions.get(playerId);
+        if (playerPerms != null) {
+            Set<String> permissions = playerPerms.getPermissions();
+            for (String permission : permissions) {
+                if (permission.startsWith("-")) {
+                    // Negative permission
+                    permissionMap.put(permission.substring(1), false);
+                } else {
+                    // Positive permission
+                    permissionMap.put(permission, true);
+                }
+            }
+        }
+        
+        return permissionMap;
+    }
+    
+    /**
+     * Set player permissions from a map (for loading from storage)
+     */
+    public void setPlayerPermissionsFromMap(UUID playerId, Map<String, Boolean> permissionMap) {
+        // Clear existing player permissions
+        playerPermissions.remove(playerId);
+        
+        // Set new permissions
+        for (Map.Entry<String, Boolean> entry : permissionMap.entrySet()) {
+            String permission = entry.getKey();
+            boolean granted = entry.getValue();
+            
+            if (granted) {
+                addPlayerPermission(playerId, permission);
+            } else {
+                addPlayerPermission(playerId, "-" + permission);
+            }
+        }
+        
+        clearPlayerCache(playerId);
+    }
+    
+    /**
      * Get permission group
      */
     public PermissionGroup getGroup(String groupName) {
@@ -436,9 +483,26 @@ public class CustomPermissionsManager {
      */
     public void savePermissions() {
         try {
-            // Save to configuration files or database
-            // Implementation would depend on storage system
-            LOGGER.info("Saved permissions configuration");
+            // Save group assignments and individual permissions to PlayerDataManager
+            PlayerDataManager playerDataManager = PlayerDataManager.getInstance();
+            
+            for (Map.Entry<UUID, String> entry : playerGroups.entrySet()) {
+                UUID playerId = entry.getKey();
+                String groupName = entry.getValue();
+                
+                PlayerData playerData = playerDataManager.getPlayerData(playerId);
+                if (playerData != null) {
+                    playerData.setPermissionGroup(groupName);
+                    
+                    // Save individual permissions
+                    Map<String, Boolean> playerPermsMap = getPlayerPermissionsMap(playerId);
+                    playerData.setPlayerPermissions(playerPermsMap);
+                    
+                    playerDataManager.savePlayerData(playerData);
+                }
+            }
+            
+            LOGGER.info("Saved permissions configuration for {} players", playerGroups.size());
         } catch (Exception e) {
             LOGGER.error("Failed to save permissions configuration", e);
         }

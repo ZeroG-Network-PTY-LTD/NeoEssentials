@@ -8,6 +8,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.economy.shops.ShopManager;
 import com.zerog.neoessentials.economy.shops.SignShopHandler;
 import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -356,37 +357,14 @@ public class SignShopCommand {
      * Check if source has permission
      */
     private static boolean hasPermission(CommandSourceStack source, String permission) {
-        // Check if it's a server player
-        if (!(source.getEntity() instanceof ServerPlayer player)) {
-            return source.hasPermission(4); // Console/server always has admin permissions
-        }
-        
-        return hasPermission(player, permission);
+        return PermissionUtil.hasPermission(source, permission);
     }
     
     /**
      * Check if player has permission
      */
     private static boolean hasPermission(ServerPlayer player, String permission) {
-        // Admin permissions - check if player is OP
-        if (permission.contains("admin") || permission.contains("ADMIN")) {
-            return player.hasPermissions(4);
-        }
-        
-        // For basic shop operations, check if player has basic permissions
-        if (permission.equals(PermissionNodes.SHOP_SIGN_USE) || 
-            permission.equals(PermissionNodes.SHOP_SIGN_CREATE)) {
-            return player.hasPermissions(0); // All players can use shops by default
-        }
-        
-        // For admin-only operations
-        if (permission.equals(PermissionNodes.SHOP_ADMIN) ||
-            permission.equals(PermissionNodes.SHOP_SIGN_ADMIN)) {
-            return player.hasPermissions(4); // Only ops can admin shops
-        }
-        
-        // Default to op check for unrecognized permissions
-        return player.hasPermissions(4);
+        return PermissionUtil.hasPermission(player, permission);
     }
     
     /**

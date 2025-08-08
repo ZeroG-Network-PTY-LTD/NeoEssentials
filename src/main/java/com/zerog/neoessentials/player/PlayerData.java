@@ -38,6 +38,10 @@ public class PlayerData {
     // Statistics
     private Map<String, Object> statistics;
     
+    // Permission system data
+    private String permissionGroup;
+    private Map<String, Boolean> playerPermissions;
+    
     public PlayerData(UUID playerUUID) {
         this.playerUUID = playerUUID;
         this.firstJoin = System.currentTimeMillis();
@@ -53,6 +57,10 @@ public class PlayerData {
         this.achievementProgress = new HashMap<>();
         this.adminNotes = new HashMap<>();
         this.statistics = new HashMap<>();
+        
+        // Initialize permission data
+        this.permissionGroup = "default"; // Default group
+        this.playerPermissions = new HashMap<>();
     }
     
     // Getters and Setters
@@ -296,6 +304,31 @@ public class PlayerData {
         } else {
             return String.format("%ds", seconds);
         }
+    }
+    
+    // Permission system getters and setters
+    public String getPermissionGroup() {
+        return permissionGroup;
+    }
+    
+    public void setPermissionGroup(String permissionGroup) {
+        this.permissionGroup = permissionGroup;
+    }
+    
+    public Map<String, Boolean> getPlayerPermissions() {
+        return playerPermissions;
+    }
+    
+    public void setPlayerPermissions(Map<String, Boolean> playerPermissions) {
+        this.playerPermissions = playerPermissions;
+    }
+    
+    public void addPlayerPermission(String permission, boolean value) {
+        this.playerPermissions.put(permission, value);
+    }
+    
+    public void removePlayerPermission(String permission) {
+        this.playerPermissions.remove(permission);
     }
     
     @Override

@@ -118,6 +118,10 @@ public class CommandRegistry {
             NickCommand.register(dispatcher);
             LOGGER.info("Registered nick command");
             
+            // Permission test command
+            com.zerog.neoessentials.commands.permissions.PermissionTestCommand.register(dispatcher);
+            LOGGER.info("Registered permission test command");
+            
             // Economy admin commands
             EconomyCommand.register(dispatcher);
             LOGGER.info("Registered economy admin commands");
@@ -131,8 +135,9 @@ public class CommandRegistry {
             // LOGGER.info("Registered economy analytics command");
             
             // Shop system commands
-            com.zerog.neoessentials.commands.economy.ShopCommand.register(dispatcher);
-            com.zerog.neoessentials.commands.economy.SignShopCommand.register(dispatcher, context);
+            // Temporarily disabled shop commands (user requested to ignore shop section)
+            // com.zerog.neoessentials.commands.economy.ShopCommand.register(dispatcher);
+            // com.zerog.neoessentials.commands.economy.SignShopCommand.register(dispatcher, context);
             LOGGER.info("Registered shop system commands");
             
             // Mail system
@@ -163,6 +168,14 @@ public class CommandRegistry {
             WarpCommands.register(dispatcher);
             LOGGER.info("Registered warp commands");
             
+            // Spawn commands
+            SpawnCommands.register(dispatcher);
+            LOGGER.info("Registered spawn commands");
+            
+            // Permission debug command (for testing)
+            PermissionDebugCommand.register(dispatcher);
+            LOGGER.info("Registered permission debug command");
+            
             // Economy commands
             EconomyCommands.register(dispatcher);
             LOGGER.info("Registered economy commands");
@@ -174,10 +187,6 @@ public class CommandRegistry {
             // Kit commands
             KitCommand.register(dispatcher);
             LOGGER.info("Registered kit commands");
-            
-            // Spawn commands
-            SpawnCommand.register(dispatcher);
-            LOGGER.info("Registered spawn commands");
             
             // Messaging commands
             MessagingCommands.register(dispatcher);

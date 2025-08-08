@@ -78,6 +78,11 @@ public final class PermissionNodes {
     public static final String GIVE_UNLIMITED = "essentials.give.unlimited";
     public static final String GIVE_ALL = "essentials.give.*";
     
+    // GameMode Command
+    public static final String GAMEMODE = "neoessentials.gamemode";
+    public static final String GAMEMODE_OTHERS = "neoessentials.gamemode.others";
+    public static final String GAMEMODE_ALL = "neoessentials.gamemode.*";
+    
     // Workbench & Anvil
     public static final String WORKBENCH = "essentials.workbench";
     public static final String ANVIL = "essentials.anvil";

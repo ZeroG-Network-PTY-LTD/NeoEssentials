@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import com.zerog.neoessentials.features.CustomBossbarManager;
 import com.zerog.neoessentials.features.TablistScoreboardManager;
 import com.zerog.neoessentials.listeners.NotificationEventListener;
-import com.zerog.neoessentials.listeners.ShopSignEventListener;
+// import com.zerog.neoessentials.listeners.ShopSignEventListener; // Temporarily disabled
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.managers.*;
 import com.zerog.neoessentials.notifications.NotificationManager;
@@ -146,13 +146,20 @@ public class NeoEssentials {
             // Initialize notification event listener
             NotificationEventListener.getInstance();
             
+            // Initialize permission event listener for persistent storage
+            NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.PermissionEventListener());
+            LOGGER.info("Permission Event Listener initialized");
+            
             // Initialize shop sign event listener for preventing edit mode
+            // Temporarily disabled shop functionality (user requested to ignore shop section)
+            /*
             ShopSignEventListener shopSignListener = 
                 new ShopSignEventListener(
                     com.zerog.neoessentials.economy.shops.ShopManager.getInstance()
                 );
             NeoForge.EVENT_BUS.register(shopSignListener);
             LOGGER.info("Shop Sign Event Listener initialized");
+            */
             
             // Initialize Playtime Tracker
             com.zerog.neoessentials.player.PlaytimeTracker.getInstance();

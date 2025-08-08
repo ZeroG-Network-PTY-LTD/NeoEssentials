@@ -2,6 +2,7 @@ package com.zerog.neoessentials.economy.shops;
 
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -72,7 +73,7 @@ public class SignShopHandler {
      */
     public boolean createSignShop(Player player, BlockPos signPos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
         // Check permissions
-        if (!hasPermission(player, PermissionNodes.SHOP_SIGN_CREATE)) {
+        if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_SIGN_CREATE)) {
             player.sendSystemMessage(Component.literal("§cYou don't have permission to create sign shops!"));
             return false;
         }
@@ -96,6 +97,50 @@ public class SignShopHandler {
             player.sendSystemMessage(Component.literal("§aSign shop created successfully!"));
             LOGGER.info("Player {} created a sign shop at {} for item {}", 
                        player.getName().getString(), signPos, item.getDisplayName().getString());
+        } else {
+            player.sendSystemMessage(Component.literal("§cFailed to create sign shop!"));
+        }
+        
+        return success;
+    }
+    
+    /**
+     * Create a new sign shop with admin shop option
+     */
+    public boolean createSignShop(Player player, BlockPos signPos, ItemStack item, double buyPrice, double sellPrice, int quantity, boolean isAdminShop) {
+        // Check permissions
+        String requiredPermission = isAdminShop ? PermissionNodes.SHOP_ADMIN : PermissionNodes.SHOP_SIGN_CREATE;
+        if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, requiredPermission)) {
+            String shopType = isAdminShop ? "admin shops" : "sign shops";
+            player.sendSystemMessage(Component.literal("§cYou don't have permission to create " + shopType + "!"));
+            return false;
+        }
+        
+        // Validate prices
+        if (buyPrice <= 0 && sellPrice <= 0) {
+            player.sendSystemMessage(Component.literal("§cAt least one price (buy or sell) must be greater than 0!"));
+            return false;
+        }
+        
+        if (buyPrice > 0 && sellPrice > 0 && buyPrice <= sellPrice) {
+            player.sendSystemMessage(Component.literal("§cBuy price must be higher than sell price!"));
+            return false;
+        }
+        
+        // Create the shop with admin status
+        boolean success;
+        if (isAdminShop) {
+            success = shopManager.createSignShop(player, signPos, item, buyPrice, sellPrice, quantity, true);
+        } else {
+            success = shopManager.createSignShop(player, signPos, item, buyPrice, sellPrice, quantity);
+        }
+        
+        if (success) {
+            updateSignText(player.level(), signPos, item, buyPrice, sellPrice, quantity, isAdminShop);
+            String shopType = isAdminShop ? "admin shop" : "sign shop";
+            player.sendSystemMessage(Component.literal("§a" + Character.toUpperCase(shopType.charAt(0)) + shopType.substring(1) + " created successfully!"));
+            LOGGER.info("Player {} created a {} at {} for item {}", 
+                       player.getName().getString(), shopType, signPos, item.getDisplayName().getString());
         } else {
             player.sendSystemMessage(Component.literal("§cFailed to create sign shop!"));
         }
@@ -489,6 +534,45 @@ public class SignShopHandler {
     }
     
     /**
+     * Update the text on a sign shop with admin shop support
+     */
+    private void updateSignText(Level level, BlockPos pos, ItemStack item, double buyPrice, double sellPrice, int quantity, boolean isAdminShop) {
+        if (level.getBlockEntity(pos) instanceof SignBlockEntity signEntity) {
+            Component[] newLines = new Component[4];
+            
+            // Set header based on shop type
+            if (isAdminShop) {
+                newLines[0] = Component.literal("[Admin Shop]").setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD));
+            } else {
+                newLines[0] = Component.literal(SHOP_HEADER).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_BLUE));
+            }
+            
+            newLines[1] = Component.literal(quantity + "x " + getShortItemName(item)).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE));
+            
+            if (buyPrice > 0 && sellPrice > 0) {
+                newLines[2] = Component.literal("Buy: $" + String.format("%.2f", buyPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
+                newLines[3] = Component.literal("Sell: $" + String.format("%.2f", sellPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+            } else if (buyPrice > 0) {
+                newLines[2] = Component.literal("Buy: $" + String.format("%.2f", buyPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
+                newLines[3] = Component.literal("(Buy Only)").setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY));
+            } else {
+                newLines[2] = Component.literal("Sell: $" + String.format("%.2f", sellPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                newLines[3] = Component.literal("(Sell Only)").setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY));
+            }
+            
+            // Update sign text using the correct method  
+            signEntity.updateText((frontText) -> {
+                return frontText.setMessage(0, newLines[0])
+                               .setMessage(1, newLines[1])
+                               .setMessage(2, newLines[2])
+                               .setMessage(3, newLines[3]);
+            }, true);
+            signEntity.setChanged();
+            level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
+        }
+    }
+    
+    /**
      * Check if the shop's chest has enough items for a purchase
      */
     private boolean hasChestStock(Level level, ShopManager.SignShop signShop) {
@@ -620,11 +704,42 @@ public class SignShopHandler {
         }
 
         return false; // Chest not found or not a chest
-    }    /**
-     * Check if player has permission
+    }
+    
+    /**
+     * Refresh all shop signs in the world to update their colors based on current stock
      */
-    private boolean hasPermission(Player player, String permission) {
-        // TODO: Implement proper permission checking
-        return true; // For now, allow all players
+    public static int refreshAllShopSigns(net.minecraft.server.level.ServerLevel level) {
+        try {
+            ShopManager shopManager = ShopManager.getInstance();
+            if (shopManager == null) {
+                LOGGER.error("ShopManager not available for refreshing signs");
+                return 0;
+            }
+            
+            int refreshedCount = 0;
+            var allShops = shopManager.getSignShops();
+            
+            for (var shop : allShops) {
+                if (shop != null && shop.getSignPos() != null) {
+                    try {
+                        // Create a temporary handler instance to call non-static methods
+                        SignShopHandler handler = new SignShopHandler(shopManager);
+                        // For now, refresh with basic display - this can be enhanced later
+                        handler.updateSignText(level, shop.getSignPos(), shop.getItem(), 
+                                             shop.getBuyPrice(), shop.getSellPrice(), shop.getQuantity());
+                        refreshedCount++;
+                    } catch (Exception e) {
+                        LOGGER.warn("Failed to refresh sign at {}: {}", shop.getSignPos(), e.getMessage());
+                    }
+                }
+            }
+            
+            LOGGER.info("Refreshed {} shop signs", refreshedCount);
+            return refreshedCount;
+        } catch (Exception e) {
+            LOGGER.error("Error refreshing all shop signs: {}", e.getMessage());
+            return 0;
+        }
     }
 }
