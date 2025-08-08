@@ -100,9 +100,9 @@ public class ShopManager {
     }
     
     /**
-     * Create a new sign shop
+     * Create a new sign shop (with admin shop support)
      */
-    public boolean createSignShop(Player player, BlockPos signPos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
+    public boolean createSignShop(Player player, BlockPos signPos, ItemStack item, double buyPrice, double sellPrice, int quantity, boolean isAdminShop) {
         if (signShops.containsKey(signPos)) {
             return false; // Sign shop already exists at this location
         }
@@ -114,18 +114,29 @@ public class ShopManager {
             return false;
         }
         
-        SignShop signShop = new SignShop(player.getStringUUID(), signPos, chestPos, item, buyPrice, sellPrice, quantity);
+        // Set owner based on shop type
+        String ownerId = isAdminShop ? "SERVER" : player.getStringUUID();
+        
+        SignShop signShop = new SignShop(ownerId, signPos, chestPos, item, buyPrice, sellPrice, quantity);
         signShops.put(signPos, signShop);
         
         // Save shops to storage after creating a new one
         saveShopsToStorage();
         
         updateWebDashboardMetrics();
-        webDashboard.addRealTimeEvent("SHOP", "Sign shop created by " + player.getName().getString() + 
+        String shopType = isAdminShop ? "admin" : "player";
+        webDashboard.addRealTimeEvent("SHOP", shopType + " shop created by " + player.getName().getString() + 
                                      " for " + item.getDisplayName().getString(), "INFO");
         
-        LOGGER.info("Created sign shop at {} for player {}", signPos, player.getName().getString());
+        LOGGER.info("Created {} sign shop at {} for player {}", shopType, signPos, player.getName().getString());
         return true;
+    }
+    
+    /**
+     * Create a new sign shop (backward compatibility)
+     */
+    public boolean createSignShop(Player player, BlockPos signPos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
+        return createSignShop(player, signPos, item, buyPrice, sellPrice, quantity, false);
     }
     
     /**

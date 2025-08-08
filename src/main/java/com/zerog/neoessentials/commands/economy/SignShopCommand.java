@@ -46,6 +46,22 @@ public class SignShopCommand {
                                 )
                         )
                 )
+                .then(Commands.literal("adminshop")
+                        .requires(source -> hasPermission(source, PermissionNodes.SHOP_ADMIN))
+                        .then(Commands.literal("create")
+                                .then(Commands.argument("item", ItemArgument.item(context))
+                                        .then(Commands.argument("quantity", IntegerArgumentType.integer(1, 64))
+                                                .then(Commands.argument("buy_price", DoubleArgumentType.doubleArg(0.0))
+                                                        .executes(ctx -> createSignShop(ctx, 0.0, true))
+                                                        .then(Commands.argument("sell_price", DoubleArgumentType.doubleArg(0.0))
+                                                                .executes(ctx -> createSignShop(ctx, 
+                                                                        DoubleArgumentType.getDouble(ctx, "sell_price"), true))
+                                                        )
+                                                )
+                                        )
+                                )
+                        )
+                )
                 .then(Commands.literal("remove")
                         .requires(source -> hasPermission(source, PermissionNodes.SHOP_SIGN_ADMIN))
                         .executes(SignShopCommand::removeSignShop)
@@ -63,13 +79,17 @@ public class SignShopCommand {
                 .then(Commands.literal("help")
                         .executes(SignShopCommand::showHelp)
                 )
+                .then(Commands.literal("refresh")
+                        .requires(source -> hasPermission(source, PermissionNodes.SHOP_ADMIN))
+                        .executes(SignShopCommand::refreshAllShopSigns)
+                )
         );
     }
     
     /**
      * Create a new sign shop
      */
-    private static int createSignShop(CommandContext<CommandSourceStack> context, double sellPrice) {
+    private static int createSignShop(CommandContext<CommandSourceStack> context, double sellPrice, boolean isAdminShop) {
         if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
             context.getSource().sendFailure(Component.literal("Only players can create sign shops!"));
             return 0;
@@ -106,12 +126,13 @@ public class SignShopCommand {
             ShopManager shopManager = ShopManager.getInstance();
             SignShopHandler handler = new SignShopHandler(shopManager);
             
-            boolean success = handler.createSignShop(player, signPos, item, buyPrice, sellPrice, quantity);
+            boolean success = handler.createSignShop(player, signPos, item, buyPrice, sellPrice, quantity, isAdminShop);
             
             if (success) {
-                player.sendSystemMessage(Component.literal("§aSign shop created successfully!"));
-                LOGGER.info("Player {} created sign shop at {} for item {}", 
-                           player.getName().getString(), signPos, item.getDisplayName().getString());
+                String shopType = isAdminShop ? "admin shop" : "sign shop";
+                player.sendSystemMessage(Component.literal("§a" + Character.toUpperCase(shopType.charAt(0)) + shopType.substring(1) + " created successfully!"));
+                LOGGER.info("Player {} created {} at {} for item {}", 
+                           player.getName().getString(), shopType, signPos, item.getDisplayName().getString());
                 return 1;
             } else {
                 player.sendSystemMessage(Component.literal("§cFailed to create sign shop!"));
@@ -123,6 +144,13 @@ public class SignShopCommand {
             LOGGER.error("Error creating sign shop for player {}", player.getName().getString(), e);
             return 0;
         }
+    }
+    
+    /**
+     * Create a new sign shop (backward compatibility overload)
+     */
+    private static int createSignShop(CommandContext<CommandSourceStack> context, double sellPrice) {
+        return createSignShop(context, sellPrice, false);
     }
     
     /**
@@ -144,15 +172,48 @@ public class SignShopCommand {
         BlockPos signPos = blockHit.getBlockPos();
         ShopManager shopManager = ShopManager.getInstance();
         
-        // Find and remove the sign shop
-        boolean found = shopManager.getSignShops().removeIf(shop -> shop.getSignPos().equals(signPos));
+        // Find the sign shop first to check ownership
+        ShopManager.SignShop signShop = shopManager.getSignShops().stream()
+                .filter(shop -> shop.getSignPos().equals(signPos))
+                .findFirst()
+                .orElse(null);
         
-        if (found) {
-            player.sendSystemMessage(Component.literal("§aSign shop removed successfully!"));
-            LOGGER.info("Player {} removed sign shop at {}", player.getName().getString(), signPos);
+        if (signShop == null) {
+            player.sendSystemMessage(Component.literal("§cNo sign shop found at this location!"));
+            return 0;
+        }
+        
+        // Check if player has permission to remove this shop
+        boolean canRemove = false;
+        
+        // Check if player is shop owner
+        if (signShop.getOwnerId().equals(player.getStringUUID())) {
+            canRemove = true;
+        }
+        // Check if player is admin and has admin permissions
+        else if (hasPermission(player, PermissionNodes.SHOP_SIGN_ADMIN) || player.hasPermissions(4)) {
+            canRemove = true;
+        }
+        // Check if it's an admin shop and player has admin permissions
+        else if ("SERVER".equals(signShop.getOwnerId()) && hasPermission(player, PermissionNodes.SHOP_ADMIN)) {
+            canRemove = true;
+        }
+        
+        if (!canRemove) {
+            player.sendSystemMessage(Component.literal("§cYou don't have permission to remove this shop! You can only remove your own shops."));
+            return 0;
+        }
+        
+        // Remove the sign shop
+        boolean removed = shopManager.removeSignShop(signPos);
+        
+        if (removed) {
+            String shopType = "SERVER".equals(signShop.getOwnerId()) ? "admin shop" : "sign shop";
+            player.sendSystemMessage(Component.literal("§a" + Character.toUpperCase(shopType.charAt(0)) + shopType.substring(1) + " removed successfully!"));
+            LOGGER.info("Player {} removed {} at {}", player.getName().getString(), shopType, signPos);
             return 1;
         } else {
-            player.sendSystemMessage(Component.literal("§cNo sign shop found at this location!"));
+            player.sendSystemMessage(Component.literal("§cFailed to remove sign shop!"));
             return 0;
         }
     }
@@ -274,6 +335,8 @@ public class SignShopCommand {
         context.getSource().sendSuccess(() -> Component.literal("§6=== Sign Shop Commands ==="), false);
         context.getSource().sendSuccess(() -> Component.literal("§e/signshop create <item> <quantity> <buy_price> [sell_price]"), false);
         context.getSource().sendSuccess(() -> Component.literal("§7  Create a new sign shop (look at a sign)"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§e/signshop adminshop create <item> <quantity> <buy_price> [sell_price]"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7  Create an admin shop with unlimited stock"), false);
         context.getSource().sendSuccess(() -> Component.literal("§e/signshop remove"), false);
         context.getSource().sendSuccess(() -> Component.literal("§7  Remove a sign shop (look at the sign)"), false);
         context.getSource().sendSuccess(() -> Component.literal("§e/signshop info"), false);
@@ -284,6 +347,7 @@ public class SignShopCommand {
         context.getSource().sendSuccess(() -> Component.literal("§6Sign Shop Usage:"), false);
         context.getSource().sendSuccess(() -> Component.literal("§7- Left click to buy from shop"), false);
         context.getSource().sendSuccess(() -> Component.literal("§7- Sneak + left click to sell to shop"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§7- Admin shops have unlimited stock"), false);
         
         return 1;
     }
@@ -292,7 +356,52 @@ public class SignShopCommand {
      * Check if source has permission
      */
     private static boolean hasPermission(CommandSourceStack source, String permission) {
-        // TODO: Implement proper permission checking
-        return true; // For now, allow all operations
+        // Check if it's a server player
+        if (!(source.getEntity() instanceof ServerPlayer player)) {
+            return source.hasPermission(4); // Console/server always has admin permissions
+        }
+        
+        return hasPermission(player, permission);
+    }
+    
+    /**
+     * Check if player has permission
+     */
+    private static boolean hasPermission(ServerPlayer player, String permission) {
+        // Admin permissions - check if player is OP
+        if (permission.contains("admin") || permission.contains("ADMIN")) {
+            return player.hasPermissions(4);
+        }
+        
+        // For basic shop operations, check if player has basic permissions
+        if (permission.equals(PermissionNodes.SHOP_SIGN_USE) || 
+            permission.equals(PermissionNodes.SHOP_SIGN_CREATE)) {
+            return player.hasPermissions(0); // All players can use shops by default
+        }
+        
+        // For admin-only operations
+        if (permission.equals(PermissionNodes.SHOP_ADMIN) ||
+            permission.equals(PermissionNodes.SHOP_SIGN_ADMIN)) {
+            return player.hasPermissions(4); // Only ops can admin shops
+        }
+        
+        // Default to op check for unrecognized permissions
+        return player.hasPermissions(4);
+    }
+    
+    /**
+     * Refresh all shop signs to update their display colors based on current stock
+     */
+    private static int refreshAllShopSigns(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        
+        try {
+            int refreshed = SignShopHandler.refreshAllShopSigns(source.getLevel());
+            source.sendSuccess(() -> Component.literal("§aRefreshed " + refreshed + " shop signs!"), true);
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("§cError refreshing shop signs: " + e.getMessage()));
+            return 0;
+        }
     }
 }
