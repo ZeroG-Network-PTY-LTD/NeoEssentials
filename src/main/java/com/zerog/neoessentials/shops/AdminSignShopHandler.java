@@ -4,7 +4,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.network.chat.Component;
-import com.zerog.neoessentials.shops.ShopManager.SignShop;
+import com.zerog.neoessentials.economy.shops.ShopManager.SignShop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +67,7 @@ public class AdminSignShopHandler {
             + signShop.getItem().getDisplayName().getString() + " for " + economyManager.formatCurrency(totalPrice)));
         
         // Record transaction
-        ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
+        com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
         
         LOGGER.info("Admin shop BUY transaction completed for player {}: {}x {} for {}", 
                    player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), totalPrice);
@@ -119,7 +119,7 @@ public class AdminSignShopHandler {
             + signShop.getItem().getDisplayName().getString() + " for " + economyManager.formatCurrency(totalEarnings)));
         
         // Record transaction
-        ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);
+        com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);
         
         LOGGER.info("Admin shop SELL transaction completed for player {}: {}x {} for {}", 
                    player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), totalEarnings);

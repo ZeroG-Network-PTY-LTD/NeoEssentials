@@ -210,6 +210,7 @@ public final class PermissionNodes {
     public static final String SHOP_ADMIN = "neoessentials.shop.admin";
     public static final String SHOP_MANAGE_OTHERS = "neoessentials.shop.manage.others";
     public static final String SHOP_BYPASS_LIMITS = "neoessentials.shop.bypass.limits";
+    public static final String SHOP_BYPASS_PROTECTION = "neoessentials.shop.bypass.protection";
     public static final String SHOP_ALL = "neoessentials.shop.*";
     
     // ==============================
@@ -490,7 +491,7 @@ public final class PermissionNodes {
             // Shop System
             SHOP_USE, SHOP_BUY, SHOP_SELL, SHOP_CREATE, SHOP_DELETE, SHOP_EDIT,
             SHOP_BROWSE, SHOP_SEARCH, SHOP_SIGN_CREATE, SHOP_SIGN_USE, SHOP_SIGN_BREAK, SHOP_SIGN_ADMIN,
-            SHOP_ADMIN, SHOP_MANAGE_OTHERS, SHOP_BYPASS_LIMITS, SHOP_ALL,
+            SHOP_ADMIN, SHOP_MANAGE_OTHERS, SHOP_BYPASS_LIMITS, SHOP_BYPASS_PROTECTION, SHOP_ALL,
             
             // Messaging
             MSG, REPLY, MSGTOGGLE, SOCIALSPY,

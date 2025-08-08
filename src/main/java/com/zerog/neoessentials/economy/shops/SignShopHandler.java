@@ -846,9 +846,20 @@ public class SignShopHandler {
                     try {
                         // Create a temporary handler instance to call non-static methods
                         SignShopHandler handler = new SignShopHandler(shopManager);
-                        // For now, refresh with basic display - this can be enhanced later
-                        handler.updateSignText(level, shop.getSignPos(), shop.getItem(), 
-                                             shop.getBuyPrice(), shop.getSellPrice(), shop.getQuantity());
+                        
+                        // CRITICAL FIX: Properly detect admin shops and call correct method
+                        boolean isAdminShop = "SERVER".equals(shop.getOwnerId());
+                        if (isAdminShop) {
+                            // Use the admin shop updateSignText method
+                            handler.updateSignText(level, shop.getSignPos(), shop.getItem(), 
+                                                 shop.getBuyPrice(), shop.getSellPrice(), shop.getQuantity(), true);
+                            LOGGER.debug("Refreshed ADMIN shop sign at {}", shop.getSignPos());
+                        } else {
+                            // Use the player shop updateSignText method
+                            handler.updateSignText(level, shop.getSignPos(), shop.getItem(), 
+                                                 shop.getBuyPrice(), shop.getSellPrice(), shop.getQuantity(), false);
+                            LOGGER.debug("Refreshed PLAYER shop sign at {}", shop.getSignPos());
+                        }
                         refreshedCount++;
                     } catch (Exception e) {
                         LOGGER.warn("Failed to refresh sign at {}: {}", shop.getSignPos(), e.getMessage());

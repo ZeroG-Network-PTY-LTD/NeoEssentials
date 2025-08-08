@@ -1,7 +1,7 @@
 package com.zerog.neoessentials;
 
 import com.zerog.neoessentials.economy.shops.ShopManager;
-import com.zerog.neoessentials.economy.shops.SignShopHandler;
+import com.zerog.neoessentials.shops.SignShopHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.block.SignBlock;
