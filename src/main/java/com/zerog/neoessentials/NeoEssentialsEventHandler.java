@@ -1,4 +1,4 @@
-package com.zerog.neoessentials.events;
+package com.zerog.neoessentials;
 
 import com.zerog.neoessentials.managers.*;
 import com.zerog.neoessentials.economy.shops.ShopManager;
@@ -198,7 +198,8 @@ public class NeoEssentialsEventHandler {
         BlockPos chestPos = event.getPos();
         Level level = (Level) event.getLevel();
         
-        if (!isShopChest(level, chestPos)) return;
+        // Only proceed if this is actually a chest
+        if (!isChest(level, chestPos)) return;
         
         ShopManager shopManager = ShopManager.getInstance();
         if (shopManager == null) return;
@@ -210,13 +211,23 @@ public class NeoEssentialsEventHandler {
         
         if (signShop == null) return; // Not a shop chest
         
+        LOGGER.info("Player {} attempting to access shop chest at {} owned by {}", 
+                   player.getName().getString(), chestPos, signShop.getOwnerId());
+        
         if (!canAccessShop(player, signShop)) {
             event.setCanceled(true);
             if ("SERVER".equals(signShop.getOwnerId())) {
                 MessageUtil.sendMessage(player, "§cYou cannot access this admin shop chest! You need admin permissions.");
+                LOGGER.warn("Player {} tried to access admin shop chest at {} - BLOCKED", 
+                           player.getName().getString(), chestPos);
             } else {
                 MessageUtil.sendMessage(player, "§cYou cannot access this shop chest! It belongs to another player.");
+                LOGGER.warn("Player {} tried to access shop chest at {} owned by {} - BLOCKED", 
+                           player.getName().getString(), chestPos, signShop.getOwnerId());
             }
+        } else {
+            LOGGER.info("Player {} successfully accessed shop chest at {} - permission granted", 
+                       player.getName().getString(), chestPos);
         }
     }
     
@@ -258,10 +269,24 @@ public class NeoEssentialsEventHandler {
     }
     
     /**
-     * Check if a block is a chest
+     * Check if a block is a chest (renamed for clarity)
+     */
+    private static boolean isChest(Level level, BlockPos pos) {
+        return level.getBlockState(pos).getBlock() instanceof ChestBlock;
+    }
+    
+    /**
+     * Check if a block is a chest that belongs to a shop
      */
     private static boolean isShopChest(Level level, BlockPos pos) {
-        return level.getBlockState(pos).getBlock() instanceof ChestBlock;
+        if (!isChest(level, pos)) return false;
+        
+        ShopManager shopManager = ShopManager.getInstance();
+        if (shopManager == null) return false;
+        
+        // Check if this chest is connected to any shop
+        return shopManager.getSignShops().stream()
+            .anyMatch(shop -> pos.equals(shop.getChestPos()));
     }
 
     }
