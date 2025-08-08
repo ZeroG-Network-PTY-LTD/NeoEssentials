@@ -73,6 +73,10 @@ public class NeoEssentialsEventHandler {
         if (!(event.getEntity() instanceof ServerPlayer)) return;
         if (event.getLevel().isClientSide()) return;
         
+        ServerPlayer player = (ServerPlayer) event.getEntity();
+        BlockPos pos = event.getPos();
+        LOGGER.debug("RIGHT CLICK EVENT: Player {} clicked block at {}", player.getName().getString(), pos);
+        
         try {
             // Check for shop chest access protection
             handleChestAccess(event);
@@ -143,12 +147,15 @@ public class NeoEssentialsEventHandler {
         if (!canBreakShop(player, signShop)) {
             event.setCanceled(true);
             if ("SERVER".equals(signShop.getOwnerId())) {
-                MessageUtil.sendMessage(player, "§cYou cannot break this admin shop sign! You need admin permissions.");
-                LOGGER.warn("Player {} tried to break admin shop sign at {} - BLOCKED", 
+                MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis admin shop sign is protected!");
+                MessageUtil.sendMessage(player, "§7You need the '§eneoessentials.shop.admin§7' or '§eneoessentials.shop.bypass.protection§7' permission.");
+                LOGGER.warn("GRIEFING ATTEMPT: Player {} tried to break admin shop sign at {} - BLOCKED", 
                            player.getName().getString(), signPos);
             } else {
-                MessageUtil.sendMessage(player, "§cYou cannot break this shop sign! It belongs to another player.");
-                LOGGER.warn("Player {} tried to break shop sign at {} owned by {} - BLOCKED", 
+                MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis shop sign is protected!");
+                MessageUtil.sendMessage(player, "§7This sign belongs to another player's shop. Only the owner can break it.");
+                MessageUtil.sendMessage(player, "§7Admins can use '§eneoessentials.shop.bypass.protection§7' permission.");
+                LOGGER.warn("GRIEFING ATTEMPT: Player {} tried to break shop sign at {} owned by {} - BLOCKED", 
                            player.getName().getString(), signPos, signShop.getOwnerId());
             }
             return;
@@ -183,7 +190,11 @@ public class NeoEssentialsEventHandler {
         
         if (!canBreakShop(player, signShop)) {
             event.setCanceled(true);
-            MessageUtil.sendMessage(player, "§cYou cannot break this chest! It belongs to a shop owned by another player.");
+            MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis shop chest is protected!");
+            MessageUtil.sendMessage(player, "§7This chest belongs to another player's shop. Only the owner can break it.");
+            MessageUtil.sendMessage(player, "§7Admins can use '§eneoessentials.shop.bypass.protection§7' permission.");
+            LOGGER.warn("GRIEFING ATTEMPT: Player {} tried to break shop chest at {} owned by {} - BLOCKED", 
+                       player.getName().getString(), chestPos, signShop.getOwnerId());
             return;
         }
         
@@ -199,34 +210,58 @@ public class NeoEssentialsEventHandler {
         Level level = (Level) event.getLevel();
         
         // Only proceed if this is actually a chest
-        if (!isChest(level, chestPos)) return;
+        if (!isChest(level, chestPos)) {
+            LOGGER.debug("Block at {} is not a chest, skipping protection check", chestPos);
+            return;
+        }
+        
+        LOGGER.info("CHEST ACCESS: Player {} clicked chest at {}", player.getName().getString(), chestPos);
         
         ShopManager shopManager = ShopManager.getInstance();
-        if (shopManager == null) return;
+        if (shopManager == null) {
+            LOGGER.warn("ShopManager is null - cannot check chest protection");
+            return;
+        }
         
         // Find if this chest is connected to any shop
-        var signShop = shopManager.getSignShops().stream()
-            .filter(shop -> chestPos.equals(shop.getChestPos()))
+        var allShops = shopManager.getSignShops();
+        LOGGER.info("Checking {} shops for chest at {}", allShops.size(), chestPos);
+        
+        var signShop = allShops.stream()
+            .filter(shop -> {
+                boolean matches = chestPos.equals(shop.getChestPos());
+                if (matches) {
+                    LOGGER.info("Found matching shop! Chest {} belongs to shop at sign {} owned by {}", 
+                               chestPos, shop.getSignPos(), shop.getOwnerId());
+                }
+                return matches;
+            })
             .findFirst().orElse(null);
         
-        if (signShop == null) return; // Not a shop chest
+        if (signShop == null) {
+            LOGGER.info("Chest at {} is not connected to any shop - allowing access", chestPos);
+            return; // Not a shop chest
+        }
         
-        LOGGER.info("Player {} attempting to access shop chest at {} owned by {}", 
+        LOGGER.warn("SHOP CHEST ACCESS: Player {} attempting to access shop chest at {} owned by {}", 
                    player.getName().getString(), chestPos, signShop.getOwnerId());
         
         if (!canAccessShop(player, signShop)) {
             event.setCanceled(true);
             if ("SERVER".equals(signShop.getOwnerId())) {
-                MessageUtil.sendMessage(player, "§cYou cannot access this admin shop chest! You need admin permissions.");
-                LOGGER.warn("Player {} tried to access admin shop chest at {} - BLOCKED", 
+                MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis admin shop chest is protected!");
+                MessageUtil.sendMessage(player, "§7You need the '§eneoessentials.shop.admin§7' or '§eneoessentials.shop.bypass.protection§7' permission.");
+                LOGGER.warn("BLOCKED: Player {} tried to access admin shop chest at {} - PROTECTION ACTIVE", 
                            player.getName().getString(), chestPos);
             } else {
-                MessageUtil.sendMessage(player, "§cYou cannot access this shop chest! It belongs to another player.");
-                LOGGER.warn("Player {} tried to access shop chest at {} owned by {} - BLOCKED", 
+                MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis shop chest is protected!");
+                MessageUtil.sendMessage(player, "§7This chest belongs to another player's shop. Only the owner can access it.");
+                MessageUtil.sendMessage(player, "§7Admins can use '§eneoessentials.shop.bypass.protection§7' permission.");
+                LOGGER.warn("BLOCKED: Player {} tried to access shop chest at {} owned by {} - PROTECTION ACTIVE", 
                            player.getName().getString(), chestPos, signShop.getOwnerId());
             }
         } else {
-            LOGGER.info("Player {} successfully accessed shop chest at {} - permission granted", 
+            LOGGER.info("ALLOWED: Player {} successfully accessed shop chest at {} - permission granted", 
                        player.getName().getString(), chestPos);
         }
     }
@@ -235,6 +270,12 @@ public class NeoEssentialsEventHandler {
      * Check if player can break/remove a shop
      */
     private static boolean canBreakShop(ServerPlayer player, ShopManager.SignShop signShop) {
+        // Check for bypass permission first (for admin players)
+        if (PermissionUtil.hasPermission(player, PermissionNodes.SHOP_BYPASS_PROTECTION)) {
+            LOGGER.info("Player {} bypassed shop protection with bypass permission", player.getName().getString());
+            return true;
+        }
+        
         // Admin shops can only be broken by players with admin permissions
         if ("SERVER".equals(signShop.getOwnerId())) {
             return PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);
@@ -248,10 +289,17 @@ public class NeoEssentialsEventHandler {
      * Check if player can access shop chest (stricter than breaking)
      */
     private static boolean canAccessShop(ServerPlayer player, ShopManager.SignShop signShop) {
+        // Check for bypass permission first (for admin players)
+        if (PermissionUtil.hasPermission(player, PermissionNodes.SHOP_BYPASS_PROTECTION)) {
+            LOGGER.info("Player {} bypassed shop protection with bypass permission", player.getName().getString());
+            return true;
+        }
+        
         // Admin shops can only be accessed by players with admin permissions
         if ("SERVER".equals(signShop.getOwnerId())) {
             return PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);
         }
+        
         // Player shops can only be accessed by the owner or admins
         return signShop.getOwnerId().equals(player.getStringUUID()) || 
                PermissionUtil.hasPermission(player, PermissionNodes.SHOP_ADMIN);

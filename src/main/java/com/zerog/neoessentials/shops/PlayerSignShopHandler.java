@@ -6,7 +6,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import com.zerog.neoessentials.shops.ShopManager.SignShop;
+import com.zerog.neoessentials.economy.shops.ShopManager.SignShop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.UUID;
@@ -19,9 +19,41 @@ public class PlayerSignShopHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlayerSignShopHandler.class);
     
     public static boolean handleBuyTransaction(Player player, SignShop signShop, Level level, int quantity) {
-        // Check if shop has enough stock
+        // Check if shop has enough stock - but do REAL-TIME check, not just recorded stock
+        BlockPos chestPos = signShop.getChestPos();
+        if (chestPos == null) {
+            player.sendSystemMessage(Component.literal("§cThis shop doesn't have a connected chest!"));
+            return false;
+        }
+        
+        if (!(level.getBlockEntity(chestPos) instanceof ChestBlockEntity chestEntity)) {
+            player.sendSystemMessage(Component.literal("§cShop chest not found!"));
+            return false;
+        }
+        
+        // CRITICAL: Check ACTUAL chest inventory FIRST - this prevents duplication bugs
+        int actualItemsInChest = countItemsInChest(chestEntity, signShop.getItem());
+        LOGGER.info("ANTI-DUPE CHECK: Player {} attempting to buy {}x {} from shop. Chest actually contains: {} items", 
+                   player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), actualItemsInChest);
+        
+        if (actualItemsInChest == 0) {
+            player.sendSystemMessage(Component.literal("§4[ANTI-DUPE PROTECTION] §cThis shop has NO ITEMS in the chest! Transaction blocked."));
+            LOGGER.warn("BLOCKED POTENTIAL DUPE: Player {} tried to buy from empty chest at {}", 
+                       player.getName().getString(), chestPos);
+            return false;
+        }
+        
+        if (actualItemsInChest < quantity) {
+            player.sendSystemMessage(Component.literal("§e[INSUFFICIENT STOCK] §6This shop only has " + actualItemsInChest 
+                + "x " + signShop.getItem().getDisplayName().getString() + " but you're trying to buy " + quantity + "x. Transaction blocked."));
+            LOGGER.warn("BLOCKED INSUFFICIENT STOCK: Player {} tried to buy {}x but chest only has {}x at {}", 
+                       player.getName().getString(), quantity, actualItemsInChest, chestPos);
+            return false;
+        }
+        
+        // Legacy recorded stock check (keeping for compatibility)
         if (!signShop.hasStock() || signShop.getStock() < quantity) {
-            player.sendSystemMessage(Component.literal("§cThis shop doesn't have enough items in stock!"));
+            player.sendSystemMessage(Component.literal("§cThis shop doesn't have enough items in stock! (Legacy check)"));
             return false;
         }
         
@@ -46,19 +78,7 @@ public class PlayerSignShopHandler {
             return false;
         }
         
-        // Check if chest has enough items
-        BlockPos chestPos = signShop.getChestPos();
-        if (chestPos == null) {
-            player.sendSystemMessage(Component.literal("§cThis shop doesn't have a connected chest!"));
-            return false;
-        }
-        
-        if (!(level.getBlockEntity(chestPos) instanceof ChestBlockEntity chestEntity)) {
-            player.sendSystemMessage(Component.literal("§cShop chest not found!"));
-            return false;
-        }
-        
-        // Check chest inventory for items
+        // Check chest inventory for items (redundant check for extra safety)
         int availableItems = countItemsInChest(chestEntity, signShop.getItem());
         if (availableItems < quantity) {
             player.sendSystemMessage(Component.literal("§cThis shop only has " + availableItems 
@@ -112,13 +132,13 @@ public class PlayerSignShopHandler {
         }
         
         // Update shop stock
-        ShopManager.getInstance().updateSignShopStock(signShop.getSignPos(), signShop.getStock() - quantity);
+        com.zerog.neoessentials.economy.shops.ShopManager.getInstance().updateSignShopStock(signShop.getSignPos(), signShop.getStock() - quantity);
         
         player.sendSystemMessage(Component.literal("§aYou bought " + quantity + "x " 
             + signShop.getItem().getDisplayName().getString() + " for " + economyManager.formatCurrency(totalPrice)));
         
         // Record transaction
-        ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
+        com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
         
         LOGGER.info("Player shop BUY transaction completed for player {}: {}x {} for {}", 
                    player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), totalPrice);
@@ -218,7 +238,7 @@ public class PlayerSignShopHandler {
             + signShop.getItem().getDisplayName().getString() + " for " + economyManager.formatCurrency(totalEarnings)));
         
         // Record transaction
-        ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);
+        com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);
         
         LOGGER.info("Player shop SELL transaction completed for player {}: {}x {} for {}", 
                    player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), totalEarnings);
@@ -252,7 +272,7 @@ public class PlayerSignShopHandler {
         return remaining == 0;
     }
     
-    private static int countItemsInChest(ChestBlockEntity chest, ItemStack targetItem) {
+    public static int countItemsInChest(ChestBlockEntity chest, ItemStack targetItem) {
         int count = 0;
         for (int i = 0; i < chest.getContainerSize(); i++) {
             ItemStack stack = chest.getItem(i);

@@ -412,8 +412,9 @@ public class SignShopCommand {
         CommandSourceStack source = context.getSource();
         
         try {
-            int refreshed = SignShopHandler.refreshAllShopSigns(source.getLevel());
-            source.sendSuccess(() -> Component.literal("§aRefreshed " + refreshed + " shop signs!"), true);
+            // Use the NEW SignShopHandler for refreshing (has proper admin shop logic)
+            int refreshed = com.zerog.neoessentials.shops.SignShopHandler.refreshAllShopSigns(source.getLevel());
+            source.sendSuccess(() -> Component.literal("§aRefreshed " + refreshed + " shop signs with proper logic!"), true);
             return 1;
         } catch (Exception e) {
             source.sendFailure(Component.literal("§cError refreshing shop signs: " + e.getMessage()));
