@@ -30,6 +30,8 @@ The NeoEssentials Animation System provides powerful animated placeholders for t
 config/neoessentials/animations.json
 ```
 
+> **Note**: This file is automatically created when NeoEssentials first starts. You can customize the animations by editing this JSON file and then using `/neoanimations reload` to apply changes without restarting the server.
+
 ### Basic Animation Structure
 ```json
 {
@@ -325,7 +327,7 @@ Use `/neoanimations stats` to monitor:
 
 ## Examples and Templates
 
-See the `docs/Example Configs/animations_examples.yml` file for complete working examples of:
+See the `docs/Example Configs/animations_prefix_examples.json` file for working examples of animated prefix configurations. For complete animation system examples, check the auto-generated `config/neoessentials/animations.json` file after first server startup, which includes:
 - Animated tablist themes
 - Dynamic scoreboard configurations  
 - Interactive bossbar templates

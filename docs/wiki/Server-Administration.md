@@ -1,104 +1,336 @@
 # Server Administration
 
-NeoEssentials provides comprehensive server administration tools for managing and maintaining your Minecraft server. This documentation covers all administrative commands, server control features, and advanced management capabilities.
+NeoEssentials provides essential server administration tools for managing your Minecraft server. This documentation covers the administrative commands and server control features that are currently implemented in the mod.
 
 ## 🖥️ Server Control Commands
 
 ### World Management
 
 #### Time Control
+
+Control world time with comprehensive time management commands:
+
 ```bash
-/time set <time>                # Set world time
-/time add <time>                # Add time to current
-/day                           # Set time to day (1000)
-/night                         # Set time to night (13000)
-/sunrise                       # Set time to sunrise (6000)
-/sunset                        # Set time to sunset (18000)
+/time set <preset|value>       # Set world time to preset or specific value
+/time add <value>              # Add time to current world time
+/time query daytime            # Query current day time
+/time query gametime           # Query total game time
 ```
 
-**Time Values:**
-- `day` or `1000` - Daytime
-- `night` or `13000` - Nighttime  
-- `noon` or `6000` - Noon
+**Time Presets:**
+- `day` or `1000` - Daytime (morning)
+- `noon` or `6000` - Noon (midday)  
+- `night` or `13000` - Nighttime (evening)
 - `midnight` or `18000` - Midnight
-- Custom values: `0-24000`
-
-#### Weather Control
-```bash
-/weather <type> [duration]      # Set weather
-/sun [duration]                # Clear weather
-/rain [duration]               # Set rain
-/thunder [duration]            # Set thunderstorm
-```
+- Custom values: `0-24000` (full day cycle)
 
 **Examples:**
 ```bash
-/weather clear 1000            # Clear weather for 1000 ticks
-/rain 600                      # Rain for 600 seconds
-/thunder                       # Toggle thunderstorm
+/time set day                  # Set time to day (1000 ticks)
+/time set 12000               # Set time to specific value
+/time add 6000                # Add 6000 ticks to current time
+/time query daytime           # Check current day time
 ```
 
-#### World Properties
+#### Weather Control
+
+Manage world weather conditions:
+
 ```bash
-/gamerule <rule> <value>       # Set game rules
-/difficulty <level>            # Set difficulty
-/worldborder <command>         # Manage world border
-/seed                          # Display world seed
+/weather clear [duration]      # Clear weather
+/weather rain [duration]       # Start rain
+/weather thunder [duration]    # Start thunderstorm
 ```
 
-**Common Game Rules:**
+**Duration Options:**
+- No duration: Default duration (600 seconds)
+- Custom duration: Specify time in seconds
+- Maximum duration: 1,000,000 seconds
+
+**Examples:**
 ```bash
-/gamerule keepInventory true   # Keep items on death
-/gamerule doDaylightCycle false # Stop day/night cycle
-/gamerule doMobSpawning false  # Disable mob spawning
-/gamerule announceAdvancements false # Disable advancement announcements
+/weather clear                # Clear weather (default duration)
+/weather rain 300             # Rain for 300 seconds
+/weather thunder 600          # Thunderstorm for 600 seconds
 ```
 
-### Server Control
+### Player Management
 
-#### Server Management
+Basic player administration commands:
+
+#### Game Mode Management
 ```bash
-/restart [delay] [reason]      # Restart server with countdown
-/stop [reason]                 # Stop server gracefully
-/reload                        # Reload server plugins/configs
-/save-all                      # Force save all worlds
-/save-off                      # Disable auto-saving
-/save-on                       # Enable auto-saving
+/gamemode <mode> [player]     # Change game mode
+/gm <mode> [player]           # Alias for gamemode
+/gmc [player]                 # Creative mode shortcut
+/gms [player]                 # Survival mode shortcut  
+/gma [player]                 # Adventure mode shortcut
+/gmsp [player]                # Spectator mode shortcut
 ```
 
-#### Player Management
+**Game Mode Options:**
+- `survival` or `0` - Survival mode
+- `creative` or `1` - Creative mode
+- `adventure` or `2` - Adventure mode
+- `spectator` or `3` - Spectator mode
+
+#### Player Control
 ```bash
-/list                          # List online players
-/whitelist <add/remove> <player> # Manage whitelist
-/op <player>                   # Give operator permissions
-/deop <player>                 # Remove operator permissions
-/pardon <player>               # Remove player from ban list
+/kick <player> [reason]       # Kick player from server
+/ban <player> [reason]        # Ban player from server
+/heal <player>                # Heal player to full health
+/feed <player>                # Feed player to full hunger
 ```
 
-#### Memory & Performance
+### Server Information
+
+#### System Information
 ```bash
-/gc                            # Force garbage collection
-/lag                           # Check server performance
-/tps                           # View server TPS (ticks per second)
-/memory                        # View memory usage
-/entities                      # Count entities per world
+/info                         # Display comprehensive server information
 ```
 
-## 🎛️ Admin GUI System
+**Information Displayed:**
+- Server version and MOTD
+- Player count (online/max)
+- Memory usage and percentage
+- Current world day
+- Game rule status (keepInventory, mobGriefing, etc.)
+- Difficulty level
+- Server tick count
+- NeoEssentials version
 
-### Admin Control Panel
+#### Configuration Management
 ```bash
-/admin                         # Open main admin panel
+/config                       # Basic configuration command
 ```
 
-**Panel Features:**
-- **Server Status** - TPS, memory usage, uptime
-- **Player Management** - Online players, quick actions
-- **World Control** - Time, weather, game rules
-- **Server Tools** - Restart, reload, maintenance mode
-- **Configuration** - Quick config access
+**Note**: Configuration features are limited in the current implementation.
 
-### Server Management GUI
+## 📊 Performance Monitoring
+
+### Performance Commands
+
+Monitor and manage server performance:
+
+```bash
+/performance                  # Show comprehensive performance statistics
+/performance stats            # Display performance metrics
+/performance memory           # Show detailed memory information
+/performance cache            # Show cache statistics
+/performance clear            # Clear performance cache
+/performance gc               # Force garbage collection
+/performance monitoring <on|off> # Enable/disable monitoring
+```
+
+#### Performance Statistics
+
+**System Metrics:**
+- **Memory Usage**: Current heap usage, free memory, and usage percentage
+- **Cache Performance**: Cache size and hit rates
+- **Command Statistics**: Execution times and frequency
+- **Thread Information**: Executor statistics and thread usage
+
+**Example Output:**
+```
+=== Performance Statistics ===
+Memory Usage: 65.2%
+Cache Size: 147
+Average Command Time: 2.3ms
+Total Commands: 1,524
+Cache Hit Rate: 87.4%
+
+Top Commands:
+1. /heal - 234 executions
+2. /feed - 187 executions
+3. /home - 156 executions
+```
+
+#### Memory Management
+
+**Memory Information:**
+```bash
+/performance memory           # Detailed memory breakdown
+```
+
+**Memory Status Indicators:**
+- **✅ Healthy**: < 70% memory usage
+- **⚠️ Moderate**: 70-85% memory usage
+- **❌ High**: > 85% memory usage (optimization recommended)
+
+**Garbage Collection:**
+```bash
+/performance gc               # Force garbage collection
+```
+
+**Features:**
+- Memory usage before and after GC
+- Amount of memory freed
+- Performance impact analysis
+
+### Cache Management
+
+```bash
+/performance cache            # Show cache statistics
+/performance clear            # Clear all performance caches
+```
+
+**Cache Information:**
+- Cache size and capacity
+- Hit rates and performance impact
+- Memory usage by cache system
+- Cache cleanup and optimization
+
+## ⚙️ Configuration
+
+### Basic Settings
+
+NeoEssentials integrates with standard server configuration through TOML files:
+
+```
+config/
+├── neoessentials-common.toml     # Common server settings
+├── neoessentials-general.toml    # General configuration
+└── neoessentials/               # Detailed configurations
+    ├── main.json                # Core settings
+    ├── permissions.json         # Permission configuration
+    └── other config files...
+```
+
+### Permission Requirements
+
+Administrative commands require appropriate permissions:
+
+```yaml
+# World management
+neoessentials.time               # Time control commands
+neoessentials.weather            # Weather control commands
+
+# Player management  
+neoessentials.gamemode           # Change own gamemode
+neoessentials.gamemode.others    # Change other players' gamemode
+neoessentials.kick               # Kick players
+neoessentials.ban                # Ban players
+neoessentials.heal.others        # Heal other players
+neoessentials.feed.others        # Feed other players
+
+# Performance monitoring
+neoessentials.performance        # Basic performance commands
+neoessentials.admin.performance  # Advanced performance management
+
+# System information
+neoessentials.info               # Server information command
+neoessentials.config             # Configuration access
+```
+
+## 🛠️ Administrative Workflow
+
+### Daily Administration Tasks
+
+1. **Monitor Server Health**:
+   ```bash
+   /info                         # Check overall server status
+   /performance stats            # Review performance metrics
+   ```
+
+2. **Manage World Settings**:
+   ```bash
+   /time set day                 # Reset time if needed
+   /weather clear               # Clear bad weather
+   ```
+
+3. **Handle Player Issues**:
+   ```bash
+   /heal PlayerName             # Help players with health issues
+   /gamemode survival PlayerName # Fix gamemode problems
+   ```
+
+4. **Performance Maintenance**:
+   ```bash
+   /performance memory          # Check memory usage
+   /performance gc              # Clean up memory if needed
+   /performance clear           # Clear caches periodically
+   ```
+
+### Performance Optimization
+
+#### Memory Management
+- Run `/performance memory` regularly to monitor usage
+- Use `/performance gc` when memory usage exceeds 80%
+- Clear caches with `/performance clear` during low-activity periods
+
+#### Command Monitoring
+- Review command statistics with `/performance stats`
+- Identify frequently used commands for optimization
+- Monitor command execution times for performance issues
+
+### Troubleshooting
+
+#### Common Issues
+
+**Performance Problems:**
+1. Check memory usage: `/performance memory`
+2. Review command performance: `/performance stats`
+3. Force garbage collection: `/performance gc`
+4. Clear caches: `/performance clear`
+
+**World Issues:**
+1. Check server info: `/info`
+2. Verify game rules and settings
+3. Reset time/weather if needed
+
+**Player Problems:**
+1. Use `/heal` and `/feed` for player health issues
+2. Correct gamemode with `/gamemode` commands
+3. Use moderation commands (`/kick`, `/ban`) for problem players
+
+#### Debug Information
+
+**System Status:**
+- Server version and configuration
+- Memory usage and available resources
+- Active game rules and world settings
+- Player count and connection status
+
+**Performance Analysis:**
+- Command execution statistics
+- Memory usage patterns
+- Cache performance metrics
+- Thread and executor status
+
+## 🔧 Limitations & Recommendations
+
+### Current Limitations
+
+**Missing Features:**
+- **Server restart/stop commands**: Use your server control panel or console
+- **Advanced TPS monitoring**: Consider dedicated performance plugins
+- **Automated scheduling**: Use external cron jobs or server management tools
+- **Advanced player analytics**: Limited to basic information
+
+**Workarounds:**
+- **Server Control**: Use your hosting panel or direct console access
+- **Advanced Monitoring**: Combine with external monitoring tools
+- **Automation**: Use server management scripts outside of NeoEssentials
+- **Backup Management**: Use dedicated backup plugins or scripts
+
+### Recommended Setup
+
+**For Basic Administration:**
+- Use NeoEssentials for world and player management
+- Monitor performance with built-in tools
+- Handle configuration through TOML files
+
+**For Advanced Administration:**
+- Combine NeoEssentials with dedicated server management tools
+- Use external monitoring for comprehensive analytics
+- Implement automated scripts for advanced scheduling
+- Consider additional plugins for specialized features
+
+---
+
+**Related Documentation**: [Essential Commands](Essential-Commands.md) | [Permissions](Permissions.md) | [Performance](Performance.md) | [Configuration](Configuration.md)
+
+*Last Updated: August 9, 2025*
 ```bash
 /servermanager                 # Open server management interface
 ```

@@ -1,84 +1,302 @@
-# Themes and Styling
+# Theme System
 
-NeoEssentials offers comprehensive theming and styling capabilities, allowing server administrators to create unique visual experiences that match their server's brand and aesthetic preferences.
+NeoEssentials provides a basic theme system that allows customization of tablist, scoreboard, and bossbar displays through predefined themes.
 
-## 🎨 Theme System Overview
+## 🎯 Overview
 
-### What are Themes?
-Themes in NeoEssentials control the visual appearance of:
-- **GUI Interfaces** - Colors, borders, backgrounds
-- **Chat Messages** - Prefixes, colors, formatting
-- **Notifications** - Styling for different notification types
-- **Bossbar Displays** - Colors, styles, and animations
-- **Tablist & Scoreboard** - Headers, formatting, colors
+The theme system currently supports:
+- **Tablist Themes** - Different visual styles for player lists
+- **Scoreboard Themes** - Various layouts for scoreboard information
+- **Bossbar Themes** - Styled bossbar templates with different colors and overlays
 
-### Theme Architecture
-The theme system uses a hierarchical structure:
-1. **Base Theme** - Core color palette and styling rules
-2. **Component Themes** - Specific styling for GUI components
-3. **User Overrides** - Player-specific customizations
-4. **Dynamic Themes** - Themes that change based on conditions
+The theme system uses predefined themes that are built into the mod and cannot be customized through configuration files.
 
-## 🖌️ Built-in Themes
+## 🎨 Available Themes
 
-### Default Theme
-Clean, professional appearance suitable for most servers:
+### Tablist Themes
 
-```json
-{
-  "name": "default",
-  "displayName": "§fDefault Theme",
-  "description": "Clean and professional appearance",
-  "colors": {
-    "primary": "§6",      // Gold
-    "secondary": "§7",    // Gray
-    "accent": "§b",       // Aqua
-    "success": "§a",      // Green
-    "warning": "§e",      // Yellow
-    "error": "§c",        // Red
-    "info": "§9"          // Blue
-  },
-  "gui": {
-    "background": "minecraft:black_stained_glass_pane",
-    "border": "minecraft:gray_stained_glass_pane",
-    "button": "minecraft:stone_button",
-    "decoration": "minecraft:gold_ingot"
-  }
-}
+The tablist system includes several predefined themes:
+
+#### Available Themes:
+- **default** - Standard theme with basic formatting
+- **modern** - Contemporary styling with enhanced colors  
+- **classic** - Traditional appearance with simple design
+- **minimalist** - Clean, minimal styling
+
+Each theme provides different header/footer formatting and color schemes for the player list display.
+
+### Scoreboard Themes
+
+Multiple scoreboard layouts for different information displays:
+
+#### Available Themes:
+- **serverinfo** - General server information (TPS, memory, player count)
+- **playerstats** - Detailed player statistics (health, level, position)
+- **economy** - Economy-related information (balance, ranks)
+
+Each theme displays different types of information with themed formatting and colors.
+
+### Bossbar Themes
+
+Predefined bossbar templates with different visual styles:
+
+#### Available Themes:
+- **default** - Standard white progress bar
+- **modern** - Blue with notched overlay and arrow formatting
+- **classic** - Gold/yellow with decorative formatting
+- **minimalist** - Simple white design
+
+Each theme includes different colors, overlays, and text formatting for bossbar displays.
+
+## 🎮 Commands
+
+The theme system is managed through the `/theme` command:
+
+### `/theme tablist <theme> [player]`
+Apply a tablist theme to yourself or another player.
+
+**Examples**:
+```bash
+# Apply modern theme to yourself
+/theme tablist modern
+
+# Apply classic theme to specific player
+/theme tablist classic Steve
 ```
 
-### Dark Theme
-Sleek dark appearance for low-light environments:
+**Permission**: `neoessentials.moderation.basic`
 
-```json
-{
-  "name": "dark",
-  "displayName": "§8Dark Theme",
-  "description": "Sleek dark mode for night owls",
-  "colors": {
-    "primary": "§8",      // Dark Gray
-    "secondary": "§7",    // Gray
-    "accent": "§b",       // Aqua
-    "success": "§2",      // Dark Green
-    "warning": "§6",      // Gold
-    "error": "§4",        // Dark Red
-    "info": "§1"          // Dark Blue
-  },
-  "gui": {
-    "background": "minecraft:black_stained_glass_pane",
-    "border": "minecraft:gray_stained_glass_pane",
-    "button": "minecraft:blackstone_button",
-    "decoration": "minecraft:iron_ingot"
-  }
-}
+---
+
+### `/theme scoreboard <theme> [player]`
+Apply a scoreboard theme to yourself or another player.
+
+**Examples**:
+```bash
+# Apply server info theme to yourself
+/theme scoreboard serverinfo
+
+# Apply player stats theme to specific player
+/theme scoreboard playerstats Steve
 ```
 
-### Ocean Theme
-Calming blue ocean-inspired theme:
+**Permission**: `neoessentials.moderation.basic`
 
-```json
-{
-  "name": "ocean",
+---
+
+### `/theme bossbar show <template> [duration] [player]`
+Show a bossbar with the specified theme template.
+
+**Examples**:
+```bash
+# Show default bossbar for 10 seconds
+/theme bossbar show default
+
+# Show modern bossbar for 30 seconds
+/theme bossbar show modern 30
+
+# Show bossbar for specific player
+/theme bossbar show classic 15 Steve
+```
+
+**Permission**: `neoessentials.moderation.basic`
+
+---
+
+### `/theme bossbar hide [player]`
+Hide the bossbar for yourself or another player.
+
+**Examples**:
+```bash
+# Hide your bossbar
+/theme bossbar hide
+
+# Hide bossbar for specific player
+/theme bossbar hide Steve
+```
+
+**Permission**: `neoessentials.moderation.basic`
+
+---
+
+### `/theme list [type]`
+List available themes for different components.
+
+**Examples**:
+```bash
+# List all available themes
+/theme list
+
+# List only tablist themes
+/theme list tablist
+
+# List only scoreboard themes
+/theme list scoreboard
+
+# List only bossbar templates
+/theme list bossbar
+```
+
+**Permission**: `neoessentials.moderation.basic`
+
+---
+
+### `/theme reload`
+Reload the theme system (admin command).
+
+**Example**:
+```bash
+/theme reload
+```
+
+**Permission**: `neoessentials.admin.basic`
+
+## ⚙️ Theme Implementation
+
+### Tablist Themes
+
+Tablist themes are implemented in the `TablistScoreboardManager` class and include:
+
+#### Theme Properties:
+- **Headers**: List of header texts that can cycle through animations
+- **Footers**: List of footer texts for the bottom of the tablist
+- **Name Formatting**: How player names appear in the list
+- **Color Schemes**: Predefined color combinations
+
+#### Features:
+- Real-time placeholder replacement
+- Animation support through text cycling
+- Player-specific theme assignments
+- Automatic updates at configured intervals
+
+### Scoreboard Themes
+
+Scoreboard themes provide different information layouts:
+
+#### Theme Structure:
+- **Title**: Scoreboard title with theme-specific formatting
+- **Lines**: Up to 15 lines of content with placeholders
+- **Colors**: Theme-specific color coding
+- **Update Intervals**: Automatic refresh of dynamic content
+
+#### Content Types:
+- Server statistics (TPS, memory usage, player count)
+- Player information (health, level, position, balance)
+- Session data (playtime, experience)
+
+### Bossbar Themes
+
+Bossbar themes control the appearance of temporary message displays:
+
+#### Theme Components:
+- **Title Format**: Main bossbar text formatting
+- **Subtitle Format**: Secondary text formatting (if supported)
+- **Bar Color**: Progress bar color (WHITE, BLUE, YELLOW, etc.)
+- **Bar Overlay**: Progress bar style (PROGRESS, NOTCHED_6, NOTCHED_10, etc.)
+
+#### Usage:
+- Announcements and notifications
+- Event notifications
+- Server status messages
+- Player-specific information
+
+## 🔧 Technical Details
+
+### Theme Storage
+
+Themes are stored in memory as predefined objects:
+
+#### TablistTheme Class:
+- Theme name and display properties
+- Header and footer text lists
+- Animation frame management
+- Player assignment tracking
+
+#### ScoreboardTheme Class:
+- Theme identification
+- Title and line content
+- Placeholder processing
+- Real-time data integration
+
+#### BossbarTheme Class:
+- Template name and formatting
+- Color and overlay properties
+- Duration and display settings
+
+### Theme Application
+
+#### Player Assignment:
+- Themes are assigned per-player using UUID mapping
+- Default themes applied to new players
+- Theme preferences persist during session
+- Automatic cleanup on player disconnect
+
+#### Update System:
+- Timer-based updates for dynamic content
+- Placeholder replacement for real-time data
+- Animation frame cycling for visual effects
+- Performance optimization through caching
+
+### Placeholder Support
+
+The theme system supports various placeholders:
+
+#### Player Information:
+- `{player}` - Player display name
+- `{health}` - Player health
+- `{level}` - Player level
+- `{balance}` - Player balance (if economy enabled)
+- `{world}` - Current world
+
+#### Server Information:
+- `{server_players}` - Online player count
+- `{server_tps}` - Server TPS
+- `{server_memory_percent}` - Memory usage
+- `{time}` - Current time
+- `{uptime}` - Server uptime
+
+## ⚠️ Limitations
+
+### Current Constraints
+
+#### Theme Customization:
+- **Predefined Only**: Themes are hardcoded and cannot be modified
+- **No Custom Themes**: Cannot create new themes through configuration
+- **Limited Options**: Only the built-in themes are available
+- **No File-based Configuration**: Themes cannot be edited in external files
+
+#### Design Restrictions:
+- **Basic Formatting**: Limited to Minecraft color codes
+- **Static Structure**: Theme layouts cannot be modified
+- **No Advanced Features**: No gradients, animations, or complex styling
+- **Memory Storage**: Themes exist only in memory, not persistent
+
+#### Functionality Limits:
+- **Tablist/Scoreboard/Bossbar Only**: Limited to these three components
+- **No GUI Theming**: Cannot style inventory GUIs or menus
+- **No Chat Theming**: Chat messages use separate formatting
+- **No Dynamic Switching**: No automatic theme changes based on conditions
+
+### Recommendations
+
+#### For Server Administrators:
+- **Use Built-in Themes**: Work with the provided theme options
+- **Test Combinations**: Try different theme combinations for different players
+- **Permission Management**: Control theme access through permissions
+- **Regular Updates**: Use the reload command when making system changes
+
+#### For Future Development:
+- **File-based Configuration**: Consider adding configurable themes
+- **GUI Integration**: Expand theming to inventory interfaces
+- **Custom Color Support**: Add hex color or RGB support
+- **Dynamic Features**: Implement conditional theme switching
+- **Theme Editor**: Create in-game theme customization tools
+
+---
+
+**Related Documentation**: [Tablist-Scoreboard](Tablist-Scoreboard.md) | [Bossbar](Bossbar.md) | [Configuration](Configuration.md)
+
+*Last Updated: August 9, 2025*
   "displayName": "§b§lOcean Theme",
   "description": "Calming ocean-inspired colors",
   "colors": {

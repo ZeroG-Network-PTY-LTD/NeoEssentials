@@ -1,84 +1,343 @@
-# Enhanced Tablist & Scoreboard System
+# Tablist & Scoreboard System
 
-The NeoEssentials Enhanced Tablist & Scoreboard System provides dynamic, theme-based player list and scoreboard management with real-time updates, multiple theme support, and comprehensive customization options.
+NeoEssentials provides a theme-based tablist and scoreboard system that allows customization of player list displays and scoreboards with multiple themes and real-time updates.
 
 ## 🎯 Overview
 
-The enhanced tablist and scoreboard system allows administrators to:
-- Display dynamic tablist headers and footers with theme support
-- Show real-time scoreboard information with customizable layouts
-- Use multiple themes simultaneously for different player groups
-- Create animated content with 20-frame animation cycles
-- Display server statistics, player data, and custom information
-- Apply consistent styling across all display elements
-- Support advanced placeholder system with real-time updates
+The tablist and scoreboard system allows administrators to:
+- Apply different tablist and scoreboard themes to players
+- Display dynamic content with real-time server information
+- Use predefined themes with consistent styling
+- Show player-specific information and server statistics
+- Support color formatting and basic placeholders
 
-## 🎨 Enhanced Tablist Features
+## 🎨 Tablist Features
 
-### Multi-Theme Support
-Players can have different tablist themes applied simultaneously, allowing for personalized experiences:
+### Theme System
+The system includes predefined themes that provide different visual styles for the tablist:
 
-#### Default Theme
-```yaml
-default:
-  header_format: "§f§l{title}"
-  footer_format: "§7{subtitle}"
-  name_format: "§f{player}"
-  colors: ["§f", "§7", "§e"]
-```
+#### Available Themes
+- **default** - Standard theme with basic formatting
+- **modern** - Contemporary styling with enhanced colors
+- **classic** - Traditional appearance with simple design
+- **minimalist** - Clean, minimal styling
 
-#### Modern Theme
-```yaml
-modern:
-  header_format: "§b§l❖ {title} ❖"
-  footer_format: "§f{subtitle}"
-  name_format: "§b{player}"
-  colors: ["§b", "§3", "§f"]
-```
-
-#### Classic Theme
-```yaml
-classic:
-  header_format: "§6§l「 {title} 」"
-  footer_format: "§e{subtitle}"
-  name_format: "§6{player}"
-  colors: ["§6", "§e", "§f"]
-```
-
-#### Minimalist Theme
-```yaml
-minimalist:
-  header_format: "§f{title}"
-  footer_format: "§8{subtitle}"
-  name_format: "§f{player}"
-  colors: ["§f", "§8", "§7"]
-```
+### Tablist Display
+- **Custom Headers**: Configurable top display with server information
+- **Custom Footers**: Bottom display with helpful information
+- **Player Name Formatting**: Theme-based player name styling
+- **Real-time Updates**: Live server statistics and player information
 
 ### Dynamic Content
-- **Real-time Updates**: Information updates automatically based on configured intervals
-- **Player-Specific Content**: Each player sees personalized information
-- **Server Statistics**: Live TPS, memory usage, player count, and more
-- **Animation Support**: Cycling text colors and animated messages
+The tablist supports dynamic placeholders that update automatically:
+- Server player count
+- Server TPS (Ticks Per Second)
+- Server memory usage
+- Player-specific information
+- Current time and server uptime
 
-### Tablist Features
-- **Custom Headers**: Configurable top display with server info and announcements
-- **Custom Footers**: Bottom display with helpful information and tips
-- **Player Name Formatting**: Theme-based player name styling
-- **Real-time Data**: Live server statistics and player information
+## 🏆 Scoreboard Features
 
-## 🏆 Enhanced Scoreboard Features
+### Scoreboard Themes
+Multiple scoreboard layouts for different purposes:
 
-### Multi-Theme Scoreboard Support
-Different scoreboard layouts and styling for various purposes:
+#### Available Themes
+- **serverinfo** - General server information display
+- **playerstats** - Player-specific statistics
+- **economy** - Economy-related information (if economy is enabled)
 
-#### Information Scoreboard Theme
-```yaml
-info:
-  title: "§b§lServer Info"
-  lines:
-    - "§fOnline: §a{server_players}"
-    - "§fTPS: §a{server_tps}"
-    - "§fMemory: §a{server_memory_percent}%"
+### Scoreboard Display
+- **Dynamic Titles**: Themed scoreboard titles
+- **Multiple Lines**: Up to 15 lines of configurable content
+- **Real-time Updates**: Live data refresh
+- **Player-specific Content**: Personalized information for each player
+
+### Scoreboard Content
+The scoreboard can display:
+- Player health, food, and level
+- Server statistics (TPS, memory, player count)
+- Player position and world information
+- Economy balance (if economy system is enabled)
+- Session time and statistics
+
+## 🎮 Commands
+
+### Theme Commands
+
+The main command for managing themes is `/theme`:
+
+#### `/theme tablist <theme> [player]`
+Apply a tablist theme to yourself or another player.
+
+**Examples**:
+```bash
+# Apply modern theme to yourself
+/theme tablist modern
+
+# Apply classic theme to specific player
+/theme tablist classic Steve
+```
+
+**Permission**: `neoessentials.moderation.basic`
+
+---
+
+#### `/theme scoreboard <theme> [player]`
+Apply a scoreboard theme to yourself or another player.
+
+**Examples**:
+```bash
+# Apply server info theme to yourself
+/theme scoreboard serverinfo
+
+# Apply player stats theme to specific player
+/theme scoreboard playerstats Steve
+```
+
+**Permission**: `neoessentials.moderation.basic`
+
+---
+
+#### `/theme list [type]`
+List available themes and templates.
+
+**Examples**:
+```bash
+# List all available themes
+/theme list
+
+# List only tablist themes
+/theme list tablist
+
+# List only scoreboard themes
+/theme list scoreboard
+```
+
+**Permission**: `neoessentials.moderation.basic`
+
+---
+
+#### `/theme reload`
+Reload the theme system configuration.
+
+**Example**:
+```bash
+/theme reload
+```
+
+**Permission**: `neoessentials.admin.basic`
+
+### Bossbar Commands
+
+The theme system also includes bossbar management:
+
+#### `/theme bossbar show <template> [duration] [player]`
+Show a bossbar with the specified template.
+
+**Examples**:
+```bash
+# Show default bossbar (10 seconds)
+/theme bossbar show welcome
+
+# Show bossbar for 30 seconds
+/theme bossbar show announcement 30
+
+# Show bossbar for specific player
+/theme bossbar show info 15 Steve
+```
+
+#### `/theme bossbar hide [player]`
+Hide the bossbar for yourself or another player.
+
+**Examples**:
+```bash
+# Hide your bossbar
+/theme bossbar hide
+
+# Hide bossbar for specific player
+/theme bossbar hide Steve
+```
+
+## ⚙️ Placeholders
+
+### Supported Placeholders
+
+The system supports various placeholders for dynamic content:
+
+#### Player Information
+- `{player}` - Player display name
+- `{player_name}` - Player username
+- `{health}` - Player health
+- `{max_health}` - Player maximum health
+- `{food}` - Player food level
+- `{level}` - Player level
+- `{exp}` - Player experience percentage
+- `{ping}` - Player ping in milliseconds
+- `{world}` - Player current world
+- `{player_x}` - Player X coordinate
+- `{player_y}` - Player Y coordinate
+- `{player_z}` - Player Z coordinate
+
+#### Server Information
+- `{server_players}` - Current online player count
+- `{server_max_players}` - Maximum server player capacity
+- `{server_tps}` - Server TPS (Ticks Per Second)
+- `{server_memory_percent}` - Memory usage percentage
+- `{server_name}` - Server name
+- `{time}` - Current time
+- `{uptime}` - Server uptime
+
+#### Economy Information (if enabled)
+- `{balance}` - Player balance
+- `{player_rank}` - Player rank (if available)
+
+#### Session Information
+- `{session_time}` - Current session playtime
+
+## 🎨 Theme Configuration
+
+### Theme Structure
+
+Tablist and scoreboard themes are defined programmatically with the following structure:
+
+#### Tablist Theme Properties
+- **Theme Name**: Unique identifier for the theme
+- **Headers**: List of header texts that can cycle
+- **Footers**: List of footer texts that can cycle
+- **Name Format**: How player names appear in the tablist
+
+#### Scoreboard Theme Properties
+- **Theme Name**: Unique identifier for the theme
+- **Title**: Scoreboard title text
+- **Lines**: List of content lines (up to 15 lines)
+
+### Default Themes
+
+The system comes with several predefined themes:
+
+#### Tablist Themes
+1. **default** - Basic white and gray formatting
+2. **modern** - Blue and cyan color scheme
+3. **classic** - Gold and yellow traditional styling
+4. **minimalist** - Simple white and gray design
+
+#### Scoreboard Themes
+1. **serverinfo** - General server information display
+2. **playerstats** - Detailed player statistics
+3. **economy** - Economy-focused information
+
+## 🔧 Configuration
+
+### Animation Settings
+
+The system includes animation support for dynamic content:
+- **Update Interval**: How often content refreshes (configurable)
+- **Animation Frames**: Cycling through different header/footer texts
+- **Real-time Data**: Live updates of server statistics
+
+### Performance Settings
+
+- **Update Timer**: Manages the refresh rate for dynamic content
+- **Cache Management**: Efficient handling of player data
+- **Memory Usage**: Optimized for server performance
+
+## 📊 Usage Examples
+
+### Basic Theme Application
+```bash
+# Set up server information display
+/theme tablist modern
+/theme scoreboard serverinfo
+
+# Apply player stats for detailed information
+/theme scoreboard playerstats
+```
+
+### Administrative Usage
+```bash
+# Apply specific themes to players
+/theme tablist classic Steve
+/theme scoreboard economy VIP_Player
+
+# List available options
+/theme list tablist
+/theme list scoreboard
+```
+
+### Event Management
+```bash
+# Show announcement bossbar to all online players
+/theme bossbar show announcement 60 @a
+
+# Hide all bossbars
+/theme bossbar hideall @a
+```
+
+## 🛠️ Technical Details
+
+### Implementation
+
+The tablist and scoreboard system is implemented through:
+
+#### TablistScoreboardManager
+- **Singleton Pattern**: Single instance manages all functionality
+- **Event Handling**: Responds to player join/leave events
+- **Theme Management**: Stores and applies different themes
+- **Update System**: Regular updates for dynamic content
+
+#### Theme Storage
+- **ConcurrentHashMap**: Thread-safe storage for themes
+- **Player Preferences**: Per-player theme assignments
+- **Default Themes**: Built-in themes loaded at startup
+
+#### Update Mechanism
+- **Timer-based Updates**: Regular refresh of dynamic content
+- **Player-specific Updates**: Individual player display management
+- **Server Statistics**: Real-time server data integration
+
+### Performance Considerations
+
+- **Efficient Updates**: Only updates when necessary
+- **Memory Management**: Proper cleanup of player data
+- **Thread Safety**: Concurrent access handling
+- **Animation Management**: Controlled animation frame cycling
+
+## ⚠️ Limitations
+
+### Current Limitations
+
+#### Theme System
+- **Predefined Themes**: Limited to built-in themes (no custom theme creation)
+- **Static Configuration**: Themes are hardcoded, not configurable via files
+- **Limited Customization**: Cannot modify theme properties without code changes
+
+#### Display Constraints
+- **Minecraft Limits**: Scoreboard limited to 15 lines maximum
+- **Color Support**: Limited to Minecraft color codes (no RGB support)
+- **Animation Complexity**: Simple text cycling only
+
+#### Commands
+- **Basic Functionality**: Limited to theme switching and listing
+- **No Advanced Features**: No custom header/footer commands
+- **Permission Requirements**: Requires moderation permissions for basic usage
+
+### Recommendations
+
+#### For Server Administrators
+- **Use Built-in Themes**: Stick to the provided themes for consistency
+- **Regular Updates**: Use the timer system for real-time information
+- **Permission Management**: Ensure proper permissions for theme commands
+
+#### For Development
+- **Theme Expansion**: Consider adding more predefined themes
+- **Configuration Files**: Future enhancement could include file-based theme configuration
+- **Advanced Placeholders**: Additional placeholder support could be beneficial
+
+---
+
+**Related Documentation**: [Essential Commands](Essential-Commands.md) | [Bossbar](Bossbar.md) | [Themes](Themes.md)
+
+*Last Updated: August 9, 2025*
     - ""
     - "§fYour Stats:"
     - "§fHealth: §c{player_health}"

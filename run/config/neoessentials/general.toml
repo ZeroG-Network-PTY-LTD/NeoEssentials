@@ -12,7 +12,7 @@
 #Feature Toggles - Enable or disable major features
 [features]
 	#Enable the economy system
-	enableEconomy = true
+	enableEconomy = false
 	#Enable all teleportation commands (home, warp, tpa, etc.)
 	enableTeleportation = true
 	#Enable the home system

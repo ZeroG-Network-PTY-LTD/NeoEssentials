@@ -61,6 +61,18 @@ public class TablistScoreboardManager {
     public void onServerStarted(ServerStartedEvent event) {
         this.server = event.getServer();
         
+        // Check if tablist is enabled in configuration
+        try {
+            com.zerog.neoessentials.config.TablistConfig config = getTablistConfig();
+            if (config == null || !config.isEnabled()) {
+                LOGGER.info("TablistScoreboardManager disabled in configuration - skipping initialization");
+                return;
+            }
+            LOGGER.info("TablistScoreboardManager enabled in configuration - proceeding with initialization");
+        } catch (Exception e) {
+            LOGGER.error("Failed to check tablist configuration, proceeding with default behavior", e);
+        }
+        
         // Initialize animation manager
         try {
             File configDir = new File("config/neoessentials");
@@ -84,6 +96,18 @@ public class TablistScoreboardManager {
     public void setServer(MinecraftServer server) {
         if (this.server == null && server != null) {
             this.server = server;
+            
+            // Check if tablist is enabled in configuration
+            try {
+                com.zerog.neoessentials.config.TablistConfig config = getTablistConfig();
+                if (config == null || !config.isEnabled()) {
+                    LOGGER.info("TablistScoreboardManager disabled in configuration - skipping manual initialization");
+                    return;
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to check tablist configuration during manual server set", e);
+            }
+            
             LOGGER.info("Server instance manually set for TablistScoreboardManager");
             setupScoreboards();
             startUpdateTask();
@@ -94,6 +118,13 @@ public class TablistScoreboardManager {
     public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             try {
+                // Check if tablist is enabled in configuration before processing player
+                com.zerog.neoessentials.config.TablistConfig config = getTablistConfig();
+                if (config == null || !config.isEnabled()) {
+                    LOGGER.debug("TablistScoreboardManager disabled - skipping player join processing for: {}", player.getDisplayName().getString());
+                    return;
+                }
+                
                 // Initialize server reference if not set yet
                 if (this.server == null && player.getServer() != null) {
                     this.server = player.getServer();
@@ -228,9 +259,14 @@ public class TablistScoreboardManager {
             String prefix = buildPlayerPrefix(player, playerGroup);
             String suffix = buildPlayerSuffix(player, playerGroup);
             
-            // Set team prefix and suffix (with color code support)
-            team.setPlayerPrefix(Component.literal(prefix));
-            team.setPlayerSuffix(Component.literal(suffix));
+            // Set team prefix and suffix (with color code support) - wrapped in try-catch to prevent crashes
+            try {
+                team.setPlayerPrefix(Component.literal(prefix));
+                team.setPlayerSuffix(Component.literal(suffix));
+            } catch (ConcurrentModificationException e) {
+                LOGGER.debug("ConcurrentModificationException while updating team for {}, skipping this update", player.getName().getString());
+                return; // Skip this update to avoid crash
+            }
             
             // Determine display name (nickname or real name) - logged for debugging
             String displayName = nickname != null ? nickname : player.getName().getString();
@@ -239,7 +275,12 @@ public class TablistScoreboardManager {
             // Add player to team if not already in it
             String playerName = player.getName().getString();
             if (!team.getPlayers().contains(playerName)) {
-                scoreboard.addPlayerToTeam(playerName, team);
+                try {
+                    scoreboard.addPlayerToTeam(playerName, team);
+                } catch (ConcurrentModificationException e) {
+                    LOGGER.debug("ConcurrentModificationException while adding player {} to team, skipping", playerName);
+                    return; // Skip this update to avoid crash
+                }
             }
             
             LOGGER.debug("Updated tablist display for player {} with prefix: '{}', suffix: '{}', nickname: '{}'", 
@@ -384,15 +425,14 @@ public class TablistScoreboardManager {
     }
     
     /**
-     * Get tablist configuration (placeholder - should be injected or retrieved from config system)
+     * Get tablist configuration from the config manager
      */
     private com.zerog.neoessentials.config.TablistConfig getTablistConfig() {
         try {
-            // This would typically be injected or retrieved from a config manager
-            // For now, return null and use fallback behavior
-            return null;
+            return com.zerog.neoessentials.config.ConfigManager.getInstance().getTablistConfig();
         } catch (Exception e) {
-            return null;
+            LOGGER.error("Failed to get tablist configuration", e);
+            return new com.zerog.neoessentials.config.TablistConfig(); // Return default config as fallback
         }
     }
     
@@ -528,6 +568,18 @@ public class TablistScoreboardManager {
             return; // Task already started
         }
         
+        // Check if tablist is enabled before starting update task
+        try {
+            com.zerog.neoessentials.config.TablistConfig config = getTablistConfig();
+            if (config == null || !config.isEnabled()) {
+                LOGGER.info("TablistScoreboardManager disabled in configuration - skipping update task start");
+                return;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to check tablist configuration for update task", e);
+            return; // Don't start update task if config check fails
+        }
+        
         updateTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -550,11 +602,31 @@ public class TablistScoreboardManager {
             return;
         }
         
+        // Check if tablist is enabled before updating players
+        try {
+            com.zerog.neoessentials.config.TablistConfig config = getTablistConfig();
+            if (config == null || !config.isEnabled()) {
+                LOGGER.debug("TablistScoreboardManager disabled - skipping player updates");
+                return;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to check tablist configuration during player update", e);
+            return; // Don't update if config check fails
+        }
+        
         try {
             animationFrame++; // Increment for animated themes
-            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                updatePlayerTablist(player);
-                updatePlayerScoreboard(player);
+            
+            // Create a copy of the player list to avoid ConcurrentModificationException
+            List<ServerPlayer> playersCopy = new ArrayList<>(server.getPlayerList().getPlayers());
+            
+            for (ServerPlayer player : playersCopy) {
+                try {
+                    updatePlayerTablist(player);
+                    updatePlayerScoreboard(player);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to update player {}: {}", player.getName().getString(), e.getMessage());
+                }
             }
         } catch (Exception e) {
             LOGGER.warn("Failed to update all players", e);

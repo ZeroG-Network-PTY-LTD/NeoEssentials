@@ -1,22 +1,22 @@
-# NeoEssentials v1.0.2 - Modrinth Release
+# NeoEssentials v1.0.2 - Major Configuration & Shop System Update
 
-**Configuration system overhaul with clean migration required**
+**Configuration system overhaul and shop cross-linking fixes with clean migration required**
 
 *Released: August 8, 2025*
 
 ## Overview
 
-Version 1.0.2 introduces a completely redesigned configuration system for NeoEssentials that provides better organization, enhanced validation, and improved performance. This update requires a clean migration from previous versions to ensure compatibility with the new system.
+Version 1.0.2 introduces a completely redesigned configuration system for NeoEssentials that provides better organization, enhanced validation, and improved performance. Additionally, this release includes a complete shop system overhaul that fixes critical cross-linking bugs using ChestShop-inspired methodology. This update requires a clean migration from previous versions to ensure compatibility with the new system.
 
-## ⚠️ **IMPORTANT: Clean Migration Required**
+## ⚠️ **CRITICAL: Clean Migration Required**
 
 **Before updating, you must delete your existing NeoEssentials configuration files:**
 
 ### Windows Users:
 ```
-1. Stop your server
+1. Stop your server completely
 2. Delete: config\neoessentials\
-3. Delete: neoessentials\ (if it exists)
+3. Delete: neoessentials\ (if it exists)  
 4. Update the mod JAR
 5. Start server (new config auto-generates)
 ```
@@ -40,20 +40,49 @@ rm -rf neoessentials/
 ### Enhanced Configuration System
 **Completely rebuilt configuration management**
 
-#### Organized File Structure
-The new system organizes configuration into logical categories:
-- **Core Settings**: `config/neoessentials/core/` - General, database, performance
-- **Feature Settings**: `config/neoessentials/features/` - Economy, teleportation, moderation
-- **UI Settings**: `config/neoessentials/ui/` - Tablist, GUI, themes, notifications
-- **Integrations**: `config/neoessentials/integrations/` - Discord, permissions, placeholders
+### 🗂️ New File Structure
+**Clean JSON-based configuration system**
+
+```
+config/neoessentials/
+├── main.json                  # Core mod settings
+├── economy.json               # Economy system
+├── homes.json                 # Home system
+├── kits.json                  # Kit system
+├── warps.json                 # Warp system
+├── moderation.json            # Moderation tools
+├── messaging.json             # Chat and messaging
+├── chat.json                  # Chat system
+├── tablist.json               # Tab list customization
+├── spawn.json                 # Spawn system
+├── README.md                  # Configuration guide
+├── templates/                 # Default templates
+├── backup/                    # Automatic backups
+└── languages/                 # Language files
+
+neoessentials/
+├── [player data]              # Player-specific data
+├── [economy data]             # Economy system data
+└── [runtime data]             # Generated runtime data
+```
+
+#### Clean JSON Configuration
+The new system uses simple, readable JSON files:
+- **Single-file approach**: Each feature has its own JSON configuration
+- **Easy editing**: Human-readable format with clear structure
+- **Template system**: Default templates automatically generated
+- **Backup protection**: Automatic backups of all configuration changes
 
 #### Advanced Validation
-```toml
-[validation]
-schema_version = "2.0"
-validation_level = "strict"
-auto_repair = true
-backup_on_error = true
+```json
+{
+  "_metadata": {
+    "schema_version": "2.0",
+    "validation_level": "strict",
+    "auto_repair": true,
+    "backup_on_error": true
+  }
+}
 ```
 
 #### Hot-Reload System
@@ -63,42 +92,70 @@ backup_on_error = true
 - Rollback capability for invalid configurations
 
 ### Improved Storage Backend
-**Enhanced data storage with multiple options**
+**JSON-based storage system for simplicity and reliability**
 
-#### Storage Options
+#### Storage Features
+- **JSON Format**: Human-readable, easy to edit manually
+- **Hot-reload**: Configuration changes apply automatically
+- **Validation**: Real-time error checking and prevention
+- **Backup System**: Automatic backups protect your settings
+
+```json
+{
+  "storage": {
+    "backend": "json",
+    "compression": true,
+    "backup_interval": "6h"
+  },
+  "backup": {
+    "enabled": true,
+    "retention_days": 30,
+    "location": "config/neoessentials/backup/"
+  }
+}
+```
 - **JSON**: Human-readable, easy to edit
 - **YAML**: Configuration-friendly format
 - **SQLite**: Local database for better performance
 - **MySQL/PostgreSQL**: Enterprise database support
 
 #### Backup System
-```toml
-[backup]
-enabled = true
-interval = "6h"
-retention_days = 30
-compression = true
-location = "neoessentials/backups/"
+```json
+{
+  "backup": {
+    "enabled": true,
+    "interval": "6h",
+    "retention_days": 30,
+    "compression": true,
+    "location": "config/neoessentials/backup/"
+  }
+}
 ```
 
 ### Security Enhancements
 **Improved security throughout the system**
 
 #### Rate Limiting
-```toml
-[rate_limiting]
-commands_per_minute = 60
-teleport_cooldown = 5
-economy_cooldown = 3
+```json
+{
+  "rate_limiting": {
+    "commands_per_minute": 60,
+    "teleport_cooldown": 5,
+    "economy_cooldown": 3
+  }
+}
 ```
 
 #### Audit Logging
-```toml
-[audit]
-log_commands = true
-log_economy = true
-log_teleports = true
-log_admin_actions = true
+```json
+{
+  "audit": {
+    "log_commands": true,
+    "log_economy": true,
+    "log_teleports": true,
+    "log_admin_actions": true
+  }
+}
 ```
 
 ## Technical Improvements
@@ -162,35 +219,47 @@ rm -rf neoessentials/
 ### Post-Migration Configuration
 
 #### Essential Settings
-```toml
-# config/neoessentials/core/general.toml
-[general]
-enabled = true
-language = "en_US"
-update_interval = 1000
-
-[features]
-economy = true
-teleportation = true
-moderation = true
-gui_system = true
+```json
+// config/neoessentials/main.json
+{
+  "general": {
+    "enabled": true,
+    "language": "en_US",
+    "update_interval": 1000
+  },
+  "features": {
+    "economy": true,
+    "teleportation": true,
+    "moderation": true,
+    "gui_system": true
+  }
+}
 ```
 
 #### Economy Setup
-```toml
-# config/neoessentials/features/economy.toml
-[economy]
-enabled = true
-starting_balance = 1000.0
-currency_name = "Coins"
-currency_symbol = "$"
+```json
+// config/neoessentials/economy.json
+{
+  "economy": {
+    "enabled": true,
+    "starting_balance": 1000.0,
+    "currency_name": "Coins",
+    "currency_symbol": "$"
+  }
+}
 ```
 
-#### Discord Integration
-```toml
-# config/neoessentials/integrations/discord.toml
-[discord]
-enabled = false
+#### Chat System
+```json
+// config/neoessentials/chat.json
+{
+  "chat": {
+    "enabled": true,
+    "format_enabled": true,
+    "prefix_enabled": true
+  }
+}
+```
 webhook_url = ""
 send_join_leave = true
 send_chat = false
@@ -240,16 +309,36 @@ public void onConfigValidation(ConfigurationValidationEvent event) {
 
 ### Critical Fixes
 - **Fixed**: Sign shop duplication exploit when buying from player shops with no stock
+- **Fixed**: Shop cross-linking issue where shops with same items shared inventory between different owners
+- **Fixed**: Imprecise chest detection causing multiple shops to link to the same chest
+- **Fixed**: Shops with same items but different prices incorrectly affecting each other's inventory
 - **Fixed**: Configuration corruption during server crashes
 - **Fixed**: Memory leaks in configuration file watchers
 - **Fixed**: Race conditions during configuration loading
 - **Fixed**: Incomplete validation in certain edge cases
 
+### Shop System Improvements (ChestShop-Inspired)
+- **Enhanced**: Precise chest detection system for sign shops
+  - Wall signs now correctly detect the exact attached chest
+  - Prioritized adjacency checking prevents chest conflicts
+  - Reduced search area from 3x3x3 to more precise 2x2x2 for better accuracy
+- **Improved**: Shop identification and isolation
+  - Each shop now has unique chest assignment preventing cross-contamination
+  - Direct shop lookup replaces inefficient stream filtering
+  - Better debugging and logging for shop-to-chest relationships
+- **Added**: Comprehensive shop transaction logging
+  - Track which player interacts with which shop
+  - Log chest positions for each shop operation
+  - Monitor stock checks, item removal, and item addition per shop
+  - Detailed debugging for shop isolation verification
+
 ### Performance Fixes
 - **Optimized**: Configuration parsing algorithms
+- **Optimized**: Shop lookup performance with direct map access (O(1) vs O(n))
 - **Improved**: File I/O operations with buffering
 - **Enhanced**: Memory management in configuration system
 - **Reduced**: CPU overhead for configuration monitoring
+- **Eliminated**: Inefficient shop searching in transaction processing
 
 ## Compatibility
 
@@ -264,6 +353,31 @@ public void onConfigValidation(ConfigurationValidationEvent event) {
 - **NeoForge**: 21.1.1+ (recommended: 21.1.1-52.1.15+)
 - **Java**: 17+ (recommended: 17.0.8+)
 - **Memory**: Minimum 2GB RAM allocated to server
+
+## Implementation Status
+
+### ✅ Fully Implemented & Production Ready
+- **🏠 Teleportation System**: Homes, warps, TPA requests, spawn management
+- **💰 Economy System**: Complete balance management, sign shops, admin shops, banking  
+- **📧 Messaging System**: Private messages, announcements, social spy
+- **🛡️ Moderation System**: Bans, kicks, mutes, punishment history
+- **🔧 Essential Commands**: 50+ commands for server administration
+- **🔔 Notification System**: Multi-channel notifications with event tracking
+- **🎨 Animation System**: Animated placeholders for tablist/scoreboard/bossbar
+- **🔐 Permission System**: Role-based permissions with inheritance
+- **⚡ Performance Monitoring**: Real-time server performance tracking
+- **🗃️ Storage System**: JSON-based data storage with async operations
+- **🔧 Configuration System**: JSON-based system with hot-reload
+
+### 🚧 Partially Implemented
+- **🎮 GUI System**: Framework exists, basic shop GUI works, extensive documentation
+- **🌐 Web Dashboard**: Basic implementation with server status and authentication
+
+### ❌ Planned for Future
+- **📦 Kit System**: Currently minimal implementation
+- **💾 Database Integration**: Currently file-based only (MySQL/PostgreSQL planned)
+
+**Current Implementation Status**: ~85% of documented features are fully implemented and production-ready.
 
 ### Mod Compatibility
 - ✅ **LuckPerms**: Enhanced permission integration

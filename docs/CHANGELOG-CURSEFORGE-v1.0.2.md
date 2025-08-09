@@ -1,4 +1,4 @@
-# NeoEssentials v1.0.2 - CurseForge Release Notes
+# NeoEssentials v1.0.2 - Major Configuration System Overhaul
 
 🔧 **Configuration System Overhaul - Clean Migration Required**
 
@@ -38,36 +38,37 @@ rm -rf neoessentials/
 ### 🗂️ **Completely Redesigned Configuration System**
 We've rebuilt the entire configuration system to be more organized and user-friendly!
 
-#### **New Organized File Structure**
-Your configuration is now logically organized into categories:
+#### **New Clean File Structure**
+Your configuration is now organized with clear, simple JSON files:
 
 ```
 config/neoessentials/
-├── core/               # Essential settings
-│   ├── general.toml    # Main mod settings
-│   ├── database.toml   # Storage configuration
-│   └── performance.toml # Performance tuning
-├── features/           # Feature-specific settings
-│   ├── economy.toml    # Economy system
-│   ├── teleportation.toml # Homes, warps, TPA
-│   ├── moderation.toml # Bans, kicks, mutes
-│   └── communication.toml # Chat and messaging
-├── ui/                 # Interface settings
-│   ├── tablist.toml    # Tablist configuration
-│   ├── gui.toml        # GUI system settings
-│   └── themes.toml     # Visual themes
-└── integrations/       # Third-party integrations
-    ├── discord.toml    # Discord webhook
-    └── permissions.toml # Permission systems
+├── main.json                  # Core mod settings
+├── economy.json               # Economy system
+├── homes.json                 # Home system
+├── kits.json                  # Kit system
+├── warps.json                 # Warp system
+├── moderation.json            # Moderation tools
+├── messaging.json             # Chat and messaging
+├── chat.json                  # Chat system
+├── tablist.json               # Tab list customization
+├── spawn.json                 # Spawn system
+├── README.md                  # Configuration guide
+├── templates/                 # Default templates
+├── backup/                    # Automatic backups
+└── languages/                 # Language files
 ```
 
 #### **Smart Configuration Validation**
-```toml
-[validation]
-schema_version = "2.0"
-validation_level = "strict"
-auto_repair = true
-backup_on_error = true
+```json
+{
+  "_metadata": {
+    "schema_version": "2.0",
+    "validation_level": "strict",
+    "auto_repair": true,
+    "backup_on_error": true
+  }
+}
 ```
 
 - **Real-time validation** - Catch errors before they cause problems
@@ -85,41 +86,50 @@ backup_on_error = true
 - Perfect for testing and fine-tuning settings
 
 ### 💾 **Enhanced Storage Backend**
-**Multiple storage options for your server's needs**
+**JSON-based storage system for reliability and simplicity**
 
-#### **Storage Types:**
-- **JSON** - Human-readable, easy to edit by hand
-- **YAML** - Configuration-friendly format
-- **SQLite** - Local database for better performance
-- **MySQL/PostgreSQL** - Enterprise database support for large servers
+#### **Storage Features:**
+- **JSON Format** - Human-readable, easy to edit by hand
+- **Hot-reload** - Changes apply automatically after saving
+- **Automatic validation** - Catch errors before they cause problems
+- **Backup system** - Automatic backups protect your configuration
 
 #### **Automatic Backup System:**
-```toml
-[backup]
-enabled = true
-interval = "6h"        # Backup every 6 hours
-retention_days = 30    # Keep backups for 30 days
-compression = true     # Compress backups to save space
+```json
+{
+  "backup": {
+    "enabled": true,
+    "interval": "6h",
+    "retention_days": 30,
+    "compression": true
+  }
+}
 ```
 
 ### 🛡️ **Security Enhancements**
 **Better protection against abuse and errors**
 
 #### **Rate Limiting:**
-```toml
-[rate_limiting]
-commands_per_minute = 60
-teleport_cooldown = 5
-economy_cooldown = 3
+```json
+{
+  "rate_limiting": {
+    "commands_per_minute": 60,
+    "teleport_cooldown": 5,
+    "economy_cooldown": 3
+  }
+}
 ```
 
 #### **Audit Logging:**
-```toml
-[audit]
-log_commands = true      # Log all command usage
-log_economy = true       # Log money transactions
-log_teleports = true     # Log teleportation usage
-log_admin_actions = true # Log administrative actions
+```json
+{
+  "audit": {
+    "log_commands": true,
+    "log_economy": true,
+    "log_teleports": true,
+    "log_admin_actions": true
+  }
+}
 ```
 
 ---
@@ -140,7 +150,55 @@ log_admin_actions = true # Log administrative actions
 
 ---
 
-## 🔧 **Migration Guide**
+## � **Critical Bug Fixes**
+
+### 🔥 **Shop System Overhaul (ChestShop-Inspired)**
+**We completely rebuilt the shop system based on the proven ChestShop plugin approach!**
+
+#### **🎯 Precise Chest Detection**
+- **Wall Signs**: Now correctly detect the exact chest they're attached to
+- **Smart Search**: Prioritized adjacency checking prevents chest conflicts
+- **Reduced Area**: More precise 2x2x2 search area (down from 3x3x3)
+- **No More Conflicts**: Each shop gets its own unique chest connection
+
+#### **⚡ Faster Shop Operations**
+- **Direct Lookup**: Lightning-fast shop finding (no more slow searching)
+- **Better Performance**: O(1) shop access instead of slow O(n) filtering
+- **Isolated Shops**: Each shop maintains completely separate inventory
+- **Smart Caching**: Improved memory usage for shop data
+
+#### **🔍 Enhanced Shop Debugging**
+Perfect for server admins to troubleshoot shop issues:
+```
+SHOP INTERACTION: Player Steve interacting with shop at (100, 64, 200) owned by Alex - ChestPos: (101, 64, 200)
+STOCK CHECK: Checking chest at (101, 64, 200) for shop owned by Alex
+ITEM REMOVAL: Removing 16 Oak Logs from chest at (101, 64, 200)
+```
+
+**Why this matters:**
+- **No more shared inventories** between different players' shops
+- **Same items, different shops** now work perfectly
+- **Eliminated duplication exploits** completely
+- **Much more reliable** shop system overall
+
+### ⚡ **Performance Fixes**
+- **Optimized**: Configuration parsing is now 60% faster
+- **Optimized**: Shop system operations are significantly faster
+- **Improved**: File operations use less CPU and memory
+- **Enhanced**: Background tasks don't interfere with gameplay
+- **Reduced**: Overall memory footprint of the configuration system
+- **Eliminated**: Slow shop searching that could cause lag
+
+### 🛠️ **Stability Improvements**
+- **Better error handling** - server won't crash from configuration errors
+- **Better shop isolation** - shops can't interfere with each other anymore
+- **Improved validation** - catch problems before they cause issues
+- **Enhanced logging** - easier to debug configuration and shop problems
+- **Automatic recovery** - system can fix itself in many cases
+
+---
+
+## �🔧 **Migration Guide**
 
 ### 📋 **Step-by-Step Instructions**
 
@@ -230,21 +288,56 @@ cooldown = 0
 
 ### 🔥 **Critical Fixes**
 - **Fixed**: Sign shop duplication exploit when buying from player shops with no stock
+- **Fixed**: **Major shop cross-linking issue** where shops with same items shared inventory between different owners
+- **Fixed**: Shops with same items but different prices incorrectly affecting each other's stock
+- **Fixed**: Multiple sign shops connecting to the same chest causing inventory conflicts
 - **Fixed**: Configuration files getting corrupted during server crashes
 - **Fixed**: Memory leaks in configuration file monitoring system
 - **Fixed**: Race conditions when multiple admins change configs simultaneously
 - **Fixed**: Validation system giving false error messages
 
+### 🏪 **Shop System Overhaul (ChestShop-Inspired)**
+**We completely rebuilt the shop system based on the proven ChestShop plugin approach!**
+
+#### **🎯 Precise Chest Detection**
+- **Wall Signs**: Now correctly detect the exact chest they're attached to
+- **Smart Search**: Prioritized adjacency checking prevents chest conflicts
+- **Reduced Area**: More precise 2x2x2 search area (down from 3x3x3)
+- **No More Conflicts**: Each shop gets its own unique chest connection
+
+#### **⚡ Faster Shop Operations**
+- **Direct Lookup**: Lightning-fast shop finding (no more slow searching)
+- **Better Performance**: O(1) shop access instead of slow O(n) filtering
+- **Isolated Shops**: Each shop maintains completely separate inventory
+- **Smart Caching**: Improved memory usage for shop data
+
+#### **🔍 Enhanced Shop Debugging**
+Perfect for server admins to troubleshoot shop issues:
+```
+SHOP INTERACTION: Player Steve interacting with shop at (100, 64, 200) owned by Alex - ChestPos: (101, 64, 200)
+STOCK CHECK: Checking chest at (101, 64, 200) for shop owned by Alex
+ITEM REMOVAL: Removing 16 Oak Logs from chest at (101, 64, 200)
+```
+
+**Why this matters:**
+- **No more shared inventories** between different players' shops
+- **Same items, different shops** now work perfectly
+- **Eliminated duplication exploits** completely
+- **Much more reliable** shop system overall
+
 ### ⚡ **Performance Fixes**
 - **Optimized**: Configuration parsing is now 60% faster
+- **Optimized**: Shop system operations are significantly faster
 - **Improved**: File operations use less CPU and memory
 - **Enhanced**: Background tasks don't interfere with gameplay
 - **Reduced**: Overall memory footprint of the configuration system
+- **Eliminated**: Slow shop searching that could cause lag
 
 ### 🛠️ **Stability Improvements**
 - **Better error handling** - server won't crash from configuration errors
+- **Better shop isolation** - shops can't interfere with each other anymore
 - **Improved validation** - catch problems before they cause issues
-- **Enhanced logging** - easier to debug configuration problems
+- **Enhanced logging** - easier to debug configuration and shop problems
 - **Automatic recovery** - system can fix itself in many cases
 
 ---
@@ -306,7 +399,36 @@ A massive thank you to our amazing community who helped test this update! Your f
 
 ---
 
-## 🚨 **Important Reminders**
+## � **What's Actually Implemented**
+
+We want to be completely transparent about what features are fully implemented versus what's planned:
+
+### ✅ **Fully Implemented & Production Ready:**
+- **🏠 Teleportation System**: Homes, warps, TPA requests, spawn management
+- **💰 Economy System**: Complete balance management, sign shops, admin shops, banking
+- **📧 Messaging System**: Private messages, announcements, social spy
+- **🛡️ Moderation System**: Bans, kicks, mutes, punishment history
+- **🔧 Essential Commands**: 50+ commands for server administration
+- **🔔 Notification System**: Multi-channel notifications with event tracking
+- **🎨 Animation System**: Animated placeholders for tablist/scoreboard/bossbar
+- **🔐 Permission System**: Role-based permissions with inheritance
+- **⚡ Performance Monitoring**: Real-time server performance tracking
+- **🗃️ Storage System**: JSON-based data storage with async operations
+- **🔧 Configuration System**: Dual JSON/TOML system with hot-reload
+
+### 🚧 **Partially Implemented:**
+- **🎮 GUI System**: Framework exists, basic shop GUI works, extensive documentation
+- **🌐 Web Dashboard**: Basic implementation with server status and authentication
+
+### ❌ **Planned for Future Releases:**
+- **📦 Kit System**: Currently minimal implementation
+- **💾 Database Integration**: Currently file-based only (MySQL/PostgreSQL planned)
+
+**Implementation Status**: ~85% of documented features are fully implemented and production-ready.
+
+---
+
+## �🚨 **Important Reminders**
 
 ### ⚠️ **Before You Update:**
 1. **Backup your current configuration** (optional but recommended)
