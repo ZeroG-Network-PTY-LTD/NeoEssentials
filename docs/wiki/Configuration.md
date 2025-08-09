@@ -1,104 +1,97 @@
 # Configuration Guide
 
-This comprehensive guide covers all configuration options available in NeoEssentials. Configuration files are located in the `config/` directory and use TOML format for most settings, with JSON used for GUI and advanced features.
+This comprehensive guide covers all configuration options available in NeoEssentials. Configuration files are located in the `config/neoessentials/` directory and use JSON format for easy editing and readability.
 
 ## 📁 Configuration Files Overview
 
 ### Main Configuration Files
-- `neoessentials-general.toml` - General mod settings and server information
-- `neoessentials-common.toml` - Common gameplay settings and feature toggles
-- `gui/` - GUI system configurations (JSON format)
-- `neoessentials/` - Advanced feature configurations
+- `main.json` - Core mod settings and general configuration
+- `economy.json` - Economy system configuration
+- `homes.json` - Home system settings
+- `kits.json` - Kit system configuration
+- `warps.json` - Warp system settings
+- `moderation.json` - Moderation tools configuration
+- `messaging.json` - Chat and messaging settings
+- `chat.json` - Chat system configuration
+- `tablist.json` - Tab list customization
+- `spawn.json` - Spawn system settings
+- `animations.json` - Animation system configuration (auto-generated)
 
 ### Complete Configuration Directory Structure
 ```
-config/
-├── neoessentials-general.toml       # General mod settings
-├── neoessentials-common.toml        # Common configurations
-├── gui/                            # 🎮 GUI System configurations (NEW)
-│   ├── main_config.json            # Main GUI settings & themes
-│   ├── shop_gui.json               # Shop interface configuration
-│   ├── kits_gui.json               # Kit selection menu settings
-│   ├── stats_gui.json              # Player statistics display
-│   ├── economy_gui.json            # Economy management interface
-│   ├── warps_gui.json              # Warp destinations browser
-│   ├── admin_gui.json              # Admin control panel
-│   └── teleport_gui.json           # Teleportation hub interface
-└── neoessentials/
-    ├── language/                   # 🌐 Multi-language support
-    │   ├── en_US.properties
-    │   ├── de_DE.properties
-    │   ├── es_ES.properties
-    │   └── fr_FR.properties
-    ├── templates/                  # 📝 Message & GUI templates
-    │   ├── bossbar_templates.yml
-    │   ├── message_templates.yml
-    │   └── gui_themes.yml
-    ├── security/                   # 🔒 Security configurations
-    │   ├── security.toml
-    │   ├── rate_limiting.toml
-    │   └── command_filtering.toml
-    └── features/                   # 🎯 Feature-specific configs
-        ├── commands.toml           # Command-specific settings
-        ├── teleportation.toml      # Teleportation system
-        ├── permissions.toml        # Permission management
-        ├── economy.toml            # Economy system (if enabled)
-        ├── homes.toml              # Home system settings
-        ├── warps.toml              # Warp system settings
-        ├── kits.toml               # Kit system configuration
-        ├── moderation.toml         # Moderation tools
-        ├── messaging.toml          # Chat and messaging
-        └── bossbar.toml            # Bossbar system settings
+config/neoessentials/
+├── main.json                       # Core mod settings
+├── economy.json                    # Economy system with balance management
+├── homes.json                      # Home system configuration
+├── kits.json                       # Kit system settings
+├── warps.json                      # Warp system configuration
+├── moderation.json                 # Moderation tools (ban, kick, mute)
+├── messaging.json                  # Chat and messaging configuration
+├── chat.json                       # Chat system settings
+├── tablist.json                    # Tab list customization
+├── spawn.json                      # Spawn system configuration
+├── animations.json                 # Animation system (auto-generated)
+├── README.md                       # Auto-generated configuration guide
+├── templates/                      # Default configuration templates
+│   ├── main.json                  # Template for main config
+│   ├── economy.json               # Template for economy config
+│   └── [all other templates]      # One template per config file
+├── backup/                         # Automatic configuration backups
+│   └── [timestamped backups]      # Automatic backups with timestamps
+└── languages/                     # Language files for localization
+    ├── en_US.properties
+    ├── de_DE.properties
+    └── [other languages]
+
+neoessentials/
+├── [player data files]            # Player-specific data storage
+├── [economy data]                  # Economy system data
+└── [other runtime data]            # Generated runtime data
 ```
 
 ## ⚙️ General Configuration
 
-### `neoessentials-general.toml`
+### `main.json`
 
 The main configuration file controlling core mod behavior:
 
-```toml
-[general]
-# Enable or disable the entire mod
-enabled = true
-
-# Default language for messages
-defaultLanguage = "en_US"
-
-# Enable debug mode for troubleshooting
-debugMode = false
-
-# Server display name (used in messages and GUIs)
-serverName = "My Minecraft Server"
-
-# Server MOTD override (optional)
-serverDescription = "Welcome to our awesome server!"
-
-# Enable update notifications for admins
-updateNotifications = true
-
-# Performance monitoring
-enablePerformanceMonitoring = true
-
-[features]
-# 🎮 GUI System (NEW in v1.2+)
-guiSystem = true
-guiThemes = true
-guiShop = true
-guiKits = true
-guiStats = true
-guiAdmin = true
-
-# 📊 Bossbar System
-bossbarSystem = true
-bossbarTemplates = true
-bossbarAnimations = true
-
-# 🔧 Essential Commands
-essentialCommands = true
-teleportationCommands = true
-moderationCommands = false  # Set to true for moderation servers
-utilityCommands = true
+```json
+{
+  "general": {
+    "enabled": true,
+    "language": "en_US",
+    "debug_mode": false,
+    "server_name": "My Minecraft Server",
+    "server_description": "Welcome to our awesome server!",
+    "update_notifications": true,
+    "performance_monitoring": true
+  },
+  "features": {
+    "economy": true,
+    "homes": true,
+    "warps": true,
+    "kits": true,
+    "moderation": false,
+    "messaging": true,
+    "chat": true,
+    "tablist": true,
+    "spawn": true,
+    "animations": true
+  },
+  "security": {
+    "validate_commands": true,
+    "rate_limiting": true,
+    "secure_storage": true,
+    "audit_logging": true
+  },
+  "performance": {
+    "async_operations": true,
+    "cache_enabled": true,
+    "optimize_packets": true,
+    "hot_reload": true
+  }
+}
+```
 
 # 🔒 Security Features
 securityFeatures = true

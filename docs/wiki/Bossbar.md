@@ -21,184 +21,90 @@ The enhanced bossbar system allows administrators to:
 - **Individual Management**: Each bossbar can be updated, styled, and removed independently
 
 ### Theme System
-The enhanced bossbar system includes 4 built-in themes for consistent styling:
+The bossbar system includes 4 built-in themes for consistent styling:
 
 #### Default Theme
-```yaml
-default:
-  title_format: "§f§l{title}"
-  subtitle_format: "§7{subtitle}"
-  color: "WHITE"
-  style: "PROGRESS"
-```
+- **Title Format**: "§f§l{title}"
+- **Subtitle Format**: "§7{subtitle}"
+- **Color**: WHITE
+- **Style**: PROGRESS
 
 #### Modern Theme
-```yaml
-modern:
-  title_format: "§b§l► {title} §b§l◄"
-  subtitle_format: "§f{subtitle}"
-  color: "BLUE"
-  style: "NOTCHED_10"
-```
+- **Title Format**: "§b§l► {title} §b§l◄"
+- **Subtitle Format**: "§f{subtitle}"
+- **Color**: BLUE
+- **Style**: NOTCHED_10
 
 #### Classic Theme
-```yaml
-classic:
-  title_format: "§6§l═══ {title} ═══"
-  subtitle_format: "§e{subtitle}"
-  color: "YELLOW"
-  style: "NOTCHED_6"
-```
+- **Title Format**: "§6§l═══ {title} ═══"
+- **Subtitle Format**: "§e{subtitle}"
+- **Color**: YELLOW
+- **Style**: NOTCHED_6
 
 #### Minimalist Theme
-```yaml
-minimalist:
-  title_format: "§f{title}"
-  subtitle_format: "§8{subtitle}"
-  color: "WHITE"
-  style: "PROGRESS"
-```
+- **Title Format**: "§f{title}"
+- **Subtitle Format**: "§8{subtitle}"
+- **Color**: WHITE
+- **Style**: PROGRESS
 
-### Advanced Templates
+**Note**: Theme support is implemented in the manager but not exposed through commands in the current version.
 
-#### Enhanced Welcome Template
-**Purpose**: Animated welcome experience for new players
-```yaml
-animated_welcome:
-  title: "{animated_title}"
-  text: "{animated_subtitle}"
-  color: "YELLOW"
-  style: "PROGRESS"
-  duration: 15
-  progress: 100
-  animation_frames: 5
-```
-
-#### Health Status Template
-**Purpose**: Real-time health monitoring
-```yaml
-health:
-  title: "§c§lHealth Status"
-  text: "§fHealth: §a{player_health}§f/§a{player_max_health}"
-  color: "RED"
-  style: "PROGRESS"
-  duration: 30
-  progress: "{player_health_percent}"
-  update_interval: 1
-```
-
-### Enhanced Pre-defined Templates
+### Pre-defined Templates
 
 #### Welcome Template
 **Purpose**: Welcome new players to the server
-```yaml
-welcome:
-  text: "Welcome to {server_name}, {player_name}!"
-  color: "GREEN"
-  style: "SOLID"
-  duration: 5
-  progress: 100
-```
+- **Text**: "§6§lWelcome to the Server! - §7Enjoy your stay and have fun!"
+- **Color**: YELLOW
+- **Style**: PROGRESS
+- **Progress**: 100%
 
 #### Server Info Template
 **Purpose**: Display real-time server information
-```yaml
-serverinfo:
-  text: "Players: {server_players}/{server_max_players} | TPS: {server_tps} | Memory: {server_memory_used}%"
-  color: "BLUE"
-  style: "SEGMENTED_10"
-  duration: 15
-  progress: "{server_memory_used}"
-  updateInterval: 2
-```
+- **Text**: "§b§lServer Information - §fOnline: §a{online}§f/§a{max} §7| §fTPS: §a{tps}"
+- **Color**: BLUE
+- **Style**: NOTCHED_10
+- **Progress**: 80%
 
 #### Event Template
 **Purpose**: Announce server events
-```yaml
-event:
-  text: "🎉 Server Event: {event_name} - {event_description}"
-  color: "YELLOW"
-  style: "SOLID"
-  duration: 30
-  progress: 100
-```
+- **Text**: "§d§lEvent Announcement - §fCheck out the latest server events!"
+- **Color**: PURPLE
+- **Style**: NOTCHED_6
+- **Progress**: 100%
 
 #### Warning Template
 **Purpose**: Display warning messages
-```yaml
-warning:
-  text: "⚠️ Warning: {warning_message}"
-  color: "RED"
-  style: "SOLID"
-  duration: 8
-  progress: 100
-```
+- **Text**: "§c§lWarning - §fPlease read the server rules!"
+- **Color**: RED
+- **Style**: PROGRESS
+- **Progress**: 100%
+- **Effects**: Darkens screen
 
 #### Progress Template
 **Purpose**: Show progress indicators
-```yaml
-progress:
-  text: "Progress: {progress_text} - {progress_percent}%"
-  color: "PURPLE"
-  style: "SEGMENTED_20"
-  duration: 60
-  progress: "{progress_percent}"
-```
+- **Text**: "§e§lProgress - §fTask in progress..."
+- **Color**: YELLOW
+- **Style**: NOTCHED_20
+- **Progress**: 50%
+- **Effects**: Plays boss music
 
-## 🎮 Enhanced Commands
+#### Health Template
+**Purpose**: Real-time health monitoring
+- **Text**: "§c§lHealth Status - §fHealth: §a{health}§f/§a{maxhealth}"
+- **Color**: RED
+- **Style**: PROGRESS
+- **Progress**: 100%
 
-### Theme-Based Display Commands
+#### Animated Welcome Template
+**Purpose**: Animated welcome experience for new players
+- **Text**: "§6§l{animated_title} - §7{animated_subtitle}"
+- **Color**: YELLOW
+- **Style**: PROGRESS
+- **Progress**: 100%
 
-#### `/bossbar show <template> [theme] [player] [duration]`
-Display a bossbar using a predefined template with optional theme styling.
+## 🎮 Commands
 
-**Examples**:
-```bash
-# Show welcome bossbar with default theme
-/bossbar show welcome
-
-# Show server info with modern theme to specific player
-/bossbar show serverinfo modern Steve 30
-
-# Show health status with classic theme
-/bossbar show health classic 60
-```
-
-**Permissions**: `neoessentials.bossbar.show`, `neoessentials.bossbar.show.others`, `neoessentials.bossbar.theme.use`
-
----
-
-#### `/bossbar themed <template> <theme> [player] [duration]`
-Display a themed bossbar with enhanced styling options.
-
-**Examples**:
-```bash
-# Show themed welcome with modern styling
-/bossbar themed welcome modern
-
-# Broadcast themed announcement with classic styling
-/bossbar themed event classic @a 45
-```
-
-**Permission**: `neoessentials.bossbar.themed`
-
----
-
-#### `/bossbar multi <template1> <template2> [template3] [player]`
-Display multiple bossbars simultaneously to a player.
-
-**Examples**:
-```bash
-# Show welcome and server info together
-/bossbar multi welcome serverinfo
-
-# Show health, progress, and event info
-/bossbar multi health progress event Steve
-```
-
-**Permission**: `neoessentials.bossbar.multi`
-
----
+### Display Commands
 
 #### `/bossbar show <template> [player] [duration]`
 Display a bossbar using a predefined template.
@@ -229,6 +135,22 @@ Broadcast a bossbar to all online players.
 
 # Broadcast warning message for 10 seconds
 /bossbar broadcast warning 10
+```
+
+**Permission**: `neoessentials.bossbar.broadcast`
+
+---
+
+#### `/bossbar announce <template> <duration>`
+Alias for broadcast - announce a bossbar to all online players.
+
+**Examples**:
+```bash
+# Announce event for 60 seconds
+/bossbar announce event 60
+
+# Announce warning for 10 seconds
+/bossbar announce warning 10
 ```
 
 **Permission**: `neoessentials.bossbar.broadcast`
@@ -317,165 +239,86 @@ Available bossbar styles:
 
 ### Custom Template Configuration
 
-Create custom templates in `config/neoessentials/templates/bossbar.yml`:
+**Note**: Template customization is currently managed programmatically. JSON-based template configuration is planned for future versions.
 
-```yaml
-custom_template:
-  text: "Your custom message here with {placeholders}"
-  color: "BLUE"
-  style: "SEGMENTED_10"
-  duration: 20
-  progress: 100
-  updateInterval: 5
-  autoRemove: true
-  playSound: true
-  soundType: "BLOCK_NOTE_BLOCK_PLING"
-```
-
-### Template Properties
-
-| Property | Type | Description | Default |
-|----------|------|-------------|---------|
-| `text` | String | Bossbar text (supports placeholders) | Required |
-| `color` | String | Bossbar color | "BLUE" |
-| `style` | String | Bossbar style | "SOLID" |
-| `duration` | Integer | Display duration in seconds | 10 |
-| `progress` | Integer/String | Progress percentage (0-100) or placeholder | 100 |
-| `updateInterval` | Integer | Update interval in seconds | 0 (no updates) |
-| `autoRemove` | Boolean | Auto-remove when duration expires | true |
-| `playSound` | Boolean | Play sound when displayed | false |
-| `soundType` | String | Sound to play | "BLOCK_NOTE_BLOCK_PLING" |
+Current templates can be modified by extending the CustomBossbarManager class or through the API.
 
 ## 🔧 Placeholder Support
 
-### Built-in Placeholders
+### Player Placeholders
+- `{player_name}` - Player display name
+- `{player_uuid}` - Player UUID
+- `{player_health}` - Current health points
+- `{player_max_health}` - Maximum health points
+- `{player_level}` - Player experience level
+- `{player_world}` - Current world name
 
-#### Enhanced Placeholders
-- `{player_health}` - Player's current health (20.0)
-- `{player_max_health}` - Player's maximum health (20.0)  
-- `{player_health_percent}` - Health as percentage (100)
-- `{animated_title}` - Cycling animated title text
-- `{animated_subtitle}` - Cycling animated subtitle text
+### Server Placeholders
+- `{online}` - Current player count
+- `{max}` - Maximum player slots
+- `{tps}` - Server TPS (ticks per second)
 
-#### Animation Placeholders
-The enhanced system supports animated placeholders that cycle through different values:
+### Animation Placeholders
+- `{animated_title}` - Animated title text
+- `{animated_subtitle}` - Animated subtitle text
 
-**Animated Title Frames**:
-1. "Welcome to the Server!"
-2. "§6Welcome to the Server!"
-3. "§e§lWelcome to the Server!"
-4. "§6§lWelcome to the Server!"
-5. "Welcome to the Server!"
-
-**Animated Subtitle Frames**:
-1. "Enjoy your stay!"
-2. "Have fun and follow the rules!"
-3. "Welcome aboard, adventurer!"
-4. "Ready for an epic journey?"
-5. "Let the adventure begin!"
-
-#### Server Placeholders
-- `{server_name}` - Server name
-- `{server_players}` - Current player count
-- `{server_max_players}` - Maximum player count
-- `{server_tps}` - Server TPS (ticks per second)
-- `{server_memory_used}` - Memory usage percentage
-- `{server_memory_max}` - Maximum memory (MB)
-
-#### Time Placeholders
-- `{time}` - Current time (HH:mm)
-- `{date}` - Current date (MM/dd/yyyy)
-- `{datetime}` - Current date and time
-- `{world_time}` - Minecraft world time
-
-#### Utility Placeholders
-- `{random_1_10}` - Random number 1-10
-- `{random_1_100}` - Random number 1-100
-- `{neoessentials_version}` - Mod version
+**Animation Support**: The bossbar system integrates with the NeoEssentials animation system for cycling text content.
 
 ### Custom Placeholders
 
-Register custom placeholders for use in bossbars:
-
-```java
-// Example custom placeholder registration
-PlaceholderManager.registerPlaceholder("custom_data", (player, context) -> {
-    return "Your custom value";
-});
-```
+Custom placeholders can be registered through the NeoEssentials API for advanced use cases.
 
 ## ⚙️ Configuration
 
 ### Global Bossbar Settings
 
-```toml
-[bossbar]
-# Enable bossbar system
-enabled = true
+The bossbar system is currently configured through code and templates are managed programmatically. Configuration files are handled through the NeoEssentials JSON configuration system in `config/neoessentials/`.
 
-# Default duration for bossbars (seconds)
-defaultDuration = 10
+### Template Management
 
-# Maximum bossbars per player
-maxPerPlayer = 3
+Templates are currently defined in the CustomBossbarManager class and include:
+- **welcome** - Welcome message for new players
+- **serverinfo** - Server information display
+- **event** - Event announcements
+- **warning** - Warning messages
+- **progress** - Progress indicators
+- **health** - Health status display
+- **animated_welcome** - Animated welcome message
 
-# Enable template system
-enableTemplates = true
+### Default Settings
 
-# Auto-remove expired bossbars
-autoRemove = true
+- **Default Duration**: 10 seconds
+- **Multi-Bossbar Support**: Yes (multiple bossbars per player)
+- **Animation Support**: Yes (through AnimationManager integration)
+- **Placeholder Support**: Yes (player, server, and custom placeholders)
+- **Theme Support**: Yes (4 built-in themes)
 
-# Default update interval (seconds)
-defaultUpdateInterval = 0
-```
+### Future Configuration
 
-### Template-Specific Settings
-
-```toml
-[bossbar.templates.welcome]
-enabled = true
-autoShow = true  # Automatically show to new players
-showDelay = 2    # Delay before showing (seconds)
-
-[bossbar.templates.serverinfo]
-enabled = true
-updateInterval = 5
-showToAdmins = true  # Only show to admins
-
-[bossbar.templates.event]
-enabled = true
-broadcastByDefault = true  # Broadcast to all players
-requirePermission = "neoessentials.events.view"
-```
+Template and theme customization through JSON configuration files is planned for future versions.
 
 ## 🎭 Event Integration
 
 ### Automatic Events
 
-The bossbar system can automatically display bossbars for certain events:
+The bossbar system automatically integrates with player events:
 
 #### Player Join Event
-```yaml
-player_join:
-  template: "welcome"
-  delay: 2
-  enabled: true
-```
+- Automatically shows the "welcome" template when players join
+- Duration: 10 seconds
+- Template: "§6§lWelcome to the Server! - §7Enjoy your stay and have fun!"
 
-#### Server Events
-```yaml
-server_restart:
-  template: "warning"
-  text: "Server restart in {restart_time} minutes!"
-  duration: 30
-  broadcast: true
-```
+#### Player Leave Event
+- Automatically cleans up all active bossbars for the player
+- Clears animation data to prevent memory leaks
 
-### Custom Event Triggers
+### Animation Integration
 
-Create custom event triggers in your configuration:
-
-```toml
+The bossbar system integrates with the NeoEssentials animation system:
+- Supports animated titles and subtitles
+- 20-frame animation cycles
+- Automatic frame updates
+- Animation cleanup on player disconnect
 [bossbar.events]
 # Show bossbar when player reaches certain level
 [bossbar.events.level_up]
@@ -546,49 +389,40 @@ conditional_bossbar:
 - `neoessentials.bossbar.hide` - Hide bossbars
 - `neoessentials.bossbar.templates` - List available templates
 
-### Template-Specific Permissions
-- `neoessentials.bossbar.template.welcome` - Use welcome template
-- `neoessentials.bossbar.template.serverinfo` - Use server info template
-- `neoessentials.bossbar.template.event` - Use event template
-- `neoessentials.bossbar.template.warning` - Use warning template
-- `neoessentials.bossbar.template.progress` - Use progress template
-
 ### Administrative Permissions
-- `neoessentials.bossbar.admin` - All administrative functions
-- `neoessentials.bossbar.reload` - Reload bossbar configuration
-- `neoessentials.bossbar.debug` - Debug bossbar system
+- `neoessentials.moderation.basic` - Basic moderation permissions (required for bossbar commands)
+
+**Note**: The bossbar system currently uses the general moderation permission for access control.
 
 ## 🔍 Troubleshooting
 
 ### Common Issues
 
-#### Bossbar Not Displaying
-1. Check if bossbar system is enabled in configuration
-2. Verify player has appropriate permissions
-3. Ensure template exists and is properly formatted
+#### Bossbar Not Showing
+1. Check player permissions: `neoessentials.bossbar.show`
+2. Verify template exists: `/bossbar templates`
+3. Check if player already has multiple bossbars (system supports multiple per player)
+4. Ensure the template name is spelled correctly
+
+#### Template Not Found
+1. Use `/bossbar templates` to list available templates
+2. Verify template name spelling (case-sensitive)
+3. Available templates: welcome, serverinfo, event, warning, progress, health, animated_welcome
 
 #### Placeholders Not Working
-1. Verify placeholder syntax is correct
-2. Check if placeholder is registered
-3. Ensure player context is available
+1. Ensure placeholder syntax is correct: `{placeholder_name}`
+2. Check if placeholder is registered in the system
+3. Some placeholders require specific server conditions
+
+#### Animation Issues
+1. Check if AnimationManager is properly initialized
+2. Verify animation configuration files in `config/neoessentials/`
+3. Animation frames update automatically every few seconds
 
 #### Performance Issues
-1. Reduce update intervals for frequently updating bossbars
-2. Limit maximum bossbars per player
-3. Optimize placeholder calculations
-
-### Debug Commands
-
-```bash
-# Check bossbar system status
-/neoessentials debug bossbar
-
-# Test placeholder resolution
-/placeholder test "{server_players} players online"
-
-# Validate bossbar templates
-/bossbar validate templates
-```
+1. Multiple bossbars per player are supported but may impact performance
+2. Limit frequent updates to avoid client lag
+3. Use appropriate durations to prevent bossbar spam
 
 ## 📊 Usage Examples
 

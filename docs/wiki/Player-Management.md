@@ -1,6 +1,6 @@
 # Player Management
 
-NeoEssentials provides comprehensive player management tools for server administrators. This system includes moderation commands, player monitoring, and administrative utilities to maintain a healthy server environment.
+NeoEssentials provides essential player management tools for server administrators. This includes moderation commands, player assistance tools, and basic administrative utilities to help maintain your server.
 
 ## 🛡️ Moderation Commands
 
@@ -10,105 +10,73 @@ NeoEssentials provides comprehensive player management tools for server administ
 ```bash
 /kick <player> [reason]
 ```
-- Removes a player from the server temporarily
-- Optional reason is displayed to the player and logged
-- Player can rejoin immediately unless banned
+Temporarily removes a player from the server. Players can rejoin immediately.
 
 **Examples:**
 ```bash
-/kick PlayerName           # Kick without reason
-/kick PlayerName Griefing  # Kick with reason
+/kick PlayerName Griefing
+/kick PlayerName
 ```
 
 #### Ban Management
 ```bash
-/ban <player> [reason]           # Permanent ban
-/tempban <player> <time> [reason] # Temporary ban
-/unban <player>                  # Remove ban
-/banip <ip> [reason]            # IP ban
-/unbanip <ip>                   # Remove IP ban
+/ban <player> [reason]          # Permanent ban (basic implementation)
+/tempban <player> <time> [reason] # Temporary ban with duration
 ```
 
 **Time Format Examples:**
-- `1h` - 1 hour
-- `3d` - 3 days  
-- `1w` - 1 week
-- `30m` - 30 minutes
+- `60m` - 60 minutes
+- `24h` - 24 hours  
+- `7d` - 7 days
 
 **Examples:**
 ```bash
 /ban PlayerName Hacking
-/tempban PlayerName 24h Inappropriate behavior
-/banip 192.168.1.100 VPN abuse
+/tempban PlayerName 1h Spamming
 ```
 
 #### Mute System
 ```bash
-/mute <player> [time] [reason]   # Mute player chat
-/unmute <player>                # Remove mute
-/mutelist                       # List muted players
+/mute <player> <duration> [reason]   # Mute player chat
+/unmute <player>                     # Remove mute
 ```
 
 **Examples:**
 ```bash
-/mute PlayerName 1h Spam        # Mute for 1 hour
-/mute PlayerName Permanent toxicity  # Permanent mute
-/unmute PlayerName              # Remove mute
+/mute PlayerName 30m Inappropriate language
+/unmute PlayerName
 ```
 
-### Advanced Moderation
-
-#### Player Monitoring
+#### Jail System
 ```bash
-/whois <player>                 # Detailed player information
-/seen <player>                  # Last seen information
-/lookup <player>                # Player history and statistics
-/inspect <player>               # Real-time player monitoring
-```
-
-**WhoisInformation Includes:**
-- UUID and current username
-- IP address and location
-- First join and last seen dates
-- Playtime statistics
-- Permission group
-- Current health, hunger, XP
-- Current dimension and coordinates
-
-#### Inventory Management
-```bash
-/invsee <player>                # View player inventory
-/enderinv <player>              # View ender chest
-/clear <player> [item] [amount] # Clear inventory items
-/give <player> <item> [amount]  # Give items to player
+/jail <player> <duration> [reason]   # Jail player (restricts movement)
+/unjail <player>                     # Release from jail
 ```
 
 **Examples:**
 ```bash
-/invsee PlayerName              # Open player's inventory
-/clear PlayerName               # Clear entire inventory
-/clear PlayerName diamond_sword # Clear specific item
-/give PlayerName diamond 64     # Give 64 diamonds
+/jail PlayerName 1h Griefing
+/unjail PlayerName
 ```
 
 ## 🎯 Player Assistance Tools
 
-### Teleportation Management
-```bash
-/tp <player1> <player2>         # Teleport player1 to player2
-/tphere <player>                # Teleport player to you
-/tpall                          # Teleport all players to you
-/tppos <player> <x> <y> <z>     # Teleport to coordinates
-```
-
 ### Health & Status Management
 ```bash
-/heal <player>                  # Heal specific player
-/feed <player>                  # Feed specific player
-/god <player>                   # Toggle god mode for player
-/fly <player>                   # Toggle flight for player
-/vanish <player>                # Toggle vanish for player
-/speed <player> <speed>         # Set player movement speed
+/heal [player]                  # Heal yourself or another player
+/feed [player]                  # Feed yourself or another player
+/god [player]                   # Toggle god mode
+/vanish [player]                # Toggle vanish mode
+/fly [player]                   # Toggle flight mode
+/speed <walk|fly> <speed> [player] # Set movement speed
+```
+
+**Examples:**
+```bash
+/heal                           # Heal yourself
+/heal PlayerName                # Heal another player
+/god PlayerName                 # Toggle god mode for player
+/speed walk 2 PlayerName        # Set walk speed to 2x
 ```
 
 ### Game Mode Management
@@ -120,264 +88,199 @@ NeoEssentials provides comprehensive player management tools for server administ
 /gmsp [player]                  # Spectator mode
 ```
 
-## 📊 Player Information Systems
-
-### Player Statistics
+### Teleportation Management
 ```bash
-/stats [player]                 # View player statistics
-/playtime [player]              # View playtime information
-/playerinfo <player>            # Comprehensive player data
+/tp <player1> <player2>         # Teleport player1 to player2
+/tphere <player>                # Teleport player to you
+/tppos <player> <x> <y> <z>     # Teleport to coordinates
 ```
 
-**Statistics Include:**
-- Total playtime
-- Blocks broken/placed
-- Deaths and kills
-- Distance traveled
-- Items crafted
-- Chat messages sent
-- Commands used
-
-### Location Tracking
+### Inventory Management
 ```bash
-/getpos [player]                # Get player coordinates
-/compass [player]               # Get direction to player
-/near [distance]                # List nearby players
-/afk [player]                   # Check AFK status
+/invsee <player>                # View player inventory
+/give <player> <item> [amount]  # Give items to player
 ```
 
-## 🎮 Player GUI Management
-
-### Admin Control Panel
+**Examples:**
 ```bash
-/admin                          # Open admin GUI panel
+/invsee PlayerName
+/give PlayerName diamond 64
 ```
 
-**GUI Features:**
-- **Player List** - Browse all online players
-- **Quick Actions** - Heal, feed, teleport players
-- **Moderation Tools** - Kick, ban, mute from GUI
-- **Gamemode Control** - Change player game modes
-- **Teleportation** - Teleport to or summon players
+## 📊 Player Information
 
-### Player Management GUI
+### Player Data Commands
 ```bash
-/playermanager                  # Open player management interface
-/playermanager <player>         # Open specific player's management
+/whois <player>                 # View detailed player information
+/playtime [player]              # View playtime statistics
 ```
 
-**Management Options:**
-- **Health Control** - Heal, feed, god mode
-- **Inventory Access** - View and modify inventories
-- **Teleportation** - Quick teleport options
-- **Status Control** - Vanish, fly, speed settings
-- **Moderation Actions** - Warn, kick, ban, mute
+**Whois Information Includes:**
+- Player UUID and username
+- Current location and world
+- Health, hunger, and experience
+- Permission group (if applicable)
+- Playtime statistics
 
-## 🔒 Permission-Based Management
+## 🛡️ Permissions
 
-### Permission Levels
-Different management commands require different permission levels:
-
-#### Moderator Permissions
+### Moderation Permissions
 ```yaml
 neoessentials.kick              # Kick players
-neoessentials.mute              # Mute players
+neoessentials.ban               # Ban players (permanent)
 neoessentials.tempban           # Temporary bans
-neoessentials.invsee            # View inventories
-neoessentials.whois             # Player information
+neoessentials.mute              # Mute players
+neoessentials.unmute            # Unmute players
+neoessentials.jail              # Jail players
+neoessentials.unjail            # Unjail players
 ```
 
-#### Admin Permissions
+### Player Assistance Permissions
 ```yaml
-neoessentials.ban               # Permanent bans
-neoessentials.banip             # IP bans
+neoessentials.heal              # Heal yourself
+neoessentials.heal.others       # Heal other players
+neoessentials.feed              # Feed yourself
+neoessentials.feed.others       # Feed other players
+neoessentials.god               # God mode for yourself
+neoessentials.god.others        # God mode for others
+neoessentials.vanish            # Vanish for yourself
+neoessentials.vanish.others     # Vanish for others
+neoessentials.fly               # Flight for yourself
+neoessentials.fly.others        # Flight for others
+neoessentials.speed             # Speed for yourself
+neoessentials.speed.others      # Speed for others
+```
+
+### Administrative Permissions
+```yaml
+neoessentials.gamemode          # Change your gamemode
+neoessentials.gamemode.others   # Change others' gamemode
 neoessentials.give              # Give items
-neoessentials.gamemode.others   # Change other's gamemode
+neoessentials.invsee            # View inventories
 neoessentials.teleport.others   # Teleport others
+neoessentials.whois             # View player information
 ```
 
-#### Super Admin Permissions
-```yaml
-neoessentials.admin.*           # All admin commands
-neoessentials.override.*        # Override all restrictions
-neoessentials.security.manage   # Manage security system
-```
+## ⚙️ Configuration
 
-## 📝 Logging & Audit Trail
+Player management features are configured through the main NeoEssentials configuration files:
 
-### Command Logging
-All moderation actions are automatically logged:
-
-```
-[2025-08-06 10:30:45] AdminName kicked PlayerName: Griefing
-[2025-08-06 10:31:12] AdminName banned PlayerName: Repeated offenses
-[2025-08-06 10:32:00] AdminName gave PlayerName 64x diamond
-```
-
-### Audit Commands
-```bash
-/logs player <player>           # View player's action history
-/logs admin <admin>             # View admin's action history
-/logs recent [lines]            # View recent moderation actions
-/logs search <keyword>          # Search logs for specific events
-```
-
-## 🚨 Security Integration
-
-### Threat Detection
-Player management integrates with the security system:
-
-- **Automatic Flagging** - Suspicious players are highlighted
-- **Risk Levels** - Players shown with risk indicators
-- **Alert System** - Notifications for high-risk players
-- **Pattern Recognition** - Identify repeat offenders
-
-### Security Commands
-```bash
-/security player <player>       # View player security profile
-/security threats               # List current threats
-/security whitelist <player>    # Whitelist trusted player
-/security blacklist <player>    # Blacklist problematic player
-```
-
-## 🎛️ Bulk Management Tools
-
-### Bulk Operations
-```bash
-/kickall [reason]               # Kick all players except admins
-/healall                        # Heal all online players
-/feedall                        # Feed all online players
-/tpall                          # Teleport all players to you
-/gamemode <mode> @a             # Change gamemode for all players
-```
-
-### Group Management
-```bash
-/group <group> heal             # Heal all players in group
-/group <group> feed             # Feed all players in group
-/group <group> tp <location>    # Teleport group to location
-/group <group> gamemode <mode>  # Set gamemode for group
-```
-
-## ⚙️ Configuration Options
-
-### Player Management Settings
-Configure in `config/neoessentials/player-management.toml`:
-
+### Main Configuration
 ```toml
+# In neoessentials-common.toml
 [moderation]
-# Enable moderation commands
-enabled = true
+enabled = true              # Enable moderation commands
+logActions = true          # Log moderation actions
+requireReason = true       # Require reason for bans/kicks
 
-# Log all moderation actions
-logActions = true
-
-# Require reason for bans/kicks
-requireReason = true
-
-# Ban duration limits
-maxTempBanDuration = "30d"
-
-[monitoring]
-# Enable player monitoring
-enabled = true
-
-# Track player statistics
-trackStats = true
-
-# Update interval for player data
-updateInterval = 300
-
-[security]
-# Enable security integration
-enabled = true
-
-# Auto-flag suspicious players
-autoFlag = true
-
-# Alert threshold for player actions
-alertThreshold = 10
+[commands]
+# Individual command toggles
+kick = true
+ban = true
+tempban = true
+mute = true
+jail = true
+heal = true
+feed = true
+god = true
+vanish = true
+fly = true
+speed = true
+gamemode = true
 ```
 
-### GUI Configuration
-Customize the admin panel in `config/gui/admin_gui.json`:
+### Command-Specific Settings
+```toml
+# Cooldowns and limits
+[commands.heal]
+cooldown = 30              # Cooldown in seconds
 
-```json
-{
-  "title": "§c§lAdmin Control Panel",
-  "size": 54,
-  "sections": {
-    "player_management": {
-      "slot": 10,
-      "icon": "minecraft:player_head",
-      "name": "§6Player Management",
-      "lore": [
-        "§7Manage online players",
-        "§7• View player information", 
-        "§7• Moderation actions",
-        "§7• Teleportation tools"
-      ]
-    }
-  }
-}
+[commands.feed]
+cooldown = 30              # Cooldown in seconds
+
+[commands.speed]
+maxWalkSpeed = 10.0        # Maximum walk speed
+maxFlySpeed = 10.0         # Maximum fly speed
 ```
 
-## 🛠️ Advanced Features
+## 🔧 Usage Examples
 
-### Custom Commands
-Create custom player management commands:
-
+### Basic Moderation
 ```bash
-/warn <player> <reason>         # Custom warning system
-/freeze <player>                # Freeze player movement
-/jail <player> <time>           # Jail system integration
-/punish <player> <punishment>   # Custom punishment system
+# Check player information
+/whois SuspiciousPlayer
+
+# Warn with a temporary mute
+/mute SuspiciousPlayer 10m Please read the rules
+
+# For more serious issues
+/tempban SuspiciousPlayer 1h Rule violation
+
+# Permanent removal
+/ban ProblemPlayer Hacking
 ```
 
-### Integration Features
-- **Database Logging** - Store actions in database
-- **Webhook Support** - Send events to external systems
-- **API Access** - Programmatic player management
+### Player Assistance
+```bash
+# Help a new player
+/heal NewPlayer
+/feed NewPlayer
+/gamemode survival NewPlayer
 
-### Automation
-- **Auto-moderation** - Automatic responses to violations
-- **Scheduled Actions** - Timed moderation actions
-- **Rule Enforcement** - Automatic rule violation detection
-- **Escalation System** - Progressive punishment system
+# Give starting items
+/give NewPlayer bread 32
+/give NewPlayer wooden_sword 1
+```
 
-## 🔧 Troubleshooting
+### Administrative Tasks
+```bash
+# Check on players
+/whois PlayerName
+/invsee PlayerName
+
+# Quick player management
+/tp StuckPlayer SafeLocation
+/god PlayerName              # Temporary protection
+```
+
+## 📝 Logging
+
+All moderation actions are automatically logged to help track administrative activity:
+
+- Kicks, bans, and mutes are logged with timestamp, admin, and reason
+- Player assistance commands (heal, feed) are logged when used on others
+- Administrative actions (gamemode changes, teleports) are tracked
+
+Log entries follow this format:
+```
+[TIMESTAMP] ADMIN performed ACTION on PLAYER: REASON
+```
+
+## � Troubleshooting
 
 ### Common Issues
 
-#### Commands Not Working
-- Verify permissions are correctly assigned
-- Check if player management is enabled in config
-- Ensure target player is online (for most commands)
+**Commands not working:**
+- Check that you have the required permissions
+- Verify the player is online (for most commands)
+- Ensure the command syntax is correct
 
-#### Permission Errors
-- Check permission hierarchy
-- Verify admin permissions are granted
-- Test with different permission levels
+**Moderation not effective:**
+- Verify moderation system is enabled in configuration
+- Check that target players don't have exemption permissions
+- Confirm reasons are provided if required by configuration
 
-#### GUI Not Opening
-- Verify GUI system is enabled
-- Check admin GUI permissions
-- Reload GUI configurations
+**Player assistance commands failing:**
+- Check command cooldowns in configuration
+- Verify you have permission to use commands on other players
+- Ensure target player is online and in the same world
 
 ### Debug Commands
 ```bash
-/neoessentials debug player <player>    # Debug player data
-/neoessentials reload playermanagement  # Reload configurations
-/neoessentials test permissions <player> # Test player permissions
+/neoessentials reload        # Reload configuration
+/neoessentials info          # View system information
 ```
 
 ---
 
-## 📚 Related Documentation
-
-- **[Essential Commands](Essential-Commands)** - Complete command reference
-- **[Permissions](Permissions)** - Permission system setup
-- **[Security Features](Security)** - Security system integration
-- **[GUI System](GUI-System)** - Admin panel customization
-
-*Last Updated: August 6, 2025*
+*NeoEssentials Player Management - Essential tools for server administration and player assistance.*

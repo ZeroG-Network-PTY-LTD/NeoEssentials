@@ -49,8 +49,9 @@ Yes! NeoEssentials **fully supports** hex colors (#FFFFFF format) in custom plac
 
 ### Hex Color Animation Example
 ```json
-"hex_rainbow": {
-  "type": "color_cycle",
+"custom_rainbow": {
+  "type": "sequence",
+  "interval": 500,
   "frames": [
     "#FF0000{text}",
     "#FF7F00{text}",
@@ -60,7 +61,6 @@ Yes! NeoEssentials **fully supports** hex colors (#FFFFFF format) in custom plac
     "#4B0082{text}",
     "#9400D3{text}"
   ],
-  "speed": 500,
   "description": "True RGB rainbow animation"
 }
 ```
@@ -68,7 +68,8 @@ Yes! NeoEssentials **fully supports** hex colors (#FFFFFF format) in custom plac
 ### Neon Glow Effect
 ```json
 "neon_glow": {
-  "type": "color_cycle",
+  "type": "sequence",
+  "interval": 300,
   "frames": [
     "#00FFFF{text}",
     "#00DDFF{text}",
@@ -79,7 +80,6 @@ Yes! NeoEssentials **fully supports** hex colors (#FFFFFF format) in custom plac
     "#00BBFF{text}",
     "#00DDFF{text}"
   ],
-  "speed": 300,
   "description": "Neon blue glow effect"
 }
 ```
@@ -87,7 +87,8 @@ Yes! NeoEssentials **fully supports** hex colors (#FFFFFF format) in custom plac
 ### Fire Effect
 ```json
 "fire_effect": {
-  "type": "color_cycle", 
+  "type": "sequence", 
+  "interval": 200,
   "frames": [
     "#FF0000{text}",
     "#FF3300{text}",
@@ -100,7 +101,6 @@ Yes! NeoEssentials **fully supports** hex colors (#FFFFFF format) in custom plac
     "#FF6600{text}",
     "#FF3300{text}"
   ],
-  "speed": 200,
   "description": "Fire color animation"
 }
 ```
@@ -170,27 +170,44 @@ String hex = ColorUtil.rgbToHex(255, 100, 50);  // "#FF6432"
 int[] rgb = ColorUtil.hexToRgb("#FF6432");  // [255, 100, 50]
 ```
 
-## Available Hex Animations
+## Available Default Animations
 
-The default configuration includes these hex-powered animations:
+The default configuration includes these animations (which can use hex colors):
 
-### Color Animations
-- `{hex_server_name}` - True RGB rainbow
-- `{neon_text}` - Neon blue glow  
-- `{fire_text}` - Fire effect
-- `{sunset_text}` - Sunset glow
-- `{ocean_text}` - Ocean wave gradient
+### Standard Animations
+- `{server_name}` - Animated server name
+- `{rainbow_server}` - Rainbow text effect
+- `{loading}` - Loading bar animation
+- `{server_tps}` - Color-coded TPS display
+- `{server_time}` - Real-time clock
 
-### Usage Examples
+### Usage Examples with Hex Colors
 ```yaml
 # In tablist header
-header: "#FF6B35Server: {hex_server_name}"
+header: "#FF6B35Server: {server_name}"
 
 # In scoreboard line  
-line: "#06FFA5Status: {neon_text}"
+line: "#06FFA5TPS: {server_tps}"
 
 # In bossbar text
-text: "{fire_text} #FFFFFF{player}! {sunset_text}"
+text: "#FFFFFF{player}! #45B7D1{loading}"
+```
+
+### Custom Hex Animations
+You can create custom hex-powered animations in `config/neoessentials/animations.json`:
+```json
+"neon_text": {
+  "type": "sequence",
+  "interval": 300,
+  "frames": [
+    "#00FFFF{text}",
+    "#00DDFF{text}",
+    "#00BBFF{text}",
+    "#0099FF{text}",
+    "#00BBFF{text}",
+    "#00DDFF{text}"
+  ]
+}
 ```
 
 ## Color Tools & Resources
@@ -253,9 +270,9 @@ text: "{fire_text} #FFFFFF{player}! {sunset_text}"
 
 ### Debug Commands
 ```
-/neoanimations test hex_rainbow    - Test hex rainbow animation
-/neoanimations list               - Show all available animations
-/neoanimations stats              - Show animation system stats
+/neoanimations test rainbow_text    - Test rainbow animation
+/neoanimations list                 - Show all available animations
+/neoanimations stats                - Show animation system stats
 ```
 
 ## Configuration Examples
@@ -265,7 +282,10 @@ See `docs/Example Configs/hex_colors_examples.yml` for complete working examples
 - Animated hex tablist themes
 - Dynamic hex scoreboard configurations  
 - Interactive hex bossbar templates
-- Complex hex gradient animations
+- Custom hex color animations
+
+### Default Animations with Hex Colors
+The auto-generated `config/neoessentials/animations.json` includes standard animations that can be enhanced with hex colors by editing the frames.
 
 ## Summary
 

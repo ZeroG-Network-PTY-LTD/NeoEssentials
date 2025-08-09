@@ -1,84 +1,398 @@
 # Data Storage
 
-NeoEssentials implements a flexible and robust data storage system that supports multiple storage backends, automatic backups, and efficient data management. This system handles player data, configuration, logs, and all persistent information.
+NeoEssentials implements a basic file-based data storage system using JSON format. The system provides simple data management for player information, configuration files, and other persistent data.
 
 ## 🗄️ Storage Architecture
 
-### Storage Backends
-NeoEssentials supports multiple storage backends to meet different server needs:
+### File-Based Storage
 
-#### File-Based Storage (Default)
-- **JSON Files** - Human-readable, easy to edit
-- **YAML Files** - Configuration-friendly format
-- **Binary Files** - Compact, fast access for large datasets
-- **SQLite Database** - Local database with SQL capabilities
+NeoEssentials uses a simple file-based storage system:
 
-#### Database Storage (Advanced)
-- **MySQL** - Popular relational database
-- **PostgreSQL** - Advanced relational database
-- **MongoDB** - NoSQL document database
-- **Redis** - In-memory data structure store
+#### JSON Files (Primary Storage)
+- **Human-readable format**: Easy to edit manually if needed
+- **Structured data**: Well-organized JSON structure
+- **Async operations**: Non-blocking file operations
+- **Basic caching**: In-memory cache for performance
 
-#### Hybrid Storage
-- **Configuration** - YAML/TOML files for easy editing
-- **Player Data** - Database for scalability
-- **Logs** - File-based for simplicity
-- **Cache** - Redis for performance
+#### Configuration Management
+- **JSON configuration files**: Located in `config/neoessentials/`
+- **Hot-reload capability**: Configuration changes apply automatically
+- **Backup system**: Automatic configuration backups
+- **Validation**: Basic configuration validation
 
 ## 📂 Data Organization
 
 ### File Structure
-Default file-based storage organization:
+
+The actual file structure used by NeoEssentials:
 
 ```
-neoessentials/
-├── data/
-│   ├── players/               # Player data
-│   │   ├── uuid1.json
-│   │   ├── uuid2.json
-│   │   └── ...
-│   ├── homes/                 # Player homes
-│   │   ├── uuid1.yml
-│   │   └── ...
-│   ├── warps/                 # Server warps
-│   │   ├── spawn.yml
-│   │   ├── shop.yml
-│   │   └── ...
-│   ├── economy/               # Economy data
-│   │   ├── balances.json
-│   │   ├── transactions.log
-│   │   └── shop_data.json
-│   └── cache/                 # Temporary cache files
-├── backups/                   # Automatic backups
-│   ├── daily/
-│   ├── weekly/
-│   └── manual/
-└── logs/                      # System logs
-    ├── debug.log
-    ├── events.log
-    └── security.log
+config/neoessentials/
+├── main.json                  # Core mod settings
+├── economy.json               # Economy configuration
+├── homes.json                 # Home system settings
+├── kits.json                  # Kit definitions
+├── warps.json                 # Warp locations
+├── moderation.json            # Moderation settings
+├── messaging.json             # Chat and messaging
+├── tablist.json               # Tablist customization
+├── spawn.json                 # Spawn configuration
+└── backup/                    # Configuration backups
+    ├── main_[timestamp].json
+    ├── economy_[timestamp].json
+    └── ...
+
+run/neoessentials/             # Runtime data storage
+├── players/                   # Player data (runtime)
+├── homes/                     # Player homes (runtime)
+├── warps/                     # Server warps (runtime)
+├── economy/                   # Economy data (runtime)
+└── cache/                     # Temporary cache files
 ```
 
-### Database Schema
-When using database storage, NeoEssentials creates optimized tables:
+### JSON Data Format
 
-```sql
--- Player data table
-CREATE TABLE players (
-    uuid VARCHAR(36) PRIMARY KEY,
-    username VARCHAR(16) NOT NULL,
-    first_join TIMESTAMP,
-    last_seen TIMESTAMP,
-    playtime BIGINT DEFAULT 0,
-    language VARCHAR(10) DEFAULT 'en_US',
-    balance DECIMAL(15,2) DEFAULT 0.00,
-    data JSON
-);
+#### Player Data Structure
+```json
+{
+  "uuid": "player-uuid-here",
+  "username": "PlayerName",
+  "firstJoin": 1691234567890,
+  "lastSeen": 1691234567890,
+  "balance": 1500.50,
+  "homes": {
+    "home": {
+      "world": "minecraft:overworld",
+      "x": 100.5,
+      "y": 64.0,
+      "z": 200.5,
+      "yaw": 180.0,
+      "pitch": 0.0
+    }
+  },
+  "settings": {
+    "language": "en_US",
+    "notifications": true
+  }
+}
+```
 
--- Homes table
-CREATE TABLE homes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    player_uuid VARCHAR(36),
+#### Configuration Structure
+```json
+{
+  "main": {
+    "serverName": "My Server",
+    "enableEssentialCommands": true,
+    "enableTeleportation": true,
+    "enableEconomy": true
+  },
+  "features": {
+    "homeSystem": true,
+    "warpSystem": true,
+    "kitSystem": true
+  }
+}
+```
+
+## ⚙️ Storage Configuration
+
+### Basic Storage Settings
+
+Storage behavior is configured through the main configuration:
+
+```json
+{
+  "storage": {
+    "autoSave": true,
+    "autoSaveInterval": 300,
+    "enableCache": true,
+    "cacheSize": 100,
+    "createBackups": true
+  }
+}
+```
+
+**Configuration Options:**
+- **autoSave**: Automatically save data periodically
+- **autoSaveInterval**: Seconds between auto-saves (300 = 5 minutes)
+- **enableCache**: Use in-memory cache for better performance
+- **cacheSize**: Maximum number of cached entries
+- **createBackups**: Create backups before modifying configurations
+
+### Cache Configuration
+
+```json
+{
+  "cache": {
+    "playerData": true,
+    "homeData": true,
+    "warpData": true,
+    "configData": true,
+    "maxAge": 3600
+  }
+}
+```
+
+## 🔧 Storage Management
+
+### Configuration Management
+
+The ConfigManager handles all configuration operations:
+
+#### Features
+- **JSON-based configuration**: Human-readable format
+- **Hot-reload**: Changes apply without restart
+- **Automatic backups**: Backups created before changes
+- **Validation**: Basic configuration validation
+- **Caching**: Configuration caching for performance
+
+#### Configuration Files Managed
+- `main.json` - Core mod settings
+- `economy.json` - Economy system configuration
+- `homes.json` - Home system settings
+- `kits.json` - Kit definitions and settings
+- `warps.json` - Warp locations and configuration
+- `moderation.json` - Moderation tool settings
+- `messaging.json` - Chat and message settings
+- `tablist.json` - Tablist customization
+- `spawn.json` - Spawn location and settings
+
+### Data Storage Manager
+
+The StorageManager handles runtime data:
+
+#### Features
+- **Async file operations**: Non-blocking storage operations
+- **JSON format**: Structured, readable data format
+- **Caching layer**: In-memory cache for frequently accessed data
+- **Category-based organization**: Data organized by type
+- **Backup capability**: Create backups of all data
+
+#### Data Categories Managed
+- **players**: Player-specific data and settings
+- **homes**: Player home locations
+- **warps**: Server warp points
+- **economy**: Economy and transaction data
+- **kits**: Kit usage and cooldown data
+- **mail**: Player mail system data
+
+### Player Data Management
+
+Basic player data storage:
+
+#### PlayerDataManager Features
+- **UUID-based storage**: Players identified by UUID
+- **Session management**: Track player sessions
+- **Data persistence**: Save/load player data
+- **Memory management**: Efficient data handling
+
+#### Data Types Stored
+- **Basic info**: Username, first join, last seen
+- **Game data**: Balance, homes, settings
+- **Statistics**: Playtime, command usage
+- **Preferences**: Language, notification settings
+
+## 📊 Storage Information
+
+### Performance Monitoring
+
+View storage performance with the performance command:
+
+```bash
+/performance cache            # View cache statistics
+/performance memory           # Check memory usage
+/performance clear            # Clear caches
+```
+
+**Cache Information:**
+- Cache hit rates
+- Memory usage by cache
+- Number of cached entries
+- Cache cleanup statistics
+
+### Storage Statistics
+
+While there are no dedicated storage commands, you can monitor storage through:
+
+#### File System Monitoring
+- Check `config/neoessentials/` directory size
+- Monitor `run/neoessentials/` for runtime data
+- Review backup directory growth
+
+#### Performance Impact
+- Use `/performance stats` to see overall system performance
+- Monitor memory usage with `/performance memory`
+- Check command execution times for storage-related operations
+
+## � Backup System
+
+### Configuration Backups
+
+The ConfigManager automatically creates backups:
+
+#### Backup Features
+- **Automatic creation**: Backups created before configuration changes
+- **Timestamp naming**: Files named with timestamps for easy identification
+- **Storage location**: `config/neoessentials/backup/`
+- **File format**: Same JSON format as originals
+
+#### Backup Structure
+```
+config/neoessentials/backup/
+├── main_1691234567890.json
+├── economy_1691234567890.json
+├── homes_1691234567890.json
+└── ...
+```
+
+### Manual Backup Creation
+
+The StorageManager can create data backups:
+
+#### Backup Process
+1. **Data collection**: Gather all runtime data
+2. **Directory creation**: Create timestamped backup directory
+3. **File copying**: Copy all data files to backup location
+4. **Verification**: Ensure backup completed successfully
+
+#### Backup Location
+```
+run/neoessentials/backups/
+└── backup_[timestamp]/
+    ├── players/
+    ├── homes/
+    ├── warps/
+    ├── economy/
+    └── ...
+```
+
+## 🛠️ Data Management
+
+### Manual Data Operations
+
+#### File-Based Management
+Since data is stored in JSON files, you can:
+
+1. **View data**: Open JSON files in any text editor
+2. **Edit data**: Modify JSON files carefully (backup first!)
+3. **Transfer data**: Copy JSON files between servers
+4. **Reset data**: Delete files to reset to defaults
+
+#### Configuration Management
+1. **Edit configs**: Modify JSON configuration files
+2. **Reload configs**: Changes apply automatically with hot-reload
+3. **Restore configs**: Use backup files to restore previous settings
+4. **Reset configs**: Delete files to restore defaults
+
+### Data Cleanup
+
+#### Automatic Cleanup
+- **Cache cleanup**: Old cache entries removed automatically
+- **Memory management**: Garbage collection handles memory cleanup
+- **Backup rotation**: Configuration backups managed automatically
+
+#### Manual Cleanup
+- **Clear cache**: Use `/performance clear` to clear all caches
+- **Remove old backups**: Manually delete old backup files
+- **Reset player data**: Delete player JSON files to reset individual players
+
+## 🔧 Troubleshooting
+
+### Common Storage Issues
+
+#### Configuration Problems
+**Issue**: Configuration not loading
+**Solution**:
+1. Check JSON syntax validity
+2. Restore from backup if corrupted
+3. Delete file to restore defaults
+4. Check file permissions
+
+#### Performance Issues
+**Issue**: Slow data operations
+**Solution**:
+1. Clear cache: `/performance clear`
+2. Check memory usage: `/performance memory`
+3. Restart server to clear all data
+4. Reduce cache size in configuration
+
+#### Data Corruption
+**Issue**: Corrupted JSON files
+**Solution**:
+1. Restore from backup files
+2. Validate JSON format online
+3. Recreate file with default content
+4. Check disk space and permissions
+
+### Data Recovery
+
+#### Configuration Recovery
+1. **Use backups**: Configuration backups in `config/neoessentials/backup/`
+2. **Restore process**: Copy backup file over corrupted file
+3. **Restart**: Restart server to reload configuration
+4. **Verify**: Check that configuration loaded correctly
+
+#### Player Data Recovery
+1. **Backup restoration**: Use backup files if available
+2. **Manual recreation**: Create new player data files
+3. **Reset to defaults**: Delete corrupted files for fresh start
+4. **Partial recovery**: Extract valid data from corrupted files
+
+### Performance Optimization
+
+#### Cache Optimization
+- **Monitor cache performance**: Use `/performance cache`
+- **Adjust cache size**: Modify cache settings in configuration
+- **Clear cache regularly**: Use `/performance clear` during low activity
+- **Monitor memory**: Check memory usage with `/performance memory`
+
+#### File System Optimization
+- **Regular cleanup**: Remove old backup files periodically
+- **Monitor disk space**: Ensure adequate free space
+- **Check file permissions**: Verify proper read/write access
+- **Use SSD storage**: Faster storage improves performance
+
+## ⚠️ Limitations & Recommendations
+
+### Current Limitations
+
+#### Storage Backend
+- **File-based only**: No database support currently
+- **Local storage**: No remote or cloud storage options
+- **Limited scalability**: May not scale well for very large servers
+- **No replication**: No automatic data replication or redundancy
+
+#### Data Management
+- **Manual operations**: Most data management requires manual file operations
+- **Limited tools**: No built-in data migration or analysis tools
+- **Basic backup**: Simple backup system without advanced features
+- **No compression**: Data stored uncompressed
+
+### Recommendations
+
+#### For Small to Medium Servers
+- **Use default settings**: File-based storage works well
+- **Regular backups**: Create manual backups periodically
+- **Monitor performance**: Use built-in performance tools
+- **Basic maintenance**: Clear caches and clean up old files
+
+#### For Large Servers
+- **External backup solutions**: Use dedicated backup plugins
+- **Database migration**: Consider migrating to database-based systems
+- **Performance monitoring**: Use external monitoring tools
+- **Load balancing**: Consider distributed storage solutions
+
+#### Best Practices
+- **Regular backups**: Back up configuration and data regularly
+- **Monitor disk space**: Ensure adequate storage space
+- **Test restores**: Verify backup restoration procedures
+- **Documentation**: Document any custom configurations or modifications
+
+---
+
+**Related Documentation**: [Configuration](Configuration.md) | [Performance](Performance.md) | [Essential Commands](Essential-Commands.md)
+
+*Last Updated: August 9, 2025*
     name VARCHAR(32),
     world VARCHAR(64),
     x DOUBLE, y DOUBLE, z DOUBLE,

@@ -58,6 +58,60 @@ public class NeoEssentialsAPI {
         return instance;
     }
     
+    /**
+     * Check if NeoEssentials API is available
+     */
+    public static boolean isAvailable() {
+        try {
+            return instance != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Get API version (static method)
+     */
+    public static String getAPIVersion() {
+        return "2.0.0";
+    }
+    
+    /**
+     * Get mod version (static method)
+     */
+    public static String getModVersion() {
+        return "1.0.2";
+    }
+    
+    /**
+     * Check if API version is at least the specified version
+     */
+    public static boolean isAPIVersionAtLeast(String minVersion) {
+        String current = getAPIVersion();
+        return compareVersions(current, minVersion) >= 0;
+    }
+    
+    /**
+     * Compare two version strings
+     */
+    private static int compareVersions(String version1, String version2) {
+        String[] v1Parts = version1.split("\\.");
+        String[] v2Parts = version2.split("\\.");
+        
+        int maxLength = Math.max(v1Parts.length, v2Parts.length);
+        
+        for (int i = 0; i < maxLength; i++) {
+            int v1Part = i < v1Parts.length ? Integer.parseInt(v1Parts[i]) : 0;
+            int v2Part = i < v2Parts.length ? Integer.parseInt(v2Parts[i]) : 0;
+            
+            if (v1Part != v2Part) {
+                return Integer.compare(v1Part, v2Part);
+            }
+        }
+        
+        return 0;
+    }
+    
     // ========================= HOME API =========================
     
     /**
@@ -293,20 +347,6 @@ public class NeoEssentialsAPI {
     }
     
     // ========================= VERSION INFO =========================
-    
-    /**
-     * Get API version
-     */
-    public String getAPIVersion() {
-        return "2.0.0";
-    }
-    
-    /**
-     * Get mod version
-     */
-    public String getModVersion() {
-        return "1.0.2";
-    }
     
     /**
      * Check if specific feature is available

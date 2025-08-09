@@ -50,21 +50,23 @@ your-server/
 ├── mods/
 │   └── neoessentials-1.0.2.jar
 ├── config/
-│   ├── neoessentials-common.toml
-│   ├── neoessentials-general.toml
-│   ├── gui/                    # New GUI System configurations
-│   │   ├── main_config.json    # Main GUI settings & themes
-│   │   ├── shop_gui.json       # Shop interface configuration
-│   │   ├── kits_gui.json       # Kit selection menu
-│   │   ├── stats_gui.json      # Player statistics GUI
-│   │   ├── economy_gui.json    # Economy management
-│   │   ├── warps_gui.json      # Warp destinations
-│   │   ├── admin_gui.json      # Admin control panel
-│   │   └── teleport_gui.json   # Teleport hub
-│   └── neoessentials/
-│       ├── language/
-│       ├── templates/
-│       └── security/
+│   ├── neoessentials-common.toml    # Forge mod configuration
+│   ├── neoessentials-general.toml   # General NeoEssentials settings  
+│   ├── neoessentials-gui.toml       # GUI system configuration
+│   └── neoessentials/               # Feature configurations (JSON)
+│       ├── main.json                # Core mod settings
+│       ├── economy.json             # Economy system
+│       ├── homes.json               # Home system
+│       ├── kits.json                # Kit definitions
+│       ├── warps.json               # Warp locations
+│       ├── moderation.json          # Moderation tools
+│       ├── messaging.json           # Chat and messages
+│       ├── chat.json                # Chat settings
+│       ├── tablist.json             # Tablist customization
+│       ├── spawn.json               # Spawn settings
+│       ├── language/                # Language files
+│       ├── templates/               # Configuration templates
+│       └── security/                # Security configurations
 ├── neoessentials/
 │   ├── data/
 │   ├── homes/
@@ -93,11 +95,10 @@ your-server/
 
 ### Essential Configurations
 ```toml
+# neoessentials-general.toml
 [features]
 essentialCommands = true
 teleportation = true
-bossbarSystem = true
-guiSystem = true      # Enable new GUI system
 notifications = true
 security = true
 
@@ -110,13 +111,29 @@ maxHomesStaff = 20
 teleportDelay = 3
 teleportCooldown = 30
 enableBack = true
+```
 
-[gui]
-# GUI system will auto-generate JSON configs
-enableShop = true
-enableKits = true
-enableStats = true
-enableThemes = true
+```toml
+# neoessentials-gui.toml - GUI system configuration
+[layout]
+inventory_rows = 6
+menu_title_format = "&6&l{menu_name} &7(Page {page}/{max_page})"
+enable_menu_sounds = true
+
+[colors]
+primary_color = "&6"
+secondary_color = "&e"
+accent_color = "&a"
+
+[shop]
+shop_enable_categories = true
+shop_items_per_page = 45
+shop_show_prices = true
+
+[kits]
+kit_show_previews = true
+kit_show_cooldowns = true
+kit_show_costs = true
 ```
 
 ## 🔑 Permissions Setup
@@ -133,12 +150,11 @@ NeoEssentials includes a built-in permission system:
 /permissions group permission add vip essentials.fly
 /permissions group permission add vip essentials.heal
 
-# GUI system permissions
-/permissions group permission add default neoessentials.gui.shop
-/permissions group permission add default neoessentials.gui.kits
-/permissions group permission add default neoessentials.gui.stats
-/permissions group permission add vip neoessentials.gui.theme.change
-/permissions group permission add admin neoessentials.gui.admin
+# Basic command permissions
+/permissions group permission add default neoessentials.commands.home
+/permissions group permission add default neoessentials.commands.sethome
+/permissions group permission add default neoessentials.commands.warp
+/permissions group permission add default neoessentials.commands.kit
 ```
 
 ### Using External Permission Mods
@@ -181,8 +197,8 @@ Look for these messages in your server console:
 [INFO] NeoEssentials: Successfully loaded
 [INFO] NeoEssentials: Registered 23 essential commands
 [INFO] NeoEssentials: Bossbar system initialized
-[INFO] NeoEssentials: GUI system loaded - 8 configurations ready
-[INFO] NeoEssentials: ConfigurableGuiManager initialized successfully
+[INFO] NeoEssentials: Configuration system initialized
+[INFO] NeoEssentials: All modules loaded successfully  
 [INFO] NeoEssentials: Security framework loaded
 ```
 

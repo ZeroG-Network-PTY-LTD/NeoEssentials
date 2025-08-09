@@ -28,34 +28,40 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 
 ### 🔧 Technical Documentation
 - [API Reference](API.md) - Developer API documentation
-- [Events System](Events.md) - Custom event handling
+- [Events System](Events.md) - Notification and event handling
 - [Data Storage](Storage.md) - Player data and configuration
 - [Performance](Performance.md) - Optimization and monitoring
+- [Animations](Animations.md) - Animation system documentation
 
 ### 🎨 Customization
-- [GUI System](GUI-System.md) - Advanced config-based user interfaces
 - [Themes and Styling](Themes.md) - Visual customization
-- [Custom Commands](Custom-Commands.md) - Creating custom commands
+- [Hex Color Support](Hex-Colors.md) - Modern RGB color support
+- [Animation System](Animations.md) - Dynamic content animations
+- [Custom Commands](Custom-Commands.md) - Command system documentation
 
 ## 📊 Current Implementation Status
 
 **NeoEssentials** is actively developed with the following features currently implemented:
 
 ### ✅ Fully Implemented Features
-- **Essential Commands** - 20+ core utility commands
-- **Player Management** - Comprehensive moderation tools
-- **Teleportation System** - Home, warp, and teleport functionality
-- **Advanced GUI System** - Config-based customizable interfaces with themes
-- **Enhanced Bossbar System** - Multi-bossbar templates with theme support
-- **Enhanced Tablist & Scoreboard** - Dynamic displays with multiple themes
-- **Enhanced Placeholder System** - 50+ placeholders with animation support
-- **Notification System** - Multi-channel notification support
-- **Security Framework** - Player and IP security monitoring
+- **Essential Commands** - 20+ core utility commands including heal, feed, fly, god, vanish, speed
+- **Player Management** - Comprehensive moderation tools including bans, kicks, mutes, teleportation
+- **Teleportation System** - Home, warp, and teleport functionality with TPA requests
+- **Economy System** - Advanced currency management with banking, loans, multi-currency, shop systems
+- **Advanced Bossbar System** - Multi-bossbar templates with theme support and animations
+- **Enhanced Tablist & Scoreboard** - Dynamic displays with multiple themes and placeholders
+- **Enhanced Placeholder System** - 50+ placeholders with comprehensive animation support
+- **Animation System** - Custom animated placeholders for dynamic content display
+- **Notification System** - Multi-channel notification support with event handling
+- **Security Framework** - Player and IP security monitoring with threat detection
+- **Shop System** - Sign shops, admin shops, and player shops with economy integration
+- **Banking System** - Complete banking with accounts, loans, interest calculation, transfers
+- **Kit System** - Comprehensive kit management with cooldowns, permissions, and GUI
 
 ### 🚧 In Development
-- **Economy System** - Advanced currency management
-- **Language System** - Multi-language support
-- **Plugin Compatibility** - Integration with other mods
+- **GUI System** - Advanced config-based user interfaces (core functionality implemented)
+- **Language System** - Multi-language support framework
+- **Plugin Compatibility** - Integration with other mods and permission systems
 
 ## 🎯 Key Features
 
@@ -68,9 +74,9 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - `/speed` - Adjust movement speed
 - `/home` - Teleport to set homes
 - `/warp` - Teleport to server warps
-- `/shop` - Open server shop GUI
-- `/kits` - Access kit selection interface
-- `/stats` - View player statistics GUI
+- `/kit` - Access available kits
+- `/kits` - List all available kits
+- `/balance` - Check your balance (if economy enabled)
 
 ### 🛠️ Admin Tools
 - `/heal <player>` - Heal other players
@@ -79,16 +85,16 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - `/weather <type>` - Control weather
 - `/give <player> <item>` - Give items to players
 - `/repair` - Repair items and equipment
-- `/admin` - Access admin control panel GUI
-- `/economy` - Open economy management interface
+- `/economy` - Economy management commands (if enabled)
+- `/analytics` - Server analytics and statistics
 
 ### 🎨 Advanced Features
 - **Enhanced Multi-Bossbar Templates** - Welcome, server info, health monitoring, events
 - **Theme-Based Tablist & Scoreboard** - Multiple simultaneous themes per player
-- **Animated Placeholder System** - Player stats, server info, animated content
-- **Multi-Channel Notifications** - Discord, email, log files
-- **Security Monitoring** - Threat detection and player profiling
-- **Config-Based GUI System** - Fully customizable interfaces with JSON configuration
+- **Animated Placeholder System** - Player stats, server info, animated content with 50+ placeholders
+- **Shop System** - Admin and Player shops with economy integration
+- **Kit System** - Comprehensive kit management with cooldowns and permissions
+- **Animation System** - Custom animated placeholders for dynamic content display
 
 ## 🚀 Getting Started
 
@@ -117,4 +123,4 @@ NeoEssentials is released under the MIT License. See the [LICENSE](../LICENSE) f
 
 ---
 
-*Last Updated: August 6, 2025*
+*Last Updated: August 8, 2025*

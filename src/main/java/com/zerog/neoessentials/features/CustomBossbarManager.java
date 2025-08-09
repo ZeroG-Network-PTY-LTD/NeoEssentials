@@ -53,6 +53,21 @@ public class CustomBossbarManager {
     public void onServerStarted(ServerStartedEvent event) {
         this.server = event.getServer();
         
+        // Check if features are enabled in configuration (using tablist as a proxy for UI features)
+        try {
+            com.zerog.neoessentials.config.MainConfig mainConfig = 
+                com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
+            
+            // For now, check if general modules are enabled - you may want to add a specific bossbar config
+            if (mainConfig == null || !mainConfig.modules.tablist) {
+                LOGGER.info("CustomBossbarManager disabled (tablist module disabled) - skipping initialization");
+                return;
+            }
+            LOGGER.info("CustomBossbarManager enabled in configuration - proceeding with initialization");
+        } catch (Exception e) {
+            LOGGER.error("Failed to check bossbar configuration, proceeding with default behavior", e);
+        }
+        
         // Initialize animation manager
         try {
             File configDir = new File("config/neoessentials");
@@ -72,6 +87,20 @@ public class CustomBossbarManager {
     @SubscribeEvent
     public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            // Check if bossbar features are enabled before showing welcome bossbar
+            try {
+                com.zerog.neoessentials.config.MainConfig mainConfig = 
+                    com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
+                
+                if (mainConfig == null || !mainConfig.modules.tablist) {
+                    LOGGER.debug("CustomBossbarManager disabled - skipping welcome bossbar for: {}", player.getDisplayName().getString());
+                    return;
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to check bossbar configuration for player join", e);
+                return;
+            }
+            
             // Show welcome bossbar
             showBossbar(player, "welcome", 10);
         }
@@ -479,6 +508,20 @@ public class CustomBossbarManager {
      * Start the update task for managing bossbar durations
      */
     private void startUpdateTask() {
+        // Check if bossbar features are enabled before starting update task
+        try {
+            com.zerog.neoessentials.config.MainConfig mainConfig = 
+                com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
+            
+            if (mainConfig == null || !mainConfig.modules.tablist) {
+                LOGGER.info("CustomBossbarManager disabled in configuration - skipping update task start");
+                return;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to check bossbar configuration for update task", e);
+            return; // Don't start update task if config check fails
+        }
+        
         updateTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {

@@ -1,104 +1,301 @@
-# Custom Commands
+# Command System
 
-NeoEssentials provides a powerful custom command system that allows server administrators to create their own commands with complex logic, GUI integration, and advanced functionality without requiring plugin development knowledge.
+NeoEssentials provides a comprehensive command system with over 100 built-in commands for server administration, player management, economy, teleportation, and more.
 
-## 🚀 Custom Command System Overview
+## 🚀 Command System Overview
 
-### What are Custom Commands?
-Custom commands in NeoEssentials are user-defined commands that can:
-- Execute multiple actions in sequence
-- Include conditional logic and parameters
-- Integrate with GUI systems
-- Access player and server data
-- Trigger other systems (economy, teleportation, etc.)
-- Use scripting for advanced functionality
+### Built-in Commands
+NeoEssentials includes a wide range of pre-built commands organized into categories:
 
-### Command Types
-NeoEssentials supports several types of custom commands:
+#### Essential Utility Commands
+- `/heal [player]` - Heal yourself or another player
+- `/feed [player]` - Feed yourself or another player
+- `/god [player]` - Toggle god mode
+- `/vanish [player]` - Toggle visibility
+- `/fly [player]` - Toggle flight mode
+- `/speed <walk|fly> <speed> [player]` - Set movement speed
+- `/gamemode <mode> [player]` - Change game mode
 
-1. **Simple Commands** - Basic action sequences
-2. **Parameterized Commands** - Commands with arguments
-3. **Conditional Commands** - Commands with if/else logic
-4. **GUI Commands** - Commands that open custom interfaces
-5. **Scripted Commands** - Commands with JavaScript/Lua scripting
-6. **Alias Commands** - Shortcuts for existing commands
+#### Teleportation Commands
+- `/tp <player>` - Teleport to a player
+- `/tpa <player>` - Request teleportation to a player
+- `/tpaccept` - Accept teleport request
+- `/tpdeny` - Deny teleport request
+- `/back` - Return to previous location
+- `/spawn` - Teleport to spawn
+- `/home [name]` - Teleport to home
+- `/sethome [name]` - Set home location
+- `/warp <name>` - Teleport to warp
+- `/setwarp <name>` - Create warp location
 
-## 📝 Creating Basic Custom Commands
+#### Economy Commands
+- `/balance [player]` - Check balance
+- `/pay <player> <amount>` - Pay another player
+- `/economy <give|take|set> <player> <amount>` - Admin economy management
+- `/shop` - Access shop system
 
-### Command Configuration
-Custom commands are defined in `config/neoessentials/custom_commands/`:
+#### Communication Commands
+- `/msg <player> <message>` - Private message
+- `/reply <message>` - Reply to last message
+- `/mail <send|read|clear>` - Mail system
+- `/broadcast <message>` - Server-wide message
 
-```yaml
-# basic_example.yml
-command:
-  name: "welcome"
-  description: "Welcome new players with style"
-  permission: "server.welcome"
-  usage: "/welcome [player]"
-  
-  aliases: ["greet", "hello"]
-  
-  actions:
-    - type: "message"
-      target: "{target_player}"
-      message: "§6Welcome to our amazing server, {target_player}!"
-      
-    - type: "sound"
-      target: "{target_player}"
-      sound: "entity.player.levelup"
-      
-    - type: "give_money"
-      target: "{target_player}"
-      amount: 100
-      
-    - type: "teleport"
-      target: "{target_player}"
-      location: "spawn"
+#### Moderation Commands
+- `/kick <player> [reason]` - Kick player
+- `/ban <player> [reason]` - Ban player
+- `/tempban <player> <duration> [reason]` - Temporary ban
+- `/mute <player> [duration] [reason]` - Mute player
+- `/whois <player>` - Player information
+- `/seen <player>` - Last seen information
+
+### Command Registration
+Commands are registered through the centralized `CommandRegistry` system during server startup.
+
+## 📋 Complete Command List
+
+### Administrative Commands
+- `/neoessentials <reload|version|status>` - Main admin command
+- `/permissions <info|group|user|reload|stats>` - Permission management
+- `/config <reload|get|set>` - Configuration management
+- `/theme <tablist|scoreboard|bossbar> <theme>` - Theme management
+- `/security <status|audit|config>` - Security management
+
+### Player Management Commands
+- `/whois <player>` - Detailed player information
+- `/seen <player>` - Last seen information
+- `/list` - List online players
+- `/playtime [player]` - Check playtime
+- `/nick <nickname>` - Set nickname
+- `/preferences <setting> <value>` - Player preferences
+
+### Utility Commands
+- `/workbench` - Open crafting table
+- `/anvil` - Open anvil interface
+- `/enderchest` - Open ender chest
+- `/invsee <player>` - View player inventory
+- `/repair [all]` - Repair items
+- `/give <item> [amount] [player]` - Give items
+- `/time <set|add> <value>` - Time management
+- `/weather <clear|rain|thunder>` - Weather control
+
+### Information Commands
+- `/help [command]` - Command help
+- `/info` - Server information
+- `/motd` - Message of the day
+- `/rules` - Server rules
+
+### Bossbar Commands
+- `/bossbar show <template> [player] [duration]` - Show bossbar
+- `/bossbar hide [player]` - Hide bossbar
+- `/bossbar broadcast <template> <duration>` - Broadcast bossbar
+- `/bossbar templates` - List templates
+- `/bossbar update <text> <progress> [player]` - Update bossbar
+
+### Kit System
+- `/kit <name>` - Get a kit
+- `/kit list` - List available kits
+- `/kit preview <name>` - Preview kit contents
+
+### Animation Commands
+- `/animation <play|stop|list> [name] [player]` - Animation management
+- `/animation reload` - Reload animations
+- `/animation stats` - Animation statistics
+
+## 🛠️ Command Permissions
+
+### Permission Structure
+Commands use a hierarchical permission system:
+```
+neoessentials.<category>.<command>[.<subcategory>]
 ```
 
-### Simple Action Commands
-Create commands that perform a series of actions:
+### Basic Permission Groups
+- `neoessentials.user.*` - Basic user commands
+- `neoessentials.moderator.*` - Moderation commands  
+- `neoessentials.admin.*` - Administrative commands
+- `neoessentials.*` - All permissions
 
-```yaml
-# heal_and_feed.yml
-command:
-  name: "refresh"
-  description: "Heal and feed yourself"
-  permission: "essentials.refresh"
-  cooldown: 60  # 60 seconds
-  
-  actions:
-    - type: "heal"
-      target: "{player}"
-      
-    - type: "feed"
-      target: "{player}"
-      
-    - type: "message"
-      target: "{player}"
-      message: "§aYou feel refreshed!"
-      
-    - type: "particle"
-      target: "{player}"
-      effect: "heart"
-      count: 10
+### Specific Permissions
+- `neoessentials.heal.self` - Heal yourself
+- `neoessentials.heal.others` - Heal other players
+- `neoessentials.teleport.tp` - Basic teleportation
+- `neoessentials.economy.admin` - Economy administration
+- `neoessentials.moderation.basic` - Basic moderation
+- `neoessentials.bossbar.show` - Show bossbars
+
+## 🔧 Command Usage Examples
+
+### Basic Player Commands
+```bash
+# Heal yourself
+/heal
+
+# Heal another player  
+/heal Steve
+
+# Set your nickname
+/nick "§6Golden§fPlayer"
+
+# Check your balance
+/balance
+
+# Send a private message
+/msg Steve Hello there!
 ```
 
-### Parameterized Commands
-Commands that accept and use parameters:
+### Administrative Commands
+```bash
+# Give items to a player
+/give Steve minecraft:diamond 64
 
-```yaml
-# give_kit.yml
-command:
-  name: "givekit"
-  description: "Give a kit to a player"
-  permission: "admin.givekit"
-  usage: "/givekit <player> <kit_name>"
-  
-  parameters:
-    - name: "target_player"
-      type: "player"
-      required: true
+# Set server time to day
+/time set day
+
+# Teleport to a player
+/tp Steve
+
+# Create a warp point
+/setwarp mall
+
+# Show server-wide bossbar
+/bossbar broadcast welcome 30
+```
+
+### Moderation Commands
+```bash
+# Check player information
+/whois Steve
+
+# Temporary ban for 1 hour
+/tempban Steve 1h Griefing
+
+# Mute player for 30 minutes
+/mute Steve 30m Spam
+
+# View player's last login
+/seen Steve
+```
+
+## 📊 Command Categories
+
+### Essential Commands (20+ commands)
+Core server functionality including heal, feed, god mode, vanish, fly, speed, and gamemode commands.
+
+### Teleportation Commands (15+ commands)  
+Complete teleportation system with homes, warps, spawn, TPA requests, and back functionality.
+
+### Economy Commands (10+ commands)
+Full economy system with balance management, payments, shops, and administrative tools.
+
+### Moderation Commands (15+ commands)
+Comprehensive moderation tools including bans, kicks, mutes, and player information commands.
+
+### Communication Commands (8+ commands)
+Messaging system with private messages, mail, replies, and server-wide broadcasts.
+
+### Utility Commands (25+ commands)
+Various utility commands for inventory management, crafting interfaces, item giving, and server management.
+
+### Information Commands (10+ commands)
+Commands for displaying server information, rules, help, and player statistics.
+
+### Administrative Commands (20+ commands)
+Advanced administrative tools for server configuration, permissions, themes, and system management.
+
+## 🎯 Command Aliases
+
+Many commands include convenient aliases:
+- `/gm` = `/gamemode`
+- `/gmc` = `/gamemode creative`
+- `/gms` = `/gamemode survival`
+- `/gma` = `/gamemode adventure` 
+- `/gmsp` = `/gamemode spectator`
+- `/tpa` = teleport request
+- `/tpaccept` = accept teleport
+- `/tpdeny` = deny teleport
+- `/msg` = `/message`
+- `/r` = `/reply`
+
+## 🔍 Command Help System
+
+### Getting Help
+- `/help` - List all available commands
+- `/help <command>` - Get specific command help
+- `/help <category>` - Get category-specific help
+
+### Command Information
+Each command provides:
+- Usage syntax
+- Parameter descriptions
+- Permission requirements
+- Example usage
+- Related commands
+
+## ⚙️ Command Configuration
+
+Commands are managed through the NeoEssentials configuration system:
+- **Command enabling/disabling**: Control which commands are available
+- **Permission requirements**: Set required permissions for commands
+- **Cooldowns**: Configure command cooldowns
+- **Aliases**: Define custom command aliases
+
+**Configuration Location**: `config/neoessentials/main.json`
+
+## 🚫 Disabled Commands
+
+Some commands may be temporarily disabled:
+- Commands requiring missing dependencies
+- Commands with compilation issues
+- Experimental or unstable commands
+
+Check the console logs during server startup for information about disabled commands.
+
+---
+
+**Related Documentation**: [Permissions](Permissions.md) | [Configuration](Configuration.md) | [Essential Commands](Essential-Commands.md)
+
+*Last Updated: August 8, 2025*
+- `/feed [player]` - Feed yourself or another player
+- `/god [player]` - Toggle god mode
+- `/vanish [player]` - Toggle visibility
+- `/fly [player]` - Toggle flight mode
+- `/speed <walk|fly> <speed> [player]` - Set movement speed
+- `/gamemode <mode> [player]` - Change game mode
+
+#### Teleportation Commands
+- `/tp <player>` - Teleport to a player
+- `/tpa <player>` - Request teleportation to a player
+- `/tpaccept` - Accept teleport request
+- `/tpdeny` - Deny teleport request
+- `/back` - Return to previous location
+- `/spawn` - Teleport to spawn
+- `/home [name]` - Teleport to home
+- `/sethome [name]` - Set home location
+- `/warp <name>` - Teleport to warp
+- `/setwarp <name>` - Create warp location
+
+#### Economy Commands
+- `/balance [player]` - Check balance
+- `/pay <player> <amount>` - Pay another player
+- `/economy <give|take|set> <player> <amount>` - Admin economy management
+- `/shop` - Access shop system
+
+#### Communication Commands
+- `/msg <player> <message>` - Private message
+- `/reply <message>` - Reply to last message
+- `/mail <send|read|clear>` - Mail system
+- `/broadcast <message>` - Server-wide message
+
+#### Moderation Commands
+- `/kick <player> [reason]` - Kick player
+- `/ban <player> [reason]` - Ban player
+- `/tempban <player> <duration> [reason]` - Temporary ban
+- `/mute <player> [duration] [reason]` - Mute player
+- `/whois <player>` - Player information
+- `/seen <player>` - Last seen information
+
+### Command Registration
+Commands are registered through the centralized `CommandRegistry` system during server startup.
       description: "The player to give the kit to"
       
     - name: "kit_name"
