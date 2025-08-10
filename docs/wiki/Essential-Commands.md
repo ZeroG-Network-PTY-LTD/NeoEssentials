@@ -1,20 +1,18 @@
 # Essential Commands
 
-NeoEssentials provides a comprehensive set of essential commands for server administration and player convenience. This page documents all currently implemented commands, including the new GUI system commands and enhanced features.
+NeoEssentials provides a comprehensive set of essential commands for server administration and player convenience. This page documents all currently implemented commands.
 
 ## 🎮 Player Utility Commands
 
 ### Health & Survival
 
 #### `/heal [player]`
-**Description**: Restore health, hunger, and remove harmful effects  
-**Permission**: `neoessentials.heal` (self), `neoessentials.heal.others` (other players)  
-**Cooldown**: 30 seconds (configurable)  
+**Description**: Restore health, hunger, and remove harmful effects
+**Permission**: `neoessentials.heal` (self), `neoessentials.heal.others` (other players)
 **Usage**:
 ```bash
 /heal                    # Heal yourself
 /heal Steve             # Heal player Steve (admin only)
-/heal *                 # Heal all online players (admin only)
 ```
 **Effects**:
 - Restores full health (20 HP)
@@ -22,64 +20,35 @@ NeoEssentials provides a comprehensive set of essential commands for server admi
 - Restores full saturation
 - Removes all harmful effects (poison, wither, etc.)
 - Extinguishes fire
-- Plays success sound notification
-
-**Configuration**:
-```toml
-# In neoessentials-common.toml
-[commands.heal]
-enabled = true
-cooldown = 30
-enableSound = true
-healOthersPermission = "neoessentials.heal.others"
-```
 
 ---
 
 #### `/feed [player]`
-**Description**: Restore hunger and saturation to full  
-**Permission**: `neoessentials.feed` (self), `neoessentials.feed.others` (other players)  
-**Cooldown**: 30 seconds (configurable)  
+**Description**: Restore hunger and saturation to full
+**Permission**: `neoessentials.feed` (self), `neoessentials.feed.others` (other players)
 **Usage**:
 ```bash
 /feed                    # Feed yourself
 /feed Steve             # Feed player Steve (admin only)
-/feed *                 # Feed all online players (admin only)
 ```
 **Effects**:
 - Sets hunger to 20 points
 - Sets saturation to 20.0
 - Removes hunger effect
-- Restores food exhaustion
-
-**Configuration**:
-```toml
-# In neoessentials-common.toml
-[commands.feed]
-enabled = true
-cooldown = 30
-feedOthersPermission = "neoessentials.feed.others"
-```
 
 ---
 
 #### `/god [player]`
-**Description**: Toggle invincibility mode  
-**Permission**: `neoessentials.god` (self), `neoessentials.god.others` (other players)  
+**Description**: Toggle invincibility mode
+**Permission**: `neoessentials.god` (self), `neoessentials.god.others` (other players)
 **Usage**:
 ```bash
 /god                     # Toggle god mode for yourself
 /god Steve              # Toggle god mode for Steve (admin only)
-/god Steve on           # Enable god mode for Steve
-/god Steve off          # Disable god mode for Steve
 ```
 **Features**:
 - Complete damage immunity
 - Prevents fall damage
-- Immunity to suffocation
-- Protection from void damage
-- Fire immunity
-- Visual indicator in tablist (optional)
 - Prevents drowning
 - Prevents fire/lava damage
 - Visual indicator when enabled

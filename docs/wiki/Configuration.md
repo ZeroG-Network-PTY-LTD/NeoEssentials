@@ -1,10 +1,15 @@
 # Configuration Guide
 
+<<<<<<< HEAD
 This comprehensive guide covers all configuration options available in NeoEssentials. Configuration files are located in the `config/neoessentials/` directory and use JSON format for easy editing and readability.
+=======
+This comprehensive guide covers all configuration options available in NeoEssentials. Configuration files are located in the `config/` directory and use TOML format.
+>>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 
 ## 📁 Configuration Files Overview
 
 ### Main Configuration Files
+<<<<<<< HEAD
 - `main.json` - Core mod settings and general configuration
 - `economy.json` - Economy system configuration
 - `homes.json` - Home system settings
@@ -16,9 +21,17 @@ This comprehensive guide covers all configuration options available in NeoEssent
 - `tablist.json` - Tab list customization
 - `spawn.json` - Spawn system settings
 - `animations.json` - Animation system configuration (auto-generated)
+=======
+- `neoessentials-general.toml` - General mod settings
+- `neoessentials-common.toml` - Common gameplay settings
+- `neoessentials/language/` - Language files
+- `neoessentials/templates/` - Bossbar and message templates
+- `neoessentials/security/` - Security configuration
+>>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 
-### Complete Configuration Directory Structure
+### Configuration Directory Structure
 ```
+<<<<<<< HEAD
 config/neoessentials/
 ├── main.json                       # Core mod settings
 ├── economy.json                    # Economy system with balance management
@@ -47,12 +60,32 @@ neoessentials/
 ├── [player data files]            # Player-specific data storage
 ├── [economy data]                  # Economy system data
 └── [other runtime data]            # Generated runtime data
+=======
+config/
+├── neoessentials-general.toml
+├── neoessentials-common.toml
+└── neoessentials/
+    ├── language/
+    │   ├── en_US.yml
+    │   ├── es_ES.yml
+    │   └── fr_FR.yml
+    ├── templates/
+    │   ├── bossbar.yml
+    │   └── messages.yml
+    ├── security/
+    │   └── security.toml
+    └── features/
+        ├── economy.toml
+        ├── homes.toml
+        └── warps.toml
+>>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 ```
 
 ## ⚙️ General Configuration
 
 ### `main.json`
 
+<<<<<<< HEAD
 The main configuration file controlling core mod behavior:
 
 ```json
@@ -399,6 +432,21 @@ rateLimitWindow = 10  # seconds
 enablePlayerMonitoring = true
 suspiciousActivityThreshold = 10
 ```
+=======
+```toml
+[general]
+# Enable or disable the entire mod
+enabled = true
+
+# Default language for messages
+defaultLanguage = "en_US"
+
+# Enable debug mode for troubleshooting
+debugMode = false
+
+# Server display name
+serverName = "My Minecraft Server"
+>>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 
 # Enable automatic updates check
 checkUpdates = true
