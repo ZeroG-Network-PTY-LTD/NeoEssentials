@@ -1,25 +1,10 @@
 # Features Overview - Accurate Implementation Status
 
-<<<<<<< HEAD
-NeoEssentials provides a comprehensive suite of server administration tools designed for modern Minecraft servers. This page provides a complete overview of all **currently implemented and tested** features.
-
-## 🏠 **Teleportation System** ✅ **FULLY IMPLEMENTED**
-
-### Home Management
-- **Multiple Homes**: Players can set multiple homes with permission-based limits
-- **Named Homes**: Set homes with custom names for easy identification  
-- **Smart Limits**: Configurable home limits per permission group
-- **Economy Integration**: Optional costs for setting homes
-- **Safety Validation**: Automatic safety checks before teleportation
-- **Cross-Dimension**: Support for homes across different dimensions
-- **Cooldown System**: Configurable teleportation cooldowns
-=======
 NeoEssentials provides a comprehensive suite of server administration tools designed for modern Minecraft servers. This page provides an overview of all available features and their capabilities.
 
 ## 🎮 GUI System
 
 **Advanced graphical user interfaces for enhanced player experience**
->>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 
 ### Shop System
 - **Visual Shopping Interface**: Browse items by category with rich descriptions
@@ -29,21 +14,12 @@ NeoEssentials provides a comprehensive suite of server administration tools desi
 - **Customizable Categories**: Organize items into logical groups (weapons, tools, food, etc.)
 - **Real-time Updates**: Inventory and balance updates immediately
 
-<<<<<<< HEAD
-### Warp System  
-- **Public Warps**: Server-wide teleportation points for all players
-- **Categories**: Organize warps by type (spawn, shops, minigames, etc.)
-- **Permission Control**: Restrict specific warps to certain groups
-- **Economy Integration**: Optional costs for warp creation and usage
-- **World Restrictions**: Configure which worlds allow warps
-=======
 ### Kit Management
 - **Visual Kit Browser**: Browse available kits with detailed information
 - **Cooldown System**: Automatic cooldown tracking and display
 - **Permission Integration**: Access control based on player permissions
 - **Category Organization**: Starter kits, VIP kits, special event kits
 - **Preview System**: See kit contents before claiming
->>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 
 ### Player Statistics
 - **Comprehensive Stats Display**: Playtime, deaths, kills, blocks broken/placed
@@ -52,79 +28,6 @@ NeoEssentials provides a comprehensive suite of server administration tools desi
 - **Historical Data**: Track progress over time
 - **Visual Indicators**: Icons and progress bars for easy reading
 
-<<<<<<< HEAD
-### Advanced Teleportation
-- **Teleport Requests**: Player-to-player teleportation with approval system (`/tpa`, `/tpaccept`, `/tpdeny`)
-- **Spawn Management**: Configurable spawn points and first-join behavior
-- **Cooldowns & Delays**: Configurable teleportation timers and restrictions
-- **Economy Integration**: Optional costs for teleportation commands
-
-**Commands**: `/tpa`, `/tpaccept`, `/tpdeny`, `/spawn`
-
-## 💰 **Economy System** ✅ **FULLY IMPLEMENTED** 
-
-### Core Economy Features
-- **Player Balances**: Complete balance management with BigDecimal precision
-- **Currency System**: Configurable currency names and symbols
-- **Transaction History**: Complete transaction logging and history
-- **Multi-currency Support**: Support for different currency types
-- **Command Costs**: Optional costs for using commands
-- **Economy Analytics**: Transaction tracking and statistics
-
-**Commands**: `/balance`, `/pay`, `/eco give`, `/eco take`, `/eco set`
-
-### Advanced Shop System (ChestShop-Inspired)
-- **Sign Shops**: Player-created shops using signs and chests
-- **Admin Shops**: Infinite-stock server shops
-- **Player Shops**: Player-to-player trading shops  
-- **Precise Chest Detection**: Enhanced chest-sign linking system
-- **Shop Analytics**: Transaction tracking and performance monitoring
-- **Economy Integration**: Full integration with balance system
-
-**Commands**: Create shops by placing signs near chests
-
-### Banking System
-- **Bank Accounts**: Player bank accounts with interest
-- **Interest System**: Configurable interest rates
-- **Transaction Management**: Secure banking transactions
-- **Account Analytics**: Banking statistics and monitoring
-
-## 📧 **Messaging System** ✅ **FULLY IMPLEMENTED**
-
-### Private Messaging
-- **Direct Messages**: Player-to-player private messages (`/msg`, `/reply`)
-- **Message History**: Track conversation history
-- **Social Spy**: Staff monitoring of private messages
-- **Reply System**: Quick replies to last received message
-
-**Commands**: `/msg`, `/reply`, `/socialspy`
-
-### Announcements
-- **Server Announcements**: Broadcast messages to all players
-- **Targeted Messages**: Send messages to specific groups
-- **Message Broadcasting**: Rich formatted announcement system
-
-**Commands**: `/announce`, `/broadcast`
-
-## 🛡️ **Moderation System** ✅ **FULLY IMPLEMENTED**
-
-### Player Management
-- **Ban System**: Permanent and temporary player bans
-- **Kick System**: Remove players from server with reasons
-- **Mute System**: Prevent players from chatting
-- **Punishment History**: Track all moderation actions
-- **IP Management**: IP-based restrictions and monitoring
-
-**Commands**: `/ban`, `/tempban`, `/kick`, `/mute`, `/tempmute`, `/unban`, `/unmute`
-
-### Advanced Security
-- **Security Monitoring**: Real-time threat detection
-- **IP Blocking**: Automatic and manual IP restrictions  
-- **Security Events**: Comprehensive security event logging
-- **Player Monitoring**: Track suspicious player behavior
-
-## 🔧 **Essential Commands** ✅ **FULLY IMPLEMENTED**
-=======
 ### Warp System GUI
 - **Visual Warp Browser**: See all available warps with descriptions
 - **Category Organization**: Group warps by type (spawn, shops, minigames, etc.)
@@ -149,7 +52,6 @@ NeoEssentials provides a comprehensive suite of server administration tools desi
 ## 🛠️ Essential Commands
 
 **Core server administration and player convenience commands**
->>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 
 ### Player Commands
 - **Health & Survival**: `/heal`, `/feed`, `/god`
