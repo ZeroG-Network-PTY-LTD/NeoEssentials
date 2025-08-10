@@ -14,7 +14,7 @@ public class ChatConfig {
     
     // Main chat formatting settings
     public boolean enabled = true;
-    public String format = "{PREFIX}{NICKNAME}{SUFFIX}: {MESSAGE}"; // Fixed: removed {PLAYER} duplication
+    public String format = "{MESSAGE}";
     public boolean enableColors = true;
     public boolean enableHexColors = true;
     public boolean enableFormattingCodes = true;
