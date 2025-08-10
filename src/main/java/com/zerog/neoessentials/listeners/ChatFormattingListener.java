@@ -105,6 +105,10 @@ public class ChatFormattingListener {
         // Determine display name
         String displayName = (nickname != null && config.nicknames.showInChat) ? nickname : playerName;
         
+        // Process prefix and suffix for dynamic placeholders
+        prefix = processDynamicPlaceholders(prefix != null ? prefix : "", player, group);
+        suffix = processDynamicPlaceholders(suffix != null ? suffix : "", player, group);
+        
         // Build the format string
         String format = config.format;
         if (format == null || format.isEmpty()) {
@@ -113,8 +117,8 @@ public class ChatFormattingListener {
         
         // Replace placeholders
         String formattedText = format
-            .replace("{PREFIX}", prefix != null ? prefix : "")
-            .replace("{SUFFIX}", suffix != null ? suffix : "")
+            .replace("{PREFIX}", prefix)
+            .replace("{SUFFIX}", suffix)
             .replace("{PLAYER}", playerName)
             .replace("{NICKNAME}", nickname != null ? nickname : playerName)
             .replace("{DISPLAYNAME}", displayName)
@@ -141,6 +145,59 @@ public class ChatFormattingListener {
         }
         
         return component;
+    }
+    
+    /**
+     * Process dynamic placeholders in prefix/suffix text
+     * Handles placeholders like %owner%, %group%, etc.
+     */
+    private String processDynamicPlaceholders(String text, ServerPlayer player, String groupName) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        
+        String processed = text;
+        
+        // Handle group-based placeholders
+        if (groupName != null) {
+            // Replace %<groupname>% with the actual formatted group prefix
+            processed = processed.replace("%" + groupName.toLowerCase() + "%", getFormattedGroupName(groupName));
+            
+            // Handle common group placeholders
+            switch (groupName.toLowerCase()) {
+                case "owner" -> processed = processed.replace("%owner%", "&4[&cOwner&4] ");
+                case "admin" -> processed = processed.replace("%admin%", "&c[Admin] ");
+                case "moderator" -> processed = processed.replace("%moderator%", "&6[Mod] ");
+                case "vip" -> processed = processed.replace("%vip%", "&b[VIP] ");
+                case "default" -> processed = processed.replace("%default%", "&7[Player] ");
+            }
+        }
+        
+        // Handle player-specific placeholders
+        processed = processed.replace("%player%", player.getName().getString());
+        processed = processed.replace("%displayname%", player.getDisplayName().getString());
+        
+        // Handle time placeholders
+        processed = processed.replace("%time%", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        processed = processed.replace("%date%", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        
+        return processed;
+    }
+    
+    /**
+     * Get a formatted group name for display
+     */
+    private String getFormattedGroupName(String groupName) {
+        if (groupName == null) return "";
+        
+        return switch (groupName.toLowerCase()) {
+            case "owner" -> "&4[&cOwner&4] ";
+            case "admin" -> "&c[Admin] ";
+            case "moderator" -> "&6[Mod] ";
+            case "vip" -> "&b[VIP] ";
+            case "default" -> "&7[Player] ";
+            default -> "&7[" + groupName + "] ";
+        };
     }
     
     /**

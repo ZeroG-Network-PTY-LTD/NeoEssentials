@@ -106,12 +106,12 @@ public class CustomPermissionsManager {
         defaultGroup.addPermission(PermissionNodes.LIST);
         defaultGroup.addPermission(PermissionNodes.WHOIS);
         defaultGroup.addPermission(PermissionNodes.SEEN);
-        defaultGroup.addPermission(PermissionNodes.PLACEHOLDER_TEST);
-        defaultGroup.addPermission(PermissionNodes.GUI_OPEN);
         defaultGroup.addPermission(PermissionNodes.PLAYTIME_VIEW);
         defaultGroup.addPermission(PermissionNodes.ACHIEVEMENTS_VIEW);
         defaultGroup.addPermission(PermissionNodes.PREFERENCES_SET);
         defaultGroup.addPermission(PermissionNodes.PREFERENCES_VIEW);
+        defaultGroup.addPermission(PermissionNodes.SHOP_SIGN_CREATE);
+        defaultGroup.addPermission(PermissionNodes.SHOP_SIGN_USE);
         groups.put(DEFAULT_GROUP, defaultGroup);
         
         // VIP group - enhanced permissions using comprehensive permission nodes
@@ -120,6 +120,7 @@ public class CustomPermissionsManager {
         vipGroup.addPermission(PermissionNodes.FLY_SELF);
         vipGroup.addPermission(PermissionNodes.HEAL_SELF);
         vipGroup.addPermission(PermissionNodes.FEED_SELF);
+        vipGroup.addPermission(PermissionNodes.FLY_SELF);
         vipGroup.addPermission(PermissionNodes.WORKBENCH);
         vipGroup.addPermission(PermissionNodes.ANVIL);
         vipGroup.addPermission(PermissionNodes.ENDERCHEST);
