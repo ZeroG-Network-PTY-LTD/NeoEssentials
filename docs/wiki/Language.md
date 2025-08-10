@@ -1,12 +1,13 @@
 # Language System
 
-NeoEssentials features a robust multi-language system that provides comprehensive internationalization support. Players can seamlessly switch between languages in-game, and server administrators can easily add custom translations and manage language preferences.
+NeoEssentials includes comprehensive multi-language support, allowing server administrators to provide localized experiences for players from different regions. The language system supports dynamic switching, custom translations, and regional formatting.
 
 ## 🌍 Supported Languages
 
 ### Built-in Language Support
-NeoEssentials includes complete translations for major languages:
+NeoEssentials comes with built-in support for major languages:
 
+<<<<<<< HEAD
 #### **Fully Supported Languages** ✅
 - **English (en_US)** - Default language, 100% complete ✅
 - **Spanish (es_ES)** - Complete translation ✅
@@ -35,73 +36,51 @@ home.set=&aHome '{HOME}' set at your current location!
 command.heal.self=&aYou have been healed!
 command.feed.self=&aYou have been fed!
 ```
+=======
+- **English (en_US)** - Default language, fully supported
+- **Spanish (es_ES)** - Complete translation
+- **French (fr_FR)** - Complete translation  
+- **German (de_DE)** - Complete translation
+- **Italian (it_IT)** - Complete translation
+- **Portuguese (pt_BR)** - Brazilian Portuguese
+- **Russian (ru_RU)** - Complete translation
+- **Chinese Simplified (zh_CN)** - Complete translation
+- **Chinese Traditional (zh_TW)** - Complete translation
+- **Japanese (ja_JP)** - Complete translation
+- **Korean (ko_KR)** - Complete translation
+- **Dutch (nl_NL)** - Complete translation
+
+### Regional Variants
+Some languages include regional variants:
+
+- **English**: en_US (American), en_GB (British), en_AU (Australian)
+- **Spanish**: es_ES (Spain), es_MX (Mexico), es_AR (Argentina)
+- **Portuguese**: pt_BR (Brazil), pt_PT (Portugal)
+- **Chinese**: zh_CN (Simplified), zh_TW (Traditional)
+>>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 
 ## 🎯 Language Management Commands
 
 ### Player Language Commands
-
-#### `/language` - Show Language Information
 ```bash
-/language                       # Show current language and available options
-```
-**Output Example:**
-```
-=== Language Information ===
-Current Language: English (en_US)
-Available Languages: 8
-Use '/language set <language>' to change your language
-Use '/language list' to see all available languages
-```
-
-#### `/language list` - List Available Languages
-```bash
-/language list                  # List all available languages
-```
-**Output Example:**
-```
-=== Available Languages ===
-► English (en_US) <- Current
-- Deutsch (de_DE)
-- Español (es_ES)
-- Français (fr_FR)
-- Português (pt_BR)
-- Русский (ru_RU)
-- 中文 (zh_CN)
-- 日本語 (ja_JP)
-```
-
-#### `/language set <code>` - Change Language
-```bash
-/language set <language_code>   # Set your language
-/lang <language_code>           # Alias for language set
+/language                       # Show current language
+/language list                  # List available languages
+/language set <code>            # Set your language
+/lang <code>                    # Alias for language set
+/language info                  # Show language information
+/language help                  # Language system help
 ```
 
 **Examples:**
 ```bash
-/language set de_de             # Switch to German  
-/lang es_es                     # Switch to Spanish
-/language set fr_fr             # Switch to French
-/language set zh_cn             # Switch to Chinese Simplified
-/lang en_us                     # Switch back to English
-```
-
-#### `/language info` - Detailed Language Information
-```bash
-/language info                  # Show detailed language system information
-```
-**Output Example:**
-```
-=== Language System Information ===
-Available Languages: 8
-Default Language: en_US
-Players with Custom Locales: 25
-Current Locale: de_DE (Deutsch)
+/language set es_ES             # Switch to Spanish
+/lang fr_FR                     # Switch to French
+/language set zh_CN             # Switch to Chinese Simplified
 ```
 
 ### Admin Language Commands
-
-#### `/language reload` - Reload Language Files
 ```bash
+<<<<<<< HEAD
 /language reload                # Reload all language files from disk
 ```
 **Permission**: `neoessentials.language.reload`
@@ -130,6 +109,14 @@ Other languages:
 #### `/language stats` - Language Usage Statistics
 ```bash
 /language stats                 # Show language system statistics
+=======
+/language admin                 # Open language admin panel
+/language reload                # Reload language files
+/language stats                 # Language usage statistics
+/language validate              # Validate language files
+/language export <lang>         # Export language file
+/language import <file>         # Import language file
+>>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 ```
 **Permission**: `neoessentials.language.admin`
 

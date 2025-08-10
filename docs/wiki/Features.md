@@ -1,5 +1,6 @@
 # Features Overview - Accurate Implementation Status
 
+<<<<<<< HEAD
 NeoEssentials provides a comprehensive suite of server administration tools designed for modern Minecraft servers. This page provides a complete overview of all **currently implemented and tested** features.
 
 ## 🏠 **Teleportation System** ✅ **FULLY IMPLEMENTED**
@@ -12,18 +13,46 @@ NeoEssentials provides a comprehensive suite of server administration tools desi
 - **Safety Validation**: Automatic safety checks before teleportation
 - **Cross-Dimension**: Support for homes across different dimensions
 - **Cooldown System**: Configurable teleportation cooldowns
+=======
+NeoEssentials provides a comprehensive suite of server administration tools designed for modern Minecraft servers. This page provides an overview of all available features and their capabilities.
 
-**Commands**: `/home`, `/sethome`, `/delhome`, `/homes`
+## 🎮 GUI System
 
+**Advanced graphical user interfaces for enhanced player experience**
+>>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
+
+### Shop System
+- **Visual Shopping Interface**: Browse items by category with rich descriptions
+- **Economy Integration**: Built-in pricing system with buy/sell functionality  
+- **Quantity Selection**: Choose how many items to purchase or sell
+- **Sound Effects**: Audio feedback for transactions and navigation
+- **Customizable Categories**: Organize items into logical groups (weapons, tools, food, etc.)
+- **Real-time Updates**: Inventory and balance updates immediately
+
+<<<<<<< HEAD
 ### Warp System  
 - **Public Warps**: Server-wide teleportation points for all players
 - **Categories**: Organize warps by type (spawn, shops, minigames, etc.)
 - **Permission Control**: Restrict specific warps to certain groups
 - **Economy Integration**: Optional costs for warp creation and usage
 - **World Restrictions**: Configure which worlds allow warps
+=======
+### Kit Management
+- **Visual Kit Browser**: Browse available kits with detailed information
+- **Cooldown System**: Automatic cooldown tracking and display
+- **Permission Integration**: Access control based on player permissions
+- **Category Organization**: Starter kits, VIP kits, special event kits
+- **Preview System**: See kit contents before claiming
+>>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 
-**Commands**: `/warp`, `/warps`, `/setwarp`, `/delwarp`
+### Player Statistics
+- **Comprehensive Stats Display**: Playtime, deaths, kills, blocks broken/placed
+- **Achievement Tracking**: Server-specific achievements and milestones
+- **Leaderboards**: Compare stats with other players
+- **Historical Data**: Track progress over time
+- **Visual Indicators**: Icons and progress bars for easy reading
 
+<<<<<<< HEAD
 ### Advanced Teleportation
 - **Teleport Requests**: Player-to-player teleportation with approval system (`/tpa`, `/tpaccept`, `/tpdeny`)
 - **Spawn Management**: Configurable spawn points and first-join behavior
@@ -95,6 +124,32 @@ NeoEssentials provides a comprehensive suite of server administration tools desi
 - **Player Monitoring**: Track suspicious player behavior
 
 ## 🔧 **Essential Commands** ✅ **FULLY IMPLEMENTED**
+=======
+### Warp System GUI
+- **Visual Warp Browser**: See all available warps with descriptions
+- **Category Organization**: Group warps by type (spawn, shops, minigames, etc.)
+- **Permission-Based Access**: Only show warps players can use
+- **Favorites System**: Quick access to frequently used warps
+- **Search Functionality**: Find warps quickly by name or description
+
+### Admin Control Panel
+- **Server Management**: Quick access to common admin functions
+- **Player Management**: View, moderate, and assist players
+- **Economy Controls**: Manage server economy and player balances
+- **Configuration Access**: Modify settings without editing files
+- **Monitoring Tools**: Server performance and player activity
+
+### Theme System
+- **Multiple Themes**: Default, Dark, Ocean, and custom themes
+- **Personal Preferences**: Each player can choose their preferred theme
+- **Dynamic Switching**: Change themes instantly with commands
+- **Custom Themes**: Server owners can create custom themes
+- **Consistent Experience**: All GUIs use the selected theme
+
+## 🛠️ Essential Commands
+
+**Core server administration and player convenience commands**
+>>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
 
 ### Player Commands
 - **Health & Survival**: `/heal`, `/feed`, `/god`
