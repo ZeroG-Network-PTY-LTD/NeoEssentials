@@ -72,9 +72,9 @@ public class BackCommand {
         
         if (lastLocation == null) {
             if (targetPlayer != null && targetPlayer != context.getSource().getPlayerOrException()) {
-                context.getSource().sendFailure(Component.literal("§c" + player.getName().getString() + " has no previous location to return to!"));
+                context.getSource().sendFailure(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "back.no_previous_location_other", player.getName().getString())));
             } else {
-                context.getSource().sendFailure(Component.literal("§cYou have no previous location to return to!"));
+                context.getSource().sendFailure(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "back.no_previous_location")));
             }
             return 0;
         }
@@ -82,7 +82,7 @@ public class BackCommand {
         // Check if the dimension still exists
         ServerLevel targetLevel = context.getSource().getServer().getLevel(lastLocation.dimension);
         if (targetLevel == null) {
-            context.getSource().sendFailure(Component.literal("§cThe dimension you were last in no longer exists!"));
+            context.getSource().sendFailure(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "back.dimension_missing")));
             return 0;
         }
         
@@ -103,10 +103,10 @@ public class BackCommand {
         // Send confirmation messages
         String timeAgo = getTimeAgo(lastLocation.timestamp);
         if (targetPlayer != null && targetPlayer != context.getSource().getPlayerOrException()) {
-            context.getSource().sendSuccess(() -> Component.literal("§aTeleported " + player.getName().getString() + " back to their " + lastLocation.reason + " location (" + timeAgo + " ago)"), true);
-            targetPlayer.sendSystemMessage(Component.literal("§aYou have been teleported back to your " + lastLocation.reason + " location (" + timeAgo + " ago)"));
+            context.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "back.success_other", player.getName().getString(), lastLocation.reason, timeAgo)), true);
+            targetPlayer.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getMessage(targetPlayer, "back.success_self", lastLocation.reason, timeAgo)));
         } else {
-            context.getSource().sendSuccess(() -> Component.literal("§aTeleported back to your " + lastLocation.reason + " location (" + timeAgo + " ago)"), false);
+            context.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "back.success_self", lastLocation.reason, timeAgo)), false);
         }
         
         return 1;

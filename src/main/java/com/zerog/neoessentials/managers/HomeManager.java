@@ -56,13 +56,13 @@ public class HomeManager {
         
     boolean homeModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.homes;
         if (!homeModuleEnabled) {
-            MessageUtil.sendMessage(player, "&cHome system is disabled.");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.disabled"));
             return false;
         }
         
         // Validate home name
         if (!isValidHomeName(homeName)) {
-            MessageUtil.sendMessage(player, config.messages.invalidHomeName, homeName);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.invalid_name", homeName));
             return false;
         }
         
@@ -72,14 +72,14 @@ public class HomeManager {
         
         boolean isNewHome = !playerDataManager.hasHome(player.getUUID(), homeName);
         if (isNewHome && currentHomes >= maxHomes) {
-            MessageUtil.sendMessage(player, config.messages.maxHomesReached, maxHomes);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.max_reached", String.valueOf(maxHomes)));
             return false;
         }
         
         // Check world restrictions
         String worldName = player.level().dimension().location().toString();
         if (config.restrictedWorlds.contains(worldName)) {
-            MessageUtil.sendMessage(player, config.messages.restrictedWorld);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.restricted_world"));
             return false;
         }
         
@@ -87,8 +87,7 @@ public class HomeManager {
     if (config.setHomeCost.compareTo(BigDecimal.ZERO) > 0) {
             EconomyManager economyManager = EconomyManager.getInstance();
             if (!economyManager.hasBalance(player.getUUID(), config.setHomeCost)) {
-                MessageUtil.sendMessage(player, config.messages.insufficientFunds,
-                    economyManager.formatCurrency(config.setHomeCost));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.insufficient_funds", economyManager.formatCurrency(config.setHomeCost.doubleValue())));
                 return false;
             }
             economyManager.withdrawBalance(player.getUUID(), config.setHomeCost, "Home creation: " + homeName);
@@ -109,7 +108,7 @@ public class HomeManager {
         playerDataManager.setHome(player.getUUID(), homeName, homeLocation);
         
     String message = isNewHome ? config.messages.homeSet : config.messages.homeSet;
-    MessageUtil.sendMessage(player, message, homeName);
+    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, message, homeName));
         
         LOGGER.info("Player {} {} home '{}' at {} in {}", 
             player.getName().getString(),
@@ -129,17 +128,17 @@ public class HomeManager {
         
     boolean homeModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.homes;
         if (!homeModuleEnabled) {
-            MessageUtil.sendMessage(player, "&cHome system is disabled.");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.disabled"));
             return false;
         }
         
         if (!playerDataManager.hasHome(player.getUUID(), homeName)) {
-            MessageUtil.sendMessage(player, config.messages.homeNotFound, homeName);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.not_found", homeName));
             return false;
         }
         
         playerDataManager.deleteHome(player.getUUID(), homeName);
-    MessageUtil.sendMessage(player, config.messages.homeDeleted, homeName);
+    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.deleted", homeName));
         
         LOGGER.info("Player {} deleted home '{}'", player.getName().getString(), homeName);
         return true;
@@ -153,22 +152,21 @@ public class HomeManager {
         
     boolean homeModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.homes;
         if (!homeModuleEnabled) {
-            MessageUtil.sendMessage(player, "&cHome system is disabled.");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.disabled"));
             return false;
         }
         
         // Check if home exists
     LocationUtil.Location home = playerDataManager.getHome(player.getUUID(), homeName);
         if (home == null) {
-            MessageUtil.sendMessage(player, config.messages.homeNotFound, homeName);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.not_found", homeName));
             return false;
         }
         
         // Check cooldown
         if (isOnCooldown(player)) {
             long remainingTime = getRemainingCooldown(player);
-            MessageUtil.sendMessage(player, config.messages.cooldownActive,
-                MessageUtil.formatTime(remainingTime));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.cooldown_active", MessageUtil.formatTime(remainingTime)));
             return false;
         }
         
@@ -176,15 +174,14 @@ public class HomeManager {
     if (config.teleportHomeCost.compareTo(BigDecimal.ZERO) > 0) {
             EconomyManager economyManager = EconomyManager.getInstance();
             if (!economyManager.hasBalance(player.getUUID(), config.teleportHomeCost)) {
-                MessageUtil.sendMessage(player, config.messages.insufficientFunds,
-                    economyManager.formatCurrency(config.teleportHomeCost));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.insufficient_funds", economyManager.formatCurrency(config.teleportHomeCost.doubleValue())));
                 return false;
             }
         }
         
         // Validate home location safety if required
         if (config.requireSafeLocation && !isLocationSafe(home)) {
-            MessageUtil.sendMessage(player, config.messages.unsafeLocation);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.unsafe_location"));
             return false;
         }
         
@@ -213,15 +210,14 @@ public class HomeManager {
         
     List<String> homes = getPlayerHomes(player.getUUID());
         if (homes.isEmpty()) {
-            MessageUtil.sendMessage(player, config.messages.homeListEmpty);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.list_empty"));
             return false;
         }
         
-        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.homeListHeader, 
-            String.valueOf(homes.size()), String.valueOf(getMaxHomes(player))));
+        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.list_header", String.valueOf(homes.size()), String.valueOf(getMaxHomes(player))));
         
         for (String homeName : homes) {
-            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.homeListEntry, homeName));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.list_entry", homeName));
         }
         
         return true;
@@ -300,7 +296,7 @@ public class HomeManager {
         // Cancel existing warmup
         cancelWarmup(player);
         
-    MessageUtil.sendMessage(player, "&aStarting teleport in " + config.teleportWarmup + " seconds...");
+        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.warmup", String.valueOf(config.teleportWarmup)));
         
         // Store warmup task
         long warmupEnd = System.currentTimeMillis() + (config.teleportWarmup * 1000L);
@@ -332,7 +328,7 @@ public class HomeManager {
             ServerLevel targetWorld = server.getLevel(Level.OVERWORLD); // Placeholder - would need proper world lookup
             
             if (targetWorld == null) {
-                MessageUtil.sendMessage(player, "&cTarget world not found!");
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.target_world_not_found"));
                 return false;
             }
             
@@ -348,7 +344,7 @@ public class HomeManager {
             // Perform teleport
             player.teleportTo(targetWorld, home.x, home.y, home.z, home.yaw, home.pitch);
             
-        MessageUtil.sendMessage(player, config.messages.homeTeleporting, homeName);
+        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.teleporting", homeName));
             
             LOGGER.info("Player {} teleported to home '{}' at {}, {}, {} in {}", 
                 player.getName().getString(), homeName, home.x, home.y, home.z, home.world);
@@ -356,7 +352,7 @@ public class HomeManager {
             return true;
         } catch (Exception e) {
             LOGGER.error("Failed to teleport player {} to home '{}'", player.getName().getString(), homeName, e);
-            MessageUtil.sendMessage(player, "&cTeleportation failed!");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "home.failed"));
             return false;
         }
     }

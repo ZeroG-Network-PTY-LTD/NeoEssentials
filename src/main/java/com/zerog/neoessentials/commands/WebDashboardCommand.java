@@ -96,32 +96,26 @@ public class WebDashboardCommand {
     
     private static void startDashboard(CommandSourceStack source) {
         WebDashboardManager manager = WebDashboardManager.getInstance();
-        
         if (manager.isDashboardEnabled()) {
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&6Web Dashboard is already running!")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.start.already_running")
             ), false);
             return;
         }
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&6Starting Web Dashboard...")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.start.starting")
         ), false);
-        
         if (manager.start()) {
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&a✓ Web Dashboard started successfully!")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.start.success")
             ), false);
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&7  URL: &ehttp://localhost:" + manager.getPort() + "/")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.status.url", "http://localhost:" + manager.getPort() + "/")
             ), false);
-            
-            // Log the start event
-            manager.addRealTimeEvent("SYSTEM", "Web Dashboard started by " + 
-                source.getDisplayName().getString(), "INFO");
+            manager.addRealTimeEvent("SYSTEM", com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.event.started", source.getDisplayName().getString()), "INFO");
         } else {
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&c✗ Failed to start Web Dashboard!")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.start.failed")
             ), false);
         }
     }
@@ -162,17 +156,17 @@ public class WebDashboardCommand {
         
         if (manager.isDashboardEnabled()) {
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&cCannot change port while dashboard is running! Stop it first.")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.port.cannot_change_while_running")
             ), false);
             return;
         }
         
         manager.setPort(port);
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&a✓ Web Dashboard port set to &e" + port)
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.port.set_success", port)
         ), false);
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Use &e/dashboard start &7to start on the new port")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.port.start_hint")
         ), false);
     }
     
@@ -180,54 +174,43 @@ public class WebDashboardCommand {
         WebDashboardManager manager = WebDashboardManager.getInstance();
         Map<String, Object> analytics = manager.getShopAnalytics();
         Map<String, Object> economy = manager.getEconomyHealth();
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&6&l=== Shop Analytics ===")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.analytics.header")
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Total Shops: &e" + analytics.get("total_shops"))
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.analytics.total_shops", analytics.get("total_shops"))
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Active Shops: &a" + analytics.get("active_shops"))
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.analytics.active_shops", analytics.get("active_shops"))
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Daily Transactions: &e" + analytics.get("daily_transactions"))
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.analytics.daily_transactions", analytics.get("daily_transactions"))
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Daily Revenue: &2$" + String.format("%.2f", analytics.get("daily_revenue")))
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.analytics.daily_revenue", String.format("%.2f", analytics.get("daily_revenue")))
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Economy Status: &a" + economy.get("economy_status"))
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.analytics.economy_status", economy.get("economy_status"))
         ), false);
     }
-    
+
     private static void showPerformance(CommandSourceStack source) {
         WebDashboardManager manager = WebDashboardManager.getInstance();
         Map<String, Object> performance = manager.getServerPerformance();
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&6&l=== Server Performance ===")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.performance.header")
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7TPS: &e" + String.format("%.1f", performance.get("tps")))
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.performance.tps", String.format("%.1f", performance.get("tps")))
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Memory Usage: &e" + performance.get("memory_usage") + "%")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.performance.memory_usage", performance.get("memory_usage"))
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7CPU Usage: &e" + performance.get("cpu_usage") + "%")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.performance.cpu_usage", performance.get("cpu_usage"))
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Disk Usage: &e" + performance.get("disk_usage") + "%")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.performance.disk_usage", performance.get("disk_usage"))
         ), false);
     }
     
@@ -235,26 +218,21 @@ public class WebDashboardCommand {
     private static void showRecentEvents(CommandSourceStack source) {
         WebDashboardManager manager = WebDashboardManager.getInstance();
         Map<String, Object> data = manager.getDashboardData();
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&6&l=== Recent Events ===")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.events.header")
         ), false);
-        
         Object eventsObj = data.get("recent_events");
         if (eventsObj instanceof java.util.List) {
             java.util.List<Map<String, Object>> events = (java.util.List<Map<String, Object>>) eventsObj;
-            
             if (events.isEmpty()) {
                 source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&7No recent events")
+                    com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.events.none")
                 ), false);
                 return;
             }
-            
             int count = 0;
             for (Map<String, Object> event : events) {
-                if (count >= 5) break; // Show only last 5 events
-                
+                if (count >= 5) break;
                 String severity = (String) event.get("severity");
                 String color = switch (severity) {
                     case "ERROR" -> "&c";
@@ -262,16 +240,14 @@ public class WebDashboardCommand {
                     case "INFO" -> "&a";
                     default -> "&7";
                 };
-                
                 source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes(color + "[" + event.get("type") + "] " + event.get("message"))
+                    com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.events.entry", color, event.get("type"), event.get("message"))
                 ), false);
-                
                 count++;
             }
         } else {
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&7No events available")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.events.not_available")
             ), false);
         }
     }

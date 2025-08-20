@@ -54,24 +54,78 @@ public class MainConfig {
     }
     public WarpSettings warpSettings = new WarpSettings();
     public static class WarpSettings {
-        public boolean checkForVoid = true;
-        public boolean checkForSuffocation = true;
-        public int safeLocationRadius = 3;
-        public boolean enablePublicWarps = true;
-        public boolean enablePrivateWarps = true;
-        public boolean allowCrossDimensionTeleport = true;
-        public boolean enableWarpCategories = true;
-        public java.util.List<String> defaultCategories = java.util.Arrays.asList("spawn", "shops", "arenas", "farms", "builds");
-        public java.util.List<String> noTeleportWorlds = java.util.Arrays.asList();
-        public int maxWarpNameLength = 20;
-        public boolean allowSpacesInNames = false;
-        public boolean allowSpecialCharacters = false;
-        public java.util.List<String> bannedWarpNames = java.util.Arrays.asList("spawn", "home", "admin", "server", "console");
-        public boolean enablePermissionWarps = true;
-        public String permissionPrefix = "neoessentials.warp.";
-        public boolean enableWarpSigns = true;
-        public String warpSignFormat = "[Warp]";
-        public java.math.BigDecimal warpSignCost = new java.math.BigDecimal("100.00");
+    /**
+     * Check for void below player when teleporting to warp
+     */
+    public boolean checkForVoid = true;
+    /**
+     * Check for suffocation blocks at warp location
+     */
+    public boolean checkForSuffocation = true;
+    /**
+     * Radius to check for safe location around warp
+     */
+    public int safeLocationRadius = 3;
+    /**
+     * Enable public warps (accessible by all players)
+     */
+    public boolean enablePublicWarps = true;
+    /**
+     * Enable private warps (owner only)
+     */
+    public boolean enablePrivateWarps = true;
+    /**
+     * Allow teleporting between dimensions
+     */
+    public boolean allowCrossDimensionTeleport = true;
+    /**
+     * Enable warp categories (group warps by type)
+     */
+    public boolean enableWarpCategories = true;
+    /**
+     * Default categories for warps
+     */
+    public java.util.List<String> defaultCategories = java.util.Arrays.asList("spawn", "shops", "arenas", "farms", "builds");
+    /**
+     * Worlds where teleporting to warps is not allowed
+     */
+    public java.util.List<String> noTeleportWorlds = java.util.Arrays.asList();
+    /**
+     * Maximum length for warp names
+     */
+    public int maxWarpNameLength = 20;
+    /**
+     * Allow spaces in warp names
+     */
+    public boolean allowSpacesInNames = false;
+    /**
+     * Allow special characters in warp names
+     */
+    public boolean allowSpecialCharacters = false;
+    /**
+     * List of banned warp names
+     */
+    public java.util.List<String> bannedWarpNames = java.util.Arrays.asList("spawn", "home", "admin", "server", "console");
+    /**
+     * Enable permission-based warps
+     */
+    public boolean enablePermissionWarps = true;
+    /**
+     * Permission prefix for warps
+     */
+    public String permissionPrefix = "neoessentials.warp.";
+    /**
+     * Enable warp signs (physical sign teleport)
+     */
+    public boolean enableWarpSigns = true;
+    /**
+     * Format for warp signs
+     */
+    public String warpSignFormat = "[Warp]";
+    /**
+     * Cost to use a warp sign
+     */
+    public java.math.BigDecimal warpSignCost = new java.math.BigDecimal("100.00");
         public MessagesConfig messages = new MessagesConfig();
 
         public static class MessagesConfig {
@@ -101,22 +155,70 @@ public class MainConfig {
             public String categoryWarpsHeader = "&6Warps in category '{0}':";
         }
         // Utility methods from WarpConfig can be migrated here as needed
-        public boolean enabled = true;
-        public int maxWarps = 50;
-        public int maxWarpsPerPlayer = 5;
-        public java.math.BigDecimal createWarpCost = new java.math.BigDecimal("500.00");
-        public java.math.BigDecimal teleportWarpCost = new java.math.BigDecimal("25.00");
-        public java.math.BigDecimal deleteWarpCost = java.math.BigDecimal.ZERO;
-        public int createWarpCooldown = 600;
-        public int teleportWarpCooldown = 120;
-        public int deleteWarpCooldown = 60;
-        public int teleportWarmup = 5;
-        public boolean cancelOnMove = true;
-        public boolean cancelOnDamage = true;
-        public double maxMoveDistance = 0.5;
-        public boolean requireSafeLocation = true;
-        public boolean checkForLava = true;
-        public java.util.List<String> restrictedWorlds = java.util.Arrays.asList();
+    /**
+     * Enable warp system
+     */
+    public boolean enabled = true;
+    /**
+     * Maximum number of warps allowed on the server
+     */
+    public int maxWarps = 50;
+    /**
+     * Maximum number of warps per player
+     */
+    public int maxWarpsPerPlayer = 5;
+    /**
+     * Cost to create a warp
+     */
+    public java.math.BigDecimal createWarpCost = new java.math.BigDecimal("500.00");
+    /**
+     * Cost to teleport to a warp
+     */
+    public java.math.BigDecimal teleportWarpCost = new java.math.BigDecimal("25.00");
+    /**
+     * Cost to delete a warp
+     */
+    public java.math.BigDecimal deleteWarpCost = java.math.BigDecimal.ZERO;
+    /**
+     * Cooldown (seconds) after creating a warp
+     */
+    public int createWarpCooldown = 600;
+    /**
+     * Cooldown (seconds) after teleporting to a warp
+     */
+    public int teleportWarpCooldown = 120;
+    /**
+     * Cooldown (seconds) after deleting a warp
+     */
+    public int deleteWarpCooldown = 60;
+    /**
+     * Warmup (seconds) before teleporting to a warp
+     */
+    public int teleportWarmup = 5;
+    /**
+     * Cancel teleport if player moves
+     */
+    public boolean cancelOnMove = true;
+    /**
+     * Cancel teleport if player takes damage
+     */
+    public boolean cancelOnDamage = true;
+    /**
+     * Maximum allowed movement distance before canceling teleport
+     */
+    public double maxMoveDistance = 0.5;
+    /**
+     * Require safe location for teleport
+     */
+    public boolean requireSafeLocation = true;
+    /**
+     * Check for lava at warp location
+     */
+    public boolean checkForLava = true;
+    /**
+     * Worlds where warps are restricted
+     */
+    public java.util.List<String> restrictedWorlds = java.util.Arrays.asList();
     }
     
     public String serverName = "NeoServer";
@@ -125,23 +227,74 @@ public class MainConfig {
     public Modules modules = new Modules();
     public HomeSettings homeSettings = new HomeSettings();
     public static class HomeSettings {
-        public int maxHomes = 3;
-        public int maxHomesVip = 5;
-        public int maxHomesAdmin = 10;
-        public int defaultMaxHomes = 3;
-        public int cooldown = 60; // seconds
-        public java.math.BigDecimal setHomeCost = new java.math.BigDecimal("50.00");
-        public java.math.BigDecimal teleportHomeCost = new java.math.BigDecimal("10.00");
-        public java.math.BigDecimal deleteHomeCost = java.math.BigDecimal.ZERO;
-        public int setHomeCooldown = 300; // 5 minutes
-        public int teleportHomeCooldown = 60; // 1 minute
-        public int deleteHomeCooldown = 30; // 30 seconds
-        public int teleportWarmup = 3; // 3 seconds warmup
-        public boolean cancelOnMove = true;
-        public boolean cancelOnDamage = true;
-        public double maxMoveDistance = 0.5; // blocks
-        public boolean requireSafeLocation = true;
-        public java.util.List<String> restrictedWorlds = java.util.Arrays.asList();
+    /**
+     * Maximum number of homes a regular player can set
+     */
+    public int maxHomes = 3;
+    /**
+     * Maximum number of homes a VIP player can set
+     */
+    public int maxHomesVip = 5;
+    /**
+     * Maximum number of homes an admin can set
+     */
+    public int maxHomesAdmin = 10;
+    /**
+     * Default maximum homes for new players
+     */
+    public int defaultMaxHomes = 3;
+    /**
+     * Cooldown (seconds) between home-related actions
+     */
+    public int cooldown = 60; // seconds
+    /**
+     * Cost to set a home
+     */
+    public java.math.BigDecimal setHomeCost = new java.math.BigDecimal("50.00");
+    /**
+     * Cost to teleport to a home
+     */
+    public java.math.BigDecimal teleportHomeCost = new java.math.BigDecimal("10.00");
+    /**
+     * Cost to delete a home
+     */
+    public java.math.BigDecimal deleteHomeCost = java.math.BigDecimal.ZERO;
+    /**
+     * Cooldown (seconds) after setting a home
+     */
+    public int setHomeCooldown = 300; // 5 minutes
+    /**
+     * Cooldown (seconds) after teleporting to a home
+     */
+    public int teleportHomeCooldown = 60; // 1 minute
+    /**
+     * Cooldown (seconds) after deleting a home
+     */
+    public int deleteHomeCooldown = 30; // 30 seconds
+    /**
+     * Warmup (seconds) before teleporting to a home
+     */
+    public int teleportWarmup = 3; // 3 seconds warmup
+    /**
+     * Cancel teleport if player moves
+     */
+    public boolean cancelOnMove = true;
+    /**
+     * Cancel teleport if player takes damage
+     */
+    public boolean cancelOnDamage = true;
+    /**
+     * Maximum allowed movement distance before canceling teleport
+     */
+    public double maxMoveDistance = 0.5; // blocks
+    /**
+     * Require safe location for teleport
+     */
+    public boolean requireSafeLocation = true;
+    /**
+     * Worlds where homes are restricted
+     */
+    public java.util.List<String> restrictedWorlds = java.util.Arrays.asList();
         public Messages messages = new Messages();
 
         public static class Messages {
@@ -248,36 +401,90 @@ public class MainConfig {
         }
         
         public static class TeleportationConfig {
-            // Basic teleportation
+            /**
+             * Enable /tp command (teleport to another player)
+             */
             public boolean tp = true;
+            /**
+             * Enable /tphere command (teleport another player to you)
+             */
             public boolean tphere = true;
+            /**
+             * Enable /tpall command (teleport all players to you)
+             */
             public boolean tpall = true;
+            /**
+             * Enable /tpa command (request teleport to another player)
+             */
             public boolean tpa = true;
+            /**
+             * Enable /tpaccept command (accept teleport request)
+             */
             public boolean tpaccept = true;
+            /**
+             * Enable /tpdeny command (deny teleport request)
+             */
             public boolean tpdeny = true;
+            /**
+             * Enable /tptoggle command (toggle receiving teleport requests)
+             */
             public boolean tptoggle = true;
-            
-            // Home system
+
+            /**
+             * Enable /home command (teleport to a saved home)
+             */
             public boolean home = true;
+            /**
+             * Enable /sethome command (set a new home location)
+             */
             public boolean sethome = true;
+            /**
+             * Enable /delhome command (delete a saved home)
+             */
             public boolean delhome = true;
+            /**
+             * Enable /homes command (list all saved homes)
+             */
             public boolean homes = true;
-            
-            // Warp system
+
+            /**
+             * Enable /warp command (teleport to a warp point)
+             */
             public boolean warp = true;
+            /**
+             * Enable /setwarp command (set a new warp point)
+             */
             public boolean setwarp = true;
+            /**
+             * Enable /delwarp command (delete a warp point)
+             */
             public boolean delwarp = true;
+            /**
+             * Enable /warps command (list all warp points)
+             */
             public boolean warps = true;
-            
-            // Spawn system
+
+            /**
+             * Enable /spawn command (teleport to server spawn)
+             */
             public boolean spawn = true;
+            /**
+             * Enable /setspawn command (set server spawn location)
+             */
             public boolean setspawn = true;
-            
-            // Back system
+
+            /**
+             * Enable /back command (teleport to previous location)
+             */
             public boolean back = true;
-            
-            // Random teleport
+
+            /**
+             * Enable /rtp command (random teleport)
+             */
             public boolean rtp = true;
+            /**
+             * Enable /randomtp command (alias for random teleport)
+             */
             public boolean randomtp = true;
         }
         
