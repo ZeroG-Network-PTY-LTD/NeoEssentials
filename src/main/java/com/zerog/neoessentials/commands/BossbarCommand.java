@@ -105,7 +105,7 @@ public class BossbarCommand {
             CustomBossbarManager.getInstance().showBossbar(player, template, 10);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aShowing bossbar '" + template + "' for 10 seconds"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.show.self", template)), false);
             
             return 1;
         } catch (Exception e) {
@@ -123,8 +123,7 @@ public class BossbarCommand {
             CustomBossbarManager.getInstance().showBossbar(target, template, 10);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aShowing bossbar '" + template + "' to " + 
-                target.getDisplayName().getString() + " for 10 seconds"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.show.player", template, target.getDisplayName().getString())), false);
             
             return 1;
         } catch (Exception e) {
@@ -143,8 +142,7 @@ public class BossbarCommand {
             CustomBossbarManager.getInstance().showBossbar(target, template, duration);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aShowing bossbar '" + template + "' to " + 
-                target.getDisplayName().getString() + " for " + duration + " seconds"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.show.player.duration", template, target.getDisplayName().getString(), duration)), false);
             
             return 1;
         } catch (Exception e) {
@@ -161,7 +159,7 @@ public class BossbarCommand {
             CustomBossbarManager.getInstance().removeBossbar(player);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aHidden your bossbar"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.hide.self")), false);
             
             return 1;
         } catch (Exception e) {
@@ -178,7 +176,7 @@ public class BossbarCommand {
             CustomBossbarManager.getInstance().removeBossbar(target);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aHidden bossbar for " + target.getDisplayName().getString()), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.hide.player", target.getDisplayName().getString())), false);
             
             return 1;
         } catch (Exception e) {
@@ -196,7 +194,7 @@ public class BossbarCommand {
             CustomBossbarManager.getInstance().updateBossbar(player, text, 1.0f);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aUpdated your bossbar text"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.update.self")), false);
             
             return 1;
         } catch (Exception e) {
@@ -215,7 +213,7 @@ public class BossbarCommand {
             CustomBossbarManager.getInstance().updateBossbar(player, text, progress);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aUpdated your bossbar"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.update.self.progress")), false);
             
             return 1;
         } catch (Exception e) {
@@ -234,7 +232,7 @@ public class BossbarCommand {
             CustomBossbarManager.getInstance().updateBossbar(target, text, progress);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aUpdated bossbar for " + target.getDisplayName().getString()), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.update.player", target.getDisplayName().getString())), false);
             
             return 1;
         } catch (Exception e) {
@@ -252,8 +250,7 @@ public class BossbarCommand {
             CustomBossbarManager.getInstance().broadcastBossbar(template, duration);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aBroadcasting bossbar '" + template + "' to all players for " + 
-                duration + " seconds"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.broadcast", template, duration)), false);
             
             return 1;
         } catch (Exception e) {
@@ -268,15 +265,15 @@ public class BossbarCommand {
             var templates = CustomBossbarManager.getInstance().getTemplateNames();
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§6§lAvailable Bossbar Templates:"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.list.header")), false);
             
             if (templates.isEmpty()) {
                 context.getSource().sendSuccess(() -> 
-                    Component.literal("§7No templates available"), false);
+                    Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.list.empty")), false);
             } else {
                 for (String template : templates) {
                     context.getSource().sendSuccess(() -> 
-                        Component.literal("§7- §b" + template), false);
+                        Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.list.item", template)), false);
                 }
             }
             
@@ -307,7 +304,7 @@ public class BossbarCommand {
             CustomBossbarManager.getInstance().showBossbar(player, template, 10);
             
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aShowing custom bossbar for 10 seconds"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "bossbar.create.custom")), false);
             
             return 1;
         } catch (Exception e) {

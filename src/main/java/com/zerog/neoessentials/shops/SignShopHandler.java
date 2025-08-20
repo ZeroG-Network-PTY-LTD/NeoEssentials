@@ -64,7 +64,7 @@ public class SignShopHandler {
         }
         
         if (shopOptional == null || shopOptional.isEmpty()) {
-            player.sendSystemMessage(Component.literal("§cThis shop is no longer valid!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.invalid")));
             return InteractionResult.FAIL;
         }
         
@@ -72,14 +72,14 @@ public class SignShopHandler {
         
         // Validate shop integrity
         if (!validateShopIntegrity(level, signShop)) {
-            player.sendSystemMessage(Component.literal("§cThis shop has integrity issues and cannot be used!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.integrity.failed")));
             LOGGER.error("Shop at {} failed integrity check - transaction blocked", signShop.getSignPos());
             return InteractionResult.FAIL;
         }
         
         // Check permissions
         if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_USE)) {
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to use shops!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.no.permission")));
             return InteractionResult.FAIL;
         }
         
@@ -92,11 +92,11 @@ public class SignShopHandler {
                     
                     // Display stock status with color coding
                     if (actualStock == 0) {
-                        player.sendSystemMessage(Component.literal("§4[OUT OF STOCK] §cThis shop has no items available!"));
+                player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.out.of.stock")));
                     } else if (actualStock < signShop.getQuantity()) {
-                        player.sendSystemMessage(Component.literal("§e[LOW STOCK] §6Only " + actualStock + " items available (shop sells " + signShop.getQuantity() + " per transaction)"));
+                player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.low.stock", actualStock, signShop.getQuantity())));
                     } else {
-                        player.sendSystemMessage(Component.literal("§2[IN STOCK] §a" + actualStock + " items available"));
+                player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.in.stock", actualStock)));
                     }
                 }
             }
@@ -109,7 +109,7 @@ public class SignShopHandler {
         if (isSelling) {
             // Player wants to sell to the shop
             if (signShop.getSellPrice() <= 0) {
-                player.sendSystemMessage(Component.literal("§cThis shop doesn't buy items!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.not.buying")));
                 return InteractionResult.FAIL;
             }
             
@@ -124,7 +124,7 @@ public class SignShopHandler {
         } else {
             // Player wants to buy from the shop
             if (signShop.getBuyPrice() <= 0) {
-                player.sendSystemMessage(Component.literal("§cThis shop doesn't sell items!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.not.selling")));
                 return InteractionResult.FAIL;
             }
             
@@ -133,11 +133,11 @@ public class SignShopHandler {
                 if (level.getBlockEntity(signShop.getChestPos()) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
                     int actualStock = PlayerSignShopHandler.countItemsInChest(chestEntity, signShop.getItem());
                     if (actualStock == 0) {
-                        player.sendSystemMessage(Component.literal("§4[TRANSACTION BLOCKED] §cCannot buy from empty shop! No items available!"));
+                player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.transaction.blocked.empty")));
                         return InteractionResult.FAIL;
                     }
                     if (actualStock < signShop.getQuantity()) {
-                        player.sendSystemMessage(Component.literal("§e[PARTIAL STOCK] §6Shop only has " + actualStock + " items, but sells " + signShop.getQuantity() + " per transaction. Transaction blocked to prevent issues."));
+                player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.transaction.blocked.partial", actualStock, signShop.getQuantity())));
                         return InteractionResult.FAIL;
                     }
                 }

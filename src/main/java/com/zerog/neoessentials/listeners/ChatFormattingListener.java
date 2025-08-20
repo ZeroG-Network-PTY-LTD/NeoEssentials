@@ -3,19 +3,12 @@ package com.zerog.neoessentials.listeners;
 import com.zerog.neoessentials.config.ChatConfig;
 import com.zerog.neoessentials.permissions.CustomPermissionsManager;
 import com.zerog.neoessentials.commands.essentials.NickCommand;
-import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.ServerChatEvent;
-import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,235 +20,135 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author ZeroG
  * @since 2.0.0
  */
+@net.neoforged.fml.common.EventBusSubscriber(modid = "neoessentials")
 public class ChatFormattingListener {
-    
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatFormattingListener.class);
-    private static ChatFormattingListener instance;
-    
-    // Anti-spam tracking
-    private final Map<UUID, Long> lastMessageTime = new ConcurrentHashMap<>();
-    private final Map<UUID, String> lastMessage = new ConcurrentHashMap<>();
-    private final Map<UUID, Integer> messageCount = new ConcurrentHashMap<>();
-    
-    // Configuration (would typically be injected)
-    private ChatConfig config;
-    
-    private ChatFormattingListener() {
-        NeoForge.EVENT_BUS.register(this);
-        loadConfigFromManager(); // Load config from ConfigManager
-        LOGGER.info("Chat formatting listener registered");
-    }
-    
-    public static synchronized ChatFormattingListener getInstance() {
-        if (instance == null) {
-            instance = new ChatFormattingListener();
-        }
-        return instance;
-    }
-    
+
+    // Anti-spam tracking (static for static event handler)
+    private static final Map<UUID, Long> lastMessageTime = new ConcurrentHashMap<>();
+    private static final Map<UUID, String> lastMessage = new ConcurrentHashMap<>();
+    private static final Map<UUID, Integer> messageCount = new ConcurrentHashMap<>();
+
     /**
      * Handle server chat events for formatting
      */
     @SubscribeEvent
-    public void onServerChat(ServerChatEvent event) {
-        if (!config.isEnabled()) {
-            return; // Chat formatting disabled
+    public static void onServerChat(net.neoforged.neoforge.event.ServerChatEvent event) {
+        LOGGER.info("[NeoEssentials] ChatFormattingListener: onServerChat event triggered. Message: {}", event.getMessage().getString());
+        com.zerog.neoessentials.config.MainConfig mainConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
+        if (mainConfig == null) {
+            LOGGER.error("[NeoEssentials] ChatFormattingListener: MainConfig is null! Skipping ALL formatting. Letting vanilla handle chat.");
+            return;
         }
-        
+    boolean chatEnabled = mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.enabled;
+    LOGGER.info("[NeoEssentials] ChatFormattingListener: mainConfig.modules.chat.enabled = {}", chatEnabled);
+        if (!chatEnabled) {
+            LOGGER.info("[NeoEssentials] ChatFormattingListener: Chat is DISABLED. Cancelling event and notifying player.");
+            event.setCanceled(true);
+            ServerPlayer player = event.getPlayer();
+            com.zerog.neoessentials.util.MessageUtil.sendMessage(player, "§cChat is currently disabled by the server administrator.");
+            return;
+        }
+        ChatConfig config = com.zerog.neoessentials.config.ConfigManager.getInstance().getChatConfig();
+        if (config == null) {
+            LOGGER.error("[NeoEssentials] ChatFormattingListener: ChatConfig is null! Skipping ALL formatting. Letting vanilla handle chat.");
+            return;
+        }
+        LOGGER.info("[NeoEssentials] ChatFormattingListener: config.isEnabled() = {}", config.isEnabled());
+        if (!config.isEnabled()) {
+            LOGGER.info("[NeoEssentials] ChatFormattingListener: Chat formatting is DISABLED. Bypassing ALL formatting and letting vanilla handle chat.");
+            // Do not set event message, do not cancel, let vanilla handle everything
+            return;
+        }
         ServerPlayer player = event.getPlayer();
         String originalMessage = event.getMessage().getString();
-        
         try {
-            // Anti-spam check
-            if (config.antiSpam.enabled && isSpam(player, originalMessage)) {
+            LOGGER.debug("[NeoEssentials] AntiSpam enabled: {}", config.antiSpam.enabled);
+            if (config.antiSpam.enabled && isSpam(player, originalMessage, config)) {
                 event.setCanceled(true);
-                MessageUtil.sendMessage(player, "§cPlease slow down your chat messages!");
+                com.zerog.neoessentials.util.MessageUtil.sendMessage(player, "§cPlease slow down your chat messages!");
+                LOGGER.debug("[NeoEssentials] Message blocked for spam: {}", originalMessage);
                 return;
             }
-            
-            // Filter message if enabled
-            String filteredMessage = config.filter.enabled ? 
-                filterMessage(originalMessage) : originalMessage;
-            
-            // Build formatted message
-            Component formattedMessage = buildFormattedMessage(player, filteredMessage);
-            
-            // Replace the message
-            event.setMessage(formattedMessage);
-            
-            LOGGER.debug("Formatted chat message for player: {}", player.getName().getString());
-            
+            LOGGER.debug("[NeoEssentials] Filter enabled: {}", config.filter.enabled);
+            String filteredMessage = config.filter.enabled ? filterMessage(originalMessage, config) : originalMessage;
+            if (filteredMessage == null) {
+                event.setCanceled(true);
+                com.zerog.neoessentials.util.MessageUtil.sendMessage(player, "§cYour message was blocked by the chat filter!");
+                LOGGER.debug("[NeoEssentials] Message blocked by filter: {}", originalMessage);
+                return;
+            }
+            String playerName = player.getName().getString();
+            String nickname = getPlayerNickname(player);
+            String format = config.format;
+            if (format == null || format.isEmpty()) {
+                format = "{MESSAGE}";
+            }
+            String displayName = playerName;
+            LOGGER.debug("[NeoEssentials] Nicknames enabled: {}, showInChat: {}, nickname: {}", config.nicknames.enabled, config.nicknames.showInChat, nickname);
+            if (config.nicknames.enabled && config.nicknames.showInChat && nickname != null) {
+                displayName = nickname;
+                if (config.nicknames.allowColors) {
+                    displayName = com.zerog.neoessentials.util.ColorUtil.colorize(displayName).getString();
+                }
+            }
+            String prefix = "";
+            String suffix = "";
+            String group = "";
+            // Only apply prefix/suffix logic if enabled in config
+            LOGGER.debug("[NeoEssentials] PrefixSuffix enabled: {}", config.prefixSuffix.enabled);
+            if (config.prefixSuffix.enabled) {
+                if (format.contains("{PREFIX}") && config.prefixSuffix.isPermissionSystemEnabled()) {
+                    prefix = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerPrefix(player.getUUID());
+                    if (prefix == null) prefix = config.prefixSuffix.defaultPrefix;
+                } else if (format.contains("{PREFIX}") && config.prefixSuffix.isGroupSystemEnabled()) {
+                    prefix = config.prefixSuffix.defaultPrefix;
+                } else if (format.contains("{PREFIX}")) {
+                    prefix = config.prefixSuffix.defaultPrefix;
+                }
+                if (format.contains("{SUFFIX}") && config.prefixSuffix.isPermissionSystemEnabled()) {
+                    suffix = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerSuffix(player.getUUID());
+                    if (suffix == null) suffix = config.prefixSuffix.defaultSuffix;
+                } else if (format.contains("{SUFFIX}") && config.prefixSuffix.isGroupSystemEnabled()) {
+                    suffix = config.prefixSuffix.defaultSuffix;
+                } else if (format.contains("{SUFFIX}")) {
+                    suffix = config.prefixSuffix.defaultSuffix;
+                }
+                if (format.contains("{GROUP}") && config.prefixSuffix.isGroupSystemEnabled()) {
+                    group = getPlayerGroup(player);
+                    if (group == null) group = "";
+                }
+                LOGGER.debug("[NeoEssentials] Prefix: '{}', Suffix: '{}', Group: '{}'", prefix, suffix, group);
+                if (!config.prefixSuffix.isColorEnabled()) {
+                    prefix = prefix.replaceAll("§[0-9a-fk-or]", "");
+                    suffix = suffix.replaceAll("§[0-9a-fk-or]", "");
+                }
+            }
+            String formattedText = format
+                .replace("{DISPLAYNAME}", displayName)
+                .replace("{PREFIX}", prefix)
+                .replace("{SUFFIX}", suffix)
+                .replace("{GROUP}", group)
+                .replace("{MESSAGE}", filteredMessage)
+                .replace("{TIME}", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")))
+                .replace("{DATE}", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+            LOGGER.debug("[NeoEssentials] Final formattedText: {}", formattedText);
+            if (config.enableColors) {
+                event.setMessage(com.zerog.neoessentials.util.ColorUtil.colorize(formattedText));
+                LOGGER.debug("[NeoEssentials] Colors enabled. Message colorized.");
+            } else {
+                event.setMessage(Component.literal(formattedText));
+                LOGGER.debug("[NeoEssentials] Colors disabled. Message sent as plain text.");
+            }
         } catch (Exception e) {
             LOGGER.error("Error formatting chat message for player: {}", player.getName().getString(), e);
             // Let the original message through on error
         }
     }
-    
-    /**
-     * Build a formatted chat message with prefix/suffix and nickname
-     */
-    private Component buildFormattedMessage(ServerPlayer player, String message) {
-        // Get player information
-        String playerName = player.getName().getString();
-        String nickname = getPlayerNickname(player);
-        String prefix = getPlayerPrefix(player);
-        String suffix = getPlayerSuffix(player);
-        String group = getPlayerGroup(player);
-        
-        // Determine display name
-        String displayName = (nickname != null && config.nicknames.showInChat) ? nickname : playerName;
-        
-        // Process prefix and suffix for dynamic placeholders
-        prefix = processDynamicPlaceholders(prefix != null ? prefix : "", player, group);
-        suffix = processDynamicPlaceholders(suffix != null ? suffix : "", player, group);
-        
-        // Build the format string
-        String format = config.format;
-        if (format == null || format.isEmpty()) {
-            format = config.getFullFormat();
-        }
-        
-        // Replace placeholders
-        String formattedText = format
-            .replace("{PREFIX}", prefix)
-            .replace("{SUFFIX}", suffix)
-            .replace("{PLAYER}", playerName)
-            .replace("{NICKNAME}", nickname != null ? nickname : playerName)
-            .replace("{DISPLAYNAME}", displayName)
-            .replace("{GROUP}", group != null ? group : "default")
-            .replace("{MESSAGE}", message)
-            .replace("{TIME}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")))
-            .replace("{DATE}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        
-        // Apply color codes if enabled
-        if (config.areColorsEnabled()) {
-            formattedText = MessageUtil.translateColorCodes(formattedText);
-        }
-        
-        // Create the component
-        MutableComponent component = Component.literal(formattedText);
-        
-        // Add hover text for nickname if enabled
-        if (nickname != null && config.nicknames.showOriginalOnHover) {
-            String hoverText = config.nicknames.hoverText.replace("{PLAYER}", playerName);
-            final String finalHoverText = MessageUtil.translateColorCodes(hoverText);
-            component = component.withStyle(style -> style.withHoverEvent(
-                new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(finalHoverText))
-            ));
-        }
-        
-        return component;
-    }
-    
-    /**
-     * Process dynamic placeholders in prefix/suffix text
-     * Handles placeholders like %owner%, %group%, etc.
-     */
-    private String processDynamicPlaceholders(String text, ServerPlayer player, String groupName) {
-        if (text == null || text.isEmpty()) {
-            return "";
-        }
-        
-        String processed = text;
-        
-        // Handle group-based placeholders
-        if (groupName != null) {
-            // Replace %<groupname>% with the actual formatted group prefix
-            processed = processed.replace("%" + groupName.toLowerCase() + "%", getFormattedGroupName(groupName));
-            
-            // Handle common group placeholders
-            switch (groupName.toLowerCase()) {
-                case "owner" -> processed = processed.replace("%owner%", "&4[&cOwner&4] ");
-                case "admin" -> processed = processed.replace("%admin%", "&c[Admin] ");
-                case "moderator" -> processed = processed.replace("%moderator%", "&6[Mod] ");
-                case "vip" -> processed = processed.replace("%vip%", "&b[VIP] ");
-                case "default" -> processed = processed.replace("%default%", "&7[Player] ");
-            }
-        }
-        
-        // Handle player-specific placeholders
-        processed = processed.replace("%player%", player.getName().getString());
-        processed = processed.replace("%displayname%", player.getDisplayName().getString());
-        
-        // Handle time placeholders
-        processed = processed.replace("%time%", LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-        processed = processed.replace("%date%", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        
-        return processed;
-    }
-    
-    /**
-     * Get a formatted group name for display
-     */
-    private String getFormattedGroupName(String groupName) {
-        if (groupName == null) return "";
-        
-        return switch (groupName.toLowerCase()) {
-            case "owner" -> "&4[&cOwner&4] ";
-            case "admin" -> "&c[Admin] ";
-            case "moderator" -> "&6[Mod] ";
-            case "vip" -> "&b[VIP] ";
-            case "default" -> "&7[Player] ";
-            default -> "&7[" + groupName + "] ";
-        };
-    }
-    
-    /**
-     * Get player's nickname from NickCommand system
-     */
-    private String getPlayerNickname(ServerPlayer player) {
-        try {
-            // Access the static nickname map from NickCommand
-            java.lang.reflect.Field nicknamesField = 
-                NickCommand.class.getDeclaredField("nicknames");
-            nicknamesField.setAccessible(true);
-            
-            @SuppressWarnings("unchecked")
-            Map<UUID, String> nicknames = (Map<UUID, String>) nicknamesField.get(null);
-            
-            return nicknames.get(player.getUUID());
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get nickname for {}: {}", player.getName().getString(), e.getMessage());
-            return null;
-        }
-    }
-    
-    /**
-     * Get player's prefix from permission system
-     */
-    private String getPlayerPrefix(ServerPlayer player) {
-        try {
-            CustomPermissionsManager permManager = CustomPermissionsManager.getInstance();
-            if (permManager != null && config.prefixSuffix.usePermissionSystem) {
-                String prefix = permManager.getPlayerPrefix(player.getUUID());
-                return prefix != null ? prefix : config.prefixSuffix.defaultPrefix;
-            }
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get prefix for {}: {}", player.getName().getString(), e.getMessage());
-        }
-        return config.prefixSuffix.defaultPrefix;
-    }
-    
-    /**
-     * Get player's suffix from permission system
-     */
-    private String getPlayerSuffix(ServerPlayer player) {
-        try {
-            CustomPermissionsManager permManager = CustomPermissionsManager.getInstance();
-            if (permManager != null && config.prefixSuffix.usePermissionSystem) {
-                String suffix = permManager.getPlayerSuffix(player.getUUID());
-                return suffix != null ? suffix : config.prefixSuffix.defaultSuffix;
-            }
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get suffix for {}: {}", player.getName().getString(), e.getMessage());
-        }
-        return config.prefixSuffix.defaultSuffix;
-    }
-    
-    /**
-     * Get player's primary group
-     */
-    private String getPlayerGroup(ServerPlayer player) {
+
+    // Helper methods now static
+    private static String getPlayerGroup(ServerPlayer player) {
         try {
             CustomPermissionsManager permManager = CustomPermissionsManager.getInstance();
             if (permManager != null) {
@@ -266,40 +159,28 @@ public class ChatFormattingListener {
         }
         return "default";
     }
-    
-    /**
-     * Filter message content if filtering is enabled
-     */
-    private String filterMessage(String message) {
+
+    private static String filterMessage(String message, ChatConfig config) {
         if (!config.filter.enabled) {
             return message;
         }
-        
         String filteredMessage = message;
         for (String blockedWord : config.filter.blockedWords) {
             String pattern = config.filter.caseSensitive ? blockedWord : "(?i)" + blockedWord;
             if (config.filter.censorMode) {
-                // Censor mode: replace with censorship characters
                 filteredMessage = filteredMessage.replaceAll(pattern, config.filter.censorReplacement);
             } else {
-                // Block mode: check if message contains blocked words
                 if (filteredMessage.matches(".*" + pattern + ".*")) {
                     return null; // Message should be blocked
                 }
             }
         }
-        
         return filteredMessage;
     }
-    
-    /**
-     * Check if message is spam
-     */
-    private boolean isSpam(ServerPlayer player, String message) {
+
+    private static boolean isSpam(ServerPlayer player, String message, ChatConfig config) {
         UUID playerId = player.getUUID();
         long currentTime = System.currentTimeMillis();
-        
-        // Check message rate
         Long lastTime = lastMessageTime.get(playerId);
         if (lastTime != null) {
             long timeDiff = currentTime - lastTime;
@@ -307,75 +188,32 @@ public class ChatFormattingListener {
                 return true; // Too fast
             }
         }
-        
-        // Check duplicate messages
         String lastMsg = lastMessage.get(playerId);
         if (lastMsg != null && lastMsg.equals(message)) {
             Integer count = messageCount.get(playerId);
             count = count != null ? count + 1 : 1;
             messageCount.put(playerId, count);
-            
             if (count > config.antiSpam.maxDuplicateMessages) {
                 return true; // Too many duplicates
             }
         } else {
             messageCount.put(playerId, 1);
         }
-        
-        // Update tracking
         lastMessageTime.put(playerId, currentTime);
         lastMessage.put(playerId, message);
-        
         return false;
     }
-    
-    /**
-     * Load configuration from ConfigManager
-     */
-    private void loadConfigFromManager() {
+
+    private static String getPlayerNickname(ServerPlayer player) {
         try {
-            com.zerog.neoessentials.config.ConfigManager configManager = 
-                com.zerog.neoessentials.config.ConfigManager.getInstance();
-            this.config = configManager.getChatConfig();
-            LOGGER.debug("Loaded chat configuration from ConfigManager");
+            java.lang.reflect.Field nicknamesField = NickCommand.class.getDeclaredField("nicknames");
+            nicknamesField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<UUID, String> nicknames = (Map<UUID, String>) nicknamesField.get(null);
+            return nicknames.get(player.getUUID());
         } catch (Exception e) {
-            LOGGER.warn("Failed to load chat config from ConfigManager, using defaults: {}", e.getMessage());
-            this.config = createDefaultConfig();
+            LOGGER.debug("Failed to get nickname for {}: {}", player.getName().getString(), e.getMessage());
+            return null;
         }
-    }
-    
-    /**
-     * Create default configuration (fallback)
-     */
-    private ChatConfig createDefaultConfig() {
-        ChatConfig config = new ChatConfig();
-        config.enabled = true;
-        config.format = "{PREFIX}{NICKNAME}{SUFFIX}: {MESSAGE}";
-        config.prefixSuffix.enabled = true;
-        config.nicknames.enabled = true;
-        return config;
-    }
-    
-    /**
-     * Reload configuration from ConfigManager
-     */
-    public void reloadConfig() {
-        loadConfigFromManager();
-        LOGGER.info("Chat formatting configuration reloaded");
-    }
-    
-    /**
-     * Update configuration
-     */
-    public void updateConfig(ChatConfig newConfig) {
-        this.config = newConfig;
-        LOGGER.info("Chat formatting configuration updated");
-    }
-    
-    /**
-     * Get current configuration
-     */
-    public ChatConfig getConfig() {
-        return config;
     }
 }

@@ -150,7 +150,8 @@ public class PermissionGroup {
     }
     
     public String getPrefix() {
-        return prefix;
+    // Only return this group's direct prefix, never inherited
+    return prefix != null ? prefix : "";
     }
     
     public void setPrefix(String prefix) {

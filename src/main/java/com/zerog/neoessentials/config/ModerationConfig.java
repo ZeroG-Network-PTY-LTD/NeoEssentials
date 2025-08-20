@@ -15,7 +15,6 @@ import java.util.Map;
 public class ModerationConfig {
     
     // Basic moderation settings
-    public boolean enabled = true;
     public boolean logActions = true;
     public boolean broadcastActions = true;
     public boolean enableJail = true;
@@ -46,14 +45,14 @@ public class ModerationConfig {
     public MessagesConfig messages = new MessagesConfig();
     
     public static class BanConfig {
-        public boolean enabled = true;
-        public boolean enableTempBan = true;
-        public int defaultBanDays = 7;
-        public int maxBanDays = 365;
-        public boolean enableIPBan = true;
-        public boolean broadcastBans = true;
-        public String defaultBanReason = "Violating server rules";
-        public List<String> banExemptPermissions = Arrays.asList("neoessentials.ban.exempt");
+    public boolean enabled = true;
+    public boolean enableTempBan = true;
+    public int defaultBanDays = 7;
+    public int maxBanDays = 365;
+    public boolean enableIPBan = true;
+    public boolean broadcastBans = true;
+    public List<String> banExemptPermissions = Arrays.asList("neoessentials.ban.exempt");
+    public String defaultBanReason = "Banned by an administrator";
     }
     
     public static class KickConfig {

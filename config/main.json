@@ -1,0 +1,160 @@
+{
+  "serverName": "NeoServer",
+  "defaultLanguage": "en",
+  "debugMode": false,
+  "Modules": {
+    "economy": true,
+    "homes": true,
+    "kits": true,
+    "warps": true,
+    "moderation": true,
+    "chat": {
+      "enabled": true,
+      "messaging": true
+    },
+    "tablist": true,
+    "spawn": true
+  },
+  "database": {
+    "type": "mysql",
+    "host": "localhost",
+    "port": 3306,
+    "username": "root",
+    "password": "password",
+    "database": "neoessentials"
+  },
+  "essentialCommands": {
+    "heal": true,
+    "feed": true,
+    "fly": true,
+    "god": true,
+    "vanish": true,
+    "speed": true,
+    "gamemode": true,
+    "time": true,
+    "weather": true,
+    "give": true,
+    "repair": true,
+    "clear": true,
+    "invsee": true,
+    "enderchest": true
+  },
+  "teleportation": {
+    "tp": true,
+    "tphere": true,
+    "tpall": true,
+    "tpa": true,
+    "tpaccept": true,
+    "tpdeny": true,
+    "tptoggle": true,
+    "home": true,
+    "sethome": true,
+    "delhome": true,
+    "homes": true,
+    "warp": true,
+    "setwarp": true,
+    "delwarp": true,
+    "warps": true,
+    "spawn": true,
+    "setspawn": true,
+    "back": true,
+    "rtp": true,
+    "randomtp": true
+  },
+  "playerManagement": {
+    "list": true,
+    "whois": true,
+    "seen": true,
+    "realname": true,
+    "nick": true,
+    "delnick": true,
+    "afk": true,
+    "afkcheck": true,
+    "playerdata": true,
+    "exp": true,
+    "skull": true
+  },
+  "itemManagement": {
+    "give": true,
+    "item": true,
+    "more": true,
+    "repair": true,
+    "enchant": true,
+    "clear": true,
+    "invsee": true,
+    "enderchest": true,
+    "hat": true,
+    "disposal": true,
+    "condense": true
+  },
+  "utilities": {
+    "fill": true,
+    "clone": true,
+    "setblock": true,
+    "coords": true,
+    "depth": true,
+    "getpos": true,
+    "biome": true,
+    "jump": true,
+    "top": true,
+    "up": true,
+    "thru": true,
+    "editsign": true,
+    "book": true,
+    "me": true,
+    "say": true,
+    "broadcast": true
+  },
+  "integrations": {
+    "disableIfEssentialsXFound": true,
+    "disableIfEssentialsFound": true,
+    "disableIfCMIFound": true,
+    "disableIfLuckPermsFound": false,
+    "disableEconomyIfVaultFound": false,
+    "disablePermissionsIfLPFound": false,
+    "disableChatIfChatModFound": false,
+    "disableTablistIfTabModFound": false,
+    "enableWorldEditIntegration": true,
+    "enableJEIIntegration": true,
+    "enableJourneyMapIntegration": true,
+    "enableWaystoneIntegration": true
+  },
+  "chatConfig": {
+    "radius": 0,
+    "format": "<{PREFIX}{DISPLAYNAME}{SUFFIX}> {MESSAGE}",
+    "localChatOnly": false,
+    "enableNearbyChat": false,
+    "nearbyRadius": 100
+  },
+  "colorPermissions": {
+    "nick": true,
+    "chat": true,
+    "rgb": true,
+    "signs": true,
+    "books": true
+  },
+  "protect": {
+    "fireSpread": false,
+    "creeperExplosion": false,
+    "tntExplosion": false,
+    "endermenPickup": false,
+    "mobGriefing": false,
+    "preventLavaFlow": false,
+    "preventWaterFlow": false
+  },
+  "antiBuild": {
+    "build": true,
+    "use": true,
+    "warnOnBuildDisallow": true,
+    "alertOnViolation": true,
+    "alertMessage": "&cPlayer {PLAYER} tried to build without permission!"
+  },
+  "newbie": {
+    "announceFormat": "&dWelcome {DISPLAYNAME}&d to the server!",
+    "kit": "tools",
+    "respawnListenerPriority": "high",
+    "giveKitOnJoin": true,
+    "announceOnJoin": true,
+    "protectionTime": 300
+  }
+}

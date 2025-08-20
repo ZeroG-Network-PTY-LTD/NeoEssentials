@@ -48,8 +48,8 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(TablistScoreboardManager.getInstance());
         NeoForge.EVENT_BUS.register(CustomBossbarManager.getInstance());
         
-        // Register chat formatting listener for prefix/suffix support
-        com.zerog.neoessentials.listeners.ChatFormattingListener.getInstance();
+        // Register name tag formatting listener
+        NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.NameTagFormattingListener());
         LOGGER.info("Chat formatting system initialized");
         
         LOGGER.info("NeoEssentials initialized successfully!");
@@ -148,23 +148,26 @@ public class NeoEssentials {
             
             // Initialize notification event listener
             NotificationEventListener.getInstance();
-            
+
             // Initialize permission event listener for persistent storage
             NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.PermissionEventListener());
             LOGGER.info("Permission Event Listener initialized");
-            
+
             // Shop sign interactions are now handled by NeoEssentialsEventHandler
             // No need for separate ShopSignEventListener
             LOGGER.info("Shop Sign Event Handling consolidated into NeoEssentialsEventHandler");
-            
+
             // Initialize Playtime Tracker
             com.zerog.neoessentials.player.PlaytimeTracker.getInstance();
             LOGGER.info("Playtime Tracker initialized");
-            
+
+            // PATCH: Reload chat formatting config after config system is initialized
+            // ChatFormattingListener config is now hot-reloadable and does not require manual reload.
+
             LOGGER.info("All managers initialized successfully");
-            
+
             LOGGER.info("NeoEssentials server setup completed successfully!");
-            
+
         } catch (Exception e) {
             LOGGER.error("Failed to setup NeoEssentials on server start", e);
         }

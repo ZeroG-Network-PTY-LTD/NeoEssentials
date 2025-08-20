@@ -62,7 +62,7 @@ public class EconomyManager {
      * Check if economy system is enabled
      */
     public boolean isEnabled() {
-        return configUnifier.getConfigManager().getEconomyConfig().enabled;
+    return configUnifier.getConfigManager().getMainConfig().modules.economy;
     }
     
     /**

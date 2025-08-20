@@ -13,8 +13,10 @@ import java.util.List;
  */
 public class WarpConfig {
     
-    // Basic warp settings
+    // Top-level module enable/disable
     public boolean enabled = true;
+
+    // Basic warp settings
     public int maxWarps = 50; // Maximum warps on server
     public int maxWarpsPerPlayer = 5; // Max warps a player can create
     

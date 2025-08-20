@@ -13,8 +13,10 @@ import java.util.Map;
  */
 public class EconomyConfig {
     
-    // Basic economy settings
+    // Top-level module enable/disable
     public boolean enabled = true;
+
+    // Basic economy settings
     public String currencySymbol = "$";
     public String currencyName = "dollar";
     public String currencyNamePlural = "dollars";

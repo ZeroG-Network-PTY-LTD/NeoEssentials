@@ -1,0 +1,217 @@
+# NeoEssentials Main Configuration (YAML)
+# Modules section is at the top to control enabled/disabled features.
+
+modules:
+  economy: true
+  homes: true
+  kits: true
+  warps: true
+  moderation: true
+  chat:
+    enabled: true
+    messaging: true
+  tablist: true
+  spawn: true
+
+main:
+  serverName: NeoServer
+  defaultLanguage: en
+  debugMode: false
+  database:
+    type: mysql
+    host: localhost
+    port: 3306
+    username: root
+    password: password
+    database: neoessentials
+  integrations:
+    disableIfEssentialsXFound: true
+    disableIfEssentialsFound: true
+    disableIfCMIFound: true
+    disableIfLuckPermsFound: false
+    disableEconomyIfVaultFound: false
+    disablePermissionsIfLPFound: false
+    disableChatIfChatModFound: false
+    disableTablistIfTabModFound: false
+    enableWorldEditIntegration: true
+    enableJEIIntegration: true
+    enableJourneyMapIntegration: true
+    enableWaystoneIntegration: true
+
+chat:
+  config:
+    format: "<{PREFIX}{DISPLAYNAME}{SUFFIX}> {MESSAGE}"
+    localChatOnly: false
+    enableNearbyChat: false
+    nearbyRadius: 100
+    enableColors: true
+    enableHexColors: true
+    enableFormattingCodes: true
+    prefixSuffix:
+      enabled: true
+      usePermissionSystem: true
+      useGroupSystem: true
+      defaultPrefix: ""
+      defaultSuffix: ""
+      prefixFormat: "{PREFIX}"
+      suffixFormat: "{SUFFIX}"
+      inheritGroupColors: true
+      allowCustomColors: true
+    nicknames:
+      enabled: true
+      showInChat: true
+      showOriginalOnHover: true
+      nicknameFormat: "{NICKNAME}"
+      hoverText: "Real name: {PLAYER}"
+      maxLength: 16
+      allowColors: true
+      allowFormatting: true
+    filter:
+      enabled: false
+      blockedWords:
+        - spam
+        - bad
+      censorReplacement: "***"
+      censorMode: false
+      caseSensitive: false
+    placeholders:
+      enabled: true
+      enablePlayerPlaceholders: true
+      enableServerPlaceholders: true
+      enableTimePlaceholders: true
+      enableCustomPlaceholders: true
+    antiSpam:
+      enabled: false
+      maxMessagesPerSecond: 3
+      maxDuplicateMessages: 2
+      duplicateTimeWindow: 30
+      blockSimilarMessages: true
+      similarityThreshold: 80
+
+kitSettings:
+  giveKitOnFirstJoin: true
+  firstJoinKit: starter
+  enableCooldowns: true
+  persistCooldowns: true
+  enableKitCosts: true
+  enabled: true
+  kits: {}
+  messages:
+    kitNoPermission: "&cYou don't have permission for this kit!"
+    kitCooldown: "&cYou must wait {TIME} before using this kit again."
+    kitCost: "&cKit '{KIT}' costs {AMOUNT}. You need {REQUIRED} more."
+    inventoryFull: "&cYour inventory is full!"
+    kitGiven: "&aKit '{KIT}' given!"
+    kitNotFound: "&cKit '{KIT}' not found!"
+    cooldownActive: "&cYou must wait {TIME} before using this kit again."
+    insufficientFunds: "&cYou do not have enough funds: {AMOUNT}"
+    kitListHeader: "&aAvailable Kits:"
+    kitListEntry: "&e- {KIT}"
+    kitListEmpty: "&cNo kits available!"
+    firstJoinKit: "&aYou have received your first join kit!"
+
+warpSettings:
+  checkForVoid: true
+  checkForSuffocation: true
+  safeLocationRadius: 3
+  enablePublicWarps: true
+  enablePrivateWarps: true
+  allowCrossDimensionTeleport: true
+  enableWarpCategories: true
+  defaultCategories:
+    - spawn
+    - shops
+    - arenas
+    - farms
+    - builds
+  noTeleportWorlds: []
+  maxWarpNameLength: 20
+  allowSpacesInNames: false
+  allowSpecialCharacters: false
+  bannedWarpNames:
+    - spawn
+    - home
+    - admin
+    - server
+    - console
+  enablePermissionWarps: true
+  permissionPrefix: "neoessentials.warp."
+  enableWarpSigns: true
+  warpSignFormat: "[Warp]"
+  warpSignCost: 100.00
+  messages:
+    warpCreated: "&aWarp '{0}' created successfully!"
+    warpDeleted: "&cWarp '{0}' deleted!"
+    warpNotFound: "&cWarp '{0}' not found!"
+    warpTeleporting: "&aTeleporting to warp '{0}'..."
+    warpTeleportCancelled: "&cTeleport cancelled due to movement!"
+    maxWarpsReached: "&cMaximum number of warps reached ({0})!"
+    warpAlreadyExists: "&cWarp '{0}' already exists!"
+    invalidWarpName: "&cInvalid warp name! Use only letters and numbers."
+    warpListHeader: "&6Available warps:"
+    warpListEntry: "&7- &a{0} &7({1}) [{2}] &8({3} {4}, {5}, {6})"
+    warpListEmpty: "&cNo warps available!"
+    unsafeLocation: "&cUnsafe location! Teleport cancelled."
+    restrictedWorld: "&cYou cannot create warps in this world!"
+    noTeleportWorld: "&cYou cannot teleport to this world!"
+    insufficientFunds: "&cYou need {0} to create/use this warp!"
+    cooldownActive: "&cYou must wait {0} before using this command again!"
+    warpNoPermission: "&cYou don't have permission to access this warp!"
+    warpPrivate: "&cThis is a private warp!"
+    warpSignCreated: "&aWarp sign created for '{0}'!"
+    warpSignUsed: "&aTeleporting via warp sign..."
+    categoryNotFound: "&cCategory '{0}' not found!"
+    categoryListHeader: "&6Warp categories:"
+    categoryListEntry: "&7- &a{0} &7({1} warps)"
+    categoryWarpsHeader: "&6Warps in category '{0}':"
+  enabled: true
+  maxWarps: 50
+  maxWarpsPerPlayer: 5
+  createWarpCost: 500.00
+  teleportWarpCost: 25.00
+  deleteWarpCost: 0
+  createWarpCooldown: 600
+  teleportWarpCooldown: 120
+  deleteWarpCooldown: 60
+  teleportWarmup: 5
+  cancelOnMove: true
+  cancelOnDamage: true
+  maxMoveDistance: 0.5
+  requireSafeLocation: true
+  checkForLava: true
+  restrictedWorlds: []
+
+homeSettings:
+  maxHomes: 3
+  maxHomesVip: 5
+  maxHomesAdmin: 10
+  defaultMaxHomes: 3
+  cooldown: 60
+  setHomeCost: 50.00
+  teleportHomeCost: 10.00
+  deleteHomeCost: 0
+  setHomeCooldown: 300
+  teleportHomeCooldown: 60
+  deleteHomeCooldown: 30
+  teleportWarmup: 3
+  cancelOnMove: true
+  cancelOnDamage: true
+  maxMoveDistance: 0.5
+  requireSafeLocation: true
+  restrictedWorlds: []
+  messages:
+    invalidHomeName: "&cInvalid home name!"
+    maxHomesReached: "&cYou have reached the maximum number of homes: {MAX}"
+    restrictedWorld: "&cYou cannot set a home in this world."
+    insufficientFunds: "&cYou do not have enough funds: {AMOUNT}"
+    homeSet: "&aHome '{HOME}' set!"
+    homeNotFound: "&cHome '{HOME}' not found!"
+    homeDeleted: "&aHome '{HOME}' deleted!"
+    homeListEmpty: "&cYou have no homes set."
+    homeListHeader: "&aYour Homes ({COUNT}/{MAX}):"
+    homeListEntry: "&e- {HOME}"
+    cooldownActive: "&cYou must wait {TIME} before teleporting again."
+    unsafeLocation: "&cHome location is not safe!"
+    homeTeleporting: "&aTeleporting to home '{HOME}'..."
+
+# Add other modules below as needed

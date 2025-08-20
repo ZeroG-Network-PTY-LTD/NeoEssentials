@@ -10,6 +10,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.analytics.AnalyticsManager;
 import com.zerog.neoessentials.analytics.AnalyticsReport;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.localization.LanguageManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -257,7 +258,7 @@ public class AnalyticsCommands {
             
         } catch (Exception e) {
             LOGGER.error("Error showing feature stats: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error retrieving feature statistics: " + e.getMessage()));
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage("analytics.error.feature_stats", e.getMessage())));
             return 0;
         }
     }
@@ -275,14 +276,14 @@ public class AnalyticsCommands {
             analytics.getPerformanceMetrics().clear();
             analytics.getFeatureStats().clear();
             
-            MessageUtil.sendMessage(player, "&aAll analytics data has been cleared successfully!");
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "analytics.success.cleared"));
             LOGGER.info("Analytics data cleared by {}", source.getTextName());
             
             return 1;
             
         } catch (Exception e) {
             LOGGER.error("Error clearing analytics data: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error clearing analytics data: " + e.getMessage()));
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage("analytics.error.clearing_data", e.getMessage())));
             return 0;
         }
     }
@@ -296,8 +297,8 @@ public class AnalyticsCommands {
             boolean currentState = analytics.isAnalyticsEnabled();
             analytics.setAnalyticsEnabled(!currentState);
             
-            String status = analytics.isAnalyticsEnabled() ? "&aENABLED" : "&cDISABLED";
-            MessageUtil.sendMessage(player, "&6Analytics tracking is now " + status);
+                String statusKey = analytics.isAnalyticsEnabled() ? "analytics.status.enabled" : "analytics.status.disabled";
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "analytics.status.tracking", LanguageManager.getInstance().getMessage(player, statusKey)));
             
             LOGGER.info("Analytics tracking {} by {}", 
                 analytics.isAnalyticsEnabled() ? "enabled" : "disabled", source.getTextName());
@@ -306,7 +307,7 @@ public class AnalyticsCommands {
             
         } catch (Exception e) {
             LOGGER.error("Error toggling analytics: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error toggling analytics: " + e.getMessage()));
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage("analytics.error.toggling", e.getMessage())));
             return 0;
         }
     }

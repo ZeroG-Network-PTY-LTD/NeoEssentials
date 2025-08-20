@@ -11,9 +11,9 @@ import java.util.List;
  * @since 2.0.0
  */
 public class SpawnConfig {
+    public boolean enabled = true;
     
     // Basic spawn settings
-    public boolean enabled = true;
     public boolean setSpawnOnFirstJoin = true;
     public boolean setSpawnOnDeath = true;
     public boolean setSpawnOnRespawn = true;
@@ -211,6 +211,7 @@ public class SpawnConfig {
         
         // Group spawn messages
         public String groupSpawnSet = "&aGroup spawn for {0} has been set!";
+            public boolean enabled = true;
         public String groupSpawnNotSet = "&cGroup spawn for {0} is not set!";
         public String groupSpawnDeleted = "&cGroup spawn for {0} has been deleted!";
         public String groupNotFound = "&cGroup {0} not found!";

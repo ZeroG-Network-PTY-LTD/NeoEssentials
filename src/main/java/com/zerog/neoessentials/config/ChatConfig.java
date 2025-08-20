@@ -11,10 +11,19 @@ import java.util.List;
  * @since 2.0.0
  */
 public class ChatConfig {
+    public AntiSpamConfig antiSpam = new AntiSpamConfig();
+    public static class AntiSpamConfig {
+        public boolean enabled = false;
+        public int maxMessagesPerSecond = 3;
+        public int maxDuplicateMessages = 2;
+        public int duplicateTimeWindow = 30; // seconds
+        public boolean blockSimilarMessages = true;
+        public int similarityThreshold = 80; // percentage
+    }
+    public boolean enabled = true;
     
     // Main chat formatting settings
-    public boolean enabled = true;
-    public String format = "{MESSAGE}";
+    public String format = "{MESSAGE}"; // Fixed: removed {PLAYER} duplication
     public boolean enableColors = true;
     public boolean enableHexColors = true;
     public boolean enableFormattingCodes = true;
@@ -32,10 +41,39 @@ public class ChatConfig {
     public PlaceholderConfig placeholders = new PlaceholderConfig();
     
     // Anti-spam settings
-    public AntiSpamConfig antiSpam = new AntiSpamConfig();
+        // Anti-spam settings
+        // public AntiSpamConfig antiSpam = new AntiSpamConfig(); // Uncomment if AntiSpamConfig is defined
     
     public static class PrefixSuffixConfig {
-        public boolean enabled = true;
+        /**
+         * Strictly check if prefix/suffix logic is enabled
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        /**
+         * Strictly check if permission system for prefix/suffix is enabled
+         */
+        public boolean isPermissionSystemEnabled() {
+            return enabled && usePermissionSystem;
+        }
+
+            // Top-level module enable/disable
+            public boolean enabled = true;
+        /**
+         * Strictly check if group system for prefix/suffix is enabled
+         */
+        public boolean isGroupSystemEnabled() {
+            return enabled && useGroupSystem;
+        }
+
+        /**
+         * Strictly check if color logic for prefix/suffix is enabled
+         */
+        public boolean isColorEnabled() {
+            return enabled && (inheritGroupColors || allowCustomColors);
+        }
         public boolean usePermissionSystem = true;
         public boolean useGroupSystem = true;
         public String defaultPrefix = "";
@@ -49,6 +87,7 @@ public class ChatConfig {
         public boolean inheritGroupColors = true;
         public boolean allowCustomColors = true;
     }
+        // Duplicate PrefixSuffixConfig removed
     
     public static class NicknameConfig {
         public boolean enabled = true;
@@ -75,40 +114,6 @@ public class ChatConfig {
         public boolean enableServerPlaceholders = true;
         public boolean enableTimePlaceholders = true;
         public boolean enableCustomPlaceholders = true;
-    }
-    
-    public static class AntiSpamConfig {
-        public boolean enabled = false;
-        public int maxMessagesPerSecond = 3;
-        public int maxDuplicateMessages = 2;
-        public int duplicateTimeWindow = 30; // seconds
-        public boolean blockSimilarMessages = true;
-        public int similarityThreshold = 80; // percentage
-    }
-    
-    /**
-     * Get the full chat format with all placeholders
-     */
-    public String getFullFormat() {
-        StringBuilder formatBuilder = new StringBuilder();
-        
-        if (prefixSuffix.enabled) {
-            formatBuilder.append(prefixSuffix.prefixFormat);
-        }
-        
-        if (nicknames.enabled && nicknames.showInChat) {
-            formatBuilder.append(nicknames.nicknameFormat);
-        } else {
-            formatBuilder.append("{PLAYER}");
-        }
-        
-        if (prefixSuffix.enabled) {
-            formatBuilder.append(prefixSuffix.suffixFormat);
-        }
-        
-        formatBuilder.append(": {MESSAGE}");
-        
-        return formatBuilder.toString();
     }
     
     /**

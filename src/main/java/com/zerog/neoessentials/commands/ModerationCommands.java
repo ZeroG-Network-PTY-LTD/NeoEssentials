@@ -146,15 +146,15 @@ public class ModerationCommands {
         
         try {
             // For now, use a simple kick - ban functionality can be enhanced later
-            target.connection.disconnect(Component.literal("You have been banned: " + reason));
+            target.connection.disconnect(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "moderation.ban.kick_message", reason)));
             
             // Send confirmation to admin
-            MessageUtil.sendMessage(admin, "§cBanned player " + target.getName().getString() + " for: " + reason);
-            MessageUtil.sendMessage(admin, "§eNote: Full ban system implementation pending");
+            MessageUtil.sendMessage(admin, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(admin, "moderation.ban.success", target.getName().getString(), reason));
+            MessageUtil.sendMessage(admin, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(admin, "moderation.ban.note_pending"));
             
             return 1;
         } catch (Exception e) {
-            MessageUtil.sendMessage(admin, "§cFailed to ban player: " + e.getMessage());
+            MessageUtil.sendMessage(admin, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(admin, "moderation.ban.failed", e.getMessage()));
             return 0;
         }
     }
@@ -200,18 +200,18 @@ public class ModerationCommands {
         
         // Validate duration
         if (durationMinutes < 1) {
-            MessageUtil.sendMessage(admin, "&cDuration must be at least 1 minute!");
+            MessageUtil.sendMessage(admin, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(admin, "moderation.tempban.duration_too_short"));
             return 0;
         }
         
         if (durationMinutes > 525600) { // 1 year in minutes
-            MessageUtil.sendMessage(admin, "&cDuration cannot exceed 1 year!");
+            MessageUtil.sendMessage(admin, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(admin, "moderation.tempban.duration_too_long"));
             return 0;
         }
         
         // Check if trying to ban themselves
         if (target.getUUID().equals(admin.getUUID())) {
-            MessageUtil.sendMessage(admin, "&cYou cannot ban yourself!");
+            MessageUtil.sendMessage(admin, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(admin, "moderation.tempban.cannot_ban_self"));
             return 0;
         }
         

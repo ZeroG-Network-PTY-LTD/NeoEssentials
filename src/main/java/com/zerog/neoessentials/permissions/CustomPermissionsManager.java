@@ -1,12 +1,8 @@
 package com.zerog.neoessentials.permissions;
 
-import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.player.PlayerDataManager;
 import com.zerog.neoessentials.player.PlayerData;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +24,47 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 2.0.0
  */
 public class CustomPermissionsManager {
+    // Store player group tags for instant display updates
+    // Only one definition for playerGroups below
+
+    /**
+     * Set player group and refresh display (no CommandSourceStack dependency)
+     */
+    public void setGroup(ServerPlayer player, String group) {
+        playerGroups.put(player.getUUID(), group);
+        refreshPlayerDisplay(player);
+        // Optionally, send feedback to player here if needed
+    }
+
+    /**
+     * Refresh player display (triggers event-based updates)
+     */
+    public void refreshPlayerDisplay(ServerPlayer player) {
+        // Always reset to raw username or nickname only (no prefix/suffix)
+        try {
+            String rawName = player.getGameProfile().getName();
+            String nickname = null;
+            try {
+                java.lang.reflect.Field nicknamesField = Class.forName("com.zerog.neoessentials.commands.essentials.NickCommand").getDeclaredField("nicknames");
+                nicknamesField.setAccessible(true);
+                @SuppressWarnings("unchecked")
+                java.util.Map<java.util.UUID, String> nicknames = (java.util.Map<java.util.UUID, String>) nicknamesField.get(null);
+                nickname = nicknames.get(player.getUUID());
+            } catch (Exception ignored) {}
+            net.minecraft.network.chat.Component formattedName = net.minecraft.network.chat.Component.literal(nickname != null ? nickname : rawName);
+            player.setCustomName(formattedName);
+            LOGGER.info("NeoEssentials: Set player displayName='{}' (rawName='{}', nickname='{}')", formattedName.getString(), rawName, nickname);
+            // Update tablist/name tag using TablistScoreboardManager
+            try {
+                com.zerog.neoessentials.features.TablistScoreboardManager manager = com.zerog.neoessentials.features.TablistScoreboardManager.getInstance();
+                manager.updatePlayerTablistName(player, player.server);
+            } catch (Exception e) {
+                LOGGER.warn("Failed to update tablist/name tag for {}: {}", player.getName().getString(), e.getMessage());
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to update display for {}: {}", player.getName().getString(), e.getMessage());
+        }
+    }
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomPermissionsManager.class);
     private static CustomPermissionsManager instance;
     
@@ -479,26 +516,25 @@ public class CustomPermissionsManager {
         String groupName = getPlayerGroup(playerId);
         PermissionGroup group = groups.get(groupName);
         if (group == null) return "";
-        
-        String prefix = group.getPrefix();
-        
+        String prefix = group.getPrefix(); // Only use direct group prefix
+        LOGGER.debug("[NeoEssentials] Raw prefix for group '{}': {}", groupName, prefix);
         // Process animated placeholders in prefix if animation manager is available
         try {
-            // Get the player if available
-            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             if (server != null) {
-                ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+                net.minecraft.server.level.ServerPlayer player = server.getPlayerList().getPlayer(playerId);
                 if (player != null) {
-                    // Try to get animation manager instance and process animated text
                     try {
                         Class<?> animationManagerClass = Class.forName("com.zerog.neoessentials.animation.AnimationManager");
                         Object animationManager = animationManagerClass.getDeclaredMethod("getInstance").invoke(null);
+                        LOGGER.debug("[NeoEssentials] AnimationManager instance: {}", animationManager);
                         if (animationManager != null) {
-                            java.lang.reflect.Method processMethod = animationManagerClass.getDeclaredMethod("processAnimatedText", String.class, ServerPlayer.class);
-                            prefix = (String) processMethod.invoke(animationManager, prefix, player);
+                            java.lang.reflect.Method processMethod = animationManagerClass.getDeclaredMethod("processAnimatedText", String.class, net.minecraft.server.level.ServerPlayer.class);
+                            String processed = (String) processMethod.invoke(animationManager, prefix, player);
+                            LOGGER.debug("[NeoEssentials] Processed animated prefix for {}: {}", player.getName().getString(), processed);
+                            prefix = processed;
                         }
                     } catch (Exception e) {
-                        // Animation manager not available, use static prefix
                         LOGGER.debug("Animation manager not available for prefix processing: {}", e.getMessage());
                     }
                 }
@@ -506,7 +542,6 @@ public class CustomPermissionsManager {
         } catch (Exception e) {
             LOGGER.debug("Error processing animated prefix for player {}: {}", playerId, e.getMessage());
         }
-        
         return prefix;
     }
     

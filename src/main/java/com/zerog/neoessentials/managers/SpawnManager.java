@@ -50,8 +50,8 @@ public class SpawnManager {
      */
     public boolean setSpawn(ServerPlayer player, LocationUtil.Location location) {
         SpawnConfig config = configUnifier.getConfigManager().getSpawnConfig();
-        
-        if (!config.enabled) {
+    boolean spawnModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.spawn;
+        if (!spawnModuleEnabled) {
             MessageUtil.sendMessage(player, "&cSpawn system is disabled.");
             return false;
         }
