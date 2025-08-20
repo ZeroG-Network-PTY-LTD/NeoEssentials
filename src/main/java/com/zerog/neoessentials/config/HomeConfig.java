@@ -65,6 +65,8 @@ public class HomeConfig {
     public static class MessagesConfig {
         public String homeSet = "&aHome '{0}' set successfully!";
         public String homeDeleted = "&cHome '{0}' deleted!";
+        // Enable/disable cost for setting home
+        public boolean useSetHomeCost = true;
         public String homeNotFound = "&cHome '{0}' not found!";
         public String homeTeleporting = "&aTeleporting to home '{0}'...";
         public String homeTeleportCancelled = "&cTeleport cancelled due to movement!";

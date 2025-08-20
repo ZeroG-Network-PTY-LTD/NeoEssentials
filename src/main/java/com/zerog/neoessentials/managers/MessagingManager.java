@@ -1,7 +1,8 @@
 package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
-import com.zerog.neoessentials.config.MessagingConfig;
+import com.zerog.neoessentials.config.MainConfig;
+// import removed: MessagingConfig is now centralized in MainConfig
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -49,7 +50,7 @@ public class MessagingManager {
      * Send a private message between players
      */
     public boolean sendPrivateMessage(ServerPlayer sender, String targetName, String message) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
+    MainConfig.MessagingSettings config = configUnifier.getConfigManager().getMainConfig().messagingSettings;
         com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
         boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.enabled;
         boolean messagingModuleEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.messaging;
@@ -121,14 +122,14 @@ public class MessagingManager {
      * Send mail to a player
      */
     public boolean sendMail(ServerPlayer sender, String targetName, String message) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
+    MainConfig.MessagingSettings config = configUnifier.getConfigManager().getMainConfig().messagingSettings;
         com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
         boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.enabled;
         if (!chatEnabled) {
             MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "chat.disabled"));
             return false;
         }
-        if (!config.isMailEnabled()) {
+    if (!config.enableMail) {
             MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "mail.disabled"));
             return false;
         }
@@ -145,7 +146,7 @@ public class MessagingManager {
         }
         // Check mail limit
         int mailCount = getMailCount(targetUuid);
-        if (mailCount >= config.mail.maxMailsPerPlayer) {
+    if (mailCount >= config.mail.maxMailsPerPlayer) {
             MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "mail.full", targetName));
             return false;
         }
@@ -177,8 +178,8 @@ public class MessagingManager {
      * Read player's mail
      */
     public void readMail(ServerPlayer player) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
-        if (!config.enabled || !config.enableMail) {
+    MainConfig.MessagingSettings config = configUnifier.getConfigManager().getMainConfig().messagingSettings;
+    if (!config.enabled || !config.enableMail) {
             MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "mail.disabled"));
             return;
         }
@@ -308,8 +309,8 @@ public class MessagingManager {
      * Check if player is on message cooldown
      */
     private boolean isOnMessageCooldown(ServerPlayer player) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
-        if (config.privateMessages.cooldownSeconds <= 0) {
+    MainConfig.MessagingSettings config = configUnifier.getConfigManager().getMainConfig().messagingSettings;
+    if (config.privateMessages.cooldownSeconds <= 0) {
             return false;
         }
         
@@ -323,21 +324,21 @@ public class MessagingManager {
         }
         
         long elapsed = System.currentTimeMillis() - ((Number) lastMessageTime).longValue();
-        return elapsed < (config.privateMessages.cooldownSeconds * 1000L);
+    return elapsed < (config.privateMessages.cooldownSeconds * 1000L);
     }
     
     /**
      * Get remaining cooldown time in seconds
      */
     private long getRemainingCooldown(ServerPlayer player) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
+    MainConfig.MessagingSettings config = configUnifier.getConfigManager().getMainConfig().messagingSettings;
         Object lastMessageTime = playerDataManager.getSetting(player.getUUID(), "last_message_time");
         if (lastMessageTime == null) {
             return 0;
         }
         
         long elapsed = System.currentTimeMillis() - ((Number) lastMessageTime).longValue();
-        long cooldownMs = config.privateMessages.cooldownSeconds * 1000L;
+    long cooldownMs = config.privateMessages.cooldownSeconds * 1000L;
         return Math.max(0, (cooldownMs - elapsed) / 1000);
     }
     
@@ -352,9 +353,9 @@ public class MessagingManager {
      * Send message to social spy users
      */
     private void sendToSocialSpy(ServerPlayer sender, ServerPlayer target, String message) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
+    MainConfig.MessagingSettings config = configUnifier.getConfigManager().getMainConfig().messagingSettings;
         
-        String spyMessage = MessageUtil.replacePlaceholders(config.messages.pmFormatSocialSpy,
+    String spyMessage = MessageUtil.replacePlaceholders(config.messages.pmFormatSocialSpy,
             sender.getName().getString(), target.getName().getString(), message);
         
         for (Map.Entry<UUID, Boolean> entry : socialSpyEnabled.entrySet()) {
@@ -535,11 +536,11 @@ public class MessagingManager {
      * Process automatic announcements
      */
     public void processAnnouncements() {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
+    MainConfig.MessagingSettings config = configUnifier.getConfigManager().getMainConfig().messagingSettings;
         
         // For now, announcements are handled through broadcast system
         // This method would be improved with announcement-specific configuration
-        if (!config.isBroadcastEnabled()) {
+    if (!config.broadcast.enabled) {
             return;
         }
         

@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
-import com.zerog.neoessentials.config.EconomyConfig;
+import com.zerog.neoessentials.config.MainConfig;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.storage.StorageManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -92,7 +92,7 @@ public class EconomyManager {
         // Check if player needs starting balance initialization (only for truly new players)
         if (balance == null && !hasBeenInitialized(playerUUID)) {
             // New player - set starting balance from config
-            EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+            MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
             balance = BigDecimal.valueOf(config.startingBalance);
             playerDataManager.setBalance(playerUUID, balance);
             markAsInitialized(playerUUID);
@@ -123,7 +123,7 @@ public class EconomyManager {
             return;
         }
         
-        EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+    MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
         
         // Validate amount
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
@@ -158,7 +158,7 @@ public class EconomyManager {
         BigDecimal currentBalance = getBalance(playerUUID);
         BigDecimal newBalance = currentBalance.add(amount);
         
-        EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+    MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
         if (newBalance.compareTo(BigDecimal.valueOf(config.maxBalance)) > 0) {
             newBalance = BigDecimal.valueOf(config.maxBalance);
         }
@@ -235,7 +235,7 @@ public class EconomyManager {
         }
         
         // Apply transfer fee if configured
-        EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+    MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
         BigDecimal fee = BigDecimal.ZERO;
         if (config.transferFeePercent > 0) {
             fee = amount.multiply(BigDecimal.valueOf(config.transferFeePercent / 100.0))
@@ -275,7 +275,7 @@ public class EconomyManager {
      * Format currency amount for display with BigDecimal precision
      */
     public String formatCurrency(BigDecimal amount) {
-        EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+    MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
         
         DecimalFormat formatter = new DecimalFormat(config.currencyFormat);
         formatter.setRoundingMode(RoundingMode.HALF_UP);
@@ -289,7 +289,7 @@ public class EconomyManager {
      * Get command cost from configuration
      */
     public double getCommandCost(String command) {
-        EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+    MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
         return config.commandCosts.getOrDefault(command.toLowerCase(), BigDecimal.ZERO).doubleValue();
     }
     
@@ -304,14 +304,14 @@ public class EconomyManager {
         
         UUID playerUUID = player.getUUID();
         if (!hasBalance(playerUUID, cost)) {
-            EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+            MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
             MessageUtil.sendMessage(player, config.messages.insufficientFunds,
                 formatCurrency(cost), formatCurrency(getBalance(playerUUID)));
             return false;
         }
         
         withdrawBalance(playerUUID, cost, "Command usage: " + command);
-        EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+    MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
         MessageUtil.sendMessage(player, config.messages.commandCostCharged,
             formatCurrency(cost), command);
         
@@ -329,7 +329,7 @@ public class EconomyManager {
      * Calculate and apply interest to all accounts
      */
     public void processInterest() {
-        EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+    MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
         if (!config.bank.enabled || config.bank.interestRate <= 0) {
             return;
         }
@@ -395,7 +395,7 @@ public class EconomyManager {
      * Clean up inactive accounts
      */
     public void cleanup() {
-        EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+    MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
         
         // Remove small balances if configured
         if (config.cleanupInactiveAccounts) {
@@ -417,7 +417,7 @@ public class EconomyManager {
             return;
         }
         
-        EconomyConfig config = configUnifier.getConfigManager().getEconomyConfig();
+    MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
         BigDecimal startingBalance = BigDecimal.valueOf(config.startingBalance);
         
         // Set the starting balance and mark as initialized

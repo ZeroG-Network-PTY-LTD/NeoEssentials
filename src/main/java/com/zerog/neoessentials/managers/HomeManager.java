@@ -84,7 +84,7 @@ public class HomeManager {
         }
         
         // Check cost
-    if (config.setHomeCost.compareTo(BigDecimal.ZERO) > 0) {
+        if (config.useSetHomeCost && config.setHomeCost.compareTo(BigDecimal.ZERO) > 0) {
             EconomyManager economyManager = EconomyManager.getInstance();
             if (!economyManager.hasBalance(player.getUUID(), config.setHomeCost)) {
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "home.insufficient_funds", economyManager.formatCurrency(config.setHomeCost.doubleValue())));
