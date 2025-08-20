@@ -63,34 +63,37 @@ public class AnalyticsCommands {
     }
     
     private static int showRealtimeStats(CommandContext<CommandSourceStack> context) {
+        ServerPlayer playerForError = null;
         try {
             CommandSourceStack source = context.getSource();
-            ServerPlayer player = source.getPlayerOrException();
+            final ServerPlayer player = source.getPlayerOrException();
+            playerForError = player;
             AnalyticsManager analytics = AnalyticsManager.getInstance();
-            
             Map<String, Object> stats = analytics.getRealtimeStats();
-            
-            MessageUtil.sendMessage(player, "&6&l=== Real-time Analytics Stats ===");
-            MessageUtil.sendMessage(player, "&e📊 Total Commands: &f" + stats.get("totalCommands"));
-            MessageUtil.sendMessage(player, "&e👥 Active Players: &f" + stats.get("activePlayers"));
-            MessageUtil.sendMessage(player, "&e📋 Total Events: &f" + stats.get("totalEvents"));
-            MessageUtil.sendMessage(player, "&e🔧 Features Tracked: &f" + stats.get("featuresTracked"));
-            MessageUtil.sendMessage(player, "&e⚡ Analytics Enabled: &f" + stats.get("analyticsEnabled"));
-            MessageUtil.sendMessage(player, "&e🕒 Last Update: &f" + stats.get("lastUpdate"));
-            
+            LanguageManager lang = LanguageManager.getInstance();
+            lang.getMessage(player, "analytics.stats.header");
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.stats.header"));
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.stats.total_commands", stats.get("totalCommands")));
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.stats.active_players", stats.get("activePlayers")));
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.stats.total_events", stats.get("totalEvents")));
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.stats.features_tracked", stats.get("featuresTracked")));
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.stats.enabled", stats.get("analyticsEnabled")));
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.stats.last_update", stats.get("lastUpdate")));
             @SuppressWarnings("unchecked")
             Map<String, Long> topCommands = (Map<String, Long>) stats.get("topCommands");
             if (topCommands != null && !topCommands.isEmpty()) {
-                MessageUtil.sendMessage(player, "&e🏆 Top Commands:");
+                MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.stats.top_commands.header"));
                 topCommands.forEach((cmd, count) -> 
-                    MessageUtil.sendMessage(player, "&f  • &a" + cmd + "&f: &e" + count + " uses"));
+                    MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.stats.top_commands.entry", cmd, count)));
             }
-            
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error showing realtime stats: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error retrieving analytics stats: " + e.getMessage()));
+            if (playerForError != null) {
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage(playerForError, "analytics.error.stats", e.getMessage())));
+            } else {
+                context.getSource().sendFailure(Component.literal("Error showing realtime stats: " + e.getMessage()));
+            }
             return 0;
         }
     }
@@ -107,33 +110,33 @@ public class AnalyticsCommands {
     }
     
     private static int generateReportForPeriod(CommandContext<CommandSourceStack> context, String reportType, int hours) {
+        ServerPlayer playerForError = null;
         try {
             CommandSourceStack source = context.getSource();
-            ServerPlayer player = source.getPlayerOrException();
+            final ServerPlayer player = source.getPlayerOrException();
+            playerForError = player;
             AnalyticsManager analytics = AnalyticsManager.getInstance();
-            
             LocalDateTime endTime = LocalDateTime.now();
             LocalDateTime startTime = endTime.minusHours(hours);
-            
-            MessageUtil.sendMessage(player, "&6Generating " + reportType + " analytics report...");
-            
+            LanguageManager lang = LanguageManager.getInstance();
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.report.generating", reportType));
             AnalyticsReport report = analytics.generateReport(reportType, startTime, endTime);
             String formattedReport = report.generateFormattedReport();
-            
-            // Split report into chunks for chat (Minecraft chat has line limits)
             String[] lines = formattedReport.split("\n");
             for (String line : lines) {
                 if (!line.trim().isEmpty()) {
-                    MessageUtil.sendMessage(player, "&f" + line);
+                    MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.report.line", line));
                 }
             }
-            
-            MessageUtil.sendMessage(player, "&aReport generated successfully!");
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.report.success"));
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error generating analytics report: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error generating report: " + e.getMessage()));
+            if (playerForError != null) {
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage(playerForError, "analytics.error.report", e.getMessage())));
+            } else {
+                context.getSource().sendFailure(Component.literal("Error generating analytics report: " + e.getMessage()));
+            }
             return 0;
         }
     }
@@ -148,166 +151,165 @@ public class AnalyticsCommands {
     }
     
     private static int showCommandStatsWithLimit(CommandContext<CommandSourceStack> context, int limit) {
+        ServerPlayer playerForError = null;
         try {
             CommandSourceStack source = context.getSource();
-            ServerPlayer player = source.getPlayerOrException();
+            final ServerPlayer player = source.getPlayerOrException();
+            playerForError = player;
             AnalyticsManager analytics = AnalyticsManager.getInstance();
-            
             var commandStats = analytics.getCommandUsageStats();
-            
-            MessageUtil.sendMessage(player, "&6&l=== Command Usage Statistics ===");
-            MessageUtil.sendMessage(player, "&eShowing top " + limit + " commands:");
-            
+            LanguageManager lang = LanguageManager.getInstance();
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.commands.header"));
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.commands.limit", limit));
             commandStats.entrySet().stream()
-                .sorted(Map.Entry.<String, java.util.concurrent.atomic.AtomicLong>comparingByValue(
-                    (a, b) -> Long.compare(b.get(), a.get())))
+                .sorted(Map.Entry.<String, java.util.concurrent.atomic.AtomicLong>comparingByValue((a, b) -> Long.compare(b.get(), a.get())))
                 .limit(limit)
                 .forEach(entry -> 
-                    MessageUtil.sendMessage(player, String.format("&f  %d. &a%s &f- &e%,d uses", 
-                        1, entry.getKey(), entry.getValue().get())));
-            
+                    MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.commands.entry", entry.getKey(), entry.getValue().get())));
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error showing command stats: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error retrieving command statistics: " + e.getMessage()));
+            if (playerForError != null) {
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage(playerForError, "analytics.error.command_stats", e.getMessage())));
+            } else {
+                context.getSource().sendFailure(Component.literal("Error showing command stats: " + e.getMessage()));
+            }
             return 0;
         }
     }
     
     private static int showPlayerStats(CommandContext<CommandSourceStack> context) {
+        ServerPlayer playerForError = null;
         try {
             CommandSourceStack source = context.getSource();
-            ServerPlayer player = source.getPlayerOrException();
+            final ServerPlayer player = source.getPlayerOrException();
+            playerForError = player;
             AnalyticsManager analytics = AnalyticsManager.getInstance();
-            
             var playerSessions = analytics.getPlayerSessions();
-            
-            MessageUtil.sendMessage(player, "&6&l=== Player Session Statistics ===");
-            MessageUtil.sendMessage(player, "&eActive Sessions: &f" + playerSessions.size());
-            
+            LanguageManager lang = LanguageManager.getInstance();
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.players.header"));
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.players.active_sessions", playerSessions.size()));
             if (!playerSessions.isEmpty()) {
-                MessageUtil.sendMessage(player, "&eActive Players:");
+                MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.players.active_players.header"));
                 playerSessions.values().forEach(session -> 
-                    MessageUtil.sendMessage(player, String.format("&f  • &a%s &f- &e%d min session, %d commands", 
-                        session.getPlayerName(), session.getSessionDurationMinutes(), session.getCommandsExecuted())));
+                    MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.players.active_players.entry", session.getPlayerName(), session.getSessionDurationMinutes(), session.getCommandsExecuted())));
             }
-            
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error showing player stats: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error retrieving player statistics: " + e.getMessage()));
+            if (playerForError != null) {
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage(playerForError, "analytics.error.player_stats", e.getMessage())));
+            } else {
+                context.getSource().sendFailure(Component.literal("Error showing player stats: " + e.getMessage()));
+            }
             return 0;
         }
     }
     
     private static int showPerformanceStats(CommandContext<CommandSourceStack> context) {
+        ServerPlayer playerForError = null;
         try {
             CommandSourceStack source = context.getSource();
-            ServerPlayer player = source.getPlayerOrException();
+            final ServerPlayer player = source.getPlayerOrException();
+            playerForError = player;
             AnalyticsManager analytics = AnalyticsManager.getInstance();
-            
             var performanceMetrics = analytics.getPerformanceMetrics();
-            
-            MessageUtil.sendMessage(player, "&6&l=== Performance Statistics ===");
-            MessageUtil.sendMessage(player, "&eTracked Operations: &f" + performanceMetrics.size());
-            
+            LanguageManager lang = LanguageManager.getInstance();
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.performance.header"));
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.performance.tracked_operations", performanceMetrics.size()));
             if (!performanceMetrics.isEmpty()) {
-                MessageUtil.sendMessage(player, "&eTop Performance Metrics:");
+                MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.performance.top_metrics.header"));
                 performanceMetrics.values().stream()
                     .sorted((a, b) -> Long.compare(b.getExecutionCount(), a.getExecutionCount()))
                     .limit(10)
                     .forEach(metric -> 
-                        MessageUtil.sendMessage(player, String.format("&f  • &a%s &f- &e%,d calls, avg: %.2fms", 
-                            metric.getName(), metric.getExecutionCount(), metric.getAverageExecutionTime())));
+                        MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.performance.top_metrics.entry", metric.getName(), metric.getExecutionCount(), metric.getAverageExecutionTime())));
             }
-            
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error showing performance stats: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error retrieving performance statistics: " + e.getMessage()));
+            if (playerForError != null) {
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage(playerForError, "analytics.error.performance_stats", e.getMessage())));
+            } else {
+                context.getSource().sendFailure(Component.literal("Error showing performance stats: " + e.getMessage()));
+            }
             return 0;
         }
     }
     
     private static int showFeatureStats(CommandContext<CommandSourceStack> context) {
+        ServerPlayer playerForError = null;
         try {
             CommandSourceStack source = context.getSource();
-            ServerPlayer player = source.getPlayerOrException();
+            final ServerPlayer player = source.getPlayerOrException();
+            playerForError = player;
             AnalyticsManager analytics = AnalyticsManager.getInstance();
-            
-            var featureStats = analytics.getFeatureStats();
-            
-            MessageUtil.sendMessage(player, "&6&l=== Feature Usage Statistics ===");
-            MessageUtil.sendMessage(player, "&eTracked Features: &f" + featureStats.size());
-            
+            Map<String, com.zerog.neoessentials.analytics.FeatureUsageStats> featureStats = analytics.getFeatureStats();
+            LanguageManager lang = LanguageManager.getInstance();
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.features.header"));
+            MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.features.tracked_features", featureStats.size()));
             if (!featureStats.isEmpty()) {
-                MessageUtil.sendMessage(player, "&eMost Used Features:");
+                MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.features.top_features.header"));
                 featureStats.values().stream()
                     .sorted((a, b) -> Long.compare(b.getTotalUsage(), a.getTotalUsage()))
                     .limit(10)
-                    .forEach(feature -> 
-                        MessageUtil.sendMessage(player, String.format("&f  • &a%s &f- &e%,d uses (last: %s)", 
-                            feature.getFeatureName(), feature.getTotalUsage(), 
-                            feature.getLastUsed().format(DateTimeFormatter.ofPattern("MM-dd HH:mm")))));
+                    .forEach(stat -> 
+                        MessageUtil.sendMessage(player, lang.getMessage(player, "analytics.features.top_features.entry", stat.getFeatureName(), stat.getTotalUsage())));
             }
-            
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error showing feature stats: " + e.getMessage(), e);
-                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage("analytics.error.feature_stats", e.getMessage())));
+            if (playerForError != null) {
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage(playerForError, "analytics.error.feature_stats", e.getMessage())));
+            } else {
+                context.getSource().sendFailure(Component.literal("Error showing feature stats: " + e.getMessage()));
+            }
             return 0;
         }
     }
     
     private static int clearAnalyticsData(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = null;
         try {
             CommandSourceStack source = context.getSource();
-            ServerPlayer player = source.getPlayerOrException();
+            player = source.getPlayerOrException();
             AnalyticsManager analytics = AnalyticsManager.getInstance();
-            
-            // Clear all analytics data
             analytics.getCommandUsageStats().clear();
             analytics.getPlayerSessions().clear();
             analytics.getEventHistory().clear();
             analytics.getPerformanceMetrics().clear();
             analytics.getFeatureStats().clear();
-            
-                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "analytics.success.cleared"));
-            LOGGER.info("Analytics data cleared by {}", source.getTextName());
-            
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "analytics.clear.success"));
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error clearing analytics data: " + e.getMessage(), e);
-                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage("analytics.error.clearing_data", e.getMessage())));
+            if (player != null) {
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage(player, "analytics.error.clear_data", e.getMessage())));
+            } else {
+                context.getSource().sendFailure(Component.literal("Error clearing analytics data: " + e.getMessage()));
+            }
             return 0;
         }
     }
     
     private static int toggleAnalytics(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = null;
         try {
             CommandSourceStack source = context.getSource();
-            ServerPlayer player = source.getPlayerOrException();
+            player = source.getPlayerOrException();
             AnalyticsManager analytics = AnalyticsManager.getInstance();
-            
-            boolean currentState = analytics.isAnalyticsEnabled();
-            analytics.setAnalyticsEnabled(!currentState);
-            
-                String statusKey = analytics.isAnalyticsEnabled() ? "analytics.status.enabled" : "analytics.status.disabled";
-                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "analytics.status.tracking", LanguageManager.getInstance().getMessage(player, statusKey)));
-            
-            LOGGER.info("Analytics tracking {} by {}", 
-                analytics.isAnalyticsEnabled() ? "enabled" : "disabled", source.getTextName());
-            
+            boolean newEnabled = !analytics.isAnalyticsEnabled();
+            analytics.setAnalyticsEnabled(newEnabled);
+            String key = newEnabled ? "analytics.toggle.enabled" : "analytics.toggle.disabled";
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, key));
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error toggling analytics: " + e.getMessage(), e);
-                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage("analytics.error.toggling", e.getMessage())));
+            if (player != null) {
+                context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage(player, "analytics.error.toggle", e.getMessage())));
+            } else {
+                context.getSource().sendFailure(Component.literal("Error toggling analytics: " + e.getMessage()));
+            }
             return 0;
         }
     }

@@ -76,7 +76,7 @@ public class HealCommand {
                 
                 // Send confirmation to both players
                 source.sendSuccess(() -> Component.literal("§a✨ You have healed " + target.getName().getString() + "!"), true);
-                target.sendSystemMessage(Component.literal("§a✨ You have been healed by " + executor.getName().getString() + "! Full health and hunger restored."));
+                target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.heal.success", executor.getName().getString())));
                 
                 return 1;
             }

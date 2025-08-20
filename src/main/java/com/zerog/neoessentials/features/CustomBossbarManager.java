@@ -512,8 +512,7 @@ public class CustomBossbarManager {
         try {
             com.zerog.neoessentials.config.MainConfig mainConfig = 
                 com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
-            
-            if (mainConfig == null || !mainConfig.modules.tablist) {
+            if (mainConfig == null || !mainConfig.modules.bossbar) {
                 LOGGER.info("CustomBossbarManager disabled in configuration - skipping update task start");
                 return;
             }

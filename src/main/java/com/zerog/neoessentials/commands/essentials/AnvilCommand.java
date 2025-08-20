@@ -69,7 +69,7 @@ public class AnvilCommand {
             return 1;
             
         } catch (Exception e) {
-            source.sendFailure(Component.literal("Failed to open anvil: " + e.getMessage()));
+            source.sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "command.anvil.failed", e.getMessage())));
             return 0;
         }
     }

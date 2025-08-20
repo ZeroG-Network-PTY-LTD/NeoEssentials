@@ -39,13 +39,15 @@ public class AnimationCommands {
         try {
             TablistScoreboardManager.getInstance().reloadAnimations();
             CustomBossbarManager.getInstance().reloadAnimations();
-            
-            context.getSource().sendSuccess(() -> 
-                Component.literal("§a✓ Animation configurations reloaded successfully!"), 
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            context.getSource().sendSuccess(() ->
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.reload.success")),
                 true);
         } catch (Exception e) {
+            ServerPlayer player = null;
+            try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
             context.getSource().sendFailure(
-                Component.literal("§c✗ Failed to reload animations: " + e.getMessage()));
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.reload.failure", e.getMessage())));
         }
         return 1;
     }
@@ -54,15 +56,17 @@ public class AnimationCommands {
         try {
             String tablistStats = TablistScoreboardManager.getInstance().getAnimationStats();
             String bossbarStats = CustomBossbarManager.getInstance().getAnimationStats();
-            
-            context.getSource().sendSuccess(() -> 
-                Component.literal("§6=== Animation Statistics ===\n" +
-                    "§eTablist/Scoreboard: §f" + tablistStats + "\n" +
-                    "§eBossbar: §f" + bossbarStats), 
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            context.getSource().sendSuccess(() ->
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.header") + "\n"
+                    + com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.tablist", tablistStats) + "\n"
+                    + com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.bossbar", bossbarStats)),
                 false);
         } catch (Exception e) {
+            ServerPlayer player = null;
+            try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
             context.getSource().sendFailure(
-                Component.literal("§c✗ Failed to get animation stats: " + e.getMessage()));
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.failure", e.getMessage())));
         }
         return 1;
     }
@@ -71,28 +75,20 @@ public class AnimationCommands {
         try {
             var tablistAnimations = TablistScoreboardManager.getInstance().getAvailableAnimations();
             var bossbarAnimations = CustomBossbarManager.getInstance().getAvailableAnimations();
-            
-            StringBuilder message = new StringBuilder("§6=== Available Animations ===\n");
-            
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            StringBuilder message = new StringBuilder(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.header") + "\n");
             if (!tablistAnimations.isEmpty()) {
-                message.append("§eTablist/Scoreboard: §f");
-                message.append(String.join(", ", tablistAnimations));
-                message.append("\n");
+                message.append(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.tablist", String.join(", ", tablistAnimations))).append("\n");
             }
-            
             if (!bossbarAnimations.isEmpty()) {
-                message.append("§eBossbar: §f");
-                message.append(String.join(", ", bossbarAnimations));
+                message.append(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.bossbar", String.join(", ", bossbarAnimations))).append("\n");
             }
-            
-            if (tablistAnimations.isEmpty() && bossbarAnimations.isEmpty()) {
-                message.append("§cNo animations loaded");
-            }
-            
             context.getSource().sendSuccess(() -> Component.literal(message.toString()), false);
         } catch (Exception e) {
+            ServerPlayer player = null;
+            try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
             context.getSource().sendFailure(
-                Component.literal("§c✗ Failed to list animations: " + e.getMessage()));
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.failure", e.getMessage())));
         }
         return 1;
     }
@@ -120,26 +116,17 @@ public class AnimationCommands {
     }
     
     private static int showHelp(CommandContext<CommandSourceStack> context) {
-        String helpText = """
-            §6=== NeoEssentials Animation Commands ===
-            §e/neoanimations reload §7- Reload animation configurations
-            §e/neoanimations stats §7- Show animation system statistics
-            §e/neoanimations list §7- List all available animations
-            §e/neoanimations test <animation> §7- Test an animation
-            §e/neoanimations help §7- Show this help message
-            
-            §6=== Animation Features ===
-            §7• §bCustom animated placeholders for tablist, scoreboard, and bossbar
-            §7• §bMultiple animation types: text cycling, color cycling, conditional, etc.
-            §7• §bPlayer-specific animation states
-            §7• §bReal-time configuration reloading
-            §7• §bHealth bars, weather icons, progress bars, and more!
-            
-            §6=== Configuration ===
-            §7Edit §econfig/neoessentials/animations.json §7to customize animations
-            """;
-        
-        context.getSource().sendSuccess(() -> Component.literal(helpText), false);
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            context.getSource().sendSuccess(() ->
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.help")),
+                false);
+        } catch (Exception e) {
+            ServerPlayer player = null;
+            try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
+            context.getSource().sendFailure(
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.help.failure", e.getMessage())));
+        }
         return 1;
     }
 }

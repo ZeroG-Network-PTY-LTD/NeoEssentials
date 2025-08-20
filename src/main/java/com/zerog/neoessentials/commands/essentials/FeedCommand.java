@@ -68,7 +68,7 @@ public class FeedCommand {
                 
                 // Send confirmation to both players
                 source.sendSuccess(() -> Component.literal("§a🍖 You have fed " + target.getName().getString() + "! They are now fully satisfied."), true);
-                target.sendSystemMessage(Component.literal("§a🍖 Your hunger has been satisfied by " + executor.getName().getString() + "! You feel full and energized."));
+                target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.feed.success", executor.getName().getString())));
                 
                 return 1;
             }

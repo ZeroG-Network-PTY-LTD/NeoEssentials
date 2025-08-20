@@ -65,59 +65,52 @@ public class PreferencesCommand {
             PlayerData playerData = PlayerDataManager.getInstance().getPlayerData(player.getUUID());
             PlayerPreferences prefs = playerData.getPreferences();
             
-            Component header = MessageUtils.format("&6&l==== &eYour Preferences &6&l====");
+                Component header = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.header"));
             player.sendSystemMessage(header);
             
             // General Preferences
-            Component generalHeader = MessageUtils.format("&6&lGeneral:");
+                Component generalHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.general.header"));
             player.sendSystemMessage(generalHeader);
             
-            Component notifications = MessageUtils.format("  &eReceive Notifications: &f" + 
-                (prefs.isReceiveNotifications() ? "&aEnabled" : "&cDisabled"));
+                Component notifications = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.general.notifications", prefs.isReceiveNotifications()));
             player.sendSystemMessage(notifications);
             
-            Component announcements = MessageUtils.format("  &eReceive Announcements: &f" + 
-                (prefs.isReceiveAnnouncements() ? "&aEnabled" : "&cDisabled"));
+                Component announcements = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.general.announcements", prefs.isReceiveAnnouncements()));
             player.sendSystemMessage(announcements);
             
             // GUI Preferences
-            Component guiHeader = MessageUtils.format("&6&lGUI:");
+                Component guiHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.gui.header"));
             player.sendSystemMessage(guiHeader);
             
-            Component theme = MessageUtils.format("  &eGUI Theme: &f" + prefs.getGuiTheme());
+                Component theme = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.gui.theme", prefs.getGuiTheme()));
             player.sendSystemMessage(theme);
             
-            Component animations = MessageUtils.format("  &eUse Animations: &f" + 
-                (prefs.isUseAnimations() ? "&aEnabled" : "&cDisabled"));
+                Component animations = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.gui.animations", prefs.isUseAnimations()));
             player.sendSystemMessage(animations);
             
-            Component sounds = MessageUtils.format("  &ePlay Click Sounds: &f" + 
-                (prefs.isPlayClickSounds() ? "&aEnabled" : "&cDisabled"));
+                Component sounds = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.gui.sounds", prefs.isPlayClickSounds()));
             player.sendSystemMessage(sounds);
             
             // Chat Preferences
-            Component chatHeader = MessageUtils.format("&6&lChat:");
+                Component chatHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.chat.header"));
             player.sendSystemMessage(chatHeader);
             
-            Component format = MessageUtils.format("  &eChat Format: &f" + prefs.getChatFormat());
+                Component format = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.chat.format", prefs.getChatFormat()));
             player.sendSystemMessage(format);
             
-            Component privateMessages = MessageUtils.format("  &ePrivate Messages: &f" + 
-                (prefs.isEnablePrivateMessages() ? "&aEnabled" : "&cDisabled"));
+                Component privateMessages = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.chat.private_messages", prefs.isEnablePrivateMessages()));
             player.sendSystemMessage(privateMessages);
             
-            Component colors = MessageUtils.format("  &eChat Colors: &f" + 
-                (prefs.isEnableChatColors() ? "&aEnabled" : "&cDisabled"));
+                Component colors = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.chat.colors", prefs.isEnableChatColors()));
             player.sendSystemMessage(colors);
             
-            Component timestamps = MessageUtils.format("  &eChat Timestamps: &f" + 
-                (prefs.isEnableChatTimestamps() ? "&aEnabled" : "&cDisabled"));
+                Component timestamps = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.chat.timestamps", prefs.isEnableChatTimestamps()));
             player.sendSystemMessage(timestamps);
             
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Error showing preferences for player " + player.getName().getString(), e);
-            Component error = MessageUtils.format("&cError retrieving preferences.");
+                Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.error.retrieve"));
+            // Error message already declared above, remove duplicate
             player.sendSystemMessage(error);
             return 0;
         }
@@ -131,23 +124,18 @@ public class PreferencesCommand {
         try {
             PlayerData playerData = PlayerDataManager.getInstance().getPlayerData(player.getUUID());
             PlayerPreferences prefs = playerData.getPreferences();
-            
             boolean success = setPreferenceValue(prefs, key, value);
-            
             if (success) {
-                PlayerDataManager.getInstance().savePlayerData(playerData);
-                
-                Component message = MessageUtils.format("&aPreference &e" + key + " &aset to &f" + value);
+                Component message = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.set.success", key, value));
                 player.sendSystemMessage(message);
                 return 1;
             } else {
-                Component error = MessageUtils.format("&cInvalid preference key or value: &f" + key + " = " + value);
+                Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.set.invalid", key, value));
                 player.sendSystemMessage(error);
                 return 0;
             }
         } catch (Exception e) {
-            LOGGER.error("Error setting preference for player " + player.getName().getString(), e);
-            Component error = MessageUtils.format("&cError setting preference.");
+            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.error.set"));
             player.sendSystemMessage(error);
             return 0;
         }
@@ -160,21 +148,17 @@ public class PreferencesCommand {
         try {
             PlayerData playerData = PlayerDataManager.getInstance().getPlayerData(player.getUUID());
             PlayerPreferences prefs = playerData.getPreferences();
-            
             String value = getPreferenceValue(prefs, key);
-            
             if (value != null) {
-                Component message = MessageUtils.format("&ePreference &f" + key + " &eis set to: &f" + value);
+                Component message = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.get.success", key, value));
                 player.sendSystemMessage(message);
                 return 1;
             } else {
-                Component error = MessageUtils.format("&cPreference &f" + key + " &cnot found.");
-                player.sendSystemMessage(error);
+                player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.get.not_found", key)));
                 return 0;
             }
         } catch (Exception e) {
-            LOGGER.error("Error getting preference for player " + player.getName().getString(), e);
-            Component error = MessageUtils.format("&cError getting preference.");
+            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.error.get"));
             player.sendSystemMessage(error);
             return 0;
         }
@@ -189,15 +173,13 @@ public class PreferencesCommand {
             PlayerPreferences prefs = playerData.getPreferences();
             
             boolean success = resetPreferenceValue(prefs, key);
-            
             if (success) {
                 PlayerDataManager.getInstance().savePlayerData(playerData);
-                
-                Component message = MessageUtils.format("&aPreference &e" + key + " &areset to default value.");
+                Component message = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.reset.success", key));
                 player.sendSystemMessage(message);
                 return 1;
             } else {
-                Component error = MessageUtils.format("&cInvalid preference key: &f" + key);
+                Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.reset.invalid", key));
                 player.sendSystemMessage(error);
                 return 0;
             }
@@ -211,49 +193,41 @@ public class PreferencesCommand {
 
     private static int listPreferences(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        
         try {
             PlayerData playerData = PlayerDataManager.getInstance().getPlayerData(player.getUUID());
             PlayerPreferences prefs = playerData.getPreferences();
-            
-            Component header = MessageUtils.format("&6&l==== &eAvailable Preferences &6&l====");
+            Component header = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.header"));
             player.sendSystemMessage(header);
-            
-            Component generalHeader = MessageUtils.format("&6&lGeneral:");
+            Component generalHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.general.header"));
             player.sendSystemMessage(generalHeader);
-            player.sendSystemMessage(MessageUtils.format("  &ereceiveNotifications &7- &fEnable/disable notifications"));
-            player.sendSystemMessage(MessageUtils.format("  &ereceiveAnnouncements &7- &fEnable/disable announcements"));
-            
-            Component guiHeader = MessageUtils.format("&6&lGUI:");
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.general.receiveNotifications")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.general.receiveAnnouncements")));
+            Component guiHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.gui.header"));
             player.sendSystemMessage(guiHeader);
-            player.sendSystemMessage(MessageUtils.format("  &eguiTheme &7- &fSet GUI theme (dark/light/auto)"));
-            player.sendSystemMessage(MessageUtils.format("  &euseAnimations &7- &fEnable/disable GUI animations"));
-            player.sendSystemMessage(MessageUtils.format("  &eplayClickSounds &7- &fEnable/disable click sounds"));
-            
-            Component chatHeader = MessageUtils.format("&6&lChat:");
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.gui.guiTheme")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.gui.useAnimations")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.gui.playClickSounds")));
+            Component chatHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.chat.header"));
             player.sendSystemMessage(chatHeader);
-            player.sendSystemMessage(MessageUtils.format("  &echatFormat &7- &fSet chat format"));
-            player.sendSystemMessage(MessageUtils.format("  &eenablePrivateMessages &7- &fEnable/disable private messages"));
-            player.sendSystemMessage(MessageUtils.format("  &eenableChatColors &7- &fEnable/disable chat colors"));
-            player.sendSystemMessage(MessageUtils.format("  &eenableChatTimestamps &7- &fEnable/disable timestamps"));
-            
-            // Show custom preferences
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.chat.chatFormat")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.chat.enablePrivateMessages")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.chat.enableChatColors")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.chat.enableChatTimestamps")));
             Map<String, Object> customPrefs = prefs.getCustomPreferences();
             if (!customPrefs.isEmpty()) {
-                Component customHeader = MessageUtils.format("&6&lCustom:");
+                Component customHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.custom.header"));
                 player.sendSystemMessage(customHeader);
                 for (String customKey : customPrefs.keySet()) {
-                    player.sendSystemMessage(MessageUtils.format("  &e" + customKey + " &7- &fCustom preference"));
+                    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.custom.entry", customKey)));
                 }
             }
-            
             return 1;
-        } catch (Exception e) {
-            LOGGER.error("Error listing preferences for player " + player.getName().getString(), e);
-            Component error = MessageUtils.format("&cError listing preferences.");
-            player.sendSystemMessage(error);
+        } catch (Exception ex) {
+            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayerOrException(), "preferences.error.list"));
+            context.getSource().getPlayerOrException().sendSystemMessage(error);
             return 0;
         }
+            
     }
 
     private static String getPreferenceValue(PlayerPreferences prefs, String key) {

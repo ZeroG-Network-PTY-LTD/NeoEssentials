@@ -94,7 +94,7 @@ public class WorkbenchCommand {
             return 1;
             
         } catch (Exception e) {
-            source.sendFailure(Component.literal("Failed to open workbench: " + e.getMessage()));
+            source.sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "command.workbench.failed", e.getMessage())));
             return 0;
         }
     }

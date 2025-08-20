@@ -79,10 +79,10 @@ public class GodCommand {
                 // Send confirmation to both players
                 if (isGodMode) {
                     source.sendSuccess(() -> Component.literal("§a⚡ God mode enabled for " + target.getName().getString() + "!"), true);
-                    target.sendSystemMessage(Component.literal("§a⚡ God mode enabled by " + executor.getName().getString() + "! You are now invincible and untouchable."));
+                    target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.god.enabled", executor.getName().getString())));
                 } else {
                     source.sendSuccess(() -> Component.literal("§c🛡️ God mode disabled for " + target.getName().getString() + "!"), true);
-                    target.sendSystemMessage(Component.literal("§c🛡️ God mode disabled by " + executor.getName().getString() + "! You are now mortal again."));
+                    target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.god.disabled", executor.getName().getString())));
                 }
                 
                 return 1;

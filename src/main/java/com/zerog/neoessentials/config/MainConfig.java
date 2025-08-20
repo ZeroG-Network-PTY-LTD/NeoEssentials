@@ -316,14 +316,15 @@ public class MainConfig {
     public Database database = new Database();
 
     public static class Modules {
-        public boolean economy = true;
-        public boolean homes = true;
-        public boolean kits = true;
-        public boolean warps = true;
-        public boolean moderation = true;
-        public ChatModules chat = new ChatModules();
-        public boolean tablist = true;
-        public boolean spawn = true;
+    public boolean economy = true;
+    public boolean homes = true;
+    public boolean kits = true;
+    public boolean warps = true;
+    public boolean moderation = true;
+    public ChatModules chat = new ChatModules();
+    public boolean tablist = true;
+    public boolean bossbar = true;
+    public boolean spawn = true;
 
         public static class ChatModules {
             public boolean enabled = true;
