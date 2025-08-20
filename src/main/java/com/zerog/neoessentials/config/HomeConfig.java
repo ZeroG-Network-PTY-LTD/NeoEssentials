@@ -14,11 +14,12 @@ import java.util.List;
 public class HomeConfig {
     
     // Basic home settings
-    public boolean enabled = true;
     public int maxHomes = 3;
     public int maxHomesVip = 5;
     public int maxHomesAdmin = 10;
     public int defaultMaxHomes = 3;
+    // Required field for validation
+    public int cooldown = 60; // seconds
     
     // Home costs
     public BigDecimal setHomeCost = new BigDecimal("50.00");

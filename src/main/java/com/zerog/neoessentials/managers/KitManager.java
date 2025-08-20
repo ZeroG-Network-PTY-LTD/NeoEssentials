@@ -1,7 +1,8 @@
 package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
-import com.zerog.neoessentials.config.KitConfig;
+import com.zerog.neoessentials.config.MainConfig;
+// import removed: KitConfig is now centralized in MainConfig
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -49,22 +50,22 @@ public class KitManager {
      * Give a kit to a player
      */
     public boolean giveKit(ServerPlayer player, String kitName) {
-        KitConfig config = configUnifier.getConfigManager().getKitConfig();
-        
-        if (!config.enabled) {
+    MainConfig.KitSettings config = configUnifier.getConfigManager().getMainConfig().kitSettings;
+    boolean kitModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.kits;
+        if (!kitModuleEnabled) {
             MessageUtil.sendMessage(player, "&cKit system is disabled.");
             return false;
         }
         
         // Get kit definition
-        KitConfig.KitDefinition kit = config.getKit(kitName);
-        if (kit == null) {
-            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.kitNotFound, kitName));
-            return false;
-        }
+            MainConfig.KitSettings.KitDefinition kit = config.kits.get(kitName);
+            if (kit == null) {
+                MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.kitNotFound, kitName));
+                return false;
+            }
         
         // Check permission
-        if (!hasKitPermission(player, kit)) {
+            if (!hasKitPermission(player, kit)) {
             MessageUtil.sendMessage(player, config.messages.kitNoPermission);
             return false;
         }
@@ -126,11 +127,11 @@ public class KitManager {
      * Get available kits for a player
      */
     public List<String> getAvailableKits(ServerPlayer player) {
-        KitConfig config = configUnifier.getConfigManager().getKitConfig();
+        MainConfig.KitSettings config = configUnifier.getConfigManager().getMainConfig().kitSettings;
         List<String> availableKits = new ArrayList<>();
         
-        for (String kitName : config.getKitNames()) {
-            KitConfig.KitDefinition kit = config.getKit(kitName);
+        for (String kitName : config.kits.keySet()) {
+            MainConfig.KitSettings.KitDefinition kit = config.kits.get(kitName);
             if (kit != null && hasKitPermission(player, kit)) {
                 availableKits.add(kitName);
             }
@@ -142,7 +143,7 @@ public class KitManager {
     /**
      * Check if player has permission for kit
      */
-    private boolean hasKitPermission(ServerPlayer player, KitConfig.KitDefinition kit) {
+    private boolean hasKitPermission(ServerPlayer player, MainConfig.KitSettings.KitDefinition kit) {
         if (kit.permission == null || kit.permission.isEmpty()) {
             return true;
         }
@@ -153,58 +154,49 @@ public class KitManager {
      * Check if player is on cooldown for kit
      */
     public boolean isOnCooldown(ServerPlayer player, String kitName) {
-        KitConfig config = configUnifier.getConfigManager().getKitConfig();
-        if (!config.enableCooldowns) {
+        MainConfig.KitSettings kitSettings = configUnifier.getConfigManager().getMainConfig().kitSettings;
+        if (!kitSettings.enableCooldowns) {
             return false;
         }
-        
-        // Check if player has cooldown bypass
         if (PermissionUtil.hasPermission(player, PermissionNodes.BYPASS_COOLDOWN_COMMAND)) {
             return false;
         }
-        
         Map<String, Long> playerCooldowns = kitCooldowns.get(player.getUUID());
         if (playerCooldowns == null) {
             return false;
         }
-        
         Long lastUsed = playerCooldowns.get(kitName.toLowerCase());
         if (lastUsed == null) {
             return false;
         }
-        
-        KitConfig.KitDefinition kit = config.getKit(kitName);
-        if (kit == null || !kit.hasDelay()) {
+        MainConfig.KitSettings.KitDefinition kitDef = kitSettings.kits.get(kitName);
+        if (kitDef == null || !kitDef.hasDelay()) {
             return false;
         }
-        
-        long cooldownTime = kit.delay * 1000L;
-        return System.currentTimeMillis() - lastUsed < cooldownTime;
+        long cooldownMillis = kitDef.delay * 1000L;
+        return System.currentTimeMillis() - lastUsed < cooldownMillis;
     }
     
     /**
      * Get remaining cooldown time in milliseconds
      */
     public long getRemainingCooldown(ServerPlayer player, String kitName) {
-        KitConfig config = configUnifier.getConfigManager().getKitConfig();
+        MainConfig.KitSettings kitSettings = configUnifier.getConfigManager().getMainConfig().kitSettings;
         Map<String, Long> playerCooldowns = kitCooldowns.get(player.getUUID());
         if (playerCooldowns == null) {
             return 0;
         }
-        
         Long lastUsed = playerCooldowns.get(kitName.toLowerCase());
         if (lastUsed == null) {
             return 0;
         }
-        
-        KitConfig.KitDefinition kit = config.getKit(kitName);
-        if (kit == null || !kit.hasDelay()) {
+        MainConfig.KitSettings.KitDefinition kitDef = kitSettings.kits.get(kitName);
+        if (kitDef == null || !kitDef.hasDelay()) {
             return 0;
         }
-        
-        long cooldownTime = kit.delay * 1000L;
+        long cooldownMillis = kitDef.delay * 1000L;
         long elapsed = System.currentTimeMillis() - lastUsed;
-        return Math.max(0, cooldownTime - elapsed);
+        return Math.max(0, cooldownMillis - elapsed);
     }
     
     /**
@@ -218,7 +210,7 @@ public class KitManager {
     /**
      * Give kit items to player
      */
-    private boolean giveKitItems(ServerPlayer player, KitConfig.KitDefinition kit) {
+    private boolean giveKitItems(ServerPlayer player, MainConfig.KitSettings.KitDefinition kit) {
         Inventory inventory = player.getInventory();
         boolean allItemsGiven = true;
         
@@ -339,7 +331,7 @@ public class KitManager {
     /**
      * Execute kit commands
      */
-    private void executeKitCommands(ServerPlayer player, KitConfig.KitDefinition kit) {
+    private void executeKitCommands(ServerPlayer player, MainConfig.KitSettings.KitDefinition kit) {
         for (String command : kit.commands) {
             try {
                 // Replace placeholders
@@ -357,22 +349,17 @@ public class KitManager {
      * Give first join kit if enabled
      */
     public void giveFirstJoinKit(ServerPlayer player) {
-        KitConfig config = configUnifier.getConfigManager().getKitConfig();
-        
-        if (!config.giveKitOnFirstJoin || config.firstJoinKit.isEmpty()) {
+        MainConfig.KitSettings kitSettings = configUnifier.getConfigManager().getMainConfig().kitSettings;
+        if (!kitSettings.giveKitOnFirstJoin || kitSettings.firstJoinKit.isEmpty()) {
             return;
         }
-        
-        // Check if player has received first join kit before
-        Object receivedSetting = playerDataManager.getSetting(player.getUUID(), "received_first_join_kit");
-        if (Boolean.TRUE.equals(receivedSetting) || "true".equals(String.valueOf(receivedSetting))) {
+        Object received = playerDataManager.getSetting(player.getUUID(), "received_first_join_kit");
+        if (Boolean.TRUE.equals(received) || "true".equals(String.valueOf(received))) {
             return;
         }
-        
-        // Give the kit
-        if (giveKit(player, config.firstJoinKit)) {
+        if (giveKit(player, kitSettings.firstJoinKit)) {
             playerDataManager.setSetting(player.getUUID(), "received_first_join_kit", true);
-            MessageUtil.sendMessage(player, config.messages.firstJoinKit);
+            MessageUtil.sendMessage(player, kitSettings.messages.firstJoinKit);
         }
     }
     

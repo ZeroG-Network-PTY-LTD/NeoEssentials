@@ -79,17 +79,17 @@ public class WebDashboardCommand {
         
         if (manager.isDashboardEnabled()) {
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&a✓ Web Dashboard is RUNNING")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.status.running")
             ), false);
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&7  URL: &ehttp://localhost:" + manager.getPort() + "/")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.status.url", "http://localhost:" + manager.getPort() + "/")
             ), false);
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&7  Active sessions: &e" + manager.getActiveSessionsCount())
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.status.sessions", manager.getActiveSessionsCount())
             ), false);
         } else {
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&c✗ Web Dashboard is STOPPED")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.status.stopped")
             ), false);
         }
     }
@@ -128,54 +128,31 @@ public class WebDashboardCommand {
     
     private static void stopDashboard(CommandSourceStack source) {
         WebDashboardManager manager = WebDashboardManager.getInstance();
-        
-        if (!manager.isDashboardEnabled()) {
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&6Web Dashboard is already stopped!")
-            ), false);
-            return;
-        }
-        
-        source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&6Stopping Web Dashboard...")
-        ), false);
-        
         manager.stop();
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&a✓ Web Dashboard stopped successfully!")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.stop.success")
         ), false);
-        
         // Log the stop event
-        manager.addRealTimeEvent("SYSTEM", "Web Dashboard stopped by " + 
-            source.getDisplayName().getString(), "INFO");
+        manager.addRealTimeEvent("SYSTEM", com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.event.stopped", source.getDisplayName().getString()), "INFO");
     }
-    
+
     private static void restartDashboard(CommandSourceStack source) {
-        source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&6Restarting Web Dashboard...")
-        ), false);
-        
         WebDashboardManager manager = WebDashboardManager.getInstance();
-        
         if (manager.isDashboardEnabled()) {
             manager.stop();
         }
-        
         if (manager.start()) {
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&a✓ Web Dashboard restarted successfully!")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.restart.success")
             ), false);
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&7  URL: &ehttp://localhost:" + manager.getPort() + "/")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.status.url", "http://localhost:" + manager.getPort() + "/")
             ), false);
-            
             // Log the restart event
-            manager.addRealTimeEvent("SYSTEM", "Web Dashboard restarted by " + 
-                source.getDisplayName().getString(), "INFO");
+            manager.addRealTimeEvent("SYSTEM", com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.event.restarted", source.getDisplayName().getString()), "INFO");
         } else {
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&c✗ Failed to restart Web Dashboard!")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "webdashboard.restart.failed")
             ), false);
         }
     }

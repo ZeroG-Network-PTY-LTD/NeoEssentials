@@ -12,8 +12,8 @@ import java.util.List;
  */
 public class TablistConfig {
     
+
     // Basic tablist settings
-    public boolean enabled = true;
     public boolean enableCustomHeader = true;
     public boolean enableCustomFooter = true;
     public boolean enablePlayerPrefixes = true;
@@ -177,28 +177,32 @@ public class TablistConfig {
      * Check if tablist is enabled
      */
     public boolean isEnabled() {
-        return enabled;
+    // Centralized: check main config for tablist enable/disable
+    return com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().modules.tablist;
     }
     
     /**
      * Check if custom header/footer is enabled
      */
     public boolean isHeaderFooterEnabled() {
-        return enabled && enableCustomHeader && enableCustomFooter && headerFooter.enabled;
+    return com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().modules.tablist
+        && enableCustomHeader && enableCustomFooter && headerFooter.enabled;
     }
     
     /**
      * Check if player formatting is enabled
      */
     public boolean isPlayerFormatEnabled() {
-        return enabled && enablePlayerPrefixes && enablePlayerSuffixes && playerFormat.enabled;
+    return com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().modules.tablist
+        && enablePlayerPrefixes && enablePlayerSuffixes && playerFormat.enabled;
     }
     
     /**
      * Check if group sorting is enabled
      */
     public boolean isGroupSortingEnabled() {
-        return enabled && enableGroupSorting && groups.enabled && groups.sorting.enabled;
+    return com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().modules.tablist
+        && enableGroupSorting && groups.enabled && groups.sorting.enabled;
     }
     
     /**

@@ -63,7 +63,7 @@ public class WarpCommands {
         
         // Double-check permission (defense in depth)
         if (!PermissionUtil.hasPermission(player, PermissionNodes.WARP)) {
-            MessageUtil.sendMessage(player, "&cYou don't have permission to use warps!");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.error.no_permission_use"));
             return 0;
         }
         
@@ -77,7 +77,7 @@ public class WarpCommands {
         
         // Double-check permission (defense in depth)
         if (!PermissionUtil.hasPermission(player, PermissionNodes.WARP_SET)) {
-            MessageUtil.sendMessage(player, "&cYou don't have permission to create warps!");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.error.no_permission_create"));
             return 0;
         }
         
@@ -91,7 +91,7 @@ public class WarpCommands {
         
         // Double-check permission (defense in depth)
         if (!PermissionUtil.hasPermission(player, PermissionNodes.WARP_DELETE)) {
-            MessageUtil.sendMessage(player, "&cYou don't have permission to delete warps!");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.error.no_permission_delete"));
             return 0;
         }
         
@@ -105,7 +105,7 @@ public class WarpCommands {
         
         // Double-check permission (defense in depth)
         if (!PermissionUtil.hasPermission(player, PermissionNodes.WARP_LIST)) {
-            MessageUtil.sendMessage(player, "&cYou don't have permission to list warps!");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.error.no_permission_list"));
             return 0;
         }
         

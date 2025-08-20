@@ -13,7 +13,6 @@ import java.util.*;
 public class KitConfig {
     
     // Basic kit settings
-    public boolean enabled = true;
     public boolean giveKitOnFirstJoin = true;
     public String firstJoinKit = "starter";
     
@@ -24,7 +23,9 @@ public class KitConfig {
     // Kit cost settings
     public boolean enableKitCosts = true;
     
-    // Available kits
+        // Top-level module enable/disable
+        public boolean enabled = true;
+    
     public Map<String, KitDefinition> kits = new HashMap<>();
     
     // Messages

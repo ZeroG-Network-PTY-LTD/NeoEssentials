@@ -1,8 +1,8 @@
 package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
-import com.zerog.neoessentials.config.HomeConfig;
-import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.config.MainConfig;
+// import removed: HomeConfig is now centralized in MainConfig
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -52,9 +52,10 @@ public class HomeManager {
      * Create or update a home for a player
      */
     public boolean setHome(ServerPlayer player, String homeName) {
-        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
+    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         
-        if (!config.enabled) {
+    boolean homeModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.homes;
+        if (!homeModuleEnabled) {
             MessageUtil.sendMessage(player, "&cHome system is disabled.");
             return false;
         }
@@ -66,8 +67,8 @@ public class HomeManager {
         }
         
         // Check home limit
-        int currentHomes = playerDataManager.getHomeCount(player.getUUID());
-        int maxHomes = getMaxHomes(player);
+    int currentHomes = playerDataManager.getHomeCount(player.getUUID());
+    int maxHomes = getMaxHomes(player);
         
         boolean isNewHome = !playerDataManager.hasHome(player.getUUID(), homeName);
         if (isNewHome && currentHomes >= maxHomes) {
@@ -83,7 +84,7 @@ public class HomeManager {
         }
         
         // Check cost
-        if (config.setHomeCost.compareTo(BigDecimal.ZERO) > 0) {
+    if (config.setHomeCost.compareTo(BigDecimal.ZERO) > 0) {
             EconomyManager economyManager = EconomyManager.getInstance();
             if (!economyManager.hasBalance(player.getUUID(), config.setHomeCost)) {
                 MessageUtil.sendMessage(player, config.messages.insufficientFunds,
@@ -107,8 +108,8 @@ public class HomeManager {
         // Save home
         playerDataManager.setHome(player.getUUID(), homeName, homeLocation);
         
-        String message = isNewHome ? config.messages.homeSet : config.messages.homeSet;
-        MessageUtil.sendMessage(player, message, homeName);
+    String message = isNewHome ? config.messages.homeSet : config.messages.homeSet;
+    MessageUtil.sendMessage(player, message, homeName);
         
         LOGGER.info("Player {} {} home '{}' at {} in {}", 
             player.getName().getString(),
@@ -124,9 +125,10 @@ public class HomeManager {
      * Delete a home for a player
      */
     public boolean deleteHome(ServerPlayer player, String homeName) {
-        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
+    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         
-        if (!config.enabled) {
+    boolean homeModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.homes;
+        if (!homeModuleEnabled) {
             MessageUtil.sendMessage(player, "&cHome system is disabled.");
             return false;
         }
@@ -137,7 +139,7 @@ public class HomeManager {
         }
         
         playerDataManager.deleteHome(player.getUUID(), homeName);
-        MessageUtil.sendMessage(player, config.messages.homeDeleted, homeName);
+    MessageUtil.sendMessage(player, config.messages.homeDeleted, homeName);
         
         LOGGER.info("Player {} deleted home '{}'", player.getName().getString(), homeName);
         return true;
@@ -147,15 +149,16 @@ public class HomeManager {
      * Teleport player to their home
      */
     public boolean teleportToHome(ServerPlayer player, String homeName) {
-        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
+    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         
-        if (!config.enabled) {
+    boolean homeModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.homes;
+        if (!homeModuleEnabled) {
             MessageUtil.sendMessage(player, "&cHome system is disabled.");
             return false;
         }
         
         // Check if home exists
-        LocationUtil.Location home = playerDataManager.getHome(player.getUUID(), homeName);
+    LocationUtil.Location home = playerDataManager.getHome(player.getUUID(), homeName);
         if (home == null) {
             MessageUtil.sendMessage(player, config.messages.homeNotFound, homeName);
             return false;
@@ -170,7 +173,7 @@ public class HomeManager {
         }
         
         // Check cost
-        if (config.teleportHomeCost.compareTo(BigDecimal.ZERO) > 0) {
+    if (config.teleportHomeCost.compareTo(BigDecimal.ZERO) > 0) {
             EconomyManager economyManager = EconomyManager.getInstance();
             if (!economyManager.hasBalance(player.getUUID(), config.teleportHomeCost)) {
                 MessageUtil.sendMessage(player, config.messages.insufficientFunds,
@@ -206,9 +209,9 @@ public class HomeManager {
      * List all homes for a player
      */
     public boolean listHomes(ServerPlayer player) {
-        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
+    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         
-        List<String> homes = getPlayerHomes(player.getUUID());
+    List<String> homes = getPlayerHomes(player.getUUID());
         if (homes.isEmpty()) {
             MessageUtil.sendMessage(player, config.messages.homeListEmpty);
             return false;
@@ -235,23 +238,23 @@ public class HomeManager {
      * Get max homes for player based on permissions
      */
     public int getMaxHomes(ServerPlayer player) {
-        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
+    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         
         // Check for unlimited homes permission
         if (PermissionUtil.hasPermission(player, "neoessentials.sethome.unlimited")) {
             return Integer.MAX_VALUE;
         }
-        
+
         // Check for admin permission
         if (PermissionUtil.hasPermission(player, "neoessentials.sethome.admin")) {
             return config.maxHomesAdmin;
         }
-        
+
         // Check for VIP permission
         if (PermissionUtil.hasPermission(player, "neoessentials.sethome.vip")) {
             return config.maxHomesVip;
         }
-        
+
         return config.maxHomes;
     }
     
@@ -259,7 +262,7 @@ public class HomeManager {
      * Check if player is on teleport cooldown
      */
     public boolean isOnCooldown(ServerPlayer player) {
-        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
+    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         if (config.teleportHomeCooldown <= 0) {
             return false;
         }
@@ -277,27 +280,27 @@ public class HomeManager {
      * Get remaining cooldown time in milliseconds
      */
     public long getRemainingCooldown(ServerPlayer player) {
-        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
+    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         Long lastTeleport = teleportCooldowns.get(player.getUUID());
         if (lastTeleport == null) {
             return 0;
         }
         
-        long cooldownTime = config.teleportHomeCooldown * 1000L;
-        long elapsed = System.currentTimeMillis() - lastTeleport;
-        return Math.max(0, cooldownTime - elapsed);
+    long cooldownTime = config.teleportHomeCooldown * 1000L;
+    long elapsed = System.currentTimeMillis() - lastTeleport;
+    return Math.max(0, cooldownTime - elapsed);
     }
     
     /**
      * Start warmup process for teleportation
      */
     private void startWarmup(ServerPlayer player, LocationUtil.Location home, String homeName) {
-        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
+    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         
         // Cancel existing warmup
         cancelWarmup(player);
         
-        MessageUtil.sendMessage(player, "&aStarting teleport in " + config.teleportWarmup + " seconds...");
+    MessageUtil.sendMessage(player, "&aStarting teleport in " + config.teleportWarmup + " seconds...");
         
         // Store warmup task
         long warmupEnd = System.currentTimeMillis() + (config.teleportWarmup * 1000L);
@@ -318,7 +321,7 @@ public class HomeManager {
      * Perform the actual teleportation
      */
     private boolean performTeleport(ServerPlayer player, LocationUtil.Location home, String homeName) {
-        HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
+    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         
         try {
             // Find the target world - simplified version
@@ -334,18 +337,18 @@ public class HomeManager {
             }
             
             // Charge cost after successful teleport
-            if (config.teleportHomeCost.compareTo(BigDecimal.ZERO) > 0) {
+        if (config.teleportHomeCost.compareTo(BigDecimal.ZERO) > 0) {
                 EconomyManager economyManager = EconomyManager.getInstance();
                 economyManager.withdrawBalance(player.getUUID(), config.teleportHomeCost, "Home teleport: " + homeName);
             }
             
             // Set cooldown
-            teleportCooldowns.put(player.getUUID(), System.currentTimeMillis());
+        teleportCooldowns.put(player.getUUID(), System.currentTimeMillis());
             
             // Perform teleport
             player.teleportTo(targetWorld, home.x, home.y, home.z, home.yaw, home.pitch);
             
-            MessageUtil.sendMessage(player, config.messages.homeTeleporting, homeName);
+        MessageUtil.sendMessage(player, config.messages.homeTeleporting, homeName);
             
             LOGGER.info("Player {} teleported to home '{}' at {}, {}, {} in {}", 
                 player.getName().getString(), homeName, home.x, home.y, home.z, home.world);
@@ -402,7 +405,7 @@ public class HomeManager {
         
         // Clean up expired cooldowns
         teleportCooldowns.entrySet().removeIf(entry -> {
-            HomeConfig config = configUnifier.getConfigManager().getHomeConfig();
+        MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
             long cooldownTime = config.teleportHomeCooldown * 1000L;
             return currentTime - entry.getValue() > cooldownTime;
         });

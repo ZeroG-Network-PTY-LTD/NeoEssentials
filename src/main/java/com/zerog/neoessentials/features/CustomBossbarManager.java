@@ -59,7 +59,7 @@ public class CustomBossbarManager {
                 com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
             
             // For now, check if general modules are enabled - you may want to add a specific bossbar config
-            if (mainConfig == null || !mainConfig.modules.tablist) {
+                if (mainConfig == null || !mainConfig.modules.tablist) {
                 LOGGER.info("CustomBossbarManager disabled (tablist module disabled) - skipping initialization");
                 return;
             }

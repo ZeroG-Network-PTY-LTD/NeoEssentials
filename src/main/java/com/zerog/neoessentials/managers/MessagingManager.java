@@ -5,6 +5,7 @@ import com.zerog.neoessentials.config.MessagingConfig;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -49,62 +50,51 @@ public class MessagingManager {
      */
     public boolean sendPrivateMessage(ServerPlayer sender, String targetName, String message) {
         MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
-        
-        if (!config.arePrivateMessagesEnabled()) {
-            MessageUtil.sendMessage(sender, "&cPrivate messaging is disabled.");
+        com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
+        boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.enabled;
+        boolean messagingModuleEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.messaging;
+        if (!chatEnabled) {
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "chat.disabled"));
             return false;
         }
-        
+        if (!messagingModuleEnabled) {
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "messaging.disabled"));
+            return false;
+        }
         // Check permission
         if (!PermissionUtil.hasPermission(sender, PermissionNodes.MSG)) {
-            MessageUtil.sendMessage(sender, config.messages.noPermission);
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "no.permission"));
             return false;
         }
-        
         // Find target player
         ServerPlayer target = getPlayerByName(targetName);
         if (target == null) {
-            MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.playerNotFound, targetName));
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "player.not.found", targetName));
             return false;
         }
-        
         // Check if target is ignoring sender
         if (isPlayerIgnored(target.getUUID(), sender.getUUID())) {
-            MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.playerIgnoringYou, 
-                target.getName().getString()));
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "player.ignoring.you", target.getName().getString()));
             return false;
         }
-        
         // Check cooldown
         if (isOnMessageCooldown(sender)) {
-            MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.messageCooldown,
-                String.valueOf(getRemainingCooldown(sender))));
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "message.cooldown", String.valueOf(getRemainingCooldown(sender))));
             return false;
         }
-        
         // Send messages
-        String senderFormat = MessageUtil.replacePlaceholders(config.messages.pmFormatSender,
-            target.getName().getString(), message);
-        
-        String receiverFormat = MessageUtil.replacePlaceholders(config.messages.pmFormatReceiver,
-            sender.getName().getString(), message);
-        
+    String senderFormat = LanguageManager.getInstance().getMessage(sender, "pm.format.sender", target.getName().getString(), message);
+    String receiverFormat = LanguageManager.getInstance().getMessage(target, "pm.format.receiver", sender.getName().getString(), message);
         MessageUtil.sendMessage(sender, senderFormat);
         MessageUtil.sendMessage(target, receiverFormat);
-        
         // Update last messaged
         lastMessaged.put(sender.getUUID(), target.getUUID());
         lastMessaged.put(target.getUUID(), sender.getUUID());
-        
         // Social spy
         sendToSocialSpy(sender, target, message);
-        
         // Set cooldown
         setMessageCooldown(sender);
-        
-        LOGGER.info("Private message from {} to {}: {}", 
-            sender.getName().getString(), target.getName().getString(), message);
-        
+        LOGGER.info("Private message from {} to {}: {}", sender.getName().getString(), target.getName().getString(), message);
         return true;
     }
     
@@ -112,20 +102,18 @@ public class MessagingManager {
      * Reply to the last received private message
      */
     public boolean replyToMessage(ServerPlayer sender, String message) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
+    // ...existing code...
         
         UUID lastSenderUuid = lastMessaged.get(sender.getUUID());
         if (lastSenderUuid == null) {
-            MessageUtil.sendMessage(sender, config.messages.noReplyTarget);
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "no.reply.target"));
             return false;
         }
-        
         ServerPlayer target = getPlayerByUuid(lastSenderUuid);
         if (target == null) {
-            MessageUtil.sendMessage(sender, config.messages.playerOffline);
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "player.offline"));
             return false;
         }
-        
         return sendPrivateMessage(sender, target.getName().getString(), message);
     }
     
@@ -134,32 +122,33 @@ public class MessagingManager {
      */
     public boolean sendMail(ServerPlayer sender, String targetName, String message) {
         MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
-        
-        if (!config.isMailEnabled()) {
-            MessageUtil.sendMessage(sender, "&cMail system is disabled.");
+        com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
+        boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.enabled;
+        if (!chatEnabled) {
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "chat.disabled"));
             return false;
         }
-        
+        if (!config.isMailEnabled()) {
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "mail.disabled"));
+            return false;
+        }
         // Check permission
         if (!PermissionUtil.hasPermission(sender, PermissionNodes.MAIL_SEND)) {
-            MessageUtil.sendMessage(sender, config.messages.noPermission);
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "no.permission"));
             return false;
         }
-        
         // Get target UUID (could be offline player)
         UUID targetUuid = getPlayerUuidByName(targetName);
         if (targetUuid == null) {
-            MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.playerNotFound, targetName));
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "player.not.found", targetName));
             return false;
         }
-        
         // Check mail limit
         int mailCount = getMailCount(targetUuid);
         if (mailCount >= config.mail.maxMailsPerPlayer) {
-            MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.mailFull, targetName));
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "mail.full", targetName));
             return false;
         }
-        
         // Create mail entry
         MailEntry mail = new MailEntry(
             UUID.randomUUID(),
@@ -171,23 +160,16 @@ public class MessagingManager {
             System.currentTimeMillis(),
             false
         );
-        
         // Save mail
         saveMail(targetUuid, mail);
-        
         // Notify sender
-        MessageUtil.sendMessage(sender, MessageUtil.replacePlaceholders(config.messages.mailSent, targetName, message));
-        
+    MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "mail.sent", targetName, message));
         // Notify target if online
         ServerPlayer target = getPlayerByUuid(targetUuid);
         if (target != null) {
-            MessageUtil.sendMessage(target, MessageUtil.replacePlaceholders(config.messages.mailReceived,
-                sender.getName().getString()));
+            MessageUtil.sendMessage(target, LanguageManager.getInstance().getMessage(target, "mail.received", sender.getName().getString()));
         }
-        
-        LOGGER.info("Mail sent from {} to {}: {}", 
-            sender.getName().getString(), targetName, message);
-        
+        LOGGER.info("Mail sent from {} to {}: {}", sender.getName().getString(), targetName, message);
         return true;
     }
     
@@ -196,28 +178,20 @@ public class MessagingManager {
      */
     public void readMail(ServerPlayer player) {
         MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
-        
         if (!config.enabled || !config.enableMail) {
-            MessageUtil.sendMessage(player, "&cMail system is disabled.");
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "mail.disabled"));
             return;
         }
-        
         List<MailEntry> mails = getPlayerMail(player.getUUID());
         if (mails.isEmpty()) {
-            MessageUtil.sendMessage(player, config.messages.mailEmpty);
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "mail.empty"));
             return;
         }
-        
-        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.mailListHeader,
-            String.valueOf(mails.size()), String.valueOf(config.mail.maxMailsPerPlayer)));
-        
+    MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "mail.list.header", String.valueOf(mails.size()), String.valueOf(config.mail.maxMailsPerPlayer)));
         for (int i = 0; i < mails.size(); i++) {
             MailEntry mail = mails.get(i);
             String timeStr = MessageUtil.formatTime(System.currentTimeMillis() - mail.timestamp);
-            
-            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.mailRead,
-                timeStr, mail.senderName, mail.message));
-            
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "mail.read", timeStr, mail.senderName, mail.message));
             // Mark as read
             if (!mail.read) {
                 mail.read = true;
@@ -230,19 +204,14 @@ public class MessagingManager {
      * Clear player's mail
      */
     public boolean clearMail(ServerPlayer player) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
-        
+    // ...existing code...
         List<MailEntry> mails = getPlayerMail(player.getUUID());
         if (mails.isEmpty()) {
-            MessageUtil.sendMessage(player, config.messages.mailEmpty);
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "mail.empty"));
             return false;
         }
-        
         clearPlayerMail(player.getUUID());
-        
-        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.mailClear,
-            String.valueOf(mails.size())));
-        
+    MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "mail.clear", String.valueOf(mails.size())));
         return true;
     }
     
@@ -250,17 +219,19 @@ public class MessagingManager {
      * Broadcast a message to all players
      */
     public void broadcast(ServerPlayer sender, String message) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
-        
-        if (!PermissionUtil.hasPermission(sender, PermissionNodes.BROADCAST)) {
-            MessageUtil.sendMessage(sender, config.messages.noPermission);
+    // ...existing code...
+        com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
+        boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.enabled;
+        if (!chatEnabled) {
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "chat.disabled"));
             return;
         }
-        
-        String broadcastMessage = MessageUtil.replacePlaceholders(config.messages.broadcastReceived, message);
-        
+        if (!PermissionUtil.hasPermission(sender, PermissionNodes.BROADCAST)) {
+            MessageUtil.sendMessage(sender, LanguageManager.getInstance().getMessage(sender, "no.permission"));
+            return;
+        }
+    String broadcastMessage = LanguageManager.getInstance().getMessage(sender, "broadcast.received", message);
         broadcastToAll(broadcastMessage);
-        
         LOGGER.info("Broadcast by {}: {}", sender.getName().getString(), message);
     }
     
@@ -268,22 +239,17 @@ public class MessagingManager {
      * Toggle social spy for a player
      */
     public boolean toggleSocialSpy(ServerPlayer player) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
-        
+    // ...existing code...
         if (!PermissionUtil.hasPermission(player, PermissionNodes.SOCIALSPY)) {
-            MessageUtil.sendMessage(player, config.messages.noPermission);
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "no.permission"));
             return false;
         }
-        
         boolean currentState = socialSpyEnabled.getOrDefault(player.getUUID(), false);
         boolean newState = !currentState;
-        
         socialSpyEnabled.put(player.getUUID(), newState);
         playerDataManager.setSetting(player.getUUID(), "socialspy_enabled", newState);
-        
-        String message = newState ? config.messages.socialSpyOn : config.messages.socialSpyOff;
+    String message = newState ? LanguageManager.getInstance().getMessage(player, "socialspy.on") : LanguageManager.getInstance().getMessage(player, "socialspy.off");
         MessageUtil.sendMessage(player, message);
-        
         return newState;
     }
     
@@ -291,32 +257,30 @@ public class MessagingManager {
      * Ignore a player
      */
     public boolean ignorePlayer(ServerPlayer player, String targetName) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
-        
+    // ...existing code...
+        com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
+        boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.enabled;
+        if (!chatEnabled) {
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "chat.disabled"));
+            return false;
+        }
         ServerPlayer target = getPlayerByName(targetName);
         if (target == null) {
-            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.playerNotFound, targetName));
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "player.not.found", targetName));
             return false;
         }
-        
         if (target.getUUID().equals(player.getUUID())) {
-            MessageUtil.sendMessage(player, config.messages.cannotIgnoreSelf);
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "cannot.ignore.self"));
             return false;
         }
-        
         // Check if already ignoring
         if (isPlayerIgnored(player.getUUID(), target.getUUID())) {
-            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.alreadyIgnoring, 
-                target.getName().getString()));
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "already.ignoring", target.getName().getString()));
             return false;
         }
-        
         // Add to ignore list
         addToIgnoreList(player.getUUID(), target.getUUID());
-        
-        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.ignoreAdded,
-            target.getName().getString()));
-        
+    MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "ignore.added", target.getName().getString()));
         return true;
     }
     
@@ -324,24 +288,19 @@ public class MessagingManager {
      * Unignore a player
      */
     public boolean unignorePlayer(ServerPlayer player, String targetName) {
-        MessagingConfig config = configUnifier.getConfigManager().getMessagingConfig();
-        
+    // ...existing code...
         UUID targetUuid = getPlayerUuidByName(targetName);
         if (targetUuid == null) {
-            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.playerNotFound, targetName));
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "player.not.found", targetName));
             return false;
         }
-        
         if (!isPlayerIgnored(player.getUUID(), targetUuid)) {
-            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.notIgnoring, targetName));
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "not.ignoring", targetName));
             return false;
         }
-        
         // Remove from ignore list
         removeFromIgnoreList(player.getUUID(), targetUuid);
-        
-        MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.ignoreRemoved, targetName));
-        
+    MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "ignore.removed", targetName));
         return true;
     }
     

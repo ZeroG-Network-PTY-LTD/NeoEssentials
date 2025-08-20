@@ -5,6 +5,11 @@ plugins {
     id 'idea'
 }
 
+// Globally exclude all Log4j dependencies from all configurations
+configurations.all {
+    exclude group: 'org.apache.logging.log4j'
+}
+
 version = mod_version
 group = mod_group_id
 
@@ -22,30 +27,24 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 neoForge {
     version = project.neo_version
-
     parchment {
         mappingsVersion = project.parchment_mappings_version
         minecraftVersion = project.parchment_minecraft_version
     }
-
     runs {
         server {
             server()
             programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-        
         client {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
-
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
         }
     }
-
     mods {
         neoessentials {
             sourceSet(sourceSets.main)
@@ -55,23 +54,33 @@ neoForge {
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-configurations {
-    runtimeClasspath.extendsFrom localRuntime
-}
+// Uncomment and resolve all conflicts before using failOnVersionConflict
+// configurations.all {
+//     resolutionStrategy {
+//         failOnVersionConflict()
+//     }
+// }
 
 dependencies {
+    // Bundle SnakeYAML with the mod, but prefer server-provided version if present
+    implementation('org.yaml:snakeyaml:2.2')
+// Compile SnakeYAML as a normal dependency
     implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
-    
     compileOnly('com.mysql:mysql-connector-j:8.3.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
-    
     compileOnly 'net.luckperms:api:5.4'
     implementation 'com.moandjiezana.toml:toml4j:0.7.2'
-    compileOnly 'org.yaml:snakeyaml:2.2'
-    
+
+
+    // If you have a dependency that brings in SnakeYAML transitively, exclude it here
+    // Example:
+    // implementation('real.dependency:that-uses-snakeyaml:1.0') {
+    //     exclude group: 'org.yaml', module: 'snakeyaml'
+    // }
+
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
@@ -79,6 +88,7 @@ dependencies {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
+
 
 jar {
     manifest {
@@ -99,7 +109,7 @@ test {
 
 publishing {
     publications {
-        register('mavenJava', MavenPublication) {
+        mavenJava(MavenPublication) {
             from components.java
         }
     }

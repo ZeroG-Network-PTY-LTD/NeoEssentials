@@ -1,8 +1,5 @@
 package com.zerog.neoessentials.animation;
 
-import com.zerog.neoessentials.animation.AnimationManager;
-import com.zerog.neoessentials.animation.Animation;
-
 import com.google.gson.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,8 +19,6 @@ import java.util.regex.Pattern;
  * Manages custom animated placeholders for tablist, scoreboard, and bossbar
  */
 public class AnimationManager {
-    private static AnimationManager instance;
-    public static AnimationManager getInstance() { return instance; }
     private static final Logger LOGGER = LoggerFactory.getLogger(AnimationManager.class);
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{([^}]+)\\}");
     
@@ -124,9 +119,13 @@ public class AnimationManager {
             try {
                 Animation animation = parseAnimation(name, animData);
                 animations.put(name, animation);
-
-                placeholderMappings.put("%" + name + "%", name);
-                
+                // Automatically register placeholder mappings for new animations
+                if (!placeholderMappings.containsKey("{" + name + "}")) {
+                    placeholderMappings.put("{" + name + "}", name);
+                }
+                if (!placeholderMappings.containsKey("%" + name + "%")) {
+                    placeholderMappings.put("%" + name + "%", name);
+                }
                 if (debugMode) {
                     LOGGER.debug("Loaded animation '{}' with {} frames", name, animation.getFrameCount());
                 }

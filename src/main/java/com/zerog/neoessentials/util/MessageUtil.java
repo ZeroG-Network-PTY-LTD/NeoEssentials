@@ -1,6 +1,4 @@
 package com.zerog.neoessentials.util;
-import com.zerog.neoessentials.animation.Animation;
-import com.zerog.neoessentials.animation.AnimationManager;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -9,7 +7,6 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 
 /**
  * Utility class for sending formatted messages to players
@@ -93,16 +90,16 @@ public class MessageUtil {
         if (message == null || placeholders == null || placeholders.length == 0) {
             return message;
         }
-
+        
         String result = message;
-
+        
         // Replace {0}, {1}, {2}, etc. placeholders
         for (int i = 0; i < placeholders.length; i++) {
             String placeholder = "{" + i + "}";
             String value = placeholders[i] != null ? placeholders[i].toString() : "null";
             result = result.replace(placeholder, value);
         }
-
+        
         // Also support %s formatting for compatibility
         try {
             if (result.contains("%s") && placeholders.length > 0) {
@@ -117,20 +114,7 @@ public class MessageUtil {
             // If formatting fails, return the original message with {i} replacements
             // This prevents crashes from malformed format strings
         }
-
-        // Animation placeholder support
-        com.zerog.neoessentials.animation.AnimationManager animationManager = com.zerog.neoessentials.animation.AnimationManager.getInstance();
-        if (animationManager != null && animationManager.isEnabled()) {
-            for (String animationName : animationManager.getAnimationNames()) {
-                String animPlaceholder = "%" + animationName + "%";
-                if (result.contains(animPlaceholder)) {
-                    com.zerog.neoessentials.animation.Animation animation = animationManager.getAnimation(animationName);
-                    String frame = animation != null && !animation.getFrames().isEmpty() ? animation.getFrames().get(0) : "";
-                    result = result.replace(animPlaceholder, frame);
-                }
-            }
-        }
-
+        
         return result;
     }
     
@@ -157,12 +141,16 @@ public class MessageUtil {
             return "";
         }
         
-        // Handle hex colors first (&#RRGGBB)
+        // Handle hex colors (&#RRGGBB) -> §x§R§R§G§G§B§B
         Matcher hexMatcher = HEX_PATTERN.matcher(message);
         StringBuffer hexBuffer = new StringBuffer();
         while (hexMatcher.find()) {
-            // For now, just replace with closest color (in a real implementation, you'd handle RGB)
-            hexMatcher.appendReplacement(hexBuffer, ChatFormatting.WHITE.toString());
+            String hex = hexMatcher.group(1);
+            StringBuilder mcHex = new StringBuilder("§x");
+            for (char c : hex.toCharArray()) {
+                mcHex.append('§').append(c);
+            }
+            hexMatcher.appendReplacement(hexBuffer, mcHex.toString());
         }
         hexMatcher.appendTail(hexBuffer);
         message = hexBuffer.toString();

@@ -37,7 +37,7 @@ public class SpawnCommands {
         
         // Double-check permission (defense in depth)
         if (!PermissionUtil.hasPermission(player, PermissionNodes.SPAWN)) {
-            MessageUtil.sendMessage(player, "&cYou don't have permission to use spawn!");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.error.no_permission_use"));
             return 0;
         }
         
@@ -51,7 +51,7 @@ public class SpawnCommands {
         
         // Double-check permission (defense in depth)
         if (!PermissionUtil.hasPermission(player, PermissionNodes.SPAWN_SET)) {
-            MessageUtil.sendMessage(player, "&cYou don't have permission to set spawn!");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.error.no_permission_set"));
             return 0;
         }
         

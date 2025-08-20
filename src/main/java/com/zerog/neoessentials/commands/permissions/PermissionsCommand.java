@@ -424,19 +424,28 @@ public class PermissionsCommand {
         try {
             ServerPlayer target = EntityArgument.getPlayer(context, "player");
             String groupName = StringArgumentType.getString(context, "group");
-            
+
             CustomPermissionsManager manager = CustomPermissionsManager.getInstance();
-            
             if (manager.getGroup(groupName) == null) {
                 context.getSource().sendFailure(Component.literal("§cGroup '" + groupName + "' not found"));
                 return 0;
             }
-            
+
+            // Clean up all NeoEssentials teams/scoreboards for this player before setting group
+            com.zerog.neoessentials.features.TablistScoreboardManager tabManager = com.zerog.neoessentials.features.TablistScoreboardManager.getInstance();
+            tabManager.cleanupAllNeoEssentialsTeamsAndScoreboards();
+
+            // Set new group and force display refresh
             manager.setPlayerGroup(target.getUUID(), groupName);
-            
-            context.getSource().sendSuccess(() -> 
-                Component.literal("§aSet " + target.getDisplayName().getString() + "'s group to '" + groupName + "'"), false);
-            
+            manager.refreshPlayerDisplay(target);
+            // Force chat formatting refresh by sending a dummy message (triggers event listeners)
+            try {
+                target.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Your group has been updated. Please send a chat message to see your new prefix."));
+            } catch (Exception ignored) {}
+
+            context.getSource().sendSuccess(() ->
+                Component.literal("§aReset all NeoEssentials teams/scoreboards and set " + target.getGameProfile().getName() + "'s group to '" + groupName + "'"), false);
+
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error executing user set group command", e);

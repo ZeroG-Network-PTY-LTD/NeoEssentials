@@ -46,17 +46,22 @@ public class ColorUtil {
      */
     private static Component parseColoredText(String text) {
         MutableComponent result = Component.empty();
-        
+
         String[] parts = splitByColorCodes(text);
         Style currentStyle = Style.EMPTY;
-        
+
         for (String part : parts) {
             if (part.isEmpty()) continue;
-            
+
             if (isColorCode(part)) {
                 Style newStyle = parseColorCode(part);
                 if (newStyle != null) {
-                    currentStyle = mergeStyles(currentStyle, newStyle);
+                    // If &r (reset), set style to EMPTY, not merged
+                    if (newStyle.equals(Style.EMPTY)) {
+                        currentStyle = Style.EMPTY;
+                    } else {
+                        currentStyle = mergeStyles(currentStyle, newStyle);
+                    }
                 }
             } else {
                 if (!part.isEmpty()) {
@@ -64,7 +69,7 @@ public class ColorUtil {
                 }
             }
         }
-        
+
         return result;
     }
     

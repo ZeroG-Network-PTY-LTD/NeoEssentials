@@ -55,23 +55,23 @@ public class NeoEssentialsCommand {
         try {
             var source = context.getSource();
             
-            source.sendSuccess(() -> Component.literal("§6§l◆━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◆"), false);
-            source.sendSuccess(() -> Component.literal("§6§l                           NeoEssentials v2.0.0"), false);
-            source.sendSuccess(() -> Component.literal("§7           Essential server administration tools for NeoForge"), false);
-            source.sendSuccess(() -> Component.literal("§6§l◆━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◆"), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.header")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.title")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.subtitle")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.header")), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            source.sendSuccess(() -> Component.literal("§a§lAvailable Commands:"), false);
-            source.sendSuccess(() -> Component.literal("§b/ne features §7- View all available features"), false);
-            source.sendSuccess(() -> Component.literal("§b/ne commands §7- View all available commands"), false);
-            source.sendSuccess(() -> Component.literal("§b/ne version §7- View version information"), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.available.commands")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.features")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.commands")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.version")), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            source.sendSuccess(() -> Component.literal("§e§lQuick Access:"), false);
-            source.sendSuccess(() -> Component.literal("§6/shop §7- Open server shop"), false);
-            source.sendSuccess(() -> Component.literal("§6/menu §7- Open main menu"), false);
-            source.sendSuccess(() -> Component.literal("§6/stats §7- View your statistics"), false);
-            source.sendSuccess(() -> Component.literal("§6/warps §7- View server warps"), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.quick.access")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.shop")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.menu")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.stats")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.warps")), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            source.sendSuccess(() -> Component.literal("§7Author: §fZeroG §7| §7Version: §f2.0.0"), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.main.author.version")), false);
             
             return 1;
         } catch (Exception e) {
@@ -84,26 +84,26 @@ public class NeoEssentialsCommand {
         try {
             var source = context.getSource();
             
-            source.sendSuccess(() -> Component.literal("§6§l◆━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◆"), false);
-            source.sendSuccess(() -> Component.literal("§6§l                        NeoEssentials Version Info"), false);
-            source.sendSuccess(() -> Component.literal("§6§l◆━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◆"), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.header")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.title")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.header")), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            source.sendSuccess(() -> Component.literal("§a§lMod Information:"), false);
-            source.sendSuccess(() -> Component.literal("§7Name: §fNeoEssentials"), false);
-            source.sendSuccess(() -> Component.literal("§7Version: §f2.0.0"), false);
-            source.sendSuccess(() -> Component.literal("§7Author: §fZeroG"), false);
-            source.sendSuccess(() -> Component.literal("§7Target: §fNeoForge Server-Side"), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.modinfo")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.name")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.version")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.author")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.target")), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            source.sendSuccess(() -> Component.literal("§b§lFeature Status:"), false);
-            source.sendSuccess(() -> Component.literal("§7Essential Commands: §a✓ Implemented"), false);
-            source.sendSuccess(() -> Component.literal("§7Discord Integration: §a✓ Implemented"), false);
-            source.sendSuccess(() -> Component.literal("§7Custom GUIs: §a✓ Implemented"), false);
-            source.sendSuccess(() -> Component.literal("§7Tablist & Scoreboards: §a✓ Implemented"), false);
-            source.sendSuccess(() -> Component.literal("§7Economy System: §e⚠ Partial"), false);
-            source.sendSuccess(() -> Component.literal("§7Home System: §a✓ Implemented"), false);
-            source.sendSuccess(() -> Component.literal("§7Warp System: §e⚠ Partial"), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.featurestatus")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.essential")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.discord")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.guis")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.tablist")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.economy")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.home")), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.warp")), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            source.sendSuccess(() -> Component.literal("§d§lCompatibility: §fServer-side only, no client required"), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "ne.version.compatibility")), false);
             
             return 1;
         } catch (Exception e) {
@@ -115,99 +115,205 @@ public class NeoEssentialsCommand {
     private static int executeFeaturesCommand(CommandContext<CommandSourceStack> context) {
         try {
             var source = context.getSource();
-            
-            source.sendSuccess(() -> Component.literal("§6§l◆━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◆"), false);
-            source.sendSuccess(() -> Component.literal("§6§l                          NeoEssentials Features"), false);
-            source.sendSuccess(() -> Component.literal("§6§l◆━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◆"), false);
+            var player = source.getPlayer();
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.header")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.title")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.separator")
+            ), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            
-            source.sendSuccess(() -> Component.literal("§a§l1. Essential Utility Commands"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Player management: heal, feed, god, vanish"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Movement: fly, speed"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Items: give, workbench, anvil, enderchest, invsee"), false);
-            source.sendSuccess(() -> Component.literal("§7   • World: time, weather"), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.essential")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.essential.player_management")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.essential.movement")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.essential.items")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.essential.world")
+            ), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            
-            source.sendSuccess(() -> Component.literal("§b§l2. Discord Integration"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Webhook notifications"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Account linking"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Server event broadcasts"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Rich embed messages"), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.discord")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.discord.webhook")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.discord.account_linking")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.discord.broadcasts")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.discord.embeds")
+            ), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            
-            source.sendSuccess(() -> Component.literal("§c§l3. Custom GUI System"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Interactive shop interface"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Player statistics viewer"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Server information display"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Kit and warp selectors"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Economy management"), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.gui")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.gui.shop")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.gui.stats")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.gui.info")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.gui.kit_warp")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.gui.economy")
+            ), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            
-            source.sendSuccess(() -> Component.literal("§d§l4. Enhanced Tablist & Scoreboards"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Custom player list headers/footers"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Real-time server information"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Player statistics display"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Session time tracking"), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.tablist")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.tablist.header_footer")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.tablist.realtime_info")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.tablist.stats")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.tablist.session")
+            ), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            
-            source.sendSuccess(() -> Component.literal("§e§l5. Additional Systems"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Home management system"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Multi-language support"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Configuration management"), false);
-            source.sendSuccess(() -> Component.literal("§7   • Data persistence"), false);
-            
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.additional")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.additional.home")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.additional.language")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.additional.config")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.features.additional.persistence")
+            ), false);
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error executing features command", e);
             return 0;
         }
     }
-    
+
     private static int executeCommandsCommand(CommandContext<CommandSourceStack> context) {
         try {
             var source = context.getSource();
-            
-            source.sendSuccess(() -> Component.literal("§6§l◆━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◆"), false);
-            source.sendSuccess(() -> Component.literal("§6§l                         NeoEssentials Commands"), false);
-            source.sendSuccess(() -> Component.literal("§6§l◆━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━◆"), false);
+            var player = source.getPlayer();
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.header")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.title")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.separator")
+            ), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            
-            source.sendSuccess(() -> Component.literal("§a§lUtility Commands:"), false);
-            source.sendSuccess(() -> Component.literal("§7/heal [player] §f- Restore health"), false);
-            source.sendSuccess(() -> Component.literal("§7/feed [player] §f- Restore hunger"), false);
-            source.sendSuccess(() -> Component.literal("§7/god [player] §f- Toggle invincibility"), false);
-            source.sendSuccess(() -> Component.literal("§7/vanish [player] §f- Toggle invisibility"), false);
-            source.sendSuccess(() -> Component.literal("§7/fly [player] §f- Toggle flight"), false);
-            source.sendSuccess(() -> Component.literal("§7/speed <type> <value> [player] §f- Set movement speed"), false);
-            source.sendSuccess(() -> Component.literal("§7/give <player> <item> [amount] §f- Give items"), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.utility.header")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.utility.heal")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.utility.feed")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.utility.god")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.utility.vanish")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.utility.fly")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.utility.speed")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.utility.give")
+            ), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            
-            source.sendSuccess(() -> Component.literal("§b§lWorld Commands:"), false);
-            source.sendSuccess(() -> Component.literal("§7/time <set|add> <value> §f- Manage time"), false);
-            source.sendSuccess(() -> Component.literal("§7/weather <clear|rain|thunder> §f- Control weather"), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.world.header")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.world.time")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.world.weather")
+            ), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            
-            source.sendSuccess(() -> Component.literal("§c§lInterface Commands:"), false);
-            source.sendSuccess(() -> Component.literal("§7/workbench §f- Open crafting table"), false);
-            source.sendSuccess(() -> Component.literal("§7/anvil §f- Open anvil interface"), false);
-            source.sendSuccess(() -> Component.literal("§7/enderchest [player] §f- Open ender chest"), false);
-            source.sendSuccess(() -> Component.literal("§7/invsee <player> §f- View player inventory"), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.interface.header")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.interface.workbench")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.interface.anvil")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.interface.enderchest")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.interface.invsee")
+            ), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            
-            source.sendSuccess(() -> Component.literal("§d§lGUI Commands:"), false);
-            source.sendSuccess(() -> Component.literal("§7/shop [category] §f- Open server shop"), false);
-            source.sendSuccess(() -> Component.literal("§7/menu §f- Open main menu"), false);
-            source.sendSuccess(() -> Component.literal("§7/stats [player] §f- View statistics"), false);
-            source.sendSuccess(() -> Component.literal("§7/kits §f- Open kit selector"), false);
-            source.sendSuccess(() -> Component.literal("§7/warps §f- Open warp selector"), false);
-            source.sendSuccess(() -> Component.literal("§7/economy §f- Economy management"), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.gui.header")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.gui.shop")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.gui.menu")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.gui.stats")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.gui.kits")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.gui.warps")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.gui.economy")
+            ), false);
             source.sendSuccess(() -> Component.literal(""), false);
-            
-            source.sendSuccess(() -> Component.literal("§e§lDiscord Commands:"), false);
-            source.sendSuccess(() -> Component.literal("§7/discord §f- Discord integration menu"), false);
-            source.sendSuccess(() -> Component.literal("§7/discord link <username> §f- Link Discord account"), false);
-            source.sendSuccess(() -> Component.literal("§7/discord broadcast <message> §f- Send to Discord"), false);
-            
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.discord.header")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.discord.menu")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.discord.link")
+            ), false);
+            source.sendSuccess(() -> Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "ne.commands.discord.broadcast")
+            ), false);
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error executing commands command", e);

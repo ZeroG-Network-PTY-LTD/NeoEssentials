@@ -12,8 +12,10 @@ import java.util.List;
  */
 public class MessagingConfig {
     
-    // Basic messaging settings
+    // Top-level module enable/disable
     public boolean enabled = true;
+
+    // Basic messaging settings
     public boolean enablePrivateMessages = true;
     public boolean enableMail = true;
     public boolean enableReply = true;

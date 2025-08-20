@@ -22,12 +22,12 @@ public class PlayerSignShopHandler {
         // Check if shop has enough stock - but do REAL-TIME check, not just recorded stock
         BlockPos chestPos = signShop.getChestPos();
         if (chestPos == null) {
-            player.sendSystemMessage(Component.literal("§cThis shop doesn't have a connected chest!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.chest.not.connected")));
             return false;
         }
         
         if (!(level.getBlockEntity(chestPos) instanceof ChestBlockEntity chestEntity)) {
-            player.sendSystemMessage(Component.literal("§cShop chest not found!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.chest.not.found")));
             return false;
         }
         
@@ -37,15 +37,14 @@ public class PlayerSignShopHandler {
                    player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), actualItemsInChest);
         
         if (actualItemsInChest == 0) {
-            player.sendSystemMessage(Component.literal("§4[ANTI-DUPE PROTECTION] §cThis shop has NO ITEMS in the chest! Transaction blocked."));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.chest.empty.dupe.protection")));
             LOGGER.warn("BLOCKED POTENTIAL DUPE: Player {} tried to buy from empty chest at {}", 
                        player.getName().getString(), chestPos);
             return false;
         }
         
         if (actualItemsInChest < quantity) {
-            player.sendSystemMessage(Component.literal("§e[INSUFFICIENT STOCK] §6This shop only has " + actualItemsInChest 
-                + "x " + signShop.getItem().getDisplayName().getString() + " but you're trying to buy " + quantity + "x. Transaction blocked."));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.chest.insufficient.stock", actualItemsInChest, signShop.getItem().getDisplayName().getString(), quantity)));
             LOGGER.warn("BLOCKED INSUFFICIENT STOCK: Player {} tried to buy {}x but chest only has {}x at {}", 
                        player.getName().getString(), quantity, actualItemsInChest, chestPos);
             return false;
@@ -53,7 +52,7 @@ public class PlayerSignShopHandler {
         
         // Legacy recorded stock check (keeping for compatibility)
         if (!signShop.hasStock() || signShop.getStock() < quantity) {
-            player.sendSystemMessage(Component.literal("§cThis shop doesn't have enough items in stock! (Legacy check)"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.legacy.not.enough.stock")));
             return false;
         }
         
@@ -64,25 +63,21 @@ public class PlayerSignShopHandler {
             com.zerog.neoessentials.managers.EconomyManager.getInstance();
         
         if (economyManager == null) {
-            player.sendSystemMessage(Component.literal("§cEconomy system is not available!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.economy.unavailable")));
             return false;
         }
         
         // Check if player has sufficient balance
         if (!economyManager.hasBalance(player.getUUID(), totalPrice)) {
             double currentBalance = economyManager.getBalance(player.getUUID()).doubleValue();
-            player.sendSystemMessage(Component.literal("§cYou don't have enough money to buy " 
-                + quantity + "x " + signShop.getItem().getDisplayName().getString() + " for " 
-                + economyManager.formatCurrency(totalPrice) + ". You have " 
-                + economyManager.formatCurrency(currentBalance)));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.not.enough.money", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice), economyManager.formatCurrency(currentBalance))));
             return false;
         }
         
         // Check chest inventory for items (redundant check for extra safety)
         int availableItems = countItemsInChest(chestEntity, signShop.getItem());
         if (availableItems < quantity) {
-            player.sendSystemMessage(Component.literal("§cThis shop only has " + availableItems 
-                + "x " + signShop.getItem().getDisplayName().getString() + " in stock!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.chest.only.has", availableItems, signShop.getItem().getDisplayName().getString())));
             return false;
         }
         
@@ -95,7 +90,7 @@ public class PlayerSignShopHandler {
             "Bought " + quantity + "x " + signShop.getItem().getDisplayName().getString() + " from player shop");
         
         if (!withdrawSuccess) {
-            player.sendSystemMessage(Component.literal("§cPayment failed!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.payment.failed")));
             return false;
         }
         
@@ -103,7 +98,7 @@ public class PlayerSignShopHandler {
         if (!removeItemsFromChest(chestEntity, signShop.getItem(), quantity)) {
             // Failed to remove items - refund player
             economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Shop out of stock");
-            player.sendSystemMessage(Component.literal("§cFailed to remove items from shop chest! Payment refunded."));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.remove.items.failed.refunded")));
             return false;
         }
         
@@ -117,7 +112,7 @@ public class PlayerSignShopHandler {
             returnItem.setCount(quantity);
             addItemsToChest(chestEntity, returnItem);
             economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Inventory full");
-            player.sendSystemMessage(Component.literal("§cYour inventory is full! Payment refunded."));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.inventory.full.refunded")));
             return false;
         }
         
@@ -134,8 +129,7 @@ public class PlayerSignShopHandler {
         // Update shop stock
         com.zerog.neoessentials.economy.shops.ShopManager.getInstance().updateSignShopStock(signShop.getSignPos(), signShop.getStock() - quantity);
         
-        player.sendSystemMessage(Component.literal("§aYou bought " + quantity + "x " 
-            + signShop.getItem().getDisplayName().getString() + " for " + economyManager.formatCurrency(totalPrice)));
+    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.bought", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice))));
         
         // Record transaction
         com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
@@ -149,8 +143,7 @@ public class PlayerSignShopHandler {
     public static boolean handleSellTransaction(Player player, SignShop signShop, Level level, int quantity) {
         // Check if player has items to sell
         if (!hasItemInInventory(player, signShop.getItem(), quantity)) {
-            player.sendSystemMessage(Component.literal("§cYou don't have enough " 
-                + signShop.getItem().getDisplayName().getString() + " to sell!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.not.enough.to.sell", signShop.getItem().getDisplayName().getString())));
             return false;
         }
         
@@ -161,26 +154,26 @@ public class PlayerSignShopHandler {
             com.zerog.neoessentials.managers.EconomyManager.getInstance();
         
         if (economyManager == null || !economyManager.isEnabled()) {
-            player.sendSystemMessage(Component.literal("§cEconomy system is not available!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.economy.unavailable")));
             return false;
         }
         
         // Check if shop owner has enough money
         UUID shopOwnerUUID = UUID.fromString(signShop.getOwnerId());
         if (!economyManager.hasBalance(shopOwnerUUID, totalEarnings)) {
-            player.sendSystemMessage(Component.literal("§cThe shop owner doesn't have enough money to buy your items!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.owner.not.enough.money")));
             return false;
         }
         
         // Check if chest has space for items
         BlockPos chestPos = signShop.getChestPos();
         if (chestPos == null) {
-            player.sendSystemMessage(Component.literal("§cThis shop doesn't have a connected chest!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.chest.not.connected")));
             return false;
         }
         
         if (!(level.getBlockEntity(chestPos) instanceof ChestBlockEntity chestEntity)) {
-            player.sendSystemMessage(Component.literal("§cShop chest not found!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.chest.not.found")));
             return false;
         }
         
@@ -188,7 +181,7 @@ public class PlayerSignShopHandler {
         ItemStack testItem = signShop.getItem().copy();
         testItem.setCount(quantity);
         if (!canChestFitItem(chestEntity, testItem)) {
-            player.sendSystemMessage(Component.literal("§cThe shop chest is full!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.chest.full")));
             return false;
         }
         
@@ -198,7 +191,7 @@ public class PlayerSignShopHandler {
         
         // STEP 1: Remove items from player inventory first (payment-first security model)
         if (!removeItemFromInventory(player, signShop.getItem(), quantity)) {
-            player.sendSystemMessage(Component.literal("§cFailed to remove items from inventory!"));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.remove.items.failed.inventory")));
             return false;
         }
         
@@ -211,7 +204,7 @@ public class PlayerSignShopHandler {
             ItemStack returnItem = signShop.getItem().copy();
             returnItem.setCount(quantity);
             player.getInventory().add(returnItem);
-            player.sendSystemMessage(Component.literal("§cShop owner payment failed! Items returned."));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.owner.payment.failed.items.returned")));
             return false;
         }
         
@@ -225,7 +218,7 @@ public class PlayerSignShopHandler {
             ItemStack returnItem = signShop.getItem().copy();
             returnItem.setCount(quantity);
             player.getInventory().add(returnItem);
-            player.sendSystemMessage(Component.literal("§cPayment failed! Items returned."));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.payment.failed.items.returned")));
             return false;
         }
         
@@ -234,8 +227,7 @@ public class PlayerSignShopHandler {
         itemsToAdd.setCount(quantity);
         addItemsToChest(chestEntity, itemsToAdd);
         
-        player.sendSystemMessage(Component.literal("§aYou sold " + quantity + "x " 
-            + signShop.getItem().getDisplayName().getString() + " for " + economyManager.formatCurrency(totalEarnings)));
+    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.sold", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalEarnings))));
         
         // Record transaction
         com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);

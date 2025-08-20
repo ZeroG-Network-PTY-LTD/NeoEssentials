@@ -61,20 +61,22 @@ public class ConfigCommand {
         
         try {
             ConfigManager configManager = ConfigManager.getInstance();
-            
+
             // Perform hot-reload
             configManager.reloadAll();
-            
+
+            // ChatFormattingListener config is now hot-reloadable and does not require manual reload.
+
             // Send success message
             source.sendSuccess(() -> Component.literal("§a✓ All configurations reloaded successfully!"), true);
-            
+
             // Log the reload action
             if (source.getEntity() instanceof ServerPlayer player) {
                 MessageUtil.sendMessage(player, "&aConfiguration reload completed successfully!");
             }
-            
+
             return 1;
-            
+
         } catch (Exception e) {
             source.sendFailure(Component.literal("§cFailed to reload configurations: " + e.getMessage()));
             return 0;

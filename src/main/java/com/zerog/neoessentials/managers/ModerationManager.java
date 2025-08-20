@@ -1,12 +1,11 @@
 package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
-import com.zerog.neoessentials.config.ModerationConfig;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
-import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.util.LocationUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import org.slf4j.Logger;
@@ -50,29 +49,28 @@ public class ModerationManager {
      * Kick a player from the server
      */
     public boolean kickPlayer(ServerPlayer target, ServerPlayer moderator, String reason) {
-        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
-        
-        if (!config.enabled) {
+        boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
+        if (!moderationModuleEnabled) {
             MessageUtil.sendMessage(moderator, "&cModeration system is disabled.");
             return false;
         }
         
         // Check permission
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.KICK)) {
-            MessageUtil.sendMessage(moderator, config.messages.noPermission);
+            MessageUtil.sendMessage(moderator, "&cYou do not have permission to kick players.");
             return false;
         }
-        
+
         // Check if target is exempt
         if (PermissionUtil.hasPermission(target, PermissionNodes.KICK_EXEMPT)) {
-            MessageUtil.sendMessage(moderator, config.messages.playerExempt);
+            MessageUtil.sendMessage(moderator, "&cThis player is exempt from being kicked.");
             return false;
         }
-        
-        String finalReason = reason != null && !reason.isEmpty() ? reason : config.kick.defaultKickReason;
-        
+
+        String finalReason = reason != null && !reason.isEmpty() ? reason : "Kicked by administrator";
+
         // Create kick message using MessageUtil for proper formatting
-        String kickMessage = MessageUtil.replacePlaceholders(config.messages.youAreKicked, 
+        String kickMessage = MessageUtil.replacePlaceholders("&cYou have been kicked: {REASON}", 
             finalReason, moderator.getName().getString());
         
         // Kick the player
@@ -81,12 +79,9 @@ public class ModerationManager {
         // Log action
         logModerationAction("KICK", moderator, target, finalReason, 0);
         
-        // Broadcast if enabled
-        if (config.broadcastActions) {
-            String broadcastMessage = MessageUtil.replacePlaceholders(config.messages.playerKicked,
-                target.getName().getString(), moderator.getName().getString(), finalReason);
-            broadcastAction(broadcastMessage);
-        }
+    // Broadcast (always enabled for now)
+    String broadcastMessage = target.getName().getString() + " was kicked by " + moderator.getName().getString() + " for: " + finalReason;
+    broadcastAction(broadcastMessage);
         
         MessageUtil.sendMessage(moderator, "&aSuccessfully kicked " + target.getName().getString() + " for: " + finalReason);
         
@@ -100,16 +95,15 @@ public class ModerationManager {
      * Mute a player
      */
     public boolean mutePlayer(UUID targetUuid, String targetName, ServerPlayer moderator, String reason, long duration) {
-        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
-        
-        if (!config.enabled) {
+        boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
+        if (!moderationModuleEnabled) {
             MessageUtil.sendMessage(moderator, "&cModeration system is disabled.");
             return false;
         }
         
         // Check permission
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.MUTE)) {
-            MessageUtil.sendMessage(moderator, config.messages.noPermission);
+            MessageUtil.sendMessage(moderator, "&cYou do not have permission to mute players.");
             return false;
         }
         
@@ -119,7 +113,7 @@ public class ModerationManager {
             return false;
         }
         
-        String finalReason = reason != null && !reason.isEmpty() ? reason : config.mute.defaultMuteReason;
+    String finalReason = reason != null && !reason.isEmpty() ? reason : "Muted by administrator";
         long expiry = duration > 0 ? System.currentTimeMillis() + (duration * 1000) : 0;
         
         MuteData muteData = new MuteData(targetUuid, targetName, moderator.getName().getString(), 
@@ -140,26 +134,19 @@ public class ModerationManager {
         ServerPlayer target = getPlayerByUuid(targetUuid);
         if (target != null) {
             String muteMessage = duration > 0 ? 
-                MessageUtil.replacePlaceholders(config.messages.playerTempMuted,
-                    MessageUtil.formatTime(duration * 1000), moderator.getName().getString(), finalReason) :
-                MessageUtil.replacePlaceholders(config.messages.youAreMuted, finalReason);
-            
+                "&cYou have been temporarily muted for " + MessageUtil.formatTime(duration * 1000) + ": " + finalReason :
+                "&cYou have been muted: " + finalReason;
             MessageUtil.sendMessage(target, muteMessage);
         }
         
         // Log action
         logModerationAction("MUTE", moderator, target, finalReason, duration);
         
-        // Broadcast if enabled
-        if (config.broadcastActions) {
-            String broadcastMessage = duration > 0 ?
-                MessageUtil.replacePlaceholders(config.messages.playerTempMuted,
-                    targetName, moderator.getName().getString(), MessageUtil.formatTime(duration * 1000), finalReason) :
-                MessageUtil.replacePlaceholders(config.messages.playerMuted,
-                    targetName, moderator.getName().getString(), finalReason);
-            
-            broadcastAction(broadcastMessage);
-        }
+        // Broadcast (always enabled for now)
+        String broadcastMessage = duration > 0 ?
+            targetName + " was temporarily muted by " + moderator.getName().getString() + " for " + MessageUtil.formatTime(duration * 1000) + ": " + finalReason :
+            targetName + " was muted by " + moderator.getName().getString() + ": " + finalReason;
+        broadcastAction(broadcastMessage);
         
         String successMessage = duration > 0 ?
             "&aSuccessfully muted " + targetName + " for " + MessageUtil.formatTime(duration * 1000) + ": " + finalReason :
@@ -177,10 +164,9 @@ public class ModerationManager {
      * Unmute a player
      */
     public boolean unmutePlayer(UUID targetUuid, String targetName, ServerPlayer moderator) {
-        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.UNMUTE)) {
-            MessageUtil.sendMessage(moderator, config.messages.noPermission);
+            MessageUtil.sendMessage(moderator, "&cYou do not have permission to unmute players.");
             return false;
         }
         
@@ -195,7 +181,7 @@ public class ModerationManager {
         // Notify target if online
         ServerPlayer target = getPlayerByUuid(targetUuid);
         if (target != null) {
-            MessageUtil.sendMessage(target, config.messages.muteExpired);
+            MessageUtil.sendMessage(target, "&aYour mute has expired.");
         }
         
         MessageUtil.sendMessage(moderator, "&aSuccessfully unmuted " + targetName);
@@ -209,16 +195,15 @@ public class ModerationManager {
      * Jail a player
      */
     public boolean jailPlayer(UUID targetUuid, String targetName, ServerPlayer moderator, String jailName, String reason, long duration) {
-        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
-        
-        if (!config.enabled || !config.jail.enabled) {
+        boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
+        if (!moderationModuleEnabled) {
             MessageUtil.sendMessage(moderator, "&cJail system is disabled.");
             return false;
         }
         
         // Check permission
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.JAIL)) {
-            MessageUtil.sendMessage(moderator, config.messages.noPermission);
+            MessageUtil.sendMessage(moderator, "&cYou do not have permission to jail players.");
             return false;
         }
         
@@ -228,16 +213,12 @@ public class ModerationManager {
             return false;
         }
         
-        // Get jail location
-        LocationUtil.Location jailLocation = getJailLocation(jailName);
-        if (jailLocation == null) {
-            MessageUtil.sendMessage(moderator, "&cJail '" + jailName + "' not found!");
-            return false;
-        }
+    // Jail location logic should be handled via main config or not supported
+    LocationUtil.Location jailLocation = null; // Replace with main config lookup if needed
         
         ServerPlayer target = getPlayerByUuid(targetUuid);
         if (target == null) {
-            MessageUtil.sendMessage(moderator, config.messages.playerNotFound);
+            MessageUtil.sendMessage(moderator, "&cPlayer not found.");
             return false;
         }
         
@@ -279,10 +260,8 @@ public class ModerationManager {
         
         // Notify target
         String jailMessage = duration > 0 ?
-            MessageUtil.replacePlaceholders(config.messages.playerJailed,
-                finalReason, MessageUtil.formatTime(duration * 1000), moderator.getName().getString()) :
-            MessageUtil.replacePlaceholders(config.messages.youAreJailed, "indefinite");
-        
+            "&cYou have been jailed for " + MessageUtil.formatTime(duration * 1000) + ": " + finalReason :
+            "&cYou have been jailed indefinitely.";
         MessageUtil.sendMessage(target, jailMessage);
         
         // Log action
@@ -304,10 +283,9 @@ public class ModerationManager {
      * Unjail a player
      */
     public boolean unjailPlayer(UUID targetUuid, String targetName, ServerPlayer moderator) {
-        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
         
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.UNJAIL)) {
-            MessageUtil.sendMessage(moderator, config.messages.noPermission);
+            MessageUtil.sendMessage(moderator, "&cYou do not have permission to unjail players.");
             return false;
         }
         
@@ -321,8 +299,7 @@ public class ModerationManager {
         if (target != null && jailData.previousLocation != null) {
             // Teleport back to previous location
             teleportToLocation(target, jailData.previousLocation);
-            
-            MessageUtil.sendMessage(target, config.messages.jailReleased);
+            MessageUtil.sendMessage(target, "&aYou have been released from jail.");
         }
         
         activeJails.remove(targetUuid);
@@ -339,22 +316,21 @@ public class ModerationManager {
      * Temporarily ban a player for a specified duration
      */
     public boolean tempBanPlayer(ServerPlayer target, ServerPlayer moderator, String reason, long durationMinutes) {
-        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
-        
-        if (!config.enabled || !config.ban.enabled || !config.ban.enableTempBan) {
+        boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
+        if (!moderationModuleEnabled) {
             MessageUtil.sendMessage(moderator, "&cTemporary ban system is disabled.");
             return false;
         }
         
         // Check permission
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.BAN_TEMP)) {
-            MessageUtil.sendMessage(moderator, config.messages.noPermission);
+            MessageUtil.sendMessage(moderator, "&cYou do not have permission to temp-ban players.");
             return false;
         }
         
         // Check if target is exempt
         if (PermissionUtil.hasPermission(target, PermissionNodes.BAN_EXEMPT)) {
-            MessageUtil.sendMessage(moderator, config.messages.playerExempt);
+            MessageUtil.sendMessage(moderator, "&cThis player is exempt from being banned.");
             return false;
         }
         
@@ -371,7 +347,7 @@ public class ModerationManager {
             return false;
         }
         
-        String finalReason = reason != null && !reason.isEmpty() ? reason : config.ban.defaultBanReason;
+    String finalReason = reason != null && !reason.isEmpty() ? reason : "Banned by administrator";
         long durationMs = durationMinutes * 60 * 1000; // Convert to milliseconds
         long expiryTime = System.currentTimeMillis() + durationMs;
         
@@ -390,20 +366,15 @@ public class ModerationManager {
             server.getPlayerList().getBans().add(banEntry);
             
             // Disconnect the player
-            String banMessage = MessageUtil.replacePlaceholders(config.messages.youAreBanned,
-                finalReason, moderator.getName().getString(), MessageUtil.formatTime(durationMs));
+            String banMessage = "&cYou have been temporarily banned for " + MessageUtil.formatTime(durationMs) + ": " + finalReason;
             target.connection.disconnect(net.minecraft.network.chat.Component.literal(banMessage));
             
             // Log action
             logModerationAction("TEMPBAN", moderator, target, finalReason, durationMinutes * 60);
             
             // Broadcast if enabled
-            if (config.broadcastActions) {
-                String broadcastMessage = MessageUtil.replacePlaceholders(config.messages.playerTempBanned,
-                    target.getName().getString(), MessageUtil.formatTime(durationMs), 
-                    moderator.getName().getString(), finalReason);
-                broadcastAction(broadcastMessage);
-            }
+            String broadcastMessage = target.getName().getString() + " was temporarily banned by " + moderator.getName().getString() + " for " + MessageUtil.formatTime(durationMs) + ": " + finalReason;
+            broadcastAction(broadcastMessage);
             
             String successMessage = "&aSuccessfully temp-banned " + target.getName().getString() + 
                 " for " + MessageUtil.formatTime(durationMs) + ": " + finalReason;
@@ -487,17 +458,7 @@ public class ModerationManager {
     /**
      * Get jail location
      */
-    private LocationUtil.Location getJailLocation(String jailName) {
-        ModerationConfig config = configUnifier.getConfigManager().getModerationConfig();
-        // Return the default jail location
-        return new LocationUtil.Location(
-            config.jail.jailWorld, 
-            config.jail.jailX, 
-            config.jail.jailY, 
-            config.jail.jailZ, 
-            0, 0
-        );
-    }
+    // getJailLocation removed: now handled via main config or not supported
     
     /**
      * Teleport player to location

@@ -96,13 +96,13 @@ public class ThemeCommand {
             String theme = StringArgumentType.getString(context, "theme");
             
             if (!TablistScoreboardManager.getInstance().getAvailableTablistThemes().contains(theme)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown tablist theme: " + theme));
+                context.getSource().sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.tablist.unknown", theme)));
                 return 0;
             }
             
             TablistScoreboardManager.getInstance().setPlayerTablistTheme(player, theme);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aSet your tablist theme to: §6" + theme), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.tablist.set", theme)), false);
             
             return 1;
         } catch (Exception e) {
@@ -121,13 +121,13 @@ public class ThemeCommand {
             String theme = StringArgumentType.getString(context, "theme");
             
             if (!TablistScoreboardManager.getInstance().getAvailableTablistThemes().contains(theme)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown tablist theme: " + theme));
+                context.getSource().sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.tablist.unknown", theme)));
                 return 0;
             }
             
             TablistScoreboardManager.getInstance().setPlayerTablistTheme(targetPlayer, theme);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aSet tablist theme for §6" + targetPlayer.getDisplayName().getString() + " §ato: §6" + theme), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.tablist.set.other", targetPlayer.getDisplayName().getString(), theme)), false);
             
             return 1;
         } catch (Exception e) {
@@ -146,13 +146,13 @@ public class ThemeCommand {
             String theme = StringArgumentType.getString(context, "theme");
             
             if (!TablistScoreboardManager.getInstance().getAvailableScoreboardThemes().contains(theme)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown scoreboard theme: " + theme));
+                context.getSource().sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.scoreboard.unknown", theme)));
                 return 0;
             }
             
             TablistScoreboardManager.getInstance().setPlayerScoreboardTheme(player, theme);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aSet your scoreboard theme to: §6" + theme), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.scoreboard.set", theme)), false);
             
             return 1;
         } catch (Exception e) {
@@ -171,13 +171,13 @@ public class ThemeCommand {
             String theme = StringArgumentType.getString(context, "theme");
             
             if (!TablistScoreboardManager.getInstance().getAvailableScoreboardThemes().contains(theme)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown scoreboard theme: " + theme));
+                context.getSource().sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.scoreboard.unknown", theme)));
                 return 0;
             }
             
             TablistScoreboardManager.getInstance().setPlayerScoreboardTheme(targetPlayer, theme);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aSet scoreboard theme for §6" + targetPlayer.getDisplayName().getString() + " §ato: §6" + theme), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.scoreboard.set.other", targetPlayer.getDisplayName().getString(), theme)), false);
             
             return 1;
         } catch (Exception e) {
@@ -196,13 +196,13 @@ public class ThemeCommand {
             String template = StringArgumentType.getString(context, "template");
             
             if (!CustomBossbarManager.getInstance().getTemplateNames().contains(template)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown bossbar template: " + template));
+                context.getSource().sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.bossbar.unknown", template)));
                 return 0;
             }
             
             CustomBossbarManager.getInstance().showBossbar(player, template, 10);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aShowing bossbar: §6" + template), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.bossbar.show", template)), false);
             
             return 1;
         } catch (Exception e) {
@@ -222,13 +222,13 @@ public class ThemeCommand {
             int duration = IntegerArgumentType.getInteger(context, "duration");
             
             if (!CustomBossbarManager.getInstance().getTemplateNames().contains(template)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown bossbar template: " + template));
+                context.getSource().sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.bossbar.unknown", template)));
                 return 0;
             }
             
             CustomBossbarManager.getInstance().showBossbar(player, template, duration);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aShowing bossbar: §6" + template + " §afor §6" + duration + " §aseconds"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.bossbar.show.duration", template, duration)), false);
             
             return 1;
         } catch (Exception e) {
@@ -248,13 +248,13 @@ public class ThemeCommand {
             int duration = IntegerArgumentType.getInteger(context, "duration");
             
             if (!CustomBossbarManager.getInstance().getTemplateNames().contains(template)) {
-                context.getSource().sendFailure(Component.literal("§cUnknown bossbar template: " + template));
+                context.getSource().sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.bossbar.unknown", template)));
                 return 0;
             }
             
             CustomBossbarManager.getInstance().showBossbar(targetPlayer, template, duration);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aShowing bossbar: §6" + template + " §ato §6" + targetPlayer.getDisplayName().getString() + " §afor §6" + duration + " §aseconds"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.bossbar.show.other", template, targetPlayer.getDisplayName().getString(), duration)), false);
             
             return 1;
         } catch (Exception e) {
@@ -273,7 +273,7 @@ public class ThemeCommand {
             
             CustomBossbarManager.getInstance().removeBossbar(player);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aHidden your bossbar"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.bossbar.hide")), false);
             
             return 1;
         } catch (Exception e) {
@@ -292,7 +292,7 @@ public class ThemeCommand {
             
             CustomBossbarManager.getInstance().removeBossbar(targetPlayer);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aHidden bossbar for §6" + targetPlayer.getDisplayName().getString()), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.bossbar.hide.other", targetPlayer.getDisplayName().getString())), false);
             
             return 1;
         } catch (Exception e) {
@@ -311,7 +311,7 @@ public class ThemeCommand {
             
             CustomBossbarManager.getInstance().removeBossbar(player);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aHidden all your bossbars"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.bossbar.hideall")), false);
             
             return 1;
         } catch (Exception e) {
@@ -330,7 +330,7 @@ public class ThemeCommand {
             
             CustomBossbarManager.getInstance().removeBossbar(targetPlayer);
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aHidden all bossbars for §6" + targetPlayer.getDisplayName().getString()), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.bossbar.hideall.other", targetPlayer.getDisplayName().getString())), false);
             
             return 1;
         } catch (Exception e) {
@@ -346,30 +346,30 @@ public class ThemeCommand {
     private static int executeListAll(CommandContext<CommandSourceStack> context) {
         try {
             context.getSource().sendSuccess(() -> 
-                Component.literal("§6§l=== NeoEssentials Theme System ==="), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.header")), false);
             
             // Tablist themes
             context.getSource().sendSuccess(() -> 
-                Component.literal("§b§lTablist Themes:"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.tablist")), false);
             for (String theme : TablistScoreboardManager.getInstance().getAvailableTablistThemes()) {
                 context.getSource().sendSuccess(() -> 
-                    Component.literal("§7- §a" + theme), false);
+                    Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.tablist.item", theme)), false);
             }
             
             // Scoreboard themes
             context.getSource().sendSuccess(() -> 
-                Component.literal("§e§lScoreboard Themes:"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.scoreboard")), false);
             for (String theme : TablistScoreboardManager.getInstance().getAvailableScoreboardThemes()) {
                 context.getSource().sendSuccess(() -> 
-                    Component.literal("§7- §a" + theme), false);
+                    Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.scoreboard.item", theme)), false);
             }
             
             // Bossbar templates
             context.getSource().sendSuccess(() -> 
-                Component.literal("§d§lBossbar Templates:"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.bossbar")), false);
             for (String template : CustomBossbarManager.getInstance().getTemplateNames()) {
                 context.getSource().sendSuccess(() -> 
-                    Component.literal("§7- §a" + template), false);
+                    Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.bossbar.item", template)), false);
             }
             
             return 1;
@@ -386,11 +386,11 @@ public class ThemeCommand {
     private static int executeListTablistThemes(CommandContext<CommandSourceStack> context) {
         try {
             context.getSource().sendSuccess(() -> 
-                Component.literal("§b§lAvailable Tablist Themes:"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.tablist.available")), false);
             
             for (String theme : TablistScoreboardManager.getInstance().getAvailableTablistThemes()) {
                 context.getSource().sendSuccess(() -> 
-                    Component.literal("§7- §a" + theme), false);
+                    Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.tablist.item", theme)), false);
             }
             
             return 1;
@@ -407,11 +407,11 @@ public class ThemeCommand {
     private static int executeListScoreboardThemes(CommandContext<CommandSourceStack> context) {
         try {
             context.getSource().sendSuccess(() -> 
-                Component.literal("§e§lAvailable Scoreboard Themes:"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.scoreboard.available")), false);
             
             for (String theme : TablistScoreboardManager.getInstance().getAvailableScoreboardThemes()) {
                 context.getSource().sendSuccess(() -> 
-                    Component.literal("§7- §a" + theme), false);
+                    Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.scoreboard.item", theme)), false);
             }
             
             return 1;
@@ -428,11 +428,11 @@ public class ThemeCommand {
     private static int executeListBossbarTemplates(CommandContext<CommandSourceStack> context) {
         try {
             context.getSource().sendSuccess(() -> 
-                Component.literal("§d§lAvailable Bossbar Templates:"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.bossbar.available")), false);
             
             for (String template : CustomBossbarManager.getInstance().getTemplateNames()) {
                 context.getSource().sendSuccess(() -> 
-                    Component.literal("§7- §a" + template), false);
+                    Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.bossbar.item", template)), false);
             }
             
             return 1;
@@ -449,7 +449,7 @@ public class ThemeCommand {
     private static int executeReload(CommandContext<CommandSourceStack> context) {
         try {
             context.getSource().sendSuccess(() -> 
-                Component.literal("§aReloaded theme system configurations"), false);
+                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.reload.success")), false);
             
             return 1;
         } catch (Exception e) {

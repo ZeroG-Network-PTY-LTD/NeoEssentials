@@ -1,7 +1,8 @@
 package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigurationUnifier;
-import com.zerog.neoessentials.config.WarpConfig;
+import com.zerog.neoessentials.config.MainConfig;
+// import removed: WarpConfig is now centralized in MainConfig
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -48,9 +49,9 @@ public class WarpManager {
      * Create a new warp
      */
     public boolean createWarp(ServerPlayer player, String warpName, String category) {
-        WarpConfig config = configUnifier.getConfigManager().getWarpConfig();
-        
-        if (!config.enabled) {
+    MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
+        boolean warpModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.warps;
+        if (!warpModuleEnabled) {
             MessageUtil.sendMessage(player, "&cWarp system is disabled.");
             return false;
         }
@@ -130,9 +131,9 @@ public class WarpManager {
      * Delete a warp
      */
     public boolean deleteWarp(ServerPlayer player, String warpName) {
-        WarpConfig config = configUnifier.getConfigManager().getWarpConfig();
-        
-        if (!config.enabled) {
+    MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
+        boolean warpModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.warps;
+        if (!warpModuleEnabled) {
             MessageUtil.sendMessage(player, "&cWarp system is disabled.");
             return false;
         }
@@ -163,9 +164,9 @@ public class WarpManager {
      * Teleport player to a warp
      */
     public boolean teleportToWarp(ServerPlayer player, String warpName) {
-        WarpConfig config = configUnifier.getConfigManager().getWarpConfig();
-        
-        if (!config.enabled) {
+    MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
+        boolean warpModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.warps;
+        if (!warpModuleEnabled) {
             MessageUtil.sendMessage(player, "&cWarp system is disabled.");
             return false;
         }
@@ -179,7 +180,7 @@ public class WarpManager {
         // Check permission for private warps
         if (!warpData.isPublic && !warpData.ownerId.equals(player.getUUID()) && 
             !PermissionUtil.hasPermission(player, "neoessentials.warp." + warpName.toLowerCase())) {
-            MessageUtil.sendMessage(player, config.messages.warpPrivate);
+            MessageUtil.sendMessage(player, MessageUtil.replacePlaceholders(config.messages.warpPrivate, warpName));
             return false;
         }
         
@@ -234,7 +235,7 @@ public class WarpManager {
      * List all available warps
      */
     public boolean listWarps(ServerPlayer player, String category) {
-        WarpConfig config = configUnifier.getConfigManager().getWarpConfig();
+    MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
         
         List<WarpData> availableWarps = warps.values().stream()
             .filter(warp -> warp.isPublic || warp.ownerId.equals(player.getUUID()) || 
@@ -263,7 +264,7 @@ public class WarpManager {
      * Check if location is safe for teleportation
      */
     private boolean isLocationSafe(LocationUtil.Location location) {
-        WarpConfig config = configUnifier.getConfigManager().getWarpConfig();
+    MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
         
         if (!config.requireSafeLocation) {
             return true;
@@ -282,7 +283,7 @@ public class WarpManager {
      * Check warp cooldown
      */
     private boolean hasWarpCooldown(UUID playerId) {
-        WarpConfig config = configUnifier.getConfigManager().getWarpConfig();
+    MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
         
         if (config.teleportWarpCooldown <= 0) {
             return false;
@@ -301,7 +302,7 @@ public class WarpManager {
      * Get remaining cooldown time
      */
     private long getWarpCooldownRemaining(UUID playerId) {
-        WarpConfig config = configUnifier.getConfigManager().getWarpConfig();
+    MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
         
         Long lastUse = warpCooldowns.get(playerId);
         if (lastUse == null) {
