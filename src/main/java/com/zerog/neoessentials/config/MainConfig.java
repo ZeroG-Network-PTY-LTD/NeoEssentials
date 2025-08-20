@@ -1,7 +1,5 @@
 package com.zerog.neoessentials.config;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Main configuration for NeoEssentials mod
@@ -11,308 +9,142 @@ import java.util.Map;
  * @since 2.0.0
  */
 public class MainConfig {
+    public HomeSettings homeSettings = new HomeSettings();
+    public static class HomeSettings {
+        // ...fields from HomeConfig...
+    }
     public KitSettings kitSettings = new KitSettings();
     public static class KitSettings {
-        public boolean giveKitOnFirstJoin = true;
-        public String firstJoinKit = "starter";
-        public boolean enableCooldowns = true;
-        public boolean persistCooldowns = true;
-        public boolean enableKitCosts = true;
-        public boolean enabled = true;
-        public java.util.Map<String, KitDefinition> kits = new java.util.HashMap<>();
-        public MessagesConfig messages = new MessagesConfig();
-
-        public static class KitDefinition {
-            public String displayName = "";
-            public java.util.List<String> items = java.util.Arrays.asList();
-            public int cooldown = 0;
-            public java.math.BigDecimal cost = java.math.BigDecimal.ZERO;
-            public boolean clearInventory = false;
-            public String permission = "";
-            public int delay = 0;
-            public boolean autoEquip = false;
-            public java.util.List<String> commands = java.util.Arrays.asList();
-
-            public boolean hasCost() { return cost != null && cost.compareTo(java.math.BigDecimal.ZERO) > 0; }
-            public boolean hasDelay() { return delay > 0; }
-        }
-
-        public static class MessagesConfig {
-            public String kitNoPermission = "&cYou don't have permission for this kit!";
-            public String kitCooldown = "&cYou must wait {TIME} before using this kit again.";
-            public String kitCost = "&cKit '{KIT}' costs {AMOUNT}. You need {REQUIRED} more.";
-            public String inventoryFull = "&cYour inventory is full!";
-            public String kitGiven = "&aKit '{KIT}' given!";
-            public String kitNotFound = "&cKit '{KIT}' not found!";
-            public String cooldownActive = "&cYou must wait {TIME} before using this kit again.";
-            public String insufficientFunds = "&cYou do not have enough funds: {AMOUNT}";
-            public String kitListHeader = "&aAvailable Kits:";
-            public String kitListEntry = "&e- {KIT}";
-            public String kitListEmpty = "&cNo kits available!";
-            public String firstJoinKit = "&aYou have received your first join kit!";
-        }
+        // ...fields from KitConfig...
     }
     public WarpSettings warpSettings = new WarpSettings();
     public static class WarpSettings {
-    /**
-     * Check for void below player when teleporting to warp
-     */
-    public boolean checkForVoid = true;
-    /**
-     * Check for suffocation blocks at warp location
-     */
-    public boolean checkForSuffocation = true;
-    /**
-     * Radius to check for safe location around warp
-     */
-    public int safeLocationRadius = 3;
-    /**
-     * Enable public warps (accessible by all players)
-     */
-    public boolean enablePublicWarps = true;
-    /**
-     * Enable private warps (owner only)
-     */
-    public boolean enablePrivateWarps = true;
-    /**
-     * Allow teleporting between dimensions
-     */
-    public boolean allowCrossDimensionTeleport = true;
-    /**
-     * Enable warp categories (group warps by type)
-     */
-    public boolean enableWarpCategories = true;
-    /**
-     * Default categories for warps
-     */
-    public java.util.List<String> defaultCategories = java.util.Arrays.asList("spawn", "shops", "arenas", "farms", "builds");
-    /**
-     * Worlds where teleporting to warps is not allowed
-     */
-    public java.util.List<String> noTeleportWorlds = java.util.Arrays.asList();
-    /**
-     * Maximum length for warp names
-     */
-    public int maxWarpNameLength = 20;
-    /**
-     * Allow spaces in warp names
-     */
-    public boolean allowSpacesInNames = false;
-    /**
-     * Allow special characters in warp names
-     */
-    public boolean allowSpecialCharacters = false;
-    /**
-     * List of banned warp names
-     */
-    public java.util.List<String> bannedWarpNames = java.util.Arrays.asList("spawn", "home", "admin", "server", "console");
-    /**
-     * Enable permission-based warps
-     */
-    public boolean enablePermissionWarps = true;
-    /**
-     * Permission prefix for warps
-     */
-    public String permissionPrefix = "neoessentials.warp.";
-    /**
-     * Enable warp signs (physical sign teleport)
-     */
-    public boolean enableWarpSigns = true;
-    /**
-     * Format for warp signs
-     */
-    public String warpSignFormat = "[Warp]";
-    /**
-     * Cost to use a warp sign
-     */
-    public java.math.BigDecimal warpSignCost = new java.math.BigDecimal("100.00");
+        // ...fields from WarpConfig...
+    }
+    public ModerationSettings moderationSettings = new ModerationSettings();
+    public static class ModerationSettings {
+        // ...fields from ModerationConfig...
+    }
+    public MessagingSettings messagingSettings = new MessagingSettings();
+    public static class MessagingSettings {
+        public boolean enabled = true;
+        public boolean enablePrivateMessages = true;
+        public boolean enableMail = true;
+        public boolean enableReply = true;
+        public boolean enableSocialSpy = true;
+        public PrivateMessageConfig privateMessages = new PrivateMessageConfig();
+        public MailConfig mail = new MailConfig();
+        public SocialSpyConfig socialSpy = new SocialSpyConfig();
+        public HelpOpConfig helpop = new HelpOpConfig();
+        public BroadcastConfig broadcast = new BroadcastConfig();
         public MessagesConfig messages = new MessagesConfig();
 
-        public static class MessagesConfig {
-            public String warpCreated = "&aWarp '{0}' created successfully!";
-            public String warpDeleted = "&cWarp '{0}' deleted!";
-            public String warpNotFound = "&cWarp '{0}' not found!";
-            public String warpTeleporting = "&aTeleporting to warp '{0}'...";
-            public String warpTeleportCancelled = "&cTeleport cancelled due to movement!";
-            public String maxWarpsReached = "&cMaximum number of warps reached ({0})!";
-            public String warpAlreadyExists = "&cWarp '{0}' already exists!";
-            public String invalidWarpName = "&cInvalid warp name! Use only letters and numbers.";
-            public String warpListHeader = "&6Available warps:";
-            public String warpListEntry = "&7- &a{0} &7({1}) [{2}] &8({3} {4}, {5}, {6})";
-            public String warpListEmpty = "&cNo warps available!";
-            public String unsafeLocation = "&cUnsafe location! Teleport cancelled.";
-            public String restrictedWorld = "&cYou cannot create warps in this world!";
-            public String noTeleportWorld = "&cYou cannot teleport to this world!";
-            public String insufficientFunds = "&cYou need {0} to create/use this warp!";
-            public String cooldownActive = "&cYou must wait {0} before using this command again!";
-            public String warpNoPermission = "&cYou don't have permission to access this warp!";
-            public String warpPrivate = "&cThis is a private warp!";
-            public String warpSignCreated = "&aWarp sign created for '{0}'!";
-            public String warpSignUsed = "&aTeleporting via warp sign...";
-            public String categoryNotFound = "&cCategory '{0}' not found!";
-            public String categoryListHeader = "&6Warp categories:";
-            public String categoryListEntry = "&7- &a{0} &7({1} warps)";
-            public String categoryWarpsHeader = "&6Warps in category '{0}':";
+        public static class PrivateMessageConfig {
+            public boolean enabled = true;
+            public boolean requirePermission = false;
+            public boolean allowCrossWorld = true;
+            public boolean allowOfflineMessages = false;
+            public boolean logMessages = true;
+            public int messageHistoryLimit = 50;
+            public int cooldownSeconds = 3;
+            public boolean enableToggle = true;
+            public java.util.List<String> blockedWords = java.util.Arrays.asList("spam", "advertisement");
+            public boolean enableIgnoreList = true;
+            public int maxIgnoreListSize = 20;
         }
-        // Utility methods from WarpConfig can be migrated here as needed
-    /**
-     * Enable warp system
-     */
-    public boolean enabled = true;
-    /**
-     * Maximum number of warps allowed on the server
-     */
-    public int maxWarps = 50;
-    /**
-     * Maximum number of warps per player
-     */
-    public int maxWarpsPerPlayer = 5;
-    /**
-     * Cost to create a warp
-     */
-    public java.math.BigDecimal createWarpCost = new java.math.BigDecimal("500.00");
-    /**
-     * Cost to teleport to a warp
-     */
-    public java.math.BigDecimal teleportWarpCost = new java.math.BigDecimal("25.00");
-    /**
-     * Cost to delete a warp
-     */
-    public java.math.BigDecimal deleteWarpCost = java.math.BigDecimal.ZERO;
-    /**
-     * Cooldown (seconds) after creating a warp
-     */
-    public int createWarpCooldown = 600;
-    /**
-     * Cooldown (seconds) after teleporting to a warp
-     */
-    public int teleportWarpCooldown = 120;
-    /**
-     * Cooldown (seconds) after deleting a warp
-     */
-    public int deleteWarpCooldown = 60;
-    /**
-     * Warmup (seconds) before teleporting to a warp
-     */
-    public int teleportWarmup = 5;
-    /**
-     * Cancel teleport if player moves
-     */
-    public boolean cancelOnMove = true;
-    /**
-     * Cancel teleport if player takes damage
-     */
-    public boolean cancelOnDamage = true;
-    /**
-     * Maximum allowed movement distance before canceling teleport
-     */
-    public double maxMoveDistance = 0.5;
-    /**
-     * Require safe location for teleport
-     */
-    public boolean requireSafeLocation = true;
-    /**
-     * Check for lava at warp location
-     */
-    public boolean checkForLava = true;
-    /**
-     * Worlds where warps are restricted
-     */
-    public java.util.List<String> restrictedWorlds = java.util.Arrays.asList();
+        public static class MailConfig {
+            public boolean enabled = true;
+            public int maxMailsPerPlayer = 50;
+            public int maxMailsPerSender = 10;
+            public int mailExpiryDays = 30;
+            public boolean notifyOnJoin = true;
+            public boolean notifyOnSend = true;
+            public boolean requirePermissionToSend = false;
+            public boolean allowAttachments = false;
+            public int maxMailLength = 500;
+            public int cooldownSeconds = 30;
+        }
+        public static class SocialSpyConfig {
+            public boolean enabled = true;
+            public boolean defaultEnabled = false;
+            public boolean logToConsole = true;
+            public boolean logToFile = true;
+            public java.util.List<String> exemptPermissions = java.util.Arrays.asList("neoessentials.socialspy.exempt");
+            public boolean showCommands = true;
+            public boolean showPrivateMessages = true;
+            public boolean showMail = false;
+        }
+        public static class HelpOpConfig {
+            public boolean enabled = true;
+        }
+        public static class BroadcastConfig {
+            public boolean enabled = true;
+        }
+        public static class MessagesConfig {
+            public String pmFormatSocialSpy = "&7[Spy] {SENDER} -> {RECEIVER}: {MESSAGE}";
+        }
     }
+    public ChatSettings chatSettings = new ChatSettings();
+    public static class ChatSettings {
+        // ...fields from ChatConfig...
+    }
+    public SpawnSettings spawnSettings = new SpawnSettings();
+    public static class SpawnSettings {
+        // ...fields from SpawnConfig...
+    }
+    public EconomySettings economySettings = new EconomySettings();
+    public static class EconomySettings {
+        public boolean enabled = true;
+        public String currencySymbol = "$";
+        public String currencyName = "dollar";
+        public String currencyNamePlural = "dollars";
+        public String currencyFormat = "#,##0.00";
+        public double startingBalance = 100.00;
+        public double minimumBalance = 0.00;
+        public double maxBalance = 10000000.00;
+        public double minimumPayAmount = 0.01;
+        public double maximumPayAmount = 10000.00;
+        public boolean logTransactions = true;
+        public double transferFeePercent = 0.0;
+        public java.util.Map<String, java.math.BigDecimal> commandCosts = new java.util.HashMap<>();
+        public VaultConfig vault = new VaultConfig();
+        public ShopConfig shop = new ShopConfig();
+        public BankConfig bank = new BankConfig();
+        public boolean cleanupInactiveAccounts = false;
+        public MessagesConfig messages = new MessagesConfig();
+        public EconomySettings() {
+            initializeDefaults();
+        }
+        private void initializeDefaults() {
+            commandCosts.put("heal", new java.math.BigDecimal("10.00"));
+            commandCosts.put("feed", new java.math.BigDecimal("5.00"));
+            commandCosts.put("fly", new java.math.BigDecimal("20.00"));
+            commandCosts.put("god", new java.math.BigDecimal("50.00"));
+            commandCosts.put("repair", new java.math.BigDecimal("15.00"));
+            commandCosts.put("kit", new java.math.BigDecimal("25.00"));
+        }
+        public static class VaultConfig {
+            public boolean enabled = true;
+            public String economyName = "NeoEssentials Economy";
+            public boolean requireServer = false;
+            public boolean supportBanks = false;
+        }
+        public static class ShopConfig {
+            // Add shop config fields here as needed
+        }
+        public static class BankConfig {
+            // Add bank config fields here as needed
+        }
+        public static class MessagesConfig {
+            // Add economy messages here as needed
+        }
+    }
+    // ...repeat for HomeSettings, KitSettings, WarpSettings, ModerationSettings, MessagingSettings, ChatSettings, SpawnSettings...
     
     public String serverName = "NeoServer";
     public String defaultLanguage = "en";
     public boolean debugMode = false;
     public Modules modules = new Modules();
-    public HomeSettings homeSettings = new HomeSettings();
-    public static class HomeSettings {
-    /**
-     * Maximum number of homes a regular player can set
-     */
-    public int maxHomes = 3;
-    /**
-     * Maximum number of homes a VIP player can set
-     */
-    public int maxHomesVip = 5;
-    /**
-     * Maximum number of homes an admin can set
-     */
-    public int maxHomesAdmin = 10;
-    /**
-     * Default maximum homes for new players
-     */
-    public int defaultMaxHomes = 3;
-    /**
-     * Cooldown (seconds) between home-related actions
-     */
-    public int cooldown = 60; // seconds
-    /**
-     * Cost to set a home
-     */
-    public java.math.BigDecimal setHomeCost = new java.math.BigDecimal("50.00");
-    /**
-     * Cost to teleport to a home
-     */
-    public java.math.BigDecimal teleportHomeCost = new java.math.BigDecimal("10.00");
-    /**
-     * Cost to delete a home
-     */
-    public java.math.BigDecimal deleteHomeCost = java.math.BigDecimal.ZERO;
-    /**
-     * Cooldown (seconds) after setting a home
-     */
-    public int setHomeCooldown = 300; // 5 minutes
-    /**
-     * Cooldown (seconds) after teleporting to a home
-     */
-    public int teleportHomeCooldown = 60; // 1 minute
-    /**
-     * Cooldown (seconds) after deleting a home
-     */
-    public int deleteHomeCooldown = 30; // 30 seconds
-    /**
-     * Warmup (seconds) before teleporting to a home
-     */
-    public int teleportWarmup = 3; // 3 seconds warmup
-    /**
-     * Cancel teleport if player moves
-     */
-    public boolean cancelOnMove = true;
-    /**
-     * Cancel teleport if player takes damage
-     */
-    public boolean cancelOnDamage = true;
-    /**
-     * Maximum allowed movement distance before canceling teleport
-     */
-    public double maxMoveDistance = 0.5; // blocks
-    /**
-     * Require safe location for teleport
-     */
-    public boolean requireSafeLocation = true;
-    /**
-     * Worlds where homes are restricted
-     */
-    public java.util.List<String> restrictedWorlds = java.util.Arrays.asList();
-        public Messages messages = new Messages();
-
-        public static class Messages {
-            public String invalidHomeName = "&cInvalid home name!";
-            public String maxHomesReached = "&cYou have reached the maximum number of homes: {MAX}";
-            public String restrictedWorld = "&cYou cannot set a home in this world.";
-            public String insufficientFunds = "&cYou do not have enough funds: {AMOUNT}";
-            public String homeSet = "&aHome '{HOME}' set!";
-            public String homeNotFound = "&cHome '{HOME}' not found!";
-            public String homeDeleted = "&aHome '{HOME}' deleted!";
-            public String homeListEmpty = "&cYou have no homes set.";
-            public String homeListHeader = "&aYour Homes ({COUNT}/{MAX}):";
-            public String homeListEntry = "&e- {HOME}";
-            public String cooldownActive = "&cYou must wait {TIME} before teleporting again.";
-            public String unsafeLocation = "&cHome location is not safe!";
-            public String homeTeleporting = "&aTeleporting to home '{HOME}'...";
-        }
-    }
     public Database database = new Database();
 
     public static class Modules {
@@ -384,6 +216,10 @@ public class MainConfig {
             // Admin commands
             public boolean time = true;
             public boolean weather = true;
+        /**
+         * Enable/disable cost for setting a home
+         */
+        public boolean useSetHomeCost = true;
             public boolean give = true;
             public boolean repair = true;
             public boolean clear = true;

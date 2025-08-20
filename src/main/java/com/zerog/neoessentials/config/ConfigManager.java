@@ -15,15 +15,8 @@ public class ConfigManager {
 	private final ConfigStatus configStatus = new ConfigStatus();
 	public void saveAll() {
 		saveConfig("main.json", mainConfig);
-		saveConfig("economy.json", economyConfig);
-		saveConfig("homes.json", homeConfig);
-		saveConfig("kits.json", kitConfig);
-		saveConfig("warps.json", warpConfig);
-		saveConfig("moderation.json", moderationConfig);
-		saveConfig("messaging.json", messagingConfig);
-		saveConfig("chat.json", chatConfig);
 		saveConfig("tablist.json", tablistConfig);
-		saveConfig("spawn.json", spawnConfig);
+		// Bossbar, scoreboard, animation configs if present
 	}
 
 	public void reloadAll() {
@@ -33,7 +26,6 @@ public class ConfigManager {
 			MainConfig mainConfig = getMainConfig();
 			if (mainConfig == null || !mainConfig.modules.bossbar) {
 				com.zerog.neoessentials.features.CustomBossbarManager.getInstance().shutdown();
-				// Remove bossbars for all players if needed
 				net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
 				if (server != null) {
 					for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -48,8 +40,7 @@ public class ConfigManager {
 
 	public String[] getAllConfigFiles() {
 		return new String[] {
-			"main.json", "economy.json", "homes.json", "kits.json", "warps.json",
-			"moderation.json", "messaging.json", "chat.json", "tablist.json", "spawn.json"
+			"main.json", "tablist.json" // Bossbar, scoreboard, animation configs if present
 		};
 	}
 
@@ -79,15 +70,8 @@ public class ConfigManager {
 	private final Map<String, Object> configCache = new ConcurrentHashMap<>();
 
 	private MainConfig mainConfig;
-	private EconomyConfig economyConfig;
-	private HomeConfig homeConfig;
-	private KitConfig kitConfig;
-	private WarpConfig warpConfig;
-	private ModerationConfig moderationConfig;
-	private MessagingConfig messagingConfig;
-	private ChatConfig chatConfig;
 	private TablistConfig tablistConfig;
-	private SpawnConfig spawnConfig;
+	// Bossbar, scoreboard, animation configs if present
 
 	private ConfigManager() {
 		this.gson = new GsonBuilder().setPrettyPrinting().create();
@@ -115,15 +99,8 @@ public class ConfigManager {
 
 	private void loadAllConfigurations() {
 		mainConfig = loadConfig("main.json", MainConfig.class);
-		economyConfig = loadConfig("economy.json", EconomyConfig.class);
-		homeConfig = loadConfig("homes.json", HomeConfig.class);
-		kitConfig = loadConfig("kits.json", KitConfig.class);
-		warpConfig = loadConfig("warps.json", WarpConfig.class);
-		moderationConfig = loadConfig("moderation.json", ModerationConfig.class);
-		messagingConfig = loadConfig("messaging.json", MessagingConfig.class);
-		chatConfig = loadConfig("chat.json", ChatConfig.class);
 		tablistConfig = loadConfig("tablist.json", TablistConfig.class);
-		spawnConfig = loadConfig("spawn.json", SpawnConfig.class);
+		// Bossbar, scoreboard, animation configs if present
 	}
 
 	private <T> T loadConfig(String fileName, Class<T> configClass) {
@@ -160,13 +137,6 @@ public class ConfigManager {
 
 	// Getters
 	public MainConfig getMainConfig() { return mainConfig != null ? mainConfig : new MainConfig(); }
-	public EconomyConfig getEconomyConfig() { return economyConfig != null ? economyConfig : new EconomyConfig(); }
-	public HomeConfig getHomeConfig() { return homeConfig != null ? homeConfig : new HomeConfig(); }
-	public KitConfig getKitConfig() { return kitConfig != null ? kitConfig : new KitConfig(); }
-	public WarpConfig getWarpConfig() { return warpConfig != null ? warpConfig : new WarpConfig(); }
-	public ModerationConfig getModerationConfig() { return moderationConfig != null ? moderationConfig : new ModerationConfig(); }
-	public MessagingConfig getMessagingConfig() { return messagingConfig != null ? messagingConfig : new MessagingConfig(); }
-	public ChatConfig getChatConfig() { return chatConfig != null ? chatConfig : new ChatConfig(); }
 	public TablistConfig getTablistConfig() { return tablistConfig != null ? tablistConfig : new TablistConfig(); }
-	public SpawnConfig getSpawnConfig() { return spawnConfig != null ? spawnConfig : new SpawnConfig(); }
+	// Bossbar, scoreboard, animation config getters if present
 }

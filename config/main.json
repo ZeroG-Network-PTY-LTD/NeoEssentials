@@ -156,5 +156,40 @@
     "giveKitOnJoin": true,
     "announceOnJoin": true,
     "protectionTime": 300
+  },
+  "homeSettings": {
+    "maxHomes": 3,
+    "maxHomesVip": 5,
+    "maxHomesAdmin": 10,
+    "defaultMaxHomes": 3,
+    "cooldown": 60,
+    "setHomeCost": 50.0,
+    "teleportHomeCost": 10.0,
+    "deleteHomeCost": 0.0,
+    "setHomeCooldown": 300,
+    "teleportHomeCooldown": 60,
+    "deleteHomeCooldown": 30,
+    "teleportWarmup": 3,
+    "cancelOnMove": true,
+    "cancelOnDamage": true,
+    "maxMoveDistance": 0.5,
+    "requireSafeLocation": true,
+    "restrictedWorlds": [],
+    "useSetHomeCost": true,
+    "messages": {
+      "invalidHomeName": "&cInvalid home name!",
+      "maxHomesReached": "&cYou have reached the maximum number of homes: {MAX}",
+      "restrictedWorld": "&cYou cannot set a home in this world.",
+      "insufficientFunds": "&cYou do not have enough funds: {AMOUNT}",
+      "homeSet": "&aHome '{HOME}' set!",
+      "homeNotFound": "&cHome '{HOME}' not found!",
+      "homeDeleted": "&aHome '{HOME}' deleted!",
+      "homeListEmpty": "&cYou have no homes set.",
+      "homeListHeader": "&aYour Homes ({COUNT}/{MAX}):",
+      "homeListEntry": "&e- {HOME}",
+      "cooldownActive": "&cYou must wait {TIME} before teleporting again.",
+      "unsafeLocation": "&cHome location is not safe!",
+      "homeTeleporting": "&aTeleporting to home '{HOME}'..."
+    }
   }
 }
