@@ -40,57 +40,48 @@ public class CompatibilityCommand {
     
     private static void showStatus(CommandSourceStack source, PluginCompatibilityManager manager) {
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&6=== Plugin Compatibility Status ===")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.status.header")
         ), false);
-        
         manager.getDetectedPlugins().forEach(plugin -> {
-            String status = plugin.getStatus() == com.zerog.neoessentials.data.PluginStatusEnum.INTEGRATED ? 
-                "&a✓ INTEGRATED" : "&c✗ AVAILABLE";
+            String statusKey = plugin.getStatus() == com.zerog.neoessentials.data.PluginStatusEnum.INTEGRATED ?
+                "compat.status.integrated" : "compat.status.available";
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&7" + plugin.getName() + ": " + status)
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", statusKey, plugin.getName())
             ), false);
         });
     }
     
     private static void refreshIntegrations(CommandSourceStack source, PluginCompatibilityManager manager) {
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&6Refreshing plugin integrations...")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.refresh.start")
         ), false);
-        
         manager.refreshIntegrations();
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&aPlugin integrations refreshed!")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.refresh.success")
         ), false);
     }
     
     private static void generateReport(CommandSourceStack source, PluginCompatibilityManager manager) {
         var report = manager.generateCompatibilityReport();
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&6=== Compatibility Report ===")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.header")
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Total Plugins Detected: &e" + report.getTotalPlugins())
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.total", report.getTotalPlugins())
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Successfully Integrated: &a" + report.getIntegratedPlugins())
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.integrated", report.getIntegratedPlugins())
         ), false);
-        
         source.sendSuccess(() -> Component.literal(
-            MessageUtil.translateColorCodes("&7Failed Integrations: &c" + report.getFailedPlugins())
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.failed", report.getFailedPlugins())
         ), false);
-        
         if (!report.getIssues().isEmpty()) {
             source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&6Issues Found:")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.issues.header")
             ), false);
-            
             report.getIssues().forEach(issue -> {
                 source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&c- " + issue)
+                    com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.issue", issue)
                 ), false);
             });
         }
