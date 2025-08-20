@@ -52,29 +52,29 @@ public class WarpManager {
     MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
         boolean warpModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.warps;
         if (!warpModuleEnabled) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.disabled"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.disabled"));
             return false;
         }
         
         // Check permission
         if (!PermissionUtil.hasPermission(player, PermissionNodes.WARP_SET)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.no_permission"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.no_permission"));
             return false;
         }
         
         // Validate warp name
         if (warpName.length() > config.maxWarpNameLength) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.name_too_long", String.valueOf(config.maxWarpNameLength)));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.name_too_long", String.valueOf(config.maxWarpNameLength)));
             return false;
         }
         
         if (!config.allowSpacesInNames && warpName.contains(" ")) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.no_spaces"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.no_spaces"));
             return false;
         }
         
         if (config.bannedWarpNames.contains(warpName.toLowerCase())) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.name_banned"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.name_banned"));
             return false;
         }
         
@@ -84,14 +84,14 @@ public class WarpManager {
         // Check world restrictions
         String worldName = player.serverLevel().dimension().location().toString();
         if (config.restrictedWorlds.contains(worldName)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.restricted_world"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.restricted_world"));
             return false;
         }
         
         // Check economy cost
         if (config.createWarpCost.doubleValue() > 0) {
             if (!economyManager.hasBalance(player.getUUID(), config.createWarpCost.doubleValue())) {
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.insufficient_funds", economyManager.formatCurrency(config.createWarpCost.doubleValue())));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.insufficient_funds", economyManager.formatCurrency(config.createWarpCost.doubleValue())));
                 return false;
             }
             economyManager.withdrawBalance(player.getUUID(), config.createWarpCost.doubleValue(), "Warp creation: " + warpName);
@@ -118,8 +118,8 @@ public class WarpManager {
         warps.put(warpName.toLowerCase(), warpData);
         saveWarpData();
         
-        String message = isNewWarp ? config.messages.warpCreated : com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.updated");
-        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, message, warpName));
+    String message = isNewWarp ? config.messages.warpCreated : com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.updated");
+    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, message, warpName));
         
         LOGGER.info("Warp '{}' {} by {}", warpName, isNewWarp ? "created" : "updated", player.getName().getString());
         
@@ -133,26 +133,26 @@ public class WarpManager {
     MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
         boolean warpModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.warps;
         if (!warpModuleEnabled) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.disabled"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.disabled"));
             return false;
         }
         
         WarpData warpData = warps.get(warpName.toLowerCase());
         if (warpData == null) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.not_found", warpName));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.not_found", warpName));
             return false;
         }
         
         // Check permission - owner or admin
         if (!warpData.ownerId.equals(player.getUUID()) && !PermissionUtil.hasPermission(player, "neoessentials.delwarp.others")) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.delete_own_only"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.delete_own_only"));
             return false;
         }
         
         warps.remove(warpName.toLowerCase());
         saveWarpData();
         
-        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.deleted", warpName));
+    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.deleted", warpName));
         
         LOGGER.info("Warp '{}' deleted by {}", warpName, player.getName().getString());
         
@@ -166,34 +166,34 @@ public class WarpManager {
     MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
         boolean warpModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.warps;
         if (!warpModuleEnabled) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.disabled"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.disabled"));
             return false;
         }
         
         WarpData warpData = warps.get(warpName.toLowerCase());
         if (warpData == null) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.not_found", warpName));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.not_found", warpName));
             return false;
         }
         
         // Check permission for private warps
         if (!warpData.isPublic && !warpData.ownerId.equals(player.getUUID()) && 
             !PermissionUtil.hasPermission(player, "neoessentials.warp." + warpName.toLowerCase())) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.private", warpName));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.private", warpName));
             return false;
         }
         
         // Check cooldown
         if (hasWarpCooldown(player.getUUID())) {
             long remainingTime = getWarpCooldownRemaining(player.getUUID());
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.cooldown_active", MessageUtil.formatTime(remainingTime)));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.cooldown_active", MessageUtil.formatTime(remainingTime)));
             return false;
         }
         
         // Check teleport cost
         if (config.teleportWarpCost.doubleValue() > 0) {
             if (!economyManager.hasBalance(player.getUUID(), config.teleportWarpCost.doubleValue())) {
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.insufficient_funds", economyManager.formatCurrency(config.teleportWarpCost.doubleValue())));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.insufficient_funds", economyManager.formatCurrency(config.teleportWarpCost.doubleValue())));
                 return false;
             }
             economyManager.withdrawBalance(player.getUUID(), config.teleportWarpCost.doubleValue(), "Warp teleport: " + warpName);
@@ -201,13 +201,13 @@ public class WarpManager {
         
         // Safety check
         if (config.requireSafeLocation && !isLocationSafe(warpData.location)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.unsafe_location"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.unsafe_location"));
             return false;
         }
         
         // Check world restrictions
         if (config.noTeleportWorlds.contains(warpData.location.world)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.no_teleport_world"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.no_teleport_world"));
             return false;
         }
         
@@ -221,7 +221,7 @@ public class WarpManager {
         // Set cooldown
         setWarpCooldown(player.getUUID());
         
-        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "warp.teleporting", warpName));
+    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.teleporting", warpName));
         
         LOGGER.info("Player {} teleporting to warp '{}'", player.getName().getString(), warpName);
         

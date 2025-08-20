@@ -77,7 +77,7 @@ public class SpeedCommand {
         if (success) {
             // Send confirmation to both players
             context.getSource().sendSuccess(() -> Component.literal("§a" + target.getName().getString() + "'s " + type + " speed has been set to " + String.format("%.2f", speed) + "!"), true);
-            target.sendSystemMessage(Component.literal("§aYour " + type + " speed has been set to " + String.format("%.2f", speed) + " by " + executor.getName().getString() + "!"));
+            target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.speed.set", type, String.format("%.2f", speed), executor.getName().getString())));
         } else {
             context.getSource().sendFailure(Component.literal("§cInvalid speed type! Use 'walking' or 'flying'."));
         }

@@ -28,6 +28,22 @@ public class ConfigManager {
 
 	public void reloadAll() {
 		loadAllConfigurations();
+		// Bossbar disable logic on config reload
+		try {
+			MainConfig mainConfig = getMainConfig();
+			if (mainConfig == null || !mainConfig.modules.bossbar) {
+				com.zerog.neoessentials.features.CustomBossbarManager.getInstance().shutdown();
+				// Remove bossbars for all players if needed
+				net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+				if (server != null) {
+					for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
+						com.zerog.neoessentials.features.CustomBossbarManager.getInstance().removeBossbar(player);
+					}
+				}
+			}
+		} catch (Exception e) {
+			LOGGER.error("Failed to shutdown bossbar manager on config reload", e);
+		}
 	}
 
 	public String[] getAllConfigFiles() {

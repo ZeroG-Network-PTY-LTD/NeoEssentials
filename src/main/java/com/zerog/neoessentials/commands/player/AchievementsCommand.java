@@ -9,7 +9,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.player.AchievementSystem;
 import com.zerog.neoessentials.player.PlayerData;
 import com.zerog.neoessentials.player.PlayerDataManager;
-import com.zerog.neoessentials.util.MessageUtils;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -18,7 +17,6 @@ import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -58,22 +56,18 @@ public class AchievementsCommand {
         try {
             AchievementSystem achievementSystem = AchievementSystem.getInstance();
             
-            Component header = MessageUtils.format("&6&l=== Achievement Categories ===");
+            Component header = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.categories.header"));
             context.getSource().sendSuccess(() -> header, false);
-            
             for (AchievementSystem.AchievementCategory category : AchievementSystem.AchievementCategory.values()) {
                 List<AchievementSystem.Achievement> categoryAchievements = achievementSystem.getAchievementsByCategory(category);
-                
-                Component categoryInfo = MessageUtils.format(
-                    "&e" + category.getDisplayName() + " &7- &a" + categoryAchievements.size() + " achievements"
-                );
+                Component categoryInfo = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.categories.entry", category.getDisplayName(), categoryAchievements.size()));
                 context.getSource().sendSuccess(() -> categoryInfo, false);
             }
             
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error showing achievement categories", e);
-            Component error = MessageUtils.format("&cError retrieving achievement categories.");
+            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.categories.error"));
             context.getSource().sendSuccess(() -> error, false);
             return 0;
         }
@@ -87,27 +81,21 @@ public class AchievementsCommand {
             Map<String, Long> achievements = playerData.getAchievements();
             Collection<AchievementSystem.Achievement> allAchievementsCollection = AchievementSystem.getInstance().getAllAchievements();
             
-            Component header = MessageUtils.format("&6&l=== All Achievements ===");
+            Component header = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.list.header"));
             context.getSource().sendSuccess(() -> header, false);
-            
             for (AchievementSystem.Achievement achievement : allAchievementsCollection) {
                 long progress = achievements.getOrDefault(achievement.getId(), 0L);
                 boolean completed = progress >= achievement.getRequiredProgress();
-                
-                String status = completed ? "&a✓" : "&7○";
-                String progressText = completed ? "Completed" : progress + "/" + achievement.getRequiredProgress();
-                
-                Component achievementInfo = MessageUtils.format(
-                    status + " &e" + achievement.getName() + " &7- &f" + achievement.getDescription() +
-                    " &7(" + progressText + ")"
-                );
+                String status = completed ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.list.completed") : com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.list.incomplete");
+                String progressText = completed ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.list.progress.completed") : com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.list.progress.incomplete", progress, achievement.getRequiredProgress());
+                Component achievementInfo = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.list.entry", status, achievement.getName(), achievement.getDescription(), progressText));
                 context.getSource().sendSuccess(() -> achievementInfo, false);
             }
             
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error showing all achievements for player " + player.getName().getString(), e);
-            Component error = MessageUtils.format("&cError retrieving achievements.");
+            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.list.error"));
             context.getSource().sendSuccess(() -> error, false);
             return 0;
         }
@@ -135,26 +123,21 @@ public class AchievementsCommand {
                 }
             }
             
-            Component header = MessageUtils.format("&6&l=== Achievement Statistics ===");
+            Component header = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.stats.header"));
             context.getSource().sendSuccess(() -> header, false);
-            
-            Component completedInfo = MessageUtils.format("&eCompleted: &a" + completed + "&7/&a" + allAchievementsCollection.size());
+            Component completedInfo = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.stats.completed", completed, allAchievementsCollection.size()));
             context.getSource().sendSuccess(() -> completedInfo, false);
-            
-            Component progressInfo = MessageUtils.format("&eIn Progress: &6" + inProgress);
+            Component progressInfo = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.stats.in_progress", inProgress));
             context.getSource().sendSuccess(() -> progressInfo, false);
-            
-            Component scoreInfo = MessageUtils.format("&eTotal Score: &b" + totalScore + " points");
+            Component scoreInfo = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.stats.score", totalScore));
             context.getSource().sendSuccess(() -> scoreInfo, false);
-            
             double completionRate = (double) completed / allAchievementsCollection.size() * 100;
-            Component rateInfo = MessageUtils.format("&eCompletion Rate: &d" + String.format("%.1f", completionRate) + "%");
+            Component rateInfo = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.stats.completion_rate", String.format("%.1f", completionRate)));
             context.getSource().sendSuccess(() -> rateInfo, false);
-            
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error showing achievement stats for player " + player.getName().getString(), e);
-            Component error = MessageUtils.format("&cError retrieving achievement statistics.");
+            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "achievements.stats.error"));
             context.getSource().sendSuccess(() -> error, false);
             return 0;
         }
@@ -169,14 +152,11 @@ public class AchievementsCommand {
             boolean isOwnAchievements = source.getEntity() instanceof ServerPlayer player && 
                 player.getUUID().equals(targetPlayer.getUUID());
             
-            String targetName = isOwnAchievements ? "Your" : targetPlayer.getName().getString() + "'s";
-            
-            Component header = MessageUtils.format("&6&l=== " + targetName + " Achievements ===");
+            String targetName = isOwnAchievements ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.your") : targetPlayer.getName().getString();
+            Component header = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.header", targetName));
             source.sendSuccess(() -> header, false);
-            
             long completed = 0;
             int totalScore = 0;
-            
             for (AchievementSystem.Achievement achievement : allAchievementsCollection) {
                 long progress = achievements.getOrDefault(achievement.getId(), 0L);
                 if (progress >= achievement.getRequiredProgress()) {
@@ -184,45 +164,33 @@ public class AchievementsCommand {
                     totalScore += achievement.getPoints();
                 }
             }
-            
-            Component summary = MessageUtils.format("&eCompleted: &a" + completed + "&7/&a" + allAchievementsCollection.size() + 
-                " &7| Score: &b" + totalScore + " points");
+            Component summary = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.summary", completed, allAchievementsCollection.size(), totalScore));
             source.sendSuccess(() -> summary, false);
-            
-            // Show recently completed achievements (last 5)
-            Component recentHeader = MessageUtils.format("&6Recent Progress:");
+            Component recentHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.recent_header"));
             source.sendSuccess(() -> recentHeader, false);
-            
             int shown = 0;
             for (AchievementSystem.Achievement achievement : allAchievementsCollection) {
                 if (shown >= 5) break;
-                
                 long progress = achievements.getOrDefault(achievement.getId(), 0L);
                 if (progress > 0) {
                     boolean completedAchievement = progress >= achievement.getRequiredProgress();
-                    String status = completedAchievement ? "&a✓" : "&6⏳";
-                    String progressText = completedAchievement ? "Completed" : progress + "/" + achievement.getRequiredProgress();
-                    
-                    Component achievementInfo = MessageUtils.format(
-                        status + " &e" + achievement.getName() + " &7(" + progressText + ")"
-                    );
+                    String status = completedAchievement ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.list.completed") : com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.list.incomplete");
+                    String progressText = completedAchievement ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.list.progress.completed") : com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.list.progress.incomplete", progress, achievement.getRequiredProgress());
+                    Component achievementInfo = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.recent_entry", status, achievement.getName(), progressText));
                     source.sendSuccess(() -> achievementInfo, false);
                     shown++;
                 }
             }
-            
             if (shown == 0) {
-                Component noProgress = MessageUtils.format("&7No achievements in progress yet.");
+                Component noProgress = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.no_progress"));
                 source.sendSuccess(() -> noProgress, false);
             }
-            
-            Component footerInfo = MessageUtils.format("&7Use &e/achievements list &7or &e/achievements stats &7for more details.");
+            Component footerInfo = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.footer"));
             source.sendSuccess(() -> footerInfo, false);
-            
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error showing achievements for player " + targetPlayer.getName().getString(), e);
-            Component error = MessageUtils.format("&cError retrieving achievement data.");
+            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "achievements.error"));
             source.sendSuccess(() -> error, false);
             return 0;
         }

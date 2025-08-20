@@ -52,19 +52,19 @@ public class SpawnManager {
         SpawnConfig config = configUnifier.getConfigManager().getSpawnConfig();
     boolean spawnModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.spawn;
         if (!spawnModuleEnabled) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "spawn.disabled"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.disabled"));
             return false;
         }
         
         // Check permission
         if (!PermissionUtil.hasPermission(player, PermissionNodes.SPAWN_SET)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "spawn.no_permission"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.no_permission"));
             return false;
         }
         
         // Validate location
         if (!isValidSpawnLocation(location)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "spawn.not_found"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.not_found"));
             return false;
         }
         
@@ -76,7 +76,7 @@ public class SpawnManager {
         config.mainSpawn.yaw = location.yaw;
         config.mainSpawn.pitch = location.pitch;
         
-        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "spawn.set", location.world, String.valueOf((int) location.x), String.valueOf((int) location.y), String.valueOf((int) location.z)));
+    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.set", location.world, String.valueOf((int) location.x), String.valueOf((int) location.y), String.valueOf((int) location.z)));
         
         LOGGER.info("Spawn location set by {} at {}", player.getName().getString(), 
             formatLocation(location));
@@ -104,30 +104,30 @@ public class SpawnManager {
         SpawnConfig config = configUnifier.getConfigManager().getSpawnConfig();
         
         if (!config.enabled) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "spawn.disabled"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.disabled"));
             return false;
         }
         
         // Check permission
         if (!PermissionUtil.hasPermission(player, PermissionNodes.SPAWN)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "spawn.no_permission"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.no_permission"));
             return false;
         }
         
         // Get spawn location
         LocationUtil.Location spawnLocation = getSpawnLocation();
         if (spawnLocation == null) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "spawn.not_set"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.not_set"));
             return false;
         }
         
         // Perform teleport
         boolean success = teleportToLocation(player, spawnLocation);
         if (success) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "spawn.teleported"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.teleported"));
             LOGGER.info("Player {} teleported to spawn", player.getName().getString());
         } else {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "spawn.not_found"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.not_found"));
         }
         
         return success;
@@ -202,7 +202,7 @@ public class SpawnManager {
             teleportToLocation(player, spawnLocation);
             
             if (config.newPlayer.giveWelcomeMessage && !config.messages.welcomeMessage.isEmpty()) {
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getMessage(player, "spawn.welcome", location.world, String.valueOf((int) location.x), String.valueOf((int) location.y), String.valueOf((int) location.z)));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.welcome", spawnLocation.world, String.valueOf((int) spawnLocation.x), String.valueOf((int) spawnLocation.y), String.valueOf((int) spawnLocation.z)));
             }
             
             LOGGER.info("Player {} teleported to spawn on first join", player.getName().getString());

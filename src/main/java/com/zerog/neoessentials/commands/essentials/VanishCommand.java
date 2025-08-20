@@ -79,10 +79,10 @@ public class VanishCommand {
         // Send confirmation to both players
         if (isVanished) {
             context.getSource().sendSuccess(() -> Component.literal("§aVanish enabled for " + target.getName().getString() + "!"), true);
-            target.sendSystemMessage(Component.literal("§aVanish enabled by " + executor.getName().getString() + "! You are now invisible to other players."));
+            target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.vanish.enabled", executor.getName().getString())));
         } else {
             context.getSource().sendSuccess(() -> Component.literal("§cVanish disabled for " + target.getName().getString() + "!"), true);
-            target.sendSystemMessage(Component.literal("§cVanish disabled by " + executor.getName().getString() + "! You are now visible to other players."));
+            target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.vanish.disabled", executor.getName().getString())));
         }
         
         return 1;

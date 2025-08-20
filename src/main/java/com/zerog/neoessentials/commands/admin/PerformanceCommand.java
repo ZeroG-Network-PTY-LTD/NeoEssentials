@@ -8,6 +8,7 @@ import com.zerog.neoessentials.performance.PerformanceManager;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 
@@ -52,48 +53,40 @@ public class PerformanceCommand {
             "neoessentials.admin.performance",
             (source) -> {
                 PerformanceManager.PerformanceStats stats = PerformanceManager.getInstance().getPerformanceStats();
+                ServerPlayer player = source.getPlayerOrException();
                 
-                source.sendSuccess(() -> Component.literal("§b=== NeoEssentials Performance Statistics ==="), false);
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.header")), false);
                 source.sendSuccess(() -> Component.literal(""), false);
                 
                 // Command statistics
-                source.sendSuccess(() -> Component.literal("§6📊 Command Performance:"), false);
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§7Total Commands Executed: §e%,d", stats.getTotalCommands())), false);
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§7Average Execution Time: §e%.2fms", stats.getAverageCommandTime())), false);
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.command.header")), false);
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.command.total", stats.getTotalCommands())), false);
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.command.avg_time", stats.getAverageCommandTime())), false);
                 
                 // Memory statistics
                 source.sendSuccess(() -> Component.literal(""), false);
-                source.sendSuccess(() -> Component.literal("§6🧠 Memory Usage:"), false);
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§7Memory Usage: §e%.1f%%", stats.getMemoryUsage())), false);
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.memory.header")), false);
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.memory.usage", stats.getMemoryUsage())), false);
                 
                 Map<String, Object> systemMetrics = stats.getSystemMetrics();
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§7Heap Used: §e%sMB / %sMB", 
-                        systemMetrics.get("heapUsed"), systemMetrics.get("heapMax"))), false);
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.memory.heap", systemMetrics.get("heapUsed"), systemMetrics.get("heapMax"))), false);
                 
                 // Cache statistics
                 source.sendSuccess(() -> Component.literal(""), false);
-                source.sendSuccess(() -> Component.literal("§6💾 Cache Performance:"), false);
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§7Cache Size: §e%d / %s entries", 
-                        stats.getCacheSize(), systemMetrics.get("cacheMaxSize"))), false);
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.cache.header")), false);
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.cache.size", stats.getCacheSize(), systemMetrics.get("cacheMaxSize"))), false);
                 
                 // Top slow commands
                 source.sendSuccess(() -> Component.literal(""), false);
-                source.sendSuccess(() -> Component.literal("§6🐌 Slowest Commands:"), false);
-                stats.getSlowestCommands().forEach((command, avgTime) -> 
-                    source.sendSuccess(() -> Component.literal(
-                        String.format("§7  %s: §c%.2fms", command, avgTime)), false));
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.slow.header")), false);
+                    stats.getSlowestCommands().forEach((command, avgTime) -> 
+                        source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.slow.entry", command, avgTime)), false));
                 
                 // Most used commands
                 source.sendSuccess(() -> Component.literal(""), false);
-                source.sendSuccess(() -> Component.literal("§6🔥 Most Used Commands:"), false);
-                stats.getMostUsedCommands().forEach((command, count) -> 
-                    source.sendSuccess(() -> Component.literal(
-                        String.format("§7  %s: §a%,d times", command, count)), false));
+                    source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.most.header")), false);
+                    stats.getMostUsedCommands().forEach((command, count) -> 
+                        source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.stats.most.entry", command, count)), false));
                 
                 return 1;
             }
@@ -112,41 +105,54 @@ public class PerformanceCommand {
                 PerformanceManager.PerformanceStats stats = PerformanceManager.getInstance().getPerformanceStats();
                 Map<String, Object> systemMetrics = stats.getSystemMetrics();
                 
-                source.sendSuccess(() -> Component.literal("§b=== Memory Information ==="), false);
-                source.sendSuccess(() -> Component.literal(""), false);
-                
-                // Heap memory
-                source.sendSuccess(() -> Component.literal("§6🧠 Heap Memory:"), false);
-                long heapUsed = (Long) systemMetrics.get("heapUsed");
-                long heapMax = (Long) systemMetrics.get("heapMax");
-                double heapPercent = (Double) systemMetrics.get("heapUsagePercent");
-                
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§7Used: §e%,dMB", heapUsed)), false);
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§7Max: §e%,dMB", heapMax)), false);
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§7Usage: §e%.1f%%", heapPercent)), false);
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§7Free: §a%,dMB", heapMax - heapUsed)), false);
-                
-                // Garbage collection
-                source.sendSuccess(() -> Component.literal(""), false);
-                source.sendSuccess(() -> Component.literal("§6🗑️ Garbage Collection:"), false);
-                long totalGcTime = (Long) systemMetrics.get("totalGcTime");
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§7Total GC Time: §e%,dms", totalGcTime)), false);
-                
-                // Memory status
-                source.sendSuccess(() -> Component.literal(""), false);
-                source.sendSuccess(() -> Component.literal("§6📊 Memory Status:"), false);
-                if (heapPercent < 70) {
-                    source.sendSuccess(() -> Component.literal("§a✅ Memory usage is healthy"), false);
-                } else if (heapPercent < 85) {
-                    source.sendSuccess(() -> Component.literal("§e⚠️ Memory usage is moderate"), false);
-                } else {
-                    source.sendSuccess(() -> Component.literal("§c❌ Memory usage is high - consider optimization"), false);
-                }
+                    ServerPlayer player = source.getPlayerOrException();
+                    source.sendSuccess(() -> {
+                        return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.header"));
+                    }, false);
+                    source.sendSuccess(() -> Component.literal(""), false);
+                    source.sendSuccess(() -> {
+                        return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.heap.header"));
+                    }, false);
+                    long heapUsed = (Long) systemMetrics.get("heapUsed");
+                    long heapMax = (Long) systemMetrics.get("heapMax");
+                    double heapPercent = (Double) systemMetrics.get("heapUsagePercent");
+                    source.sendSuccess(() -> {
+                        return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.heap.used", heapUsed));
+                    }, false);
+                    source.sendSuccess(() -> {
+                        return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.heap.max", heapMax));
+                    }, false);
+                    source.sendSuccess(() -> {
+                        return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.heap.usage", heapPercent));
+                    }, false);
+                    source.sendSuccess(() -> {
+                        return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.heap.free", heapMax - heapUsed));
+                    }, false);
+                    source.sendSuccess(() -> Component.literal(""), false);
+                    source.sendSuccess(() -> {
+                        return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.gc.header"));
+                    }, false);
+                    long totalGcTime = (Long) systemMetrics.get("totalGcTime");
+                    source.sendSuccess(() -> {
+                        return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.gc.total", totalGcTime));
+                    }, false);
+                    source.sendSuccess(() -> Component.literal(""), false);
+                    source.sendSuccess(() -> {
+                        return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.status.header"));
+                    }, false);
+                    if (heapPercent < 70) {
+                        source.sendSuccess(() -> {
+                            return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.status.healthy"));
+                        }, false);
+                    } else if (heapPercent < 85) {
+                        source.sendSuccess(() -> {
+                            return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.status.moderate"));
+                        }, false);
+                    } else {
+                        source.sendSuccess(() -> {
+                            return Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.memory.status.high"));
+                        }, false);
+                    }
                 
                 return 1;
             }
@@ -163,7 +169,8 @@ public class PerformanceCommand {
             "neoessentials.admin.performance",
             (source) -> {
                 PerformanceManager.getInstance().clearCache();
-                source.sendSuccess(() -> Component.literal("§a✅ Performance cache cleared successfully!"), false);
+                ServerPlayer player = source.getPlayerOrException();
+                source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.cache.cleared")), false);
                 return 1;
             }
         );
@@ -217,10 +224,8 @@ public class PerformanceCommand {
             (source) -> {
                 boolean enabled = BoolArgumentType.getBool(context, "enabled");
                 PerformanceManager.getInstance().setPerformanceMonitoring(enabled);
-                
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§a✅ Performance monitoring %s!", enabled ? "enabled" : "disabled")), false);
-                
+                ServerPlayer player = source.getPlayerOrException();
+                source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.monitoring.status", enabled)), false);
                 return 1;
             }
         );
@@ -235,7 +240,8 @@ public class PerformanceCommand {
             "performance gc",
             "neoessentials.admin.performance",
             (source) -> {
-                source.sendSuccess(() -> Component.literal("§e⏳ Running garbage collection..."), false);
+                ServerPlayer player = source.getPlayerOrException();
+                source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.gc.running")), false);
                 
                 // Get memory before GC
                 Runtime runtime = Runtime.getRuntime();
@@ -255,8 +261,7 @@ public class PerformanceCommand {
                 long usedAfter = runtime.totalMemory() - runtime.freeMemory();
                 long freedMemory = usedBefore - usedAfter;
                 
-                source.sendSuccess(() -> Component.literal(
-                    String.format("§a✅ Garbage collection completed! Freed: %,d bytes", freedMemory)), false);
+                source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "performance.gc.completed", freedMemory)), false);
                 
                 return 1;
             }

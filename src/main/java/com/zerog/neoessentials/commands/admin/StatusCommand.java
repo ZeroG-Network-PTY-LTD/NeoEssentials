@@ -56,7 +56,10 @@ public class StatusCommand {
      */
     private static int showStatus(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        
+        ServerPlayer player = null;
+        try {
+            player = source.getPlayerOrException();
+        } catch (Exception ignored) {}
         try {
             StringBuilder status = new StringBuilder();
             status.append("§6=== NeoEssentials System Status ===\n");
@@ -79,17 +82,23 @@ public class StatusCommand {
             status.append("§7(").append(getMemoryColor(memoryPercent)).append(DECIMAL_FORMAT.format(memoryPercent)).append("%§7)\n");
             
             // Quick system status
-            status.append("§aConfigurations: ").append(getConfigStatusSummary()).append("\n");
-            status.append("§aLanguages: ").append(getLanguageStatusSummary()).append("\n");
+            status.append("§aConfigurations: ").append(getConfigStatusSummary(source)).append("\n");
+            status.append("§aLanguages: ").append(getLanguageStatusSummary(source)).append("\n");
             
             status.append("\n§7Use §e/neostatus detailed §7for more information");
             
-            source.sendSuccess(() -> Component.literal(status.toString()), false);
+            final ServerPlayer finalPlayer = player;
+            source.sendSuccess(() -> Component.literal(
+                finalPlayer != null ? LanguageManager.getInstance().getMessage(finalPlayer, "status.system", status.toString()) : status.toString()
+            ), false);
             return 1;
             
         } catch (Exception e) {
             LOGGER.error("Error showing system status", e);
-            source.sendFailure(Component.literal("§cError retrieving system status: " + e.getMessage()));
+            final ServerPlayer finalPlayer = player;
+            source.sendFailure(Component.literal(
+                finalPlayer != null ? LanguageManager.getInstance().getMessage(finalPlayer, "status.system.error", e.getMessage()) : "§cError retrieving system status: " + e.getMessage()
+            ));
             return 0;
         }
     }
@@ -99,7 +108,10 @@ public class StatusCommand {
      */
     private static int showDetailedStatus(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        
+        ServerPlayer player = null;
+        try {
+            player = source.getPlayerOrException();
+        } catch (Exception ignored) {}
         try {
             StringBuilder status = new StringBuilder();
             status.append("§6=== NeoEssentials Detailed Status ===\n\n");
@@ -126,20 +138,25 @@ public class StatusCommand {
             
             // System Components
             status.append("\n§e--- System Components ---\n");
-            status.append("§aConfiguration Manager: ").append(getComponentStatus("config")).append("\n");
-            status.append("§aLanguage System: ").append(getComponentStatus("language")).append("\n");
-            status.append("§aEconomy System: ").append(getComponentStatus("economy")).append("\n");
-            status.append("§aHome System: ").append(getComponentStatus("home")).append("\n");
-            status.append("§aWarp System: ").append(getComponentStatus("warp")).append("\n");
-            status.append("§aKit System: ").append(getComponentStatus("kit")).append("\n");
-            status.append("§aGUI System: ").append(getComponentStatus("gui")).append("\n");
+            status.append("§aConfiguration Manager: ").append(getComponentStatus("config", source)).append("\n");
+            status.append("§aLanguage System: ").append(getComponentStatus("language", source)).append("\n");
+            status.append("§aEconomy System: ").append(getComponentStatus("economy", source)).append("\n");
+            status.append("§aHome System: ").append(getComponentStatus("home", source)).append("\n");
+            status.append("§aWarp System: ").append(getComponentStatus("warp", source)).append("\n");
+            status.append("§aKit System: ").append(getComponentStatus("kit", source)).append("\n");
+            status.append("§aGUI System: ").append(getComponentStatus("gui", source)).append("\n");
             
-            source.sendSuccess(() -> Component.literal(status.toString()), false);
+            final ServerPlayer finalPlayer = player;
+            source.sendSuccess(() -> Component.literal(
+                finalPlayer != null ? LanguageManager.getInstance().getMessage(finalPlayer, "status.detailed", status.toString()) : status.toString()
+            ), false);
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error showing detailed status", e);
-            source.sendFailure(Component.literal("§cError retrieving detailed status: " + e.getMessage()));
+            final ServerPlayer finalPlayer = player;
+            source.sendFailure(Component.literal(
+                finalPlayer != null ? LanguageManager.getInstance().getMessage(finalPlayer, "status.detailed.error", e.getMessage()) : "§cError retrieving detailed status: " + e.getMessage()
+            ));
             return 0;
         }
     }
@@ -149,7 +166,10 @@ public class StatusCommand {
      */
     private static int showConfigStatus(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        
+        ServerPlayer player = null;
+        try {
+            player = source.getPlayerOrException();
+        } catch (Exception ignored) {}
         try {
             StringBuilder status = new StringBuilder();
             status.append("§6=== Configuration Status ===\n\n");
@@ -179,12 +199,17 @@ public class StatusCommand {
             status.append("§aAuto-backup: §aEnabled\n");
             status.append("§aValidation: §aEnabled\n");
             
-            source.sendSuccess(() -> Component.literal(status.toString()), false);
+            final ServerPlayer finalPlayer = player;
+            source.sendSuccess(() -> Component.literal(
+                finalPlayer != null ? LanguageManager.getInstance().getMessage(finalPlayer, "status.config", status.toString()) : status.toString()
+            ), false);
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error showing configuration status", e);
-            source.sendFailure(Component.literal("§cError retrieving configuration status: " + e.getMessage()));
+            final ServerPlayer finalPlayer = player;
+            source.sendFailure(Component.literal(
+                finalPlayer != null ? LanguageManager.getInstance().getMessage(finalPlayer, "status.config.error", e.getMessage()) : "§cError retrieving configuration status: " + e.getMessage()
+            ));
             return 0;
         }
     }
@@ -194,7 +219,10 @@ public class StatusCommand {
      */
     private static int showLanguageStatus(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        
+        ServerPlayer player = null;
+        try {
+            player = source.getPlayerOrException();
+        } catch (Exception ignored) {}
         try {
             StringBuilder status = new StringBuilder();
             status.append("§6=== Language System Status ===\n\n");
@@ -241,12 +269,17 @@ public class StatusCommand {
                 status.append(" §7(").append(successRate).append("% success rate)");
             }
             
-            source.sendSuccess(() -> Component.literal(status.toString()), false);
+            final ServerPlayer finalPlayer = player;
+            source.sendSuccess(() -> Component.literal(
+                finalPlayer != null ? LanguageManager.getInstance().getMessage(finalPlayer, "status.language", status.toString()) : status.toString()
+            ), false);
             return 1;
-            
         } catch (Exception e) {
             LOGGER.error("Error showing language status", e);
-            source.sendFailure(Component.literal("§cError retrieving language status: " + e.getMessage()));
+            final ServerPlayer finalPlayer = player;
+            source.sendFailure(Component.literal(
+                finalPlayer != null ? LanguageManager.getInstance().getMessage(finalPlayer, "status.language.error", e.getMessage()) : "§cError retrieving language status: " + e.getMessage()
+            ));
             return 0;
         }
     }
@@ -266,60 +299,70 @@ public class StatusCommand {
         return hours + "h " + minutes + "m";
     }
     
-    private static String getConfigStatusSummary() {
+    private static String getConfigStatusSummary(CommandSourceStack source) {
+        ServerPlayer player = null;
+        try {
+            player = source.getPlayerOrException();
+        } catch (Exception ignored) {}
         try {
             ConfigManager configManager = ConfigManager.getInstance();
-            // Check if configurations are properly loaded
             boolean configsValid = (configManager != null);
             if (configsValid) {
-                return "§aHealthy";
+                return player != null ? LanguageManager.getInstance().getMessage(player, "status.config.healthy") : "§aHealthy";
             } else {
-                return "§eWarnings";
+                return player != null ? LanguageManager.getInstance().getMessage(player, "status.config.warning") : "§eWarnings";
             }
         } catch (Exception e) {
-            return "§cError";
+            return player != null ? LanguageManager.getInstance().getMessage(player, "status.config.error", e.getMessage()) : "§cError";
         }
     }
     
-    private static String getLanguageStatusSummary() {
+    private static String getLanguageStatusSummary(CommandSourceStack source) {
+        ServerPlayer player = null;
+        try {
+            player = source.getPlayerOrException();
+        } catch (Exception ignored) {}
         try {
             LanguageManager langManager = LanguageManager.getInstance();
             int languages = langManager.getAvailableLanguages().size();
-            return "§a" + languages + " languages";
+            return player != null ? LanguageManager.getInstance().getMessage(player, "status.language.summary", languages) : "§a" + languages + " languages";
         } catch (Exception e) {
-            return "§cError";
+            return player != null ? LanguageManager.getInstance().getMessage(player, "status.language.error", e.getMessage()) : "§cError";
         }
     }
     
-    private static String getComponentStatus(String component) {
+    private static String getComponentStatus(String component, CommandSourceStack source) {
+        ServerPlayer player = null;
+        try {
+            player = source.getPlayerOrException();
+        } catch (Exception ignored) {}
         try {
             switch (component.toLowerCase()) {
                 case "config":
                     ConfigManager.getInstance();
-                    return "§aOperational";
+                    return player != null ? LanguageManager.getInstance().getMessage(player, "status.component.config.operational") : "§aOperational";
                 case "language":
                     LanguageManager.getInstance();
-                    return "§aOperational";
+                    return player != null ? LanguageManager.getInstance().getMessage(player, "status.component.language.operational") : "§aOperational";
                 case "economy":
                     EconomyManager.getInstance();
-                    return "§aOperational";
+                    return player != null ? LanguageManager.getInstance().getMessage(player, "status.component.economy.operational") : "§aOperational";
                 case "home":
                     HomeManager.getInstance();
-                    return "§aOperational";
+                    return player != null ? LanguageManager.getInstance().getMessage(player, "status.component.home.operational") : "§aOperational";
                 case "warp":
                     WarpManager.getInstance();
-                    return "§aOperational";
+                    return player != null ? LanguageManager.getInstance().getMessage(player, "status.component.warp.operational") : "§aOperational";
                 case "kit":
                     KitManager.getInstance();
-                    return "§aOperational";
+                    return player != null ? LanguageManager.getInstance().getMessage(player, "status.component.kit.operational") : "§aOperational";
                 case "gui":
-                    // GUI system removed - using sign-based shops only
-                    return "§eDisabled (Sign-based shops only)";
+                    return player != null ? LanguageManager.getInstance().getMessage(player, "status.component.gui.disabled") : "§eDisabled (Sign-based shops only)";
                 default:
-                    return "§eUnknown";
+                    return player != null ? LanguageManager.getInstance().getMessage(player, "status.component.unknown") : "§eUnknown";
             }
         } catch (Exception e) {
-            return "§cError: " + e.getMessage();
+            return player != null ? LanguageManager.getInstance().getMessage(player, "status.component.error", e.getMessage()) : "§cError: " + e.getMessage();
         }
     }
 }

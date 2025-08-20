@@ -80,10 +80,10 @@ public class FlyCommand {
                 // Send confirmation to both players
                 if (canFly) {
                     source.sendSuccess(() -> Component.literal("§a✈️ Flight enabled for " + target.getName().getString() + "!"), true);
-                    target.sendSystemMessage(Component.literal("§a✈️ Flight enabled by " + executor.getName().getString() + "! You can now soar through the skies."));
+                    target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.fly.enabled", executor.getName().getString())));
                 } else {
                     source.sendSuccess(() -> Component.literal("§c🚫 Flight disabled for " + target.getName().getString() + "!"), true);
-                    target.sendSystemMessage(Component.literal("§c🚫 Flight disabled by " + executor.getName().getString() + "! Your feet are back on the ground."));
+                    target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.fly.disabled", executor.getName().getString())));
                 }
                 
                 return 1;

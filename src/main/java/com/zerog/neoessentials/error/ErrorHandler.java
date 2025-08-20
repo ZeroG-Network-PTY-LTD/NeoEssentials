@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.commands.CommandSourceStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.localization.LanguageManager;
 
 /**
  * Enhanced error handling system for NeoEssentials
@@ -65,11 +66,8 @@ public class ErrorHandler {
      * Handle command validation errors with user-friendly messages
      */
     public static void handleCommandValidationError(CommandSourceStack source, String commandName, String issue) {
-        String message = String.format("§c❌ Command Error: §7%s\n§7Command: §f/%s\n§7Issue: §e%s", 
-            "Invalid command usage", commandName, issue);
-        
-        sendUserFriendlyError(source, message);
-        logError(ErrorLevel.WARNING, ErrorCategory.COMMAND, 
+        sendLocalizedError(source, "error.command.validation", commandName, issue);
+        logError(ErrorLevel.WARNING, ErrorCategory.COMMAND,
             String.format("Command validation failed for /%s: %s", commandName, issue), null);
     }
     
@@ -77,10 +75,7 @@ public class ErrorHandler {
      * Handle permission errors with helpful suggestions
      */
     public static void handlePermissionError(CommandSourceStack source, String requiredPermission) {
-        String message = String.format("§c🔒 Permission Denied\n§7You need permission: §e%s\n§7Contact an administrator for access.", 
-            requiredPermission);
-        
-        sendUserFriendlyError(source, message);
+        sendLocalizedError(source, "error.permission.denied", requiredPermission);
         logError(ErrorLevel.INFO, ErrorCategory.PERMISSION,
             String.format("Permission denied for %s: %s", getPlayerName(source), requiredPermission), null);
     }
@@ -89,10 +84,7 @@ public class ErrorHandler {
      * Handle economy-related errors
      */
     public static void handleEconomyError(CommandSourceStack source, String operation, String details) {
-        String message = String.format("§c💰 Economy Error\n§7Operation: §e%s\n§7Details: §f%s", 
-            operation, details);
-        
-        sendUserFriendlyError(source, message);
+        sendLocalizedError(source, "error.economy", operation, details);
         logError(ErrorLevel.ERROR, ErrorCategory.ECONOMY,
             String.format("Economy error for %s - %s: %s", getPlayerName(source), operation, details), null);
     }
@@ -126,10 +118,7 @@ public class ErrorHandler {
      * Handle teleportation errors with helpful context
      */
     public static void handleTeleportationError(CommandSourceStack source, String type, String reason) {
-        String message = String.format("§c🌀 Teleportation Failed\n§7Type: §e%s\n§7Reason: §f%s\n§7Try again in a moment.", 
-            type, reason);
-        
-        sendUserFriendlyError(source, message);
+        sendLocalizedError(source, "error.teleportation", type, reason);
         logError(ErrorLevel.WARNING, ErrorCategory.TELEPORTATION,
             String.format("Teleportation failed for %s (%s): %s", getPlayerName(source), type, reason), null);
     }
@@ -160,12 +149,9 @@ public class ErrorHandler {
      * Handle validation errors with helpful guidance
      */
     public static void handleValidationError(CommandSourceStack source, String field, String value, String expected) {
-        String message = String.format("§c✋ Invalid Input\n§7Field: §e%s\n§7Your Input: §f%s\n§7Expected: §a%s", 
-            field, value, expected);
-        
-        sendUserFriendlyError(source, message);
+        sendLocalizedError(source, "error.validation", field, value, expected);
         logError(ErrorLevel.INFO, ErrorCategory.VALIDATION,
-            String.format("Validation error for %s - %s: '%s' (expected: %s)", 
+            String.format("Validation error for %s - %s: '%s' (expected: %s)",
                 getPlayerName(source), field, value, expected), null);
     }
     
@@ -188,11 +174,21 @@ public class ErrorHandler {
         try {
             source.sendFailure(Component.literal(message));
         } catch (Exception e) {
-            // Fallback to logging if sending fails
             LOGGER.warn("Failed to send error message to user: {}", message, e);
         }
     }
-    
+
+    private static void sendLocalizedError(CommandSourceStack source, String key, Object... args) {
+        try {
+            ServerPlayer player = null;
+            if (source.getEntity() instanceof ServerPlayer p) player = p;
+            String msg = LanguageManager.getInstance().getMessage(player, key, args);
+            source.sendFailure(Component.literal(msg));
+        } catch (Exception e) {
+            LOGGER.warn("Failed to send localized error message to user: {}", key, e);
+        }
+    }
+
     /**
      * Log error with appropriate level and category
      */
@@ -264,20 +260,9 @@ public class ErrorHandler {
          */
         public static boolean attemptCommandRecovery(CommandSourceStack source, String commandName, Exception error) {
             try {
-                // Log the recovery attempt
+                sendLocalizedError(source, "error.command.recovery", commandName);
                 LOGGER.info("Attempting recovery for command {} after error: {}", commandName, error.getMessage());
-                
-                // Send helpful recovery message to user
-                String recoveryMessage = String.format(
-                    "§e⚠️ Command encountered an issue but we're handling it gracefully.\n" +
-                    "§7Command: §f/%s\n" +
-                    "§7You can try again in a moment or contact an administrator if the issue persists.",
-                    commandName
-                );
-                
-                source.sendFailure(Component.literal(recoveryMessage));
                 return true;
-                
             } catch (Exception recoveryError) {
                 LOGGER.error("Failed to recover from command error", recoveryError);
                 return false;
@@ -289,13 +274,8 @@ public class ErrorHandler {
          */
         public static void gracefulShutdown(String reason, Exception cause) {
             LOGGER.error("Initiating graceful shutdown due to critical error: {}", reason, cause);
-            
-            // Notify all online players
-            notifyAdmins(ErrorLevel.CRITICAL, "System Shutdown", 
-                String.format("§4🚨 Critical error detected - Graceful shutdown initiated:\n§7Reason: §f%s", reason));
-            
-            // Save critical data before shutdown
-            // TODO: Implement data saving logic if needed
+            notifyAdmins(ErrorLevel.CRITICAL, "System Shutdown",
+                LanguageManager.getInstance().getMessage((String) null, "error.system.shutdown", reason));
         }
     }
 }
