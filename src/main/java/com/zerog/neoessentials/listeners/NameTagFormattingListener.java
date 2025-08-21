@@ -21,7 +21,7 @@ public class NameTagFormattingListener {
             String nickname = com.zerog.neoessentials.commands.essentials.NickCommand.getNicknameOnly(serverPlayer.getUUID());
             if (nickname != null && !nickname.isEmpty()) {
                 displayName = nickname;
-                com.zerog.neoessentials.config.ChatConfig chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getChatConfig();
+                com.zerog.neoessentials.config.MainConfig.ChatSettings chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().chatSettings;
                 if (chatConfig.nicknames.allowColors) {
                     displayName = com.zerog.neoessentials.util.ColorUtil.colorize(displayName).getString();
                 }

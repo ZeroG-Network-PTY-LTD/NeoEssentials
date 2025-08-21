@@ -88,14 +88,6 @@ public class ConfigurationUnifier {
         
         // Force creation of all config files with proper defaults
         configManager.getMainConfig();
-        configManager.getEconomyConfig();
-        configManager.getHomeConfig();
-        configManager.getKitConfig();
-        configManager.getWarpConfig();
-        configManager.getModerationConfig();
-        configManager.getMessagingConfig();
-        configManager.getTablistConfig();
-        configManager.getSpawnConfig();
         
         // Save all configurations to ensure files are created
         configManager.saveAll();

@@ -7,7 +7,6 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.zerog.neoessentials.config.ConfigCategories;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -41,14 +40,6 @@ public class ConfigCommand {
             )
             .then(Commands.literal("validate")
                 .executes(ConfigCommand::validateConfig)
-            )
-            .then(Commands.literal("categories")
-                .executes(ConfigCommand::showCategories)
-            )
-            .then(Commands.literal("get")
-                .then(Commands.argument("config", StringArgumentType.word())
-                    .executes(ConfigCommand::getConfigInfo)
-                )
             )
         );
     }
@@ -209,63 +200,8 @@ public class ConfigCommand {
     /**
      * Show configuration categories
      */
-    private static int showCategories(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        CommandSourceStack source = context.getSource();
-        
-        source.sendSuccess(() -> Component.literal("§6=== Configuration Categories ==="), false);
-        
-        Map<ConfigCategories.Category, List<String>> categorizedConfigs = ConfigCategories.getConfigsByCategory();
-        Map<String, String> descriptions = ConfigCategories.getConfigDescriptions();
-        
-        for (ConfigCategories.Category category : ConfigCategories.Category.values()) {
-            List<String> configs = categorizedConfigs.get(category);
-            if (!configs.isEmpty()) {
-                source.sendSuccess(() -> Component.literal(""), false);
-                source.sendSuccess(() -> Component.literal("§e" + category.getDisplayName() + " §7- " + category.getDescription()), false);
-                
-                for (String config : configs) {
-                    String description = descriptions.getOrDefault(config, "No description available");
-                    boolean critical = ConfigCategories.isCritical(config);
-                    String criticalMark = critical ? " §c[CRITICAL]" : "";
-                    
-                    source.sendSuccess(() -> Component.literal("§8  ▪ §7" + config + criticalMark + " §8- " + description), false);
-                }
-            }
-        }
-        
-        source.sendSuccess(() -> Component.literal(""), false);
-        source.sendSuccess(() -> Component.literal("§6================================"), false);
-        
-        return 1;
-    }
 
     /**
      * Get information about a specific configuration
      */
-    private static int getConfigInfo(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        CommandSourceStack source = context.getSource();
-        String configName = StringArgumentType.getString(context, "config");
-        ConfigManager configManager = ConfigManager.getInstance();
-        
-        String fileName = configName + ".json";
-        boolean exists = configManager.configExists(fileName);
-        
-        source.sendSuccess(() -> Component.literal("§6=== Configuration Info: " + configName + " ==="), false);
-        source.sendSuccess(() -> Component.literal("§7File: §f" + fileName), false);
-        source.sendSuccess(() -> Component.literal("§7Exists: " + (exists ? "§a✓ Yes" : "§c✗ No")), false);
-        
-        if (exists) {
-            try {
-                var file = configManager.getConfigFile(fileName);
-                source.sendSuccess(() -> Component.literal("§7Size: §f" + file.length() + " bytes"), false);
-                source.sendSuccess(() -> Component.literal("§7Last Modified: §f" + new java.util.Date(file.lastModified())), false);
-            } catch (Exception e) {
-                source.sendFailure(Component.literal("§cError reading file info: " + e.getMessage()));
-            }
-        } else {
-            source.sendSuccess(() -> Component.literal("§7Status: §cConfiguration file missing - will be created with defaults on next reload"), false);
-        }
-        
-        return 1;
-    }
 }

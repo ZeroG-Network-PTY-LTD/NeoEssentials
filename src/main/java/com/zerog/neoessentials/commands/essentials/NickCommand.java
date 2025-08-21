@@ -1,4 +1,5 @@
 package com.zerog.neoessentials.commands.essentials;
+import java.util.Optional;
 
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
@@ -13,14 +14,12 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class NickCommand {
     
-    // Store player nicknames
-    private static final Map<UUID, String> nicknames = new HashMap<>();
+    // Use NickManager for persistent nickname storage
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("nick")
@@ -62,51 +61,63 @@ public class NickCommand {
             target = (ServerPlayer) source.getEntity();
         }
         
-        // Validate nickname
-        if (nickname.length() > 16) {
-            sendMessage(source, "§cNickname must be 16 characters or less!");
+        // EssentialsX-style permission nodes
+    // PermissionNodes.NICK is checked by command registration, no need for local variable
+    boolean canUseColors = PermissionUtil.hasPermissionOrOp(source, PermissionNodes.NICK_COLOR);
+    // Use admin permission for bypass (since NICK_BYPASS does not exist)
+    boolean canBypass = PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC);
+
+        // Config checks
+        var nickManager = com.zerog.neoessentials.managers.NickManager.get();
+        if (!nickManager.enabled) {
+            sendLocalizedMessage(source, "neoessentials.nick.disabled");
             return 0;
         }
-        
-        if (nickname.contains("&") || nickname.contains("§")) {
-            // Allow color codes for admins
-            if (!PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC)) {
-                sendMessage(source, "§cYou cannot use color codes in nicknames!");
-                return 0;
-            }
+
+        // Validate nickname length
+        if (nickname.length() > 16 && !canBypass) {
+            sendLocalizedMessage(source, "neoessentials.nick.too_long");
+            return 0;
         }
-        
-        // Check for inappropriate content (basic)
-        if (nickname.toLowerCase().contains("admin") || 
+
+        // Unsafe character filtering
+        if (!nickManager.allowUnsafeCharacters && !nickname.matches("^[a-zA-Z0-9_§&]+$")) {
+            sendLocalizedMessage(source, "neoessentials.nick.unsafe_chars");
+            return 0;
+        }
+
+        // Color code permission
+        if ((nickname.contains("&") || nickname.contains("§")) && !canUseColors && !canBypass) {
+            sendLocalizedMessage(source, "neoessentials.nick.no_color_permission");
+            return 0;
+        }
+
+        // Staff-related nick filtering
+        if ((nickname.toLowerCase().contains("admin") || 
             nickname.toLowerCase().contains("mod") ||
-            nickname.toLowerCase().contains("owner")) {
-            if (!PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_FULL)) {
-                sendMessage(source, "§cYou cannot use staff-related nicknames!");
-                return 0;
-            }
+            nickname.toLowerCase().contains("owner")) && !canBypass) {
+            sendLocalizedMessage(source, "neoessentials.nick.no_staff_nick");
+            return 0;
         }
         
         // Set the nickname
         if (target != null) {
-            nicknames.put(target.getUUID(), nickname);
-            
-            // Update display name (this would require mixins for full functionality)
-            // For now, just store it in our map
-            
+            com.zerog.neoessentials.managers.NickManager.get().setNick(target.getUUID(), nickname);
+
             var sourceEntity = source.getEntity();
             UUID sourceUUID = sourceEntity != null ? sourceEntity.getUUID() : null;
             if (target.getUUID().equals(sourceUUID)) {
-                sendMessage(source, "§aYour nickname has been set to: §f" + nickname);
+                sendLocalizedMessage(source, "neoessentials.nick.set_self", nickname);
             } else {
-                sendMessage(source, "§aSet " + target.getName().getString() + "'s nickname to: §f" + nickname);
-                MessageUtil.sendMessage(target, "§aYour nickname has been set to: §f" + nickname + " §7by an admin");
+                sendLocalizedMessage(source, "neoessentials.nick.set_other", target.getName().getString(), nickname);
+                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.nick.set_by_admin", nickname));
             }
-            
+
             // Log the change
             source.getServer().sendSystemMessage(Component.literal(
                 "§7[Nick] " + getSourceName(source) + " set " + target.getName().getString() + "'s nickname to: " + nickname));
         }
-        
+
         return 1;
     }
     
@@ -127,35 +138,36 @@ public class NickCommand {
         }
         
         // Check if player has a nickname
-        if (target != null && !nicknames.containsKey(target.getUUID())) {
+        if (target != null && com.zerog.neoessentials.managers.NickManager.get().getNick(target.getUUID()).isEmpty()) {
             var sourceEntity = source.getEntity();
             UUID sourceUUID = sourceEntity != null ? sourceEntity.getUUID() : null;
             if (target.getUUID().equals(sourceUUID)) {
-                sendMessage(source, "§cYou don't have a nickname set!");
+                sendLocalizedMessage(source, "neoessentials.nick.not_set_self");
             } else {
-                sendMessage(source, "§c" + target.getName().getString() + " doesn't have a nickname set!");
+                sendLocalizedMessage(source, "neoessentials.nick.not_set_other", target.getName().getString());
             }
             return 0;
         }
-        
+
         // Clear the nickname
         if (target != null) {
-            String oldNickname = nicknames.remove(target.getUUID());
-            
+            Optional<String> oldNickname = com.zerog.neoessentials.managers.NickManager.get().getNick(target.getUUID());
+            com.zerog.neoessentials.managers.NickManager.get().clearNick(target.getUUID());
+
             var sourceEntity = source.getEntity();
             UUID sourceUUID = sourceEntity != null ? sourceEntity.getUUID() : null;
             if (target.getUUID().equals(sourceUUID)) {
-                sendMessage(source, "§aYour nickname has been cleared");
+                sendLocalizedMessage(source, "neoessentials.nick.cleared_self");
             } else {
-                sendMessage(source, "§aCleared " + target.getName().getString() + "'s nickname");
-                MessageUtil.sendMessage(target, "§aYour nickname has been cleared by an admin");
+                sendLocalizedMessage(source, "neoessentials.nick.cleared_other", target.getName().getString());
+                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.nick.cleared_by_admin"));
             }
-            
+
             // Log the change
             source.getServer().sendSystemMessage(Component.literal(
-                "§7[Nick] " + getSourceName(source) + " cleared " + target.getName().getString() + "'s nickname (" + oldNickname + ")"));
+                "§7[Nick] " + getSourceName(source) + " cleared " + target.getName().getString() + "'s nickname (" + oldNickname.orElse("") + ")"));
         }
-        
+
         return 1;
     }
     
@@ -165,19 +177,20 @@ public class NickCommand {
     private static int listNicknames(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
-        if (nicknames.isEmpty()) {
-            sendMessage(source, "§eNo players have nicknames set");
+        Map<UUID, String> allNicks = com.zerog.neoessentials.managers.NickManager.get().getAllNicks();
+        if (allNicks.isEmpty()) {
+            sendLocalizedMessage(source, "neoessentials.nick.list_empty");
             return 1;
         }
-        
-        sendMessage(source, "§6===== §eActive Nicknames §6=====");
-        for (Map.Entry<UUID, String> entry : nicknames.entrySet()) {
+
+        sendLocalizedMessage(source, "neoessentials.nick.list_header");
+        for (Map.Entry<UUID, String> entry : allNicks.entrySet()) {
             ServerPlayer player = source.getServer().getPlayerList().getPlayer(entry.getKey());
             if (player != null) {
-                sendMessage(source, "§a" + player.getName().getString() + " §7→ §f" + entry.getValue());
+                sendLocalizedMessage(source, "neoessentials.nick.list_entry", player.getName().getString(), entry.getValue());
             }
         }
-        
+
         return 1;
     }
     
@@ -185,29 +198,31 @@ public class NickCommand {
      * Get a player's nickname, or their real name if no nickname is set
      */
     public static String getNickname(ServerPlayer player) {
-        String nickname = nicknames.get(player.getUUID());
-        return nickname != null ? nickname : player.getName().getString();
+    Optional<String> nickname = com.zerog.neoessentials.managers.NickManager.get().getNick(player.getUUID());
+    return nickname.orElse(player.getName().getString());
     }
     
     /**
      * Get a player's nickname, or null if no nickname is set
      */
     public static String getNicknameOnly(UUID playerUUID) {
-        return nicknames.get(playerUUID);
+    return com.zerog.neoessentials.managers.NickManager.get().getNick(playerUUID).orElse(null);
     }
     
     /**
      * Clear nickname data when a player leaves
      */
     public static void clearPlayerData(UUID playerUUID) {
-        nicknames.remove(playerUUID);
+    com.zerog.neoessentials.managers.NickManager.get().clearNick(playerUUID);
     }
     
-    private static void sendMessage(CommandSourceStack source, String message) {
+    // sendMessage method removed (unused)
+
+    private static void sendLocalizedMessage(CommandSourceStack source, String key, Object... placeholders) {
         if (source.getEntity() instanceof ServerPlayer player) {
-            MessageUtil.sendMessage(player, message);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, key, placeholders));
         } else {
-            source.sendSuccess(() -> Component.literal(message), false);
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_us", key, placeholders)), false);
         }
     }
     

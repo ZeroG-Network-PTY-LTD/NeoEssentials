@@ -69,26 +69,29 @@ public class BackCommand {
     private static int teleportBack(CommandContext<CommandSourceStack> context, ServerPlayer targetPlayer) throws CommandSyntaxException {
         ServerPlayer player = targetPlayer != null ? targetPlayer : context.getSource().getPlayerOrException();
         LocationData lastLocation = getLastLocation(player);
-        
+
         if (lastLocation == null) {
             if (targetPlayer != null && targetPlayer != context.getSource().getPlayerOrException()) {
-                    context.getSource().sendFailure(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "back.no_previous_location_other", player.getName().getString())));
+                MessageUtil.sendMessage(context.getSource().getPlayerOrException(),
+                    com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.back.no_previous_location_other", player.getName().getString()));
             } else {
-                    context.getSource().sendFailure(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "back.no_previous_location")));
+                MessageUtil.sendMessage(player,
+                    com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.back.no_previous_location"));
             }
             return 0;
         }
-        
+
         // Check if the dimension still exists
         ServerLevel targetLevel = context.getSource().getServer().getLevel(lastLocation.dimension);
         if (targetLevel == null) {
-            context.getSource().sendFailure(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "back.dimension_missing")));
+            MessageUtil.sendMessage(player,
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.back.dimension_missing"));
             return 0;
         }
-        
+
         // Store current location before teleporting back
         storeLocation(player, "teleport");
-        
+
         // Teleport the player
         if (player.level().dimension() != lastLocation.dimension) {
             // Cross-dimensional teleport
@@ -99,16 +102,19 @@ public class BackCommand {
             player.setYRot(lastLocation.yaw);
             player.setXRot(lastLocation.pitch);
         }
-        
+
         // Send confirmation messages
         String timeAgo = getTimeAgo(lastLocation.timestamp);
         if (targetPlayer != null && targetPlayer != context.getSource().getPlayerOrException()) {
-            context.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "back.success_other", player.getName().getString(), lastLocation.reason, timeAgo)), true);
-            targetPlayer.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "back.success_self", lastLocation.reason, timeAgo)));
+            MessageUtil.sendMessage(context.getSource().getPlayerOrException(),
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.back.success_other", player.getName().getString(), lastLocation.reason, timeAgo));
+            MessageUtil.sendMessage(targetPlayer,
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.back.success_self", lastLocation.reason, timeAgo));
         } else {
-            context.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "back.success_self", lastLocation.reason, timeAgo)), false);
+            MessageUtil.sendMessage(player,
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.back.success_self", lastLocation.reason, timeAgo));
         }
-        
+
         return 1;
     }
     

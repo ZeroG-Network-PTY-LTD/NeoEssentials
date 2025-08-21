@@ -90,44 +90,25 @@ public class SecurityCommand {
             SecurityManager securityManager = SecurityManager.getInstance();
             Map<String, Object> stats = securityManager.getSecurityStats();
             
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&6&l=== Security System Status ===")
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eTotal Events: &f" + stats.get("total_events"))
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eBlocked IPs: &f" + stats.get("blocked_ips"))
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eMonitored Players: &f" + stats.get("monitored_players"))
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eMonitored IPs: &f" + stats.get("monitored_ips"))
-            ), false);
-            
-            // Show event type statistics
-            @SuppressWarnings("unchecked")
-            Map<String, Long> eventTypes = (Map<String, Long>) stats.get("event_types");
-            if (!eventTypes.isEmpty()) {
-                source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&eEvent Types:")
-                ), false);
-                
-                eventTypes.forEach((type, count) -> {
-                    source.sendSuccess(() -> Component.literal(
-                        MessageUtil.translateColorCodes("&7- " + type + ": &f" + count)
-                    ), false);
-                });
+            try {
+                ServerPlayer player = source.getPlayerOrException();
+                MessageUtil.sendMessage(player, "&6&l=== Security System Status ===");
+                MessageUtil.sendMessage(player, "&eTotal Events: &f" + stats.get("total_events"));
+                MessageUtil.sendMessage(player, "&eBlocked IPs: &f" + stats.get("blocked_ips"));
+                MessageUtil.sendMessage(player, "&eMonitored Players: &f" + stats.get("monitored_players"));
+                MessageUtil.sendMessage(player, "&eMonitored IPs: &f" + stats.get("monitored_ips"));
+                @SuppressWarnings("unchecked")
+                Map<String, Long> eventTypes = (Map<String, Long>) stats.get("event_types");
+                if (!eventTypes.isEmpty()) {
+                    MessageUtil.sendMessage(player, "&eEvent Types:");
+                    eventTypes.forEach((type, count) -> {
+                        MessageUtil.sendMessage(player, "&7- " + type + ": &f" + count);
+                    });
+                }
+                MessageUtil.sendMessage(player, "&7Use '/security events' to see recent events");
+            } catch (com.mojang.brigadier.exceptions.CommandSyntaxException ex) {
+                // Optionally log or handle the error
             }
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&7Use '/security events' to see recent events")
-            ), false);
             
             return 1;
             
@@ -147,35 +128,23 @@ public class SecurityCommand {
             SecurityManager securityManager = SecurityManager.getInstance();
             List<SecurityEvent> events = securityManager.getRecentEvents(limit);
             
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&6&l=== Recent Security Events (Last " + limit + ") ===")
-            ), false);
-            
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&6&l=== Recent Security Events (Last " + limit + ") ===");
             if (events.isEmpty()) {
-                source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&7No recent security events")
-                ), false);
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&7No recent security events");
                 return 1;
             }
-            
             for (SecurityEvent event : events) {
                 String severityColor = getSeverityColor(event.getThreatLevel());
                 String timestamp = event.getTimestampAsDateTime().format(DateTimeFormatter.ofPattern("MM-dd HH:mm:ss"));
-                
-                source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes(String.format("&7[%s] %s%s &7- &f%s &8(%s)",
+                MessageUtil.sendMessage(source.getPlayerOrException(), String.format("&7[%s] %s%s &7- &f%s &8(%s)",
                         timestamp,
                         severityColor,
                         event.getType().toString(),
                         event.getDescription(),
                         event.getSource()
-                    ))
-                ), false);
+                    ));
             }
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&7Use '/security player <name>' or '/security ip <ip>' for details")
-            ), false);
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&7Use '/security player <name>' or '/security ip <ip>' for details");
             
             return 1;
             
@@ -198,62 +167,27 @@ public class SecurityCommand {
             // Try to find player by name (simplified - in real implementation, use proper UUID lookup)
             ServerPlayer targetPlayer = source.getServer().getPlayerList().getPlayerByName(playerName);
             if (targetPlayer == null) {
-                source.sendFailure(Component.literal("Player not found: " + playerName));
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&cPlayer not found: " + playerName);
                 return 0;
             }
-            
             UUID playerId = targetPlayer.getUUID();
             PlayerSecurityProfile profile = securityManager.getPlayerProfile(playerId);
-            
             if (profile == null) {
-                source.sendFailure(Component.literal("No security profile found for player: " + playerName));
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&cNo security profile found for player: " + playerName);
                 return 0;
             }
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&6&l=== Security Profile: " + playerName + " ===")
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&ePlayer ID: &f" + playerId)
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eFirst Seen: &f" + 
-                    profile.getFirstSeen().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eLast Seen: &f" + 
-                    profile.getLastSeen().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eLast Known IP: &f" + 
-                    (profile.getLastKnownIp() != null ? profile.getLastKnownIp() : "Unknown"))
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eSuspicion Level: &f" + profile.getSuspicionLevel() + "/10")
-            ), false);
-            
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&6&l=== Security Profile: " + playerName + " ===");
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&ePlayer ID: &f" + playerId);
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eFirst Seen: &f" + profile.getFirstSeen().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eLast Seen: &f" + profile.getLastSeen().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eLast Known IP: &f" + (profile.getLastKnownIp() != null ? profile.getLastKnownIp() : "Unknown"));
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eSuspicion Level: &f" + profile.getSuspicionLevel() + "/10");
             if (profile.isFlagged()) {
-                source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&cFlagged: &f" + profile.getFlagReason())
-                ), false);
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&cFlagged: &f" + profile.getFlagReason());
             }
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eLogin Attempts: &f" + profile.getLoginAttempts().size())
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eCommand History: &f" + profile.getCommandHistory().size())
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eRecent Commands: &f" + profile.getRecentCommandCount() + "/min")
-            ), false);
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eLogin Attempts: &f" + profile.getLoginAttempts().size());
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eCommand History: &f" + profile.getCommandHistory().size());
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eRecent Commands: &f" + profile.getRecentCommandCount() + "/min");
             
             return 1;
             
@@ -276,58 +210,23 @@ public class SecurityCommand {
             IpSecurityProfile profile = securityManager.getIpProfile(ipAddress);
             
             if (profile == null) {
-                source.sendFailure(Component.literal("No security profile found for IP: " + ipAddress));
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&cNo security profile found for IP: " + ipAddress);
                 return 0;
             }
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&6&l=== IP Security Profile: " + ipAddress + " ===")
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eFirst Seen: &f" + 
-                    profile.getFirstSeen().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eLast Seen: &f" + 
-                    profile.getLastSeen().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eFailed Login Attempts: &f" + profile.getFailedLoginAttempts())
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eRecent Failures: &f" + profile.getRecentFailureCount() + "/hour")
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eSuspicion Level: &f" + profile.getSuspicionLevel() + "/10")
-            ), false);
-            
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&6&l=== IP Security Profile: " + ipAddress + " ===");
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eFirst Seen: &f" + profile.getFirstSeen().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eLast Seen: &f" + profile.getLastSeen().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eFailed Login Attempts: &f" + profile.getFailedLoginAttempts());
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eRecent Failures: &f" + profile.getRecentFailureCount() + "/hour");
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eSuspicion Level: &f" + profile.getSuspicionLevel() + "/10");
             if (profile.isBlocked()) {
-                source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&cBlocked: &f" + profile.getBlockReason())
-                ), false);
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&cBlocked: &f" + profile.getBlockReason());
             }
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eLogin Attempts: &f" + profile.getLoginAttempts().size())
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eWeb Requests: &f" + profile.getWebRequests().size())
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eBot-like Behavior: &f" + (profile.isBotLike() ? "Yes" : "No"))
-            ), false);
-            
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eLogin Attempts: &f" + profile.getLoginAttempts().size());
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eWeb Requests: &f" + profile.getWebRequests().size());
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eBot-like Behavior: &f" + (profile.isBotLike() ? "Yes" : "No"));
             if (profile.getGeolocation() != null) {
-                source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&eLocation: &f" + profile.getGeolocation())
-                ), false);
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&eLocation: &f" + profile.getGeolocation());
             }
             
             return 1;
@@ -349,19 +248,15 @@ public class SecurityCommand {
             SecurityManager securityManager = SecurityManager.getInstance();
             
             if (securityManager.isIpBlocked(ipAddress)) {
-                source.sendFailure(Component.literal("IP address is already blocked: " + ipAddress));
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&cIP address is already blocked: " + ipAddress);
                 return 0;
             }
             
             securityManager.blockIpAddress(ipAddress, reason);
             
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&aIP address blocked: &f" + ipAddress)
-            ), true);
+            source.sendSuccess(() -> MessageUtil.formatMessage("&aIP address blocked: &f" + ipAddress), true);
             
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eReason: &f" + reason)
-            ), false);
+            source.sendSuccess(() -> MessageUtil.formatMessage("&eReason: &f" + reason), false);
             
             LOGGER.info("IP address {} blocked by {} - Reason: {}", 
                 ipAddress, source.getTextName(), reason);
@@ -385,15 +280,13 @@ public class SecurityCommand {
             SecurityManager securityManager = SecurityManager.getInstance();
             
             if (!securityManager.isIpBlocked(ipAddress)) {
-                source.sendFailure(Component.literal("IP address is not blocked: " + ipAddress));
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&cIP address is not blocked: " + ipAddress);
                 return 0;
             }
             
             securityManager.unblockIpAddress(ipAddress);
             
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&aIP address unblocked: &f" + ipAddress)
-            ), true);
+            source.sendSuccess(() -> MessageUtil.formatMessage("&aIP address unblocked: &f" + ipAddress), true);
             
             LOGGER.info("IP address {} unblocked by {}", ipAddress, source.getTextName());
             
@@ -414,45 +307,22 @@ public class SecurityCommand {
             CommandSourceStack source = context.getSource();
             SecurityManager securityManager = SecurityManager.getInstance();
             
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&6Running comprehensive security scan...")
-            ), false);
-            
-            // Trigger security analysis
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&6Running comprehensive security scan...");
             Map<String, Object> stats = securityManager.getSecurityStats();
             int totalEvents = (int) stats.get("total_events");
             int blockedIps = (int) stats.get("blocked_ips");
-            
-            // Analyze recent events for threats
             List<SecurityEvent> recentEvents = securityManager.getRecentEvents(50);
             long highThreatEvents = recentEvents.stream()
                 .filter(event -> event.getThreatLevel().getLevel() >= 3)
                 .count();
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&a=== Security Scan Results ===")
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eTotal Security Events: &f" + totalEvents)
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eHigh-Threat Events (Recent): &f" + highThreatEvents)
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eBlocked IP Addresses: &f" + blockedIps)
-            ), false);
-            
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&a=== Security Scan Results ===");
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eTotal Security Events: &f" + totalEvents);
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eHigh-Threat Events (Recent): &f" + highThreatEvents);
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eBlocked IP Addresses: &f" + blockedIps);
             if (highThreatEvents > 0) {
-                source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&c⚠ High-threat events detected! Review with '/security events'")
-                ), false);
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&c⚠ High-threat events detected! Review with '/security events'");
             } else {
-                source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&a✓ No immediate threats detected")
-                ), false);
+                MessageUtil.sendMessage(source.getPlayerOrException(), "&a✓ No immediate threats detected");
             }
             
             return 1;
@@ -471,21 +341,10 @@ public class SecurityCommand {
         try {
             CommandSourceStack source = context.getSource();
             
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&6Generating compliance report...")
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&aCompliance report generated!")
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eReport Location: &fneoessentials/security/compliance_report.json")
-            ), false);
-            
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&7Report includes: Event statistics, blocked IPs, monitoring data")
-            ), false);
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&6Generating compliance report...");
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&aCompliance report generated!");
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&eReport Location: &fneoessentials/security/compliance_report.json");
+            MessageUtil.sendMessage(source.getPlayerOrException(), "&7Report includes: Event statistics, blocked IPs, monitoring data");
             
             return 1;
             

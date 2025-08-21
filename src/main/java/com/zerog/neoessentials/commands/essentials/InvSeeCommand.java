@@ -20,7 +20,7 @@ public class InvSeeCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("invsee")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.INVSEE))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(InvSeeCommand::openPlayerInventory)
             )
@@ -28,14 +28,14 @@ public class InvSeeCommand {
         
         // Alternative commands
         dispatcher.register(Commands.literal("openinv")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.INVSEE))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(InvSeeCommand::openPlayerInventory)
             )
         );
         
         dispatcher.register(Commands.literal("oi")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.INVSEE))
             .then(Commands.argument("player", EntityArgument.player())
                 .executes(InvSeeCommand::openPlayerInventory)
             )
@@ -58,30 +58,35 @@ public class InvSeeCommand {
         try {
             // Don't allow opening own inventory
             if (opener == target) {
-                source.sendFailure(Component.literal("You cannot open your own inventory with this command"));
+                sendLocalizedMessage(source, "neoessentials.invsee.cannot_open_self");
                 return 0;
             }
-            
+
+            // Config: allowModify
+            boolean canModify = PermissionUtil.hasPermissionOrOp(source, PermissionNodes.INVSEE_MODIFY)
+                && com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().invseeConfig.allowModify;
+
             MenuProvider inventoryProvider = new SimpleMenuProvider(
-                (windowId, playerInventory, playerEntity) -> new ChestMenu(
-                    MenuType.GENERIC_9x6, 
-                    windowId, 
-                    playerInventory, 
-                    target.getInventory(), 
-                    6
-                ),
+                (windowId, playerInventory, playerEntity) -> new com.zerog.neoessentials.menus.InvseeMenu(windowId, playerInventory, target.getInventory(), canModify),
                 Component.literal(target.getDisplayName().getString() + "'s Inventory")
             );
-            
+
             opener.openMenu(inventoryProvider);
-            
-            source.sendSuccess(() -> Component.literal("Opened " + target.getDisplayName().getString() + "'s inventory"), true);
-            
+
+            sendLocalizedMessage(source, "neoessentials.invsee.opened", target.getDisplayName().getString());
             return 1;
-            
+
         } catch (Exception e) {
-            source.sendFailure(Component.literal("Failed to open inventory: " + e.getMessage()));
+            sendLocalizedMessage(source, "neoessentials.invsee.failed", e.getMessage());
             return 0;
+        }
+    }
+
+    private static void sendLocalizedMessage(CommandSourceStack source, String key, Object... placeholders) {
+        if (source.getEntity() instanceof ServerPlayer player) {
+            com.zerog.neoessentials.util.MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, key, placeholders));
+        } else {
+            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_us", key, placeholders)), false);
         }
     }
 }

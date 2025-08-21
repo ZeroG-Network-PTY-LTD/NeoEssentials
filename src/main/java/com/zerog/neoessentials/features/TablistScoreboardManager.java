@@ -1,4 +1,6 @@
+
 package com.zerog.neoessentials.features;
+import com.zerog.neoessentials.util.MessageUtil;
 
 import com.zerog.neoessentials.animation.AnimationManager;
 import net.minecraft.network.chat.Component;
@@ -239,7 +241,7 @@ public class TablistScoreboardManager {
             if (i > 0) {
                 component.append(Component.literal("\n"));
             }
-            component.append(Component.literal(translateColorCodes(lines[i])));
+            component.append(MessageUtil.formatMessage(lines[i]));
         }
         
         return component;
@@ -304,17 +306,7 @@ public class TablistScoreboardManager {
                 }
             }
             
-            // Fallback to tablist configuration
-            com.zerog.neoessentials.config.TablistConfig config = getTablistConfig();
-                boolean tablistEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().modules.tablist;
-            if (tablistEnabled && config != null && config.playerFormat.enabled) {
-                // Look for group-specific prefix in configuration
-                for (var groupDef : config.groups.groups) {
-                    if (groupDef.name.equals(group)) {
-                        return translateColorCodes(groupDef.prefix);
-                    }
-                }
-            }
+            // Fallback to tablist configuration removed. Always return empty string if not found in permissions.
         } catch (Exception e) {
             LOGGER.debug("Failed to build prefix for player {}: {}", player.getName().getString(), e.getMessage());
         }
@@ -339,17 +331,7 @@ public class TablistScoreboardManager {
                 }
             }
             
-            // Fallback to tablist configuration
-            com.zerog.neoessentials.config.TablistConfig config = getTablistConfig();
-            boolean tablistEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().modules.tablist;
-            if (tablistEnabled && config != null && config.playerFormat.enabled) {
-                // Look for group-specific suffix in configuration
-                for (var groupDef : config.groups.groups) {
-                    if (groupDef.name.equals(group)) {
-                        return translateColorCodes(groupDef.suffix);
-                    }
-                }
-            }
+            // Fallback to tablist configuration removed. Always return empty string if not found in permissions.
         } catch (Exception e) {
             LOGGER.debug("Failed to build suffix for player {}: {}", player.getName().getString(), e.getMessage());
         }
@@ -361,14 +343,6 @@ public class TablistScoreboardManager {
     /**
      * Get tablist configuration from the config manager
      */
-    private com.zerog.neoessentials.config.TablistConfig getTablistConfig() {
-        try {
-            return com.zerog.neoessentials.config.ConfigManager.getInstance().getTablistConfig();
-        } catch (Exception e) {
-            LOGGER.error("Failed to get tablist configuration", e);
-            return new com.zerog.neoessentials.config.TablistConfig(); // Return default config as fallback
-        }
-    }
     
     /**
      * Translate color codes in text
@@ -378,7 +352,7 @@ public class TablistScoreboardManager {
         
         // Use the existing MessageUtil to translate color codes
         try {
-            return com.zerog.neoessentials.util.MessageUtil.translateColorCodes(text);
+            return com.zerog.neoessentials.util.MessageUtil.formatMessage(text).getString();
         } catch (Exception e) {
             // Fallback to simple & translation
             return text.replace('&', '§');

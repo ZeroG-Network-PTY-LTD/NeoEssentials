@@ -1,4 +1,6 @@
 package com.zerog.neoessentials.commands.essentials;
+import java.util.UUID;
+import java.util.Optional;
 
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
@@ -47,72 +49,53 @@ public class SeenCommand {
      */
     private static int checkPlayerSeen(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         String playerName = StringArgumentType.getString(context, "player");
-        
-        // Check if player is currently online
-        ServerPlayer onlinePlayer = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
-        
+        var source = context.getSource();
+        var server = source.getServer();
+        ServerPlayer onlinePlayer = server.getPlayerList().getPlayerByName(playerName);
+
         if (onlinePlayer != null) {
-            // Player is online
-            context.getSource().sendSuccess(() -> Component.literal("§a" + playerName + " is currently online!"), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7Location: §b" + onlinePlayer.level().dimension().location()), false);
-            context.getSource().sendSuccess(() -> Component.literal("§7Game Mode: §6" + onlinePlayer.gameMode.getGameModeForPlayer().getName()), false);
-            
+            source.sendSuccess(() -> Component.literal("§a" + playerName + " is currently online!"), false);
+            source.sendSuccess(() -> Component.literal("§7Location: §b" + onlinePlayer.level().dimension().location()), false);
+            source.sendSuccess(() -> Component.literal("§7Game Mode: §6" + onlinePlayer.gameMode.getGameModeForPlayer().getName()), false);
             return 1;
         }
-        
-        // Player is not online - try to get info from user cache
-        // This is a simplified implementation. In a production environment,
-        // you'd want to store last seen times in a database or persistent storage
-        
-        var userCache = context.getSource().getServer().getProfileCache();
+
+        // Try to resolve UUID from name
+        UUID targetUuid = null;
+        var userCache = server.getProfileCache();
         if (userCache != null) {
             var gameProfile = userCache.get(playerName);
-            
             if (gameProfile.isPresent()) {
-                context.getSource().sendSuccess(() -> Component.literal("§c" + playerName + " is currently offline."), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7UUID: §f" + gameProfile.get().getId()), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7Last seen data not available (requires database storage)."), false);
-                context.getSource().sendSuccess(() -> Component.literal("§7This player has been on the server before."), false);
-            } else {
-                context.getSource().sendFailure(Component.literal("§cPlayer '" + playerName + "' has never been on this server!"));
-                return 0;
+                targetUuid = gameProfile.get().getId();
             }
-        } else {
-            context.getSource().sendFailure(Component.literal("§cUnable to check player data - user cache not available."));
+        }
+        if (targetUuid == null) {
+            // Try to parse as UUID
+            try {
+                targetUuid = UUID.fromString(playerName);
+            } catch (IllegalArgumentException ignored) {}
+        }
+        if (targetUuid == null) {
+            source.sendFailure(Component.literal("§cPlayer or UUID not found."));
             return 0;
         }
-        
-        return 1;
+
+        // Use LastSeenManager for last seen lookup
+        var mgr = com.zerog.neoessentials.managers.LastSeenManager.getInstance();
+        Optional<Long> lastSeenOpt = mgr.getLastSeen(targetUuid);
+        if (lastSeenOpt.isPresent()) {
+            java.time.Instant instant = java.time.Instant.ofEpochMilli(lastSeenOpt.get());
+            java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofLocalizedDateTime(java.time.format.FormatStyle.MEDIUM).withZone(java.time.ZoneId.systemDefault());
+            String time = fmt.format(instant);
+            source.sendSuccess(() -> Component.literal("§e" + playerName + " was last seen: §a" + time), false);
+            return 1;
+        } else {
+            source.sendFailure(Component.literal("§cNo data for " + playerName));
+            return 0;
+        }
     }
     
     /**
      * Format duration in a human-readable way
      */
-    private static String formatDuration(long millis) {
-        if (millis < 0) millis = 0;
-        
-        Duration duration = Duration.ofMillis(millis);
-        
-        long days = duration.toDays();
-        long hours = duration.toHours() % 24;
-        long minutes = duration.toMinutes() % 60;
-        long seconds = duration.getSeconds() % 60;
-        
-        StringBuilder result = new StringBuilder();
-        
-        if (days > 0) {
-            result.append(days).append("d ");
-        }
-        if (hours > 0) {
-            result.append(hours).append("h ");
-        }
-        if (minutes > 0) {
-            result.append(minutes).append("m ");
-        }
-        if (seconds > 0 || result.length() == 0) {
-            result.append(seconds).append("s");
-        }
-        
-        return result.toString().trim();
-    }
 }

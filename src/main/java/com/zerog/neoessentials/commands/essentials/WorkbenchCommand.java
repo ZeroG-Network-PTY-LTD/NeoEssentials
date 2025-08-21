@@ -20,36 +20,20 @@ public class WorkbenchCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("workbench")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.WORKBENCH))
             .executes(WorkbenchCommand::openWorkbench)
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(WorkbenchCommand::openWorkbenchForPlayer)
-            )
         );
-        
-        // Alternative commands
         dispatcher.register(Commands.literal("wb")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.WORKBENCH))
             .executes(WorkbenchCommand::openWorkbench)
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(WorkbenchCommand::openWorkbenchForPlayer)
-            )
         );
-        
         dispatcher.register(Commands.literal("craft")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.WORKBENCH))
             .executes(WorkbenchCommand::openWorkbench)
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(WorkbenchCommand::openWorkbenchForPlayer)
-            )
         );
-        
         dispatcher.register(Commands.literal("crafting")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.WORKBENCH))
             .executes(WorkbenchCommand::openWorkbench)
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(WorkbenchCommand::openWorkbenchForPlayer)
-            )
         );
     }
 
@@ -58,7 +42,17 @@ public class WorkbenchCommand {
      */
     private static int openWorkbench(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        return openWorkbenchForPlayer(context.getSource(), player);
+        MenuProvider workbenchProvider = new SimpleMenuProvider(
+            (windowId, playerInventory, playerEntity) -> new CraftingMenu(
+                windowId,
+                playerInventory,
+                ContainerLevelAccess.create(player.level(), player.blockPosition())
+            ),
+            Component.translatable("container.crafting")
+        );
+        player.openMenu(workbenchProvider);
+        context.getSource().sendSuccess(() -> Component.literal("Opened workbench"), false);
+        return 1;
     }
 
     /**

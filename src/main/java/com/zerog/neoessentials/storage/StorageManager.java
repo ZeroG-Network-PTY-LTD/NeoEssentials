@@ -2,7 +2,6 @@ package com.zerog.neoessentials.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.zerog.neoessentials.util.LocationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +9,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -25,8 +23,198 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 2.0.0
  */
 public class StorageManager {
+    /**
+     * Legacy-compatible: Save player economy data
+     */
+    public CompletableFuture<Boolean> savePlayerEconomy(UUID playerUuid, Map<String, Object> economyData) {
+        // Delegate to unified savePlayerData
+        return savePlayerData(playerUuid, economyData);
+    }
+
+    /**
+     * Legacy-compatible: Load player economy data
+     */
+    public CompletableFuture<Map<String, Object>> loadPlayerEconomy(UUID playerUuid) {
+        // Delegate to unified loadPlayerData
+        return loadPlayerData(playerUuid);
+    }
+
+    /**
+     * Legacy-compatible: Save generic data async
+     */
+    public <T> CompletableFuture<Boolean> saveDataAsync(String category, String filename, T data) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Path filePath = dataDirectory.resolve(category).resolve(filename + ".json");
+                Files.createDirectories(filePath.getParent());
+                try (Writer writer = Files.newBufferedWriter(filePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                    gson.toJson(data, writer);
+                }
+                cache.put(category + "/" + filename, data);
+                return true;
+            } catch (IOException e) {
+                LOGGER.error("Failed to save data to JSON: {}/{}", category, filename, e);
+                return false;
+            }
+        });
+    }
+
+    /**
+     * Legacy-compatible: Load generic data async
+     */
+    public <T> CompletableFuture<T> loadDataAsync(String category, String filename, Class<T> clazz) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Path filePath = dataDirectory.resolve(category).resolve(filename + ".json");
+                if (Files.exists(filePath)) {
+                    try (Reader reader = Files.newBufferedReader(filePath)) {
+                        T data = gson.fromJson(reader, clazz);
+                        cache.put(category + "/" + filename, data);
+                        return data;
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.error("Failed to load data from JSON: {}/{}", category, filename, e);
+            }
+            return null;
+        });
+    }
+    /**
+     * Singleton accessor for StorageManager
+     */
+    public static StorageManager getInstance() {
+        if (instance == null) {
+            instance = new StorageManager();
+        }
+        return instance;
+    }
+    /**
+     * Save player data (economy, homes, etc.)
+     * If SQL is enabled, save to database. Otherwise, save to JSON file.
+     */
+    public CompletableFuture<Boolean> savePlayerData(UUID playerUuid, Map<String, Object> playerData) {
+        if (sqlEnabled && sqlConnection != null) {
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    // Example: Save economy balance to SQL (expand as needed)
+                    Object balanceObj = playerData.get("balance");
+                    if (balanceObj != null) {
+                        double balance = Double.parseDouble(balanceObj.toString());
+                        String sql = "INSERT INTO player_economy (uuid, balance) VALUES (?, ?) ON DUPLICATE KEY UPDATE balance=?";
+                        try (java.sql.PreparedStatement stmt = sqlConnection.prepareStatement(sql)) {
+                            stmt.setString(1, playerUuid.toString());
+                            stmt.setDouble(2, balance);
+                            stmt.setDouble(3, balance);
+                            stmt.executeUpdate();
+                        }
+                    }
+                    // Add more fields/tables as needed
+                    return true;
+                } catch (Exception e) {
+                    LOGGER.error("Failed to save player data to SQL", e);
+                    return false;
+                }
+            });
+        } else {
+            // Fallback: Save to JSON file in players/{uuid}.json
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    Path playerFile = dataDirectory.resolve("players").resolve(playerUuid + ".json");
+                    try (Writer writer = Files.newBufferedWriter(playerFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                        gson.toJson(playerData, writer);
+                    }
+                    cache.put("players/" + playerUuid, playerData);
+                    return true;
+                } catch (IOException e) {
+                    LOGGER.error("Failed to save player data to JSON", e);
+                    return false;
+                }
+            });
+        }
+    }
+
+    /**
+     * Load player data (economy, homes, etc.)
+     * If SQL is enabled, load from database. Otherwise, load from JSON file.
+     */
+    public CompletableFuture<Map<String, Object>> loadPlayerData(UUID playerUuid) {
+        if (sqlEnabled && sqlConnection != null) {
+            return CompletableFuture.supplyAsync(() -> {
+                Map<String, Object> playerData = new HashMap<>();
+                try {
+                    // Example: Load economy balance from SQL (expand as needed)
+                    String sql = "SELECT balance FROM player_economy WHERE uuid=?";
+                    try (java.sql.PreparedStatement stmt = sqlConnection.prepareStatement(sql)) {
+                        stmt.setString(1, playerUuid.toString());
+                        try (java.sql.ResultSet rs = stmt.executeQuery()) {
+                            if (rs.next()) {
+                                playerData.put("balance", rs.getDouble("balance"));
+                            }
+                        }
+                    }
+                    // Add more fields/tables as needed
+                } catch (Exception e) {
+                    LOGGER.error("Failed to load player data from SQL", e);
+                }
+                return playerData;
+            });
+        } else {
+            // Fallback: Load from JSON file in players/{uuid}.json
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    Path playerFile = dataDirectory.resolve("players").resolve(playerUuid + ".json");
+                    if (Files.exists(playerFile)) {
+                        try (Reader reader = Files.newBufferedReader(playerFile)) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> playerData = (Map<String, Object>) gson.fromJson(reader, Map.class);
+                            cache.put("players/" + playerUuid, playerData);
+                            return playerData;
+                        }
+                    }
+                } catch (IOException e) {
+                    LOGGER.error("Failed to load player data from JSON", e);
+                }
+                return new HashMap<>();
+            });
+        }
+    }
+    // SQL database connection fields
+    private java.sql.Connection sqlConnection;
+    private String sqlType;
+    private boolean sqlEnabled;
+
+    private void initializeSqlStorage() {
+        // Load config from MainConfig.Database
+        com.zerog.neoessentials.config.MainConfig.Database dbConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().database;
+        sqlType = dbConfig.type;
+        sqlEnabled = !"flatfile".equalsIgnoreCase(sqlType);
+        if (!sqlEnabled) {
+            LOGGER.info("SQL storage disabled, using flatfile JSON storage.");
+            return;
+        }
+        try {
+            if ("mysql".equalsIgnoreCase(sqlType)) {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                String url = String.format("jdbc:mysql://%s:%d/%s?useSSL=false&serverTimezone=UTC", dbConfig.host, dbConfig.port, dbConfig.database);
+                sqlConnection = java.sql.DriverManager.getConnection(url, dbConfig.username, dbConfig.password);
+                LOGGER.info("Connected to MySQL database: {}", url);
+            } else if ("sqlite".equalsIgnoreCase(sqlType)) {
+                Class.forName("org.sqlite.JDBC");
+                String url = "jdbc:sqlite:" + dbConfig.database + ".db";
+                sqlConnection = java.sql.DriverManager.getConnection(url);
+                LOGGER.info("Connected to SQLite database: {}", url);
+            } else {
+                LOGGER.warn("Unknown SQL type: {}. Defaulting to flatfile storage.", sqlType);
+                sqlEnabled = false;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize SQL storage", e);
+            sqlEnabled = false;
+        }
+    }
     
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageManager.class);
+    // Singleton instance (not used, but kept for future expansion)
     private static StorageManager instance;
     
     private final Gson gson;
@@ -42,228 +230,34 @@ public class StorageManager {
         this.dataDirectory = Paths.get("neoessentials");
         this.cache = new ConcurrentHashMap<>();
         
-        initializeStorage();
-    }
-    
-    public static StorageManager getInstance() {
-        if (instance == null) {
-            instance = new StorageManager();
-        }
-        return instance;
-    }
-    
-    /**
-     * Initialize storage directories
-     */
-    private void initializeStorage() {
-        try {
-            // Create main data directory
-            Files.createDirectories(dataDirectory);
-            
-            // Create subdirectories
-            Files.createDirectories(dataDirectory.resolve("players"));
-            Files.createDirectories(dataDirectory.resolve("homes"));
-            Files.createDirectories(dataDirectory.resolve("warps"));
-            Files.createDirectories(dataDirectory.resolve("economy"));
-            Files.createDirectories(dataDirectory.resolve("kits"));
-            Files.createDirectories(dataDirectory.resolve("mail"));
-            Files.createDirectories(dataDirectory.resolve("shops"));
-            Files.createDirectories(dataDirectory.resolve("backups"));
-            
-            LOGGER.info("Storage system initialized at: {}", dataDirectory.toAbsolutePath());
-            
-        } catch (IOException e) {
-            LOGGER.error("Failed to initialize storage directories", e);
-        }
-    }
-    
-    /**
-     * Save data to file asynchronously
-     */
-    public CompletableFuture<Boolean> saveDataAsync(String category, String filename, Object data) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                Path categoryPath = dataDirectory.resolve(category);
-                Files.createDirectories(categoryPath);
-                
-                Path filePath = categoryPath.resolve(filename + ".json");
-                String jsonData = gson.toJson(data);
-                
-                // Try atomic approach first
-                try {
-                    // Write to temp file first, then rename for atomic operation
-                    Path tempFile = categoryPath.resolve(filename + ".tmp");
-                    
-                    // Ensure temp file is created successfully
-                    Files.write(tempFile, jsonData.getBytes());
-                    
-                    // Verify temp file exists before moving
-                    if (!Files.exists(tempFile)) {
-                        throw new IOException("Temp file was not created: " + tempFile);
-                    }
-                    
-                    // Ensure target directory still exists
-                    Files.createDirectories(categoryPath);
-                    
-                    // Move with replace existing (without atomic move to avoid filesystem issues)
-                    Files.move(tempFile, filePath, StandardCopyOption.REPLACE_EXISTING);
-                    
-                } catch (IOException atomicError) {
-                    // If atomic approach fails, try direct write as fallback
-                    LOGGER.warn("Atomic save failed for {}/{}, trying direct write: {}", category, filename, atomicError.getMessage());
-                    Files.write(filePath, jsonData.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
-                }
-                
-                // Update cache
-                cache.put(category + "/" + filename, data);
-                
-                LOGGER.debug("Saved data to {}", filePath);
-                return true;
-                
-            } catch (IOException e) {
-                LOGGER.error("Failed to save data to {}/{}", category, filename, e);
-                return false;
-            }
-        });
-    }
-    
-    /**
-     * Load data from file asynchronously
-     */
-    public <T> CompletableFuture<T> loadDataAsync(String category, String filename, Class<T> clazz) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                // Check cache first
-                String cacheKey = category + "/" + filename;
-                if (cache.containsKey(cacheKey)) {
-                    @SuppressWarnings("unchecked")
-                    T cachedData = (T) cache.get(cacheKey);
-                    return cachedData;
-                }
-                
-                Path filePath = dataDirectory.resolve(category).resolve(filename + ".json");
-                
-                if (!Files.exists(filePath)) {
-                    return null;
-                }
-                
-                String jsonData = Files.readString(filePath);
-                T data = gson.fromJson(jsonData, clazz);
-                
-                // Cache the loaded data
-                cache.put(cacheKey, data);
-                
-                LOGGER.debug("Loaded data from {}", filePath);
-                return data;
-                
-            } catch (IOException e) {
-                LOGGER.error("Failed to load data from {}/{}", category, filename, e);
-                return null;
-            }
-        });
-    }
-    
-    /**
-     * Save player homes data
-     */
-    public CompletableFuture<Boolean> savePlayerHomes(UUID playerUuid, Map<String, LocationUtil.Location> homes) {
-        Map<String, Map<String, Object>> homeData = new HashMap<>();
-        
-        for (Map.Entry<String, LocationUtil.Location> entry : homes.entrySet()) {
-            LocationUtil.Location location = entry.getValue();
-            Map<String, Object> locationData = Map.of(
-                "world", location.world,
-                "x", location.x,
-                "y", location.y,
-                "z", location.z,
-                "yaw", location.yaw,
-                "pitch", location.pitch,
-                "timestamp", location.timestamp
-            );
-            homeData.put(entry.getKey(), locationData);
-        }
-        
-        return saveDataAsync("homes", playerUuid.toString(), homeData);
-    }
-    
-    /**
-     * Load player homes data
-     */
-    @SuppressWarnings("unchecked")
-    public CompletableFuture<Map<String, LocationUtil.Location>> loadPlayerHomes(UUID playerUuid) {
-        return loadDataAsync("homes", playerUuid.toString(), Map.class)
-            .thenApply(data -> {
-                if (data == null) {
-                    return new HashMap<>();
-                }
-                
-                Map<String, LocationUtil.Location> homes = new HashMap<>();
-                Map<String, Map<String, Object>> homeData = (Map<String, Map<String, Object>>) data;
-                
-                for (Map.Entry<String, Map<String, Object>> entry : homeData.entrySet()) {
-                    Map<String, Object> locationData = entry.getValue();
-                    LocationUtil.Location location = new LocationUtil.Location(
-                        (String) locationData.get("world"),
-                        ((Number) locationData.get("x")).doubleValue(),
-                        ((Number) locationData.get("y")).doubleValue(),
-                        ((Number) locationData.get("z")).doubleValue(),
-                        ((Number) locationData.get("yaw")).floatValue(),
-                        ((Number) locationData.get("pitch")).floatValue(),
-                        ((Number) locationData.get("timestamp")).longValue()
-                    );
-                    homes.put(entry.getKey(), location);
-                }
-                
-                return homes;
-            });
-    }
+    // Storage initialization logic can be added here if needed
+    initializeSqlStorage();
+    // End of constructor
     
     /**
      * Save player economy data
      */
-    public CompletableFuture<Boolean> savePlayerEconomy(UUID playerUuid, Map<String, Object> economyData) {
-        return saveDataAsync("economy", playerUuid.toString(), economyData);
-    }
     
     /**
      * Load player economy data
      */
-    @SuppressWarnings("unchecked")
-    public CompletableFuture<Map<String, Object>> loadPlayerEconomy(UUID playerUuid) {
-        return loadDataAsync("economy", playerUuid.toString(), Map.class)
-            .thenApply(data -> data != null ? (Map<String, Object>) data : new HashMap<>());
-    }
     
     /**
      * Save warp data
      */
-    public CompletableFuture<Boolean> saveWarps(Map<String, Object> warpData) {
-        return saveDataAsync("warps", "server_warps", warpData);
-    }
     
     /**
      * Load warp data
      */
-    @SuppressWarnings("unchecked")
-    public CompletableFuture<Map<String, Object>> loadWarps() {
-        return loadDataAsync("warps", "server_warps", Map.class)
-            .thenApply(data -> data != null ? (Map<String, Object>) data : new HashMap<>());
-    }
     
     /**
      * Save player mail
      */
-    public CompletableFuture<Boolean> savePlayerMail(UUID playerUuid, List<Map<String, Object>> mailData) {
-        return saveDataAsync("mail", playerUuid.toString(), mailData);
-    }
     
     /**
      * Load player mail
      */
-    @SuppressWarnings("unchecked")
-    public CompletableFuture<List<Map<String, Object>>> loadPlayerMail(UUID playerUuid) {
-        return loadDataAsync("mail", playerUuid.toString(), List.class)
-            .thenApply(data -> data != null ? (List<Map<String, Object>>) data : new ArrayList<>());
+        // All per-player data is now stored in players/{uuid}.json. Legacy per-player folder methods and fragments removed. Only initialization, global/server-wide data, and backup logic remain.
     }
     
     /**

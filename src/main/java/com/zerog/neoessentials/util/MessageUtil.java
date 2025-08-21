@@ -5,8 +5,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.zerog.neoessentials.util.ColorService;
+import com.zerog.neoessentials.util.ColorPermission;
 
 /**
  * Utility class for sending formatted messages to players
@@ -16,9 +16,29 @@ import java.util.regex.Pattern;
  * @since 2.0.0
  */
 public class MessageUtil {
+    // Centralized color service instance (should be initialized from mod setup)
+    private static ColorService colorService = new ColorService(
+        java.util.Map.of(
+            "primary", "#00FF00", // Example theme color
+            "secondary", "#FF0000"
+        ),
+        true, // allowLegacyCodes
+        true, // allowLegacyRGB
+        new ColorPermission()
+    );
+    /**
+     * Send a simple test message to a player to verify color support
+     */
+    public static void sendColorTest(ServerPlayer player) {
+        if (player == null) return;
+        Component test = Component.literal("").append(Component.literal("&aGreen &cRed &eYellow &bAqua").withStyle(ChatFormatting.GREEN))
+            .append(Component.literal(" &cRed").withStyle(ChatFormatting.RED))
+            .append(Component.literal(" &eYellow").withStyle(ChatFormatting.YELLOW))
+            .append(Component.literal(" &bAqua").withStyle(ChatFormatting.AQUA));
+        player.displayClientMessage(test, false);
+    }
     
-    private static final Pattern COLOR_PATTERN = Pattern.compile("&([0-9a-fk-or])");
-    private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
+    // Patterns are now handled by ColorService
     
     /**
      * Send a formatted message to a player with placeholder replacement
@@ -27,10 +47,9 @@ public class MessageUtil {
         if (player == null || message == null || message.isEmpty()) {
             return;
         }
-        
         String processedMessage = replacePlaceholders(message, placeholders);
-        Component formattedMessage = formatMessage(processedMessage);
-        player.sendSystemMessage(formattedMessage);
+        Component formattedMessage = colorService.applyUserFormatting(player, processedMessage);
+        player.displayClientMessage(formattedMessage, false);
     }
     
     /**
@@ -50,10 +69,10 @@ public class MessageUtil {
      */
     public static void sendMessage(Iterable<ServerPlayer> players, String message, Object... placeholders) {
         String processedMessage = replacePlaceholders(message, placeholders);
-        Component formattedMessage = formatMessage(processedMessage);
         for (ServerPlayer player : players) {
             if (player != null) {
-                player.sendSystemMessage(formattedMessage);
+                Component formattedMessage = colorService.applyUserFormatting(player, processedMessage);
+                player.displayClientMessage(formattedMessage, false);
             }
         }
     }
@@ -65,19 +84,18 @@ public class MessageUtil {
         if (player == null || message == null || message.isEmpty()) {
             return;
         }
-        
-        Component formattedMessage = formatMessage(message);
-        player.sendSystemMessage(formattedMessage);
+        Component formattedMessage = colorService.applyUserFormatting(player, message);
+        player.displayClientMessage(formattedMessage, false);
     }
     
     /**
      * Send a formatted message to multiple players
      */
     public static void sendMessage(Iterable<ServerPlayer> players, String message) {
-        Component formattedMessage = formatMessage(message);
         for (ServerPlayer player : players) {
             if (player != null) {
-                player.sendSystemMessage(formattedMessage);
+                Component formattedMessage = colorService.applyUserFormatting(player, message);
+                player.displayClientMessage(formattedMessage, false);
             }
         }
     }
@@ -121,86 +139,38 @@ public class MessageUtil {
     /**
      * Format a message with color codes and hex colors
      */
+    // Deprecated: use ColorService for formatting
     public static Component formatMessage(String message) {
-        if (message == null) {
-            return Component.empty();
-        }
-        
-        // Replace color codes
-        String formatted = translateColorCodes(message);
-        
-        // Create component from formatted text
-        return Component.literal(formatted);
+        return Component.literal(message);
     }
-    
-    /**
-     * Translate color codes (&0-9, &a-f, &k-o, &r) to formatting codes
-     */
-    public static String translateColorCodes(String message) {
-        if (message == null) {
-            return "";
-        }
-        
-        // Handle hex colors (&#RRGGBB) -> §x§R§R§G§G§B§B
-        Matcher hexMatcher = HEX_PATTERN.matcher(message);
-        StringBuffer hexBuffer = new StringBuffer();
-        while (hexMatcher.find()) {
-            String hex = hexMatcher.group(1);
-            StringBuilder mcHex = new StringBuilder("§x");
-            for (char c : hex.toCharArray()) {
-                mcHex.append('§').append(c);
-            }
-            hexMatcher.appendReplacement(hexBuffer, mcHex.toString());
-        }
-        hexMatcher.appendTail(hexBuffer);
-        message = hexBuffer.toString();
-        
-        // Handle standard color codes
-        Matcher colorMatcher = COLOR_PATTERN.matcher(message);
-        StringBuffer colorBuffer = new StringBuffer();
-        while (colorMatcher.find()) {
-            String code = colorMatcher.group(1).toLowerCase();
-            ChatFormatting formatting = getFormattingByCode(code);
-            if (formatting != null) {
-                colorMatcher.appendReplacement(colorBuffer, formatting.toString());
-            } else {
-                colorMatcher.appendReplacement(colorBuffer, colorMatcher.group(0));
-            }
-        }
-        colorMatcher.appendTail(colorBuffer);
-        
-        return colorBuffer.toString();
-    }
-    
-    /**
-     * Get ChatFormatting by color code
-     */
+    // Legacy switch statement for color codes
     private static ChatFormatting getFormattingByCode(String code) {
-        return switch (code) {
-            case "0" -> ChatFormatting.BLACK;
-            case "1" -> ChatFormatting.DARK_BLUE;
-            case "2" -> ChatFormatting.DARK_GREEN;
-            case "3" -> ChatFormatting.DARK_AQUA;
-            case "4" -> ChatFormatting.DARK_RED;
-            case "5" -> ChatFormatting.DARK_PURPLE;
-            case "6" -> ChatFormatting.GOLD;
-            case "7" -> ChatFormatting.GRAY;
-            case "8" -> ChatFormatting.DARK_GRAY;
-            case "9" -> ChatFormatting.BLUE;
-            case "a" -> ChatFormatting.GREEN;
-            case "b" -> ChatFormatting.AQUA;
-            case "c" -> ChatFormatting.RED;
-            case "d" -> ChatFormatting.LIGHT_PURPLE;
-            case "e" -> ChatFormatting.YELLOW;
-            case "f" -> ChatFormatting.WHITE;
-            case "k" -> ChatFormatting.OBFUSCATED;
-            case "l" -> ChatFormatting.BOLD;
-            case "m" -> ChatFormatting.STRIKETHROUGH;
-            case "n" -> ChatFormatting.UNDERLINE;
-            case "o" -> ChatFormatting.ITALIC;
-            case "r" -> ChatFormatting.RESET;
-            default -> null;
-        };
+        if (code == null) return null;
+        switch (code) {
+            case "0": return ChatFormatting.BLACK;
+            case "1": return ChatFormatting.DARK_BLUE;
+            case "2": return ChatFormatting.DARK_GREEN;
+            case "3": return ChatFormatting.DARK_AQUA;
+            case "4": return ChatFormatting.DARK_RED;
+            case "5": return ChatFormatting.DARK_PURPLE;
+            case "6": return ChatFormatting.GOLD;
+            case "7": return ChatFormatting.GRAY;
+            case "8": return ChatFormatting.DARK_GRAY;
+            case "9": return ChatFormatting.BLUE;
+            case "a": return ChatFormatting.GREEN;
+            case "b": return ChatFormatting.AQUA;
+            case "c": return ChatFormatting.RED;
+            case "d": return ChatFormatting.LIGHT_PURPLE;
+            case "e": return ChatFormatting.YELLOW;
+            case "f": return ChatFormatting.WHITE;
+            case "k": return ChatFormatting.OBFUSCATED;
+            case "l": return ChatFormatting.BOLD;
+            case "m": return ChatFormatting.STRIKETHROUGH;
+            case "n": return ChatFormatting.UNDERLINE;
+            case "o": return ChatFormatting.ITALIC;
+            case "r": return ChatFormatting.RESET;
+            default: return null;
+        }
     }
     
     /**
@@ -212,46 +182,15 @@ public class MessageUtil {
         }
         
         long seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds);
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds);
-        long hours = TimeUnit.MILLISECONDS.toHours(milliseconds);
-        long days = TimeUnit.MILLISECONDS.toDays(milliseconds);
-        
-        if (days > 0) {
-            return days + "d " + (hours % 24) + "h";
-        } else if (hours > 0) {
-            return hours + "h " + (minutes % 60) + "m";
-        } else if (minutes > 0) {
-            return minutes + "m " + (seconds % 60) + "s";
-        } else {
+        if (seconds < 60) {
             return seconds + "s";
         }
-    }
-    
-    /**
-     * Format time duration in seconds to human-readable format
-     */
-    public static String formatTimeSeconds(long seconds) {
-        return formatTime(seconds * 1000);
-    }
-    
-    /**
-     * Replace placeholders in message
-     */
-    public static String replacePlaceholders(String message, String... replacements) {
-        if (message == null || replacements.length % 2 != 0) {
-            return message;
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds);
+        if (minutes < 60) {
+            return minutes + "m " + (seconds % 60) + "s";
         }
-        
-        String result = message;
-        for (int i = 0; i < replacements.length; i += 2) {
-            String placeholder = replacements[i];
-            String replacement = replacements[i + 1];
-            if (placeholder != null && replacement != null) {
-                result = result.replace(placeholder, replacement);
-            }
-        }
-        
-        return result;
+        long hours = TimeUnit.MILLISECONDS.toHours(milliseconds);
+        return hours + "h " + (minutes % 60) + "m " + (seconds % 60) + "s";
     }
     
     /**
@@ -261,14 +200,8 @@ public class MessageUtil {
         if (message == null) {
             return "";
         }
-        
-        // Remove hex colors
-        message = HEX_PATTERN.matcher(message).replaceAll("");
-        
-        // Remove standard color codes
-        message = COLOR_PATTERN.matcher(message).replaceAll("");
-        
-        return message;
+        // Remove legacy color codes and hex codes
+        return message.replaceAll("&([0-9a-fk-orA-FK-OR])", "").replaceAll("&#([A-Fa-f0-9]{6})", "");
     }
     
     /**
@@ -278,8 +211,7 @@ public class MessageUtil {
         if (message == null) {
             return false;
         }
-        
-        return COLOR_PATTERN.matcher(message).find() || HEX_PATTERN.matcher(message).find();
+        return message.matches(".*(&[0-9a-fk-orA-FK-OR]|&#[A-Fa-f0-9]{6}).*");
     }
     
     /**
@@ -289,8 +221,7 @@ public class MessageUtil {
         if (player == null || message == null) {
             return;
         }
-        
-        Component component = formatMessage(message);
+        Component component = colorService.applyUserFormatting(player, message);
         player.displayClientMessage(component, true);
     }
     
@@ -301,10 +232,8 @@ public class MessageUtil {
         if (player == null) {
             return;
         }
-        
-        Component titleComponent = title != null ? formatMessage(title) : Component.empty();
-        Component subtitleComponent = subtitle != null ? formatMessage(subtitle) : Component.empty();
-        
+        Component titleComponent = title != null ? colorService.applyUserFormatting(player, title) : Component.empty();
+        Component subtitleComponent = subtitle != null ? colorService.applyUserFormatting(player, subtitle) : Component.empty();
         // Note: This would need proper implementation with packet sending
         // For now, this is a placeholder
         player.sendSystemMessage(titleComponent);

@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.economy;
 
 import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
 import com.zerog.neoessentials.economy.bank.AccountType;
@@ -171,14 +172,9 @@ public class EconomyCommand {
                 context.getSource().sendFailure(Component.literal("Player not found: " + playerName));
                 return 0;
             }
-            
             EconomyManager economy = EconomyManager.getInstance();
             BigDecimal balance = economy.getBalance(player.getUUID(), currency);
-            
-            context.getSource().sendSuccess(() -> Component.literal(
-                String.format("%s's %s balance: %s", playerName, currency, balance.toString())
-            ), false);
-            
+            MessageUtil.sendMessage(player, String.format("Your %s balance: %s", currency, balance.toString()));
             return 1;
         } catch (Exception e) {
             context.getSource().sendFailure(Component.literal("Error checking balance: " + e.getMessage()));
@@ -197,17 +193,13 @@ public class EconomyCommand {
                 context.getSource().sendFailure(Component.literal("Player not found: " + playerName));
                 return 0;
             }
-            
             EconomyManager economy = EconomyManager.getInstance();
             boolean success = economy.setBalance(player.getUUID(), currency, BigDecimal.valueOf(amount));
-            
             if (success) {
-                context.getSource().sendSuccess(() -> Component.literal(
-                    String.format("Set %s's %s balance to %s", playerName, currency, amount)
-                ), true);
+                MessageUtil.sendMessage(player, String.format("Set your %s balance to %s", currency, amount));
                 return 1;
             } else {
-                context.getSource().sendFailure(Component.literal("Failed to set balance"));
+                MessageUtil.sendMessage(player, "neoessentials.economy.error.set_balance");
                 return 0;
             }
         } catch (Exception e) {
@@ -227,17 +219,13 @@ public class EconomyCommand {
                 context.getSource().sendFailure(Component.literal("Player not found: " + playerName));
                 return 0;
             }
-            
             EconomyManager economy = EconomyManager.getInstance();
             boolean success = economy.addBalance(player.getUUID(), currency, BigDecimal.valueOf(amount));
-            
             if (success) {
-                context.getSource().sendSuccess(() -> Component.literal(
-                    String.format("Added %s %s to %s's balance", amount, currency, playerName)
-                ), true);
+                MessageUtil.sendMessage(player, String.format("Added %s %s to your balance", amount, currency));
                 return 1;
             } else {
-                context.getSource().sendFailure(Component.literal("Failed to add balance"));
+                MessageUtil.sendMessage(player, "neoessentials.economy.error.add_balance");
                 return 0;
             }
         } catch (Exception e) {
@@ -257,17 +245,13 @@ public class EconomyCommand {
                 context.getSource().sendFailure(Component.literal("Player not found: " + playerName));
                 return 0;
             }
-            
             EconomyManager economy = EconomyManager.getInstance();
             boolean success = economy.removeBalance(player.getUUID(), currency, BigDecimal.valueOf(amount));
-            
             if (success) {
-                context.getSource().sendSuccess(() -> Component.literal(
-                    String.format("Removed %s %s from %s's balance", amount, currency, playerName)
-                ), true);
+                MessageUtil.sendMessage(player, String.format("Removed %s %s from your balance", amount, currency));
                 return 1;
             } else {
-                context.getSource().sendFailure(Component.literal("Failed to remove balance (insufficient funds?)"));
+                MessageUtil.sendMessage(player, "neoessentials.economy.error.remove_balance");
                 return 0;
             }
         } catch (Exception e) {
@@ -332,22 +316,15 @@ public class EconomyCommand {
             List<BankAccount> accounts = bankManager.getPlayerAccounts(player.getUUID());
             
             if (accounts.isEmpty()) {
-                context.getSource().sendSuccess(() -> Component.literal(
-                    playerName + " has no bank accounts"
-                ), false);
+                MessageUtil.sendMessage(player, "neoessentials.economy.bank.no_accounts", playerName);
             } else {
-                context.getSource().sendSuccess(() -> Component.literal(
-                    String.format("Bank accounts for %s:", playerName)
-                ), false);
-                
+                MessageUtil.sendMessage(player, String.format("Bank accounts for %s:", playerName));
                 for (BankAccount account : accounts) {
-                    context.getSource().sendSuccess(() -> Component.literal(
-                        String.format("- %s (%s): %s %s", 
-                                    account.getAccountName(), 
-                                    account.getAccountId(),
-                                    account.getBalance(),
-                                    account.getCurrency())
-                    ), false);
+                    MessageUtil.sendMessage(player, String.format("- %s (%s): %s %s", 
+                        account.getAccountName(), 
+                        account.getAccountId(),
+                        account.getBalance(),
+                        account.getCurrency()));
                 }
             }
             
@@ -366,10 +343,9 @@ public class EconomyCommand {
             BankManager bankManager = EconomyManager.getInstance().getBankManager();
             boolean success = bankManager.deposit(accountId, BigDecimal.valueOf(amount), "Admin deposit");
             
-            if (success) {
-                context.getSource().sendSuccess(() -> Component.literal(
-                    String.format("Deposited %s to account %s", amount, accountId)
-                ), true);
+            ServerPlayer player = context.getSource().getPlayer();
+            if (success && player != null) {
+                MessageUtil.sendMessage(player, String.format("Deposited %s to account %s", amount, accountId));
                 return 1;
             } else {
                 context.getSource().sendFailure(Component.literal("Failed to deposit money"));
@@ -389,10 +365,9 @@ public class EconomyCommand {
             BankManager bankManager = EconomyManager.getInstance().getBankManager();
             boolean success = bankManager.withdraw(accountId, BigDecimal.valueOf(amount), "Admin withdrawal");
             
-            if (success) {
-                context.getSource().sendSuccess(() -> Component.literal(
-                    String.format("Withdrew %s from account %s", amount, accountId)
-                ), true);
+            ServerPlayer player = context.getSource().getPlayer();
+            if (success && player != null) {
+                MessageUtil.sendMessage(player, String.format("Withdrew %s from account %s", amount, accountId));
                 return 1;
             } else {
                 context.getSource().sendFailure(Component.literal("Failed to withdraw money"));
@@ -412,16 +387,16 @@ public class EconomyCommand {
             CurrencyManager currencyManager = EconomyManager.getInstance().getCurrencyManager();
             List<Currency> currencies = currencyManager.getAllCurrencies();
             
-            context.getSource().sendSuccess(() -> Component.literal("Available currencies:"), false);
-            
-            for (Currency currency : currencies) {
-                context.getSource().sendSuccess(() -> Component.literal(
-                    String.format("- %s (%s) %s - %s", 
-                                currency.getName(), 
-                                currency.getCode(),
-                                currency.getSymbol(),
-                                currency.getType().getDisplayName())
-                ), false);
+            ServerPlayer player = context.getSource().getPlayer();
+            if (player != null) {
+                MessageUtil.sendMessage(player, "Available currencies:");
+                for (Currency currency : currencies) {
+                    MessageUtil.sendMessage(player, String.format("- %s (%s) %s - %s", 
+                        currency.getName(), 
+                        currency.getCode(),
+                        currency.getSymbol(),
+                        currency.getType().getDisplayName()));
+                }
             }
             
             return 1;
@@ -436,20 +411,15 @@ public class EconomyCommand {
             EconomyManager economy = EconomyManager.getInstance();
             EconomyAnalytics analytics = economy.getAnalytics();
             
-            context.getSource().sendSuccess(() -> Component.literal("=== Economy Status ==="), false);
-            context.getSource().sendSuccess(() -> Component.literal(
-                String.format("Total Money in Circulation: %s", analytics.getTotalMoney())
-            ), false);
-            context.getSource().sendSuccess(() -> Component.literal(
-                String.format("Total Players: %d (Active: %d)", 
-                            analytics.getTotalPlayers(), analytics.getActivePlayers())
-            ), false);
-            context.getSource().sendSuccess(() -> Component.literal(
-                String.format("Average Balance: %s", analytics.getAverageBalance())
-            ), false);
-            context.getSource().sendSuccess(() -> Component.literal(
-                String.format("System Status: %s", economy.isEnabled() ? "Online" : "Offline")
-            ), false);
+            ServerPlayer player = context.getSource().getPlayer();
+            if (player != null) {
+                MessageUtil.sendMessage(player, "=== Economy Status ===");
+                MessageUtil.sendMessage(player, String.format("Total Money in Circulation: %s", analytics.getTotalMoney()));
+                MessageUtil.sendMessage(player, String.format("Total Players: %d (Active: %d)", 
+                    analytics.getTotalPlayers(), analytics.getActivePlayers()));
+                MessageUtil.sendMessage(player, String.format("Average Balance: %s", analytics.getAverageBalance()));
+                MessageUtil.sendMessage(player, String.format("System Status: %s", economy.isEnabled() ? "Online" : "Offline"));
+            }
             
             return 1;
         } catch (Exception e) {

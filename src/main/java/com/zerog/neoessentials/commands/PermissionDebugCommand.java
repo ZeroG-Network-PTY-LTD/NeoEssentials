@@ -10,7 +10,7 @@ import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.network.chat.Component;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,17 +62,14 @@ public class PermissionDebugCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String permission = StringArgumentType.getString(context, "permission");
         
-        boolean hasPermission = PermissionUtil.hasPermission(player, permission);
+    boolean hasPermission = PermissionUtil.hasPermission(player, permission);
         
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§ePermission Test: §b" + permission), false);
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§eResult: " + (hasPermission ? "§aHAS PERMISSION" : "§cDOES NOT HAVE PERMISSION")), false);
+    MessageUtil.sendMessage(player, "&ePermission Test: &b{0}", permission);
+    MessageUtil.sendMessage(player, "&eResult: {0}", (hasPermission ? "&aHAS PERMISSION" : "&cDOES NOT HAVE PERMISSION"));
         
         // Also test with CustomPermissionsManager directly
         boolean directTest = CustomPermissionsManager.getInstance().hasPermission(player, permission);
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§eDirect Test: " + (directTest ? "§aHAS PERMISSION" : "§cDOES NOT HAVE PERMISSION")), false);
+    MessageUtil.sendMessage(player, "&eDirect Test: {0}", (directTest ? "&aHAS PERMISSION" : "&cDOES NOT HAVE PERMISSION"));
         
         return 1;
     }
@@ -81,12 +78,10 @@ public class PermissionDebugCommand {
         ServerPlayer target = EntityArgument.getPlayer(context, "player");
         String permission = StringArgumentType.getString(context, "permission");
         
-        boolean hasPermission = PermissionUtil.hasPermission(target, permission);
+    boolean hasPermission = PermissionUtil.hasPermission(target, permission);
         
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§ePermission Test for " + target.getDisplayName().getString() + ": §b" + permission), false);
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§eResult: " + (hasPermission ? "§aHAS PERMISSION" : "§cDOES NOT HAVE PERMISSION")), false);
+    MessageUtil.sendMessage(target, "&ePermission Test for {0}: &b{1}", target.getDisplayName().getString(), permission);
+    MessageUtil.sendMessage(target, "&eResult: {0}", (hasPermission ? "&aHAS PERMISSION" : "&cDOES NOT HAVE PERMISSION"));
         
         return 1;
     }
@@ -105,20 +100,16 @@ public class PermissionDebugCommand {
         CustomPermissionsManager manager = CustomPermissionsManager.getInstance();
         Set<String> permissions = manager.getPlayerPermissions(player.getUUID());
         
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§6§l=== Permissions for " + player.getDisplayName().getString() + " ==="), false);
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§eTotal Permissions: §b" + permissions.size()), false);
+    MessageUtil.sendMessage(player, "&6&l=== Permissions for {0} ===", player.getDisplayName().getString());
+    MessageUtil.sendMessage(player, "&eTotal Permissions: &b{0}", permissions.size());
         
         int count = 0;
         for (String perm : permissions) {
             if (count >= 20) {
-                context.getSource().sendSuccess(() -> 
-                    Component.literal("§7... and " + (permissions.size() - 20) + " more (use /permissions info for full list)"), false);
+        MessageUtil.sendMessage(player, "&7... and {0} more (use /permissions info for full list)", (permissions.size() - 20));
                 break;
             }
-            context.getSource().sendSuccess(() -> 
-                Component.literal("§7- §a" + perm), false);
+        MessageUtil.sendMessage(player, "&7- &a{0}", perm);
             count++;
         }
         
@@ -143,20 +134,14 @@ public class PermissionDebugCommand {
         String suffix = manager.getPlayerSuffix(player.getUUID());
         int priority = manager.getPlayerPriority(player.getUUID());
         
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§6§l=== Group Info for " + player.getDisplayName().getString() + " ==="), false);
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§eGroup: §b" + group), false);
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§ePrefix: §r" + prefix), false);
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§eSuffix: §r" + suffix), false);
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§ePriority: §b" + priority), false);
+        MessageUtil.sendMessage(player, "&6&l=== Group Info for {0} ===", player.getDisplayName().getString());
+        MessageUtil.sendMessage(player, "&eGroup: &b{0}", group);
+        MessageUtil.sendMessage(player, "&ePrefix: &r{0}", prefix);
+        MessageUtil.sendMessage(player, "&eSuffix: &r{0}", suffix);
+        MessageUtil.sendMessage(player, "&ePriority: &b{0}", priority);
         
-        // Test some common permissions
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§e§l--- Permission Tests ---"), false);
+    // Test some common permissions
+    MessageUtil.sendMessage(player, "&e&l--- Permission Tests ---");
         
         String[] testPerms = {
             PermissionNodes.HOME,
@@ -168,8 +153,7 @@ public class PermissionDebugCommand {
         
         for (String perm : testPerms) {
             boolean hasIt = manager.hasPermission(player, perm);
-            context.getSource().sendSuccess(() -> 
-                Component.literal("§7- " + perm + ": " + (hasIt ? "§aYES" : "§cNO")), false);
+            MessageUtil.sendMessage(player, "&7- {0}: {1}", perm, (hasIt ? "§aYES" : "§cNO"));
         }
         
         return 1;
@@ -182,14 +166,13 @@ public class PermissionDebugCommand {
         CustomPermissionsManager manager = CustomPermissionsManager.getInstance();
         
         if (manager.getGroup(group) == null) {
-            context.getSource().sendFailure(Component.literal("§cGroup '" + group + "' does not exist!"));
+            MessageUtil.sendMessage(target, "&cGroup '{0}' does not exist!", group);
             return 0;
         }
         
         manager.setPlayerGroup(target.getUUID(), group);
         
-        context.getSource().sendSuccess(() -> 
-            Component.literal("§aSet " + target.getDisplayName().getString() + "'s group to: §b" + group), false);
+        MessageUtil.sendMessage(target, "&aSet {0}'s group to: &b{1}", target.getDisplayName().getString(), group);
         
         LOGGER.info("Admin {} set player {}'s group to {}", 
             context.getSource().getDisplayName().getString(), 

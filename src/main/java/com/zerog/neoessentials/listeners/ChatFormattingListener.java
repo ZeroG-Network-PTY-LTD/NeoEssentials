@@ -1,6 +1,5 @@
 package com.zerog.neoessentials.listeners;
 
-import com.zerog.neoessentials.config.ChatConfig;
 import com.zerog.neoessentials.permissions.CustomPermissionsManager;
 import com.zerog.neoessentials.commands.essentials.NickCommand;
 import net.minecraft.network.chat.Component;
@@ -50,7 +49,7 @@ public class ChatFormattingListener {
             com.zerog.neoessentials.util.MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "chat.disabled"));
             return;
         }
-        ChatConfig config = com.zerog.neoessentials.config.ConfigManager.getInstance().getChatConfig();
+    com.zerog.neoessentials.config.MainConfig.ChatSettings config = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().chatSettings;
         if (config == null) {
             LOGGER.error("[NeoEssentials] ChatFormattingListener: ChatConfig is null! Skipping ALL formatting. Letting vanilla handle chat.");
             return;
@@ -99,22 +98,29 @@ public class ChatFormattingListener {
             // Only apply prefix/suffix logic if enabled in config
             LOGGER.debug("[NeoEssentials] PrefixSuffix enabled: {}", config.prefixSuffix.enabled);
             if (config.prefixSuffix.enabled) {
-                if (format.contains("{PREFIX}") && config.prefixSuffix.isPermissionSystemEnabled()) {
-                    prefix = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerPrefix(player.getUUID());
-                    if (prefix == null) prefix = config.prefixSuffix.defaultPrefix;
-                } else if (format.contains("{PREFIX}") && config.prefixSuffix.isGroupSystemEnabled()) {
-                    prefix = config.prefixSuffix.defaultPrefix;
-                } else if (format.contains("{PREFIX}")) {
-                    prefix = config.prefixSuffix.defaultPrefix;
+                // Only assign prefix once, prefer permission system, fallback to group, then default
+                if (format.contains("{PREFIX}")) {
+                    if (config.prefixSuffix.isPermissionSystemEnabled()) {
+                        prefix = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerPrefix(player.getUUID());
+                        if (prefix == null) prefix = config.prefixSuffix.defaultPrefix;
+                    } else if (config.prefixSuffix.isGroupSystemEnabled()) {
+                        prefix = config.prefixSuffix.defaultPrefix;
+                    } else {
+                        prefix = config.prefixSuffix.defaultPrefix;
+                    }
                 }
-                if (format.contains("{SUFFIX}") && config.prefixSuffix.isPermissionSystemEnabled()) {
-                    suffix = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerSuffix(player.getUUID());
-                    if (suffix == null) suffix = config.prefixSuffix.defaultSuffix;
-                } else if (format.contains("{SUFFIX}") && config.prefixSuffix.isGroupSystemEnabled()) {
-                    suffix = config.prefixSuffix.defaultSuffix;
-                } else if (format.contains("{SUFFIX}")) {
-                    suffix = config.prefixSuffix.defaultSuffix;
+                // Only assign suffix once, prefer permission system, fallback to group, then default
+                if (format.contains("{SUFFIX}")) {
+                    if (config.prefixSuffix.isPermissionSystemEnabled()) {
+                        suffix = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerSuffix(player.getUUID());
+                        if (suffix == null) suffix = config.prefixSuffix.defaultSuffix;
+                    } else if (config.prefixSuffix.isGroupSystemEnabled()) {
+                        suffix = config.prefixSuffix.defaultSuffix;
+                    } else {
+                        suffix = config.prefixSuffix.defaultSuffix;
+                    }
                 }
+                // Only assign group if needed
                 if (format.contains("{GROUP}") && config.prefixSuffix.isGroupSystemEnabled()) {
                     group = getPlayerGroup(player);
                     if (group == null) group = "";
@@ -161,7 +167,7 @@ public class ChatFormattingListener {
         return "default";
     }
 
-    private static String filterMessage(String message, ChatConfig config) {
+    private static String filterMessage(String message, com.zerog.neoessentials.config.MainConfig.ChatSettings config) {
         if (!config.filter.enabled) {
             return message;
         }
@@ -179,7 +185,7 @@ public class ChatFormattingListener {
         return filteredMessage;
     }
 
-    private static boolean isSpam(ServerPlayer player, String message, ChatConfig config) {
+    private static boolean isSpam(ServerPlayer player, String message, com.zerog.neoessentials.config.MainConfig.ChatSettings config) {
         UUID playerId = player.getUUID();
         long currentTime = System.currentTimeMillis();
         Long lastTime = lastMessageTime.get(playerId);

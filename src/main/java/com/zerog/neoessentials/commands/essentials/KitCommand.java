@@ -1,4 +1,6 @@
+
 package com.zerog.neoessentials.commands.essentials;
+import com.zerog.neoessentials.config.MainConfig;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -6,7 +8,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.managers.KitManager;
 import com.zerog.neoessentials.managers.EconomyManager;
-import com.zerog.neoessentials.config.KitConfig;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -54,7 +55,7 @@ public class KitCommand {
     private static int listKits(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         KitManager kitManager = KitManager.getInstance();
-        KitConfig config = ConfigManager.getInstance().getKitConfig();
+    MainConfig.KitSettings config = ConfigManager.getInstance().getMainConfig().kitSettings;
         
         if (!config.enabled) {
             MessageUtil.sendMessage(player, "&cKit system is disabled.");
@@ -73,7 +74,7 @@ public class KitCommand {
         
         // List each available kit with details
         for (String kitName : availableKits) {
-            KitConfig.KitDefinition kit = config.getKit(kitName);
+            MainConfig.KitSettings.KitDefinition kit = config.kits.get(kitName);
             if (kit != null) {
                 String delayText = kit.hasDelay() ? 
                     MessageUtil.formatTime(kit.delay * 1000L) : "None";
