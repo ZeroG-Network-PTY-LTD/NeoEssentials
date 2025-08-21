@@ -2,6 +2,8 @@ package com.zerog.neoessentials.commands.essentials;
 
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.config.ModConfig;
+import com.zerog.neoessentials.localization.LanguageManager;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -16,6 +18,9 @@ import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.commands.arguments.CompoundTagArgument;
+import java.util.Optional;
 
 /**
  * Give command implementation - /give <player> <item> [amount]
@@ -27,59 +32,46 @@ import net.minecraft.world.item.ItemStack;
 public class GiveCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
-        // /give <player> <item> [amount]
-        dispatcher.register(Commands.literal("give")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
-            .then(Commands.argument("player", EntityArgument.player())
+        int maxAmount = ModConfig.get().giveMaxAmount();
+        boolean allowEnchantments = ModConfig.get().giveAllowEnchantments();
+        dispatcher.register(
+            Commands.literal("give")
+                .requires(src -> PermissionUtil.hasPermission(src, "yourmod.give"))
                 .then(Commands.argument("item", ItemArgument.item(context))
-                    .executes(ctx -> giveItem(ctx, 1))
-                    .then(Commands.argument("amount", IntegerArgumentType.integer(1, 64))
-                        .executes(ctx -> giveItem(ctx, IntegerArgumentType.getInteger(ctx, "amount")))
+                    .then(Commands.argument("amount", IntegerArgumentType.integer(1, maxAmount))
+                        .executes(ctx -> giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), IntegerArgumentType.getInteger(ctx, "amount"), Optional.empty(), Optional.empty()))
+                        .then(allowEnchantments ? Commands.argument("nbt", CompoundTagArgument.compoundTag())
+                            .requires(src -> PermissionUtil.hasPermission(src, "yourmod.give.enchant"))
+                            .executes(ctx -> giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), IntegerArgumentType.getInteger(ctx, "amount"), Optional.of(CompoundTagArgument.getCompoundTag(ctx, "nbt")), Optional.empty()))
+                            .then(Commands.argument("player", EntityArgument.player())
+                                .requires(src -> PermissionUtil.hasPermission(src, "yourmod.give.others"))
+                                .executes(ctx -> giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), IntegerArgumentType.getInteger(ctx, "amount"), Optional.of(CompoundTagArgument.getCompoundTag(ctx, "nbt")), Optional.of(EntityArgument.getPlayer(ctx, "player"))))
+                            )
+                        : Commands.argument("player", EntityArgument.player())
+                            .requires(src -> PermissionUtil.hasPermission(src, "yourmod.give.others"))
+                            .executes(ctx -> giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), IntegerArgumentType.getInteger(ctx, "amount"), Optional.empty(), Optional.of(EntityArgument.getPlayer(ctx, "player"))))
+                        )
                     )
                 )
-            )
         );
     }
-    
+
     /**
      * Give an item to a player
      */
-    private static int giveItem(CommandContext<CommandSourceStack> context, int amount) throws CommandSyntaxException {
-        ServerPlayer target = EntityArgument.getPlayer(context, "player");
-        ItemInput itemInput = ItemArgument.getItem(context, "item");
-        
-        // Create the item stack
-        ItemStack itemStack = itemInput.createItemStack(amount, false);
-        
-        // Try to add the item to the player's inventory
-        boolean success = target.getInventory().add(itemStack);
-        
-        String itemName = itemStack.getDisplayName().getString();
-        
-        if (success) {
-            // Send success message to executor
-            context.getSource().sendSuccess(() -> Component.literal(
-                "§aGave " + amount + " " + itemName + " to " + target.getName().getString()), true);
-            
-            // Send notification to target player
-            target.sendSystemMessage(Component.literal(
-                "§aYou received " + amount + " " + itemName + " from " + 
-                context.getSource().getDisplayName().getString()));
-        } else {
-            // Player's inventory is full, drop the item
-            target.drop(itemStack, false);
-            
-            // Send message about dropped item
-            context.getSource().sendSuccess(() -> Component.literal(
-                "§eGave " + amount + " " + itemName + " to " + target.getName().getString() + 
-                " (dropped because inventory was full)"), true);
-            
-            // Notify target player
-            target.sendSystemMessage(Component.literal(
-                "§eReceived " + amount + " " + itemName + " from " + 
-                context.getSource().getDisplayName().getString() + " (dropped because inventory was full)"));
+    private static int giveItem(CommandSourceStack src, ItemInput itemRes, int amount, Optional<CompoundTag> nbtOpt, Optional<ServerPlayer> targetOpt) {
+        ServerPlayer receiver = targetOpt.orElseGet(src::getPlayerOrException);
+        ItemStack stack = itemRes.createItemStack(amount, false);
+        nbtOpt.ifPresent(stack::setTag);
+        boolean added = receiver.getInventory().add(stack);
+        if (!added) receiver.drop(stack, false);
+        String itemName = stack.getHoverName().getString();
+        String giveMsg = LanguageManager.getInstance().getMessage(receiver, "neoessentials.give.give", amount, itemName);
+        receiver.sendSystemMessage(Component.literal(giveMsg));
+        if (targetOpt.isPresent() && targetOpt.get() != src.getPlayerOrException()) {
+            String srcMsg = LanguageManager.getInstance().getMessage(src.getPlayerOrException(), "neoessentials.give.give_other", receiver.getName().getString(), amount, itemName);
+            src.sendSuccess(() -> Component.literal(srcMsg), true);
         }
-        
         return 1;
     }
 }

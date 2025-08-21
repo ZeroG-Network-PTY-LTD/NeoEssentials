@@ -67,7 +67,6 @@ public class EssentialsCommandManager {
         
         // Admin commands
         GameModeCommand.register(dispatcher);
-        SpawnerCommand.register(dispatcher);
         
         // Utility commands
         NickCommand.register(dispatcher);
