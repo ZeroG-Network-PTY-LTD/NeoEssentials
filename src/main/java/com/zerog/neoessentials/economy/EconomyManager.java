@@ -7,7 +7,6 @@ import com.zerog.neoessentials.economy.transactions.TransactionManager;
 import com.zerog.neoessentials.economy.market.MarketManager;
 // import com.zerog.neoessentials.economy.shops.ShopManager; // Now uses managers.EconomyManager
 import com.zerog.neoessentials.economy.auction.AuctionManager;
-import com.zerog.neoessentials.config.EconomyConfig;
 import com.zerog.neoessentials.storage.StorageManager;
 
 import java.util.*;
@@ -39,7 +38,6 @@ public class EconomyManager {
     private final AuctionManager auctionManager;
     
     // Configuration and data
-    private final EconomyConfig config;
     private final StorageManager storageManager;
     
     // Player balances and economy data
@@ -52,7 +50,6 @@ public class EconomyManager {
     private boolean economyEnabled;
     
     public EconomyManager() {
-        this.config = new EconomyConfig();
         this.storageManager = StorageManager.getInstance();
         this.playerData = new ConcurrentHashMap<>();
         this.serverConnections = new ConcurrentHashMap<>();
@@ -83,29 +80,26 @@ public class EconomyManager {
     private void initialize() {
         try {
             NeoEssentialsMod.LOGGER.info("Initializing Advanced Economy System...");
-            
-            // Load configuration
-            config.load();
-            
+
             // Initialize currency system
             currencyManager.initialize();
-            
+
             // Initialize banking system
             bankManager.initialize();
-            
+
             // Load player data
             loadPlayerData();
-            
+
             // Initialize market systems
             marketManager.initialize();
             // shopManager.initialize(); // Now uses managers.EconomyManager
             auctionManager.initialize();
-            
+
             // Start background tasks
             startBackgroundTasks();
-            
+
             NeoEssentialsMod.LOGGER.info("Economy System initialized successfully");
-            
+
         } catch (Exception e) {
             NeoEssentialsMod.LOGGER.error("Failed to initialize Economy System", e);
             economyEnabled = false;
@@ -117,7 +111,7 @@ public class EconomyManager {
         CompletableFuture.runAsync(() -> {
             while (economyEnabled) {
                 try {
-                    Thread.sleep(config.getInterestUpdateInterval() * 1000);
+                    Thread.sleep(60 * 1000); // Default: 60 seconds
                     bankManager.processInterest();
                     updateEconomyAnalytics();
                 } catch (InterruptedException e) {
@@ -128,12 +122,12 @@ public class EconomyManager {
                 }
             }
         });
-        
+
         // Start market update task
         CompletableFuture.runAsync(() -> {
             while (economyEnabled) {
                 try {
-                    Thread.sleep(config.getMarketUpdateInterval() * 1000);
+                    Thread.sleep(60 * 1000); // Default: 60 seconds
                     marketManager.updatePrices();
                     auctionManager.processExpiredAuctions();
                 } catch (InterruptedException e) {
@@ -264,11 +258,11 @@ public class EconomyManager {
     }
     
     private BigDecimal calculateTransferFee(BigDecimal amount) {
-        BigDecimal feeRate = config.getTransferFeeRate();
-        BigDecimal fee = amount.multiply(feeRate);
-        BigDecimal maxFee = config.getMaxTransferFee();
-        
-        return fee.min(maxFee);
+    BigDecimal feeRate = new BigDecimal("0.01"); // Default: 1%
+    BigDecimal fee = amount.multiply(feeRate);
+    BigDecimal maxFee = new BigDecimal("100.00"); // Default: $100 max fee
+
+    return fee.min(maxFee);
     }
     
     // Player Data Management
@@ -278,7 +272,7 @@ public class EconomyManager {
             if (data == null) {
                 data = new PlayerEconomyData(id);
                 // Set default balance for primary currency
-                data.setBalance(currencyManager.getPrimaryCurrency(), config.getStartingBalance());
+                data.setBalance(currencyManager.getPrimaryCurrency(), new BigDecimal("100.00")); // Default: $100
             }
             return data;
         });
@@ -372,7 +366,6 @@ public class EconomyManager {
     // public ShopManager getShopManager() { return shopManager; } // Now uses managers.EconomyManager
     public AuctionManager getAuctionManager() { return auctionManager; }
     public EconomyAnalytics getAnalytics() { return analytics; }
-    public EconomyConfig getConfig() { return config; }
     
     // Compatibility methods for GUI classes (using default currency)
     public BigDecimal getBalance(UUID playerId) {

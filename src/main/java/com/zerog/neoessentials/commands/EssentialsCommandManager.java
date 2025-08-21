@@ -2,7 +2,6 @@ package com.zerog.neoessentials.commands;
 
 import com.zerog.neoessentials.commands.essentials.*;
 import com.zerog.neoessentials.commands.economy.ShopCommand;
-import com.zerog.neoessentials.config.EssentialsConfig;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -20,13 +19,6 @@ public class EssentialsCommandManager {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(EssentialsCommandManager.class);
     
-    private final EssentialsConfig config;
-    
-    public EssentialsCommandManager(EssentialsConfig config) {
-        this.config = config;
-        NeoForge.EVENT_BUS.register(this);
-        LOGGER.info("Essentials command manager initialized");
-    }
     
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
@@ -57,11 +49,10 @@ public class EssentialsCommandManager {
         MailCommand.register(dispatcher);
         
         // Economy commands
-        if (config.economy.enabled) {
-            BalanceCommand.register(dispatcher);
-            PayCommand.register(dispatcher);
-            EconomyCommand.register(dispatcher);
-        }
+    // Economy commands
+    BalanceCommand.register(dispatcher);
+    PayCommand.register(dispatcher);
+    EconomyCommand.register(dispatcher);
         
         // Moderation commands
         KickCommand.register(dispatcher);
@@ -89,10 +80,12 @@ public class EssentialsCommandManager {
         GiveCommand.register(dispatcher, context);
         TimeCommand.register(dispatcher);
         WeatherCommand.register(dispatcher);
-        WorkbenchCommand.register(dispatcher);
-        AnvilCommand.register(dispatcher);
-        EnderChestCommand.register(dispatcher);
-        InvSeeCommand.register(dispatcher);
+    WorkbenchCommand.register(dispatcher);
+    AnvilCommand.register(dispatcher);
+    EnderChestCommand.register(dispatcher);
+    InvSeeCommand.register(dispatcher);
+    SmithingCommand.register(dispatcher);
+    StonecutterCommand.register(dispatcher);
         
         // Text file commands
         MotdCommand.register(dispatcher);

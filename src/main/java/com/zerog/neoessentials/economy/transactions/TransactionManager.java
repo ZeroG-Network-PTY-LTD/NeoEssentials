@@ -261,8 +261,8 @@ public class TransactionManager {
     }
     
     private void cleanupOldTransactions() {
-        // Remove transactions older than configured retention period
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(economyManager.getConfig().getTransactionRetentionDays());
+    // Remove transactions older than 30 days (default)
+    LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
         
         List<String> toRemove = transactionHistory.values().stream()
             .filter(t -> t.getTimestamp().isBefore(cutoff))

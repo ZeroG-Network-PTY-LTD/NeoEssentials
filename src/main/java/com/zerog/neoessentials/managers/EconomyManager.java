@@ -91,12 +91,9 @@ public class EconomyManager {
         
         // Check if player needs starting balance initialization (only for truly new players)
         if (balance == null && !hasBeenInitialized(playerUUID)) {
-            // New player - set starting balance from config
-            MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
-            balance = BigDecimal.valueOf(config.startingBalance);
-            playerDataManager.setBalance(playerUUID, balance);
-            markAsInitialized(playerUUID);
-            LOGGER.info("Set starting balance of {} for new player {}", formatCurrency(balance), playerUUID);
+            // New player - set starting balance from config and mark as initialized
+            initializePlayerBalance(playerUUID);
+            balance = BigDecimal.valueOf(configUnifier.getConfigManager().getMainConfig().economySettings.startingBalance);
         } else if (balance == null) {
             // Player exists but balance is null (corrupted data) - set to zero, don't reset to starting balance
             balance = BigDecimal.ZERO;

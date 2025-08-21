@@ -20,11 +20,8 @@ public class AnvilCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("anvil")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ANVIL))
             .executes(AnvilCommand::openAnvil)
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(AnvilCommand::openAnvilForPlayer)
-            )
         );
     }
 
@@ -33,7 +30,17 @@ public class AnvilCommand {
      */
     private static int openAnvil(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        return openAnvilForPlayer(context.getSource(), player);
+        MenuProvider anvilProvider = new SimpleMenuProvider(
+            (windowId, playerInventory, playerEntity) -> new AnvilMenu(
+                windowId,
+                playerInventory,
+                ContainerLevelAccess.create(player.level(), player.blockPosition())
+            ),
+            Component.translatable("container.repair")
+        );
+        player.openMenu(anvilProvider);
+        context.getSource().sendSuccess(() -> Component.literal("Opened anvil"), false);
+        return 1;
     }
 
     /**

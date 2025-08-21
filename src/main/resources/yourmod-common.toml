@@ -1,0 +1,12 @@
+[chat]
+allowLegacyCodes = true
+allowLegacyRGB = true
+
+[chat.messageColors]
+primary = "#f1c40f"
+secondary = "#e74c3c"
+accent = "#3498db"
+
+[chat.allowedByDefault]
+colors = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]
+formats = ["k","l","m","n","o","r"]

@@ -15,7 +15,6 @@ import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.network.chat.Component;
 
 /**
  * Item command implementation - /item, /i
@@ -60,7 +59,6 @@ public class ItemCommand {
         try {
             ItemInput itemInput = ItemArgument.getItem(context, "item");
             ItemStack itemStack = itemInput.createItemStack(amount, false);
-            
             // Add item to player inventory
             if (player.getInventory().add(itemStack)) {
                 // Success - item added
@@ -68,28 +66,21 @@ public class ItemCommand {
                 String message = target != null ?
                     MessageUtil.replacePlaceholders("&aGave {0} x{1} to {2}", itemName, amount, target.getName().getString()) :
                     MessageUtil.replacePlaceholders("&aGave {0} x{1}", itemName, amount);
-                
-                source.sendSuccess(() -> Component.literal(MessageUtil.translateColorCodes(message)), false);
-                
+                MessageUtil.sendMessage(player, message);
                 if (target != null && target != source.getEntity()) {
-                    MessageUtil.sendMessage(target, 
-                        MessageUtil.replacePlaceholders("&aReceived {0} x{1} from {2}", 
+                    MessageUtil.sendMessage(target,
+                        MessageUtil.replacePlaceholders("&aReceived {0} x{1} from {2}",
                             itemName, amount, source.getTextName()));
                 }
-                
                 return 1;
             } else {
                 // Inventory full
-                source.sendFailure(Component.literal(
-                    MessageUtil.translateColorCodes("&cPlayer's inventory is full!")
-                ));
+                MessageUtil.sendMessage(player, "&cPlayer's inventory is full!");
                 return 0;
             }
             
         } catch (Exception e) {
-            source.sendFailure(Component.literal(
-                MessageUtil.translateColorCodes("&cInvalid item or amount!")
-            ));
+            MessageUtil.sendMessage(player, "&cInvalid item or amount!");
             return 0;
         }
     }

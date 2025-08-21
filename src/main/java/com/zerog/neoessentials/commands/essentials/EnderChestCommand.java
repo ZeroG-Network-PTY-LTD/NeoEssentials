@@ -19,28 +19,16 @@ public class EnderChestCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("enderchest")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ENDERCHEST))
             .executes(EnderChestCommand::openEnderChest)
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(EnderChestCommand::openEnderChestForPlayer)
-            )
         );
-        
-        // Alternative commands
         dispatcher.register(Commands.literal("ec")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ENDERCHEST))
             .executes(EnderChestCommand::openEnderChest)
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(EnderChestCommand::openEnderChestForPlayer)
-            )
         );
-        
         dispatcher.register(Commands.literal("echest")
-            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ENDERCHEST))
             .executes(EnderChestCommand::openEnderChest)
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(EnderChestCommand::openEnderChestForPlayer)
-            )
         );
     }
 
@@ -49,7 +37,17 @@ public class EnderChestCommand {
      */
     private static int openEnderChest(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        return openEnderChestForPlayer(context.getSource(), player, player);
+        MenuProvider enderChestProvider = new SimpleMenuProvider(
+            (windowId, playerInventory, playerEntity) -> ChestMenu.threeRows(
+                windowId,
+                playerInventory,
+                player.getEnderChestInventory()
+            ),
+            Component.translatable("container.enderchest")
+        );
+        player.openMenu(enderChestProvider);
+        context.getSource().sendSuccess(() -> Component.literal("Opened ender chest"), false);
+        return 1;
     }
 
     /**

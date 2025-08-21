@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.commands;
 
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
@@ -405,19 +406,18 @@ public class ThemeCommand {
      * List scoreboard themes
      */
     private static int executeListScoreboardThemes(CommandContext<CommandSourceStack> context) {
-        try {
-            context.getSource().sendSuccess(() -> 
-                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.scoreboard.available")), false);
-            
+    try {
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player != null) {
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "theme.list.scoreboard.available"));
             for (String theme : TablistScoreboardManager.getInstance().getAvailableScoreboardThemes()) {
-                context.getSource().sendSuccess(() -> 
-                    Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.scoreboard.item", theme)), false);
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "theme.list.scoreboard.item", theme));
             }
-            
-            return 1;
+        }
+        return 1;
         } catch (Exception e) {
             LOGGER.error("Error executing list scoreboard themes command", e);
-            context.getSource().sendFailure(Component.literal("§cFailed to list scoreboard themes: " + e.getMessage()));
+            MessageUtil.sendMessage(context.getSource().getPlayer(), "&cFailed to list scoreboard themes: {0}", e.getMessage());
             return 0;
         }
     }
@@ -426,19 +426,18 @@ public class ThemeCommand {
      * List bossbar templates
      */
     private static int executeListBossbarTemplates(CommandContext<CommandSourceStack> context) {
-        try {
-            context.getSource().sendSuccess(() -> 
-                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.bossbar.available")), false);
-            
+    try {
+        ServerPlayer player = context.getSource().getPlayer();
+        if (player != null) {
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "theme.list.bossbar.available"));
             for (String template : CustomBossbarManager.getInstance().getTemplateNames()) {
-                context.getSource().sendSuccess(() -> 
-                    Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(context.getSource().getPlayer(), "theme.list.bossbar.item", template)), false);
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "theme.list.bossbar.item", template));
             }
-            
-            return 1;
+        }
+        return 1;
         } catch (Exception e) {
             LOGGER.error("Error executing list bossbar templates command", e);
-            context.getSource().sendFailure(Component.literal("§cFailed to list bossbar templates: " + e.getMessage()));
+            MessageUtil.sendMessage(context.getSource().getPlayer(), "&cFailed to list bossbar templates: {0}", e.getMessage());
             return 0;
         }
     }

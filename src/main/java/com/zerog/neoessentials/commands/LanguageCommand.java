@@ -87,21 +87,11 @@ public class LanguageCommand {
             if (source.getEntity() instanceof ServerPlayer player) {
                 String currentLocale = manager.getPlayerLocale(player);
                 Set<String> availableLanguages = manager.getAvailableLanguages();
-                source.sendSuccess(() -> Component.literal(
-                    manager.getMessage(player, "language.info.header")
-                ), false);
-                source.sendSuccess(() -> Component.literal(
-                    manager.getMessage(player, "language.info.current", currentLocale)
-                ), false);
-                source.sendSuccess(() -> Component.literal(
-                    manager.getMessage(player, "language.info.available", availableLanguages.size())
-                ), false);
-                source.sendSuccess(() -> Component.literal(
-                    manager.getMessage(player, "language.info.default", manager.getDefaultLanguage())
-                ), false);
-                source.sendSuccess(() -> Component.literal(
-                    manager.getMessage(player, "language.info.list_hint")
-                ), false);
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.info.header"));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.info.current", currentLocale));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.info.available", availableLanguages.size()));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.info.default", manager.getDefaultLanguage()));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.info.list_hint"));
             } else {
                 source.sendSuccess(() -> Component.literal(
                     manager.getMessage("en_US", "language.info.active", manager.getAvailableLanguages().size())
@@ -129,12 +119,8 @@ public class LanguageCommand {
             }
             Set<String> availableLanguages = manager.getAvailableLanguages();
             if (!availableLanguages.contains(language)) {
-                source.sendFailure(Component.literal(
-                    manager.getMessage(player, "language.set.not_available", language)
-                ));
-                source.sendSuccess(() -> Component.literal(
-                    manager.getMessage(player, "language.set.available_list", String.join(", ", availableLanguages))
-                ), false);
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.set.not_available", language));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.set.available_list", String.join(", ", availableLanguages)));
                 return 0;
             }
             manager.setPlayerLocale(player, language);
@@ -145,7 +131,7 @@ public class LanguageCommand {
             } else {
                 finalMessage = successMessage;
             }
-            source.sendSuccess(() -> Component.literal(finalMessage), false);
+            MessageUtil.sendMessage(player, finalMessage);
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error setting player language: " + e.getMessage(), e);
@@ -164,19 +150,17 @@ public class LanguageCommand {
             Set<String> languages = manager.getAvailableLanguages();
             ServerPlayer player = source.getEntity() instanceof ServerPlayer p ? p : null;
             String current = player != null ? manager.getPlayerLocale(player) : "";
-            source.sendSuccess(() -> Component.literal(
-                manager.getMessage(player, "language.list.header")
-            ), false);
-            for (String language : languages) {
-                String indicator = language.equals(current) ? "► " : "- ";
-                String languageName = getLanguageDisplayName(language);
-                source.sendSuccess(() -> Component.literal(
-                    manager.getMessage(player, "language.list.entry", indicator, languageName, language)
-                ), false);
+            if (player != null) {
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.list.header"));
+                for (String language : languages) {
+                    String indicator = language.equals(current) ? "► " : "- ";
+                    String languageName = getLanguageDisplayName(language);
+                    MessageUtil.sendMessage(player, manager.getMessage(player, "language.list.entry", indicator, languageName, language));
+                }
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.list.set_hint"));
+            } else {
+                source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "language.list.header")), false);
             }
-            source.sendSuccess(() -> Component.literal(
-                manager.getMessage(player, "language.list.set_hint")
-            ), false);
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error listing languages: " + e.getMessage(), e);
@@ -193,12 +177,8 @@ public class LanguageCommand {
             CommandSourceStack source = context.getSource();
             LanguageManager manager = LanguageManager.getInstance();
             manager.reloadLanguages();
-            source.sendSuccess(() -> Component.literal(
-                manager.getMessage("en_US", "language.reload.success")
-            ), false);
-            source.sendSuccess(() -> Component.literal(
-                manager.getMessage("en_US", "language.reload.loaded", manager.getAvailableLanguages().size())
-            ), false);
+            source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "language.reload.success")), false);
+            source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "language.reload.loaded", manager.getAvailableLanguages().size())), false);
             LOGGER.info("Language files reloaded by {}", source.getTextName());
             return 1;
         } catch (Exception e) {
@@ -217,28 +197,20 @@ public class LanguageCommand {
             LanguageManager manager = LanguageManager.getInstance();
             Map<String, Object> stats = manager.getLanguageStats();
             ServerPlayer player = source.getEntity() instanceof ServerPlayer p ? p : null;
-            source.sendSuccess(() -> Component.literal(
-                manager.getMessage(player, "language.stats.header")
-            ), false);
-            source.sendSuccess(() -> Component.literal(
-                manager.getMessage(player, "language.stats.available", stats.get("available_languages"))
-            ), false);
-            source.sendSuccess(() -> Component.literal(
-                manager.getMessage(player, "language.stats.default", stats.get("default_language"))
-            ), false);
-            source.sendSuccess(() -> Component.literal(
-                manager.getMessage(player, "language.stats.player_locales", stats.get("player_locales"))
-            ), false);
-            @SuppressWarnings("unchecked")
-            Map<String, Integer> messageCounts = (Map<String, Integer>) stats.get("message_counts");
-            source.sendSuccess(() -> Component.literal(
-                manager.getMessage(player, "language.stats.message_counts_header")
-            ), false);
-            messageCounts.forEach((language, count) -> {
-                source.sendSuccess(() -> Component.literal(
-                    manager.getMessage(player, "language.stats.message_count_entry", language, count)
-                ), false);
-            });
+            if (player != null) {
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.header"));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.available", stats.get("available_languages")));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.default", stats.get("default_language")));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.player_locales", stats.get("player_locales")));
+                @SuppressWarnings("unchecked")
+                Map<String, Integer> messageCounts = (Map<String, Integer>) stats.get("message_counts");
+                MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.message_counts_header"));
+                messageCounts.forEach((language, count) -> {
+                    MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.message_count_entry", language, count));
+                });
+            } else {
+                source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "language.stats.header")), false);
+            }
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error showing language stats: " + e.getMessage(), e);
@@ -256,41 +228,28 @@ public class LanguageCommand {
             String key = StringArgumentType.getString(context, "key");
             LanguageManager manager = LanguageManager.getInstance();
             
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&6Testing language key: &f" + key)
-            ), false);
-            
             if (source.getEntity() instanceof ServerPlayer player) {
+                MessageUtil.sendMessage(player, "&6Testing language key: &f" + key);
                 String playerLocale = manager.getPlayerLocale(player);
                 String message = manager.getRawMessage(playerLocale, key);
-                
-                source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&eYour language (" + playerLocale + "): &f" + message)
-                ), false);
-            }
-            
-            // Show in default language
-            String defaultMessage = manager.getRawMessage(manager.getDefaultLanguage(), key);
-            source.sendSuccess(() -> Component.literal(
-                MessageUtil.translateColorCodes("&eDefault (" + manager.getDefaultLanguage() + "): &f" + defaultMessage)
-            ), false);
-            
-            // Show in other languages
-            Set<String> languages = manager.getAvailableLanguages();
-            if (languages.size() > 2) {
-                source.sendSuccess(() -> Component.literal(
-                    MessageUtil.translateColorCodes("&eOther languages:")
-                ), false);
-                
-                languages.stream()
-                    .filter(lang -> !lang.equals(manager.getDefaultLanguage()))
-                    .limit(3)
-                    .forEach(lang -> {
-                        String msg = manager.getRawMessage(lang, key);
-                        source.sendSuccess(() -> Component.literal(
-                            MessageUtil.translateColorCodes("&7- " + lang + ": &f" + msg)
-                        ), false);
-                    });
+                MessageUtil.sendMessage(player, "&eYour language (" + playerLocale + "): &f" + message);
+                // Show in default language
+                String defaultMessage = manager.getRawMessage(manager.getDefaultLanguage(), key);
+                MessageUtil.sendMessage(player, "&eDefault (" + manager.getDefaultLanguage() + "): &f" + defaultMessage);
+                // Show in other languages
+                Set<String> languages = manager.getAvailableLanguages();
+                if (languages.size() > 2) {
+                    MessageUtil.sendMessage(player, "&eOther languages:");
+                    languages.stream()
+                        .filter(lang -> !lang.equals(manager.getDefaultLanguage()))
+                        .limit(3)
+                        .forEach(lang -> {
+                            String msg = manager.getRawMessage(lang, key);
+                            MessageUtil.sendMessage(player, "&7- " + lang + ": &f" + msg);
+                        });
+                }
+            } else {
+                source.sendSuccess(() -> Component.literal("&6Testing language key: &f" + key), false);
             }
             
             return 1;

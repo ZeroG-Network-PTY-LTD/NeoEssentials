@@ -43,6 +43,9 @@ public class NeoEssentials {
         
         // Register for server events
         NeoForge.EVENT_BUS.register(this);
+
+    // Register command override listener to intercept vanilla whisper commands
+    NeoForge.EVENT_BUS.register(com.zerog.neoessentials.listeners.CommandOverrideListener.class);
         
         // Register enhanced theme system event handlers (Phase 6)
         NeoForge.EVENT_BUS.register(TablistScoreboardManager.getInstance());

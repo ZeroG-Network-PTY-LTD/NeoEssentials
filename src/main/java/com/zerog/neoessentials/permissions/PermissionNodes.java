@@ -251,6 +251,17 @@ public final class PermissionNodes {
     public static final String NICK_OTHERS = "neoessentials.nick.others";
     public static final String NICK_COLOR = "neoessentials.nick.color";
     public static final String NICK_MAGIC = "neoessentials.nick.magic";
+
+    // Inventory See
+    public static final String INVSEE = "neoessentials.invsee";
+    public static final String INVSEE_MODIFY = "neoessentials.invsee.modify";
+
+    // Inventory-opening commands
+    public static final String ENDERCHEST = "neoessentials.enderchest";
+    public static final String ANVIL = "neoessentials.anvil";
+    public static final String SMITHING = "neoessentials.smithing";
+    public static final String STONECUTTER = "neoessentials.stonecutter";
+    public static final String WORKBENCH = "neoessentials.workbench";
     
     // ==============================
     // KIT SYSTEM

@@ -15,7 +15,6 @@ public class ConfigManager {
 	private final ConfigStatus configStatus = new ConfigStatus();
 	public void saveAll() {
 		saveConfig("main.json", mainConfig);
-		saveConfig("tablist.json", tablistConfig);
 		// Bossbar, scoreboard, animation configs if present
 	}
 
@@ -70,7 +69,6 @@ public class ConfigManager {
 	private final Map<String, Object> configCache = new ConcurrentHashMap<>();
 
 	private MainConfig mainConfig;
-	private TablistConfig tablistConfig;
 	// Bossbar, scoreboard, animation configs if present
 
 	private ConfigManager() {
@@ -99,8 +97,7 @@ public class ConfigManager {
 
 	private void loadAllConfigurations() {
 		mainConfig = loadConfig("main.json", MainConfig.class);
-		tablistConfig = loadConfig("tablist.json", TablistConfig.class);
-		// Bossbar, scoreboard, animation configs if present
+	// Bossbar, scoreboard, animation configs if present
 	}
 
 	private <T> T loadConfig(String fileName, Class<T> configClass) {
@@ -137,6 +134,5 @@ public class ConfigManager {
 
 	// Getters
 	public MainConfig getMainConfig() { return mainConfig != null ? mainConfig : new MainConfig(); }
-	public TablistConfig getTablistConfig() { return tablistConfig != null ? tablistConfig : new TablistConfig(); }
 	// Bossbar, scoreboard, animation config getters if present
 }

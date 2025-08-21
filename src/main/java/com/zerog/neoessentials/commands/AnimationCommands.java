@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.commands;
 
 import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -40,14 +41,11 @@ public class AnimationCommands {
             TablistScoreboardManager.getInstance().reloadAnimations();
             CustomBossbarManager.getInstance().reloadAnimations();
             ServerPlayer player = context.getSource().getPlayerOrException();
-            context.getSource().sendSuccess(() ->
-                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.reload.success")),
-                true);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.reload.success"));
         } catch (Exception e) {
             ServerPlayer player = null;
             try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            context.getSource().sendFailure(
-                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.reload.failure", e.getMessage())));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.reload.failure", e.getMessage()));
         }
         return 1;
     }
@@ -57,16 +55,13 @@ public class AnimationCommands {
             String tablistStats = TablistScoreboardManager.getInstance().getAnimationStats();
             String bossbarStats = CustomBossbarManager.getInstance().getAnimationStats();
             ServerPlayer player = context.getSource().getPlayerOrException();
-            context.getSource().sendSuccess(() ->
-                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.header") + "\n"
-                    + com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.tablist", tablistStats) + "\n"
-                    + com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.bossbar", bossbarStats)),
-                false);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.header"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.tablist", tablistStats));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.bossbar", bossbarStats));
         } catch (Exception e) {
             ServerPlayer player = null;
             try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            context.getSource().sendFailure(
-                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.failure", e.getMessage())));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.failure", e.getMessage()));
         }
         return 1;
     }
@@ -76,41 +71,33 @@ public class AnimationCommands {
             var tablistAnimations = TablistScoreboardManager.getInstance().getAvailableAnimations();
             var bossbarAnimations = CustomBossbarManager.getInstance().getAvailableAnimations();
             ServerPlayer player = context.getSource().getPlayerOrException();
-            StringBuilder message = new StringBuilder(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.header") + "\n");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.header"));
             if (!tablistAnimations.isEmpty()) {
-                message.append(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.tablist", String.join(", ", tablistAnimations))).append("\n");
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.tablist", String.join(", ", tablistAnimations)));
             }
             if (!bossbarAnimations.isEmpty()) {
-                message.append(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.bossbar", String.join(", ", bossbarAnimations))).append("\n");
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.bossbar", String.join(", ", bossbarAnimations)));
             }
-            context.getSource().sendSuccess(() -> Component.literal(message.toString()), false);
         } catch (Exception e) {
             ServerPlayer player = null;
             try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            context.getSource().sendFailure(
-                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.failure", e.getMessage())));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.failure", e.getMessage()));
         }
         return 1;
     }
     
     private static int testAnimation(CommandContext<CommandSourceStack> context) {
-        try {
-            String animationName = StringArgumentType.getString(context, "animation");
-            
-            if (context.getSource().getEntity() instanceof ServerPlayer player) {
-                // Test animation by showing a bossbar with the animation
-                CustomBossbarManager.getInstance().showBossbar(player, "test", 5);
-                
-                context.getSource().sendSuccess(() -> 
-                    Component.literal("§a✓ Testing animation: " + animationName), 
-                    false);
-            } else {
-                context.getSource().sendFailure(
-                    Component.literal("§c✗ This command can only be used by players"));
+        String animationName = StringArgumentType.getString(context, "animation");
+        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+            // Test animation by showing a bossbar with the animation
+            CustomBossbarManager.getInstance().showBossbar(player, "test", 5);
+            MessageUtil.sendMessage(player, "&a✓ Testing animation: " + animationName);
+        } else {
+            try {
+                MessageUtil.sendMessage(context.getSource().getPlayerOrException(), "&c✗ This command can only be used by players");
+            } catch (com.mojang.brigadier.exceptions.CommandSyntaxException ex) {
+                // Optionally log or handle the error
             }
-        } catch (Exception e) {
-            context.getSource().sendFailure(
-                Component.literal("§c✗ Failed to test animation: " + e.getMessage()));
         }
         return 1;
     }
@@ -118,14 +105,11 @@ public class AnimationCommands {
     private static int showHelp(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            context.getSource().sendSuccess(() ->
-                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.help")),
-                false);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.help"));
         } catch (Exception e) {
             ServerPlayer player = null;
             try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            context.getSource().sendFailure(
-                Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.help.failure", e.getMessage())));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.help.failure", e.getMessage()));
         }
         return 1;
     }
