@@ -4,6 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.zerog.neoessentials.config.ModConfig;
+import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
@@ -13,76 +15,64 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.Optional;
 
 /**
  * Item command implementation - /item, /i
  * Allows spawning items for players
  */
 public class ItemCommand {
-    
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
-        // /item <item> [amount] [player] - Give item to player
-        dispatcher.register(Commands.literal("item")
-            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GIVE_ITEM))
+        int maxAmount = ModConfig.get().itemMaxAmount();
+        boolean allowLore = ModConfig.get().itemAllowLore();
+        // /item <item> <amount> [lore] [player]
+        var base = Commands.literal("item")
+            .requires(src -> PermissionUtil.hasPermission(src, "yourmod.item"))
             .then(Commands.argument("item", ItemArgument.item(context))
-                .executes(ctx -> giveItem(ctx, 1, null))
-                .then(Commands.argument("amount", StringArgumentType.word())
-                    .executes(ctx -> giveItem(ctx, parseAmount(ctx, "amount"), null))
-                    .then(Commands.argument("player", EntityArgument.player())
-                        .executes(ctx -> giveItem(ctx, parseAmount(ctx, "amount"), EntityArgument.getPlayer(ctx, "player")))
+                .then(Commands.argument("amount", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, maxAmount))
+                    .executes(ctx -> giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), Optional.empty(), Optional.empty()))
+                    .then(allowLore ? Commands.argument("lore", StringArgumentType.greedyString())
+                        .requires(src -> PermissionUtil.hasPermission(src, "yourmod.item.lore"))
+                        .executes(ctx -> giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), Optional.of(StringArgumentType.getString(ctx, "lore")), Optional.empty()))
+                        .then(Commands.argument("player", EntityArgument.player())
+                            .requires(src -> PermissionUtil.hasPermission(src, "yourmod.item.others"))
+                            .executes(ctx -> giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), Optional.of(StringArgumentType.getString(ctx, "lore")), Optional.of(EntityArgument.getPlayer(ctx, "player"))))
+                        )
+                    : Commands.argument("player", EntityArgument.player())
+                        .requires(src -> PermissionUtil.hasPermission(src, "yourmod.item.others"))
+                        .executes(ctx -> giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), Optional.empty(), Optional.of(EntityArgument.getPlayer(ctx, "player"))))
                     )
                 )
-            )
-        );
-        
-        // /i - Alias for /item
-        dispatcher.register(Commands.literal("i")
-            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GIVE_ITEM))
-            .then(Commands.argument("item", ItemArgument.item(context))
-                .executes(ctx -> giveItem(ctx, 1, null))
-                .then(Commands.argument("amount", StringArgumentType.word())
-                    .executes(ctx -> giveItem(ctx, parseAmount(ctx, "amount"), null))
-                    .then(Commands.argument("player", EntityArgument.player())
-                        .executes(ctx -> giveItem(ctx, parseAmount(ctx, "amount"), EntityArgument.getPlayer(ctx, "player")))
-                    )
-                )
-            )
-        );
+            );
+        dispatcher.register(base);
+        dispatcher.register(Commands.literal("i").redirect(base.build()));
     }
-    
-    private static int giveItem(CommandContext<CommandSourceStack> context, int amount, ServerPlayer target) throws CommandSyntaxException {
-        CommandSourceStack source = context.getSource();
-        ServerPlayer player = target != null ? target : source.getPlayerOrException();
-        
-        try {
-            ItemInput itemInput = ItemArgument.getItem(context, "item");
-            ItemStack itemStack = itemInput.createItemStack(amount, false);
-            // Add item to player inventory
-            if (player.getInventory().add(itemStack)) {
-                // Success - item added
-                String itemName = itemStack.getDisplayName().getString();
-                String message = target != null ?
-                    MessageUtil.replacePlaceholders("&aGave {0} x{1} to {2}", itemName, amount, target.getName().getString()) :
-                    MessageUtil.replacePlaceholders("&aGave {0} x{1}", itemName, amount);
-                MessageUtil.sendMessage(player, message);
-                if (target != null && target != source.getEntity()) {
-                    MessageUtil.sendMessage(target,
-                        MessageUtil.replacePlaceholders("&aReceived {0} x{1} from {2}",
-                            itemName, amount, source.getTextName()));
-                }
-                return 1;
-            } else {
-                // Inventory full
-                MessageUtil.sendMessage(player, "&cPlayer's inventory is full!");
-                return 0;
-            }
-            
-        } catch (Exception e) {
-            MessageUtil.sendMessage(player, "&cInvalid item or amount!");
-            return 0;
+
+    private static int giveItem(CommandSourceStack src, ItemInput itemRes, int amount, Optional<String> loreOpt, Optional<ServerPlayer> targetOpt) throws CommandSyntaxException {
+        ServerPlayer receiver = targetOpt.orElseGet(src::getPlayerOrException);
+        ItemStack stack = itemRes.createItemStack(amount, false);
+        if (loreOpt.isPresent()) {
+            Component loreText = Component.literal(loreOpt.get());
+            ListTag loreList = new ListTag();
+            loreList.add(StringTag.valueOf(loreText.getString()));
+            stack.getOrCreateTagElement("display").put("Lore", loreList);
         }
+        boolean added = receiver.getInventory().add(stack);
+        if (!added) receiver.drop(stack, false);
+        String itemName = stack.getHoverName().getString();
+        String giveMsg = LanguageManager.getInstance().getMessage(receiver, "neoessentials.item.give", amount, itemName);
+        receiver.sendSystemMessage(Component.literal(giveMsg));
+        if (targetOpt.isPresent() && targetOpt.get() != src.getPlayerOrException()) {
+            String srcMsg = LanguageManager.getInstance().getMessage(src.getPlayerOrException(), "neoessentials.item.give_other", receiver.getName().getString(), amount, itemName);
+            src.sendSuccess(() -> Component.literal(srcMsg), true);
+        }
+        return 1;
     }
     
     private static int parseAmount(CommandContext<CommandSourceStack> context, String argumentName) {

@@ -58,7 +58,7 @@ public class PlaytimeCommand {
         PlayerData playerData = PlayerDataManager.getInstance().getPlayerData(player.getUUID());
         long sessionTime = PlaytimeTracker.getInstance().getCurrentSessionTime(player.getUUID());
         
-    Component message = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "playtime.session", PlaytimeTracker.formatTime(sessionTime)));
+    Component message = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.playtime.session", PlaytimeTracker.formatTime(sessionTime)));
     context.getSource().sendSuccess(() -> message, false);
     return 1;
     }
@@ -68,24 +68,24 @@ public class PlaytimeCommand {
             List<PlayerData> topPlayers = PlayerDataManager.getInstance().getTopPlayersByPlaytime(10);
             
             if (topPlayers.isEmpty()) {
-                Component message = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "playtime.no_data"));
+                Component message = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "neoessentials.playtime.no_data"));
                 context.getSource().sendSuccess(() -> message, false);
                 return 1;
             }
-            Component header = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "playtime.top_header"));
+            Component header = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "neoessentials.playtime.top_header"));
             context.getSource().sendSuccess(() -> header, false);
             for (int i = 0; i < topPlayers.size(); i++) {
                 PlayerData data = topPlayers.get(i);
                 String rank = String.valueOf(i + 1);
                 String playerName = data.getLastKnownName() != null ? data.getLastKnownName() : "Unknown";
                 String playtime = PlaytimeTracker.formatTime(data.getTotalPlaytime());
-                Component rankMessage = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "playtime.top_entry", rank, playerName, playtime));
+                Component rankMessage = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "neoessentials.playtime.top_entry", rank, playerName, playtime));
                 context.getSource().sendSuccess(() -> rankMessage, false);
             }
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error getting top playtime", e);
-            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "playtime.error"));
+            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "neoessentials.playtime.error"));
             context.getSource().sendSuccess(() -> error, false);
             return 0;
         }
@@ -99,25 +99,25 @@ public class PlaytimeCommand {
             boolean isOwnPlaytime = source.getEntity() instanceof ServerPlayer player && 
                 player.getUUID().equals(targetPlayer.getUUID());
             
-            String targetName = isOwnPlaytime ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "playtime.your") : targetPlayer.getName().getString();
-            Component header = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "playtime.header", targetName));
+            String targetName = isOwnPlaytime ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.your") : targetPlayer.getName().getString();
+            Component header = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.header", targetName));
             source.sendSuccess(() -> header, false);
-            Component totalTime = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "playtime.total", PlaytimeTracker.formatTime(playerData.getTotalPlaytime())));
+            Component totalTime = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.total", PlaytimeTracker.formatTime(playerData.getTotalPlaytime())));
             source.sendSuccess(() -> totalTime, false);
-            Component currentSession = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "playtime.session", PlaytimeTracker.formatTime(sessionTime)));
+            Component currentSession = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.session", PlaytimeTracker.formatTime(sessionTime)));
             source.sendSuccess(() -> currentSession, false);
             if (playerData.getFirstJoin() > 0) {
-                Component firstJoin = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "playtime.first_join", MessageUtils.formatTimestamp(playerData.getFirstJoin())));
+                Component firstJoin = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.first_join", MessageUtils.formatTimestamp(playerData.getFirstJoin())));
                 source.sendSuccess(() -> firstJoin, false);
             }
             if (playerData.getLastSeen() > 0) {
-                Component lastSeen = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "playtime.last_seen", MessageUtils.formatTimestamp(playerData.getLastSeen())));
+                Component lastSeen = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.last_seen", MessageUtils.formatTimestamp(playerData.getLastSeen())));
                 source.sendSuccess(() -> lastSeen, false);
             }
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error showing playtime for player " + targetPlayer.getName().getString(), e);
-            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "playtime.error"));
+            Component error = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.error"));
             source.sendSuccess(() -> error, false);
             return 0;
         }
