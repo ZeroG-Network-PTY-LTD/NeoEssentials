@@ -14,9 +14,20 @@ version = mod_version
 group = mod_group_id
 
 repositories {
+    maven {
+        name = "CurseForge"
+        url = uri("https://maven.curseforge.com")
+    }
+    maven {
+        name = "Modrinth"
+        url = uri("https://api.modrinth.com/maven")
+    }
     mavenCentral()
     maven { url = 'https://maven.neoforged.net/releases' }
     maven { url = 'https://repo.lucko.me/' }
+    maven {
+        url "https://maven.firstdark.dev/releases"
+    }
 }
 
 base {
@@ -62,9 +73,13 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 // }
 
 dependencies {
+    // SDLink Discord integration
+    implementation "com.hypherionmc.sdlink:sdlink:3.3.2"
+    implementation "com.hypherionmc.craterlib:CraterLib-NeoForge-1.21:2.1.5"
+
     // Bundle SnakeYAML with the mod, but prefer server-provided version if present
     implementation('org.yaml:snakeyaml:2.2')
-// Compile SnakeYAML as a normal dependency
+    // Compile SnakeYAML as a normal dependency
     implementation('org.xerial:sqlite-jdbc:3.44.1.0') {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
@@ -73,7 +88,6 @@ dependencies {
     }
     compileOnly 'net.luckperms:api:5.4'
     implementation 'com.moandjiezana.toml:toml4j:0.7.2'
-
 
     // If you have a dependency that brings in SnakeYAML transitively, exclude it here
     // Example:

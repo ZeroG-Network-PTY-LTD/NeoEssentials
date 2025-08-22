@@ -9,6 +9,7 @@ package com.zerog.neoessentials.config;
  * @since 2.0.0
  */
 public class MainConfig {
+    public ColorPermissionsConfig colorPermissionsConfig = new ColorPermissionsConfig();
     public InvseeConfig invseeConfig = new InvseeConfig();
     public static class InvseeConfig {
         public boolean enable = true;
@@ -565,6 +566,9 @@ public class MainConfig {
             public boolean more = true;
             public boolean repair = true;
             public boolean enchant = true;
+                // EssentialsX-style config options for /give
+                public int maxGiveAmount = 64;
+                public boolean allowGiveEnchantments = true;
             
             // Inventory management
             public boolean clear = true;

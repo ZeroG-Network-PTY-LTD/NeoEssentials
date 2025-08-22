@@ -2,7 +2,7 @@ package com.zerog.neoessentials.commands.essentials;
 
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
-
+import com.zerog.neoessentials.storage.JsonStorage;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -12,16 +12,68 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
 public class MailCommand {
+    /**
+     * Send mail to a player
+     */
+    private static int sendMail(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        if (!(source.getEntity() instanceof ServerPlayer sender)) {
+            source.sendFailure(Component.literal("§cOnly players can send mail"));
+            return 0;
+        }
+        try {
+            ServerPlayer target = EntityArgument.getPlayer(context, "player");
+            String message = StringArgumentType.getString(context, "message");
+            if (message.length() > 255) {
+                sender.sendSystemMessage(Component.literal("§cMail message is too long! Maximum 255 characters."));
+                return 0;
+            }
+            if (target.getUUID().equals(sender.getUUID())) {
+                sender.sendSystemMessage(Component.literal("§cYou cannot send mail to yourself!"));
+                return 0;
+            }
+            JsonStorage.MailEntry entry = new JsonStorage.MailEntry(sender.getName().getString(), message, System.currentTimeMillis());
+            mailData.computeIfAbsent(target.getUUID(), k -> new ArrayList<>()).add(entry);
+            JsonStorage.saveMail(mailData);
+            target.sendSystemMessage(Component.literal("You have new mail from " + sender.getName().getString()));
+            sender.sendSystemMessage(Component.literal("Mail sent to " + target.getName().getString()));
+            return 1;
+        } catch (Exception e) {
+            sender.sendSystemMessage(Component.literal("§cError sending mail: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    /**
+     * Read mail (default to page 1)
+     */
+    private static int readMail(CommandContext<CommandSourceStack> context) {
+        return readMailPage(context, 1);
+    }
+
+    /**
+     * Read mail for a specific page
+     */
+    private static int readMailPage(CommandContext<CommandSourceStack> context) {
+        int page = 1;
+        try {
+            String pageStr = StringArgumentType.getString(context, "page");
+            page = Integer.parseInt(pageStr);
+        } catch (Exception e) {
+            // Use default page 1
+        }
+        return readMailPage(context, page);
+    }
+
     
     // Mail storage - in production this would be persistent
-    private static final Map<UUID, List<MailMessage>> playerMail = new ConcurrentHashMap<>();
+    private static final Map<UUID, List<JsonStorage.MailEntry>> mailData = new ConcurrentHashMap<>(JsonStorage.loadMail());
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("MM/dd HH:mm");
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -50,110 +102,9 @@ public class MailCommand {
                     .executes(MailCommand::clearAllMail))));
     }
     
-    /**
-     * Send mail to a player
-     */
-    private static int sendMail(CommandContext<CommandSourceStack> context) {
-        CommandSourceStack source = context.getSource();
-        
-        // Only players can send mail
-        if (!(source.getEntity() instanceof ServerPlayer sender)) {
-            source.sendFailure(Component.literal("§cOnly players can send mail"));
-            return 0;
-        }
-        
-        try {
-            String targetName = StringArgumentType.getString(context, "player");
-            String message = StringArgumentType.getString(context, "message");
-            
-            // Basic validation
-            if (message.length() > 200) {
-                MessageUtil.sendMessage(sender, "§cMail message is too long! Maximum 200 characters.");
-                return 0;
-            }
-            
-            // Find target player (online or offline)
-            UUID targetUUID = null;
-            String actualTargetName = null;
-            
-            // Check online players first
-            for (ServerPlayer player : source.getServer().getPlayerList().getPlayers()) {
-                if (player.getName().getString().equalsIgnoreCase(targetName)) {
-                    targetUUID = player.getUUID();
-                    actualTargetName = player.getName().getString();
-                    break;
-                }
-            }
-            
-            // For offline players, we'd need a player database. For now, handle as if player doesn't exist
-            if (targetUUID == null) {
-                MessageUtil.sendMessage(sender, "§cPlayer '" + targetName + "' not found or has never played on this server.");
-                return 0;
-            }
-            
-            // Don't allow sending mail to yourself
-            if (targetUUID.equals(sender.getUUID())) {
-                MessageUtil.sendMessage(sender, "§cYou cannot send mail to yourself!");
-                return 0;
-            }
-            
-            // Create mail message
-            MailMessage mail = new MailMessage(
-                generateMailId(),
-                sender.getUUID(),
-                sender.getName().getString(),
-                targetUUID,
-                actualTargetName,
-                message,
-                LocalDateTime.now()
-            );
-            
-            // Store the mail
-            playerMail.computeIfAbsent(targetUUID, k -> new ArrayList<>()).add(mail);
-            
-            // Confirm to sender
-            MessageUtil.sendMessage(sender, "§aMail sent to " + actualTargetName + "!");
-            
-            // Notify target if online
-            ServerPlayer target = source.getServer().getPlayerList().getPlayer(targetUUID);
-            if (target != null) {
-                MessageUtil.sendMessage(target, "§e✉ You have new mail from " + sender.getName().getString() + "!");
-                MessageUtil.sendMessage(target, "§7Use /mail read to view your messages.");
-            }
-            
-            // Log the mail
-            source.getServer().sendSystemMessage(Component.literal(
-                "§7[Mail] " + sender.getName().getString() + " sent mail to " + actualTargetName));
-            
-            return 1;
-            
-        } catch (Exception e) {
-            MessageUtil.sendMessage(sender, "§cError sending mail: " + e.getMessage());
-            return 0;
-        }
-    }
     
-    /**
-     * Read mail
-     */
-    private static int readMail(CommandContext<CommandSourceStack> context) {
-        return readMailPage(context, 1);
-    }
     
-    private static int readMailPage(CommandContext<CommandSourceStack> context) {
-        CommandSourceStack source = context.getSource();
-        
-        int page = 1;
-        try {
-            String pageStr = StringArgumentType.getString(context, "page");
-            page = Integer.parseInt(pageStr);
-        } catch (Exception e) {
-            // Use default page 1
-        }
-        
-        return readMailPage(context, page);
-    }
-    
+    // Internal pagination logic
     private static int readMailPage(CommandContext<CommandSourceStack> context, int page) {
         CommandSourceStack source = context.getSource();
         
@@ -163,7 +114,7 @@ public class MailCommand {
             return 0;
         }
         
-        List<MailMessage> mail = playerMail.getOrDefault(player.getUUID(), new ArrayList<>());
+        List<JsonStorage.MailEntry> mail = mailData.getOrDefault(player.getUUID(), new ArrayList<>());
         
         if (mail.isEmpty()) {
             MessageUtil.sendMessage(player, "§eYou have no mail.");
@@ -187,10 +138,10 @@ public class MailCommand {
         int endIndex = Math.min(startIndex + messagesPerPage, mail.size());
         
         for (int i = startIndex; i < endIndex; i++) {
-            MailMessage msg = mail.get(i);
-            String timeStr = msg.timestamp.format(TIME_FORMAT);
-            MessageUtil.sendMessage(player, "§7[" + msg.id + "] §a" + msg.senderName + " §7(" + timeStr + "):");
-            MessageUtil.sendMessage(player, "§f  " + msg.message);
+            JsonStorage.MailEntry msg = mail.get(i);
+            String timeStr = LocalDateTime.ofEpochSecond(msg.timestamp(), 0, ZoneOffset.UTC).format(TIME_FORMAT);
+            MessageUtil.sendMessage(player, "§7[" + (i + 1) + "] §a" + msg.from() + " §7(" + timeStr + "):");
+            MessageUtil.sendMessage(player, "§f  " + msg.message());
         }
         
         // Footer
@@ -214,14 +165,14 @@ public class MailCommand {
             return 0;
         }
         
-        List<MailMessage> mail = playerMail.get(player.getUUID());
+        List<JsonStorage.MailEntry> mail = mailData.get(player.getUUID());
         if (mail == null || mail.isEmpty()) {
             MessageUtil.sendMessage(player, "§eYou have no mail to clear.");
             return 1;
         }
         
         int mailCount = mail.size();
-        playerMail.remove(player.getUUID());
+        mailData.remove(player.getUUID());
         
         MessageUtil.sendMessage(player, "§aCleared " + mailCount + " mail messages.");
         
@@ -243,13 +194,13 @@ public class MailCommand {
         try {
             String mailId = StringArgumentType.getString(context, "id");
             
-            List<MailMessage> mail = playerMail.get(player.getUUID());
+            List<JsonStorage.MailEntry> mail = mailData.get(player.getUUID());
             if (mail == null || mail.isEmpty()) {
                 MessageUtil.sendMessage(player, "§eYou have no mail.");
                 return 1;
             }
             
-            boolean found = mail.removeIf(msg -> msg.id.equals(mailId));
+            boolean found = mail.removeIf(msg -> String.valueOf(msg.timestamp()).equals(mailId));
             
             if (found) {
                 MessageUtil.sendMessage(player, "§aDeleted mail with ID: " + mailId);
@@ -274,14 +225,14 @@ public class MailCommand {
         try {
             ServerPlayer target = EntityArgument.getPlayer(context, "player");
             
-            List<MailMessage> mail = playerMail.get(target.getUUID());
+            List<JsonStorage.MailEntry> mail = mailData.get(target.getUUID());
             if (mail == null || mail.isEmpty()) {
                 sendMessage(source, "§e" + target.getName().getString() + " has no mail.");
                 return 1;
             }
             
             int mailCount = mail.size();
-            playerMail.remove(target.getUUID());
+            mailData.remove(target.getUUID());
             
             sendMessage(source, "§aCleared " + mailCount + " mail messages for " + target.getName().getString());
             
@@ -300,18 +251,12 @@ public class MailCommand {
         }
     }
     
-    /**
-     * Generate a unique mail ID
-     */
-    private static String generateMailId() {
-        return Integer.toHexString(new Random().nextInt(0xFFFF)).toUpperCase();
-    }
     
     /**
      * Get unread mail count for a player (for join notifications)
      */
     public static int getUnreadMailCount(UUID playerUUID) {
-        List<MailMessage> mail = playerMail.get(playerUUID);
+        List<JsonStorage.MailEntry> mail = mailData.get(playerUUID);
         return mail != null ? mail.size() : 0;
     }
     
@@ -319,7 +264,7 @@ public class MailCommand {
      * Clear mail data when a player is removed (cleanup)
      */
     public static void clearPlayerData(UUID playerUUID) {
-        playerMail.remove(playerUUID);
+        mailData.remove(playerUUID);
     }
     
     private static void sendMessage(CommandSourceStack source, String message) {
@@ -335,29 +280,6 @@ public class MailCommand {
             return player.getName().getString();
         } else {
             return "Console";
-        }
-    }
-    
-    /**
-     * Mail message data structure
-     */
-    private static class MailMessage {
-        final String id;
-        final UUID senderUUID;
-        final String senderName;
-        final UUID recipientUUID;
-        final String recipientName;
-        final String message;
-        final LocalDateTime timestamp;
-        
-        MailMessage(String id, UUID senderUUID, String senderName, UUID recipientUUID, String recipientName, String message, LocalDateTime timestamp) {
-            this.id = id;
-            this.senderUUID = senderUUID;
-            this.senderName = senderName;
-            this.recipientUUID = recipientUUID;
-            this.recipientName = recipientName;
-            this.message = message;
-            this.timestamp = timestamp;
         }
     }
 }

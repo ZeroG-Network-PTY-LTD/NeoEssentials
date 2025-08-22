@@ -225,12 +225,13 @@ public class ConfigurationUnifier {
             String configType = determineConfigType(fileName);
             if (configType != null) {
                 LOGGER.info("Found runtime config: {} -> {} (ready for integration)", fileName, configType);
-                // TODO: Implement actual config loading integration
-                // For now, we're just validating that the configs exist and are accessible
-                if (Files.size(configFile) > 0) {
-                    LOGGER.debug("Runtime config file {} is valid and non-empty", fileName);
+                // Actual config loading integration
+                com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+                if (configManager.configExists(fileName)) {
+                    configManager.reloadAll();
+                    LOGGER.debug("Runtime config file {} loaded via ConfigManager", fileName);
                 } else {
-                    LOGGER.warn("Runtime config file {} is empty", fileName);
+                    LOGGER.warn("Runtime config file {} does not exist", fileName);
                 }
             } else {
                 LOGGER.debug("No handler found for runtime config: {}", fileName);

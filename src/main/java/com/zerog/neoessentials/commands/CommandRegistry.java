@@ -9,7 +9,6 @@ import com.zerog.neoessentials.commands.permissions.PermissionsCommand;
 // import com.zerog.neoessentials.commands.monitoring.PerformanceCommand; // DISABLED - Over-engineered
 // import com.zerog.neoessentials.commands.enterprise.BackupCommand; // DISABLED - Over-engineered
 import com.zerog.neoessentials.commands.placeholders.PlaceholderCommand;
-import com.zerog.neoessentials.commands.BossbarCommand;
 import com.zerog.neoessentials.commands.player.PlaytimeCommand;
 import com.zerog.neoessentials.commands.player.AchievementsCommand;
 import com.zerog.neoessentials.commands.player.PreferencesCommand;

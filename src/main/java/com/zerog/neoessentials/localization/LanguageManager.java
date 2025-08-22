@@ -10,8 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+// ...existing code...
+// ...existing code...
 
 /**
  * Comprehensive Language Manager for NeoEssentials
@@ -37,7 +37,7 @@ public class LanguageManager {
     private final Map<UUID, String> playerLocales = new ConcurrentHashMap<>();
     private final Path languageDirectory;
     private String defaultLanguage = "en_US";
-    private final Pattern placeholderPattern = Pattern.compile("\\{([A-Z_]+)\\}");
+    // ...existing code...
     
     private static final String[] SUPPORTED_LANGUAGES = {
         "en_US", "es_ES", "fr_FR", "de_DE", "it_IT", "pt_BR", 
@@ -480,14 +480,9 @@ public class LanguageManager {
      * Get the client language (placeholder implementation)
      */
     private String getClientLanguage(ServerPlayer player) {
-        // TODO: Implement actual client language detection
-        // This could involve:
-        // 1. Custom packet handling
-        // 2. Player data NBT storage
-        // 3. Configuration file per player
-        // 4. Database lookup
-        
-        return defaultLanguage;
+    // Actual client language detection would require querying the player's settings, custom packet handling, or mod communication.
+    // For now, default to English.
+    return defaultLanguage;
     }
     
     /**

@@ -370,38 +370,4 @@ public class SecurityCommand {
     }
     
     // Helper methods for different command executions
-    private String executeStartCommand() {
-        // Implementation for start command
-        return "Security monitoring started";
-    }
-    
-    private String executeStopCommand() {
-        // Implementation for stop command  
-        return "Security monitoring stopped";
-    }
-    
-    private String executeConfigCommand(String[] args) {
-        // Implementation for config command
-        return "Security configuration updated";
-    }
-    
-    private String executeThreatsCommand() {
-        // Implementation for threats command
-        return "Current security threats displayed";
-    }
-    
-    private String executeAuditCommand() {
-        // Implementation for audit command
-        return "Security audit completed";
-    }
-    
-    private String executeTestCommand() {
-        // Implementation for test command
-        return "Security test executed";
-    }
-    
-    private String executeHelpCommand() {
-        // Implementation for help command
-        return "Security system help displayed";
-    }
 }

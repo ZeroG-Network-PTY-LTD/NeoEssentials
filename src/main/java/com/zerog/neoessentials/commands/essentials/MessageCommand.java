@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 
 public class MessageCommand {
     
@@ -53,8 +54,8 @@ public class MessageCommand {
         dispatcher.register(Commands.literal("w")
             .executes(ctx -> 0)); // Cancel vanilla
 
-        dispatcher.register(Commands.literal("whisper")
-            .executes(ctx -> 0)); // Cancel vanilla
+    dispatcher.register(Commands.literal("whisper")
+        .executes(ctx -> 0)); // Cancel vanilla
     }
     
     /**
@@ -78,9 +79,11 @@ public class MessageCommand {
             return 0;
         }
 
-        // Mute check (stub)
-        // TODO: Integrate with your mute system
-        // if (isMuted(sender)) { sender.sendSystemMessage(Component.literal("You are muted.")); return 0; }
+        // Mute check (example integration)
+        if (isMuted(sender)) {
+            sender.sendSystemMessage(Component.literal("You are muted."));
+            return 0;
+        }
 
         // Console recipient
         if (recipientArg.equalsIgnoreCase("console")) {
@@ -90,47 +93,89 @@ public class MessageCommand {
             return 1;
         }
 
-        // Find target player
-        ServerPlayer target = null;
-        for (ServerPlayer p : source.getServer().getPlayerList().getPlayers()) {
-            if (p.getName().getString().equalsIgnoreCase(recipientArg)) {
-                target = p;
-                break;
+        // Wildcard/multiple recipients support
+        List<ServerPlayer> recipients = new java.util.ArrayList<>();
+        if (recipientArg.equals("*")) {
+            // Send to all online players except sender
+            for (ServerPlayer p : source.getServer().getPlayerList().getPlayers()) {
+                if (!p.getUUID().equals(sender.getUUID())) {
+                    recipients.add(p);
+                }
+            }
+        } else if (recipientArg.contains(",")) {
+            // Multiple recipients separated by comma
+            String[] names = recipientArg.split(",");
+            for (String name : names) {
+                for (ServerPlayer p : source.getServer().getPlayerList().getPlayers()) {
+                    if (p.getName().getString().equalsIgnoreCase(name.trim()) && !p.getUUID().equals(sender.getUUID())) {
+                        recipients.add(p);
+                    }
+                }
+            }
+        } else {
+            // Single recipient
+            for (ServerPlayer p : source.getServer().getPlayerList().getPlayers()) {
+                if (p.getName().getString().equalsIgnoreCase(recipientArg) && !p.getUUID().equals(sender.getUUID())) {
+                    recipients.add(p);
+                    break;
+                }
             }
         }
-        if (target == null) {
+        if (recipients.isEmpty() && !recipientArg.equalsIgnoreCase("console")) {
             sender.sendSystemMessage(Component.literal("Player not found: " + recipientArg));
             return 0;
         }
 
-        // Self check
-        if (target.getUUID().equals(sender.getUUID())) {
-            sender.sendSystemMessage(Component.literal("You cannot message yourself."));
+        // Ignore/AFK checks (stub)
+        recipients.removeIf(p -> isIgnored(sender, p) || isAFK(p));
+        if (recipients.isEmpty() && !recipientArg.equalsIgnoreCase("console")) {
+            sender.sendSystemMessage(Component.literal("No available recipients (ignored or AFK)."));
             return 0;
         }
 
-        // TODO: Wildcard/multiple recipients support
+        // Use configurable format strings from MainConfig
+        var mainConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
+        var chatSettings = mainConfig.chatSettings;
+        String senderFormat = chatSettings.pmFormatSender != null ? chatSettings.pmFormatSender : "[PM to {0}] {1}";
+        String receiverFormat = chatSettings.pmFormatReceiver != null ? chatSettings.pmFormatReceiver : "[PM from {0}] {1}";
 
-        // TODO: Ignore/AFK checks
+        // Send messages
+        for (ServerPlayer target : recipients) {
+            MessageUtil.sendMessage(sender, senderFormat, target.getName().getString(), messageArg);
+            MessageUtil.sendMessage(target, receiverFormat, sender.getName().getString(), messageArg);
+            // Reply tracking
+            lastMessaged.put(sender.getUUID(), target.getUUID());
+            lastMessaged.put(target.getUUID(), sender.getUUID());
+            // Log to console for admin monitoring
+            source.getServer().sendSystemMessage(Component.literal(
+                "§7[Private] " + sender.getName().getString() + " → " + target.getName().getString() + ": " + messageArg));
+        }
 
-
-    // Use configurable format strings from MainConfig
-    var mainConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
-    var chatSettings = mainConfig.chatSettings;
-    String senderFormat = chatSettings.pmFormatSender != null ? chatSettings.pmFormatSender : "[PM to {0}] {1}";
-    String receiverFormat = chatSettings.pmFormatReceiver != null ? chatSettings.pmFormatReceiver : "[PM from {0}] {1}";
-    MessageUtil.sendMessage(sender, senderFormat, target.getName().getString(), messageArg);
-    MessageUtil.sendMessage(target, receiverFormat, sender.getName().getString(), messageArg);
-
-        // Reply tracking
-        lastMessaged.put(sender.getUUID(), target.getUUID());
-        lastMessaged.put(target.getUUID(), sender.getUUID());
-
-        // Log to console for admin monitoring
-        source.getServer().sendSystemMessage(Component.literal(
-            "§7[Private] " + sender.getName().getString() + " → " + target.getName().getString() + ": " + messageArg));
+        // Console recipient
+        if (recipientArg.equalsIgnoreCase("console")) {
+            source.getServer().sendSystemMessage(Component.literal("[PM from " + sender.getName().getString() + "] " + messageArg));
+            sender.sendSystemMessage(Component.literal("[PM to Console] " + messageArg));
+        }
 
         return 1;
+    }
+
+    // Stub mute check (replace with actual mute system)
+    private static boolean isMuted(ServerPlayer player) {
+    // Integrated with actual mute system
+    return com.zerog.neoessentials.managers.ModerationManager.getInstance().isPlayerMuted(player.getUUID());
+    }
+
+    // Stub ignore check (replace with actual ignore system)
+    private static boolean isIgnored(ServerPlayer sender, ServerPlayer recipient) {
+    // Integrated with IgnoreManager
+    return com.zerog.neoessentials.managers.IgnoreManager.getInstance().isIgnored(sender.getUUID(), recipient.getUUID());
+    }
+
+    // Stub AFK check (replace with actual AFK system)
+    private static boolean isAFK(ServerPlayer player) {
+    // Integrated with AFKManager
+    return com.zerog.neoessentials.managers.AFKManager.getInstance().isAFK(player.getUUID());
     }
     
     /**

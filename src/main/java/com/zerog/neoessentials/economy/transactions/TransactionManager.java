@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
  * - Fraud detection and prevention
  */
 public class TransactionManager {
-    private final EconomyManager economyManager;
     private final DataManager dataManager;
     
     // Transaction storage
@@ -35,10 +34,8 @@ public class TransactionManager {
     
     // Processing flags
     private boolean processingEnabled;
-    private LocalDateTime lastProcessing;
     
     public TransactionManager(EconomyManager economyManager) {
-        this.economyManager = economyManager;
         this.dataManager = DataManager.getInstance();
         this.pendingTransactions = new ConcurrentLinkedQueue<>();
         this.transactionHistory = new HashMap<>();
@@ -46,7 +43,6 @@ public class TransactionManager {
         this.limits = new TransactionLimits();
         this.fraudDetector = new FraudDetector();
         this.processingEnabled = true;
-        this.lastProcessing = LocalDateTime.now();
         
         initialize();
     }
@@ -257,7 +253,6 @@ public class TransactionManager {
                 saveTransaction(transaction);
             }
         }
-        lastProcessing = LocalDateTime.now();
     }
     
     private void cleanupOldTransactions() {

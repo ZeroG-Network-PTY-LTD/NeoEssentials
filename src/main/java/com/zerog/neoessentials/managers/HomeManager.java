@@ -124,7 +124,7 @@ public class HomeManager {
      * Delete a home for a player
      */
     public boolean deleteHome(ServerPlayer player, String homeName) {
-    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
+    // ...existing code...
         
     boolean homeModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.homes;
         if (!homeModuleEnabled) {
@@ -206,7 +206,7 @@ public class HomeManager {
      * List all homes for a player
      */
     public boolean listHomes(ServerPlayer player) {
-    MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
+    // ...existing code...
         
     List<String> homes = getPlayerHomes(player.getUUID());
         if (homes.isEmpty()) {

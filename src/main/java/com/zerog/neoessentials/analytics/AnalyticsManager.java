@@ -265,15 +265,13 @@ public class AnalyticsManager {
     
     private void loadConfiguration() {
         try {
-            // Use main config for analytics settings temporarily
-            // TODO: Create dedicated AnalyticsConfig class
-            analyticsEnabled = true; // Default enabled
-            maxEventHistory = 10000; // Default 10k events
-            sessionTimeoutMinutes = 30; // Default 30 minutes
-            
+            // Use AnalyticsConfig for analytics settings
+            AnalyticsConfig config = new AnalyticsConfig();
+            analyticsEnabled = config.isEnabled();
+            maxEventHistory = config.getMaxEventHistory();
+            sessionTimeoutMinutes = config.getSessionTimeoutMinutes();
             LOGGER.info("Analytics configuration loaded - enabled: {}, maxEvents: {}", 
                 analyticsEnabled, maxEventHistory);
-                
         } catch (Exception e) {
             LOGGER.error("Error loading analytics configuration: " + e.getMessage(), e);
         }

@@ -1,10 +1,8 @@
 package com.zerog.neoessentials.economy;
 
 import com.zerog.neoessentials.NeoEssentialsMod;
-import com.zerog.neoessentials.economy.bank.BankManager;
 import com.zerog.neoessentials.economy.currency.CurrencyManager;
 import com.zerog.neoessentials.economy.transactions.TransactionManager;
-import com.zerog.neoessentials.economy.market.MarketManager;
 // import com.zerog.neoessentials.economy.shops.ShopManager; // Now uses managers.EconomyManager
 import com.zerog.neoessentials.economy.auction.AuctionManager;
 import com.zerog.neoessentials.storage.StorageManager;
@@ -13,7 +11,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+// ...existing code...
 
 /**
  * Advanced Economy Management System
@@ -31,9 +29,7 @@ public class EconomyManager {
     
     // Core managers
     private final CurrencyManager currencyManager;
-    private final BankManager bankManager;
     private final TransactionManager transactionManager;
-    private final MarketManager marketManager;
     // private final ShopManager shopManager; // Now uses managers.EconomyManager
     private final AuctionManager auctionManager;
     
@@ -42,28 +38,22 @@ public class EconomyManager {
     
     // Player balances and economy data
     private final Map<UUID, PlayerEconomyData> playerData;
-    private final Map<String, EconomyServer> serverConnections;
     
     // Economy statistics and analytics
     private EconomyAnalytics analytics;
-    private LocalDateTime lastUpdate;
     private boolean economyEnabled;
     
     public EconomyManager() {
         this.storageManager = StorageManager.getInstance();
         this.playerData = new ConcurrentHashMap<>();
-        this.serverConnections = new ConcurrentHashMap<>();
         
         // Initialize managers
         this.currencyManager = new CurrencyManager(this);
-        this.bankManager = new BankManager(this);
         this.transactionManager = new TransactionManager(this);
-        this.marketManager = new MarketManager(this);
         // ShopManager now uses managers.EconomyManager - removed initialization
         this.auctionManager = new AuctionManager(this);
         
         this.analytics = new EconomyAnalytics();
-        this.lastUpdate = LocalDateTime.now();
         this.economyEnabled = true;
         
         instance = this;
@@ -85,13 +75,11 @@ public class EconomyManager {
             currencyManager.initialize();
 
             // Initialize banking system
-            bankManager.initialize();
 
             // Load player data
             loadPlayerData();
 
             // Initialize market systems
-            marketManager.initialize();
             // shopManager.initialize(); // Now uses managers.EconomyManager
             auctionManager.initialize();
 
@@ -112,7 +100,6 @@ public class EconomyManager {
             while (economyEnabled) {
                 try {
                     Thread.sleep(60 * 1000); // Default: 60 seconds
-                    bankManager.processInterest();
                     updateEconomyAnalytics();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -128,7 +115,6 @@ public class EconomyManager {
             while (economyEnabled) {
                 try {
                     Thread.sleep(60 * 1000); // Default: 60 seconds
-                    marketManager.updatePrices();
                     auctionManager.processExpiredAuctions();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -360,9 +346,7 @@ public class EconomyManager {
     
     // Public getters for managers
     public CurrencyManager getCurrencyManager() { return currencyManager; }
-    public BankManager getBankManager() { return bankManager; }
     public TransactionManager getTransactionManager() { return transactionManager; }
-    public MarketManager getMarketManager() { return marketManager; }
     // public ShopManager getShopManager() { return shopManager; } // Now uses managers.EconomyManager
     public AuctionManager getAuctionManager() { return auctionManager; }
     public EconomyAnalytics getAnalytics() { return analytics; }
@@ -411,8 +395,6 @@ public class EconomyManager {
             }
             
             // Shutdown managers
-            bankManager.shutdown();
-            marketManager.shutdown();
             auctionManager.shutdown();
             
             NeoEssentialsMod.LOGGER.info("Economy System shutdown completed");

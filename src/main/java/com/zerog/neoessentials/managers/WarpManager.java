@@ -130,7 +130,7 @@ public class WarpManager {
      * Delete a warp
      */
     public boolean deleteWarp(ServerPlayer player, String warpName) {
-    MainConfig.WarpSettings config = configUnifier.getConfigManager().getMainConfig().warpSettings;
+    // ...existing code...
         boolean warpModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.warps;
         if (!warpModuleEnabled) {
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "warp.disabled"));

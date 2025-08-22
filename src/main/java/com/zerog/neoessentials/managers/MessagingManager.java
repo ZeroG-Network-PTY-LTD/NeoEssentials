@@ -50,7 +50,7 @@ public class MessagingManager {
      * Send a private message between players
      */
     public boolean sendPrivateMessage(ServerPlayer sender, String targetName, String message) {
-    MainConfig.MessagingSettings config = configUnifier.getConfigManager().getMainConfig().messagingSettings;
+    // ...existing code...
         com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
         boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.enabled;
         boolean messagingModuleEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.messaging;

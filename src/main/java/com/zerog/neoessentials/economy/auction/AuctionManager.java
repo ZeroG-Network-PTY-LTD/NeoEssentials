@@ -6,10 +6,9 @@ import com.zerog.neoessentials.economy.EconomyManager;
  * Auction management system
  */
 public class AuctionManager {
-    private final EconomyManager economyManager;
     
     public AuctionManager(EconomyManager economyManager) {
-        this.economyManager = economyManager;
+        // Constructor kept for compatibility
     }
     
     public void initialize() {

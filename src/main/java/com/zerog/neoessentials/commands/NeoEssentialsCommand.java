@@ -53,8 +53,6 @@ public class NeoEssentialsCommand {
     
     private static int executeMainCommand(CommandContext<CommandSourceStack> context) {
         try {
-            var source = context.getSource();
-            
             var player = context.getSource().getPlayer();
             if (player != null) {
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.main.header"));
@@ -85,8 +83,6 @@ public class NeoEssentialsCommand {
     
     private static int executeVersionCommand(CommandContext<CommandSourceStack> context) {
         try {
-            var source = context.getSource();
-            
             var player = context.getSource().getPlayer();
             if (player != null) {
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.version.header"));

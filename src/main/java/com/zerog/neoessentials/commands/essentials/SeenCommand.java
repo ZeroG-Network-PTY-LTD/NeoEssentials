@@ -15,7 +15,6 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.time.Duration;
 
 /**
  * Seen command implementation for NeoEssentials

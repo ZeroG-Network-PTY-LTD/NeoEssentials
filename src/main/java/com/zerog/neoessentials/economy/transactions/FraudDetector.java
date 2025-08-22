@@ -121,13 +121,11 @@ public class FraudDetector {
     }
     
     private static class FraudProfile {
-        private final UUID playerId;
         private final List<BigDecimal> transactionAmounts;
         private final Set<Integer> transactionHours;
         private final Map<TransactionType, Integer> typeFrequency;
         
         public FraudProfile(UUID playerId) {
-            this.playerId = playerId;
             this.transactionAmounts = new ArrayList<>();
             this.transactionHours = new HashSet<>();
             this.typeFrequency = new HashMap<>();

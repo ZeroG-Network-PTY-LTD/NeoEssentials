@@ -57,8 +57,8 @@ public class ShopManager {
         // Initialize default admin shops
         createDefaultAdminShops();
         
-        // Load existing shops from storage (TODO: implement persistence)
-        loadShopsFromStorage();
+    // Load existing shops from storage
+    loadShopsFromStorage();
         
         // Update web dashboard with initial data
         updateWebDashboardMetrics();
@@ -70,8 +70,8 @@ public class ShopManager {
     public void shutdown() {
         LOGGER.info("Shutting down Shop Management System...");
         
-        // Save shops to storage (TODO: implement persistence)
-        saveShopsToStorage();
+    // Save shops to storage
+    saveShopsToStorage();
         
         // Clear caches
         playerShops.clear();
@@ -445,10 +445,7 @@ public class ShopManager {
      * Generate a unique shop key similar to ChestShop plugin approach
      * Format: "dimension_name§x§y§z"
      */
-    private String generateShopKey(Level level, BlockPos pos) {
-        String dimensionName = level.dimension().location().toString();
-        return dimensionName + "§" + pos.getX() + "§" + pos.getY() + "§" + pos.getZ();
-    }
+        // Method removed as it was unused
     
     /**
      * Find the chest that this sign is meant to be connected to

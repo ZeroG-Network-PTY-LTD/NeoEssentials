@@ -2,6 +2,7 @@ package com.zerog.neoessentials.commands.essentials;
 
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.localization.LanguageManager;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -17,6 +18,8 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Mute command implementation for NeoEssentials
@@ -35,6 +38,8 @@ public class MuteCommand {
     // In-memory storage for muted players
     // In production, this should be persisted to database or config
     private static final Map<UUID, MuteData> mutedPlayers = new ConcurrentHashMap<>();
+    private static final Pattern DURATION_PATTERN = Pattern.compile("(\\d+)([smhdwy])");
+    private static final int MAX_SECONDS = 31536000; // 1 year in seconds
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /mute <player> [duration] [reason] - Mute a player
@@ -129,13 +134,36 @@ public class MuteCommand {
      * Mute a player with duration parsing
      */
     private static int mutePlayerWithDuration(CommandContext<CommandSourceStack> context, ServerPlayer targetPlayer, String durationStr, String reason) throws CommandSyntaxException {
-        long durationMinutes = parseDuration(durationStr);
-        if (durationMinutes < 0) {
-            context.getSource().sendFailure(Component.literal("§cInvalid duration format! Use: 5m, 1h, 2d, etc."));
+        long seconds = parseDurationFlexible(durationStr);
+        if (seconds < 0) {
+            String msg = LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.mute.invalid_duration");
+            context.getSource().sendFailure(Component.literal(msg));
             return 0;
         }
-        
-        return mutePlayer(context, targetPlayer, durationMinutes, reason);
+        if (seconds > MAX_SECONDS) {
+            String msg = LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.mute.too_long");
+            context.getSource().sendFailure(Component.literal(msg));
+            return 0;
+        }
+        return mutePlayer(context, targetPlayer, seconds, reason);
+    }
+
+    private static long parseDurationFlexible(String input) {
+        if (input == null || input.isEmpty()) return 0;
+        Matcher matcher = DURATION_PATTERN.matcher(input.toLowerCase());
+        long totalSeconds = 0;
+        while (matcher.find()) {
+            int value = Integer.parseInt(matcher.group(1));
+            switch (matcher.group(2)) {
+                case "s": totalSeconds += value; break;
+                case "m": totalSeconds += value * 60; break;
+                case "h": totalSeconds += value * 3600; break;
+                case "d": totalSeconds += value * 86400; break;
+                case "w": totalSeconds += value * 604800; break;
+                case "y": totalSeconds += value * 31536000; break;
+            }
+        }
+        return totalSeconds > 0 ? totalSeconds : -1;
     }
     
     /**
@@ -207,32 +235,6 @@ public class MuteCommand {
     public static boolean isPlayerMuted(UUID playerId) {
         MuteData muteData = mutedPlayers.get(playerId);
         return muteData != null && !isExpired(muteData);
-    }
-    
-    /**
-     * Parse duration string (5m, 1h, 2d) into minutes
-     */
-    private static long parseDuration(String durationStr) {
-        if (durationStr == null || durationStr.isEmpty()) {
-            return 0; // Permanent
-        }
-        
-        durationStr = durationStr.toLowerCase();
-        
-        try {
-            if (durationStr.endsWith("m")) {
-                return Long.parseLong(durationStr.substring(0, durationStr.length() - 1));
-            } else if (durationStr.endsWith("h")) {
-                return Long.parseLong(durationStr.substring(0, durationStr.length() - 1)) * 60;
-            } else if (durationStr.endsWith("d")) {
-                return Long.parseLong(durationStr.substring(0, durationStr.length() - 1)) * 60 * 24;
-            } else {
-                // Try to parse as plain minutes
-                return Long.parseLong(durationStr);
-            }
-        } catch (NumberFormatException e) {
-            return -1; // Invalid format
-        }
     }
     
     /**
