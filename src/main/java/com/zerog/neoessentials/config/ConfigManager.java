@@ -10,12 +10,13 @@ import java.io.*;
 import java.nio.file.*;
 
 public class ConfigManager {
-	private final ConfigStatus configStatus = new ConfigStatus();
-	   public void saveAll() {
-		   saveConfig("main.json", mainConfig);
-		   saveConfig("tablist.json", tablistConfig);
-		   saveConfig("animations.json", animationsConfig);
-	   }
+		private final ConfigStatus configStatus = new ConfigStatus();
+
+		public void saveAll() {
+			saveConfig("main.json", mainConfig);
+			saveConfig("tablist.json", tablistConfig);
+			saveConfig("animations.json", animationsConfig);
+		}
 
 	public void reloadAll() {
 		loadAllConfigurations();
@@ -169,3 +170,5 @@ public class ConfigManager {
 	public MainConfig getMainConfig() { return mainConfig != null ? mainConfig : new MainConfig(); }
 	// Bossbar, scoreboard, animation config getters if present
 }
+
+	// ...existing code...
