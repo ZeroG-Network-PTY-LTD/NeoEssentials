@@ -1,0 +1,16 @@
+{
+  // Enable or disable the tablist feature
+  "enableTablist": true,
+  // Format for tablist display. Use placeholders like {player_name}, {ping}, {group}
+  "tablistFormat": "[{group}] {player_name} | Ping: {ping}",
+
+  // Enable or disable the scoreboard feature
+  "enableScoreboard": true,
+  // Format for scoreboard display. Use placeholders like {score}, {player_name}
+  "scoreboardFormat": "Score: {score} | Player: {player_name}",
+
+  // Enable or disable the bossbar feature
+  "enableBossbar": true,
+  // Format for bossbar display. Use placeholders like {bossbar}, {message}, {progress}
+  "bossbarFormat": "Boss: {bossbar} | {message} [{progress}%]"
+}

@@ -1,21 +1,144 @@
-# API Documentation
 
-The NeoEssentials API provides developers with comprehensive access to the mod's functionality for creating extensions, integrations, and custom features. This documentation covers all public APIs, events, and integration methods.
+# NeoEssentials API Documentation
 
-## 🎯 Overview
+The NeoEssentials API gives developers full access to mod features for extensions, integrations, and custom server logic. All APIs are config-driven, permission-checked, and lang-managed for EssentialsX-style consistency.
 
-The NeoEssentials API offers:
+## 🚀 Overview
 
-- **Command System Integration**: Register custom commands with full feature parity
-- **Permission System Access**: Advanced permission management and queries
-- **Event System**: Comprehensive event handling for all mod activities
-- **Placeholder System**: Register custom placeholders and data providers
-- **Bossbar Management**: Programmatic bossbar creation and management
-- **Security Integration**: Hook into security monitoring and response systems
-- **Teleportation Services**: Advanced teleportation with safety and validation
-- **Configuration Access**: Read and modify configuration settings
+**Key Features:**
+- Command registration and management
+- Permission system integration
+- Event bus for mod lifecycle and custom events
+- Placeholder system (custom, cached, expansion)
+- Bossbar, tablist, scoreboard, and notification APIs
+- Security and moderation hooks
+- Teleportation, homes, warps, and location services
+- Configuration and lang file access
+- IP address and player data access
 
-## 📚 Core API Components
+## 🔗 Getting Started
+
+```java
+NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
+if (NeoEssentialsAPI.isAvailable()) {
+    // Safe to use API
+}
+```
+
+## 🧩 Command API
+
+Register custom commands with full EssentialsX-style support:
+```java
+public class MyCommand implements Command {
+    // ...existing code...
+    public boolean execute(CommandContext ctx) {
+        if (!ctx.hasPermission("neoessentials.mycommand")) {
+            ctx.sendMessage(api.getLang().get("no_permission"));
+            return false;
+        }
+        // Command logic
+        return true;
+    }
+}
+api.getCommandRegistry().registerCommand(new MyCommand());
+```
+
+## 🛡️ Permission API
+
+Check, set, and query permissions:
+```java
+PermissionManager perms = api.getPermissionManager();
+boolean has = perms.hasPermission(player, "neoessentials.fly");
+perms.setPlayerGroup(player, "vip");
+```
+
+## 🏷️ Placeholder API
+
+Register and use custom placeholders:
+```java
+api.getPlaceholderManager().registerPlaceholder("server_uptime", (player, params) -> getUptime());
+String parsed = api.getPlaceholderManager().parsePlaceholders(player, "Uptime: {server_uptime}");
+```
+
+## 🎨 Bossbar, Tablist, Scoreboard API
+
+Create and manage animated displays:
+```java
+Bossbar bar = api.getBossbarManager().createBossbar("welcome", "Welcome!", BossbarColor.GREEN, BossbarStyle.SOLID);
+api.getBossbarManager().showBossbar(player, bar);
+```
+
+## 🔒 Security & Moderation API
+
+Register threat detectors, handle incidents, and manage flags:
+```java
+api.getSecurityManager().registerThreatDetector("custom", ctx -> ThreatLevel.HIGH);
+api.getSecurityManager().addSecurityFlag(player, SecurityFlag.SUSPICIOUS_MOVEMENT, "Reason", Duration.ofHours(1));
+```
+
+## 🌐 Teleportation, Homes, Warps API
+
+Teleport players, manage homes/warps:
+```java
+Location dest = new Location(world, x, y, z);
+api.getTeleportationManager().teleport(player, dest);
+api.getHomeManager().setHome(player, "base", player.getLocation());
+api.getWarpManager().createWarp("spawn", dest, "Spawn point");
+```
+
+## ⚙️ Configuration & Lang API
+
+Read and update config/lang values:
+```java
+ConfigurationManager config = api.getConfigurationManager();
+String serverName = config.getString("general.serverName", "Minecraft Server");
+api.getLang().get("welcome_message");
+```
+
+## 🌐 IP Address API
+
+Access player IP securely:
+```java
+String ip = api.getPlayerManager().getIpAddress(player);
+```
+Listen for IP changes:
+```java
+@EventHandler
+public void onPlayerIpChange(PlayerIpChangeEvent event) {
+    // ...
+}
+```
+
+## 📝 Event System
+
+Subscribe to mod lifecycle and custom events:
+```java
+api.getEventBus().subscribe(NeoEssentialsLoadEvent.class, this::onLoad);
+api.getEventBus().subscribe(CommandExecuteEvent.class, this::onCommand);
+```
+
+## 🐛 Debugging & Testing
+
+Enable debug mode, simulate events, and assert state:
+```java
+api.getDebugManager().setDebugMode(true);
+api.getTestingManager().simulateCommand(testPlayer, "heal");
+```
+
+## 🏆 Best Practices
+
+- Always check API availability
+- Use lang-managed messages for all output
+- Respect permissions and config-driven features
+- Never expose sensitive data (e.g., IP) to regular players
+- Use async for heavy operations
+- Clean up resources on disable/unload
+
+---
+
+**Related Docs:** [Installation](Installation.md) | [Configuration](Configuration.md) | [Commands](Essential-Commands.md)
+
+*Last Updated: August 22, 2025*
 
 ### NeoEssentials Main API
 
@@ -103,9 +226,6 @@ public class MyCustomCommand implements Command {
         String[] args = context.getArgs();
         
         // Command implementation
-        player.sendMessage("Custom command executed!");
-        return true;
-    }
     
     @Override
     public List<String> tabComplete(CommandContext context) {

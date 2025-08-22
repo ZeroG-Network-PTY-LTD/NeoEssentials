@@ -1,0 +1,12 @@
+{
+  "placeholders": {
+    "ping": {
+      "type": "dynamic",
+      "permission": "neoessentials.feature.ping"
+    },
+    "coins": {
+      "type": "dynamic",
+      "permission": "neoessentials.feature.coins"
+    }
+  }
+}

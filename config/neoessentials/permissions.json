@@ -1,0 +1,12 @@
+{
+  "roles": [
+    {
+      "name": "admin",
+      "permissions": ["neoessentials.*"]
+    },
+    {
+      "name": "mod",
+      "permissions": ["neoessentials.fly"]
+    }
+  ]
+}

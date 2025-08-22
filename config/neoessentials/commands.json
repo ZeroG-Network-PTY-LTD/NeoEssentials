@@ -1,0 +1,14 @@
+{
+  "commands": {
+    "fly": {
+      "enabled": true,
+      "aliases": ["f"],
+      "permission": "neoessentials.command.fly"
+    },
+    "spawn": {
+      "enabled": true,
+      "aliases": ["s"],
+      "permission": "neoessentials.command.spawn"
+    }
+  }
+}

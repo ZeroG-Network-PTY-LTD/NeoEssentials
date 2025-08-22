@@ -19,6 +19,9 @@ import java.util.regex.Pattern;
  * Manages custom animated placeholders for tablist, scoreboard, and bossbar
  */
 public class AnimationManager {
+    private static AnimationManager instance;
+    private static final Object lock = new Object();
+    
     private static final Logger LOGGER = LoggerFactory.getLogger(AnimationManager.class);
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{([^}]+)\\}");
     
@@ -34,7 +37,16 @@ public class AnimationManager {
     private final File configFile;
     private long lastModified = 0;
     
-    public AnimationManager(File configDir) {
+    public static AnimationManager getInstance(File configDir) {
+        synchronized (lock) {
+            if (instance == null) {
+                instance = new AnimationManager(configDir);
+            }
+            return instance;
+        }
+    }
+    
+    private AnimationManager(File configDir) {
         this.configFile = new File(configDir, "animations.json");
         loadAnimations();
         

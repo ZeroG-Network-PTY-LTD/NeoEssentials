@@ -1,58 +1,319 @@
-# Configuration Guide
 
-This comprehensive guide covers all configuration options available in NeoEssentials. Configuration files are located in the `config/neoessentials/` directory and use JSON format for easy editing and readability.
+# NeoEssentials Configuration Guide
 
-## 📁 Configuration Files Overview
+This guide documents only the configuration files, options, and features that are actually present in the NeoEssentials mod. All examples and sections below are based on the real codebase and config structure.
 
-### Main Configuration Files
-- `main.json` - Core mod settings and general configuration
-- `economy.json` - Economy system configuration
-- `homes.json` - Home system settings
-- `kits.json` - Kit system configuration
-- `warps.json` - Warp system settings
-- `moderation.json` - Moderation tools configuration
-- `messaging.json` - Chat and messaging settings
-- `chat.json` - Chat system configuration
-- `tablist.json` - Tab list customization
-- `spawn.json` - Spawn system settings
-- `animations.json` - Animation system configuration (auto-generated)
+---
 
-### Configuration Directory Structure
+## 📁 Configuration Files & Structure
+
+**Config Files:**
+- `main.json` — Global mod settings
+- `homes.json` — Home system
+- `kits.json` — Kits system
+- `warps.json` — Warp system
+- `moderation.json` — Moderation (ban, kick, mute, ignore)
+- `messaging.json` — Messaging/chat settings
+- `chat.json` — Chat formatting & rules
+- `tablist.json` — Tablist customization
+- `spawn.json` — Spawn system
+- `animations.json` — Animation system (auto-generated)
+
+**Directory Layout:**
 ```
 config/neoessentials/
-├── main.json                       # Core mod settings
-├── economy.json                    # Economy system with balance management
-├── homes.json                      # Home system configuration
-├── kits.json                       # Kit system settings
-├── warps.json                      # Warp system configuration
-├── moderation.json                 # Moderation tools (ban, kick, mute)
-├── messaging.json                  # Chat and messaging configuration
-├── chat.json                       # Chat system settings
-├── tablist.json                    # Tab list customization
-├── spawn.json                      # Spawn system configuration
-├── animations.json                 # Animation system (auto-generated)
-├── README.md                       # Auto-generated configuration guide
-├── templates/                      # Default configuration templates
-│   ├── main.json                  # Template for main config
-│   ├── economy.json               # Template for economy config
-│   └── [all other templates]      # One template per config file
-├── backup/                         # Automatic configuration backups
-│   └── [timestamped backups]      # Automatic backups with timestamps
-└── languages/                     # Language files for localization
-    ├── en_US.properties
-    ├── de_DE.properties
-    └── [other languages]
-
-neoessentials/
-├── [player data files]            # Player-specific data storage
-├── [economy data]                  # Economy system data
-└── [other runtime data]            # Generated runtime data
+├── main.json
+├── homes.json
+├── kits.json
+├── warps.json
+├── moderation.json
+├── messaging.json
+├── chat.json
+├── tablist.json
+├── spawn.json
+├── animations.json
+├── backup/            # Timestamped config backups
+└── languages/         # Language files (localization)
 ```
 
-## ⚙️ General Configuration
+**Data Storage:**
+```
+neoessentials/
+├── playerdata/        # Player persistent data
+├── homes/             # Home locations
+├── warps/             # Warp locations
+├── kits/              # Kit usage data
+├── permissions/       # Permission cache
+├── shops/             # Shop data
+├── backups/           # Data backups
+└── ...                # Other runtime data
+```
 
-### `main.json`
+---
 
+## ⚙️ Main Configuration (`main.json`)
+
+Controls global mod settings, feature toggles, language, debug, and performance options.
+
+```jsonc
+{
+    "enabled": true,
+    "defaultLanguage": "en_US",
+    "debugMode": false,
+    "serverName": "My Minecraft Server",
+    "checkUpdates": true,
+    "features": {
+        "essentialCommands": true,
+        "teleportation": true,
+        "bossbarSystem": true,
+        "notifications": true,
+        "security": true,
+        "placeholders": true,
+        "economy": false,
+        "guiSystem": true
+    },
+    "performance": {
+        "maxConcurrentTeleports": 5,
+        "commandTimeout": 30,
+        "performanceMonitoring": true,
+        "slowCommandThreshold": 1000
+    }
+}
+```
+
+---
+
+## 🏠 Teleportation (`homes.json`, `warps.json`, `back.json`)
+
+**Home System:**
+```jsonc
+{
+    "enabled": true,
+    "limits": { "default": 3, "vip": 5, "moderator": 10, "admin": 20 },
+    "teleport": {
+        "teleportDelay": 3,
+        "teleportCooldown": 30,
+        "teleportWarmup": true,
+        "cancelOnDamage": true,
+        "crossDimensional": true
+    },
+    "restrictions": {
+        "disabledWorlds": [],
+        "allowNether": true,
+        "allowEnd": true,
+        "minimumDistance": 0
+    }
+}
+```
+
+**Warp System:**
+```jsonc
+{
+    "enabled": true,
+    "permissions": {
+        "playerWarps": false,
+        "staffWarps": true
+    },
+    "teleport": {
+        "teleportDelay": 0,
+        "teleportCooldown": 10
+    },
+    "enableCategories": true,
+    "restrictions": {
+        "maxWarpsPerCategory": 50,
+        "disabledWorlds": []
+    }
+}
+```
+
+**Back System:**
+```jsonc
+{
+    "enabled": true,
+    "maxStoredLocations": 5,
+    "storeDeathLocations": true,
+    "storeTeleportLocations": true,
+    "cooldown": 60,
+    "crossDimensional": true
+}
+```
+
+---
+
+## 🎮 Command Settings (`main.json`, `commands.json`)
+
+Controls command aliases, cooldowns, limits, and restrictions. All commands use EssentialsX-style permission nodes and config-driven formatting.
+
+```jsonc
+{
+    "global": {
+        "prefix": "",
+        "enableAliases": true,
+        "logCommands": true
+    },
+    "cooldowns": {
+        "heal": 30,
+        "feed": 30,
+        "fly": 0,
+        "god": 0,
+        "vanish": 0,
+        "speed": 0,
+        "repair": 60,
+        "give": 0
+    },
+    "limits": {
+        "maxSpeed": 10.0,
+        "maxGiveAmount": 2304,
+        "maxRepairsPerMinute": 10
+    },
+    "restrictions": {
+        "worldBans": {},
+        "gameModeBans": {}
+    }
+}
+```
+
+---
+
+## 🎨 Bossbar System
+
+- Bossbar system is enabled/disabled via `main.json` (`bossbarSystem: true/false`).
+- Bossbar templates are managed in-memory; config file loading is not currently implemented.
+- All bossbar messages support color codes and placeholders.
+
+---
+
+## 🔔 Notifications (`notifications.json`)
+
+Configure notification channels, Discord/email integration, and event triggers.
+
+```jsonc
+{
+    "enabled": true,
+    "defaultChannels": ["console", "log"],
+    "discord": {
+        "enabled": false,
+        "webhookUrl": "",
+        "botName": "NeoEssentials",
+        "botAvatar": "",
+        "richEmbeds": true
+    },
+    "email": {
+        "enabled": false,
+        "smtpHost": "",
+        "smtpPort": 587,
+        "smtpUsername": "",
+        "smtpPassword": "",
+        "smtpTLS": true,
+        "recipients": []
+    },
+    "events": {
+        "playerJoin": true,
+        "playerLeave": true,
+        "serverStart": true,
+        "serverStop": true,
+        "errors": true
+    }
+}
+```
+
+---
+
+## 🔒 Security (`security.json`)
+
+Controls threat detection, IP monitoring, player analysis, and staff notifications.
+
+```jsonc
+{
+    "enabled": true,
+    "securityLevel": "MEDIUM",
+    "threatDetection": true,
+    "ipMonitoring": true,
+    "behaviorAnalysis": true,
+    "thresholds": {
+        "maxFailedLogins": 5,
+        "maxCommandsPerMinute": 60,
+        "maxChatPerMinute": 20
+    },
+    "responses": {
+        "autoKickOnHighThreat": false,
+        "autoBanOnCriticalThreat": false,
+        "notifyStaff": true
+    },
+    "whitelist": {
+        "whitelistedIPs": ["127.0.0.1"],
+        "whitelistedPlayers": []
+    }
+}
+```
+
+---
+
+## 🌍 Language System
+
+Language files are stored in `config/neoessentials/languages/` and support multi-language, auto-detect, hot-reload, and fallback.
+
+---
+
+## 🎯 Placeholders
+
+Placeholders are managed by the PlaceholderManager and are available in messages, bossbars, notifications, etc.
+
+---
+
+## 📊 Performance (`main.json`)
+
+Performance monitoring is enabled/disabled via `main.json` (`performanceMonitoring: true/false`).
+
+---
+
+## 🛡️ Permissions (`permissions.json`)
+
+Integrates with LuckPerms or built-in system. All permission nodes follow EssentialsX-style and are documented in [Permissions](Permissions).
+
+---
+
+## 📈 Data Storage (`main.json`)
+
+Controls persistent storage type, backup, and auto-save. All player and runtime data is stored in `neoessentials/`.
+
+---
+
+## 🔧 Advanced (`main.json`)
+
+Feature flags for experimental/beta/dev features and mod compatibility.
+
+---
+
+##  Reloading & Validation
+
+Most config changes can be reloaded live:
+```bash
+/neoessentials reload
+```
+Some changes (storage type, database, core features, performance) require a server restart.
+
+Validate config syntax and settings:
+```bash
+/neoessentials config validate
+```
+
+---
+
+## 🛠️ Troubleshooting
+
+- Validate JSON syntax
+- Check file permissions
+- Review server logs for errors
+- Ensure feature is enabled
+- Check permissions
+- Verify dependencies
+
+---
+
+**Related Docs:** [Installation](Installation) | [Essential Commands](Essential-Commands) | [Permissions](Permissions)
+
+*Last Updated: August 22, 2025*
 ```toml
 [general]
 # Enable or disable the entire mod

@@ -48,8 +48,8 @@ public class NeoEssentials {
     NeoForge.EVENT_BUS.register(com.zerog.neoessentials.listeners.CommandOverrideListener.class);
         
         // Register enhanced theme system event handlers (Phase 6)
-        NeoForge.EVENT_BUS.register(TablistScoreboardManager.getInstance());
-        NeoForge.EVENT_BUS.register(CustomBossbarManager.getInstance());
+    // Removed: TablistScoreboardManager does not have @SubscribeEvent methods and should not be registered on the event bus.
+    // Removed: CustomBossbarManager is not an event listener
         
         // Register name tag formatting listener
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.NameTagFormattingListener());
@@ -73,7 +73,9 @@ public class NeoEssentials {
             // Initialize storage systems
             PlayerDataManager.getInstance();
             LOGGER.info("Player data manager initialized");
-
+            } catch (Exception e) {
+                LOGGER.error("Error during NeoEssentials server starting setup", e);
+            }
             // Initialize Enhanced Language System (Phase 4)  
             Path configPath = ConfigurationUnifier.getInstance().getConfigPath();
             LanguageManager.getInstance(configPath).initialize();
@@ -160,21 +162,49 @@ public class NeoEssentials {
             // No need for separate ShopSignEventListener
             LOGGER.info("Shop Sign Event Handling consolidated into NeoEssentialsEventHandler");
 
-            // Initialize Playtime Tracker
-            com.zerog.neoessentials.player.PlaytimeTracker.getInstance();
-            LOGGER.info("Playtime Tracker initialized");
+                    // Initialize new PlaceholderManager
+                    com.zerog.neoessentials.features.PlaceholderManager placeholderManager = new com.zerog.neoessentials.features.PlaceholderManager();
+                    LOGGER.info("New PlaceholderManager initialized");
 
-            // PATCH: Reload chat formatting config after config system is initialized
-            // ChatFormattingListener config is now hot-reloadable and does not require manual reload.
+                    // Initialize new TabListManager
+                    com.zerog.neoessentials.features.TabListManager tabListManager = new com.zerog.neoessentials.features.TabListManager();
+                    LOGGER.info("New TabListManager initialized");
 
-            LOGGER.info("All managers initialized successfully");
+                    // Initialize new ScoreboardManager
+                    com.zerog.neoessentials.features.ScoreboardManager scoreboardManager = new com.zerog.neoessentials.features.ScoreboardManager();
+                    LOGGER.info("New ScoreboardManager initialized");
 
-            LOGGER.info("NeoEssentials server setup completed successfully!");
+                    // Initialize new BossBarManager
+                    com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
+                    LOGGER.info("New BossBarManager initialized");
 
-        } catch (Exception e) {
-            LOGGER.error("Failed to setup NeoEssentials on server start", e);
+                    // Wire managers to config and event hooks for dynamic updates
+                    NeoForge.EVENT_BUS.register(new Object() {
+                        @SubscribeEvent
+                        public void onPlayerJoin(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+                            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                                String displayName = placeholderManager.parse(player, "%prefix% %player% %suffix%");
+                                tabListManager.updateHeaderFooter(player, displayName);
+                                tabListManager.updatePlayerEntry(player, displayName);
+                                scoreboardManager.updateScoreboard(player, displayName);
+                                bossBarManager.showBossBar(player, "Welcome to the server!", 1.0f, 0x00FF00);
+                            }
+                        }
+
+                        @SubscribeEvent
+                        public void onScoreUpdate(/* CustomScoreUpdateEvent event */) {
+                            // Example: scoreboardManager.setPlayerScore(player, score);
+                            // Implement your custom score update event and logic here
+                        }
+
+                        @SubscribeEvent
+                        public void onBossBarEvent(/* CustomBossBarEvent event */) {
+                            // Example: bossBarManager.showBossBar(player, title, progress, color);
+                            // Implement your custom bossbar event and logic here
+                        }
+                    });
         }
-    }
+    // ...existing code...
     
     /**
      * Command registration event handler

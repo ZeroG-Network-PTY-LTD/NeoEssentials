@@ -29,7 +29,6 @@ public class PermissionEventListener {
     @SubscribeEvent
     public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        
         try {
             UUID playerUUID = player.getUUID();
             LOGGER.info("Loading permission data for player {}", player.getName().getString());
@@ -42,10 +41,9 @@ public class PermissionEventListener {
             CustomPermissionsManager permManager = CustomPermissionsManager.getInstance();
             
             // IMPORTANT: Check if player already has a group in the permission manager
+            // Only set group if it's different from current
             String existingGroup = permManager.getPlayerGroup(playerUUID);
             String savedGroup = playerData.getPermissionGroup();
-            
-            // Use existing group if available, otherwise use saved group
             String groupToUse = null;
             if (existingGroup != null && !existingGroup.equals("default") && !existingGroup.isEmpty()) {
                 groupToUse = existingGroup;
@@ -57,25 +55,31 @@ public class PermissionEventListener {
                 groupToUse = "default";
                 LOGGER.info("Setting default group for new player {}", player.getName().getString());
             }
-            
-            // Only set group if it's different from current
             if (!groupToUse.equals(existingGroup)) {
                 permManager.setPlayerGroup(playerUUID, groupToUse);
                 playerData.setPermissionGroup(groupToUse);
                 LOGGER.info("Set group '{}' for player {}", groupToUse, player.getName().getString());
             }
-            
-            // Load individual permissions
             Map<String, Boolean> savedPermissions = playerData.getPlayerPermissions();
             if (savedPermissions != null && !savedPermissions.isEmpty()) {
                 permManager.setPlayerPermissionsFromMap(playerUUID, savedPermissions);
-                LOGGER.info("Loaded {} individual permissions for player {}", 
-                    savedPermissions.size(), player.getName().getString());
+                LOGGER.info("Loaded {} individual permissions for player {}", savedPermissions.size(), player.getName().getString());
             }
-            
+            // --- New manager integration ---
+            com.zerog.neoessentials.features.PlaceholderManager placeholderManager = new com.zerog.neoessentials.features.PlaceholderManager();
+            com.zerog.neoessentials.features.TabListManager tabListManager = new com.zerog.neoessentials.features.TabListManager();
+            com.zerog.neoessentials.features.ScoreboardManager scoreboardManager = new com.zerog.neoessentials.features.ScoreboardManager();
+            com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
+            String prefix = permManager.getPlayerPrefix(playerUUID);
+            String suffix = permManager.getPlayerSuffix(playerUUID);
+            String displayName = placeholderManager.parse(player, prefix + " %player% " + suffix);
+            // Use parsed displayName in tablist and scoreboard updates
+            tabListManager.updateHeaderFooter(player, displayName);
+            tabListManager.updatePlayerEntry(player, displayName);
+            scoreboardManager.updateScoreboard(player, displayName);
+            bossBarManager.showBossBar(player, "Welcome to the server!", 1.0f, 0x00FF00);
         } catch (Exception e) {
-            LOGGER.error("Failed to load permission data for player {}", 
-                event.getEntity().getName().getString(), e);
+            LOGGER.error("Failed to load permission data for player {}", event.getEntity().getName().getString(), e);
         }
     }
     
@@ -85,7 +89,6 @@ public class PermissionEventListener {
     @SubscribeEvent
     public void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        
         try {
             UUID playerUUID = player.getUUID();
             LOGGER.info("Saving permission data for player {}", player.getName().getString());
@@ -101,23 +104,21 @@ public class PermissionEventListener {
                 playerData.setPermissionGroup(currentGroup);
                 LOGGER.debug("Saved group '{}' for player {}", currentGroup, player.getName().getString());
             }
-            
             // Save individual permissions
             Map<String, Boolean> currentPermissions = permManager.getPlayerPermissionsMap(playerUUID);
             if (currentPermissions != null && !currentPermissions.isEmpty()) {
                 playerData.setPlayerPermissions(currentPermissions);
-                LOGGER.debug("Saved {} individual permissions for player {}", 
-                    currentPermissions.size(), player.getName().getString());
+                LOGGER.debug("Saved {} individual permissions for player {}", currentPermissions.size(), player.getName().getString());
             }
-            
             // Trigger save to persistent storage
             playerDataManager.savePlayerData(playerData);
             
             LOGGER.info("Successfully saved permission data for player {}", player.getName().getString());
-            
+            // --- Remove bossbar on leave ---
+            com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
+            bossBarManager.removeBossBar(player);
         } catch (Exception e) {
-            LOGGER.error("Failed to save permission data for player {}", 
-                event.getEntity().getName().getString(), e);
+            LOGGER.error("Failed to save permission data for player {}", event.getEntity().getName().getString(), e);
         }
     }
 }

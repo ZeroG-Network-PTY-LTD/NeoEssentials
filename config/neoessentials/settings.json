@@ -1,0 +1,14 @@
+{
+  "settings": {
+    "motd": "Welcome to NeoEssentials!",
+    "tablist": {
+      "enabled": true,
+      "header": "Welcome %player%",
+      "footer": "Enjoy your stay!"
+    },
+    "integrations": {
+      "sdlink": true,
+      "ftbteams": false
+    }
+  }
+}
