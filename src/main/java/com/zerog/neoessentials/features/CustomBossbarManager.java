@@ -7,6 +7,8 @@ import net.minecraft.world.BossEvent.BossBarOverlay;
 
 import net.minecraft.server.level.ServerPlayer;
 import java.util.*;
+import com.zerog.neoessentials.config.TablistConfig;
+import com.zerog.neoessentials.config.ConfigManager;
 
 /**
  * EssentialsX-style Bossbar manager for NeoEssentials
@@ -27,20 +29,22 @@ public class CustomBossbarManager {
         return Collections.unmodifiableSet(templateNames);
     }
 
-    public void showBossbar(ServerPlayer player, String template, int durationSeconds) {
-        // Example: Display a bossbar to a player using a template name
-        BossbarTemplate tpl = getTemplate(template);
-        if (tpl == null) return;
-        ServerBossEvent bossbar = new ServerBossEvent(
-            Component.literal(tpl.text),
-            BossBarColor.values()[tpl.color],
-            BossBarOverlay.values()[tpl.style]
-        );
-        bossbar.setVisible(true);
-        bossbar.addPlayer(player);
-        activeBossbars.put(player.getUUID(), bossbar);
-    // To schedule removal after durationSeconds, use a tick event or scheduler from your mod framework.
-    }
+       public void showBossbar(ServerPlayer player, String template, int durationSeconds) {
+           TablistConfig config = ConfigManager.getInstance().getTablistConfig();
+           if (!config.enableBossbar) return;
+           BossbarTemplate tpl = getTemplate(template);
+           if (tpl == null) return;
+           String formatted = config.bossbarFormat.replace("{bossbar}", tpl.text);
+           ServerBossEvent bossbar = new ServerBossEvent(
+               Component.literal(formatted),
+               BossBarColor.values()[tpl.color],
+               BossBarOverlay.values()[tpl.style]
+           );
+           bossbar.setVisible(true);
+           bossbar.addPlayer(player);
+           activeBossbars.put(player.getUUID(), bossbar);
+           // To schedule removal after durationSeconds, use a tick event or scheduler from your mod framework.
+       }
 
     public void removeBossbar(ServerPlayer player) {
         // Example: Remove bossbar from player
@@ -51,31 +55,35 @@ public class CustomBossbarManager {
         }
     }
 
-    public void broadcastBossbar(String template, int durationSeconds) {
-        // Example: Broadcast bossbar to all players
-        BossbarTemplate tpl = getTemplate(template);
-        if (tpl == null) return;
-        ServerBossEvent bossbar = new ServerBossEvent(
-            Component.literal(tpl.text),
-            BossBarColor.values()[tpl.color],
-            BossBarOverlay.values()[tpl.style]
-        );
-        bossbar.setVisible(true);
-        for (ServerPlayer player : getAllOnlinePlayers()) {
-            bossbar.addPlayer(player);
-            activeBossbars.put(player.getUUID(), bossbar);
-        }
-    // To schedule removal after durationSeconds, use a tick event or scheduler from your mod framework.
-    }
+       public void broadcastBossbar(String template, int durationSeconds) {
+           TablistConfig config = ConfigManager.getInstance().getTablistConfig();
+           if (!config.enableBossbar) return;
+           BossbarTemplate tpl = getTemplate(template);
+           if (tpl == null) return;
+           String formatted = config.bossbarFormat.replace("{bossbar}", tpl.text);
+           ServerBossEvent bossbar = new ServerBossEvent(
+               Component.literal(formatted),
+               BossBarColor.values()[tpl.color],
+               BossBarOverlay.values()[tpl.style]
+           );
+           bossbar.setVisible(true);
+           for (ServerPlayer player : getAllOnlinePlayers()) {
+               bossbar.addPlayer(player);
+               activeBossbars.put(player.getUUID(), bossbar);
+           }
+           // To schedule removal after durationSeconds, use a tick event or scheduler from your mod framework.
+       }
 
-    public void updateBossbar(ServerPlayer player, String text, float progress) {
-        // Example: Update bossbar text/progress for player
-        ServerBossEvent bossbar = activeBossbars.get(player.getUUID());
-        if (bossbar != null) {
-            bossbar.setName(Component.literal(text));
-            bossbar.setProgress(progress);
-        }
-    }
+       public void updateBossbar(ServerPlayer player, String text, float progress) {
+           TablistConfig config = ConfigManager.getInstance().getTablistConfig();
+           if (!config.enableBossbar) return;
+           ServerBossEvent bossbar = activeBossbars.get(player.getUUID());
+           if (bossbar != null) {
+               String formatted = config.bossbarFormat.replace("{bossbar}", text);
+               bossbar.setName(Component.literal(formatted));
+               bossbar.setProgress(progress);
+           }
+       }
 
     public void reloadAnimations() {
         // Example: Reload bossbar animations/templates

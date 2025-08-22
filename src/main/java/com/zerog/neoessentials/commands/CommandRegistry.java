@@ -21,12 +21,34 @@ import net.minecraft.commands.CommandBuildContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Central command registration for NeoEssentials
  */
 public class CommandRegistry {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandRegistry.class);
     
+    // Dynamic command registry for auto-completion and execution
+    private static final Map<String, ICommand> dynamicCommands = new HashMap<>();
+
+    public static void registerDynamic(String name, ICommand command) {
+        dynamicCommands.put(name.toLowerCase(), command);
+        for (String alias : command.getAliases()) {
+            dynamicCommands.put(alias.toLowerCase(), command);
+        }
+    }
+
+    public static Collection<String> getDynamicCommandNames() {
+        return dynamicCommands.keySet();
+    }
+
+    public static ICommand getDynamicCommand(String name) {
+        return dynamicCommands.get(name.toLowerCase());
+    }
+
     /**
      * Register all NeoEssentials commands
      */

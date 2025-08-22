@@ -1,4 +1,9 @@
+
 package com.zerog.neoessentials.commands;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
@@ -204,6 +209,47 @@ public class NeoEssentialsCommand {
         } catch (Exception e) {
             LOGGER.error("Error executing commands command", e);
             return 0;
+        }
+    }
+
+    // Dynamic ICommand implementation for /neoessentials parent command
+    public static class DynamicNeoEssentialsCommand implements ICommand {
+        @Override
+        public void execute(net.minecraft.server.level.ServerPlayer player, String[] args) {
+            if (args.length == 0) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "Available commands: " + String.join(", ", com.zerog.neoessentials.commands.CommandRegistry.getDynamicCommandNames())
+                ));
+                return;
+            }
+            ICommand subCommand = com.zerog.neoessentials.commands.CommandRegistry.getDynamicCommand(args[0]);
+            if (subCommand == null) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "Unknown command: " + args[0]
+                ));
+                return;
+            }
+            subCommand.execute(player, Arrays.copyOfRange(args, 1, args.length));
+        }
+
+        @Override
+        public List<String> tabComplete(net.minecraft.server.level.ServerPlayer player, String[] args) {
+            if (args.length == 1) {
+                return com.zerog.neoessentials.commands.CommandRegistry.getDynamicCommandNames().stream()
+                    .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
+                    .collect(Collectors.toList());
+            } else if (args.length > 1) {
+                ICommand subCommand = com.zerog.neoessentials.commands.CommandRegistry.getDynamicCommand(args[0]);
+                if (subCommand != null) {
+                    return subCommand.tabComplete(player, Arrays.copyOfRange(args, 1, args.length));
+                }
+            }
+            return Collections.emptyList();
+        }
+
+        @Override
+        public List<String> getAliases() {
+            return Arrays.asList("ne", "essentials");
         }
     }
 }

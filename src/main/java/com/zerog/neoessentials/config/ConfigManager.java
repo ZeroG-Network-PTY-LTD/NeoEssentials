@@ -11,10 +11,11 @@ import java.nio.file.*;
 
 public class ConfigManager {
 	private final ConfigStatus configStatus = new ConfigStatus();
-	public void saveAll() {
-		saveConfig("main.json", mainConfig);
-		// Bossbar, scoreboard, animation configs if present
-	}
+	   public void saveAll() {
+		   saveConfig("main.json", mainConfig);
+		   saveConfig("tablist.json", tablistConfig);
+		   saveConfig("animations.json", animationsConfig);
+	   }
 
 	public void reloadAll() {
 		loadAllConfigurations();
@@ -35,11 +36,11 @@ public class ConfigManager {
 		}
 	}
 
-	public String[] getAllConfigFiles() {
-		return new String[] {
-			"main.json", "tablist.json" // Bossbar, scoreboard, animation configs if present
-		};
-	}
+	   public String[] getAllConfigFiles() {
+		   return new String[] {
+			   "main.json", "tablist.json", "animations.json"
+		   };
+	   }
 
 	public boolean configExists(String fileName) {
 		return configPath.resolve(fileName).toFile().exists();
@@ -65,8 +66,12 @@ public class ConfigManager {
 	private final Gson gson;
 	private final Path configPath = FMLPaths.CONFIGDIR.get().resolve("neoessentials");
 
-	private MainConfig mainConfig;
-	// Bossbar, scoreboard, animation configs if present
+		private MainConfig mainConfig;
+		private TablistConfig tablistConfig;
+		private AnimationsConfig animationsConfig;
+	// Getters for new configs
+	public TablistConfig getTablistConfig() { return tablistConfig != null ? tablistConfig : new TablistConfig(); }
+	public AnimationsConfig getAnimationsConfig() { return animationsConfig != null ? animationsConfig : new AnimationsConfig(); }
 
 	private ConfigManager() {
 		this.gson = new GsonBuilder().setPrettyPrinting().create();
@@ -79,10 +84,40 @@ public class ConfigManager {
 		return instance;
 	}
 
-	public void initialize() {
-		createConfigDirectories();
-		loadAllConfigurations();
-	}
+	   public void initialize() {
+		   createConfigDirectories();
+		   cleanupConfigDirectory();
+		   loadAllConfigurations();
+	   }
+   /**
+	* Remove any files in config/neoessentials/ except main.json, tablist.json, animations.json
+	*/
+   private void cleanupConfigDirectory() {
+	   try {
+		   File dir = configPath.toFile();
+		   String[] allowed = getAllConfigFiles();
+		   File[] files = dir.listFiles();
+		   if (files != null) {
+			   for (File file : files) {
+				   if (file.isFile()) {
+					   boolean keep = false;
+					   for (String name : allowed) {
+						   if (file.getName().equals(name)) {
+							   keep = true;
+							   break;
+						   }
+					   }
+					   if (!keep) {
+						   file.delete();
+						   LOGGER.info("Deleted unwanted config file: {}", file.getName());
+					   }
+				   }
+			   }
+		   }
+	   } catch (Exception e) {
+		   LOGGER.error("Failed to clean up config directory", e);
+	   }
+   }
 
 	private void createConfigDirectories() {
 		try {
@@ -92,10 +127,11 @@ public class ConfigManager {
 		}
 	}
 
-	private void loadAllConfigurations() {
-		mainConfig = loadConfig("main.json", MainConfig.class);
-	// Bossbar, scoreboard, animation configs if present
-	}
+	   private void loadAllConfigurations() {
+		   mainConfig = loadConfig("main.json", MainConfig.class);
+		   tablistConfig = loadConfig("tablist.json", TablistConfig.class);
+		   animationsConfig = loadConfig("animations.json", AnimationsConfig.class);
+	   }
 
 	private <T> T loadConfig(String fileName, Class<T> configClass) {
 		File configFile = configPath.resolve(fileName).toFile();

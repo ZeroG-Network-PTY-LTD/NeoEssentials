@@ -6,9 +6,6 @@ plugins {
 }
 
 // Globally exclude all Log4j dependencies from all configurations
-configurations.all {
-    exclude group: 'org.apache.logging.log4j'
-}
 
 version = mod_version
 group = mod_group_id
@@ -89,11 +86,9 @@ dependencies {
     compileOnly 'net.luckperms:api:5.4'
     implementation 'com.moandjiezana.toml:toml4j:0.7.2'
 
-    // If you have a dependency that brings in SnakeYAML transitively, exclude it here
-    // Example:
-    // implementation('real.dependency:that-uses-snakeyaml:1.0') {
-    //     exclude group: 'org.yaml', module: 'snakeyaml'
-    // }
+    // Log4j dependencies required by NeoForge
+    implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
+    implementation 'org.apache.logging.log4j:log4j-api:2.20.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

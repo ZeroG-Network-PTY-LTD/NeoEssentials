@@ -107,7 +107,7 @@ public class AnimatedPrefixCommand {
             try {
                 // Get animation manager config directory
                 File configDir = new File("config/neoessentials");
-                AnimationManager animManager = new AnimationManager(configDir);
+                AnimationManager animManager = AnimationManager.getInstance(configDir);
                 
                 if (animManager.isEnabled()) {
                     processedPrefix = animManager.processAnimatedText(prefix, player);

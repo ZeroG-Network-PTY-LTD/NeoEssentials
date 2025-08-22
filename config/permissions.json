@@ -1,0 +1,16 @@
+{
+  "roles": [
+    {
+      "name": "admin",
+      "permissions": ["neoessentials.command.*", "neoessentials.feature.*"]
+    },
+    {
+      "name": "moderator",
+      "permissions": ["neoessentials.command.teleport", "neoessentials.feature.animation"]
+    },
+    {
+      "name": "player",
+      "permissions": ["neoessentials.feature.basic"]
+    }
+  ]
+}

@@ -90,11 +90,13 @@ public final class PermissionNodes {
     public static final String GAMEMODE_OTHERS = "neoessentials.gamemode.others";
     public static final String GAMEMODE_ALL = "neoessentials.gamemode.*";
     
+    // EnderChest Command
+    public static final String ENDERCHEST = "neoessentials.enderchest";
+    public static final String ENDERCHEST_OTHERS = "neoessentials.enderchest.others";
+    
     // Workbench & Anvil
     public static final String WORKBENCH = "neoessentials.workbench";
     public static final String ANVIL = "neoessentials.anvil";
-    public static final String ENDERCHEST = "neoessentials.enderchest";
-    public static final String ENDERCHEST_OTHERS = "neoessentials.enderchest.others";
     
     // ==============================
     // TELEPORTATION COMMANDS
