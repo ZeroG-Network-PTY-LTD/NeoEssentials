@@ -3,8 +3,6 @@ package com.zerog.neoessentials.player;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import com.zerog.neoessentials.NeoEssentials;
-import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

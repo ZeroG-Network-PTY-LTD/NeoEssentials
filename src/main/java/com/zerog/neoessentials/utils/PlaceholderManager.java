@@ -80,14 +80,20 @@ public class PlaceholderManager {
         // Server info placeholders
         registerPlaceholder("server_name", (player, args) -> "NeoEssentials Server");
         registerPlaceholder("server_players", (player, args) -> {
-            if (player.getServer() != null) {
-                return String.valueOf(player.getServer().getPlayerCount());
+            if (player != null) {
+                var server = player.getServer();
+                if (server != null) {
+                    return String.valueOf(server.getPlayerCount());
+                }
             }
             return "0";
         });
         registerPlaceholder("server_max_players", (player, args) -> {
-            if (player.getServer() != null) {
-                return String.valueOf(player.getServer().getMaxPlayers());
+            if (player != null) {
+                var server = player.getServer();
+                if (server != null) {
+                    return String.valueOf(server.getMaxPlayers());
+                }
             }
             return "20";
         });

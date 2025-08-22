@@ -11,7 +11,6 @@ import com.zerog.neoessentials.economy.EconomyManager;
 import com.zerog.neoessentials.managers.HomeManager;
 import com.zerog.neoessentials.managers.KitManager;
 import com.zerog.neoessentials.managers.WarpManager;
-import com.zerog.neoessentials.performance.PerformanceManager;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;

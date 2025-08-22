@@ -4,6 +4,9 @@ import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
+import java.util.Set;
+import java.util.List;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -11,7 +14,6 @@ import com.zerog.neoessentials.features.CustomBossbarManager;
 import com.zerog.neoessentials.features.TablistScoreboardManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -68,14 +70,14 @@ public class AnimationCommands {
     
     private static int listAnimations(CommandContext<CommandSourceStack> context) {
         try {
-            var tablistAnimations = TablistScoreboardManager.getInstance().getAvailableAnimations();
-            var bossbarAnimations = CustomBossbarManager.getInstance().getAvailableAnimations();
+            Set<String> tablistAnimations = TablistScoreboardManager.getInstance().getAvailableAnimations();
+            List<String> bossbarAnimations = CustomBossbarManager.getInstance().getAvailableAnimations();
             ServerPlayer player = context.getSource().getPlayerOrException();
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.header"));
-            if (!tablistAnimations.isEmpty()) {
+            if (tablistAnimations != null && !tablistAnimations.isEmpty()) {
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.tablist", String.join(", ", tablistAnimations)));
             }
-            if (!bossbarAnimations.isEmpty()) {
+            if (bossbarAnimations != null && !bossbarAnimations.isEmpty()) {
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.bossbar", String.join(", ", bossbarAnimations)));
             }
         } catch (Exception e) {

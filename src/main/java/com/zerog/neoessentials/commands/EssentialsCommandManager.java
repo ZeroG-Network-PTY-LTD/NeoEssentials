@@ -1,10 +1,9 @@
 package com.zerog.neoessentials.commands;
 
 import com.zerog.neoessentials.commands.essentials.*;
-import com.zerog.neoessentials.commands.economy.ShopCommand;
+import com.zerog.neoessentials.economy.ShopCommand;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

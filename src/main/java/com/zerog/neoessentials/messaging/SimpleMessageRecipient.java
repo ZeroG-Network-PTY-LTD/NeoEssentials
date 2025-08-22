@@ -41,14 +41,14 @@ public class SimpleMessageRecipient implements IMessageRecipient {
 
 	@Override
 	public boolean isAfk() {
-		// TODO: Integrate with AFK system
-		return false;
+	// Integrated with AFKManager
+	return com.zerog.neoessentials.managers.AFKManager.getInstance().isAFK(player.getUUID());
 	}
 
 	@Override
 	public boolean isIgnoring(ServerPlayer sender) {
-		// TODO: Integrate with ignore list
-		return false;
+	// Integrated with IgnoreManager
+	return com.zerog.neoessentials.managers.IgnoreManager.getInstance().isIgnored(sender.getUUID(), player.getUUID());
 	}
 
 	@Override

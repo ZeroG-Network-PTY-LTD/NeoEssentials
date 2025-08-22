@@ -257,11 +257,8 @@ public final class PermissionNodes {
     public static final String INVSEE_MODIFY = "neoessentials.invsee.modify";
 
     // Inventory-opening commands
-    public static final String ENDERCHEST = "neoessentials.enderchest";
-    public static final String ANVIL = "neoessentials.anvil";
     public static final String SMITHING = "neoessentials.smithing";
     public static final String STONECUTTER = "neoessentials.stonecutter";
-    public static final String WORKBENCH = "neoessentials.workbench";
     
     // ==============================
     // KIT SYSTEM
@@ -478,7 +475,6 @@ public final class PermissionNodes {
             WEATHER_SET, WEATHER_CLEAR, WEATHER_RAIN, WEATHER_THUNDER, WEATHER_ALL,
             GIVE_ITEM, GIVE_UNLIMITED, GIVE_ALL,
             GAMEMODE, GAMEMODE_OTHERS, GAMEMODE_ALL,
-            WORKBENCH, ANVIL, ENDERCHEST, ENDERCHEST_OTHERS,
             
             // Teleportation
             TP_SELF, TP_OTHERS, TP_COORDS, TP_HERE, TP_ALL,

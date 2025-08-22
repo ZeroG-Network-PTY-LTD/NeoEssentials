@@ -2,13 +2,11 @@ package com.zerog.neoessentials.validation;
 
 import com.zerog.neoessentials.error.ErrorHandler;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
-import java.math.BigDecimal;
 import java.util.regex.Pattern;
 
 /**

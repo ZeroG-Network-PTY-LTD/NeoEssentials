@@ -1,4 +1,6 @@
+
 package com.zerog.neoessentials.error;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -225,14 +227,33 @@ public class ErrorHandler {
      * Notify online administrators about critical issues
      */
     private static void notifyAdmins(ErrorLevel level, String title, String message) {
-        // Implementation would notify all online admins
-        // This is a placeholder for the notification system
         LOGGER.info("Admin notification ({}): {} - {}", level.name(), title, message);
-        
-        // TODO: Implement actual admin notification system
-        // - Get all online players with admin permissions
-        // - Send them the formatted error message
-        // - Consider rate limiting to prevent spam
+        try {
+            // Get all online players with admin permissions
+            net.minecraft.server.MinecraftServer server = getActiveMinecraftServer();
+            if (server != null) {
+                for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
+                    // Replace with your admin permission node or OP level check
+                    if (player.hasPermissions(3)) { // 3 = OP, adjust as needed
+                        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                            String.format("[ADMIN] %s: %s", title, message)));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to notify admins: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Helper to get the active MinecraftServer instance
+     */
+    private static net.minecraft.server.MinecraftServer getActiveMinecraftServer() {
+        try {
+            return ServerLifecycleHooks.getCurrentServer();
+        } catch (Exception e) {
+            return null;
+        }
     }
     
     /**

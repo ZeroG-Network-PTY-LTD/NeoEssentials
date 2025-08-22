@@ -1,4 +1,5 @@
-package com.zerog.neoessentials.commands.economy;
+package com.zerog.neoessentials.economy;
+import com.zerog.neoessentials.localization.LanguageManager;
 
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
@@ -67,38 +68,54 @@ public class ShopCommand {
     }
     
     private static void showShopHelp(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&6&l=== Sign Shop System ===");
-        MessageUtil.sendMessage(player, "&7Create player-owned shops using signs!");
-        MessageUtil.sendMessage(player, "");
-        MessageUtil.sendMessage(player, "&e/createshop &7- Create a new sign shop");
-        MessageUtil.sendMessage(player, "&e/shop list &7- List your shops");
-        MessageUtil.sendMessage(player, "&e/shop remove &7- Remove shop instructions");
-        MessageUtil.sendMessage(player, "");
-        MessageUtil.sendMessage(player, "&7&lHow to create a sign shop:");
-        MessageUtil.sendMessage(player, "&71. Place a &echest &7where you want to store items");
-        MessageUtil.sendMessage(player, "&72. Place a &esign &7within 3 blocks of the chest");
-        MessageUtil.sendMessage(player, "&73. Use &e/createshop &7while looking at the sign");
-        MessageUtil.sendMessage(player, "&74. Follow the prompts to set prices");
-        MessageUtil.sendMessage(player, "");
-        MessageUtil.sendMessage(player, "&7&lShop Features:");
-        MessageUtil.sendMessage(player, "&7• Players buy from your shop, you get money");
-        MessageUtil.sendMessage(player, "&7• Players sell to your shop, items go in chest");
-        MessageUtil.sendMessage(player, "&7• Right-click to buy, shift+right-click to sell");
-        MessageUtil.sendMessage(player, "&7• Shops work even when you're offline!");
+        var lang = LanguageManager.getInstance();
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.header"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.intro"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.blank1"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.createshop"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.list"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.remove"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.blank2"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.howto"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.step1"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.step2"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.step3"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.step4"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.blank3"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.features"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.feature.buy"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.feature.sell"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.feature.click"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.help.feature.offline"));
     }
     
     private static void listPlayerShops(ServerPlayer player) {
-        // TODO: Implement actual shop listing
-        MessageUtil.sendMessage(player, "&6&lYour Sign Shops:");
-        MessageUtil.sendMessage(player, "&7Use &e/createshop &7to create your first shop!");
-        MessageUtil.sendMessage(player, "&7Shops will be listed here once created.");
+        var lang = LanguageManager.getInstance();
+    MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.list.header"));
+        var shopManager = com.zerog.neoessentials.economy.shops.ShopManager.getInstance();
+        if (shopManager == null) {
+            MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.list.not_initialized"));
+            return;
+        }
+        var shops = shopManager.getPlayerShops().stream()
+            .filter(shop -> shop.getOwnerId().equals(player.getUUID().toString()))
+            .toList();
+        if (shops.isEmpty()) {
+            MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.list.empty"));
+            return;
+        }
+        for (var shop : shops) {
+            MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.list.entry",
+                shop.getName(), shop.getCategory(), shop.getLocation(), shop.isActive() ? lang.getMessage(player, "neoessentials.shop.list.active.yes") : lang.getMessage(player, "neoessentials.shop.list.active.no"), shop.getTransactions()));
+        }
     }
     
     private static void showRemoveHelp(ServerPlayer player) {
-        MessageUtil.sendMessage(player, "&6&lRemoving Sign Shops:");
-        MessageUtil.sendMessage(player, "&7To remove a sign shop:");
-        MessageUtil.sendMessage(player, "&71. &eBreak the sign &7(only works if you own it)");
-        MessageUtil.sendMessage(player, "&72. The shop will be automatically removed");
-        MessageUtil.sendMessage(player, "&7Note: Items in the connected chest remain yours");
+        var lang = LanguageManager.getInstance();
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.remove.header"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.remove.intro"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.remove.step1"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.remove.step2"));
+        MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.shop.remove.note"));
     }
 }

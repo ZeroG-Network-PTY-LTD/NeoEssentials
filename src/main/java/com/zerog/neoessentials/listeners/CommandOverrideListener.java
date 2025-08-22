@@ -1,13 +1,9 @@
 package com.zerog.neoessentials.listeners;
 
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.CommandEvent;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.common.NeoForge;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
-import com.zerog.neoessentials.commands.essentials.MessageCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +22,12 @@ public class CommandOverrideListener {
                 String targetName = parts[1];
                 String message = input.substring(input.indexOf(targetName) + targetName.length()).trim();
                 // Find target player by name
-                ServerPlayer target = sender.getServer().getPlayerList().getPlayerByName(targetName);
+                var server = sender.getServer();
+                if (server == null) {
+                    source.sendSystemMessage(Component.literal("Server instance not available."));
+                    return;
+                }
+                ServerPlayer target = server.getPlayerList().getPlayerByName(targetName);
                 if (target == null) {
                     source.sendSystemMessage(Component.literal("Player not found: " + targetName));
                     return;

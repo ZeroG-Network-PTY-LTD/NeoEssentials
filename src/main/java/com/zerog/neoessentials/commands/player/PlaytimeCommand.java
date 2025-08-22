@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Command for viewing playtime statistics
@@ -55,7 +54,6 @@ public class PlaytimeCommand {
     private static int getSessionPlaytime(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         
-        PlayerData playerData = PlayerDataManager.getInstance().getPlayerData(player.getUUID());
         long sessionTime = PlaytimeTracker.getInstance().getCurrentSessionTime(player.getUUID());
         
     Component message = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.playtime.session", PlaytimeTracker.formatTime(sessionTime)));

@@ -57,7 +57,7 @@ public class ShopManager {
         // Initialize default admin shops
         createDefaultAdminShops();
         
-        // Load existing shops from storage (TODO: implement persistence)
+    // Load existing shops from storage
         loadShopsFromStorage();
         
         // Update web dashboard with initial data
@@ -70,7 +70,7 @@ public class ShopManager {
     public void shutdown() {
         LOGGER.info("Shutting down Shop Management System...");
         
-        // Save shops to storage (TODO: implement persistence)
+    // Save shops to storage
         saveShopsToStorage();
         
         // Clear caches
@@ -256,42 +256,30 @@ public class ShopManager {
     }
     
     private void loadShopsFromStorage() {
-        LOGGER.info("Loading sign shops from storage...");
-        
+        LOGGER.info("Loading shops from storage...");
         try {
-            com.zerog.neoessentials.storage.StorageManager storageManager = 
-                com.zerog.neoessentials.storage.StorageManager.getInstance();
-            
-            // Load sign shops asynchronously
+            com.zerog.neoessentials.storage.StorageManager storageManager = com.zerog.neoessentials.storage.StorageManager.getInstance();
+
+            // Load sign shops
             storageManager.loadDataAsync("shops", "signshops", java.util.Map.class)
                 .thenAccept(data -> {
                     if (data != null) {
                         try {
-                            // Clear existing sign shops
                             signShops.clear();
-                            
-                            // Convert the loaded data back to SignShop objects
                             for (Object entry : data.values()) {
                                 if (entry instanceof java.util.Map<?, ?> shopData) {
                                     try {
-                                        // Convert Map to SignShopData using Gson
                                         com.google.gson.Gson gson = new com.google.gson.Gson();
                                         String json = gson.toJson(shopData);
                                         SignShopData signShopData = gson.fromJson(json, SignShopData.class);
-                                        
-                                        // Convert to SignShop and add to collection
                                         ShopManager.SignShop signShop = signShopData.toSignShop();
                                         signShops.put(signShop.getSignPos(), signShop);
-                                        
-                                        LOGGER.debug("Loaded sign shop at {} for item {}", 
-                                                    signShop.getSignPos(), 
-                                                    signShop.getItem().getDisplayName().getString());
+                                        LOGGER.debug("Loaded sign shop at {} for item {}", signShop.getSignPos(), signShop.getItem().getDisplayName().getString());
                                     } catch (Exception e) {
                                         LOGGER.error("Failed to deserialize sign shop data: {}", e.getMessage());
                                     }
                                 }
                             }
-                            
                             LOGGER.info("Successfully loaded {} sign shops from storage", signShops.size());
                         } catch (Exception e) {
                             LOGGER.error("Failed to process loaded sign shop data", e);
@@ -304,32 +292,93 @@ public class ShopManager {
                     LOGGER.error("Failed to load sign shops from storage", throwable);
                     return null;
                 });
+
+            // Load player shops
+            storageManager.loadDataAsync("shops", "playershops", java.util.Map.class)
+                .thenAccept(data -> {
+                    if (data != null) {
+                        try {
+                            playerShops.clear();
+                            for (Object entry : data.values()) {
+                                if (entry instanceof java.util.Map<?, ?> shopData) {
+                                    try {
+                                        com.google.gson.Gson gson = new com.google.gson.Gson();
+                                        String json = gson.toJson(shopData);
+                                        PlayerShopData playerShopData = gson.fromJson(json, PlayerShopData.class);
+                                        ShopManager.PlayerShop playerShop = playerShopData.toPlayerShop();
+                                        playerShops.put(playerShop.getName().toLowerCase(), playerShop);
+                                        LOGGER.debug("Loaded player shop '{}' for owner {}", playerShop.getName(), playerShop.getOwnerId());
+                                    } catch (Exception e) {
+                                        LOGGER.error("Failed to deserialize player shop data: {}", e.getMessage());
+                                    }
+                                }
+                            }
+                            LOGGER.info("Successfully loaded {} player shops from storage", playerShops.size());
+                        } catch (Exception e) {
+                            LOGGER.error("Failed to process loaded player shop data", e);
+                        }
+                    } else {
+                        LOGGER.info("No existing player shop data found - starting with empty shop list");
+                    }
+                })
+                .exceptionally(throwable -> {
+                    LOGGER.error("Failed to load player shops from storage", throwable);
+                    return null;
+                });
+
+            // Load admin shops
+            storageManager.loadDataAsync("shops", "adminshops", java.util.Map.class)
+                .thenAccept(data -> {
+                    if (data != null) {
+                        try {
+                            adminShops.clear();
+                            for (Object entry : data.values()) {
+                                if (entry instanceof java.util.Map<?, ?> shopData) {
+                                    try {
+                                        com.google.gson.Gson gson = new com.google.gson.Gson();
+                                        String json = gson.toJson(shopData);
+                                        AdminShopData adminShopData = gson.fromJson(json, AdminShopData.class);
+                                        ShopManager.AdminShop adminShop = adminShopData.toAdminShop();
+                                        adminShops.put(adminShop.getName().toLowerCase(), adminShop);
+                                        LOGGER.debug("Loaded admin shop '{}' for owner {}", adminShop.getName(), adminShop.getOwner());
+                                    } catch (Exception e) {
+                                        LOGGER.error("Failed to deserialize admin shop data: {}", e.getMessage());
+                                    }
+                                }
+                            }
+                            LOGGER.info("Successfully loaded {} admin shops from storage", adminShops.size());
+                        } catch (Exception e) {
+                            LOGGER.error("Failed to process loaded admin shop data", e);
+                        }
+                    } else {
+                        LOGGER.info("No existing admin shop data found - starting with empty shop list");
+                    }
+                })
+                .exceptionally(throwable -> {
+                    LOGGER.error("Failed to load admin shops from storage", throwable);
+                    return null;
+                });
         } catch (Exception e) {
-            LOGGER.error("Failed to initialize sign shop loading", e);
+            LOGGER.error("Failed to initialize shop loading", e);
         }
     }
     
     public void saveShopsToStorage() {
-        LOGGER.debug("Saving {} sign shops to storage...", signShops.size());
-        
+        LOGGER.debug("Saving shops to storage...");
         try {
-            com.zerog.neoessentials.storage.StorageManager storageManager = 
-                com.zerog.neoessentials.storage.StorageManager.getInstance();
-            
-            // Convert SignShop objects to serializable data
-            java.util.Map<String, SignShopData> shopDataMap = new java.util.HashMap<>();
-            
+            com.zerog.neoessentials.storage.StorageManager storageManager = com.zerog.neoessentials.storage.StorageManager.getInstance();
+
+            // Save sign shops
+            java.util.Map<String, SignShopData> signShopDataMap = new java.util.HashMap<>();
             for (ShopManager.SignShop signShop : signShops.values()) {
                 String key = signShop.getSignPos().toShortString();
                 SignShopData shopData = new SignShopData(signShop);
-                shopDataMap.put(key, shopData);
+                signShopDataMap.put(key, shopData);
             }
-            
-            // Save asynchronously
-            storageManager.saveDataAsync("shops", "signshops", shopDataMap)
+            storageManager.saveDataAsync("shops", "signshops", signShopDataMap)
                 .thenAccept(success -> {
                     if (success) {
-                        LOGGER.debug("Successfully saved {} sign shops to storage", shopDataMap.size());
+                        LOGGER.debug("Successfully saved {} sign shops to storage", signShopDataMap.size());
                     } else {
                         LOGGER.error("Failed to save sign shops to storage");
                     }
@@ -338,8 +387,48 @@ public class ShopManager {
                     LOGGER.error("Exception while saving sign shops to storage", throwable);
                     return null;
                 });
+
+            // Save player shops
+            java.util.Map<String, PlayerShopData> playerShopDataMap = new java.util.HashMap<>();
+            for (ShopManager.PlayerShop playerShop : playerShops.values()) {
+                String key = playerShop.getName().toLowerCase();
+                PlayerShopData shopData = new PlayerShopData(playerShop);
+                playerShopDataMap.put(key, shopData);
+            }
+            storageManager.saveDataAsync("shops", "playershops", playerShopDataMap)
+                .thenAccept(success -> {
+                    if (success) {
+                        LOGGER.debug("Successfully saved {} player shops to storage", playerShopDataMap.size());
+                    } else {
+                        LOGGER.error("Failed to save player shops to storage");
+                    }
+                })
+                .exceptionally(throwable -> {
+                    LOGGER.error("Exception while saving player shops to storage", throwable);
+                    return null;
+                });
+
+            // Save admin shops
+            java.util.Map<String, AdminShopData> adminShopDataMap = new java.util.HashMap<>();
+            for (ShopManager.AdminShop adminShop : adminShops.values()) {
+                String key = adminShop.getName().toLowerCase();
+                AdminShopData shopData = new AdminShopData(adminShop);
+                adminShopDataMap.put(key, shopData);
+            }
+            storageManager.saveDataAsync("shops", "adminshops", adminShopDataMap)
+                .thenAccept(success -> {
+                    if (success) {
+                        LOGGER.debug("Successfully saved {} admin shops to storage", adminShopDataMap.size());
+                    } else {
+                        LOGGER.error("Failed to save admin shops to storage");
+                    }
+                })
+                .exceptionally(throwable -> {
+                    LOGGER.error("Exception while saving admin shops to storage", throwable);
+                    return null;
+                });
         } catch (Exception e) {
-            LOGGER.error("Failed to initialize sign shop saving", e);
+            LOGGER.error("Failed to initialize shop saving", e);
         }
     }
     

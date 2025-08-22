@@ -1,4 +1,4 @@
-package com.zerog.neoessentials.commands.economy;
+package com.zerog.neoessentials.economy;
 
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;

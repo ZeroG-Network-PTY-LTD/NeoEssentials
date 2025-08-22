@@ -46,22 +46,13 @@ public class PluginCompatibilityManager {
     }
     
     private void detectAndInitializeIntegrations() {
-        // Define integration classes to detect
-        // TODO: Implement plugin integration classes
-        Map<String, Class<?>> integrationClasses = Map.of();
-        
-        /*
+        // Define integration classes to detect (NeoForge/FTB mods)
         Map<String, Class<?>> integrationClasses = Map.of(
-            "Vault", VaultIntegration.class,
-            "LuckPerms", LuckPermsIntegration.class,
-            "PlaceholderAPI", PlaceholderAPIIntegration.class,
-            "EssentialsX", EssentialsXIntegration.class,
-            "WorldGuard", WorldGuardIntegration.class,
-            "DiscordSRV", DiscordSRVIntegration.class,
-            "McMMO", McMMOIntegration.class,
-            "GriefPrevention", GriefPreventionIntegration.class
+            "FTBTeams", com.zerog.neoessentials.integration.FTBTeamsIntegration.class,
+            "FTBRanks", com.zerog.neoessentials.integration.FTBRanksIntegration.class,
+            "SimpleDiscordLink", com.zerog.neoessentials.integration.SimpleDiscordLinkIntegration.class
+            // Add more mod integrations here as needed
         );
-        */
         
         for (Map.Entry<String, Class<?>> entry : integrationClasses.entrySet()) {
             String pluginName = entry.getKey();

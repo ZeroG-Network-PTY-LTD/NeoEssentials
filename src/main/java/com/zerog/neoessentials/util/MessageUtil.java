@@ -5,8 +5,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.concurrent.TimeUnit;
-import com.zerog.neoessentials.util.ColorService;
-import com.zerog.neoessentials.util.ColorPermission;
+// Removed unused imports
+// import com.zerog.neoessentials.util.ColorService;
+// import com.zerog.neoessentials.util.ColorPermission;
 
 /**
  * Utility class for sending formatted messages to players
@@ -59,38 +60,9 @@ public class MessageUtil {
         if (player == null || translationKey == null || translationKey.isEmpty()) {
             return;
         }
-        
         Component translatableMessage = Component.translatable(translationKey, args);
         player.sendSystemMessage(translatableMessage);
     }
-    
-    /**
-     * Send a formatted message to multiple players with placeholder replacement
-     */
-    public static void sendMessage(Iterable<ServerPlayer> players, String message, Object... placeholders) {
-        String processedMessage = replacePlaceholders(message, placeholders);
-        for (ServerPlayer player : players) {
-            if (player != null) {
-                Component formattedMessage = colorService.applyUserFormatting(player, processedMessage);
-                player.displayClientMessage(formattedMessage, false);
-            }
-        }
-    }
-    
-    /**
-     * Send a formatted message to a player
-     */
-    public static void sendMessage(ServerPlayer player, String message) {
-        if (player == null || message == null || message.isEmpty()) {
-            return;
-        }
-        Component formattedMessage = colorService.applyUserFormatting(player, message);
-        player.displayClientMessage(formattedMessage, false);
-    }
-    
-    /**
-     * Send a formatted message to multiple players
-     */
     public static void sendMessage(Iterable<ServerPlayer> players, String message) {
         for (ServerPlayer player : players) {
             if (player != null) {
@@ -144,34 +116,6 @@ public class MessageUtil {
         return Component.literal(message);
     }
     // Legacy switch statement for color codes
-    private static ChatFormatting getFormattingByCode(String code) {
-        if (code == null) return null;
-        switch (code) {
-            case "0": return ChatFormatting.BLACK;
-            case "1": return ChatFormatting.DARK_BLUE;
-            case "2": return ChatFormatting.DARK_GREEN;
-            case "3": return ChatFormatting.DARK_AQUA;
-            case "4": return ChatFormatting.DARK_RED;
-            case "5": return ChatFormatting.DARK_PURPLE;
-            case "6": return ChatFormatting.GOLD;
-            case "7": return ChatFormatting.GRAY;
-            case "8": return ChatFormatting.DARK_GRAY;
-            case "9": return ChatFormatting.BLUE;
-            case "a": return ChatFormatting.GREEN;
-            case "b": return ChatFormatting.AQUA;
-            case "c": return ChatFormatting.RED;
-            case "d": return ChatFormatting.LIGHT_PURPLE;
-            case "e": return ChatFormatting.YELLOW;
-            case "f": return ChatFormatting.WHITE;
-            case "k": return ChatFormatting.OBFUSCATED;
-            case "l": return ChatFormatting.BOLD;
-            case "m": return ChatFormatting.STRIKETHROUGH;
-            case "n": return ChatFormatting.UNDERLINE;
-            case "o": return ChatFormatting.ITALIC;
-            case "r": return ChatFormatting.RESET;
-            default: return null;
-        }
-    }
     
     /**
      * Format time duration in milliseconds to human-readable format

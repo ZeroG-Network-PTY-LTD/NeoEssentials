@@ -1,7 +1,6 @@
 package com.zerog.neoessentials.commands;
 
 import com.zerog.neoessentials.web.WebDashboardManager;
-import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;

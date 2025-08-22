@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class ConfigManager {
 	private final ConfigStatus configStatus = new ConfigStatus();
@@ -66,7 +64,6 @@ public class ConfigManager {
 	private static ConfigManager instance;
 	private final Gson gson;
 	private final Path configPath = FMLPaths.CONFIGDIR.get().resolve("neoessentials");
-	private final Map<String, Object> configCache = new ConcurrentHashMap<>();
 
 	private MainConfig mainConfig;
 	// Bossbar, scoreboard, animation configs if present

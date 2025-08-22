@@ -78,10 +78,43 @@ Features include:
     versionRange="[1.21.1]"
     ordering="NONE"
     side="SERVER"
-# Soft dependency: SnakeYAML provider mod (example: snakeyamlmod)
+
+# Soft dependency: SDLink Discord integration
 [[dependencies.neoessentials]]
-    modId="snakeyamlmod" # Replace with actual modid that provides SnakeYAML
+    modId="sdlink"
     mandatory=false
-    versionRange="[2.2,]"
+    versionRange="[4.0.7,]"
     ordering="NONE"
     side="SERVER"
+
+# Soft dependency: CraterLib
+[[dependencies.neoessentials]]
+    modId="craterlib"
+    mandatory=false
+    versionRange="[2.1.5,]"
+    ordering="NONE"
+    side="SERVER"
+
+# Soft dependency: FTBTeams
+[[dependencies.neoessentials]]
+    modId="ftbteams"
+    mandatory=false
+    versionRange="[*]"
+    ordering="AFTER"
+    side="BOTH"
+
+# Soft dependency: FTBRanks
+[[dependencies.neoessentials]]
+    modId="ftbranks"
+    mandatory=false
+    versionRange="[*]"
+    ordering="AFTER"
+    side="BOTH"
+
+# Soft dependency: FTBLibrary
+[[dependencies.neoessentials]]
+    modId="ftblibrary"
+    mandatory=false
+    versionRange="[1.21,)"
+    ordering="AFTER"
+    side="BOTH"

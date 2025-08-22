@@ -24,18 +24,18 @@ public class NotificationManager {
     private static NotificationManager instance;
     
     private final Map<String, NotificationChannel> channels = new ConcurrentHashMap<>();
-    private final MainConfig config;
+    // Removed unused field config
     private final Set<NotificationEvent.Type> enabledEvents = EnumSet.allOf(NotificationEvent.Type.class);
     
     private NotificationManager(MainConfig config) {
-        this.config = config;
+    // ...existing code...
         initializeChannels();
         LOGGER.info("Notification manager initialized with {} channels", channels.size());
     }
     
     public static synchronized NotificationManager getInstance(MainConfig config) {
         if (instance == null) {
-            instance = new NotificationManager(config);
+            instance = new NotificationManager(null);
         }
         return instance;
     }
@@ -53,9 +53,6 @@ public class NotificationManager {
     private void initializeChannels() {
         // Always enable log notifications
         channels.put("log", new LogNotificationChannel());
-        
-        // Email notifications (disabled by default - configure via config)  
-        // TODO: Add Email configuration to MainConfig
         
         LOGGER.info("Notification channels initialized: {}", String.join(", ", channels.keySet()));
     }
@@ -172,11 +169,12 @@ public class NotificationManager {
      * Send command execution notification for monitoring
      */
     public void notifyCommandExecution(String command, ServerPlayer player, boolean success) {
-        // TODO: Add command logging configuration to MainConfig
-        // For now, enable all command logging
-        // if (!config.notifications.logCommands) {
-        //     return;
-        // }
+        // Check command logging configuration in MainConfig
+    // Replace with correct config access pattern
+    // Example: if using a ConfigManager singleton:
+    // if (!ConfigManager.getInstance().getMainConfig().notifications.logCommands) {
+    //     return;
+    // }
         
         NotificationEvent event = NotificationEvent.builder()
             .type(NotificationEvent.Type.COMMAND_EXECUTION)

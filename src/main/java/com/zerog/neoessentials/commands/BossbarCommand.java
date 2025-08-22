@@ -14,7 +14,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.BossEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -286,22 +285,16 @@ public class BossbarCommand {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
             String text = StringArgumentType.getString(context, "text");
-            
-            // Create a simple custom bossbar template
+            // Create a simple custom bossbar template using available constructor
             CustomBossbarManager.BossbarTemplate template = new CustomBossbarManager.BossbarTemplate(
                 "Custom",
                 text,
-                BossEvent.BossBarColor.GREEN,
-                BossEvent.BossBarOverlay.PROGRESS,
-                1.0f,
-                false,
-                false
+                0, // color as int (e.g., 0 for GREEN)
+                0  // style as int (e.g., 0 for PROGRESS)
             );
-            
-            CustomBossbarManager.getInstance().showBossbar(player, template, 10);
-            
+            // Show bossbar using template name
+            CustomBossbarManager.getInstance().showBossbar(player, template.name, 10);
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "bossbar.create.custom"));
-            
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error executing bossbar create command", e);

@@ -5,6 +5,7 @@ import com.zerog.neoessentials.config.MainConfig;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.storage.StorageManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -552,5 +553,38 @@ public class EconomyManager {
         } catch (Exception e) {
             LOGGER.error("Failed to save economy data for player " + playerUUID, e);
         }
+    }
+    
+    // EssentialsX-style command methods for EconomyCommand
+    public int showBalance(CommandSourceStack src, ServerPlayer player) {
+        BigDecimal balance = getBalance(player.getUUID());
+        MessageUtil.sendMessage(player, "Balance: $" + formatCurrency(balance));
+        return 1;
+    }
+
+    public int pay(CommandSourceStack src, ServerPlayer sender, ServerPlayer target, double amount) {
+        BigDecimal senderBal = getBalance(sender.getUUID());
+        if (senderBal.doubleValue() < amount) {
+            MessageUtil.sendMessage(sender, "Insufficient funds.");
+            return 0;
+        }
+        setBalance(sender.getUUID(), senderBal.subtract(BigDecimal.valueOf(amount)));
+        setBalance(target.getUUID(), getBalance(target.getUUID()).add(BigDecimal.valueOf(amount)));
+        MessageUtil.sendMessage(sender, "Paid $" + amount + " to " + target.getName().getString());
+        MessageUtil.sendMessage(target, "Received $" + amount + " from " + sender.getName().getString());
+        return 1;
+    }
+
+    public int give(CommandSourceStack src, ServerPlayer target, double amount) {
+        setBalance(target.getUUID(), getBalance(target.getUUID()).add(BigDecimal.valueOf(amount)));
+        MessageUtil.sendMessage(target, "Given $" + amount);
+        return 1;
+    }
+
+    public int take(CommandSourceStack src, ServerPlayer target, double amount) {
+        BigDecimal bal = getBalance(target.getUUID());
+        setBalance(target.getUUID(), bal.subtract(BigDecimal.valueOf(amount)).max(BigDecimal.ZERO));
+        MessageUtil.sendMessage(target, "Taken $" + amount);
+        return 1;
     }
 }

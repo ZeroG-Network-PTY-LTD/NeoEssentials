@@ -44,7 +44,6 @@ public class PerformanceManager {
     private final AtomicLong totalExecutionTime;
     private volatile double averageCommandTime;
     private volatile boolean performanceMonitoringEnabled;
-    private volatile long lastMemoryCheck;
     
     private PerformanceManager() {
         this.scheduler = Executors.newScheduledThreadPool(2);
@@ -57,7 +56,6 @@ public class PerformanceManager {
         this.totalCommandsExecuted = new AtomicLong(0);
         this.totalExecutionTime = new AtomicLong(0);
         this.performanceMonitoringEnabled = true;
-        this.lastMemoryCheck = System.currentTimeMillis();
         
         startPerformanceMonitoring();
     }
@@ -176,7 +174,6 @@ public class PerformanceManager {
             long max = heapMemory.getMax();
             double usagePercentage = (double) used / max * 100;
             
-            this.lastMemoryCheck = System.currentTimeMillis();
             
             // If memory usage is above 80%, trigger cleanup
             if (usagePercentage > 80.0) {
