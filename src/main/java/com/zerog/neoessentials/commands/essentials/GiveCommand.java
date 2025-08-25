@@ -29,9 +29,9 @@ import java.util.Optional;
 public class GiveCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
-        var config = com.zerog.neoessentials.config.ConfigurationUnifier.getInstance().getConfigManager().getMainConfig().itemManagement;
-        int maxAmount = config.maxGiveAmount;
-        boolean allowEnchantments = config.allowGiveEnchantments;
+    var mainConfig = com.zerog.neoessentials.config.ConfigurationUnifier.getInstance().getConfigManager().getMainConfig();
+    int maxAmount = mainConfig.maxGiveAmount;
+    boolean allowEnchantments = mainConfig.allowGiveEnchantments;
         dispatcher.register(
             Commands.literal("give")
                 .requires(src -> PermissionUtil.hasPermission(src, "neoessentials.give"))

@@ -1,10 +1,7 @@
 package com.zerog.neoessentials.listeners;
 
-import com.zerog.neoessentials.permissions.CustomPermissionsManager;
-import com.zerog.neoessentials.commands.essentials.NickCommand;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
+import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +19,13 @@ import com.zerog.neoessentials.localization.LanguageManager;
  */
 @net.neoforged.fml.common.EventBusSubscriber(modid = "neoessentials")
 public class ChatFormattingListener {
+    /**
+     * Loads external text from a file in the config/neoessentials directory.
+     * Returns the file contents as a String, or an empty string if not found or error.
+     * This is production logic, not example code.
+     * @param type The type of text file to load (e.g. "motd", "help", "info")
+     * @return The contents of the file, or an empty string if not found/error
+     */
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatFormattingListener.class);
 
     // Anti-spam tracking (static for static event handler)
@@ -32,15 +36,22 @@ public class ChatFormattingListener {
     /**
      * Handle server chat events for formatting
      */
-    @SubscribeEvent
+    @net.neoforged.bus.api.SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST, receiveCanceled = true)
     public static void onServerChat(net.neoforged.neoforge.event.ServerChatEvent event) {
+            java.nio.file.Path configPath = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfigPath();
+            java.io.File configFile = configPath.resolve("main.json").toFile();
+            System.out.println("DEBUG config file path being used: " + configFile.getAbsolutePath());
+            System.out.println("DEBUG config file exists: " + configFile.exists());
+    // ...existing formatting logic...
+    // At the very end, override the message
+    // ...existing code...
         LOGGER.info("[NeoEssentials] ChatFormattingListener: onServerChat event triggered. Message: {}", event.getMessage().getString());
         com.zerog.neoessentials.config.MainConfig mainConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
         if (mainConfig == null) {
             LOGGER.error("[NeoEssentials] ChatFormattingListener: MainConfig is null! Skipping ALL formatting. Letting vanilla handle chat.");
             return;
         }
-    boolean chatEnabled = mainConfig.modules != null && mainConfig.modules.chat != null && mainConfig.modules.chat.enabled;
+    boolean chatEnabled = mainConfig.modules != null && mainConfig.modules.chat;
     LOGGER.info("[NeoEssentials] ChatFormattingListener: mainConfig.modules.chat.enabled = {}", chatEnabled);
         if (!chatEnabled) {
             LOGGER.info("[NeoEssentials] ChatFormattingListener: Chat is DISABLED. Cancelling event and notifying player.");
@@ -54,8 +65,8 @@ public class ChatFormattingListener {
             LOGGER.error("[NeoEssentials] ChatFormattingListener: ChatConfig is null! Skipping ALL formatting. Letting vanilla handle chat.");
             return;
         }
-        LOGGER.info("[NeoEssentials] ChatFormattingListener: config.isEnabled() = {}", config.isEnabled());
-        if (!config.isEnabled()) {
+    LOGGER.info("[NeoEssentials] ChatFormattingListener: config.isEnabled = {}", config.isEnabled);
+    if (!config.isEnabled) {
             LOGGER.info("[NeoEssentials] ChatFormattingListener: Chat formatting is DISABLED. Bypassing ALL formatting and letting vanilla handle chat.");
             // Do not set event message, do not cancel, let vanilla handle everything
             return;
@@ -78,75 +89,53 @@ public class ChatFormattingListener {
                 LOGGER.debug("[NeoEssentials] Message blocked by filter: {}", originalMessage);
                 return;
             }
-            String playerName = player.getName().getString();
-            String nickname = getPlayerNickname(player);
-            String format = config.format;
-            if (format == null || format.isEmpty()) {
-                format = "{MESSAGE}";
-            }
-            String displayName = playerName;
-            LOGGER.debug("[NeoEssentials] Nicknames enabled: {}, showInChat: {}, nickname: {}", config.nicknames.enabled, config.nicknames.showInChat, nickname);
-            if (config.nicknames.enabled && config.nicknames.showInChat && nickname != null) {
-                displayName = nickname;
-                if (config.nicknames.allowColors) {
-                    displayName = com.zerog.neoessentials.util.ColorUtil.colorize(displayName).getString();
-                }
-            }
+            // Restore full formatting logic
+            String displayName = com.zerog.neoessentials.features.DisplayNameManager.getDisplayName(player);
+            String group = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerGroup(player.getUUID());
+            // Load group prefix/suffix from groups.json
             String prefix = "";
             String suffix = "";
-            String group = "";
-            // Only apply prefix/suffix logic if enabled in config
-            LOGGER.debug("[NeoEssentials] PrefixSuffix enabled: {}", config.prefixSuffix.enabled);
-            if (config.prefixSuffix.enabled) {
-                // Only assign prefix once, prefer permission system, fallback to group, then default
-                if (format.contains("{PREFIX}")) {
-                    if (config.prefixSuffix.isPermissionSystemEnabled()) {
-                        prefix = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerPrefix(player.getUUID());
-                        if (prefix == null) prefix = config.prefixSuffix.defaultPrefix;
-                    } else if (config.prefixSuffix.isGroupSystemEnabled()) {
-                        prefix = config.prefixSuffix.defaultPrefix;
-                    } else {
-                        prefix = config.prefixSuffix.defaultPrefix;
-                    }
+            try {
+                java.io.File groupConfigFile = new java.io.File("neoessentials/permissions/groups.json");
+                com.google.gson.Gson gson = new com.google.gson.Gson();
+                java.io.FileReader reader = new java.io.FileReader(groupConfigFile);
+                java.util.Map<?,?> groupConfig = gson.fromJson(reader, java.util.Map.class);
+                if (groupConfig != null && group != null && groupConfig.containsKey(group)) {
+                    java.util.Map<?,?> groupData = (java.util.Map<?,?>) groupConfig.get(group);
+                    prefix = groupData.containsKey("prefix") ? groupData.get("prefix").toString().replace("&", "§") : "";
+                    suffix = groupData.containsKey("suffix") ? groupData.get("suffix").toString().replace("&", "§") : "";
                 }
-                // Only assign suffix once, prefer permission system, fallback to group, then default
-                if (format.contains("{SUFFIX}")) {
-                    if (config.prefixSuffix.isPermissionSystemEnabled()) {
-                        suffix = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerSuffix(player.getUUID());
-                        if (suffix == null) suffix = config.prefixSuffix.defaultSuffix;
-                    } else if (config.prefixSuffix.isGroupSystemEnabled()) {
-                        suffix = config.prefixSuffix.defaultSuffix;
-                    } else {
-                        suffix = config.prefixSuffix.defaultSuffix;
-                    }
-                }
-                // Only assign group if needed
-                if (format.contains("{GROUP}") && config.prefixSuffix.isGroupSystemEnabled()) {
-                    group = getPlayerGroup(player);
-                    if (group == null) group = "";
-                }
-                LOGGER.debug("[NeoEssentials] Prefix: '{}', Suffix: '{}', Group: '{}'", prefix, suffix, group);
-                if (!config.prefixSuffix.isColorEnabled()) {
-                    prefix = prefix.replaceAll("§[0-9a-fk-or]", "");
-                    suffix = suffix.replaceAll("§[0-9a-fk-or]", "");
-                }
+                reader.close();
+            } catch (Exception e) {
+                // fallback: no group config
             }
-            String formattedText = format
-                .replace("{DISPLAYNAME}", displayName)
+            System.out.println("DEBUG config.format: " + config.format);
+            System.out.println("DEBUG config.groupFormats: " + config.groupFormats);
+            System.out.println("DEBUG group: " + group);
+            // Always use the main format from config
+            String nameFormat = config.format;
+            System.out.println("DEBUG nameFormat source: from main format");
+            if (nameFormat == null || nameFormat.isEmpty()) {
+                nameFormat = "{PREFIX} {DISPLAYNAME} > {MESSAGE}";
+            }
+            System.out.println("DEBUG nameFormat before replacements: " + nameFormat);
+            System.out.println("DEBUG filteredMessage: " + filteredMessage);
+            String formattedName = nameFormat
                 .replace("{PREFIX}", prefix)
+                .replace("{DISPLAYNAME}", displayName)
                 .replace("{SUFFIX}", suffix)
                 .replace("{GROUP}", group)
-                .replace("{MESSAGE}", filteredMessage)
-                .replace("{TIME}", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")))
-                .replace("{DATE}", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-
-            LOGGER.debug("[NeoEssentials] Final formattedText: {}", formattedText);
-            if (config.enableColors) {
-                event.setMessage(com.zerog.neoessentials.util.ColorUtil.colorize(formattedText));
-                LOGGER.debug("[NeoEssentials] Colors enabled. Message colorized.");
-            } else {
-                event.setMessage(Component.literal(formattedText));
-                LOGGER.debug("[NeoEssentials] Colors disabled. Message sent as plain text.");
+                .replace("{MESSAGE}", filteredMessage);
+            System.out.println("DEBUG after MESSAGE replacement: " + formattedName);
+            System.out.println("DEBUG filteredMessage value: '" + filteredMessage + "'");
+            String formattedText = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance().processPlaceholders(formattedName, player);
+            System.out.println("FINAL formattedText: " + formattedText);
+            event.setCanceled(true);
+            MinecraftServer server = player.getServer();
+            if (server != null) {
+                // Use color code processing for chat output
+                net.minecraft.network.chat.Component coloredComponent = com.zerog.neoessentials.util.ColorUtil.colorize(formattedText);
+                server.getPlayerList().broadcastSystemMessage(coloredComponent, false);
             }
         } catch (Exception e) {
             LOGGER.error("Error formatting chat message for player: {}", player.getName().getString(), e);
@@ -155,17 +144,6 @@ public class ChatFormattingListener {
     }
 
     // Helper methods now static
-    private static String getPlayerGroup(ServerPlayer player) {
-        try {
-            CustomPermissionsManager permManager = CustomPermissionsManager.getInstance();
-            if (permManager != null) {
-                return permManager.getPlayerGroup(player.getUUID());
-            }
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get group for {}: {}", player.getName().getString(), e.getMessage());
-        }
-        return "default";
-    }
 
     private static String filterMessage(String message, com.zerog.neoessentials.config.MainConfig.ChatSettings config) {
         if (!config.filter.enabled) {
@@ -211,7 +189,15 @@ public class ChatFormattingListener {
         return false;
     }
 
-    private static String getPlayerNickname(ServerPlayer player) {
-    return NickCommand.getNicknameOnly(player.getUUID());
+    /**
+     * External MOTD/help/info text response loader
+     */
+    public static String loadExternalText(String type) {
+        java.nio.file.Path path = java.nio.file.Paths.get("config/neoessentials/" + type + ".txt");
+        try {
+            return java.nio.file.Files.readString(path);
+        } catch (Exception e) {
+            return "";
+        }
     }
 }

@@ -303,7 +303,6 @@ public final class PermissionNodes {
     // GUI System
     public static final String GUI_OPEN = "neoessentials.gui.open";
     public static final String GUI_ADMIN = "neoessentials.gui.admin";
-    public static final String GUI_THEMES = "neoessentials.gui.themes";
     public static final String GUI_ALL = "neoessentials.gui.*";
     
     // Security System
@@ -520,7 +519,7 @@ public final class PermissionNodes {
             BOSSBAR_SHOW, BOSSBAR_SHOW_OTHERS, BOSSBAR_HIDE, BOSSBAR_BROADCAST,
             BOSSBAR_CREATE, BOSSBAR_UPDATE, BOSSBAR_DELETE, BOSSBAR_TEMPLATES, BOSSBAR_ALL,
             PLACEHOLDER_TEST, PLACEHOLDER_LIST, PLACEHOLDER_INFO, PLACEHOLDER_RELOAD, PLACEHOLDER_ALL,
-            GUI_OPEN, GUI_ADMIN, GUI_THEMES, GUI_ALL,
+            GUI_OPEN, GUI_ADMIN, GUI_ALL,
             SECURITY_VIEW, SECURITY_ADMIN, SECURITY_ALERTS, SECURITY_ALL,
             
             // Permission Management

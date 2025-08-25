@@ -7,7 +7,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.zerog.neoessentials.managers.KitManager;
-import com.zerog.neoessentials.managers.EconomyManager;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -58,49 +57,27 @@ public class KitCommand {
     MainConfig.KitSettings config = ConfigManager.getInstance().getMainConfig().kitSettings;
         
         if (!config.enabled) {
-            MessageUtil.sendMessage(player, "&cKit system is disabled.");
+            MessageUtil.sendTranslatedMessage(player, "neoessentials.kit.disabled");
             return 0;
         }
         
         List<String> availableKits = kitManager.getAvailableKits(player);
         
         if (availableKits.isEmpty()) {
-            MessageUtil.sendMessage(player, config.messages.kitListEmpty);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.kit.list_empty"));
             return 0;
         }
-        
+
         // Send header
-        MessageUtil.sendMessage(player, config.messages.kitListHeader);
-        
-        // List each available kit with details
+        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.kit.list_header"));
+
+        // List each available kit (details should be fetched from a KitRegistry or KitManager, not config)
         for (String kitName : availableKits) {
-            MainConfig.KitSettings.KitDefinition kit = config.kits.get(kitName);
-            if (kit != null) {
-                String delayText = kit.hasDelay() ? 
-                    MessageUtil.formatTime(kit.delay * 1000L) : "None";
-                String costText = kit.hasCost() ? 
-                    EconomyManager.getInstance().formatCurrency(kit.cost) : "Free";
-                
-                // Check if on cooldown
-                String status = "";
-                if (kit.hasDelay() && kitManager.isOnCooldown(player, kitName)) {
-                    long remaining = kitManager.getRemainingCooldown(player, kitName);
-                    status = " &c(Cooldown: " + MessageUtil.formatTime(remaining) + ")";
-                }
-                
-                String message = MessageUtil.replacePlaceholders(config.messages.kitListEntry,
-                    kit.displayName, kitName, delayText, costText) + status;
-                MessageUtil.sendMessage(player, message);
-                
-                // Show description if available
-                if (!kit.description.isEmpty()) {
-                    for (String desc : kit.description) {
-                        MessageUtil.sendMessage(player, "  " + desc);
-                    }
-                }
-            }
+            // Example: You would fetch kit details from a KitRegistry or KitManager here
+            // For now, just show the kit name
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.kit.list_entry", kitName));
         }
-        
+
         return 1;
     }
     

@@ -51,43 +51,38 @@ public class ModerationManager {
     public boolean kickPlayer(ServerPlayer target, ServerPlayer moderator, String reason) {
         boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
         if (!moderationModuleEnabled) {
-            MessageUtil.sendMessage(moderator, "&cModeration system is disabled.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.disabled");
             return false;
         }
-        
+
         // Check permission
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.KICK)) {
-            MessageUtil.sendMessage(moderator, "&cYou do not have permission to kick players.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.kick.no_permission");
             return false;
         }
 
         // Check if target is exempt
         if (PermissionUtil.hasPermission(target, PermissionNodes.KICK_EXEMPT)) {
-            MessageUtil.sendMessage(moderator, "&cThis player is exempt from being kicked.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.kick.exempt");
             return false;
         }
 
         String finalReason = reason != null && !reason.isEmpty() ? reason : "Kicked by administrator";
 
-        // Create kick message using MessageUtil for proper formatting
-        String kickMessage = MessageUtil.replacePlaceholders("&cYou have been kicked: {REASON}", 
-            finalReason, moderator.getName().getString());
-        
         // Kick the player
-        target.connection.disconnect(Component.literal(kickMessage));
-        
+        target.connection.disconnect(Component.translatable("neoessentials.moderation.kick.player", finalReason));
+
         // Log action
         logModerationAction("KICK", moderator, target, finalReason, 0);
-        
-    // Broadcast (always enabled for now)
-    String broadcastMessage = target.getName().getString() + " was kicked by " + moderator.getName().getString() + " for: " + finalReason;
-    broadcastAction(broadcastMessage);
-        
-        MessageUtil.sendMessage(moderator, "&aSuccessfully kicked " + target.getName().getString() + " for: " + finalReason);
-        
+
+        // Broadcast (always enabled for now)
+        broadcastAction(Component.translatable("neoessentials.moderation.kick.broadcast", target.getName().getString(), moderator.getName().getString(), finalReason).getString());
+
+        MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.kick.success", target.getName().getString(), finalReason);
+
         LOGGER.info("Player {} kicked by {} for: {}", 
             target.getName().getString(), moderator.getName().getString(), finalReason);
-        
+
         return true;
     }
     
@@ -97,30 +92,30 @@ public class ModerationManager {
     public boolean mutePlayer(UUID targetUuid, String targetName, ServerPlayer moderator, String reason, long duration) {
         boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
         if (!moderationModuleEnabled) {
-            MessageUtil.sendMessage(moderator, "&cModeration system is disabled.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.disabled");
             return false;
         }
-        
+
         // Check permission
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.MUTE)) {
-            MessageUtil.sendMessage(moderator, "&cYou do not have permission to mute players.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.mute.no_permission");
             return false;
         }
-        
+
         // Check if already muted
         if (isPlayerMuted(targetUuid)) {
-            MessageUtil.sendMessage(moderator, "&c" + targetName + " is already muted!");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.mute.already_muted", targetName);
             return false;
         }
-        
-    String finalReason = reason != null && !reason.isEmpty() ? reason : "Muted by administrator";
+
+        String finalReason = reason != null && !reason.isEmpty() ? reason : "Muted by administrator";
         long expiry = duration > 0 ? System.currentTimeMillis() + (duration * 1000) : 0;
-        
+
         MuteData muteData = new MuteData(targetUuid, targetName, moderator.getName().getString(), 
             finalReason, System.currentTimeMillis(), expiry);
-        
+
         activeMutes.put(targetUuid, muteData);
-        
+
         // Save to player data
         Map<String, Object> muteInfo = Map.of(
             "reason", finalReason,
@@ -129,34 +124,36 @@ public class ModerationManager {
             "expiry", expiry
         );
         playerDataManager.setSetting(targetUuid, "mute_data", muteInfo);
-        
+
         // Notify target if online
         ServerPlayer target = getPlayerByUuid(targetUuid);
         if (target != null) {
-            String muteMessage = duration > 0 ? 
-                "&cYou have been temporarily muted for " + MessageUtil.formatTime(duration * 1000) + ": " + finalReason :
-                "&cYou have been muted: " + finalReason;
-            MessageUtil.sendMessage(target, muteMessage);
+            if (duration > 0) {
+                MessageUtil.sendTranslatedMessage(target, "neoessentials.moderation.mute.player.temp", MessageUtil.formatTime(duration * 1000), finalReason);
+            } else {
+                MessageUtil.sendTranslatedMessage(target, "neoessentials.moderation.mute.player", finalReason);
+            }
         }
-        
+
         // Log action
         logModerationAction("MUTE", moderator, target, finalReason, duration);
-        
+
         // Broadcast (always enabled for now)
-        String broadcastMessage = duration > 0 ?
-            targetName + " was temporarily muted by " + moderator.getName().getString() + " for " + MessageUtil.formatTime(duration * 1000) + ": " + finalReason :
-            targetName + " was muted by " + moderator.getName().getString() + ": " + finalReason;
-        broadcastAction(broadcastMessage);
-        
-        String successMessage = duration > 0 ?
-            "&aSuccessfully muted " + targetName + " for " + MessageUtil.formatTime(duration * 1000) + ": " + finalReason :
-            "&aSuccessfully muted " + targetName + ": " + finalReason;
-        
-        MessageUtil.sendMessage(moderator, successMessage);
-        
+        if (duration > 0) {
+            broadcastAction(Component.translatable("neoessentials.moderation.mute.broadcast.temp", targetName, moderator.getName().getString(), MessageUtil.formatTime(duration * 1000), finalReason).getString());
+        } else {
+            broadcastAction(Component.translatable("neoessentials.moderation.mute.broadcast", targetName, moderator.getName().getString(), finalReason).getString());
+        }
+
+        if (duration > 0) {
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.mute.success.temp", targetName, MessageUtil.formatTime(duration * 1000), finalReason);
+        } else {
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.mute.success", targetName, finalReason);
+        }
+
         LOGGER.info("Player {} muted by {} for {} seconds: {}", 
             targetName, moderator.getName().getString(), duration, finalReason);
-        
+
         return true;
     }
     
@@ -166,28 +163,28 @@ public class ModerationManager {
     public boolean unmutePlayer(UUID targetUuid, String targetName, ServerPlayer moderator) {
         
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.UNMUTE)) {
-            MessageUtil.sendMessage(moderator, "&cYou do not have permission to unmute players.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.unmute.no_permission");
             return false;
         }
-        
+
         if (!isPlayerMuted(targetUuid)) {
-            MessageUtil.sendMessage(moderator, "&c" + targetName + " is not muted!");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.unmute.not_muted", targetName);
             return false;
         }
-        
+
         activeMutes.remove(targetUuid);
         playerDataManager.setSetting(targetUuid, "mute_data", null);
-        
+
         // Notify target if online
         ServerPlayer target = getPlayerByUuid(targetUuid);
         if (target != null) {
-            MessageUtil.sendMessage(target, "&aYour mute has expired.");
+            MessageUtil.sendTranslatedMessage(target, "neoessentials.moderation.unmute.player");
         }
-        
-        MessageUtil.sendMessage(moderator, "&aSuccessfully unmuted " + targetName);
-        
+
+        MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.unmute.success", targetName);
+
         LOGGER.info("Player {} unmuted by {}", targetName, moderator.getName().getString());
-        
+
         return true;
     }
     
@@ -285,30 +282,30 @@ public class ModerationManager {
     public boolean unjailPlayer(UUID targetUuid, String targetName, ServerPlayer moderator) {
         
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.UNJAIL)) {
-            MessageUtil.sendMessage(moderator, "&cYou do not have permission to unjail players.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.unjail.no_permission");
             return false;
         }
-        
+
         JailData jailData = activeJails.get(targetUuid);
         if (jailData == null) {
-            MessageUtil.sendMessage(moderator, "&c" + targetName + " is not jailed!");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.unjail.not_jailed", targetName);
             return false;
         }
-        
+
         ServerPlayer target = getPlayerByUuid(targetUuid);
         if (target != null && jailData.previousLocation != null) {
             // Teleport back to previous location
             teleportToLocation(target, jailData.previousLocation);
-            MessageUtil.sendMessage(target, "&aYou have been released from jail.");
+            MessageUtil.sendTranslatedMessage(target, "neoessentials.moderation.unjail.player");
         }
-        
+
         activeJails.remove(targetUuid);
         playerDataManager.setSetting(targetUuid, "jail_data", null);
-        
-        MessageUtil.sendMessage(moderator, "&aSuccessfully unjailed " + targetName);
-        
+
+        MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.unjail.success", targetName);
+
         LOGGER.info("Player {} unjailed by {}", targetName, moderator.getName().getString());
-        
+
         return true;
     }
     
@@ -318,39 +315,39 @@ public class ModerationManager {
     public boolean tempBanPlayer(ServerPlayer target, ServerPlayer moderator, String reason, long durationMinutes) {
         boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
         if (!moderationModuleEnabled) {
-            MessageUtil.sendMessage(moderator, "&cTemporary ban system is disabled.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.tempban.disabled");
             return false;
         }
-        
+
         // Check permission
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.BAN_TEMP)) {
-            MessageUtil.sendMessage(moderator, "&cYou do not have permission to temp-ban players.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.tempban.no_permission");
             return false;
         }
-        
+
         // Check if target is exempt
         if (PermissionUtil.hasPermission(target, PermissionNodes.BAN_EXEMPT)) {
-            MessageUtil.sendMessage(moderator, "&cThis player is exempt from being banned.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.tempban.exempt");
             return false;
         }
-        
+
         // Get server instance safely
         net.minecraft.server.MinecraftServer server = target.getServer();
         if (server == null) {
-            MessageUtil.sendMessage(moderator, "&cFailed to access server instance for ban.");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.tempban.server_error");
             return false;
         }
-        
+
         // Check if player is already banned
         if (server.getPlayerList().getBans().isBanned(target.getGameProfile())) {
-            MessageUtil.sendMessage(moderator, "&c" + target.getName().getString() + " is already banned!");
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.tempban.already_banned", target.getName().getString());
             return false;
         }
-        
-    String finalReason = reason != null && !reason.isEmpty() ? reason : "Banned by administrator";
+
+        String finalReason = reason != null && !reason.isEmpty() ? reason : "Banned by administrator";
         long durationMs = durationMinutes * 60 * 1000; // Convert to milliseconds
         long expiryTime = System.currentTimeMillis() + durationMs;
-        
+
         try {
             // Create temporary ban entry
             java.util.Date expiryDate = new java.util.Date(expiryTime);
@@ -361,32 +358,28 @@ public class ModerationManager {
                 expiryDate,
                 finalReason
             );
-            
+
             // Add to ban list
             server.getPlayerList().getBans().add(banEntry);
-            
+
             // Disconnect the player
-            String banMessage = "&cYou have been temporarily banned for " + MessageUtil.formatTime(durationMs) + ": " + finalReason;
-            target.connection.disconnect(net.minecraft.network.chat.Component.literal(banMessage));
-            
+            target.connection.disconnect(Component.translatable("neoessentials.moderation.tempban.player", MessageUtil.formatTime(durationMs), finalReason));
+
             // Log action
             logModerationAction("TEMPBAN", moderator, target, finalReason, durationMinutes * 60);
-            
+
             // Broadcast if enabled
-            String broadcastMessage = target.getName().getString() + " was temporarily banned by " + moderator.getName().getString() + " for " + MessageUtil.formatTime(durationMs) + ": " + finalReason;
-            broadcastAction(broadcastMessage);
-            
-            String successMessage = "&aSuccessfully temp-banned " + target.getName().getString() + 
-                " for " + MessageUtil.formatTime(durationMs) + ": " + finalReason;
-            MessageUtil.sendMessage(moderator, successMessage);
-            
+            broadcastAction(Component.translatable("neoessentials.moderation.tempban.broadcast", target.getName().getString(), moderator.getName().getString(), MessageUtil.formatTime(durationMs), finalReason).getString());
+
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.tempban.success", target.getName().getString(), MessageUtil.formatTime(durationMs), finalReason);
+
             LOGGER.info("Player {} temp-banned by {} for {} minutes: {}", 
                 target.getName().getString(), moderator.getName().getString(), durationMinutes, finalReason);
-            
+
             return true;
-            
+
         } catch (Exception e) {
-            MessageUtil.sendMessage(moderator, "&cFailed to temp-ban player: " + e.getMessage());
+            MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.tempban.failed", e.getMessage());
             LOGGER.error("Failed to temp-ban player {}", target.getName().getString(), e);
             return false;
         }
@@ -487,7 +480,7 @@ public class ModerationManager {
             ServerPlayer target = getPlayerByUuid(playerUuid);
             if (target != null && jailData.previousLocation != null) {
                 teleportToLocation(target, jailData.previousLocation);
-                MessageUtil.sendMessage(target, "&aYour jail time has expired!");
+                MessageUtil.sendTranslatedMessage(target, "neoessentials.moderation.jail.expired");
             }
         }
     }

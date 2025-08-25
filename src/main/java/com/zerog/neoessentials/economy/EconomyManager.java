@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.economy;
 
-import com.zerog.neoessentials.NeoEssentialsMod;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import com.zerog.neoessentials.economy.currency.CurrencyManager;
 import com.zerog.neoessentials.economy.transactions.TransactionManager;
 // import com.zerog.neoessentials.economy.shops.ShopManager; // Now uses managers.EconomyManager
@@ -25,6 +26,7 @@ import java.math.BigDecimal;
  * - Cross-server economy synchronization
  */
 public class EconomyManager {
+    private static final Logger LOGGER = LogManager.getLogger(EconomyManager.class);
     private static EconomyManager instance;
     
     // Core managers
@@ -69,7 +71,7 @@ public class EconomyManager {
     
     private void initialize() {
         try {
-            NeoEssentialsMod.LOGGER.info("Initializing Advanced Economy System...");
+            LOGGER.info("Initializing Advanced Economy System...");
 
             // Initialize currency system
             currencyManager.initialize();
@@ -86,10 +88,10 @@ public class EconomyManager {
             // Start background tasks
             startBackgroundTasks();
 
-            NeoEssentialsMod.LOGGER.info("Economy System initialized successfully");
+            LOGGER.info("Economy System initialized successfully");
 
         } catch (Exception e) {
-            NeoEssentialsMod.LOGGER.error("Failed to initialize Economy System", e);
+            LOGGER.error("Failed to initialize Economy System", e);
             economyEnabled = false;
         }
     }
@@ -105,7 +107,7 @@ public class EconomyManager {
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception e) {
-                    NeoEssentialsMod.LOGGER.error("Error in economy background task", e);
+                    LOGGER.error("Error in economy background task", e);
                 }
             }
         });
@@ -120,7 +122,7 @@ public class EconomyManager {
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception e) {
-                    NeoEssentialsMod.LOGGER.error("Error in market update task", e);
+                    LOGGER.error("Error in market update task", e);
                 }
             }
         });
@@ -289,7 +291,7 @@ public class EconomyManager {
             
             return null;
         } catch (Exception e) {
-            NeoEssentialsMod.LOGGER.error("Failed to load player economy data for " + playerId, e);
+            LOGGER.error("Failed to load player economy data for " + playerId, e);
             return null;
         }
     }
@@ -313,14 +315,14 @@ public class EconomyManager {
                 
                 // Save asynchronously
                 storageManager.savePlayerEconomy(playerId, rawData).thenRun(() -> {
-                    NeoEssentialsMod.LOGGER.debug("Saved economy data for player " + playerId);
+                    LOGGER.debug("Saved economy data for player " + playerId);
                 }).exceptionally(throwable -> {
-                    NeoEssentialsMod.LOGGER.error("Failed to save player economy data for " + playerId, throwable);
+                    LOGGER.error("Failed to save player economy data for " + playerId, throwable);
                     return null;
                 });
                 
             } catch (Exception e) {
-                NeoEssentialsMod.LOGGER.error("Failed to save player economy data for " + playerId, e);
+                LOGGER.error("Failed to save player economy data for " + playerId, e);
             }
         }
     }
@@ -330,9 +332,9 @@ public class EconomyManager {
             // For now, we'll load data on-demand as players join
             // The StorageManager doesn't have a "load all" method 
             // so we'll rely on individual player data loading
-            NeoEssentialsMod.LOGGER.info("Economy data will be loaded on-demand as players join the server");
+            LOGGER.info("Economy data will be loaded on-demand as players join the server");
         } catch (Exception e) {
-            NeoEssentialsMod.LOGGER.error("Error initializing economy data loading", e);
+            LOGGER.error("Error initializing economy data loading", e);
         }
     }
     
@@ -340,7 +342,7 @@ public class EconomyManager {
         try {
             analytics.update(playerData, transactionManager.getRecentTransactions());
         } catch (Exception e) {
-            NeoEssentialsMod.LOGGER.error("Failed to update economy analytics", e);
+            LOGGER.error("Failed to update economy analytics", e);
         }
     }
     
@@ -397,9 +399,9 @@ public class EconomyManager {
             // Shutdown managers
             auctionManager.shutdown();
             
-            NeoEssentialsMod.LOGGER.info("Economy System shutdown completed");
+            LOGGER.info("Economy System shutdown completed");
         } catch (Exception e) {
-            NeoEssentialsMod.LOGGER.error("Error during economy shutdown", e);
+            LOGGER.error("Error during economy shutdown", e);
         }
     }
 }

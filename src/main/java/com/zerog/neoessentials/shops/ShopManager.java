@@ -110,7 +110,7 @@ public class ShopManager {
         // Find a nearby chest for the shop
         BlockPos chestPos = findNearbyChest(player.level(), signPos);
         if (chestPos == null) {
-            player.sendSystemMessage(Component.literal("§cNo chest found near the sign! Place a chest within 3 blocks."));
+            player.sendSystemMessage(Component.translatable("neoessentials.shop.no_chest_near_sign"));
             return false;
         }
         

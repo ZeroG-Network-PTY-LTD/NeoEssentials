@@ -62,11 +62,11 @@ public class InvSeeCommand {
 
             // Config: allowModify
             boolean canModify = PermissionUtil.hasPermissionOrOp(source, PermissionNodes.INVSEE_MODIFY)
-                && com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().invseeConfig.allowModify;
+                && com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().invseeConfig.allowEdit;
 
             MenuProvider inventoryProvider = new SimpleMenuProvider(
                 (windowId, playerInventory, playerEntity) -> new com.zerog.neoessentials.menus.InvseeMenu(windowId, playerInventory, target.getInventory(), canModify),
-                Component.literal(target.getDisplayName().getString() + "'s Inventory")
+                Component.translatable("neoessentials.invsee.inventory_title", target.getDisplayName().getString())
             );
 
             opener.openMenu(inventoryProvider);

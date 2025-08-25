@@ -70,25 +70,25 @@ public class NickCommand {
         // Config checks
         var nickManager = com.zerog.neoessentials.managers.NickManager.get();
         if (!nickManager.enabled) {
-            sendLocalizedMessage(source, "neoessentials.nick.disabled");
+            sendTranslatedMessage(source, "neoessentials.nick.disabled");
             return 0;
         }
 
         // Validate nickname length
         if (nickname.length() > 16 && !canBypass) {
-            sendLocalizedMessage(source, "neoessentials.nick.too_long");
+            sendTranslatedMessage(source, "neoessentials.nick.too_long");
             return 0;
         }
 
         // Unsafe character filtering
         if (!nickManager.allowUnsafeCharacters && !nickname.matches("^[a-zA-Z0-9_§&]+$")) {
-            sendLocalizedMessage(source, "neoessentials.nick.unsafe_chars");
+            sendTranslatedMessage(source, "neoessentials.nick.unsafe_chars");
             return 0;
         }
 
         // Color code permission
         if ((nickname.contains("&") || nickname.contains("§")) && !canUseColors && !canBypass) {
-            sendLocalizedMessage(source, "neoessentials.nick.no_color_permission");
+            sendTranslatedMessage(source, "neoessentials.nick.no_color_permission");
             return 0;
         }
 
@@ -96,10 +96,10 @@ public class NickCommand {
         if ((nickname.toLowerCase().contains("admin") || 
             nickname.toLowerCase().contains("mod") ||
             nickname.toLowerCase().contains("owner")) && !canBypass) {
-            sendLocalizedMessage(source, "neoessentials.nick.no_staff_nick");
+            sendTranslatedMessage(source, "neoessentials.nick.no_staff_nick");
             return 0;
         }
-        
+
         // Set the nickname
         if (target != null) {
             com.zerog.neoessentials.managers.NickManager.get().setNick(target.getUUID(), nickname);
@@ -107,10 +107,10 @@ public class NickCommand {
             var sourceEntity = source.getEntity();
             UUID sourceUUID = sourceEntity != null ? sourceEntity.getUUID() : null;
             if (target.getUUID().equals(sourceUUID)) {
-                sendLocalizedMessage(source, "neoessentials.nick.set_self", nickname);
+                sendTranslatedMessage(source, "neoessentials.nick.set_self", nickname);
             } else {
-                sendLocalizedMessage(source, "neoessentials.nick.set_other", target.getName().getString(), nickname);
-                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.nick.set_by_admin", nickname));
+                sendTranslatedMessage(source, "neoessentials.nick.set_other", target.getName().getString(), nickname);
+                MessageUtil.sendTranslatedMessage(target, "neoessentials.nick.set_by_admin", nickname);
             }
 
             // Log the change
@@ -142,9 +142,9 @@ public class NickCommand {
             var sourceEntity = source.getEntity();
             UUID sourceUUID = sourceEntity != null ? sourceEntity.getUUID() : null;
             if (target.getUUID().equals(sourceUUID)) {
-                sendLocalizedMessage(source, "neoessentials.nick.not_set_self");
+                sendTranslatedMessage(source, "neoessentials.nick.not_set_self");
             } else {
-                sendLocalizedMessage(source, "neoessentials.nick.not_set_other", target.getName().getString());
+                sendTranslatedMessage(source, "neoessentials.nick.not_set_other", target.getName().getString());
             }
             return 0;
         }
@@ -157,10 +157,10 @@ public class NickCommand {
             var sourceEntity = source.getEntity();
             UUID sourceUUID = sourceEntity != null ? sourceEntity.getUUID() : null;
             if (target.getUUID().equals(sourceUUID)) {
-                sendLocalizedMessage(source, "neoessentials.nick.cleared_self");
+                sendTranslatedMessage(source, "neoessentials.nick.cleared_self");
             } else {
-                sendLocalizedMessage(source, "neoessentials.nick.cleared_other", target.getName().getString());
-                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.nick.cleared_by_admin"));
+                sendTranslatedMessage(source, "neoessentials.nick.cleared_other", target.getName().getString());
+                MessageUtil.sendTranslatedMessage(target, "neoessentials.nick.cleared_by_admin");
             }
 
             // Log the change
@@ -179,15 +179,15 @@ public class NickCommand {
         
         Map<UUID, String> allNicks = com.zerog.neoessentials.managers.NickManager.get().getAllNicks();
         if (allNicks.isEmpty()) {
-            sendLocalizedMessage(source, "neoessentials.nick.list_empty");
+            sendTranslatedMessage(source, "neoessentials.nick.list_empty");
             return 1;
         }
 
-        sendLocalizedMessage(source, "neoessentials.nick.list_header");
+        sendTranslatedMessage(source, "neoessentials.nick.list_header");
         for (Map.Entry<UUID, String> entry : allNicks.entrySet()) {
             ServerPlayer player = source.getServer().getPlayerList().getPlayer(entry.getKey());
             if (player != null) {
-                sendLocalizedMessage(source, "neoessentials.nick.list_entry", player.getName().getString(), entry.getValue());
+                sendTranslatedMessage(source, "neoessentials.nick.list_entry", player.getName().getString(), entry.getValue());
             }
         }
 
@@ -218,11 +218,11 @@ public class NickCommand {
     
     // sendMessage method removed (unused)
 
-    private static void sendLocalizedMessage(CommandSourceStack source, String key, Object... placeholders) {
+    private static void sendTranslatedMessage(CommandSourceStack source, String key, Object... placeholders) {
         if (source.getEntity() instanceof ServerPlayer player) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, key, placeholders));
+            MessageUtil.sendTranslatedMessage(player, key, placeholders);
         } else {
-            source.sendSuccess(() -> Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_us", key, placeholders)), false);
+            source.sendSuccess(() -> Component.translatable(key, placeholders), false);
         }
     }
     

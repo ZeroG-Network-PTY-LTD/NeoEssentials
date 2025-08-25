@@ -38,11 +38,11 @@ public class ListCommand {
         int maxPlayers = playerList.getMaxPlayers();
         
         // Send header with player count
-        Component header = Component.literal(String.format("§6=== Online Players (%d/%d) ===", playerCount, maxPlayers));
+        Component header = Component.translatable("neoessentials.list.header", playerCount, maxPlayers);
         context.getSource().sendSuccess(() -> header, false);
-        
+
         if (playerCount == 0) {
-            context.getSource().sendSuccess(() -> Component.literal("§7No players are currently online."), false);
+            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.list.none_online"), false);
             return 1;
         }
         
@@ -71,15 +71,15 @@ public class ListCommand {
         
         // Display players by group
         if (adminList.length() > 0) {
-            context.getSource().sendSuccess(() -> Component.literal("§cAdmins: " + adminList.toString()), false);
+            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.list.admins", adminList.toString()), false);
         }
-        
+
         if (modList.length() > 0) {
-            context.getSource().sendSuccess(() -> Component.literal("§6Moderators: " + modList.toString()), false);
+            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.list.mods", modList.toString()), false);
         }
-        
+
         if (playersList.length() > 0) {
-            context.getSource().sendSuccess(() -> Component.literal("§aPlayers: " + playersList.toString()), false);
+            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.list.players", playersList.toString()), false);
         }
         
         return 1;

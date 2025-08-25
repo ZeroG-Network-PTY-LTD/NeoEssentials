@@ -184,33 +184,9 @@ public class StorageManager {
     private boolean sqlEnabled;
 
     private void initializeSqlStorage() {
-        // Load config from MainConfig.Database
-        com.zerog.neoessentials.config.MainConfig.Database dbConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().database;
-        sqlType = dbConfig.type;
-        sqlEnabled = !"flatfile".equalsIgnoreCase(sqlType);
-        if (!sqlEnabled) {
-            LOGGER.info("SQL storage disabled, using flatfile JSON storage.");
-            return;
-        }
-        try {
-            if ("mysql".equalsIgnoreCase(sqlType)) {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                String url = String.format("jdbc:mysql://%s:%d/%s?useSSL=false&serverTimezone=UTC", dbConfig.host, dbConfig.port, dbConfig.database);
-                sqlConnection = java.sql.DriverManager.getConnection(url, dbConfig.username, dbConfig.password);
-                LOGGER.info("Connected to MySQL database: {}", url);
-            } else if ("sqlite".equalsIgnoreCase(sqlType)) {
-                Class.forName("org.sqlite.JDBC");
-                String url = "jdbc:sqlite:" + dbConfig.database + ".db";
-                sqlConnection = java.sql.DriverManager.getConnection(url);
-                LOGGER.info("Connected to SQLite database: {}", url);
-            } else {
-                LOGGER.warn("Unknown SQL type: {}. Defaulting to flatfile storage.", sqlType);
-                sqlEnabled = false;
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to initialize SQL storage", e);
-            sqlEnabled = false;
-        }
+    // Force flat file storage only
+    sqlEnabled = false;
+    LOGGER.info("SQL storage forcibly disabled. Using flatfile JSON storage only. SQL type: {}", sqlType);
     }
     
     private static final Logger LOGGER = LoggerFactory.getLogger(StorageManager.class);

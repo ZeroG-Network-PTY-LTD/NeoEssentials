@@ -1,3 +1,6 @@
+
+// DEPRECATED: Use com.zerog.neoessentials.placeholders.PlaceholderManager singleton for all placeholder logic.
+// This class is retained only for legacy compatibility and will be removed in future versions.
 package com.zerog.neoessentials.utils;
 
 import com.zerog.neoessentials.managers.EconomyManager;

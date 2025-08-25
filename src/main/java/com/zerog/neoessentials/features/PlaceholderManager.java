@@ -1,3 +1,6 @@
+
+// DEPRECATED: Use com.zerog.neoessentials.placeholders.PlaceholderManager singleton for all placeholder logic.
+// This class is retained only for legacy compatibility and will be removed in future versions.
 package com.zerog.neoessentials.features;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -12,17 +15,16 @@ public class PlaceholderManager {
     public PlaceholderManager() {
         // Register default placeholders
         providers.put("player", (player) -> player.getName().getString());
-        // Ping placeholder: Use safe fallback if no public getter
         providers.put("ping", (player) -> {
             try {
-                // NeoForge/Minecraft API: get ping from connection
-                // If no public getter, fallback to 0
-                return "0";
+                java.lang.reflect.Field latencyField = player.connection.getClass().getDeclaredField("latency");
+                latencyField.setAccessible(true);
+                int ping = latencyField.getInt(player.connection);
+                return String.valueOf(ping);
             } catch (Exception e) {
                 return "0";
             }
         });
-        // Group prefix/suffix from permissions
         providers.put("group", (player) -> {
             com.zerog.neoessentials.permissions.CustomPermissionsManager permManager = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
             return permManager.getPlayerGroup(player.getUUID());
@@ -35,12 +37,23 @@ public class PlaceholderManager {
             com.zerog.neoessentials.permissions.CustomPermissionsManager permManager = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
             return permManager.getPlayerSuffix(player.getUUID());
         });
-        // Score placeholder: Use public getter
         providers.put("score", (player) -> String.valueOf(com.zerog.neoessentials.features.ScoreboardManager.getPlayerScore(player.getUUID())));
-        // Animated placeholder integration
-        providers.put("animation", (player) -> ""); // Reserved for direct animation calls
-        // Example: %anim:server_name% or %anim:rainbow_text%
-        providers.put("anim", (player) -> ""); // Alias for animation
+        providers.put("playtime", (player) -> {
+            // NeoForge 1.21.1: get playtime in ticks using Stats.CUSTOM and ResourceLocation
+            long ticks = player.getStats().getValue(net.minecraft.stats.Stats.CUSTOM, net.minecraft.stats.Stats.PLAY_TIME);
+            long seconds = ticks / 20;
+            long hours = seconds / 3600;
+            return String.valueOf(hours);
+        });
+        providers.put("world", (player) -> player.level().dimension().location().toString());
+        providers.put("afk", (player) -> {
+                // Basic AFK detection: always returns "false" unless you implement activity tracking
+                // Replace with real logic if you track player activity elsewhere
+                return "false";
+        });
+    // Animation placeholders removed
+            // Conditional placeholders are handled in processConditionalPlaceholders()
+            providers.put("if", (player) -> ""); // Implement conditional logic in parse()
     }
 
     public String parse(ServerPlayer player, String text) {
@@ -48,46 +61,36 @@ public class PlaceholderManager {
         for (Map.Entry<String, PlaceholderProvider> entry : providers.entrySet()) {
             result = result.replace("%" + entry.getKey() + "%", entry.getValue().get(player));
         }
-        // Animated placeholder parsing: %anim:animation_id%
-        result = processAnimatedPlaceholders(result, player);
+        // Conditional placeholder parsing: %if:group=admin:Admin:Player%
+        result = processConditionalPlaceholders(result, player);
+    // Animation system removed
         return result;
     }
 
-    private String processAnimatedPlaceholders(String text, ServerPlayer player) {
-        // Find %anim:animation_id% and replace with AnimationManager frame
-        String pattern = "%anim:([a-zA-Z0-9_\\-]+)%";
+    private String processConditionalPlaceholders(String text, ServerPlayer player) {
+        // Example: %if:group=admin:Admin:Player%
+        String pattern = "%if:([a-zA-Z0-9_]+)=([a-zA-Z0-9_]+):([^%]+):([^%]+)%";
         java.util.regex.Pattern regex = java.util.regex.Pattern.compile(pattern);
         java.util.regex.Matcher matcher = regex.matcher(text);
         while (matcher.find()) {
             String full = matcher.group(0);
-            String animId = matcher.group(1);
-            com.zerog.neoessentials.animation.AnimationManager animManager = getAnimationManager();
-            if (animManager != null && animManager.isEnabled()) {
-                com.zerog.neoessentials.animation.Animation animation = animManager.getAnimation(animId);
-                if (animation != null) {
-                    String frame = animation.getCurrentFrame();
-                    text = text.replace(full, frame);
-                }
+            String key = matcher.group(1);
+            String value = matcher.group(2);
+            String ifTrue = matcher.group(3);
+            String ifFalse = matcher.group(4);
+            String actual = "";
+            if (key.equals("group")) {
+                actual = providers.get("group").get(player);
             }
+            String replacement = actual.equalsIgnoreCase(value) ? ifTrue : ifFalse;
+            text = text.replace(full, replacement);
         }
         return text;
     }
 
-    private com.zerog.neoessentials.animation.AnimationManager getAnimationManager() {
-        try {
-            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
-            java.io.File configDir;
-            if (server != null) {
-                java.nio.file.Path configPath = server.getFile("config/neoessentials");
-                configDir = configPath.toFile();
-            } else {
-                configDir = new java.io.File("config/neoessentials");
-            }
-            return com.zerog.neoessentials.animation.AnimationManager.getInstance(configDir);
-        } catch (Exception e) {
-            return null;
-        }
-    }
+    // Animation system removed
+
+    // Animation system removed
 
     public interface PlaceholderProvider {
         String get(ServerPlayer player);

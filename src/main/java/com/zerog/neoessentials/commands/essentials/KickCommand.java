@@ -34,7 +34,7 @@ public class KickCommand {
     
     private static int kickPlayer(CommandContext<CommandSourceStack> context, ServerPlayer targetPlayer, String reason) throws CommandSyntaxException {
         if (targetPlayer == null) {
-            context.getSource().sendFailure(Component.literal("§cPlayer not found!"));
+            context.getSource().sendFailure(Component.translatable("neoessentials.kick.player_not_found"));
             return 0;
         }
         
@@ -42,7 +42,7 @@ public class KickCommand {
         try {
             ServerPlayer executor = context.getSource().getPlayerOrException();
             if (executor.getUUID().equals(targetPlayer.getUUID())) {
-                context.getSource().sendFailure(Component.literal("§cYou cannot kick yourself!"));
+                context.getSource().sendFailure(Component.translatable("neoessentials.kick.cannot_self"));
                 return 0;
             }
         } catch (CommandSyntaxException e) {
@@ -54,18 +54,18 @@ public class KickCommand {
         
         String playerName = targetPlayer.getName().getString();
         
-        // Kick the player
-        targetPlayer.connection.disconnect(Component.literal("§cKicked from server\n§7Reason: §f" + reason));
+    // Kick the player
+    targetPlayer.connection.disconnect(Component.translatable("neoessentials.kick.kicked", reason));
         
         // Broadcast to server
         context.getSource().getServer().getPlayerList().broadcastSystemMessage(
-            Component.literal("§c" + playerName + " was kicked from the server"), 
+            Component.translatable("neoessentials.kick.broadcast", playerName), 
             false
         );
         
-        // Send confirmation to executor
-        context.getSource().sendSuccess(() -> Component.literal("§aKicked " + playerName + " from the server"), true);
-        context.getSource().sendSuccess(() -> Component.literal("§7Reason: §f" + reason), false);
+    // Send confirmation to executor
+    context.getSource().sendSuccess(() -> Component.translatable("neoessentials.kick.success", playerName), true);
+    context.getSource().sendSuccess(() -> Component.translatable("neoessentials.kick.reason", reason), false);
         
         return 1;
     }

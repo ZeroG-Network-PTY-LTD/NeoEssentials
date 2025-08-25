@@ -75,8 +75,8 @@ public class PermissionEventListener {
             String displayName = placeholderManager.parse(player, prefix + " %player% " + suffix);
             // Use parsed displayName in tablist and scoreboard updates
             tabListManager.updateHeaderFooter(player, displayName);
-            tabListManager.updatePlayerEntry(player, displayName);
-            scoreboardManager.updateScoreboard(player, displayName);
+            tabListManager.updatePlayerEntry(player);
+            scoreboardManager.updateScoreboard(player);
             bossBarManager.showBossBar(player, "Welcome to the server!", 1.0f, 0x00FF00);
         } catch (Exception e) {
             LOGGER.error("Failed to load permission data for player {}", event.getEntity().getName().getString(), e);
