@@ -3,7 +3,6 @@ package com.zerog.neoessentials.commands.essentials;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.zerog.neoessentials.util.MessageUtil;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -69,7 +68,7 @@ public class MessageCommand {
 
         // Only players can send messages (for now)
         if (!(source.getEntity() instanceof ServerPlayer sender)) {
-            source.sendFailure(Component.literal("Only players can send private messages."));
+            source.sendFailure(Component.translatable("neoessentials.msg.only_players"));
             return 0;
         }
 
@@ -81,15 +80,15 @@ public class MessageCommand {
 
         // Mute check (example integration)
         if (isMuted(sender)) {
-            sender.sendSystemMessage(Component.literal("You are muted."));
+            sender.sendSystemMessage(Component.translatable("neoessentials.msg.muted"));
             return 0;
         }
 
         // Console recipient
         if (recipientArg.equalsIgnoreCase("console")) {
             // Send to console only
-            source.getServer().sendSystemMessage(Component.literal("[PM from " + sender.getName().getString() + "] " + messageArg));
-            sender.sendSystemMessage(Component.literal("[PM to Console] " + messageArg));
+            source.getServer().sendSystemMessage(Component.translatable("neoessentials.msg.console_from", sender.getName().getString(), messageArg));
+            sender.sendSystemMessage(Component.translatable("neoessentials.msg.console_to", messageArg));
             return 1;
         }
 
@@ -122,39 +121,31 @@ public class MessageCommand {
             }
         }
         if (recipients.isEmpty() && !recipientArg.equalsIgnoreCase("console")) {
-            sender.sendSystemMessage(Component.literal("Player not found: " + recipientArg));
+            sender.sendSystemMessage(Component.translatable("neoessentials.msg.player_not_found", recipientArg));
             return 0;
         }
 
         // Ignore/AFK checks (stub)
         recipients.removeIf(p -> isIgnored(sender, p) || isAFK(p));
         if (recipients.isEmpty() && !recipientArg.equalsIgnoreCase("console")) {
-            sender.sendSystemMessage(Component.literal("No available recipients (ignored or AFK)."));
+            sender.sendSystemMessage(Component.translatable("neoessentials.msg.no_available_recipients"));
             return 0;
         }
 
-        // Use configurable format strings from MainConfig
-        var mainConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
-        var chatSettings = mainConfig.chatSettings;
-        String senderFormat = chatSettings.pmFormatSender != null ? chatSettings.pmFormatSender : "[PM to {0}] {1}";
-        String receiverFormat = chatSettings.pmFormatReceiver != null ? chatSettings.pmFormatReceiver : "[PM from {0}] {1}";
 
         // Send messages
         for (ServerPlayer target : recipients) {
-            MessageUtil.sendMessage(sender, senderFormat, target.getName().getString(), messageArg);
-            MessageUtil.sendMessage(target, receiverFormat, sender.getName().getString(), messageArg);
-            // Reply tracking
+            sender.sendSystemMessage(Component.translatable("neoessentials.message.format", sender.getName().getString(), target.getName().getString(), messageArg));
+            target.sendSystemMessage(Component.translatable("neoessentials.message.reply_format", sender.getName().getString(), target.getName().getString(), messageArg));
             lastMessaged.put(sender.getUUID(), target.getUUID());
             lastMessaged.put(target.getUUID(), sender.getUUID());
-            // Log to console for admin monitoring
-            source.getServer().sendSystemMessage(Component.literal(
-                "§7[Private] " + sender.getName().getString() + " → " + target.getName().getString() + ": " + messageArg));
+            source.getServer().sendSystemMessage(Component.translatable("neoessentials.msg.log", sender.getName().getString(), target.getName().getString(), messageArg));
         }
 
         // Console recipient
         if (recipientArg.equalsIgnoreCase("console")) {
-            source.getServer().sendSystemMessage(Component.literal("[PM from " + sender.getName().getString() + "] " + messageArg));
-            sender.sendSystemMessage(Component.literal("[PM to Console] " + messageArg));
+            source.getServer().sendSystemMessage(Component.translatable("neoessentials.msg.console_from", sender.getName().getString(), messageArg));
+            sender.sendSystemMessage(Component.translatable("neoessentials.msg.console_to", messageArg));
         }
 
         return 1;

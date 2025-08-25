@@ -7,32 +7,100 @@ import java.util.*;
  * Handles multiple boss bars, progress, and colors
  */
 public class BossBarManager {
-    private final Map<UUID, BossBarEntry> activeBars = new HashMap<>();
-    private final com.zerog.neoessentials.features.PlaceholderManager placeholderManager = new com.zerog.neoessentials.features.PlaceholderManager();
+    // Config-driven, animated, and per-group bossbar support
+    private String defaultTitle = "%if:group=admin:&cAdmin Bar:Player Bar%";
+    private float defaultProgress = 1.0f;
+    private int defaultColor = 0; // 0 = default color, can be set per group
 
-    public void showBossBar(ServerPlayer player, String title, float progress, int color) {
-    String parsedTitle = placeholderManager.parse(player, title);
-    activeBars.put(player.getUUID(), new BossBarEntry(parsedTitle, progress, color));
-    // Placeholder for NeoForge boss bar integration
-    // Replace this block with the correct packet/API call when available
-    System.out.println("[BossBarManager] Would show boss bar for " + player.getName().getString() + ": " + parsedTitle + " (progress: " + progress + ", color: " + color + ")");
+    // Show bossbar for all players with config-driven title/progress/color
+    public void showAllBossBars(Collection<ServerPlayer> players) {
+        for (ServerPlayer player : players) {
+            String title = placeholderManager.processPlaceholders(defaultTitle, player);
+            float progress = defaultProgress;
+            int color = defaultColor;
+            showBossBar(player, "default", title, progress, color);
+        }
     }
+    /**
+     * Custom event for boss bar updates (production-ready for NeoForge event bus)
+     */
+    public static class CustomBossBarEvent extends net.neoforged.bus.api.Event {
+        private final ServerPlayer player;
+        private final String title;
+        private final float progress;
+        private final int color;
 
-    public void removeBossBar(ServerPlayer player) {
-    activeBars.remove(player.getUUID());
-    // Placeholder for NeoForge boss bar removal
-    // Replace this block with the correct packet/API call when available
-    System.out.println("[BossBarManager] Would remove boss bar for " + player.getName().getString());
-    }
-
-    public static class BossBarEntry {
-        public String title;
-        public float progress;
-        public int color;
-        public BossBarEntry(String title, float progress, int color) {
+        public CustomBossBarEvent(ServerPlayer player, String title, float progress, int color) {
+            this.player = player;
             this.title = title;
             this.progress = progress;
             this.color = color;
+        }
+
+        public ServerPlayer getPlayer() { return player; }
+        public String getTitle() { return title; }
+        public float getProgress() { return progress; }
+        public int getColor() { return color; }
+    }
+    // Map: player UUID -> Map of bossbar ID -> BossBarEntry
+    private final Map<UUID, Map<String, BossBarEntry>> activeBars = new HashMap<>();
+    private final com.zerog.neoessentials.placeholders.PlaceholderManager placeholderManager = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
+
+    public void showBossBar(ServerPlayer player, String title, float progress, int color) {
+        showBossBar(player, "default", title, progress, color);
+    }
+
+    public void showBossBar(ServerPlayer player, String id, String title, float progress, int color) {
+        String displayName = com.zerog.neoessentials.features.DisplayNameManager.getDisplayName(player);
+        net.minecraft.server.level.ServerBossEvent bossbar = new net.minecraft.server.level.ServerBossEvent(
+            net.minecraft.network.chat.Component.literal(displayName),
+            net.minecraft.world.BossEvent.BossBarColor.values()[color % net.minecraft.world.BossEvent.BossBarColor.values().length],
+            net.minecraft.world.BossEvent.BossBarOverlay.PROGRESS
+        );
+        bossbar.setVisible(true);
+        bossbar.setProgress(progress);
+        bossbar.addPlayer(player);
+        activeBars.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
+            .put(id, new BossBarEntry(id, displayName, progress, color, bossbar));
+        System.out.println("[BossBarManager] Showed boss bar for " + player.getName().getString() + ": " + displayName + " (id: " + id + ", progress: " + progress + ", color: " + color + ")");
+    }
+
+    public void removeBossBar(ServerPlayer player) {
+        // Remove all bossbars for player
+        Map<String, BossBarEntry> bars = activeBars.remove(player.getUUID());
+        if (bars != null) {
+            for (BossBarEntry entry : bars.values()) {
+                entry.bossbar.removePlayer(player);
+                entry.bossbar.setVisible(false);
+            }
+        }
+        System.out.println("[BossBarManager] Removed all boss bars for " + player.getName().getString());
+    }
+
+    public void removeBossBar(ServerPlayer player, String id) {
+        Map<String, BossBarEntry> bars = activeBars.get(player.getUUID());
+        if (bars != null) {
+            BossBarEntry entry = bars.remove(id);
+            if (entry != null) {
+                entry.bossbar.removePlayer(player);
+                entry.bossbar.setVisible(false);
+                System.out.println("[BossBarManager] Removed boss bar for " + player.getName().getString() + " (id: " + id + ")");
+            }
+        }
+    }
+
+    public static class BossBarEntry {
+        public String id;
+        public String title;
+        public float progress;
+        public int color;
+        public net.minecraft.server.level.ServerBossEvent bossbar;
+        public BossBarEntry(String id, String title, float progress, int color, net.minecraft.server.level.ServerBossEvent bossbar) {
+            this.id = id;
+            this.title = title;
+            this.progress = progress;
+            this.color = color;
+            this.bossbar = bossbar;
         }
     }
 }

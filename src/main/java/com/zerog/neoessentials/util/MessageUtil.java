@@ -20,7 +20,6 @@ public class MessageUtil {
     // Centralized color service instance (should be initialized from mod setup)
     private static ColorService colorService = new ColorService(
         java.util.Map.of(
-            "primary", "#00FF00", // Example theme color
             "secondary", "#FF0000"
         ),
         true, // allowLegacyCodes

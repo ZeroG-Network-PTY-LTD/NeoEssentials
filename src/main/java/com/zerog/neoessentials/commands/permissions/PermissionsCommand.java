@@ -432,8 +432,19 @@ public class PermissionsCommand {
             }
 
             // Clean up all NeoEssentials teams/scoreboards for this player before setting group
-            com.zerog.neoessentials.features.TablistScoreboardManager tabManager = com.zerog.neoessentials.features.TablistScoreboardManager.getInstance();
-            tabManager.cleanupAllNeoEssentialsTeamsAndScoreboards();
+            // Remove NeoEssentials team and objective for this player
+            var server = context.getSource().getServer();
+            var scoreboard = server.getScoreboard();
+            String teamName = "neo_" + target.getUUID();
+            var team = scoreboard.getPlayerTeam(teamName);
+            if (team != null) {
+                scoreboard.removePlayerTeam(team);
+            }
+            String objectiveName = "neoess_sidebar_" + target.getUUID();
+            var objective = scoreboard.getObjective(objectiveName);
+            if (objective != null) {
+                scoreboard.removeObjective(objective);
+            }
 
             // Set new group and force display refresh
             manager.setPlayerGroup(target.getUUID(), groupName);

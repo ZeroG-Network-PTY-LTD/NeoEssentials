@@ -88,29 +88,25 @@ public class TeleportRequestManager {
         // Check if requester is on cooldown
         if (isOnCooldown(requesterId)) {
             long remaining = getRemainingCooldown(requesterId);
-            MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.cooldown_active", String.valueOf(remaining)));
+            requester.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.teleport.cooldown_active", String.valueOf(remaining)));
             return false;
         }
-
         // Check if requester is trying to request to themselves
         if (requesterId.equals(targetId)) {
-            MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.cannot_request_self"));
+            requester.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.teleport.cannot_request_self"));
             return false;
         }
-
         // Check if target has too many pending requests
         List<TeleportRequest> targetRequests = pendingRequests.computeIfAbsent(targetId, k -> new ArrayList<>());
         if (targetRequests.size() >= MAX_PENDING_REQUESTS) {
-            MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.target_too_many_requests", target.getName().getString()));
+            requester.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.teleport.target_too_many_requests", target.getName().getString()));
             return false;
         }
-
         // Check if there's already a pending request from this requester to this target
         boolean alreadyExists = targetRequests.stream()
             .anyMatch(req -> req.requesterId.equals(requesterId) && !req.isExpired());
-
         if (alreadyExists) {
-            MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.already_pending_request", target.getName().getString()));
+            requester.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.teleport.already_pending_request", target.getName().getString()));
             return false;
         }
         

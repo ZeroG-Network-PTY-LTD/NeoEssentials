@@ -13,7 +13,6 @@ import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,41 +54,41 @@ public class HomeManager {
     MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         
     boolean homeModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.homes;
-        if (!homeModuleEnabled) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "home.disabled"));
-            return false;
-        }
+            if (!homeModuleEnabled) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.disabled"));
+                return false;
+            }
         
         // Validate home name
-        if (!isValidHomeName(homeName)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.invalid_name", homeName));
-            return false;
-        }
+            if (!isValidHomeName(homeName)) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.invalid_name", homeName));
+                return false;
+            }
         
         // Check home limit
     int currentHomes = playerDataManager.getHomeCount(player.getUUID());
     int maxHomes = getMaxHomes(player);
         
         boolean isNewHome = !playerDataManager.hasHome(player.getUUID(), homeName);
-        if (isNewHome && currentHomes >= maxHomes) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.max_homes_reached", String.valueOf(maxHomes)));
-            return false;
-        }
+            if (isNewHome && currentHomes >= maxHomes) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.max_homes_reached", String.valueOf(maxHomes)));
+                return false;
+            }
         
         // Check world restrictions
         String worldName = player.level().dimension().location().toString();
-        if (config.restrictedWorlds.contains(worldName)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.restricted_world"));
-            return false;
-        }
-        
-        // Check cost
-        if (config.useSetHomeCost && config.setHomeCost.compareTo(BigDecimal.ZERO) > 0) {
-            EconomyManager economyManager = EconomyManager.getInstance();
-            if (!economyManager.hasBalance(player.getUUID(), config.setHomeCost)) {
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.insufficient_funds", economyManager.formatCurrency(config.setHomeCost.doubleValue())));
+            if (config.restrictedWorlds.contains(worldName)) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.restricted_world"));
                 return false;
             }
+        
+        // Check cost
+    if (config.useSetHomeCost && config.setHomeCost > 0) {
+            EconomyManager economyManager = EconomyManager.getInstance();
+                if (!economyManager.hasBalance(player.getUUID(), config.setHomeCost)) {
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.insufficient_funds", economyManager.formatCurrency(config.setHomeCost)));
+                    return false;
+                }
             economyManager.withdrawBalance(player.getUUID(), config.setHomeCost, "Home creation: " + homeName);
         }
         
@@ -108,7 +107,7 @@ public class HomeManager {
         playerDataManager.setHome(player.getUUID(), homeName, homeLocation);
         
     String message = isNewHome ? "neoessentials.home.set" : "neoessentials.home.set";
-    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, message, homeName));
+        player.sendSystemMessage(net.minecraft.network.chat.Component.translatable(message, homeName));
         
         LOGGER.info("Player {} {} home '{}' at {} in {}", 
             player.getName().getString(),
@@ -127,18 +126,18 @@ public class HomeManager {
     // ...existing code...
         
     boolean homeModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.homes;
-        if (!homeModuleEnabled) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "home.disabled"));
-            return false;
-        }
+            if (!homeModuleEnabled) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.disabled"));
+                return false;
+            }
         
-        if (!playerDataManager.hasHome(player.getUUID(), homeName)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.not_found", homeName));
-            return false;
-        }
+            if (!playerDataManager.hasHome(player.getUUID(), homeName)) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.not_found", homeName));
+                return false;
+            }
         
         playerDataManager.deleteHome(player.getUUID(), homeName);
-    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.deleted", homeName));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.deleted", homeName));
         
         LOGGER.info("Player {} deleted home '{}'", player.getName().getString(), homeName);
         return true;
@@ -151,37 +150,37 @@ public class HomeManager {
     MainConfig.HomeSettings config = configUnifier.getConfigManager().getMainConfig().homeSettings;
         
     boolean homeModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.homes;
-        if (!homeModuleEnabled) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "home.disabled"));
-            return false;
-        }
+            if (!homeModuleEnabled) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.disabled"));
+                return false;
+            }
         
         // Check if home exists
     LocationUtil.Location home = playerDataManager.getHome(player.getUUID(), homeName);
-        if (home == null) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.not_found", homeName));
-            return false;
-        }
+            if (home == null) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.not_found", homeName));
+                return false;
+            }
         
         // Check cooldown
         if (isOnCooldown(player)) {
             long remainingTime = getRemainingCooldown(player);
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.cooldown_active", MessageUtil.formatTime(remainingTime)));
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.cooldown_active", MessageUtil.formatTime(remainingTime)));
             return false;
         }
         
         // Check cost
-    if (config.teleportHomeCost.compareTo(BigDecimal.ZERO) > 0) {
+    if (config.teleportHomeCost > 0) {
             EconomyManager economyManager = EconomyManager.getInstance();
-            if (!economyManager.hasBalance(player.getUUID(), config.teleportHomeCost)) {
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.insufficient_funds", economyManager.formatCurrency(config.teleportHomeCost.doubleValue())));
-                return false;
-            }
+                if (!economyManager.hasBalance(player.getUUID(), config.teleportHomeCost)) {
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.insufficient_funds", economyManager.formatCurrency(config.teleportHomeCost)));
+                    return false;
+                }
         }
         
         // Validate home location safety if required
         if (config.requireSafeLocation && !isLocationSafe(home)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.unsafe_location"));
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.unsafe_location"));
             return false;
         }
         
@@ -209,15 +208,15 @@ public class HomeManager {
     // ...existing code...
         
     List<String> homes = getPlayerHomes(player.getUUID());
-        if (homes.isEmpty()) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.list_none"));
-            return false;
-        }
+            if (homes.isEmpty()) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.list_none"));
+                return false;
+            }
         
-    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.list_header", String.valueOf(homes.size()), String.valueOf(getMaxHomes(player))));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.list_header", String.valueOf(homes.size()), String.valueOf(getMaxHomes(player))));
         
         for (String homeName : homes) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.list_entry", homeName));
+                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.list_entry", homeName));
         }
         
         return true;
@@ -296,7 +295,7 @@ public class HomeManager {
         // Cancel existing warmup
         cancelWarmup(player);
         
-    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "home.warmup", String.valueOf(config.teleportWarmup)));
+    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.warmup", String.valueOf(config.teleportWarmup)));
         
         // Store warmup task
         long warmupEnd = System.currentTimeMillis() + (config.teleportWarmup * 1000L);
@@ -333,7 +332,7 @@ public class HomeManager {
             }
             
             // Charge cost after successful teleport
-        if (config.teleportHomeCost.compareTo(BigDecimal.ZERO) > 0) {
+    if (config.teleportHomeCost > 0) {
                 EconomyManager economyManager = EconomyManager.getInstance();
                 economyManager.withdrawBalance(player.getUUID(), config.teleportHomeCost, "Home teleport: " + homeName);
             }

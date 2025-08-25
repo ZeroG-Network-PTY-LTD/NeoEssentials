@@ -8,7 +8,6 @@ import com.zerog.neoessentials.config.ConfigurationUnifier;
 
 import java.nio.file.Path;
 import com.zerog.neoessentials.features.CustomBossbarManager;
-import com.zerog.neoessentials.features.TablistScoreboardManager;
 import com.zerog.neoessentials.listeners.NotificationEventListener;
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.managers.*;
@@ -98,9 +97,6 @@ public class NeoEssentials {
         LOGGER.info("Placeholder System initialized");
         CustomBossbarManager.getInstance();
         LOGGER.info("Custom Bossbar Manager initialized");
-        TablistScoreboardManager.getInstance();
-        LOGGER.info("Enhanced Tablist & Scoreboard Manager initialized");
-        LOGGER.info("Tablist theme management ready");
         LOGGER.info("Enhanced Bossbar Manager ready");
         LOGGER.info("GUI system skipped - using sign-based shops only");
         LOGGER.info("Config GUI system skipped - using command-based configuration");
@@ -111,34 +107,20 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.PermissionEventListener());
         LOGGER.info("Permission Event Listener initialized");
         LOGGER.info("Shop Sign Event Handling consolidated into NeoEssentialsEventHandler");
+    // Register shop/signshop event handler
+    NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.shops.ShopEventHandler());
         // Initialize new PlaceholderManager, TabListManager, ScoreboardManager, BossBarManager
         com.zerog.neoessentials.features.PlaceholderManager placeholderManager = new com.zerog.neoessentials.features.PlaceholderManager();
         com.zerog.neoessentials.features.TabListManager tabListManager = new com.zerog.neoessentials.features.TabListManager();
         com.zerog.neoessentials.features.ScoreboardManager scoreboardManager = new com.zerog.neoessentials.features.ScoreboardManager();
         com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
-        // Wire managers to config and event hooks for dynamic updates
-        NeoForge.EVENT_BUS.register(new Object() {
-            @SubscribeEvent
-            public void onPlayerJoin(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
-                if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
-                    String displayName = placeholderManager.parse(player, "%prefix% %player% %suffix%");
-                    tabListManager.updateHeaderFooter(player, displayName);
-                    tabListManager.updatePlayerEntry(player, displayName);
-                    scoreboardManager.updateScoreboard(player, displayName);
-                    bossBarManager.showBossBar(player, "Welcome to the server!", 1.0f, 0x00FF00);
-                }
-            }
-            @SubscribeEvent
-            public void onScoreUpdate(/* CustomScoreUpdateEvent event */) {
-                // Example: scoreboardManager.setPlayerScore(player, score);
-                // Implement your custom score update event and logic here
-            }
-            @SubscribeEvent
-            public void onBossBarEvent(/* CustomBossBarEvent event */) {
-                // Example: bossBarManager.showBossBar(player, title, progress, color);
-                // Implement your custom bossbar event and logic here
-            }
-        });
+        // Register UI event handler for tablist, scoreboard, bossbar
+        NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.features.UIEventHandler(
+            tabListManager,
+            scoreboardManager,
+            bossBarManager,
+            placeholderManager
+        ));
     }
     // ...existing code...
     

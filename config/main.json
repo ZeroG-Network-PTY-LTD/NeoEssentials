@@ -120,8 +120,13 @@
     "enableWaystoneIntegration": true
   },
   "chatConfig": {
-    "radius": 0,
-    "format": "<{PREFIX}{DISPLAYNAME}{SUFFIX}> {MESSAGE}",
+  "radius": 0,
+  "format": "{PREFIX} {DISPLAYNAME} > {MESSAGE}",
+  "groupFormats": {
+    "admin": "{PREFIX} {DISPLAYNAME} > {MESSAGE}",
+    "mod": "{PREFIX} {DISPLAYNAME} > {MESSAGE}",
+    "default": "{PREFIX} {DISPLAYNAME} > {MESSAGE}"
+  },
     "localChatOnly": false,
     "enableNearbyChat": false,
     "nearbyRadius": 100

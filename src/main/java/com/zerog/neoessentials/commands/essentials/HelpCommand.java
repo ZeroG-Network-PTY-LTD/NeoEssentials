@@ -48,19 +48,19 @@ public class HelpCommand {
         
         List<HelpEntry> entries = HELP_CATEGORIES.get(category.toLowerCase());
         if (entries == null) {
-            sendMessage(source, "§cUnknown help category: " + category);
-            sendMessage(source, "§eAvailable categories: " + String.join(", ", HELP_CATEGORIES.keySet()));
+            sendTranslatedMessage(source, "neoessentials.help.unknown_category", category);
+            sendTranslatedMessage(source, "neoessentials.help.available_categories", String.join(", ", HELP_CATEGORIES.keySet()));
             return 0;
         }
-        
+
         int totalPages = (int) Math.ceil((double) entries.size() / ENTRIES_PER_PAGE);
         if (page < 1 || page > totalPages) {
-            sendMessage(source, "§cInvalid page number. Available pages: 1-" + totalPages);
+            sendTranslatedMessage(source, "neoessentials.help.invalid_page", totalPages);
             return 0;
         }
-        
+
         // Header
-        sendMessage(source, "§6==== §eNeoEssentials Help §7(" + category + ") §eP" + page + "/" + totalPages + " §6====");
+        sendTranslatedMessage(source, "neoessentials.help.header", category, page, totalPages);
         
         // Calculate entries for this page
         int startIndex = (page - 1) * ENTRIES_PER_PAGE;
@@ -71,15 +71,15 @@ public class HelpCommand {
             
             if (source.getEntity() instanceof ServerPlayer) {
                 // Interactive help for players
-                Component helpComponent = Component.literal("§a/" + entry.command + " §7- §f" + entry.description)
+                Component helpComponent = Component.translatable("neoessentials.help.entry", entry.command, entry.description)
                     .withStyle(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/" + entry.command))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
-                            Component.literal("§eClick to type command\n§7Usage: §f/" + entry.usage))));
+                            Component.translatable("neoessentials.help.entry_hover", entry.usage))));
                 source.sendSuccess(() -> helpComponent, false);
             } else {
                 // Simple text for console
-                sendMessage(source, "§a/" + entry.command + " §7- §f" + entry.description);
+                sendTranslatedMessage(source, "neoessentials.help.entry", entry.command, entry.description);
             }
         }
         
@@ -88,21 +88,21 @@ public class HelpCommand {
             MutableComponent navigation = Component.literal("");
             
             if (page > 1) {
-                MutableComponent prevButton = Component.literal(" §a[Previous]")
+                MutableComponent prevButton = Component.translatable("neoessentials.help.prev_button")
                     .withStyle(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/help " + category + " " + (page - 1)))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Go to previous page"))));
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("neoessentials.help.prev_hover"))));
                 navigation = navigation.append(prevButton);
             }
             
-            MutableComponent pageInfo = Component.literal(" §7Page " + page + "/" + totalPages + " ");
+            MutableComponent pageInfo = Component.translatable("neoessentials.help.page_info", page, totalPages);
             navigation = navigation.append(pageInfo);
             
             if (page < totalPages) {
-                MutableComponent nextButton = Component.literal(" §a[Next]")
+                MutableComponent nextButton = Component.translatable("neoessentials.help.next_button")
                     .withStyle(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/help " + category + " " + (page + 1)))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Go to next page"))));
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("neoessentials.help.next_hover"))));
                 navigation = navigation.append(nextButton);
             }
             
@@ -110,17 +110,17 @@ public class HelpCommand {
             source.sendSuccess(() -> finalNav, false);
         } else if (totalPages > 1) {
             // Simple navigation for console
-            sendMessage(source, "§7Page " + page + "/" + totalPages + " - Use: /help " + category + " <page>");
+            sendTranslatedMessage(source, "neoessentials.help.page_info_console", page, totalPages, category);
         }
         
         return 1;
     }
     
-    private static void sendMessage(CommandSourceStack source, String message) {
+    private static void sendTranslatedMessage(CommandSourceStack source, String key, Object... args) {
         if (source.getEntity() instanceof ServerPlayer player) {
-            MessageUtil.sendMessage(player, message);
+            MessageUtil.sendTranslatedMessage(player, key, args);
         } else {
-            source.sendSuccess(() -> Component.literal(message), false);
+            source.sendSuccess(() -> Component.translatable(key, args), false);
         }
     }
     

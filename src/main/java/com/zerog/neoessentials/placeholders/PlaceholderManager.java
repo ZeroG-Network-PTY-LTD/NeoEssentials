@@ -21,6 +21,48 @@ import java.util.regex.Pattern;
  * @since 2.1.0
  */
 public class PlaceholderManager {
+    /**
+     * Example customPlaceholders.json config:
+     *
+     * {
+     *   "customPlaceholders": {
+     *     "afk_tag": {
+     *       "type": "conditional",
+     *       "condition": "${player essentials_afk}",
+     *       "true": "&7|&oaway",
+     *       "false": ""
+     *     },
+     *     "viewer_colored_ping": {
+     *       "type": "conditional",
+     *       "condition": "${viewer ping} < 150",
+     *       "true": "${viewer_colored_ping0}",
+     *       "false": "&c${viewer ping}"
+     *     },
+     *     "viewer_colored_ping0": {
+     *       "type": "conditional",
+     *       "condition": "${viewer ping} < 50",
+     *       "true": "&a${viewer ping}",
+     *       "false": "&e${viewer ping}"
+     *     },
+     *     "welcome_animation": {
+     *       "type": "animated",
+     *       "frames": [
+     *         "&cWelcome &f${viewer name}",
+     *         "&eW&celcome &f${viewer name}",
+     *         "... more frames ..."
+     *       ],
+     *       "interval": 0.2
+     *     },
+     *     "static_example": {
+     *       "type": "static",
+     *       "value": "This is a static placeholder value."
+     *     }
+     *   }
+     * }
+     *
+     * Place this file in config/neoessentials/customPlaceholders.json.
+     * All placeholders are available in tablist, chat, GUIs, etc. as ${placeholder_name}.
+     */
     private static final Logger LOGGER = LoggerFactory.getLogger(PlaceholderManager.class);
     private static PlaceholderManager instance;
     
@@ -33,7 +75,126 @@ public class PlaceholderManager {
     private PlaceholderManager() {
         this.placeholders = new HashMap<>();
         registerBuiltInPlaceholders();
+        loadCustomPlaceholders();
         LOGGER.info("PlaceholderManager initialized with {} built-in placeholders", placeholders.size());
+    }
+    /**
+     * Load custom placeholders from config/neoessentials/customPlaceholders.json
+     */
+    private void loadCustomPlaceholders() {
+        java.nio.file.Path configDir = java.nio.file.Paths.get("config", "neoessentials");
+        java.nio.file.Path configPath = configDir.resolve("customPlaceholders.json");
+        if (!java.nio.file.Files.exists(configPath)) {
+            try {
+                LOGGER.info("customPlaceholders.json not found at {}. Attempting to create directory {}...", configPath, configDir);
+                java.nio.file.Files.createDirectories(configDir);
+                LOGGER.info("Directory created or already exists: {}", configDir);
+                // Write default file
+                String defaultJson = "{\n  \"info\": \"Edit or add custom placeholders here. Use type: static, conditional, or animated. Example usage: ${afk_tag}, ${player_prefix}, etc. Conditional placeholders use 'condition', animated use 'frames'. See documentation for details.\",\n  \"customPlaceholders\": {\n    \"afk_tag\": {\n      \"type\": \"conditional\",\n      \"condition\": \"${player essentials_afk}\",\n      \"true\": \"&7|&oaway\",\n      \"false\": \"\"\n    },\n    \"welcome_animation\": {\n      \"type\": \"animated\",\n      \"frames\": [\n        \"&cWelcome &f${viewer name}\",\n        \"&eW&celcome &f${viewer name}\"\n      ],\n      \"interval\": 0.2\n    },\n    \"static_example\": {\n      \"type\": \"static\",\n      \"value\": \"This is a static placeholder value.\"\n    },\n    \"player_prefix\": {\n      \"type\": \"static\",\n      \"value\": \"&7[Player]\"\n    },\n    \"player_suffix\": {\n      \"type\": \"static\",\n      \"value\": \"&f\"\n    },\n    \"player_status\": {\n      \"type\": \"conditional\",\n      \"condition\": \"${player online}\",\n      \"true\": \"&aOnline\",\n      \"false\": \"&cOffline\"\n    },\n    \"player_rank\": {\n      \"type\": \"static\",\n      \"value\": \"Member\"\n    },\n    \"player_points\": {\n      \"type\": \"static\",\n      \"value\": \"0\"\n    },\n    \"player_joined\": {\n      \"type\": \"static\",\n      \"value\": \"${player name} joined the server!\"\n    }\n  }\n}";
+                java.nio.file.Files.writeString(configPath, defaultJson);
+                LOGGER.info("Successfully generated default customPlaceholders.json at {}", configPath);
+            } catch (Exception e) {
+                LOGGER.error("Failed to generate default customPlaceholders.json at {}: {}", configPath, e);
+                return;
+            }
+        } else {
+            LOGGER.info("customPlaceholders.json already exists at {}. Skipping generation.", configPath);
+        }
+        try {
+            String json = new String(java.nio.file.Files.readAllBytes(configPath));
+            com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+            if (!root.has("customPlaceholders")) return;
+            com.google.gson.JsonObject placeholdersObj = root.getAsJsonObject("customPlaceholders");
+            for (String key : placeholdersObj.keySet()) {
+                com.google.gson.JsonObject def = placeholdersObj.getAsJsonObject(key);
+                String type = def.has("type") ? def.get("type").getAsString() : "static";
+                if ("conditional".equals(type)) {
+                    String condition = def.has("condition") ? def.get("condition").getAsString() : "";
+                    String trueValue = def.has("true") ? def.get("true").getAsString() : "";
+                    String falseValue = def.has("false") ? def.get("false").getAsString() : "";
+                    registerPlaceholder(key, ctx -> {
+                        boolean cond = evaluateCondition(condition, ctx);
+                        String value = cond ? trueValue : falseValue;
+                        return processPlaceholders(value, ctx);
+                    });
+                } else if ("animated".equals(type)) {
+                    // Animated placeholder: cycles through frames
+                    java.util.List<String> frames = new java.util.ArrayList<>();
+                    if (def.has("frames") && def.get("frames").isJsonArray()) {
+                        for (var el : def.getAsJsonArray("frames")) {
+                            frames.add(el.getAsString());
+                        }
+                    }
+                    double interval = def.has("interval") ? def.get("interval").getAsDouble() : 1.0;
+                    registerPlaceholder(key, new AnimatedPlaceholder(frames, interval));
+                } else {
+                    // Static placeholder
+                    String value = def.has("value") ? def.get("value").getAsString() : "";
+                    registerPlaceholder(key, ctx -> processPlaceholders(value, ctx));
+                }
+                LOGGER.info("Registered custom placeholder: {} (type: {})", key, type);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to load custom placeholders: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Evaluate a simple condition string, e.g. "${player ping} < 150"
+     */
+    private boolean evaluateCondition(String condition, PlaceholderContext ctx) {
+        if (condition == null || condition.isEmpty()) return false;
+        // Replace placeholders in condition
+        String expr = processPlaceholders(condition, ctx);
+    expr = expr.replaceAll("[^0-9<>=!.]+", "").trim();
+        try {
+            if (expr.contains("<")) {
+                String[] parts = expr.split("<");
+                double left = Double.parseDouble(parts[0].trim());
+                double right = Double.parseDouble(parts[1].trim());
+                return left < right;
+            } else if (expr.contains(">")) {
+                String[] parts = expr.split(">");
+                double left = Double.parseDouble(parts[0].trim());
+                double right = Double.parseDouble(parts[1].trim());
+                return left > right;
+            } else if (expr.contains("==")) {
+                String[] parts = expr.split("==");
+                return parts[0].trim().equals(parts[1].trim());
+            } else if (expr.contains("!=")) {
+                String[] parts = expr.split("!=");
+                return !parts[0].trim().equals(parts[1].trim());
+            } else if (expr.equals("true")) {
+                return true;
+            } else if (expr.equals("false")) {
+                return false;
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to evaluate condition: {}", condition);
+        }
+        return false;
+    }
+
+    /**
+     * Animated placeholder implementation
+     */
+    private static class AnimatedPlaceholder implements java.util.function.Function<PlaceholderContext, String> {
+        private final java.util.List<String> frames;
+        private final double interval;
+        private long startTime;
+        public AnimatedPlaceholder(java.util.List<String> frames, double interval) {
+            this.frames = frames;
+            this.interval = interval;
+            this.startTime = System.currentTimeMillis();
+        }
+        @Override
+        public String apply(PlaceholderContext ctx) {
+            if (frames.isEmpty()) return "";
+            long now = System.currentTimeMillis();
+            int idx = (int)(((now - startTime) / 1000.0 / interval) % frames.size());
+            String frame = frames.get(idx);
+            return frame;
+        }
     }
     
     public static PlaceholderManager getInstance() {
@@ -47,6 +208,16 @@ public class PlaceholderManager {
      * Register built-in placeholders
      */
     private void registerBuiltInPlaceholders() {
+        // Aliases for chat formatting compatibility
+        registerPlaceholder("player", ctx -> ctx.getPlayer() != null ? ctx.getPlayer().getName().getString() : "Unknown");
+        registerPlaceholder("prefix", ctx -> {
+            // Replace with your prefix logic, e.g. from permissions manager
+            return com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerPrefix(ctx.getPlayer().getUUID());
+        });
+        registerPlaceholder("suffix", ctx -> {
+            // Replace with your suffix logic, e.g. from permissions manager
+            return com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerSuffix(ctx.getPlayer().getUUID());
+        });
         // Player placeholders
         registerPlaceholder("player_name", ctx -> ctx.getPlayer() != null ? ctx.getPlayer().getName().getString() : "Unknown");
         registerPlaceholder("player_displayname", ctx -> ctx.getPlayer() != null ? ctx.getPlayer().getDisplayName().getString() : "Unknown");

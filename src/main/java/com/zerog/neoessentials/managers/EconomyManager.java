@@ -302,16 +302,12 @@ public class EconomyManager {
         
         UUID playerUUID = player.getUUID();
         if (!hasBalance(playerUUID, cost)) {
-            MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
-            MessageUtil.sendMessage(player, config.messages.insufficientFunds,
-                formatCurrency(cost), formatCurrency(getBalance(playerUUID)));
+            MessageUtil.sendTranslatedMessage(player, "neoessentials.economy.insufficient_funds", formatCurrency(cost), formatCurrency(getBalance(playerUUID)));
             return false;
         }
         
-        withdrawBalance(playerUUID, cost, "Command usage: " + command);
-    MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
-        MessageUtil.sendMessage(player, config.messages.commandCostCharged,
-            formatCurrency(cost), command);
+    withdrawBalance(playerUUID, cost, "Command usage: " + command);
+    MessageUtil.sendTranslatedMessage(player, "neoessentials.economy.command_cost_charged", formatCurrency(cost), command);
         
         return true;
     }
@@ -558,33 +554,33 @@ public class EconomyManager {
     // EssentialsX-style command methods for EconomyCommand
     public int showBalance(CommandSourceStack src, ServerPlayer player) {
         BigDecimal balance = getBalance(player.getUUID());
-        MessageUtil.sendMessage(player, "Balance: $" + formatCurrency(balance));
+    MessageUtil.sendTranslatedMessage(player, "neoessentials.economy.balance", formatCurrency(balance));
         return 1;
     }
 
     public int pay(CommandSourceStack src, ServerPlayer sender, ServerPlayer target, double amount) {
         BigDecimal senderBal = getBalance(sender.getUUID());
         if (senderBal.doubleValue() < amount) {
-            MessageUtil.sendMessage(sender, "Insufficient funds.");
+            MessageUtil.sendTranslatedMessage(sender, "neoessentials.economy.insufficient_funds", formatCurrency(BigDecimal.valueOf(amount)), formatCurrency(senderBal));
             return 0;
         }
         setBalance(sender.getUUID(), senderBal.subtract(BigDecimal.valueOf(amount)));
         setBalance(target.getUUID(), getBalance(target.getUUID()).add(BigDecimal.valueOf(amount)));
-        MessageUtil.sendMessage(sender, "Paid $" + amount + " to " + target.getName().getString());
-        MessageUtil.sendMessage(target, "Received $" + amount + " from " + sender.getName().getString());
+        MessageUtil.sendTranslatedMessage(sender, "neoessentials.economy.paid", target.getName().getString(), formatCurrency(BigDecimal.valueOf(amount)));
+        MessageUtil.sendTranslatedMessage(target, "neoessentials.economy.received", formatCurrency(BigDecimal.valueOf(amount)), sender.getName().getString());
         return 1;
     }
 
     public int give(CommandSourceStack src, ServerPlayer target, double amount) {
         setBalance(target.getUUID(), getBalance(target.getUUID()).add(BigDecimal.valueOf(amount)));
-        MessageUtil.sendMessage(target, "Given $" + amount);
+    MessageUtil.sendTranslatedMessage(target, "neoessentials.economy.given", formatCurrency(BigDecimal.valueOf(amount)));
         return 1;
     }
 
     public int take(CommandSourceStack src, ServerPlayer target, double amount) {
         BigDecimal bal = getBalance(target.getUUID());
         setBalance(target.getUUID(), bal.subtract(BigDecimal.valueOf(amount)).max(BigDecimal.ZERO));
-        MessageUtil.sendMessage(target, "Taken $" + amount);
+    MessageUtil.sendTranslatedMessage(target, "neoessentials.economy.taken", formatCurrency(BigDecimal.valueOf(amount)));
         return 1;
     }
 }

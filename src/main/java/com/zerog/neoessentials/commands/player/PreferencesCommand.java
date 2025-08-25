@@ -82,8 +82,6 @@ public class PreferencesCommand {
                 Component guiHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.gui.header"));
             player.sendSystemMessage(guiHeader);
             
-                Component theme = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.gui.theme", prefs.getGuiTheme()));
-            player.sendSystemMessage(theme);
             
                 Component animations = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.gui.animations", prefs.isUseAnimations()));
             player.sendSystemMessage(animations);
@@ -204,7 +202,6 @@ public class PreferencesCommand {
             player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.general.receiveAnnouncements")));
             Component guiHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.gui.header"));
             player.sendSystemMessage(guiHeader);
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.gui.guiTheme")));
             player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.gui.useAnimations")));
             player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.gui.playClickSounds")));
             Component chatHeader = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.list.chat.header"));
@@ -236,8 +233,6 @@ public class PreferencesCommand {
                 return String.valueOf(prefs.isReceiveNotifications());
             case "receiveannouncements":
                 return String.valueOf(prefs.isReceiveAnnouncements());
-            case "guitheme":
-                return prefs.getGuiTheme();
             case "useanimations":
                 return String.valueOf(prefs.isUseAnimations());
             case "playclicksounds":
@@ -272,9 +267,6 @@ public class PreferencesCommand {
                     return true;
                 case "receiveannouncements":
                     prefs.setReceiveAnnouncements(Boolean.parseBoolean(value));
-                    return true;
-                case "guitheme":
-                    prefs.setGuiTheme(value);
                     return true;
                 case "useanimations":
                     prefs.setUseAnimations(Boolean.parseBoolean(value));
@@ -337,9 +329,6 @@ public class PreferencesCommand {
                 return true;
             case "receiveannouncements":
                 prefs.setReceiveAnnouncements(true);
-                return true;
-            case "guitheme":
-                prefs.setGuiTheme("auto");
                 return true;
             case "useanimations":
                 prefs.setUseAnimations(true);

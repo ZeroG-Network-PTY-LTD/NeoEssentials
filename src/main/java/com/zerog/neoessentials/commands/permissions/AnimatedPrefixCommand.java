@@ -3,7 +3,6 @@ package com.zerog.neoessentials.commands.permissions;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.zerog.neoessentials.animation.AnimationManager;
 import com.zerog.neoessentials.permissions.CustomPermissionsManager;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.util.PermissionUtil;
@@ -15,7 +14,6 @@ import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 
 /**
  * Enhanced Prefix Command with Animation Support
@@ -100,33 +98,15 @@ public class AnimatedPrefixCommand {
     private static int previewPrefix(CommandContext<CommandSourceStack> context) {
         try {
             String prefix = StringArgumentType.getString(context, "prefix");
-            ServerPlayer player = context.getSource().getPlayerOrException();
+            // Removed unused variable 'player'
             
-            // Try to process the prefix with animations
-            String processedPrefix;
-            try {
-                // Get animation manager config directory
-                File configDir = new File("config/neoessentials");
-                AnimationManager animManager = AnimationManager.getInstance(configDir);
-                
-                if (animManager.isEnabled()) {
-                    processedPrefix = animManager.processAnimatedText(prefix, player);
-                } else {
-                    processedPrefix = prefix;
-                }
-            } catch (Exception e) {
-                LOGGER.debug("Animation manager not available for preview: {}", e.getMessage());
-                processedPrefix = prefix;
-            }
-            
-            final String finalProcessedPrefix = processedPrefix;
+            // Animation system removed; just show raw prefix
             context.getSource().sendSuccess(() -> Component.literal(
                 "§b🎬 Prefix Preview:\n" +
                 "§7Raw: §f" + prefix + "\n" +
-                "§7Processed: " + finalProcessedPrefix + "§r\n" +
-                "§7Note: Animations update dynamically in-game."
+                "§7Processed: " + prefix + "§r\n" +
+                "§7Note: Animations are no longer supported."
             ), false);
-            
             return 1;
             
         } catch (Exception e) {
@@ -168,21 +148,9 @@ public class AnimatedPrefixCommand {
     private static int listAnimations(CommandContext<CommandSourceStack> context) {
         try {
             context.getSource().sendSuccess(() -> Component.literal(
-                "§b🎨 Available Animations for Prefixes:\n" +
-                "§7Basic placeholders:\n" +
-                "§e{animated_server} §7- Animated server name\n" +
-                "§e{rainbow_server} §7- Rainbow text effect\n" +
-                "§e{loading} §7- Loading bar animation\n" +
-                "§e{players_online} §7- Online player count\n" +
-                "§e{server_time} §7- Server time display\n" +
-                "§e{server_tps} §7- Server TPS indicator\n\n" +
-                "§7Example animated prefixes:\n" +
-                "§e/aprefix set admin \"§c[{rainbow_server}]§r \"\n" +
-                "§e/aprefix set vip \"§b[{animated_server}]§r \"\n" +
-                "§e/aprefix set mod \"§6[{loading}]§r \"\n\n" +
-                "§7Create custom animations in §econfig/neoessentials/animations.json"
+                "§b🎨 Animations for Prefixes are no longer supported.\n" +
+                "§7You can still use color codes and placeholders for styling."
             ), false);
-            
             return 1;
             
         } catch (Exception e) {
@@ -196,20 +164,17 @@ public class AnimatedPrefixCommand {
      */
     private static int showHelp(CommandContext<CommandSourceStack> context) {
         context.getSource().sendSuccess(() -> Component.literal(
-            "§b🎬 Animated Prefix Commands Help:\n\n" +
-            "§e/aprefix set <group> <prefix> §7- Set animated prefix for group\n" +
+            "§b🎬 Prefix Commands Help:\n\n" +
+            "§e/aprefix set <group> <prefix> §7- Set prefix for group\n" +
             "§e/aprefix preview <prefix> §7- Preview how prefix will look\n" +
             "§e/aprefix test <player> §7- Test player's current prefix\n" +
             "§e/aprefix animations §7- List available animations\n" +
             "§e/aprefix help §7- Show this help\n\n" +
             "§b💡 Tips:\n" +
             "§7• Use {placeholders} for dynamic content\n" +
-            "§7• Animations update automatically in-game\n" +
-            "§7• Custom animations can be created in animations.json\n" +
             "§7• Use color codes (§c&c§7, §a&a§7) for styling\n" +
             "§7• Test prefixes before applying to groups"
         ), false);
-        
         return 1;
     }
 }

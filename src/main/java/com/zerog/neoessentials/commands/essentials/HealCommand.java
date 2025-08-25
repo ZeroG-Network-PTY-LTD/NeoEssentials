@@ -53,7 +53,7 @@ public class HealCommand {
                 (src) -> {
                     ServerPlayer player = src.getPlayerOrException();
                     healPlayer(player);
-                    src.sendSuccess(() -> Component.literal("§a✨ You have been healed! Full health and hunger restored."), false);
+                    src.sendSuccess(() -> Component.translatable("neoessentials.heal.self_success"), false);
                     return 1;
                 }
             )
@@ -75,8 +75,8 @@ public class HealCommand {
                 healPlayer(target);
                 
                 // Send confirmation to both players
-                source.sendSuccess(() -> Component.literal("§a✨ You have healed " + target.getName().getString() + "!"), true);
-                target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.heal.success", executor.getName().getString())));
+                source.sendSuccess(() -> Component.translatable("neoessentials.heal.other_success", target.getName().getString()), true);
+                target.sendSystemMessage(Component.translatable("neoessentials.heal.success", executor.getName().getString()));
                 
                 return 1;
             }

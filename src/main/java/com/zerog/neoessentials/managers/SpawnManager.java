@@ -49,25 +49,22 @@ public class SpawnManager {
      * Set the main spawn location
      */
     public boolean setSpawn(ServerPlayer player, LocationUtil.Location location) {
-    com.zerog.neoessentials.config.MainConfig.SpawnSettings config = configUnifier.getConfigManager().getMainConfig().spawnSettings;
-    boolean spawnModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.spawn;
+        MainConfig.SpawnConfig config = configUnifier.getConfigManager().getMainConfig().spawnConfig;
+        boolean spawnModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.spawn;
         if (!spawnModuleEnabled) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.disabled"));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.spawn.disabled"));
             return false;
         }
-        
         // Check permission
         if (!PermissionUtil.hasPermission(player, PermissionNodes.SPAWN_SET)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.no_permission"));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.spawn.no_permission"));
             return false;
         }
-        
         // Validate location
         if (!isValidSpawnLocation(location)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.not_found"));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.spawn.not_found"));
             return false;
         }
-        
         // Update main spawn configuration
         config.mainSpawn.world = location.world;
         config.mainSpawn.x = location.x;
@@ -75,12 +72,8 @@ public class SpawnManager {
         config.mainSpawn.z = location.z;
         config.mainSpawn.yaw = location.yaw;
         config.mainSpawn.pitch = location.pitch;
-        
-    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.set", location.world, String.valueOf((int) location.x), String.valueOf((int) location.y), String.valueOf((int) location.z)));
-        
-        LOGGER.info("Spawn location set by {} at {}", player.getName().getString(), 
-            formatLocation(location));
-        
+        player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.spawn.set", location.world, String.valueOf((int) location.x), String.valueOf((int) location.y), String.valueOf((int) location.z)));
+        LOGGER.info("Spawn location set by {} at {}", player.getName().getString(), formatLocation(location));
         return true;
     }
     
@@ -101,35 +94,30 @@ public class SpawnManager {
      * Teleport player to spawn
      */
     public boolean teleportToSpawn(ServerPlayer player) {
-    com.zerog.neoessentials.config.MainConfig.SpawnSettings config = configUnifier.getConfigManager().getMainConfig().spawnSettings;
-        
+        MainConfig.SpawnConfig config = configUnifier.getConfigManager().getMainConfig().spawnConfig;
         if (!config.enabled) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.disabled"));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.spawn.disabled"));
             return false;
         }
-        
         // Check permission
         if (!PermissionUtil.hasPermission(player, PermissionNodes.SPAWN)) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.no_permission"));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.spawn.no_permission"));
             return false;
         }
-        
         // Get spawn location
         LocationUtil.Location spawnLocation = getSpawnLocation();
         if (spawnLocation == null) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.not_set"));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.spawn.not_set"));
             return false;
         }
-        
         // Perform teleport
         boolean success = teleportToLocation(player, spawnLocation);
         if (success) {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.teleported"));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.spawn.teleported"));
             LOGGER.info("Player {} teleported to spawn", player.getName().getString());
         } else {
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.not_found"));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.spawn.not_found"));
         }
-        
         return success;
     }
     
@@ -137,8 +125,7 @@ public class SpawnManager {
      * Get the spawn location for a world
      */
     public LocationUtil.Location getSpawnLocation(String world) {
-    MainConfig.SpawnSettings config = configUnifier.getConfigManager().getMainConfig().spawnSettings;
-        
+        MainConfig.SpawnConfig config = configUnifier.getConfigManager().getMainConfig().spawnConfig;
         // Check for world-specific spawn
         // Only main spawn supported in centralized config
         if (config.mainSpawn.world != null && config.mainSpawn.world.equals(world)) {
@@ -156,8 +143,7 @@ public class SpawnManager {
      * Get the main spawn location
      */
     public LocationUtil.Location getSpawnLocation() {
-    MainConfig.SpawnSettings config = configUnifier.getConfigManager().getMainConfig().spawnSettings;
-        
+        MainConfig.SpawnConfig config = configUnifier.getConfigManager().getMainConfig().spawnConfig;
         if (config.mainSpawn.world != null) {
             return new LocationUtil.Location(
                 config.mainSpawn.world,
@@ -165,7 +151,6 @@ public class SpawnManager {
                 config.mainSpawn.yaw, config.mainSpawn.pitch
             );
         }
-        
         // Fall back to overworld spawn
         return getWorldDefaultSpawn("minecraft:overworld");
     }
@@ -174,30 +159,24 @@ public class SpawnManager {
      * Handle first join spawn
      */
     public void handleFirstJoin(ServerPlayer player) {
-    MainConfig.SpawnSettings config = configUnifier.getConfigManager().getMainConfig().spawnSettings;
-        
+        MainConfig.SpawnConfig config = configUnifier.getConfigManager().getMainConfig().spawnConfig;
         if (!config.enabled || !config.setSpawnOnFirstJoin) {
             return;
         }
-        
         // Check if player has joined before
         Object hasJoined = playerDataManager.getSetting(player.getUUID(), "has_joined_before");
         if (Boolean.TRUE.equals(hasJoined) || "true".equals(String.valueOf(hasJoined))) {
             return;
         }
-        
         // Get spawn location
         LocationUtil.Location spawnLocation = getSpawnLocation();
         if (spawnLocation != null) {
             teleportToLocation(player, spawnLocation);
-            
-            if (config.newPlayer.giveWelcomeMessage && !config.messages.welcomeMessage.isEmpty()) {
+            if (config.newPlayer.giveWelcomeMessage) {
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.welcome", spawnLocation.world, String.valueOf((int) spawnLocation.x), String.valueOf((int) spawnLocation.y), String.valueOf((int) spawnLocation.z)));
             }
-            
             LOGGER.info("Player {} teleported to spawn on first join", player.getName().getString());
         }
-        
         // Mark as joined
         playerDataManager.setSetting(player.getUUID(), "has_joined_before", true);
     }
@@ -206,12 +185,10 @@ public class SpawnManager {
      * Handle respawn
      */
     public void handleRespawn(ServerPlayer player) {
-    MainConfig.SpawnSettings config = configUnifier.getConfigManager().getMainConfig().spawnSettings;
-        
+        MainConfig.SpawnConfig config = configUnifier.getConfigManager().getMainConfig().spawnConfig;
         if (!config.enabled || !config.setSpawnOnRespawn) {
             return;
         }
-        
         // Check respawn settings
         if (config.respawn.respectBedSpawns) {
             BlockPos bedPos = player.getRespawnPosition();
@@ -219,7 +196,6 @@ public class SpawnManager {
                 return; // Let vanilla handle bed respawn
             }
         }
-        
         if (config.setSpawnOnDeath) {
             LocationUtil.Location spawnLocation = getSpawnLocation(player.serverLevel().dimension().location().toString());
             if (spawnLocation != null) {
@@ -289,17 +265,14 @@ public class SpawnManager {
      * Check spawn protection
      */
     public boolean isInSpawnProtection(LocationUtil.Location location) {
-    MainConfig.SpawnSettings config = configUnifier.getConfigManager().getMainConfig().spawnSettings;
-        
+        MainConfig.SpawnConfig config = configUnifier.getConfigManager().getMainConfig().spawnConfig;
         if (!config.enabled || !config.safety.enabled) {
             return false;
         }
-        
         LocationUtil.Location spawnLocation = getSpawnLocation(location.world);
         if (spawnLocation == null) {
             return false;
         }
-        
         double distance = spawnLocation.distance(location);
         return distance <= config.safety.safetySearchRadius;
     }

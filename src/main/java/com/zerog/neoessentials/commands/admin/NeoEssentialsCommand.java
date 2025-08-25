@@ -121,6 +121,8 @@ public class NeoEssentialsCommand {
         ServerPlayer player = source.getPlayer();
         try {
             ConfigManager.getInstance().reloadAll();
+            com.zerog.neoessentials.features.TabListManager.getInstance().reloadConfig();
+            // Animation system removed
             source.sendSuccess(() -> Component.literal(
                 player != null ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.reload.success") : "§aConfiguration reloaded successfully!"
             ), true);

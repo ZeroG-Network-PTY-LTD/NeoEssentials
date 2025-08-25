@@ -4,14 +4,12 @@ import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
-import java.util.Set;
 import java.util.List;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.features.CustomBossbarManager;
-import com.zerog.neoessentials.features.TablistScoreboardManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
@@ -40,7 +38,6 @@ public class AnimationCommands {
     
     private static int reloadAnimations(CommandContext<CommandSourceStack> context) {
         try {
-            TablistScoreboardManager.getInstance().reloadAnimations();
             CustomBossbarManager.getInstance().reloadAnimations();
             ServerPlayer player = context.getSource().getPlayerOrException();
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.reload.success"));
@@ -54,11 +51,9 @@ public class AnimationCommands {
     
     private static int showStats(CommandContext<CommandSourceStack> context) {
         try {
-            String tablistStats = TablistScoreboardManager.getInstance().getAnimationStats();
             String bossbarStats = CustomBossbarManager.getInstance().getAnimationStats();
             ServerPlayer player = context.getSource().getPlayerOrException();
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.header"));
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.tablist", tablistStats));
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.bossbar", bossbarStats));
         } catch (Exception e) {
             ServerPlayer player = null;
@@ -70,13 +65,9 @@ public class AnimationCommands {
     
     private static int listAnimations(CommandContext<CommandSourceStack> context) {
         try {
-            Set<String> tablistAnimations = TablistScoreboardManager.getInstance().getAvailableAnimations();
             List<String> bossbarAnimations = CustomBossbarManager.getInstance().getAvailableAnimations();
             ServerPlayer player = context.getSource().getPlayerOrException();
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.header"));
-            if (tablistAnimations != null && !tablistAnimations.isEmpty()) {
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.tablist", String.join(", ", tablistAnimations)));
-            }
             if (bossbarAnimations != null && !bossbarAnimations.isEmpty()) {
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.bossbar", String.join(", ", bossbarAnimations)));
             }

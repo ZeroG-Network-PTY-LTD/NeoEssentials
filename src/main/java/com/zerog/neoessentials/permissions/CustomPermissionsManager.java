@@ -24,6 +24,34 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 2.0.0
  */
 public class CustomPermissionsManager {
+    // Registered custom permission nodes (for tablist, etc.)
+    private final Set<String> registeredCustomTablistPermissions = new HashSet<>();
+    private final Map<String, String> customPermissionDescriptions = new HashMap<>();
+
+    /**
+     * Register a custom permission node for tablist or other features
+     */
+    public void registerCustomPermissionNode(String node, String description) {
+        if (node != null && !node.isEmpty()) {
+            registeredCustomTablistPermissions.add(node);
+            if (description != null) customPermissionDescriptions.put(node, description);
+            LOGGER.info("Registered custom permission node: {} - {}", node, description);
+        }
+    }
+
+    /**
+     * Get all registered custom tablist permission nodes
+     */
+    public Set<String> getRegisteredCustomTablistPermissions() {
+        return Collections.unmodifiableSet(registeredCustomTablistPermissions);
+    }
+
+    /**
+     * Get description for a custom permission node
+     */
+    public String getCustomPermissionDescription(String node) {
+        return customPermissionDescriptions.getOrDefault(node, "");
+    }
     // Store player group tags for instant display updates
     // Only one definition for playerGroups below
 
@@ -33,7 +61,18 @@ public class CustomPermissionsManager {
     public void setGroup(ServerPlayer player, String group) {
         playerGroups.put(player.getUUID(), group);
         refreshPlayerDisplay(player);
-        // Optionally, send feedback to player here if needed
+        // Fire PermissionUpdateEvent for dynamic UI refresh
+        try {
+            Class<?> eventClass = Class.forName("com.zerog.neoessentials.features.PermissionUpdateEvent");
+            java.lang.reflect.Constructor<?> ctor = eventClass.getConstructor(net.minecraft.server.level.ServerPlayer.class);
+            Object event = ctor.newInstance(player);
+            Class<?> eventBusClass = Class.forName("net.neoforged.bus.api.EventBus");
+            java.lang.reflect.Field busField = Class.forName("net.neoforged.neoforge.eventbus.EventBus").getDeclaredField("EVENT_BUS");
+            Object eventBus = busField.get(null);
+            eventBusClass.getMethod("post", Object.class).invoke(eventBus, event);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to fire PermissionUpdateEvent for player {}: {}", player.getUUID(), e.getMessage());
+        }
     }
 
     /**
@@ -54,13 +93,6 @@ public class CustomPermissionsManager {
             net.minecraft.network.chat.Component formattedName = net.minecraft.network.chat.Component.literal(nickname != null ? nickname : rawName);
             player.setCustomName(formattedName);
             LOGGER.info("NeoEssentials: Set player displayName='{}' (rawName='{}', nickname='{}')", formattedName.getString(), rawName, nickname);
-            // Update tablist/name tag using TablistScoreboardManager
-            try {
-                com.zerog.neoessentials.features.TablistScoreboardManager manager = com.zerog.neoessentials.features.TablistScoreboardManager.getInstance();
-                manager.updatePlayerTablistName(player, player.server);
-            } catch (Exception e) {
-                LOGGER.warn("Failed to update tablist/name tag for {}: {}", player.getName().getString(), e.getMessage());
-            }
         } catch (Exception e) {
             LOGGER.warn("Failed to update display for {}: {}", player.getName().getString(), e.getMessage());
         }
@@ -88,8 +120,9 @@ public class CustomPermissionsManager {
     private final Map<String, Long> cacheTimestamps = new ConcurrentHashMap<>();
     
     private CustomPermissionsManager() {
-        this.storageManager = PermissionStorageManager.getInstance();
-        initialize();
+    this.storageManager = PermissionStorageManager.getInstance();
+    initialize();
+    loadMetaFromConfig();
     }
     
     public static CustomPermissionsManager getInstance() {
@@ -337,11 +370,21 @@ public class CustomPermissionsManager {
         if (groups.containsKey(groupName)) {
             playerGroups.put(playerId, groupName);
             clearPlayerCache(playerId);
-            
             // Save to persistent storage
             storageManager.savePlayerGroup(playerId, groupName);
-            
             LOGGER.info("Set player {} to group {} (saved to storage)", playerId, groupName);
+            // Fire PermissionUpdateEvent for dynamic UI refresh
+            try {
+                Class<?> eventClass = Class.forName("com.zerog.neoessentials.features.PermissionUpdateEvent");
+                java.lang.reflect.Constructor<?> ctor = eventClass.getConstructor(UUID.class);
+                Object event = ctor.newInstance(playerId);
+                Class<?> eventBusClass = Class.forName("net.neoforged.bus.api.EventBus");
+                java.lang.reflect.Field busField = Class.forName("net.neoforged.neoforge.eventbus.EventBus").getDeclaredField("EVENT_BUS");
+                Object eventBus = busField.get(null);
+                eventBusClass.getMethod("post", Object.class).invoke(eventBus, event);
+            } catch (Exception e) {
+                LOGGER.warn("Failed to fire PermissionUpdateEvent for player {}: {}", playerId, e.getMessage());
+            }
         } else {
             LOGGER.warn("Attempted to set player {} to non-existent group {}", playerId, groupName);
         }
@@ -468,11 +511,25 @@ public class CustomPermissionsManager {
     public void createGroup(String groupName, String prefix, String suffix, int priority) {
         PermissionGroup group = new PermissionGroup(groupName, prefix, suffix, priority);
         groups.put(groupName, group);
-        
         // Save to persistent storage
         storageManager.saveGroup(groupName, group);
-        
         LOGGER.info("Created permission group: {} (saved to storage)", groupName);
+        // Fire PermissionUpdateEvent for all players in this group
+        try {
+            Class<?> eventClass = Class.forName("com.zerog.neoessentials.features.PermissionUpdateEvent");
+            java.lang.reflect.Constructor<?> ctor = eventClass.getConstructor(UUID.class);
+            for (Map.Entry<UUID, String> entry : playerGroups.entrySet()) {
+                if (groupName.equals(entry.getValue())) {
+                    Object event = ctor.newInstance(entry.getKey());
+                    Class<?> eventBusClass = Class.forName("net.neoforged.bus.api.EventBus");
+                    java.lang.reflect.Field busField = Class.forName("net.neoforged.neoforge.eventbus.EventBus").getDeclaredField("EVENT_BUS");
+                    Object eventBus = busField.get(null);
+                    eventBusClass.getMethod("post", Object.class).invoke(eventBus, event);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to fire PermissionUpdateEvent for group {}: {}", groupName, e.getMessage());
+        }
     }
     
     /**
@@ -482,9 +539,7 @@ public class CustomPermissionsManager {
         if (DEFAULT_GROUP.equals(groupName)) {
             return false; // Cannot delete default group
         }
-        
         groups.remove(groupName);
-        
         // Move players from deleted group to default
         for (Map.Entry<UUID, String> entry : playerGroups.entrySet()) {
             if (groupName.equals(entry.getValue())) {
@@ -492,12 +547,22 @@ public class CustomPermissionsManager {
                 entry.setValue(DEFAULT_GROUP);
                 // Update storage
                 storageManager.savePlayerGroup(playerId, DEFAULT_GROUP);
+                // Fire PermissionUpdateEvent for affected player
+                try {
+                    Class<?> eventClass = Class.forName("com.zerog.neoessentials.features.PermissionUpdateEvent");
+                    java.lang.reflect.Constructor<?> ctor = eventClass.getConstructor(UUID.class);
+                    Object event = ctor.newInstance(playerId);
+                    Class<?> eventBusClass = Class.forName("net.neoforged.bus.api.EventBus");
+                    java.lang.reflect.Field busField = Class.forName("net.neoforged.neoforge.eventbus.EventBus").getDeclaredField("EVENT_BUS");
+                    Object eventBus = busField.get(null);
+                    eventBusClass.getMethod("post", Object.class).invoke(eventBus, event);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to fire PermissionUpdateEvent for player {}: {}", playerId, e.getMessage());
+                }
             }
         }
-        
         // Remove from persistent storage
         storageManager.deleteGroup(groupName);
-        
         LOGGER.info("Deleted permission group: {} (removed from storage)", groupName);
         return true;
     }
@@ -786,5 +851,109 @@ public class CustomPermissionsManager {
         } catch (Exception e) {
             LOGGER.error("Failed to save all permission data", e);
         }
+    }
+
+    /**
+     * Robust prefix/suffix resolution (user, per-world, group, default)
+     */
+
+    // Permissions meta cache
+    private final Map<UUID, Map<String, String>> userMetaCache = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, String>> groupMetaCache = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, String>> worldOverrideCache = new ConcurrentHashMap<>();
+
+    // Load meta from permissions.toml (roles, users, overrides)
+    private void loadMetaFromConfig() {
+        try {
+            java.nio.file.Path path = java.nio.file.Paths.get("config/permissions.toml");
+            if (!java.nio.file.Files.exists(path)) return;
+            List<String> lines = java.nio.file.Files.readAllLines(path);
+            String currentSection = "";
+            String currentWorld = null;
+            for (String line : lines) {
+                line = line.trim();
+                if (line.isEmpty() || line.startsWith("#")) continue;
+                if (line.startsWith("[")) {
+                    currentSection = line.replace("[","").replace("]","");
+                    if (currentSection.startsWith("overrides.")) {
+                        currentWorld = currentSection.substring("overrides.".length());
+                    } else {
+                        currentWorld = null;
+                    }
+                    continue;
+                }
+                String[] kv = line.split("=",2);
+                if (kv.length != 2) continue;
+                String key = kv[0].trim();
+                String value = kv[1].trim().replaceAll("^\"|\"$", "");
+                if (currentSection.startsWith("roles.")) {
+                    String role = currentSection.substring("roles.".length());
+                    groupMetaCache.computeIfAbsent(role, k->new HashMap<>()).put(key, value);
+                } else if (currentSection.startsWith("users.")) {
+                    String uuid = currentSection.substring("users.".length());
+                    userMetaCache.computeIfAbsent(UUID.fromString(uuid), k->new HashMap<>()).put(key, value);
+                } else if (currentSection.startsWith("overrides.")) {
+                    // e.g. roles._DEFAULT_.suffix = " (lobby)"
+                    if (key.startsWith("roles.")) {
+                        String[] parts = key.split("\\.");
+                        if (parts.length == 3) {
+                            String role = parts[1];
+                            String metaKey = parts[2];
+                            worldOverrideCache.computeIfAbsent(currentWorld+":"+role, k->new HashMap<>()).put(metaKey, value);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load meta from permissions.toml: {}", e.getMessage());
+        }
+    }
+
+
+    // Robust prefix/suffix resolution
+    public String getPrefix(UUID playerId, String world) {
+        // 1. User-specific override
+        Map<String, String> userMeta = userMetaCache.get(playerId);
+        if (userMeta != null && userMeta.get("prefix") != null) {
+            return userMeta.get("prefix");
+        }
+        // 2. Per-world override (role-based)
+        String groupName = getPlayerGroup(playerId);
+        Map<String, String> worldMeta = worldOverrideCache.get(world+":"+groupName);
+        if (worldMeta != null && worldMeta.get("prefix") != null) {
+            return worldMeta.get("prefix");
+        }
+        // 3. Group-level
+        Map<String, String> groupMeta = groupMetaCache.get(groupName);
+        if (groupMeta != null && groupMeta.get("prefix") != null) {
+            return groupMeta.get("prefix");
+        }
+        // 4. Default fallback
+        Map<String, String> defaultMeta = groupMetaCache.get("_DEFAULT_");
+        if (defaultMeta != null && defaultMeta.get("prefix") != null) {
+            return defaultMeta.get("prefix");
+        }
+        return "";
+    }
+
+    public String getSuffix(UUID playerId, String world) {
+        Map<String, String> userMeta = userMetaCache.get(playerId);
+        if (userMeta != null && userMeta.get("suffix") != null) {
+            return userMeta.get("suffix");
+        }
+        String groupName = getPlayerGroup(playerId);
+        Map<String, String> worldMeta = worldOverrideCache.get(world+":"+groupName);
+        if (worldMeta != null && worldMeta.get("suffix") != null) {
+            return worldMeta.get("suffix");
+        }
+        Map<String, String> groupMeta = groupMetaCache.get(groupName);
+        if (groupMeta != null && groupMeta.get("suffix") != null) {
+            return groupMeta.get("suffix");
+        }
+        Map<String, String> defaultMeta = groupMetaCache.get("_DEFAULT_");
+        if (defaultMeta != null && defaultMeta.get("suffix") != null) {
+            return defaultMeta.get("suffix");
+        }
+        return "";
     }
 }

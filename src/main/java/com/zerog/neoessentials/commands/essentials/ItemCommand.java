@@ -6,7 +6,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.config.ConfigurationUnifier;
 import com.zerog.neoessentials.config.MainConfig;
-import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.util.ItemStackNbtUtil;
@@ -30,9 +29,9 @@ import java.util.Optional;
  */
 public class ItemCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
-        MainConfig.ItemManagementConfig itemConfig = ConfigurationUnifier.getInstance().getConfigManager().getMainConfig().itemManagement;
-        int maxAmount = itemConfig.maxGiveAmount;
-        boolean allowLore = itemConfig.allowGiveEnchantments; // Use config-driven option for lore/enchantments
+    MainConfig.ItemManagementConfig itemConfig = ConfigurationUnifier.getInstance().getConfigManager().getMainConfig().itemManagement;
+    int maxAmount = itemConfig.maxStackSize;
+    boolean allowLore = itemConfig.allowEnchantments; // Use config-driven option for lore/enchantments
         // /item <item> <amount> [lore] [player]
         var base = Commands.literal("item")
             .requires(src -> PermissionUtil.hasPermission(src, PermissionNodes.GIVE_ITEM))
@@ -42,7 +41,7 @@ public class ItemCommand {
                         try {
                             return giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), Optional.empty(), Optional.empty());
                         } catch (CommandSyntaxException e) {
-                            ctx.getSource().sendFailure(Component.literal("Invalid command syntax: " + e.getMessage()));
+                            ctx.getSource().sendFailure(Component.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
                             return 0;
                         }
                     })
@@ -52,7 +51,7 @@ public class ItemCommand {
                             try {
                                 return giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), Optional.of(StringArgumentType.getString(ctx, "lore")), Optional.empty());
                             } catch (CommandSyntaxException e) {
-                                ctx.getSource().sendFailure(Component.literal("Invalid command syntax: " + e.getMessage()));
+                                ctx.getSource().sendFailure(Component.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
                                 return 0;
                             }
                         })
@@ -62,7 +61,7 @@ public class ItemCommand {
                                 try {
                                     return giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), Optional.of(StringArgumentType.getString(ctx, "lore")), Optional.of(EntityArgument.getPlayer(ctx, "player")));
                                 } catch (CommandSyntaxException e) {
-                                    ctx.getSource().sendFailure(Component.literal("Invalid command syntax: " + e.getMessage()));
+                                    ctx.getSource().sendFailure(Component.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
                                     return 0;
                                 }
                             })
@@ -73,7 +72,7 @@ public class ItemCommand {
                             try {
                                 return giveItem(ctx.getSource(), ItemArgument.getItem(ctx, "item"), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount"), Optional.empty(), Optional.of(EntityArgument.getPlayer(ctx, "player")));
                             } catch (CommandSyntaxException e) {
-                                ctx.getSource().sendFailure(Component.literal("Invalid command syntax: " + e.getMessage()));
+                                ctx.getSource().sendFailure(Component.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
                                 return 0;
                             }
                         })
@@ -100,7 +99,7 @@ public class ItemCommand {
         }
         ItemStack stack = itemRes.createItemStack(amount, false);
         if (loreOpt.isPresent()) {
-            // Use reflection-based NBT helper for lore
+            // Use translation for lore (if needed, but lore is custom text, so keep as is)
             net.minecraft.nbt.CompoundTag displayTag = new net.minecraft.nbt.CompoundTag();
             ListTag loreList = new ListTag();
             loreList.add(StringTag.valueOf(Component.literal(loreOpt.get()).getString()));
@@ -110,11 +109,9 @@ public class ItemCommand {
         boolean added = receiver.getInventory().add(stack);
         if (!added) receiver.drop(stack, false);
         String itemName = stack.getHoverName().getString();
-        String giveMsg = LanguageManager.getInstance().getMessage(receiver, "neoessentials.item.give", amount, itemName);
-        receiver.sendSystemMessage(Component.literal(giveMsg));
+        receiver.sendSystemMessage(Component.translatable("neoessentials.item.give", amount, itemName));
         if (targetOpt.isPresent() && targetOpt.get() != src.getPlayerOrException()) {
-            String srcMsg = LanguageManager.getInstance().getMessage(src.getPlayerOrException(), "neoessentials.item.give_other", receiver.getName().getString(), amount, itemName);
-            src.sendSuccess(() -> Component.literal(srcMsg), true);
+            src.sendSuccess(() -> Component.translatable("neoessentials.item.give_other", receiver.getName(), amount, itemName), true);
         }
         return 1;
     }

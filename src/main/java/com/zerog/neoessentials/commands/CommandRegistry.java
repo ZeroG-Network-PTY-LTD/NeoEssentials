@@ -278,8 +278,6 @@ public class CommandRegistry {
             LOGGER.info("Registered animation management commands");
             
             // Enhanced Theme System (Phase 6) - Commands integrated into existing systems
-            ThemeCommand.register(dispatcher);
-            LOGGER.info("Registered theme system commands");
 
             // Advanced Player Features Commands
             PlaytimeCommand.register(dispatcher);

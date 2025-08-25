@@ -41,56 +41,56 @@ public class InfoCommand {
         DecimalFormat df = new DecimalFormat("#.##");
         
         // Send header
-        sendMessage(source, "§6========== §eServer Information §6==========");
-        
+        sendTranslatedMessage(source, "neoessentials.info.header");
+
         // Server basics
-        sendMessage(source, "§7Server Version: §a" + server.getServerVersion());
-        sendMessage(source, "§7Minecraft Version: §a" + server.getServerModName());
-        sendMessage(source, "§7MOTD: §a" + server.getMotd());
-        
+        sendTranslatedMessage(source, "neoessentials.info.server_version", server.getServerVersion());
+        sendTranslatedMessage(source, "neoessentials.info.minecraft_version", server.getServerModName());
+        sendTranslatedMessage(source, "neoessentials.info.motd", server.getMotd());
+
         // Player information
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
         int maxPlayers = server.getMaxPlayers();
-        sendMessage(source, "§7Players Online: §a" + players.size() + "/" + maxPlayers);
-        
+        sendTranslatedMessage(source, "neoessentials.info.players_online", players.size(), maxPlayers);
+
         // Memory information
-        sendMessage(source, "§7Memory Usage: §a" + formatBytes(usedMemory) + " / " + formatBytes(maxMemory));
+        sendTranslatedMessage(source, "neoessentials.info.memory_usage", formatBytes(usedMemory), formatBytes(maxMemory));
         double memoryPercent = (double) usedMemory / maxMemory * 100;
-        sendMessage(source, "§7Memory Percent: §a" + df.format(memoryPercent) + "%");
-        
+        sendTranslatedMessage(source, "neoessentials.info.memory_percent", df.format(memoryPercent));
+
         // TPS information (simplified)
-        sendMessage(source, "§7Server Running: §aYes");
-        
+        sendTranslatedMessage(source, "neoessentials.info.server_running");
+
         // World information
         var overworld = server.getLevel(net.minecraft.world.level.Level.OVERWORLD);
         if (overworld != null) {
             GameRules gameRules = overworld.getGameRules();
             long worldTime = overworld.getDayTime();
             int day = (int) (worldTime / 24000L);
-            
-            sendMessage(source, "§7Current Day: §a" + (day + 1));
-            sendMessage(source, "§7Keep Inventory: §a" + gameRules.getBoolean(GameRules.RULE_KEEPINVENTORY));
-            sendMessage(source, "§7Mob Griefing: §a" + gameRules.getBoolean(GameRules.RULE_MOBGRIEFING));
-            sendMessage(source, "§7Fire Spread: §a" + gameRules.getBoolean(GameRules.RULE_DOFIRETICK));
-            sendMessage(source, "§7Difficulty: §a" + overworld.getDifficulty().getDisplayName().getString());
+
+            sendTranslatedMessage(source, "neoessentials.info.current_day", day + 1);
+            sendTranslatedMessage(source, "neoessentials.info.keep_inventory", gameRules.getBoolean(GameRules.RULE_KEEPINVENTORY));
+            sendTranslatedMessage(source, "neoessentials.info.mob_griefing", gameRules.getBoolean(GameRules.RULE_MOBGRIEFING));
+            sendTranslatedMessage(source, "neoessentials.info.fire_spread", gameRules.getBoolean(GameRules.RULE_DOFIRETICK));
+            sendTranslatedMessage(source, "neoessentials.info.difficulty", overworld.getDifficulty().getDisplayName().getString());
         }
-        
+
         // Server tick count
-        sendMessage(source, "§7Server Ticks: §a" + server.getTickCount());
-        
+        sendTranslatedMessage(source, "neoessentials.info.server_ticks", server.getTickCount());
+
         // NeoEssentials version
-        sendMessage(source, "§7NeoEssentials: §aVersion 1.0.2");
-        
-        sendMessage(source, "§6==========================================");
+        sendTranslatedMessage(source, "neoessentials.info.mod_version", "1.0.2");
+
+        sendTranslatedMessage(source, "neoessentials.info.footer");
         
         return 1;
     }
     
-    private static void sendMessage(CommandSourceStack source, String message) {
+    private static void sendTranslatedMessage(CommandSourceStack source, String key, Object... args) {
         if (source.getEntity() instanceof ServerPlayer player) {
-            MessageUtil.sendMessage(player, message);
+            MessageUtil.sendTranslatedMessage(player, key, args);
         } else {
-            source.sendSuccess(() -> Component.literal(message), false);
+            source.sendSuccess(() -> Component.translatable(key, args), false);
         }
     }
     
