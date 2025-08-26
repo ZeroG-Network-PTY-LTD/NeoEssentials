@@ -2,15 +2,13 @@ package com.zerog.neoessentials.web;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import org.slf4j.Logger;
-import com.mojang.logging.LogUtils;
 
 /**
  * Web Dashboard Manager for NeoEssentials
  * Provides web-based administration interface
  */
 public class WebDashboardManager {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    // LOGGER removed; now using DebugUtil for all logging
     private static WebDashboardManager instance;
     
     private final Map<String, DashboardSession> activeSessions;
@@ -23,7 +21,7 @@ public class WebDashboardManager {
         this.dashboardData = new ConcurrentHashMap<>();
         this.dashboardEnabled = false;
         this.port = 8080;
-        LOGGER.info("WebDashboardManager initialized");
+    com.zerog.neoessentials.util.DebugUtil.infoLog("WebDashboardManager initialized");
     }
     
     public static WebDashboardManager getInstance() {
@@ -38,7 +36,7 @@ public class WebDashboardManager {
      */
     public boolean start() {
         if (dashboardEnabled) {
-            LOGGER.warn("Dashboard is already running on port {}", port);
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Dashboard is already running on port " + port);
             return false;
         }
         
@@ -46,10 +44,10 @@ public class WebDashboardManager {
             // Initialize dashboard data
             initializeDashboardData();
             dashboardEnabled = true;
-            LOGGER.info("Web dashboard started on port {}", port);
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Web dashboard started on port " + port);
             return true;
         } catch (Exception e) {
-            LOGGER.error("Failed to start web dashboard", e);
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to start web dashboard: " + e.getMessage());
             return false;
         }
     }
@@ -64,7 +62,7 @@ public class WebDashboardManager {
         
         activeSessions.clear();
         dashboardEnabled = false;
-        LOGGER.info("Web dashboard stopped");
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Web dashboard stopped");
     }
     
     /**
@@ -96,7 +94,7 @@ public class WebDashboardManager {
         dashboardData.put("login_attempts", 0);
         dashboardData.put("suspicious_activity", 0);
         
-        LOGGER.info("Enhanced dashboard data initialized with shop and economy metrics");
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced dashboard data initialized with shop and economy metrics");
     }
     
     /**
@@ -120,7 +118,7 @@ public class WebDashboardManager {
         String sessionId = UUID.randomUUID().toString();
         DashboardSession session = new DashboardSession(sessionId, username, System.currentTimeMillis());
         activeSessions.put(sessionId, session);
-        LOGGER.info("Created dashboard session for user: {}", username);
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Created dashboard session for user: " + username);
         return sessionId;
     }
     
@@ -170,9 +168,9 @@ public class WebDashboardManager {
     public void setPort(int port) {
         if (!dashboardEnabled) {
             this.port = port;
-            LOGGER.info("Dashboard port set to {}", port);
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Dashboard port set to " + port);
         } else {
-            LOGGER.warn("Cannot change port while dashboard is running");
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Cannot change port while dashboard is running");
         }
     }
     
@@ -233,8 +231,7 @@ public class WebDashboardManager {
         dashboardData.put("active_shops", activeShops);
         dashboardData.put("daily_transactions", dailyTransactions);
         dashboardData.put("daily_revenue", dailyRevenue);
-        LOGGER.debug("Updated shop metrics: {} total, {} active, {} transactions, ${}", 
-                    totalShops, activeShops, dailyTransactions, dailyRevenue);
+    com.zerog.neoessentials.util.DebugUtil.debugLog("Updated shop metrics: " + totalShops + " total, " + activeShops + " active, " + dailyTransactions + " transactions, $" + dailyRevenue);
     }
     
     /**
@@ -266,7 +263,7 @@ public class WebDashboardManager {
             events.remove(events.size() - 1); // Remove oldest
         }
         
-        LOGGER.info("Dashboard event: [{}] {} - {}", severity, eventType, message);
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Dashboard event: [" + severity + "] " + eventType + " - " + message);
     }
     
     // Helper methods for analytics

@@ -16,21 +16,40 @@ public class TablistConfig {
     public boolean enableScoreboard = true;
     public boolean enableBossbar = true;
     public boolean enableTablist = true;
+    public boolean enableNametag = true;
     public int size = 60;
 
-    // New fields to match tablist.json
-    public DefaultTablist defaultTablist = new DefaultTablist();
+    // Removed defaultTablist; tablistLayouts now handles all conditions
     public java.util.Map<String, PermSet> PermSets = new java.util.HashMap<>();
     public java.util.Map<String, FilterSet> filter = new java.util.HashMap<>();
     public String teamFiltersOrder = null;
 
-    public static class DefaultTablist {
+    // Main tablist layouts array for config-driven tablist
+    public java.util.List<TablistLayout> tablistLayouts = new java.util.ArrayList<>();
+
+    public static class TablistLayout {
+    public int priority = 1;
+    public String conditionType = "default";
+    public String condition = "";
+    public java.util.List<String> header = new java.util.ArrayList<>();
+    public java.util.List<String> footer = new java.util.ArrayList<>();
+    // Added for tablist player formatting
+    public String format = "%player%";
+    public String color = "";
+    public String prefix = "";
+    public String suffix = "";
+    }
+
+
+    public static class PermSet {
+        public Condition condition = new Condition();
+        public String permission;
         public TablistSection tablist = new TablistSection();
     }
 
-    public static class PermSet {
-        public String permission;
-        public TablistSection tablist = new TablistSection();
+    public static class Condition {
+        public String type = "all";
+        public String value = "";
     }
 
     public static class FilterSet {

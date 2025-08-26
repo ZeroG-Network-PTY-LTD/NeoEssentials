@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 
 /**
  * Event listener for permission system integration with player data
@@ -31,7 +32,7 @@ public class PermissionEventListener {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         try {
             UUID playerUUID = player.getUUID();
-            LOGGER.info("Loading permission data for player {}", player.getName().getString());
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Loading permission data for player " + player.getName().getString());
             
             // Load player data
             PlayerDataManager playerDataManager = PlayerDataManager.getInstance();
@@ -47,39 +48,56 @@ public class PermissionEventListener {
             String groupToUse = null;
             if (existingGroup != null && !existingGroup.equals("default") && !existingGroup.isEmpty()) {
                 groupToUse = existingGroup;
-                LOGGER.info("Player {} already has group '{}' in permission manager", player.getName().getString(), existingGroup);
+                com.zerog.neoessentials.util.DebugUtil.infoLog("Player " + player.getName().getString() + " already has group '" + existingGroup + "' in permission manager");
             } else if (savedGroup != null && !savedGroup.isEmpty()) {
                 groupToUse = savedGroup;
-                LOGGER.info("Loading saved group '{}' for player {}", savedGroup, player.getName().getString());
+                com.zerog.neoessentials.util.DebugUtil.infoLog("Loading saved group '" + savedGroup + "' for player " + player.getName().getString());
             } else {
                 groupToUse = "default";
-                LOGGER.info("Setting default group for new player {}", player.getName().getString());
+                com.zerog.neoessentials.util.DebugUtil.infoLog("Setting default group for new player " + player.getName().getString());
             }
             if (!groupToUse.equals(existingGroup)) {
                 permManager.setPlayerGroup(playerUUID, groupToUse);
                 playerData.setPermissionGroup(groupToUse);
-                LOGGER.info("Set group '{}' for player {}", groupToUse, player.getName().getString());
+                com.zerog.neoessentials.util.DebugUtil.infoLog("Set group '" + groupToUse + "' for player " + player.getName().getString());
             }
             Map<String, Boolean> savedPermissions = playerData.getPlayerPermissions();
             if (savedPermissions != null && !savedPermissions.isEmpty()) {
                 permManager.setPlayerPermissionsFromMap(playerUUID, savedPermissions);
-                LOGGER.info("Loaded {} individual permissions for player {}", savedPermissions.size(), player.getName().getString());
+                com.zerog.neoessentials.util.DebugUtil.infoLog("Loaded " + savedPermissions.size() + " individual permissions for player " + player.getName().getString());
             }
             // --- New manager integration ---
             com.zerog.neoessentials.features.PlaceholderManager placeholderManager = new com.zerog.neoessentials.features.PlaceholderManager();
             com.zerog.neoessentials.features.TabListManager tabListManager = new com.zerog.neoessentials.features.TabListManager();
             com.zerog.neoessentials.features.ScoreboardManager scoreboardManager = new com.zerog.neoessentials.features.ScoreboardManager();
             com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
-            String prefix = permManager.getPlayerPrefix(playerUUID);
-            String suffix = permManager.getPlayerSuffix(playerUUID);
-            String displayName = placeholderManager.parse(player, prefix + " %player% " + suffix);
+            String rawDisplayName = com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(player);
+            String displayName = placeholderManager.parse(player, rawDisplayName);
             // Use parsed displayName in tablist and scoreboard updates
             tabListManager.updateHeaderFooter(player, displayName);
             tabListManager.updatePlayerEntry(player);
-            scoreboardManager.updateScoreboard(player);
-            bossBarManager.showBossBar(player, "Welcome to the server!", 1.0f, 0x00FF00);
+            if (player.getServer() != null) {
+                scoreboardManager.updateScoreboard(player);
+            }
+            bossBarManager.showBossBar(player, displayName, 1.0f, 0x00FF00);
+
+                // Update tablist for all online players to ensure correct layout and debug output
+                try {
+                    net.minecraft.server.MinecraftServer server = player.getServer();
+                    if (server != null) {
+                        List<ServerPlayer> onlinePlayers = server.getPlayerList().getPlayers();
+                            com.zerog.neoessentials.util.DebugUtil.debugLog("Calling updateTabList for " + onlinePlayers.size() + " online players");
+                            for (ServerPlayer p : onlinePlayers) {
+                                com.zerog.neoessentials.util.DebugUtil.debugLog("Online player: " + p.getGameProfile().getName() + " UUID: " + p.getUUID());
+                            }
+                            com.zerog.neoessentials.features.TabListManager.getInstance().updateTabList(onlinePlayers);
+                            com.zerog.neoessentials.util.DebugUtil.debugLog("updateTabList call completed");
+                    }
+                } catch (Exception e) {
+                    com.zerog.neoessentials.util.DebugUtil.warnLog("Failed to update tablist for all players: " + e.getMessage());
+                }
         } catch (Exception e) {
-            LOGGER.error("Failed to load permission data for player {}", event.getEntity().getName().getString(), e);
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to load permission data for player " + event.getEntity().getName().getString() + ": " + e.getMessage());
         }
     }
     
@@ -91,7 +109,7 @@ public class PermissionEventListener {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         try {
             UUID playerUUID = player.getUUID();
-            LOGGER.info("Saving permission data for player {}", player.getName().getString());
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Saving permission data for player " + player.getName().getString());
             
             // Get current permission data
             CustomPermissionsManager permManager = CustomPermissionsManager.getInstance();
@@ -102,23 +120,23 @@ public class PermissionEventListener {
             String currentGroup = permManager.getPlayerGroup(playerUUID);
             if (currentGroup != null) {
                 playerData.setPermissionGroup(currentGroup);
-                LOGGER.debug("Saved group '{}' for player {}", currentGroup, player.getName().getString());
+                com.zerog.neoessentials.util.DebugUtil.debugLog("Saved group '" + currentGroup + "' for player " + player.getName().getString());
             }
             // Save individual permissions
             Map<String, Boolean> currentPermissions = permManager.getPlayerPermissionsMap(playerUUID);
             if (currentPermissions != null && !currentPermissions.isEmpty()) {
                 playerData.setPlayerPermissions(currentPermissions);
-                LOGGER.debug("Saved {} individual permissions for player {}", currentPermissions.size(), player.getName().getString());
+                com.zerog.neoessentials.util.DebugUtil.debugLog("Saved " + currentPermissions.size() + " individual permissions for player " + player.getName().getString());
             }
             // Trigger save to persistent storage
             playerDataManager.savePlayerData(playerData);
             
-            LOGGER.info("Successfully saved permission data for player {}", player.getName().getString());
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Successfully saved permission data for player " + player.getName().getString());
             // --- Remove bossbar on leave ---
             com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
             bossBarManager.removeBossBar(player);
         } catch (Exception e) {
-            LOGGER.error("Failed to save permission data for player {}", event.getEntity().getName().getString(), e);
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to save permission data for player " + event.getEntity().getName().getString() + ": " + e.getMessage());
         }
     }
 }

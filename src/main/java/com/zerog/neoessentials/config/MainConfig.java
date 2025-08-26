@@ -216,14 +216,14 @@ public class MainConfig {
         public boolean enablePrivateMessages = true;
         /** Enable/disable chat formatting */
         public boolean enableChatFormatting = true;
-        /** Chat format string */
-        public String chatFormat = "{MESSAGE}";
-        /** Enable/disable chat formatting */
-        public boolean isEnabled = true;
-        /** Enable/disable chat colors */
-        public boolean enableColors = true;
-        /** Chat format string */
-        public String format = "<{PREFIX}{DISPLAYNAME}{SUFFIX}> {MESSAGE}";
+    /** Chat format string (only formats the message) */
+    public String chatFormat = "{MESSAGE}";
+    /** Chat name format string (formats the name brackets) */
+    public String chatname = "<{PREFIX}{DISPLAYNAME}{SUFFIX}>";
+    /** Enable/disable chat formatting */
+    public boolean isEnabled = true;
+    /** Enable/disable chat colors */
+    public boolean enableColors = true;
 
         /** Anti-spam settings */
         public AntiSpam antiSpam = new AntiSpam();
@@ -338,8 +338,6 @@ public class MainConfig {
     public boolean debugMode = false;
     /** Enable/disable modules */
     public Modules modules = new Modules();
-    /** Database connection info (if used) */
-    public Database database = new Database();
 
     /** Example: Home settings */
     public int maxHomes = 3; // Maximum homes per player
@@ -394,13 +392,4 @@ public class MainConfig {
         public boolean spawn = true;
     }
 
-    /** Example: Database connection info */
-    public static class Database {
-        public String type = "mysql"; // Database type SQLite, Mysql, Flatfile
-        public String host = "localhost";
-        public int port = 3306;
-        public String username = "root";
-        public String password = "password";
-        public String database = "neoessentials";
-    }
 }

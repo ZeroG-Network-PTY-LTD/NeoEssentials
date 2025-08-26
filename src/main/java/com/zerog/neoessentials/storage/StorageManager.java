@@ -2,8 +2,6 @@ package com.zerog.neoessentials.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -53,7 +51,7 @@ public class StorageManager {
                 cache.put(category + "/" + filename, data);
                 return true;
             } catch (IOException e) {
-                LOGGER.error("Failed to save data to JSON: {}/{}", category, filename, e);
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to save data to JSON: " + category + "/" + filename + ", error: " + e.getMessage());
                 return false;
             }
         });
@@ -74,7 +72,7 @@ public class StorageManager {
                     }
                 }
             } catch (IOException e) {
-                LOGGER.error("Failed to load data from JSON: {}/{}", category, filename, e);
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to load data from JSON: " + category + "/" + filename + ", error: " + e.getMessage());
             }
             return null;
         });
@@ -90,106 +88,51 @@ public class StorageManager {
     }
     /**
      * Save player data (economy, homes, etc.)
-     * If SQL is enabled, save to database. Otherwise, save to JSON file.
+    * Save player data to JSON file only.
      */
     public CompletableFuture<Boolean> savePlayerData(UUID playerUuid, Map<String, Object> playerData) {
-        if (sqlEnabled && sqlConnection != null) {
-            return CompletableFuture.supplyAsync(() -> {
-                try {
-                    // Example: Save economy balance to SQL (expand as needed)
-                    Object balanceObj = playerData.get("balance");
-                    if (balanceObj != null) {
-                        double balance = Double.parseDouble(balanceObj.toString());
-                        String sql = "INSERT INTO player_economy (uuid, balance) VALUES (?, ?) ON DUPLICATE KEY UPDATE balance=?";
-                        try (java.sql.PreparedStatement stmt = sqlConnection.prepareStatement(sql)) {
-                            stmt.setString(1, playerUuid.toString());
-                            stmt.setDouble(2, balance);
-                            stmt.setDouble(3, balance);
-                            stmt.executeUpdate();
-                        }
-                    }
-                    // Add more fields/tables as needed
-                    return true;
-                } catch (Exception e) {
-                    LOGGER.error("Failed to save player data to SQL", e);
-                    return false;
+        // Only JSON file storage is supported
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Path playerFile = dataDirectory.resolve("players").resolve(playerUuid + ".json");
+                try (Writer writer = Files.newBufferedWriter(playerFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                    gson.toJson(playerData, writer);
                 }
-            });
-        } else {
-            // Fallback: Save to JSON file in players/{uuid}.json
-            return CompletableFuture.supplyAsync(() -> {
-                try {
-                    Path playerFile = dataDirectory.resolve("players").resolve(playerUuid + ".json");
-                    try (Writer writer = Files.newBufferedWriter(playerFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-                        gson.toJson(playerData, writer);
-                    }
-                    cache.put("players/" + playerUuid, playerData);
-                    return true;
-                } catch (IOException e) {
-                    LOGGER.error("Failed to save player data to JSON", e);
-                    return false;
-                }
-            });
-        }
+                cache.put("players/" + playerUuid, playerData);
+                return true;
+            } catch (IOException e) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to save player data to JSON: " + e.getMessage());
+                return false;
+            }
+        });
     }
 
     /**
      * Load player data (economy, homes, etc.)
-     * If SQL is enabled, load from database. Otherwise, load from JSON file.
+    * Load player data from JSON file only.
      */
     public CompletableFuture<Map<String, Object>> loadPlayerData(UUID playerUuid) {
-        if (sqlEnabled && sqlConnection != null) {
-            return CompletableFuture.supplyAsync(() -> {
-                Map<String, Object> playerData = new HashMap<>();
-                try {
-                    // Example: Load economy balance from SQL (expand as needed)
-                    String sql = "SELECT balance FROM player_economy WHERE uuid=?";
-                    try (java.sql.PreparedStatement stmt = sqlConnection.prepareStatement(sql)) {
-                        stmt.setString(1, playerUuid.toString());
-                        try (java.sql.ResultSet rs = stmt.executeQuery()) {
-                            if (rs.next()) {
-                                playerData.put("balance", rs.getDouble("balance"));
-                            }
-                        }
+        // Only JSON file storage is supported
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Path playerFile = dataDirectory.resolve("players").resolve(playerUuid + ".json");
+                if (Files.exists(playerFile)) {
+                    try (Reader reader = Files.newBufferedReader(playerFile)) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> playerData = (Map<String, Object>) gson.fromJson(reader, Map.class);
+                        cache.put("players/" + playerUuid, playerData);
+                        return playerData;
                     }
-                    // Add more fields/tables as needed
-                } catch (Exception e) {
-                    LOGGER.error("Failed to load player data from SQL", e);
                 }
-                return playerData;
-            });
-        } else {
-            // Fallback: Load from JSON file in players/{uuid}.json
-            return CompletableFuture.supplyAsync(() -> {
-                try {
-                    Path playerFile = dataDirectory.resolve("players").resolve(playerUuid + ".json");
-                    if (Files.exists(playerFile)) {
-                        try (Reader reader = Files.newBufferedReader(playerFile)) {
-                            @SuppressWarnings("unchecked")
-                            Map<String, Object> playerData = (Map<String, Object>) gson.fromJson(reader, Map.class);
-                            cache.put("players/" + playerUuid, playerData);
-                            return playerData;
-                        }
-                    }
-                } catch (IOException e) {
-                    LOGGER.error("Failed to load player data from JSON", e);
-                }
-                return new HashMap<>();
-            });
-        }
+            } catch (IOException e) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to load player data from JSON: " + e.getMessage());
+            }
+            return new HashMap<>();
+        });
     }
-    // SQL database connection fields
-    private java.sql.Connection sqlConnection;
-    private String sqlType;
-    private boolean sqlEnabled;
-
-    private void initializeSqlStorage() {
-    // Force flat file storage only
-    sqlEnabled = false;
-    LOGGER.info("SQL storage forcibly disabled. Using flatfile JSON storage only. SQL type: {}", sqlType);
-    }
+    // Only JSON file storage is supported.
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(StorageManager.class);
+    // LOGGER removed; now using DebugUtil for all logging
     // Singleton instance (not used, but kept for future expansion)
     private static StorageManager instance;
     
@@ -205,10 +148,8 @@ public class StorageManager {
         
         this.dataDirectory = Paths.get("neoessentials");
         this.cache = new ConcurrentHashMap<>();
-        
-    // Storage initialization logic can be added here if needed
-    initializeSqlStorage();
-    // End of constructor
+        // Storage initialization logic can be added here if needed
+        // End of constructor
     
     /**
      * Save player economy data
@@ -248,11 +189,11 @@ public class StorageManager {
                 // Remove from cache
                 cache.remove(category + "/" + filename);
                 
-                LOGGER.debug("Deleted file: {}", filePath);
+                com.zerog.neoessentials.util.DebugUtil.debugLog("Deleted file: " + filePath);
                 return deleted;
                 
             } catch (IOException e) {
-                LOGGER.error("Failed to delete file {}/{}", category, filename, e);
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to delete file " + category + "/" + filename + ", error: " + e.getMessage());
                 return false;
             }
         });
@@ -276,11 +217,11 @@ public class StorageManager {
                 copyDirectory(dataDirectory.resolve("kits"), backupPath.resolve("kits"));
                 copyDirectory(dataDirectory.resolve("mail"), backupPath.resolve("mail"));
                 
-                LOGGER.info("Created backup at: {}", backupPath);
+                com.zerog.neoessentials.util.DebugUtil.infoLog("Created backup at: " + backupPath);
                 return true;
                 
             } catch (IOException e) {
-                LOGGER.error("Failed to create backup", e);
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to create backup: " + e.getMessage());
                 return false;
             }
         });
@@ -306,7 +247,7 @@ public class StorageManager {
                         Files.copy(sourcePath, targetPath);
                     }
                 } catch (IOException e) {
-                    LOGGER.error("Failed to copy file: {}", sourcePath, e);
+                    com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to copy file: " + sourcePath + ", error: " + e.getMessage());
                 }
             });
     }
@@ -315,8 +256,8 @@ public class StorageManager {
      * Clear cache for performance
      */
     public void clearCache() {
-        cache.clear();
-        LOGGER.debug("Storage cache cleared");
+    cache.clear();
+    com.zerog.neoessentials.util.DebugUtil.debugLog("Storage cache cleared");
     }
     
     /**
@@ -330,8 +271,8 @@ public class StorageManager {
      * Shutdown storage manager
      */
     public void shutdown() {
-        // Save any pending cache data
-        LOGGER.info("Storage manager shutting down, cache size: {}", cache.size());
-        clearCache();
+    // Save any pending cache data
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Storage manager shutting down, cache size: " + cache.size());
+    clearCache();
     }
 }

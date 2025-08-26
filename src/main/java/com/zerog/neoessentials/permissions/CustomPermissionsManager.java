@@ -60,16 +60,15 @@ public class CustomPermissionsManager {
      */
     public void setGroup(ServerPlayer player, String group) {
         playerGroups.put(player.getUUID(), group);
+        LOGGER.info("[NeoEssentials] setGroup called for {}. New group: {}. Clearing permission cache.", player.getUUID(), group);
+        clearPlayerCache(player.getUUID()); // Clear permission cache for this player
         refreshPlayerDisplay(player);
         // Fire PermissionUpdateEvent for dynamic UI refresh
         try {
-            Class<?> eventClass = Class.forName("com.zerog.neoessentials.features.PermissionUpdateEvent");
-            java.lang.reflect.Constructor<?> ctor = eventClass.getConstructor(net.minecraft.server.level.ServerPlayer.class);
-            Object event = ctor.newInstance(player);
-            Class<?> eventBusClass = Class.forName("net.neoforged.bus.api.EventBus");
-            java.lang.reflect.Field busField = Class.forName("net.neoforged.neoforge.eventbus.EventBus").getDeclaredField("EVENT_BUS");
-            Object eventBus = busField.get(null);
-            eventBusClass.getMethod("post", Object.class).invoke(eventBus, event);
+            com.zerog.neoessentials.features.PermissionUpdateEvent event =
+                new com.zerog.neoessentials.features.PermissionUpdateEvent(player);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event);
+            LOGGER.info("[NeoEssentials] Firing PermissionUpdateEvent for player {}.", player.getUUID());
         } catch (Exception e) {
             LOGGER.warn("Failed to fire PermissionUpdateEvent for player {}: {}", player.getUUID(), e.getMessage());
         }
@@ -373,20 +372,38 @@ public class CustomPermissionsManager {
             // Save to persistent storage
             storageManager.savePlayerGroup(playerId, groupName);
             LOGGER.info("Set player {} to group {} (saved to storage)", playerId, groupName);
-            // Fire PermissionUpdateEvent for dynamic UI refresh
-            try {
-                Class<?> eventClass = Class.forName("com.zerog.neoessentials.features.PermissionUpdateEvent");
-                java.lang.reflect.Constructor<?> ctor = eventClass.getConstructor(UUID.class);
-                Object event = ctor.newInstance(playerId);
-                Class<?> eventBusClass = Class.forName("net.neoforged.bus.api.EventBus");
-                java.lang.reflect.Field busField = Class.forName("net.neoforged.neoforge.eventbus.EventBus").getDeclaredField("EVENT_BUS");
-                Object eventBus = busField.get(null);
-                eventBusClass.getMethod("post", Object.class).invoke(eventBus, event);
-            } catch (Exception e) {
-                LOGGER.warn("Failed to fire PermissionUpdateEvent for player {}: {}", playerId, e.getMessage());
+            // If player is online, use setGroup(ServerPlayer, String) for correct event and tablist update
+            net.minecraft.server.MinecraftServer server = getActiveServerInstance();
+            ServerPlayer player = null;
+            if (server != null) {
+                for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                    if (p.getUUID().equals(playerId)) {
+                        player = p;
+                        break;
+                    }
+                }
+            }
+            if (player != null) {
+                setGroup(player, groupName);
             }
         } else {
             LOGGER.warn("Attempted to set player {} to non-existent group {}", playerId, groupName);
+        }
+    }
+
+    /**
+     * Get the active MinecraftServer instance (NeoForge/Forge)
+     */
+    private net.minecraft.server.MinecraftServer getActiveServerInstance() {
+        // NeoForge/Forge: use ServerLifecycleHooks.getCurrentServer()
+        try {
+            Class<?> hooksClass = Class.forName("net.neoforged.neoforge.server.ServerLifecycleHooks");
+            java.lang.reflect.Method getServerMethod = hooksClass.getMethod("getCurrentServer");
+            Object server = getServerMethod.invoke(null);
+            return (net.minecraft.server.MinecraftServer) server;
+        } catch (Exception e) {
+            LOGGER.warn("Could not get active server instance: {}", e.getMessage());
+            return null;
         }
     }
     
@@ -581,9 +598,9 @@ public class CustomPermissionsManager {
         String groupName = getPlayerGroup(playerId);
         PermissionGroup group = groups.get(groupName);
         if (group == null) return "";
-        String prefix = group.getPrefix(); // Only use direct group prefix
-        LOGGER.debug("[NeoEssentials] Raw prefix for group '{}': {}", groupName, prefix);
-        // Process animated placeholders in prefix if animation manager is available
+        String prefix = group.getPrefix();
+        // Animation support: use AnimationManager if available and result is non-empty, else fallback to static
+        String animatedPrefix = null;
         try {
             net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
             if (server != null) {
@@ -592,22 +609,32 @@ public class CustomPermissionsManager {
                     try {
                         Class<?> animationManagerClass = Class.forName("com.zerog.neoessentials.animation.AnimationManager");
                         Object animationManager = animationManagerClass.getDeclaredMethod("getInstance").invoke(null);
-                        LOGGER.debug("[NeoEssentials] AnimationManager instance: {}", animationManager);
                         if (animationManager != null) {
                             java.lang.reflect.Method processMethod = animationManagerClass.getDeclaredMethod("processAnimatedText", String.class, net.minecraft.server.level.ServerPlayer.class);
                             String processed = (String) processMethod.invoke(animationManager, prefix, player);
-                            LOGGER.debug("[NeoEssentials] Processed animated prefix for {}: {}", player.getName().getString(), processed);
-                            prefix = processed;
+                            if (processed != null && !processed.isEmpty()) {
+                                animatedPrefix = processed;
+                                LOGGER.debug("[NeoEssentials] Processed animated prefix for {}: {}", player.getName().getString(), animatedPrefix);
+                            } else {
+                                LOGGER.debug("[NeoEssentials] AnimationManager returned empty for {}. Using static prefix.", player.getName().getString());
+                            }
+                        } else {
+                            LOGGER.debug("[NeoEssentials] AnimationManager instance is null. Using static prefix for {}.", player.getName().getString());
                         }
                     } catch (Exception e) {
-                        LOGGER.debug("Animation manager not available for prefix processing: {}", e.getMessage());
+                        LOGGER.debug("[NeoEssentials] AnimationManager not available for {}: {}. Using static prefix.", playerId, e.getMessage());
                     }
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Error processing animated prefix for player {}: {}", playerId, e.getMessage());
+            LOGGER.debug("[NeoEssentials] Error processing animated prefix for player {}: {}. Using static prefix.", playerId, e.getMessage());
         }
-        return prefix;
+        if (animatedPrefix != null && !animatedPrefix.isEmpty()) {
+            return animatedPrefix;
+        } else {
+            LOGGER.debug("[NeoEssentials] Using static prefix for player {}: {}", playerId, prefix);
+            return prefix;
+        }
     }
     
     /**
@@ -616,7 +643,42 @@ public class CustomPermissionsManager {
     public String getPlayerSuffix(UUID playerId) {
         String groupName = getPlayerGroup(playerId);
         PermissionGroup group = groups.get(groupName);
-        return group != null ? group.getSuffix() : "";
+        String suffix = group != null ? group.getSuffix() : "";
+        String animatedSuffix = null;
+        try {
+            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                net.minecraft.server.level.ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+                if (player != null) {
+                    try {
+                        Class<?> animationManagerClass = Class.forName("com.zerog.neoessentials.animation.AnimationManager");
+                        Object animationManager = animationManagerClass.getDeclaredMethod("getInstance").invoke(null);
+                        if (animationManager != null) {
+                            java.lang.reflect.Method processMethod = animationManagerClass.getDeclaredMethod("processAnimatedText", String.class, net.minecraft.server.level.ServerPlayer.class);
+                            String processed = (String) processMethod.invoke(animationManager, suffix, player);
+                            if (processed != null && !processed.isEmpty()) {
+                                animatedSuffix = processed;
+                                LOGGER.debug("[NeoEssentials] Processed animated suffix for {}: {}", player.getName().getString(), animatedSuffix);
+                            } else {
+                                LOGGER.debug("[NeoEssentials] AnimationManager returned empty for suffix of {}. Using static suffix.", player.getName().getString());
+                            }
+                        } else {
+                            LOGGER.debug("[NeoEssentials] AnimationManager instance is null. Using static suffix for {}.", player.getName().getString());
+                        }
+                    } catch (Exception e) {
+                        LOGGER.debug("[NeoEssentials] AnimationManager not available for suffix of {}: {}. Using static suffix.", playerId, e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("[NeoEssentials] Error processing animated suffix for player {}: {}. Using static suffix.", playerId, e.getMessage());
+        }
+        if (animatedSuffix != null && !animatedSuffix.isEmpty()) {
+            return animatedSuffix;
+        } else {
+            LOGGER.debug("[NeoEssentials] Using static suffix for player {}: {}", playerId, suffix);
+            return suffix;
+        }
     }
     
     /**

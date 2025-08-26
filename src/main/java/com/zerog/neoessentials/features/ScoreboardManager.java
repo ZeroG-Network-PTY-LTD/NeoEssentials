@@ -1,8 +1,8 @@
-
 package com.zerog.neoessentials.features;
 
+import com.zerog.neoessentials.util.DebugUtil;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import com.zerog.neoessentials.NeoEssentials;
-
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.network.chat.Component;
@@ -106,8 +106,22 @@ public class ScoreboardManager {
     }
 
     public void updateScoreboard(ServerPlayer player) {
-        if (server == null) {
-            NeoEssentials.LOGGER.error("ScoreboardManager: server is null in updateScoreboard for player {}. Skipping update.", player.getName().getString());
+        com.zerog.neoessentials.config.TablistConfig config = com.zerog.neoessentials.features.TabListManager.getInstance().config;
+        if (player == null) {
+            DebugUtil.debugLog("ScoreboardManager: player is null in updateScoreboard. Skipping update.");
+            return;
+        }
+        if (player.getServer() == null) {
+            DebugUtil.debugLog("ScoreboardManager: server is null for player " + player.getName().getString() + ". Scheduling delayed scoreboard update.");
+            // Schedule a delayed update using a simple tick event (NeoForge example)
+            net.minecraft.server.MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                server.execute(() -> updateScoreboard(player));
+            }
+            return;
+        }
+        if (config == null || !config.enableScoreboard) {
+            com.zerog.neoessentials.util.DebugUtil.debugLog("[ScoreboardManager] Scoreboard is disabled in config, skipping updateScoreboard for " + player.getName().getString());
             return;
         }
         Scoreboard scoreboard = server.getScoreboard();

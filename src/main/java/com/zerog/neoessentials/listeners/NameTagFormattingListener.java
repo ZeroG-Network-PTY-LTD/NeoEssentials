@@ -15,17 +15,16 @@ public class NameTagFormattingListener {
     @SubscribeEvent
     public void onNameFormat(PlayerEvent.NameFormat event) {
         Player player = event.getEntity();
-        String name = player.getScoreboardName();
-        String displayName = name;
+        com.zerog.neoessentials.config.TablistConfig config = com.zerog.neoessentials.features.TabListManager.getInstance().config;
+        if (config == null || !config.enableNametag) {
+            com.zerog.neoessentials.util.DebugUtil.debugLog("[NameTagFormattingListener] Nametag is disabled in config, skipping display name for " + player.getName().getString());
+            return;
+        }
+        String displayName;
         if (player instanceof ServerPlayer serverPlayer) {
-            String nickname = com.zerog.neoessentials.commands.essentials.NickCommand.getNicknameOnly(serverPlayer.getUUID());
-            if (nickname != null && !nickname.isEmpty()) {
-                displayName = nickname;
-                com.zerog.neoessentials.config.MainConfig.ChatSettings chatConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().chatSettings;
-                if (chatConfig.nicknames.allowColors) {
-                    displayName = com.zerog.neoessentials.util.ColorUtil.colorize(displayName).getString();
-                }
-            }
+            displayName = com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(serverPlayer);
+        } else {
+            displayName = player.getScoreboardName();
         }
         event.setDisplayname(com.zerog.neoessentials.util.ColorUtil.colorize(displayName));
     }

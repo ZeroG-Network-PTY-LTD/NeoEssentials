@@ -1,15 +1,23 @@
+	// ...existing imports and class declaration...
 package com.zerog.neoessentials.features;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import net.minecraft.server.level.ServerPlayer;
 import java.util.*;
 
 public class TabListManager {
-	private static final Logger LOGGER = LoggerFactory.getLogger(TabListManager.class);
+	/**
+	 * Refresh tablist and header/footer for all online players. Call after group/permission changes.
+	 */
+	public void refreshTablistForAll(Collection<ServerPlayer> players) {
+		updateTabList(players);
+		for (ServerPlayer player : players) {
+			updateHeaderFooter(player, null);
+		}
+	}
+	// LOGGER removed (was unused)
 	private static TabListManager instance;
-	private com.zerog.neoessentials.config.TablistConfig config;
+	public com.zerog.neoessentials.config.TablistConfig config;
 	private final Map<UUID, String> playerDisplayNames = new HashMap<>();
 	private final com.zerog.neoessentials.placeholders.PlaceholderManager placeholderManager = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
 
@@ -26,7 +34,7 @@ public class TabListManager {
 	public void reloadConfig() {
 		loadConfig();
 		registerTablistPermissions();
-		System.out.println("[TabListManager] Tablist config reloaded!");
+		com.zerog.neoessentials.util.DebugUtil.debugLog("[TabListManager] Tablist config reloaded!");
 	}
 
 	/**
@@ -46,28 +54,10 @@ public class TabListManager {
 				try (java.io.FileWriter writer = new java.io.FileWriter(configFile)) {
 					gson.toJson(config, writer);
 				}
-				System.out.println("[TabListManager] Generated default tablist.json using TablistConfig.");
+				com.zerog.neoessentials.util.DebugUtil.debugLog("[TabListManager] Generated default tablist.json using TablistConfig.");
 			} else {
 				try (java.io.FileReader reader = new java.io.FileReader(configFile)) {
-					// Only parse relevant fields, ignore commented-out stuff
-					com.google.gson.JsonObject json = gson.fromJson(reader, com.google.gson.JsonObject.class);
-					config = new com.zerog.neoessentials.config.TablistConfig();
-					if (json.has("tablistFormat")) config.tablistFormat = json.get("tablistFormat").getAsString();
-					if (json.has("PermSets")) {
-						java.lang.reflect.Type permSetType = new com.google.gson.reflect.TypeToken<java.util.Map<String, com.zerog.neoessentials.config.TablistConfig.PermSet>>(){}.getType();
-						config.PermSets = gson.fromJson(json.get("PermSets"), permSetType);
-					}
-					if (json.has("defaultTablist")) config.defaultTablist = gson.fromJson(json.get("defaultTablist"), com.zerog.neoessentials.config.TablistConfig.DefaultTablist.class);
-					// teamFilters.order
-					if (json.has("PermSets")) {
-						com.google.gson.JsonObject permSetsObj = json.getAsJsonObject("PermSets");
-						if (permSetsObj.has("teamFilters")) {
-							com.google.gson.JsonObject teamFiltersObj = permSetsObj.getAsJsonObject("teamFilters");
-							if (teamFiltersObj.has("order")) {
-								config.teamFiltersOrder = teamFiltersObj.get("order").getAsString();
-							}
-						}
-					}
+					config = gson.fromJson(reader, com.zerog.neoessentials.config.TablistConfig.class);
 				}
 			}
 		} catch (Exception e) {
@@ -78,164 +68,182 @@ public class TabListManager {
 
 	// Update tablist for all players with config-driven layout
 	public void updateTabList(Collection<ServerPlayer> players) {
-		// Sort players using config.teamFiltersOrder if present
+	com.zerog.neoessentials.util.DebugUtil.debugLog("[TabListManager] DEBUG: updateTabList called for " + players.size() + " player(s).");
+		if (config == null || !config.enableTablist) {
+			com.zerog.neoessentials.util.DebugUtil.debugLog("[TabListManager] Tablist is disabled in config, skipping updateTabList.");
+			return;
+		}
+		com.zerog.neoessentials.util.DebugUtil.infoLog("[TabListManager] updateTabList called for " + players.size() + " player(s).");
 		List<ServerPlayer> sortedPlayers = new ArrayList<>(players);
-		String playerOrder = config.teamFiltersOrder;
-		if (playerOrder != null) {
-			String[] rules = playerOrder.split(",");
-			Comparator<ServerPlayer> comparator = null;
-			for (String rule : rules) {
-				String[] parts = rule.trim().split(" ");
-				String placeholder = parts[0];
-				String direction = parts.length > 1 ? parts[1] : "asc";
-				Comparator<ServerPlayer> ruleComp;
-				if (rule.contains("as number")) {
-					ruleComp = Comparator.comparingDouble(p -> {
-						String value = parsePlaceholders(p, "%" + placeholder + "%");
-						try {
-							return Double.parseDouble(value.replaceAll("[^0-9.]", ""));
-						} catch (Exception e) {
-							return 0.0;
-						}
-					});
-				} else {
-					ruleComp = Comparator.comparing(p -> {
-						String value = parsePlaceholders(p, "%" + placeholder + "%");
-						return value != null ? value : "";
-					}, Comparator.nullsLast(String::compareTo));
-				}
-				if (direction.equalsIgnoreCase("desc")) {
-					ruleComp = ruleComp.reversed();
-				}
-				comparator = comparator == null ? ruleComp : comparator.thenComparing(ruleComp);
-			}
-			if (comparator != null) {
-				sortedPlayers.sort(comparator);
+		String order = config != null ? config.teamFiltersOrder : null;
+		com.zerog.neoessentials.permissions.CustomPermissionsManager permMgr = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
+		if (order != null) {
+			switch (order) {
+				case "priority-desc":
+					sortedPlayers.sort((a, b) -> Integer.compare(
+						permMgr.getPlayerPriority(b.getUUID()),
+						permMgr.getPlayerPriority(a.getUUID())));
+					break;
+				case "priority-asc":
+					sortedPlayers.sort((a, b) -> Integer.compare(
+						permMgr.getPlayerPriority(a.getUUID()),
+						permMgr.getPlayerPriority(b.getUUID())));
+					break;
+				case "name-asc":
+					sortedPlayers.sort(Comparator.comparing(p -> p.getGameProfile().getName(), String.CASE_INSENSITIVE_ORDER));
+					break;
+				case "name-desc":
+					sortedPlayers.sort(Comparator.comparing((ServerPlayer p) -> p.getGameProfile().getName(), String.CASE_INSENSITIVE_ORDER).reversed());
+					break;
+				// Add more custom orders as needed
 			}
 		}
 		for (ServerPlayer player : sortedPlayers) {
-			List<String> lines = new ArrayList<>();
-			// Per-permission tablist layout
-			boolean matched = false;
-			if (config.PermSets != null) {
-				for (java.util.Map.Entry<String, com.zerog.neoessentials.config.TablistConfig.PermSet> entry : config.PermSets.entrySet()) {
-					com.zerog.neoessentials.config.TablistConfig.PermSet set = entry.getValue();
-					if (set.permission != null && set.permission.startsWith("permission:")) {
-						String perm = set.permission.substring("permission:".length());
-						if (perm.equalsIgnoreCase("neo.staff")) perm = "neoessentials.tablist.staff";
-						if (perm.equalsIgnoreCase("neo.vip")) perm = "neoessentials.tablist.vip";
-						com.zerog.neoessentials.permissions.CustomPermissionsManager permMgr = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
-						boolean hasPerm = permMgr.hasPermission(player, perm);
-						String logMsg = "[TabListManager] Checking tablist PermSet '" + entry.getKey() + "' for player " + player.getName().getString() + ": permission='" + perm + "', hasPermission=" + hasPerm;
-						System.out.println(logMsg);
-						LOGGER.info(logMsg);
-						if (hasPerm) {
-							if (set.tablist != null && set.tablist.header != null && !set.tablist.header.isEmpty()) {
-								for (String h : set.tablist.header) {
-									String replaced = parsePlaceholders(player, h);
-									replaced = replaced.replace('&', '§');
-									lines.add(replaced);
-								}
-							}
-							matched = true;
-							String matchMsg = "[TabListManager] Matched PermSet '" + entry.getKey() + "' for player " + player.getName().getString();
-							System.out.println(matchMsg);
-							LOGGER.info(matchMsg);
-							break;
+			com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] updateTabList called for player " + player.getUUID());
+			int highestPriority = Integer.MIN_VALUE;
+			com.zerog.neoessentials.config.TablistConfig.TablistLayout matchedLayout = null;
+			List<String> matchedConditions = new ArrayList<>();
+			if (config.tablistLayouts != null) {
+				String playerGroup = com.zerog.neoessentials.features.NameFormatManager.getInstance().getGroup(player);
+				for (com.zerog.neoessentials.config.TablistConfig.TablistLayout layout : config.tablistLayouts) {
+					int priority = layout.priority;
+					String conditionType = layout.conditionType != null ? layout.conditionType : "default";
+					String condition = layout.condition != null ? layout.condition : "";
+					boolean match = false;
+					if ("permission".equalsIgnoreCase(conditionType)) {
+						boolean hasPerm = permMgr.hasPermission(player, condition);
+						com.zerog.neoessentials.util.DebugUtil.debugLog("TabListManager: Checking permission '" + condition + "' for player " + player.getGameProfile().getName() + ": " + hasPerm);
+						if (hasPerm) match = true;
+					} else if ("group".equalsIgnoreCase(conditionType)) {
+						boolean groupMatch = playerGroup != null && playerGroup.equalsIgnoreCase(condition);
+						com.zerog.neoessentials.util.DebugUtil.debugLog("TabListManager: Checking group '" + condition + "' for player " + player.getGameProfile().getName() + ": " + groupMatch);
+						if (groupMatch) match = true;
+					} else if ("default".equalsIgnoreCase(conditionType)) {
+						match = true;
+					}
+					if (match) {
+						matchedConditions.add("priority=" + priority + ", type=" + conditionType + ", condition=" + condition);
+						if (priority > highestPriority) {
+							highestPriority = priority;
+							matchedLayout = layout;
 						}
 					}
 				}
-				if (!matched) {
-					String noMatchMsg = "[TabListManager] No PermSet matched for player " + player.getName().getString() + ", using defaultTablist.";
-					System.out.println(noMatchMsg);
-					LOGGER.info(noMatchMsg);
-				}
 			}
-			// Fallback to defaultTablist if no permission match
-			if (!matched && config.defaultTablist != null && config.defaultTablist.tablist != null && config.defaultTablist.tablist.header != null) {
-				for (String h : config.defaultTablist.tablist.header) {
-					String replaced = parsePlaceholders(player, h);
-					replaced = replaced.replace('&', '§');
-					lines.add(replaced);
-				}
+			com.zerog.neoessentials.util.DebugUtil.debugLog("Player: " + player.getGameProfile().getName() + " matched conditions: " + matchedConditions);
+			if (matchedLayout != null) {
+				com.zerog.neoessentials.util.DebugUtil.debugLog("Player: " + player.getGameProfile().getName() + " selected tablist layout: priority=" + matchedLayout.priority + ", type=" + matchedLayout.conditionType + ", condition=" + matchedLayout.condition);
+			} else {
+				com.zerog.neoessentials.util.DebugUtil.debugLog("Player: " + player.getGameProfile().getName() + " using fallback tablistFormat");
 			}
-			// If still empty, use tablistFormat as last fallback
-			if (lines.isEmpty() && config.tablistFormat != null && !config.tablistFormat.isEmpty()) {
-				String replaced = parsePlaceholders(player, config.tablistFormat);
-				replaced = replaced.replace('&', '§');
-				lines.add(replaced);
-			}
-			String tabEntry = String.join(" | ", lines);
-			playerDisplayNames.put(player.getUUID(), tabEntry);
+
+			// Use automatic prefix/suffix logic, matching chat
+			String prefix = com.zerog.neoessentials.features.NameFormatManager.getInstance().getPrefix(player);
+			String suffix = com.zerog.neoessentials.features.NameFormatManager.getInstance().getSuffix(player);
+			String displayName = com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(player);
+			// Process placeholders (including animated/custom) for prefix/suffix/displayName
+			prefix = placeholderManager.processPlaceholders(prefix, player);
+			suffix = placeholderManager.processPlaceholders(suffix, player);
+			displayName = placeholderManager.processPlaceholders(displayName, player);
+			// Apply color codes
+			prefix = prefix.replace('&', '\u00A7');
+			suffix = suffix.replace('&', '\u00A7');
+			displayName = displayName.replace('&', '\u00A7');
+			// Debug output for prefix/suffix/displayName
+			com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist prefix for " + player.getGameProfile().getName() + ": " + prefix);
+			com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist suffix for " + player.getGameProfile().getName() + ": " + suffix);
+			com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist displayName for " + player.getGameProfile().getName() + ": " + displayName);
+
 			net.minecraft.world.scores.Scoreboard scoreboard = player.getScoreboard();
-			net.minecraft.world.scores.PlayerTeam team = scoreboard.getPlayerTeam(player.getScoreboardName());
+			String username = player.getGameProfile().getName();
+			net.minecraft.world.scores.PlayerTeam team = scoreboard.getPlayerTeam(username);
 			if (team == null) {
-				team = scoreboard.addPlayerTeam(player.getScoreboardName());
+				team = scoreboard.addPlayerTeam(username);
 			}
-			team.setPlayerPrefix(net.minecraft.network.chat.Component.literal(tabEntry));
-			scoreboard.addPlayerToTeam(player.getScoreboardName(), team);
+			team.setPlayerPrefix(net.minecraft.network.chat.Component.literal(prefix));
+			team.setPlayerSuffix(net.minecraft.network.chat.Component.literal(suffix));
+			scoreboard.addPlayerToTeam(username, team);
+			playerDisplayNames.put(player.getUUID(), displayName);
 		}
 	}
 
-	// Per-permission tablist header/footer selection (uses PermSets and defaultTablist)
+	/**
+	 * Checks if the player has the permission explicitly (not just OP status)
+	 */
+	private boolean hasExplicitPermission(com.zerog.neoessentials.permissions.CustomPermissionsManager permMgr, ServerPlayer player, String permission) {
+		if (permission == null || permission.isEmpty()) return false;
+		UUID playerId = player.getUUID();
+		// Check player-specific permissions
+		Set<String> perms = permMgr.getPlayerPermissions(playerId);
+		return perms.contains(permission);
+	}
+
+	// Tablist header/footer selection using PermSets
 	public void updateHeaderFooter(ServerPlayer player, String displayName) {
-		List<String> headerLines = null;
-		List<String> footerLines = null;
-		// Check PermSets for matching permission
-		if (config.PermSets != null) {
-			for (Map.Entry<String, com.zerog.neoessentials.config.TablistConfig.PermSet> entry : config.PermSets.entrySet()) {
-				com.zerog.neoessentials.config.TablistConfig.PermSet set = entry.getValue();
-				if (set.permission != null && set.permission.startsWith("permission:")) {
-					String perm = set.permission.substring("permission:".length());
-					// Update to use neoessentials.tablist.<group> permission nodes
-					if (perm.equalsIgnoreCase("neo.staff")) perm = "neoessentials.tablist.staff";
-					if (perm.equalsIgnoreCase("neo.vip")) perm = "neoessentials.tablist.vip";
-					com.zerog.neoessentials.permissions.CustomPermissionsManager permMgr = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
-					if (permMgr.hasPermission(player, perm)) {
-						if (set.tablist != null && set.tablist.header != null && !set.tablist.header.isEmpty()) {
-							headerLines = set.tablist.header;
-						}
-						if (set.tablist != null && set.tablist.footer != null && !set.tablist.footer.isEmpty()) {
-							footerLines = set.tablist.footer;
-						}
-						break;
-					}
+	com.zerog.neoessentials.util.DebugUtil.debugLog("[TabListManager] updateHeaderFooter called for " + player.getName().getString() + " (UUID: " + player.getUUID() + ")");
+	// ...existing code...
+		// Refactor: Use tablistLayouts for header/footer selection
+	// Removed duplicate declarations of headerLines and footerLines
+		if (config == null || !config.enableTablist) {
+			com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist is disabled in config, skipping updateHeaderFooter for " + player.getName().getString());
+			return;
+		}
+		int highestPriority = Integer.MIN_VALUE;
+		com.zerog.neoessentials.config.TablistConfig.TablistLayout matchedLayout = null;
+		com.zerog.neoessentials.permissions.CustomPermissionsManager permMgr = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
+		if (config.tablistLayouts != null) {
+			String playerGroup = com.zerog.neoessentials.features.NameFormatManager.getInstance().getGroup(player);
+			for (com.zerog.neoessentials.config.TablistConfig.TablistLayout layout : config.tablistLayouts) {
+				int priority = layout.priority;
+				String conditionType = layout.conditionType != null ? layout.conditionType : "default";
+				String condition = layout.condition != null ? layout.condition : "";
+				boolean match = false;
+				if ("permission".equalsIgnoreCase(conditionType)) {
+					if (permMgr.hasPermission(player, condition)) match = true;
+				} else if ("group".equalsIgnoreCase(conditionType)) {
+					if (playerGroup != null && playerGroup.equalsIgnoreCase(condition)) match = true;
+				} else if ("default".equalsIgnoreCase(conditionType)) {
+					match = true;
+				}
+				if (match && priority > highestPriority) {
+					highestPriority = priority;
+					matchedLayout = layout;
 				}
 			}
 		}
-		// Fallback to defaultTablist if no permission match
-		if (headerLines == null && config.defaultTablist != null && config.defaultTablist.tablist != null) {
-			headerLines = config.defaultTablist.tablist.header;
-		}
-		if (footerLines == null && config.defaultTablist != null && config.defaultTablist.tablist != null) {
-			footerLines = config.defaultTablist.tablist.footer;
-		}
-		if (headerLines == null) headerLines = new ArrayList<>();
-		if (footerLines == null) footerLines = new ArrayList<>();
+		List<String> headerLines = matchedLayout != null && matchedLayout.header != null ? matchedLayout.header : new ArrayList<>();
+		List<String> footerLines = matchedLayout != null && matchedLayout.footer != null ? matchedLayout.footer : new ArrayList<>();
 		String headerText = String.join("\n", headerLines);
 		String footerText = String.join("\n", footerLines);
-		String parsedHeader = parsePlaceholders(player, headerText).replace('&', '§');
-		String parsedFooter = parsePlaceholders(player, footerText).replace('&', '§');
+		String parsedHeader = parsePlaceholders(player, headerText);
+		parsedHeader = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance().processPlaceholders(parsedHeader, player).replace('&', '\u00A7');
+		String parsedFooter = parsePlaceholders(player, footerText);
+		parsedFooter = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance().processPlaceholders(parsedFooter, player).replace('&', '\u00A7');
 		player.connection.send(new net.minecraft.network.protocol.game.ClientboundTabListPacket(
 			net.minecraft.network.chat.Component.literal(parsedHeader),
 			net.minecraft.network.chat.Component.literal(parsedFooter)
 		));
 		if (displayName != null) {
-			System.out.println("[TabListManager] DisplayName for " + player.getName().getString() + ": " + displayName);
+			com.zerog.neoessentials.util.DebugUtil.debugLog("DisplayName for " + player.getName().getString() + ": " + displayName);
 		}
 	}
 
 
 	public void updatePlayerEntry(ServerPlayer player) {
-		String displayName = com.zerog.neoessentials.features.DisplayNameManager.getDisplayName(player).replace('&', '§');
-		playerDisplayNames.put(player.getUUID(), displayName);
-		net.minecraft.world.scores.Scoreboard scoreboard = player.getScoreboard();
-		net.minecraft.world.scores.PlayerTeam team = scoreboard.getPlayerTeam(player.getScoreboardName());
-		if (team == null) {
-			team = scoreboard.addPlayerTeam(player.getScoreboardName());
+		if (config == null || !config.enableTablist) {
+			com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist is disabled in config, skipping updatePlayerEntry for " + player.getName().getString());
+			return;
 		}
-		team.setPlayerPrefix(net.minecraft.network.chat.Component.literal(displayName));
-		scoreboard.addPlayerToTeam(player.getScoreboardName(), team);
+		String prefix = com.zerog.neoessentials.features.NameFormatManager.getInstance().getPrefix(player);
+		playerDisplayNames.put(player.getUUID(), prefix);
+		net.minecraft.world.scores.Scoreboard scoreboard = player.getScoreboard();
+		String username = player.getGameProfile().getName();
+		net.minecraft.world.scores.PlayerTeam team = scoreboard.getPlayerTeam(username);
+		if (team == null) {
+			team = scoreboard.addPlayerTeam(username);
+		}
+		team.setPlayerPrefix(net.minecraft.network.chat.Component.literal(prefix != null ? prefix : ""));
+		scoreboard.addPlayerToTeam(username, team);
 	}
 
 	public String parsePlaceholders(ServerPlayer player, String text) {
