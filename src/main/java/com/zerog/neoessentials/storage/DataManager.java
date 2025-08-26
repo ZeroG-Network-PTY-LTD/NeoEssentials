@@ -9,7 +9,7 @@ import java.util.UUID;
 
 /**
  * Basic data storage manager for economy system
- * In a full implementation, this would use database or file storage
+ * Basic data storage manager for economy system. Uses file storage only.
  */
 public class DataManager {
     private static DataManager instance;

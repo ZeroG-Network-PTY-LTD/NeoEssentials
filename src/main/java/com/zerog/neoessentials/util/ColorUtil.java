@@ -5,8 +5,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.regex.Pattern;
 
@@ -14,7 +12,7 @@ import java.util.regex.Pattern;
  * Enhanced color utility for handling both legacy and hex colors
  */
 public class ColorUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ColorUtil.class);
+    // LOGGER removed; now using DebugUtil for all logging
     
     // Patterns for different color formats
     private static final Pattern LEGACY_COLOR_PATTERN = Pattern.compile("&([0-9a-fk-or])");
@@ -36,7 +34,7 @@ public class ColorUtil {
         try {
             return parseColoredText(text);
         } catch (Exception e) {
-            LOGGER.warn("Failed to parse colored text: {}", text, e);
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Failed to parse colored text: " + text + ", error: " + e.getMessage());
             return Component.literal(text);
         }
     }
@@ -111,15 +109,13 @@ public class ColorUtil {
             } else if (colorCode.startsWith("&{#") && colorCode.endsWith("}")) {
                 return parseHexColor(colorCode.substring(3, colorCode.length() - 1));
             }
-            
             // Handle legacy colors
             if (colorCode.startsWith("&") && colorCode.length() == 2) {
                 return parseLegacyColor(colorCode.charAt(1));
             }
-            
             return null;
         } catch (Exception e) {
-            LOGGER.debug("Failed to parse color code: {}", colorCode, e);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Failed to parse color code: " + colorCode + ", error: " + e.getMessage());
             return null;
         }
     }
@@ -132,7 +128,7 @@ public class ColorUtil {
             int color = Integer.parseInt(hex, 16);
             return Style.EMPTY.withColor(TextColor.fromRgb(color));
         } catch (NumberFormatException e) {
-            LOGGER.debug("Invalid hex color: {}", hex);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Invalid hex color: " + hex);
             return null;
         }
     }

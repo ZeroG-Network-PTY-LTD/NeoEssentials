@@ -51,7 +51,12 @@ public class BossBarManager {
     }
 
     public void showBossBar(ServerPlayer player, String id, String title, float progress, int color) {
-        String displayName = com.zerog.neoessentials.features.DisplayNameManager.getDisplayName(player);
+        com.zerog.neoessentials.config.TablistConfig config = com.zerog.neoessentials.features.TabListManager.getInstance().config;
+        if (config == null || !config.enableBossbar) {
+            com.zerog.neoessentials.util.DebugUtil.debugLog("[BossBarManager] Bossbar is disabled in config, skipping showBossBar for " + player.getName().getString());
+            return;
+        }
+        String displayName = com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(player);
         net.minecraft.server.level.ServerBossEvent bossbar = new net.minecraft.server.level.ServerBossEvent(
             net.minecraft.network.chat.Component.literal(displayName),
             net.minecraft.world.BossEvent.BossBarColor.values()[color % net.minecraft.world.BossEvent.BossBarColor.values().length],
@@ -62,7 +67,7 @@ public class BossBarManager {
         bossbar.addPlayer(player);
         activeBars.computeIfAbsent(player.getUUID(), k -> new HashMap<>())
             .put(id, new BossBarEntry(id, displayName, progress, color, bossbar));
-        System.out.println("[BossBarManager] Showed boss bar for " + player.getName().getString() + ": " + displayName + " (id: " + id + ", progress: " + progress + ", color: " + color + ")");
+    com.zerog.neoessentials.util.DebugUtil.debugLog("[BossBarManager] Showed boss bar for " + player.getName().getString() + ": " + displayName + " (id: " + id + ", progress: " + progress + ", color: " + color + ")");
     }
 
     public void removeBossBar(ServerPlayer player) {
@@ -74,7 +79,7 @@ public class BossBarManager {
                 entry.bossbar.setVisible(false);
             }
         }
-        System.out.println("[BossBarManager] Removed all boss bars for " + player.getName().getString());
+    com.zerog.neoessentials.util.DebugUtil.debugLog("[BossBarManager] Removed all boss bars for " + player.getName().getString());
     }
 
     public void removeBossBar(ServerPlayer player, String id) {
@@ -84,7 +89,7 @@ public class BossBarManager {
             if (entry != null) {
                 entry.bossbar.removePlayer(player);
                 entry.bossbar.setVisible(false);
-                System.out.println("[BossBarManager] Removed boss bar for " + player.getName().getString() + " (id: " + id + ")");
+                com.zerog.neoessentials.util.DebugUtil.debugLog("[BossBarManager] Removed boss bar for " + player.getName().getString() + " (id: " + id + ")");
             }
         }
     }

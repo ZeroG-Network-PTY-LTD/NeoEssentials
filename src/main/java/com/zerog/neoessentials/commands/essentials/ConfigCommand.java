@@ -53,7 +53,20 @@ public class ConfigCommand {
             // Perform hot-reload
             configManager.reloadAll();
 
-            // ChatFormattingListener config is now hot-reloadable and does not require manual reload.
+            // Reload tablist config and refresh tablist for all online players
+            com.zerog.neoessentials.features.TabListManager tabListManager = com.zerog.neoessentials.features.TabListManager.getInstance();
+            if (tabListManager != null) {
+                tabListManager.reloadConfig();
+                net.minecraft.server.MinecraftServer server = source.getServer();
+                if (server != null) {
+                    java.util.Collection<net.minecraft.server.level.ServerPlayer> players = server.getPlayerList().getPlayers();
+                    tabListManager.updateTabList(players);
+                    for (net.minecraft.server.level.ServerPlayer player : players) {
+                        tabListManager.updateHeaderFooter(player, com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(player));
+                        tabListManager.updatePlayerEntry(player);
+                    }
+                }
+            }
 
             // Send success message
             source.sendSuccess(() -> Component.literal("§a✓ All configurations reloaded successfully!"), true);

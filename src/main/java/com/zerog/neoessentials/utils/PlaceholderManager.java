@@ -6,8 +6,6 @@ package com.zerog.neoessentials.utils;
 import com.zerog.neoessentials.managers.EconomyManager;
 import com.zerog.neoessentials.managers.HomeManager;
 import net.minecraft.server.level.ServerPlayer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -28,7 +26,7 @@ import java.util.function.BiFunction;
  */
 public class PlaceholderManager {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(PlaceholderManager.class);
+    // LOGGER removed; now using DebugUtil for all logging
     private static PlaceholderManager instance;
     
     private final Map<String, BiFunction<ServerPlayer, String, String>> placeholders;
@@ -55,10 +53,26 @@ public class PlaceholderManager {
      */
     private void registerDefaultPlaceholders() {
         // Player info placeholders
-        registerPlaceholder("player", (player, args) -> player.getName().getString());
-        registerPlaceholder("displayname", (player, args) -> player.getDisplayName().getString());
-        registerPlaceholder("uuid", (player, args) -> player.getUUID().toString());
-        registerPlaceholder("ping", (player, args) -> String.valueOf(player.connection.latency()));
+        registerPlaceholder("player", (p1, a1) -> p1.getName().getString());
+        registerPlaceholder("player_name", (p2, a2) -> p2.getName().getString());
+        registerPlaceholder("displayname", (p3, a3) -> p3.getDisplayName().getString());
+        registerPlaceholder("display_name", (p4, a4) -> p4.getDisplayName().getString());
+        registerPlaceholder("uuid", (p5, a5) -> p5.getUUID().toString());
+        registerPlaceholder("ping", (p6, a6) -> String.valueOf(p6.connection.latency()));
+        registerPlaceholder("player_ping", (p7, a7) -> String.valueOf(p7.connection.latency()));
+        registerPlaceholder("ping_value", (p8, a8) -> String.valueOf(p8.connection.latency()));
+        registerPlaceholder("group", (p9, a9) -> {
+            if (p9 != null) {
+                return com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerGroup(p9.getUUID());
+            }
+            return "Default";
+        });
+        registerPlaceholder("group_name", (p10, a10) -> {
+            if (p10 != null) {
+                return com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerGroup(p10.getUUID());
+            }
+            return "Default";
+        });
         
         // Location placeholders
         registerPlaceholder("world", (player, args) -> player.level().dimension().location().getPath());
@@ -81,16 +95,20 @@ public class PlaceholderManager {
             DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now()));
         
         // Server info placeholders
-        registerPlaceholder("server_name", (player, args) -> "NeoEssentials Server");
-        registerPlaceholder("server_players", (player, args) -> {
-            if (player != null) {
-                var server = player.getServer();
-                if (server != null) {
-                    return String.valueOf(server.getPlayerCount());
+            registerPlaceholder("server_name", (player, args) -> "NeoEssentials Server");
+        registerPlaceholder("player_name", (p, a) -> p.getName().getString());
+        registerPlaceholder("display_name", (p, a) -> p.getDisplayName().getString());
+        registerPlaceholder("player_ping", (p, a) -> String.valueOf(p.connection.latency()));
+        registerPlaceholder("ping_value", (p, a) -> String.valueOf(p.connection.latency()));
+            registerPlaceholder("server_players", (player, args) -> {
+                if (player != null) {
+                    var server = player.getServer();
+                    if (server != null) {
+                        return String.valueOf(server.getPlayerCount());
+                    }
                 }
-            }
-            return "0";
-        });
+                return "0";
+            });
         registerPlaceholder("server_max_players", (player, args) -> {
             if (player != null) {
                 var server = player.getServer();
@@ -120,6 +138,12 @@ public class PlaceholderManager {
             int homeCount = homeManager.getHomeCount(player.getUUID());
             return String.valueOf(homeCount);
         });
+            registerPlaceholder("group_name", (player, args) -> {
+                if (player != null) {
+                    return com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerGroup(player.getUUID());
+                }
+                return "Default";
+            });
         
         registerPlaceholder("homes_list", (player, args) -> {
             HomeManager homeManager = HomeManager.getInstance();
@@ -186,8 +210,8 @@ public class PlaceholderManager {
      * Register a custom placeholder
      */
     public void registerPlaceholder(String identifier, BiFunction<ServerPlayer, String, String> function) {
-        placeholders.put(identifier.toLowerCase(), function);
-        LOGGER.debug("Registered placeholder: {}", identifier);
+    placeholders.put(identifier.toLowerCase(), function);
+    com.zerog.neoessentials.util.DebugUtil.debugLog("Registered placeholder: " + identifier);
     }
     
     /**
@@ -262,7 +286,7 @@ public class PlaceholderManager {
             try {
                 return function.apply(player, args);
             } catch (Exception e) {
-                LOGGER.warn("Error processing placeholder '{}': {}", placeholder, e.getMessage());
+                com.zerog.neoessentials.util.DebugUtil.warnLog("Error processing placeholder '" + placeholder + "': " + e.getMessage());
                 return placeholder; // Return original if error
             }
         }
@@ -342,8 +366,8 @@ public class PlaceholderManager {
      * Clear all placeholders and re-register defaults
      */
     public void reload() {
-        placeholders.clear();
-        registerDefaultPlaceholders();
-        LOGGER.info("Placeholder manager reloaded with {} placeholders", placeholders.size());
+    placeholders.clear();
+    registerDefaultPlaceholders();
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Placeholder manager reloaded with " + placeholders.size() + " placeholders");
     }
 }

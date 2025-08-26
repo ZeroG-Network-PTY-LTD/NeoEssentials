@@ -5,15 +5,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.core.registries.BuiltInRegistries;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Sound Effects Utility for GUI Interactions
  * Handles playing sounds for GUI actions like purchases, errors, etc.
  */
 public class SoundUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SoundUtil.class);
+    // LOGGER removed; now using DebugUtil for all logging
     
     /**
      * Play a sound effect for a player
@@ -35,10 +33,10 @@ public class SoundUtil {
             if (soundEvent != null) {
                 player.playNotifySound(soundEvent, SoundSource.MASTER, volume, pitch);
             } else {
-                LOGGER.warn("Unknown sound effect: {}", soundId);
+                com.zerog.neoessentials.util.DebugUtil.warnLog("Unknown sound effect: " + soundId);
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to play sound effect: " + soundId, e);
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to play sound effect: " + soundId + ", error: " + e.getMessage());
         }
     }
     

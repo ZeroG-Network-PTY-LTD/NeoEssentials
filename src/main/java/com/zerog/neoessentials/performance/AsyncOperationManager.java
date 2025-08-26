@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 
 /**
  * Asynchronous operation manager for performance-critical tasks
- * Handles database operations, file I/O, and network requests asynchronously
+ * Handles file I/O and network requests asynchronously
  * 
  * @author ZeroG
  * @since 2.0.0
@@ -20,18 +20,13 @@ public class AsyncOperationManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncOperationManager.class);
     private static AsyncOperationManager instance;
     
-    private final ExecutorService databaseExecutor;
+    // Removed: databaseExecutor
     private final ExecutorService fileIOExecutor;
     private final ExecutorService networkExecutor;
     private final ScheduledExecutorService scheduledExecutor;
     
     private AsyncOperationManager() {
-        // Database operations (CPU-intensive, moderate concurrency)
-        this.databaseExecutor = Executors.newFixedThreadPool(4, r -> {
-            Thread t = new Thread(r, "NeoEssentials-Database");
-            t.setDaemon(true);
-            return t;
-        });
+    // Removed: databaseExecutor
         
         // File I/O operations (I/O-bound, higher concurrency)
         this.fileIOExecutor = Executors.newFixedThreadPool(6, r -> {
@@ -63,35 +58,7 @@ public class AsyncOperationManager {
     }
     
     /**
-     * Execute database operation asynchronously
-     */
-    public <T> CompletableFuture<T> executeDatabaseOperation(Supplier<T> operation) {
-        return CompletableFuture.supplyAsync(operation, databaseExecutor)
-            .exceptionally(throwable -> {
-                ErrorHandler.handleSystemError("Async Database Operation", 
-                    "database operation failed", new Exception(throwable));
-                return null;
-            });
-    }
-    
-    /**
-     * Execute database operation asynchronously with callback
-     */
-    public <T> void executeDatabaseOperation(Supplier<T> operation, Consumer<T> onSuccess, Consumer<Throwable> onError) {
-        CompletableFuture.supplyAsync(operation, databaseExecutor)
-            .whenComplete((result, throwable) -> {
-                if (throwable != null) {
-                    if (onError != null) {
-                        onError.accept(throwable);
-                    } else {
-                        ErrorHandler.handleSystemError("Async Database Operation", 
-                            "database operation failed", new Exception(throwable));
-                    }
-                } else if (onSuccess != null) {
-                    onSuccess.accept(result);
-                }
-            });
-    }
+    // Removed: database operation methods
     
     /**
      * Execute file I/O operation asynchronously
@@ -188,7 +155,6 @@ public class AsyncOperationManager {
      */
     public void executeAsync(Runnable task, AsyncTaskType type) {
         ExecutorService executor = switch (type) {
-            case DATABASE -> databaseExecutor;
             case FILE_IO -> fileIOExecutor;
             case NETWORK -> networkExecutor;
         };
@@ -208,7 +174,6 @@ public class AsyncOperationManager {
      */
     public AsyncStats getAsyncStats() {
         return new AsyncStats(
-            getExecutorStats("Database", databaseExecutor),
             getExecutorStats("FileIO", fileIOExecutor),
             getExecutorStats("Network", networkExecutor),
             getExecutorStats("Scheduled", scheduledExecutor)
@@ -240,10 +205,9 @@ public class AsyncOperationManager {
     public void shutdown() {
         LOGGER.info("Shutting down async operation manager...");
         
-        shutdownExecutor("Database", databaseExecutor);
-        shutdownExecutor("FileIO", fileIOExecutor);
-        shutdownExecutor("Network", networkExecutor);
-        shutdownExecutor("Scheduled", scheduledExecutor);
+    shutdownExecutor("FileIO", fileIOExecutor);
+    shutdownExecutor("Network", networkExecutor);
+    shutdownExecutor("Scheduled", scheduledExecutor);
         
         LOGGER.info("Async operation manager shutdown complete");
     }
@@ -271,9 +235,8 @@ public class AsyncOperationManager {
      * Task type enumeration
      */
     public enum AsyncTaskType {
-        DATABASE,
-        FILE_IO,
-        NETWORK
+    FILE_IO,
+    NETWORK
     }
     
     /**
@@ -313,21 +276,18 @@ public class AsyncOperationManager {
      * Async statistics container
      */
     public static class AsyncStats {
-        private final ExecutorStats databaseStats;
         private final ExecutorStats fileIOStats;
         private final ExecutorStats networkStats;
         private final ExecutorStats scheduledStats;
-        
-        public AsyncStats(ExecutorStats databaseStats, ExecutorStats fileIOStats,
+
+        public AsyncStats(ExecutorStats fileIOStats,
                 ExecutorStats networkStats, ExecutorStats scheduledStats) {
-            this.databaseStats = databaseStats;
             this.fileIOStats = fileIOStats;
             this.networkStats = networkStats;
             this.scheduledStats = scheduledStats;
         }
-        
+
         // Getters
-        public ExecutorStats getDatabaseStats() { return databaseStats; }
         public ExecutorStats getFileIOStats() { return fileIOStats; }
         public ExecutorStats getNetworkStats() { return networkStats; }
         public ExecutorStats getScheduledStats() { return scheduledStats; }

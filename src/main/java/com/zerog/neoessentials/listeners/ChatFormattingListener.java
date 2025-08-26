@@ -38,10 +38,11 @@ public class ChatFormattingListener {
      */
     @net.neoforged.bus.api.SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST, receiveCanceled = true)
     public static void onServerChat(net.neoforged.neoforge.event.ServerChatEvent event) {
+            // ...existing code...
             java.nio.file.Path configPath = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfigPath();
             java.io.File configFile = configPath.resolve("main.json").toFile();
-            System.out.println("DEBUG config file path being used: " + configFile.getAbsolutePath());
-            System.out.println("DEBUG config file exists: " + configFile.exists());
+            com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG config file path being used: " + configFile.getAbsolutePath());
+            com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG config file exists: " + configFile.exists());
     // ...existing formatting logic...
     // At the very end, override the message
     // ...existing code...
@@ -74,24 +75,27 @@ public class ChatFormattingListener {
         ServerPlayer player = event.getPlayer();
         String originalMessage = event.getMessage().getString();
         try {
-            LOGGER.debug("[NeoEssentials] AntiSpam enabled: {}", config.antiSpam.enabled);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] AntiSpam enabled: " + config.antiSpam.enabled);
             if (config.antiSpam.enabled && isSpam(player, originalMessage, config)) {
                 event.setCanceled(true);
                 com.zerog.neoessentials.util.MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "chat.spam"));
-                LOGGER.debug("[NeoEssentials] Message blocked for spam: {}", originalMessage);
+                com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] Message blocked for spam: " + originalMessage);
                 return;
             }
-            LOGGER.debug("[NeoEssentials] Filter enabled: {}", config.filter.enabled);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] Filter enabled: " + config.filter.enabled);
             String filteredMessage = config.filter.enabled ? filterMessage(originalMessage, config) : originalMessage;
             if (filteredMessage == null) {
                 event.setCanceled(true);
                 com.zerog.neoessentials.util.MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "chat.filter.blocked"));
-                LOGGER.debug("[NeoEssentials] Message blocked by filter: {}", originalMessage);
+                com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] Message blocked by filter: " + originalMessage);
                 return;
             }
             // Restore full formatting logic
-            String displayName = com.zerog.neoessentials.features.DisplayNameManager.getDisplayName(player);
-            String group = com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance().getPlayerGroup(player.getUUID());
+            // ...existing code for displayName, group, prefix, suffix above...
+            // ...existing code...
+            // Restore full formatting logic
+            String displayName = com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(player);
+            String group = com.zerog.neoessentials.features.NameFormatManager.getInstance().getGroup(player);
             // Load group prefix/suffix from groups.json
             String prefix = "";
             String suffix = "";
@@ -109,31 +113,32 @@ public class ChatFormattingListener {
             } catch (Exception e) {
                 // fallback: no group config
             }
-            System.out.println("DEBUG config.format: " + config.format);
-            System.out.println("DEBUG config.groupFormats: " + config.groupFormats);
-            System.out.println("DEBUG group: " + group);
-            // Always use the main format from config
-            String nameFormat = config.format;
-            System.out.println("DEBUG nameFormat source: from main format");
-            if (nameFormat == null || nameFormat.isEmpty()) {
-                nameFormat = "{PREFIX} {DISPLAYNAME} > {MESSAGE}";
+            com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG prefix: " + prefix);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG displayName: " + displayName);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG suffix: " + suffix);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG config.chatFormat: " + config.chatFormat);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG config.groupFormats: " + config.groupFormats);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG group: " + group);
+            // Use chatname for name brackets, chat.format for message section
+            String chatNameFormat = config.chatname;
+            if (chatNameFormat == null || chatNameFormat.isEmpty()) {
+                chatNameFormat = "<{PREFIX}{DISPLAYNAME}{SUFFIX}>";
             }
-            System.out.println("DEBUG nameFormat before replacements: " + nameFormat);
-            System.out.println("DEBUG filteredMessage: " + filteredMessage);
-            String formattedName = nameFormat
+            String formattedName = chatNameFormat
                 .replace("{PREFIX}", prefix)
                 .replace("{DISPLAYNAME}", displayName)
                 .replace("{SUFFIX}", suffix)
-                .replace("{GROUP}", group)
-                .replace("{MESSAGE}", filteredMessage);
-            System.out.println("DEBUG after MESSAGE replacement: " + formattedName);
-            System.out.println("DEBUG filteredMessage value: '" + filteredMessage + "'");
-            String formattedText = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance().processPlaceholders(formattedName, player);
-            System.out.println("FINAL formattedText: " + formattedText);
+                .replace("{GROUP}", group);
+            String messageFormat = config.chatFormat;
+            if (messageFormat == null || messageFormat.isEmpty()) {
+                messageFormat = "{MESSAGE}";
+            }
+            String formattedMessage = messageFormat.replace("{MESSAGE}", filteredMessage);
+            String fullChat = formattedName + " " + formattedMessage;
+            String formattedText = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance().processPlaceholders(fullChat, player);
             event.setCanceled(true);
             MinecraftServer server = player.getServer();
             if (server != null) {
-                // Use color code processing for chat output
                 net.minecraft.network.chat.Component coloredComponent = com.zerog.neoessentials.util.ColorUtil.colorize(formattedText);
                 server.getPlayerList().broadcastSystemMessage(coloredComponent, false);
             }

@@ -1,7 +1,5 @@
 package com.zerog.neoessentials.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -23,7 +21,7 @@ import java.util.Collections;
  */
 public class PerformanceMonitor {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(PerformanceMonitor.class);
+    // LOGGER removed; now using DebugUtil for all logging
     private static PerformanceMonitor instance;
     
     // Command performance tracking
@@ -67,7 +65,7 @@ public class PerformanceMonitor {
         String key = commandName + ":" + playerName + ":" + Thread.currentThread().threadId();
         commandStartTimes.put(key, System.nanoTime());
         
-        LOGGER.debug("Started tracking command: {} for player: {}", commandName, playerName);
+    com.zerog.neoessentials.util.DebugUtil.debugLog("Started tracking command: " + commandName + " for player: " + playerName);
     }
     
     /**
@@ -85,12 +83,9 @@ public class PerformanceMonitor {
             recordCommandExecution(commandName, executionTime, success);
             
             if (executionTime > performanceWarningThreshold) {
-                LOGGER.warn("Command {} took {}ms to execute (player: {}, success: {})", 
-                    commandName, executionTime, playerName, success);
+                com.zerog.neoessentials.util.DebugUtil.warnLog("Command " + commandName + " took " + executionTime + "ms to execute (player: " + playerName + ", success: " + success + ")");
             }
-            
-            LOGGER.debug("Command {} completed in {}ms (player: {}, success: {})", 
-                commandName, executionTime, playerName, success);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Command " + commandName + " completed in " + executionTime + "ms (player: " + playerName + ", success: " + success + ")");
         }
     }
     
@@ -134,9 +129,9 @@ public class PerformanceMonitor {
      * Clear all metrics (useful for reset/cleanup)
      */
     public void clearMetrics() {
-        commandMetrics.clear();
-        commandStartTimes.clear();
-        LOGGER.info("Performance metrics cleared");
+    commandMetrics.clear();
+    commandStartTimes.clear();
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Performance metrics cleared");
     }
     
     /**

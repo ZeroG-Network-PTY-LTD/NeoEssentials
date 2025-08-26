@@ -7,13 +7,19 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEven
 
 public class UIEventHandler {
     @SubscribeEvent
-    private void onPermissionUpdate(com.zerog.neoessentials.features.PermissionUpdateEvent event) {
-    ServerPlayer player = event.getPlayer();
-    String displayName = DisplayNameManager.getDisplayName(player);
-    tabListManager.updateHeaderFooter(player, displayName);
-    tabListManager.updatePlayerEntry(player);
-    scoreboardManager.updateScoreboard(player);
-    bossBarManager.showBossBar(player, displayName, 1.0f, 0x00FF00);
+    public void onPermissionUpdate(com.zerog.neoessentials.features.PermissionUpdateEvent event) {
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[UIEventHandler] DEBUG: onPermissionUpdate fired. TabListManager instance: " + tabListManager);
+        ServerPlayer player = event.getPlayer();
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[UIEventHandler] onPermissionUpdate called for " + player.getName().getString() + " (UUID: " + player.getUUID() + ")");
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] PermissionUpdateEvent received for player " + player.getUUID() + ". Updating tablist for affected player only.");
+        if (player != null) {
+            tabListManager.updateTabList(java.util.Collections.singletonList(player)); // Only update for affected player
+            tabListManager.updateHeaderFooter(player, com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(player));
+            tabListManager.updatePlayerEntry(player);
+            scoreboardManager.updateScoreboard(player);
+        }
+        String displayName = DisplayNameManager.getDisplayName(player);
+        bossBarManager.showBossBar(player, displayName, 1.0f, 0x00FF00);
     }
     private final TabListManager tabListManager;
     private final ScoreboardManager scoreboardManager;
@@ -31,7 +37,9 @@ public class UIEventHandler {
     String displayName = DisplayNameManager.getDisplayName(player);
     tabListManager.updateHeaderFooter(player, displayName);
     tabListManager.updatePlayerEntry(player);
-    scoreboardManager.updateScoreboard(player);
+    if (player.getServer() != null) {
+        scoreboardManager.updateScoreboard(player);
+    }
     bossBarManager.showBossBar(player, displayName, 1.0f, 0x00FF00);
     }
 

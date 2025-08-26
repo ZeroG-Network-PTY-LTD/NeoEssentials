@@ -128,7 +128,9 @@ public class PerformanceCommand {
             
             AsyncStats stats = asyncManager.getAsyncStats();
             
-            displayExecutorStats(source, stats.getDatabaseStats());
+            displayExecutorStats(source, stats.getFileIOStats());
+            displayExecutorStats(source, stats.getNetworkStats());
+            displayExecutorStats(source, stats.getScheduledStats());
             displayExecutorStats(source, stats.getFileIOStats());
             displayExecutorStats(source, stats.getNetworkStats());
             displayExecutorStats(source, stats.getScheduledStats());

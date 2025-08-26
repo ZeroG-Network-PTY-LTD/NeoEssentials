@@ -224,8 +224,8 @@ public class TransactionManager {
     }
     
     private void flagTransactionForReview(Transaction transaction, String reason) {
-        // Implementation for flagging suspicious transactions
-        System.out.println("Transaction flagged for review: " + transaction.getTransactionId() + " - " + reason);
+    // Implementation for flagging suspicious transactions
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Transaction flagged for review: " + transaction.getTransactionId() + " - " + reason);
     }
     
     private void startBackgroundProcessing() {
@@ -239,7 +239,7 @@ public class TransactionManager {
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception e) {
-                    System.err.println("Error in transaction processing: " + e.getMessage());
+                    com.zerog.neoessentials.util.DebugUtil.errorLog("Error in transaction processing: " + e.getMessage());
                 }
             }
         });
@@ -288,7 +288,7 @@ public class TransactionManager {
         try {
             dataManager.saveTransaction(transaction);
         } catch (Exception e) {
-            System.err.println("Failed to save transaction: " + e.getMessage());
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to save transaction: " + e.getMessage());
         }
     }
     
@@ -310,7 +310,7 @@ public class TransactionManager {
             }
             
         } catch (Exception e) {
-            System.err.println("Failed to load transaction history: " + e.getMessage());
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to load transaction history: " + e.getMessage());
         }
     }
     

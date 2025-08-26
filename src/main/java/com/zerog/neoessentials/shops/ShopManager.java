@@ -52,7 +52,7 @@ public class ShopManager {
     }
     
     public void initialize() {
-        LOGGER.info("Initializing Shop Management System...");
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Initializing Shop Management System...");
         
         // Initialize default admin shops
         createDefaultAdminShops();
@@ -63,12 +63,11 @@ public class ShopManager {
         // Update web dashboard with initial data
         updateWebDashboardMetrics();
         
-        LOGGER.info("Shop Management System initialized with {} player shops, {} admin shops, {} sign shops", 
-                   playerShops.size(), adminShops.size(), signShops.size());
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Shop Management System initialized with " + playerShops.size() + " player shops, " + adminShops.size() + " admin shops, " + signShops.size() + " sign shops");
     }
     
     public void shutdown() {
-        LOGGER.info("Shutting down Shop Management System...");
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Shutting down Shop Management System...");
         
     // Save shops to storage
         saveShopsToStorage();
@@ -78,7 +77,7 @@ public class ShopManager {
         adminShops.clear();
         signShops.clear();
         
-        LOGGER.info("Shop Management System shutdown complete");
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Shop Management System shutdown complete");
     }
     
     /**
@@ -95,7 +94,7 @@ public class ShopManager {
         updateWebDashboardMetrics();
         webDashboard.addRealTimeEvent("SHOP", "Player shop '" + shopName + "' created by " + playerId, "INFO");
         
-        LOGGER.info("Created player shop '{}' for player {}", shopName, playerId);
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Created player shop '" + shopName + "' for player " + playerId);
         return true;
     }
     
@@ -128,7 +127,7 @@ public class ShopManager {
         webDashboard.addRealTimeEvent("SHOP", shopType + " shop created by " + player.getName().getString() + 
                                      " for " + item.getDisplayName().getString(), "INFO");
         
-        LOGGER.info("Created {} sign shop at {} for player {}", shopType, signPos, player.getName().getString());
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Created " + shopType + " sign shop at " + signPos + " for player " + player.getName().getString());
         return true;
     }
     

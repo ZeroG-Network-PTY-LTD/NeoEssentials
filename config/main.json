@@ -1,7 +1,7 @@
 {
   "serverName": "NeoServer",
   "defaultLanguage": "en",
-  "debugMode": false,
+  "debugMode": true,
   "Modules": {
     "economy": true,
     "homes": true,
@@ -14,14 +14,6 @@
     },
     "tablist": true,
     "spawn": true
-  },
-  "database": {
-    "type": "mysql",
-    "host": "localhost",
-    "port": 3306,
-    "username": "root",
-    "password": "password",
-    "database": "neoessentials"
   },
   "essentialCommands": {
     "heal": true,
