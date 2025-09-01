@@ -3,7 +3,6 @@ package com.zerog.neoessentials.features;
 import com.zerog.neoessentials.util.DebugUtil;
 import com.zerog.neoessentials.util.ColorUtil;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
-import com.zerog.neoessentials.NeoEssentials;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.network.chat.Component;
@@ -34,6 +33,7 @@ public class ScoreboardManager {
     private final Map<String, List<String>> groupLines = new ConcurrentHashMap<>();
     private final Map<UUID, Long> playerJoinTime = new ConcurrentHashMap<>();
     private final Map<UUID, ScoreboardCache> scoreboardCache = new ConcurrentHashMap<>();
+    private final Map<UUID, ScoreboardState> playerScoreboards = new ConcurrentHashMap<>();
     
     // Performance and scheduling
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -50,8 +50,8 @@ public class ScoreboardManager {
     
     // Configuration
     private boolean enableScoreboard = true;
-    private boolean enableAnimations = true;
     private boolean enableColorCodes = true;
+    private com.zerog.neoessentials.config.TablistConfig config;
 
     public ScoreboardManager() {
         DebugUtil.debugLog("[ScoreboardManager] Initializing with enhanced performance features");
@@ -95,66 +95,212 @@ public class ScoreboardManager {
     }
 
     /**
-     * Enhanced config loading with better error handling and defaults
+     * Enhanced config loading with unified configuration support
      */
     private void loadConfig() {
         try {
             String configPath = "config/neoessentials/scoreboard.json";
-            Gson gson = new Gson();
+            com.google.gson.GsonBuilder gsonBuilder = new com.google.gson.GsonBuilder();
+            com.google.gson.Gson gson = gsonBuilder.create();
             
-            try (FileReader reader = new FileReader(configPath)) {
-                Map<?, ?> config = gson.fromJson(reader, Map.class);
-                
-                // Load main settings
-                if (config.containsKey("enableScoreboard")) {
-                    Object val = config.get("enableScoreboard");
-                    enableScoreboard = val instanceof Boolean ? (Boolean) val : 
-                                     Boolean.parseBoolean(val.toString());
+            java.io.File configFile = new java.io.File(configPath);
+            if (!configFile.exists()) {
+                // Try fallback to tablist.json scoreboard section
+                String fallbackPath = "config/neoessentials/tablist.json";
+                java.io.File fallbackFile = new java.io.File(fallbackPath);
+                if (fallbackFile.exists()) {
+                    loadFromTablistConfig(fallbackFile, gson);
+                    return;
                 }
                 
-                if (config.containsKey("enableAnimations")) {
-                    Object val = config.get("enableAnimations");
-                    enableAnimations = val instanceof Boolean ? (Boolean) val : 
-                                     Boolean.parseBoolean(val.toString());
+                // Create default config
+                createDefaultScoreboardConfig(configFile, gson);
+                return;
+            }
+            
+            try (FileReader reader = new FileReader(configFile)) {
+                com.zerog.neoessentials.config.TablistConfig config = gson.fromJson(reader, 
+                    com.zerog.neoessentials.config.TablistConfig.class);
+                
+                if (config != null && config.scoreboard != null) {
+                    // Load from unified config structure
+                    loadFromUnifiedConfig(config);
+                    this.config = config; // Store the loaded config
+                } else {
+                    // Load from legacy structure
+                    reader.close();
+                    loadLegacyConfig(configFile);
                 }
                 
+                DebugUtil.debugLog("[ScoreboardManager] Unified config loaded successfully - " + 
+                                  "Enabled: " + enableScoreboard + ", Layouts: " + groupTitles.size());
+            }
+        } catch (Exception e) {
+            DebugUtil.warnLog("[ScoreboardManager] Error loading config, using defaults: " + e.getMessage());
+            loadDefaultConfig();
+        }
+    }
+    
+    /**
+     * Load configuration from unified TablistConfig structure
+     */
+    private void loadFromUnifiedConfig(com.zerog.neoessentials.config.TablistConfig config) {
+        enableScoreboard = config.scoreboard.enabled;
+        enableColorCodes = true; // Default enabled
+        
+        groupTitles.clear();
+        groupLines.clear();
+        
+        // Load layouts as groups
+        if (config.scoreboard.layouts != null) {
+            for (com.zerog.neoessentials.config.TablistConfig.Layout layout : config.scoreboard.layouts) {
+                String groupName = layout.conditionType != null ? layout.conditionType : "default";
+                if (layout.condition != null && !layout.condition.isEmpty()) {
+                    groupName = layout.condition.replace(":", "_");
+                }
+                
+                String title = layout.title != null ? layout.title : config.scoreboard.title;
+                groupTitles.put(groupName, title);
+                
+                if (layout.lines != null) {
+                    groupLines.put(groupName, new ArrayList<>(layout.lines));
+                }
+            }
+        }
+        
+        // Ensure default group exists
+        if (!groupTitles.containsKey("default")) {
+            groupTitles.put("default", config.scoreboard.title != null ? 
+                           config.scoreboard.title : "&e&lServer Stats");
+            groupLines.put("default", Arrays.asList(
+                "&7━━━━━━━━━━━━━━━━━",
+                "&aName: &f{player_name}",
+                "&bRank: &f{ftb_rank_display_name}",
+                "&cHealth: &f{player_health}❤",
+                "&7━━━━━━━━━━━━━━━━━"
+            ));
+        }
+    }
+    
+    /**
+     * Load from tablist.json scoreboard section
+     */
+    private void loadFromTablistConfig(java.io.File tablistFile, com.google.gson.Gson gson) {
+        try (FileReader reader = new FileReader(tablistFile)) {
+            com.zerog.neoessentials.config.TablistConfig config = gson.fromJson(reader, 
+                com.zerog.neoessentials.config.TablistConfig.class);
+            
+            if (config != null && config.scoreboard != null) {
+                loadFromUnifiedConfig(config);
+                DebugUtil.debugLog("[ScoreboardManager] Loaded scoreboard config from tablist.json");
+            } else {
+                loadDefaultConfig();
+            }
+        } catch (Exception e) {
+            DebugUtil.warnLog("[ScoreboardManager] Error loading from tablist.json: " + e.getMessage());
+            loadDefaultConfig();
+        }
+    }
+    
+    /**
+     * Create default scoreboard.json configuration
+     */
+    private void createDefaultScoreboardConfig(java.io.File configFile, com.google.gson.Gson gson) {
+        try {
+            configFile.getParentFile().mkdirs();
+            
+            com.zerog.neoessentials.config.TablistConfig defaultConfig = new com.zerog.neoessentials.config.TablistConfig();
+            defaultConfig.scoreboard = new com.zerog.neoessentials.config.TablistConfig.ScoreboardSection();
+            defaultConfig.scoreboard.enabled = true;
+            defaultConfig.scoreboard.updateInterval = 20;
+            defaultConfig.scoreboard.title = "&6&lNeoEssentials";
+            
+            // Add default layout
+            com.zerog.neoessentials.config.TablistConfig.Layout defaultLayout = 
+                new com.zerog.neoessentials.config.TablistConfig.Layout();
+            defaultLayout.priority = 1;
+            defaultLayout.conditionType = "default";
+            defaultLayout.title = "&e&lPLAYER INFO";
+            defaultLayout.lines = Arrays.asList(
+                "&7&m─────────────────",
+                "&e&lPLAYER INFO",
+                "&7&m─────────────────",
+                "&f● &7Player: &e{player_name}",
+                "&f● &7Level: &a{player_level}",
+                "&f● &7Health: &c{player_health}&7/&c{player_max_health}",
+                "&f● &7Food: &6{player_food}",
+                "",
+                "&f● &7Team: &b{ftb_team_display_name}",
+                "&f● &7Rank: &a{ftb_rank_display_name}",
+                "",
+                "&f● &7Online: &e{server_players}&7/&e{server_max_players}",
+                "&f● &7Time: &f{time}",
+                "&7&m─────────────────"
+            );
+            defaultConfig.scoreboard.layouts = Arrays.asList(defaultLayout);
+            
+            try (java.io.FileWriter writer = new java.io.FileWriter(configFile)) {
+                gson.toJson(defaultConfig, writer);
+            }
+            
+            loadFromUnifiedConfig(defaultConfig);
+            DebugUtil.debugLog("[ScoreboardManager] Created default scoreboard.json configuration");
+            
+        } catch (Exception e) {
+            DebugUtil.errorLog("[ScoreboardManager] Error creating default config: " + e.getMessage());
+            loadDefaultConfig();
+        }
+    }
+    
+    /**
+     * Load legacy configuration format
+     */
+    private void loadLegacyConfig(java.io.File configFile) {
+        try (FileReader reader = new FileReader(configFile)) {
+            com.google.gson.Gson gson = new com.google.gson.Gson();
+            Map<?, ?> config = gson.fromJson(reader, Map.class);
+            
+            // Load main settings
+            if (config.containsKey("enableScoreboard")) {
+                Object val = config.get("enableScoreboard");
+                enableScoreboard = val instanceof Boolean ? (Boolean) val : 
+                                 Boolean.parseBoolean(val.toString());
+            }
+            
                 if (config.containsKey("enableColorCodes")) {
                     Object val = config.get("enableColorCodes");
                     enableColorCodes = val instanceof Boolean ? (Boolean) val : 
                                      Boolean.parseBoolean(val.toString());
-                }
-                
-                // Load group configurations
-                Map<?, ?> groups = (Map<?, ?>) config.get("groups");
-                groupTitles.clear();
-                groupLines.clear();
-                
-                if (groups != null) {
-                    for (Map.Entry<?, ?> entry : groups.entrySet()) {
-                        String group = entry.getKey().toString();
-                        Map<?, ?> groupConfig = (Map<?, ?>) entry.getValue();
-                        
-                        String title = groupConfig.containsKey("title") ? 
-                                      groupConfig.get("title").toString() : "&e&lPlayer Stats";
-                        List<String> lines = new ArrayList<>();
-                        
-                        Object linesObj = groupConfig.get("lines");
-                        if (linesObj instanceof List<?>) {
-                            for (Object line : (List<?>) linesObj) {
-                                lines.add(line.toString());
-                            }
+                }            // Load group configurations
+            Map<?, ?> groups = (Map<?, ?>) config.get("groups");
+            groupTitles.clear();
+            groupLines.clear();
+            
+            if (groups != null) {
+                for (Map.Entry<?, ?> entry : groups.entrySet()) {
+                    String group = entry.getKey().toString();
+                    Map<?, ?> groupConfig = (Map<?, ?>) entry.getValue();
+                    
+                    String title = groupConfig.containsKey("title") ? 
+                                  groupConfig.get("title").toString() : "&e&lPlayer Stats";
+                    List<String> lines = new ArrayList<>();
+                    
+                    Object linesObj = groupConfig.get("lines");
+                    if (linesObj instanceof List<?>) {
+                        for (Object line : (List<?>) linesObj) {
+                            lines.add(line.toString());
                         }
-                        
-                        groupTitles.put(group, title);
-                        groupLines.put(group, lines);
                     }
+                    
+                    groupTitles.put(group, title);
+                    groupLines.put(group, lines);
                 }
-                
-                DebugUtil.debugLog("[ScoreboardManager] Config loaded successfully - Groups: " + 
-                                  groupTitles.size() + ", Enabled: " + enableScoreboard);
             }
+            
+            DebugUtil.debugLog("[ScoreboardManager] Legacy config loaded successfully - Groups: " + 
+                              groupTitles.size() + ", Enabled: " + enableScoreboard);
         } catch (Exception e) {
-            DebugUtil.warnLog("[ScoreboardManager] Error loading config, using defaults: " + e.getMessage());
+            DebugUtil.warnLog("[ScoreboardManager] Error loading legacy config: " + e.getMessage());
             loadDefaultConfig();
         }
     }
@@ -164,7 +310,6 @@ public class ScoreboardManager {
      */
     private void loadDefaultConfig() {
         enableScoreboard = true;
-        enableAnimations = true;
         enableColorCodes = true;
         
         groupTitles.clear();
@@ -235,7 +380,7 @@ public class ScoreboardManager {
     }
 
     /**
-     * Enhanced scoreboard update with caching and performance optimizations
+     * Enhanced scoreboard update with unified configuration support
      */
     public void updateScoreboard(ServerPlayer player) {
         if (player == null || !enableScoreboard) {
@@ -253,72 +398,190 @@ public class ScoreboardManager {
         }
         
         try {
-            // Check cache for performance
-            UUID playerId = player.getUUID();
-            ScoreboardCache cache = scoreboardCache.get(playerId);
-            long now = System.currentTimeMillis();
-            
-            // Use cache if valid (within 2 seconds)
-            if (cache != null && (now - cache.lastUpdate) < 2000) {
-                if (!cache.needsUpdate) {
-                    return; // No update needed
-                }
+            // Check if unified config is available
+            if (config != null && config.scoreboard != null) {
+                updateScoreboardUnified(player);
+            } else {
+                updateScoreboardLegacy(player);
             }
-            
-            Scoreboard scoreboard = server.getScoreboard();
-            String objectiveName = OBJECTIVE_PREFIX + playerId;
-            
-            // Create or update objective
-            Objective objective = scoreboard.getObjective(objectiveName);
-            if (objective == null) {
-                String title = processPlaceholders(getTitle(player), player);
-                Component titleComponent = enableColorCodes ? 
-                    ColorUtil.colorize(title) : Component.literal(title);
-                
-                objective = scoreboard.addObjective(
-                    objectiveName,
-                    ObjectiveCriteria.DUMMY,
-                    titleComponent,
-                    ObjectiveCriteria.RenderType.INTEGER,
-                    true,
-                    null
-                );
-                
-                DebugUtil.debugLog("[ScoreboardManager] Created new objective for " + 
-                                  player.getName().getString());
-            }
-            
-            // Update title if changed
-            String newTitle = processPlaceholders(getTitle(player), player);
-            Component newTitleComponent = enableColorCodes ? 
-                ColorUtil.colorize(newTitle) : Component.literal(newTitle);
-            
-            if (!objective.getDisplayName().equals(newTitleComponent)) {
-                objective.setDisplayName(newTitleComponent);
-            }
-            
-            // Set display for this player only
-            player.connection.send(new ClientboundSetDisplayObjectivePacket(
-                DisplaySlot.SIDEBAR, objective
-            ));
-            
-            // Update lines
-            updateScoreboardLines(player, objective, scoreboard);
-            
-            // Update team (prefix/suffix)
-            updatePlayerTeam(player, scoreboard);
-            
-            // Update cache
-            ScoreboardCache newCache = new ScoreboardCache();
-            newCache.lastUpdate = now;
-            newCache.needsUpdate = false;
-            newCache.lastTitle = newTitle;
-            scoreboardCache.put(playerId, newCache);
-            
         } catch (Exception e) {
             DebugUtil.errorLog("[ScoreboardManager] Error updating scoreboard for " + 
                               player.getName().getString() + ": " + e.getMessage());
         }
+    }
+    
+    /**
+     * Update scoreboard using unified configuration
+     */
+    private void updateScoreboardUnified(ServerPlayer player) {
+        if (!config.scoreboard.enabled) return;
+        
+        ScoreboardState state = playerScoreboards.computeIfAbsent(player.getUUID(), k -> new ScoreboardState());
+        
+        // Find matching layout with priority system
+        com.zerog.neoessentials.config.TablistConfig.Layout matchedLayout = findMatchingLayoutUnified(player);
+        if (matchedLayout == null) return;
+        
+        // Process animated title if enabled
+        String title = getAnimatedTitle();
+        if (title == null || title.isEmpty()) {
+            title = matchedLayout.title != null ? matchedLayout.title : config.scoreboard.title;
+        }
+        String processedTitle = processPlaceholders(title, player);
+        
+        // Process lines with conditional logic and animations
+        List<String> processedLines = new ArrayList<>();
+        if (matchedLayout.lines != null) {
+            for (String line : matchedLayout.lines) {
+                // Apply conditional logic
+                if (line.contains("${") && line.contains("}")) {
+                    line = processConditionalLogic(line, player);
+                }
+                
+                // Apply animations
+                line = processAnimations(line, player);
+                
+                // Process placeholders
+                String processedLine = processPlaceholders(line, player);
+                processedLines.add(processedLine.replace('&', '§'));
+            }
+        }
+        
+        // Limit lines to maxLines
+        if (processedLines.size() > config.scoreboard.maxLines) {
+            processedLines = processedLines.subList(0, config.scoreboard.maxLines);
+        }
+        
+        // Update scoreboard if changed
+        if (!processedTitle.equals(state.lastTitle) || !processedLines.equals(state.lastLines)) {
+            state.lastTitle = processedTitle;
+            state.lastLines = new ArrayList<>(processedLines);
+            
+            // Send scoreboard update
+            sendScoreboardUpdateUnified(player, processedTitle, processedLines);
+        }
+    }
+    
+    /**
+     * Find matching layout using unified configuration
+     */
+    private com.zerog.neoessentials.config.TablistConfig.Layout findMatchingLayoutUnified(ServerPlayer player) {
+        if (config.scoreboard.layouts == null || config.scoreboard.layouts.isEmpty()) {
+            return null;
+        }
+        
+        com.zerog.neoessentials.config.TablistConfig.Layout bestMatch = null;
+        int highestPriority = -1;
+        
+        for (com.zerog.neoessentials.config.TablistConfig.Layout layout : config.scoreboard.layouts) {
+            if (layout.priority <= highestPriority) continue;
+            
+            if (matchesConditionUnified(player, layout)) {
+                bestMatch = layout;
+                highestPriority = layout.priority;
+            }
+        }
+        
+        return bestMatch;
+    }
+    
+    /**
+     * Check if player matches layout condition (unified config)
+     */
+    private boolean matchesConditionUnified(ServerPlayer player, com.zerog.neoessentials.config.TablistConfig.Layout layout) {
+        String conditionType = layout.conditionType != null ? layout.conditionType : "default";
+        String condition = layout.condition != null ? layout.condition : "";
+        
+        switch (conditionType.toLowerCase()) {
+            case "permission":
+                return hasPermissionMethod(player, condition);
+            case "placeholder":
+                return checkPlaceholderConditionUnified(player, condition);
+            case "default":
+            default:
+                return true;
+        }
+    }
+    
+    /**
+     * Check placeholder-based condition (unified config)
+     */
+    private boolean checkPlaceholderConditionUnified(ServerPlayer player, String condition) {
+        if (condition == null || !condition.contains(":")) return false;
+        
+        String[] parts = condition.split(":", 2);
+        String placeholderName = parts[0];
+        String expectedValue = parts[1];
+        
+        String actualValue = processPlaceholders("{" + placeholderName + "}", player);
+        
+        return expectedValue.equals(actualValue);
+    }
+    
+    /**
+     * Legacy scoreboard update method
+     */
+    private void updateScoreboardLegacy(ServerPlayer player) {
+        // Check cache for performance
+        UUID playerId = player.getUUID();
+        ScoreboardCache cache = scoreboardCache.get(playerId);
+        long now = System.currentTimeMillis();
+        
+        // Use cache if valid (within 2 seconds)
+        if (cache != null && (now - cache.lastUpdate) < 2000) {
+            if (!cache.needsUpdate) {
+                return; // No update needed
+            }
+        }
+        
+        Scoreboard scoreboard = server.getScoreboard();
+        String objectiveName = OBJECTIVE_PREFIX + playerId;
+        
+        // Create or update objective
+        Objective objective = scoreboard.getObjective(objectiveName);
+        if (objective == null) {
+            String title = processPlaceholders(getTitle(player), player);
+            Component titleComponent = enableColorCodes ? 
+                ColorUtil.colorize(title) : Component.literal(title);
+            
+            objective = scoreboard.addObjective(
+                objectiveName,
+                ObjectiveCriteria.DUMMY,
+                titleComponent,
+                ObjectiveCriteria.RenderType.INTEGER,
+                true,
+                null
+            );
+            
+            DebugUtil.debugLog("[ScoreboardManager] Created new objective for " + 
+                              player.getName().getString());
+        }
+        
+        // Update title if changed
+        String newTitle = processPlaceholders(getTitle(player), player);
+        Component newTitleComponent = enableColorCodes ? 
+            ColorUtil.colorize(newTitle) : Component.literal(newTitle);
+        
+        if (!objective.getDisplayName().equals(newTitleComponent)) {
+            objective.setDisplayName(newTitleComponent);
+        }
+        
+        // Set display for this player only
+        player.connection.send(new ClientboundSetDisplayObjectivePacket(
+            DisplaySlot.SIDEBAR, objective
+        ));
+        
+        // Update lines
+        updateScoreboardLines(player, objective, scoreboard);
+        
+        // Update team (prefix/suffix)
+        updatePlayerTeam(player, scoreboard);
+        
+        // Update cache
+        ScoreboardCache newCache = new ScoreboardCache();
+        newCache.lastUpdate = now;
+        newCache.needsUpdate = false;
+        scoreboardCache.put(playerId, newCache);
     }
     
     /**
@@ -528,24 +791,57 @@ public class ScoreboardManager {
     private String processPlaceholders(String text, ServerPlayer player) {
         if (text == null || text.isEmpty()) return "";
         
+        try {
+            // Use PlaceholderManager if available
+            com.zerog.neoessentials.placeholders.PlaceholderManager placeholderMgr = 
+                com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
+            
+            String result = placeholderMgr.processPlaceholders(text, player);
+            return result.replace('&', '§');
+        } catch (Exception e) {
+            DebugUtil.debugLog("[ScoreboardManager] Error with PlaceholderManager, using fallback: " + e.getMessage());
+            return processPlaceholdersFallback(text, player);
+        }
+    }
+    
+    /**
+     * Fallback placeholder processing
+     */
+    private String processPlaceholdersFallback(String text, ServerPlayer player) {
         // Replace common placeholders
         String result = text
             .replace("%player%", player.getName().getString())
+            .replace("{player_name}", player.getName().getString())
             .replace("%group%", getGroup(player))
+            .replace("{ftb_rank_display_name}", getGroup(player))
             .replace("%health%", String.valueOf((int)player.getHealth()))
+            .replace("{player_health}", String.valueOf((int)player.getHealth()))
             .replace("%max_health%", String.valueOf((int)player.getMaxHealth()))
+            .replace("{player_max_health}", String.valueOf((int)player.getMaxHealth()))
             .replace("%hunger%", String.valueOf(player.getFoodData().getFoodLevel()))
+            .replace("{player_food}", String.valueOf(player.getFoodData().getFoodLevel()))
             .replace("%x%", String.valueOf((int)player.getX()))
+            .replace("{player_x}", String.valueOf((int)player.getX()))
             .replace("%y%", String.valueOf((int)player.getY()))
+            .replace("{player_y}", String.valueOf((int)player.getY()))
             .replace("%z%", String.valueOf((int)player.getZ()))
+            .replace("{player_z}", String.valueOf((int)player.getZ()))
             .replace("%world%", player.level().dimension().location().getPath())
+            .replace("{world_name}", player.level().dimension().location().getPath())
             .replace("%onlinetime%", formatTime(getOnlineTime(player)))
+            .replace("{session_time}", formatTime(getOnlineTime(player)))
             .replace("%kills%", String.valueOf(getKills(player)))
+            .replace("{player_kills}", String.valueOf(getKills(player)))
             .replace("%deaths%", String.valueOf(getDeaths(player)))
+            .replace("{player_deaths}", String.valueOf(getDeaths(player)))
             .replace("%blocks_broken%", String.valueOf(getBlocksBroken(player)))
+            .replace("{blocks_broken}", String.valueOf(getBlocksBroken(player)))
             .replace("%blocks_placed%", String.valueOf(getBlocksPlaced(player)))
+            .replace("{blocks_placed}", String.valueOf(getBlocksPlaced(player)))
             .replace("%distance%", String.format("%.1f", getDistanceTraveled(player)))
-            .replace("%kdr%", calculateKDR(player));
+            .replace("{distance_traveled}", String.format("%.1f", getDistanceTraveled(player)))
+            .replace("%kdr%", calculateKDR(player))
+            .replace("{kdr}", calculateKDR(player));
         
         // Playtime integration
         try {
@@ -556,8 +852,11 @@ public class ScoreboardManager {
             
             result = result
                 .replace("%total_playtime%", formatTime(totalPlaytime))
+                .replace("{total_playtime}", formatTime(totalPlaytime))
                 .replace("%session_time%", formatTime(currentSession))
-                .replace("%playtime_formatted%", playtimeTracker.formatPlaytime(totalPlaytime));
+                .replace("{current_session}", formatTime(currentSession))
+                .replace("%playtime_formatted%", playtimeTracker.formatPlaytime(totalPlaytime))
+                .replace("{playtime_formatted}", playtimeTracker.formatPlaytime(totalPlaytime));
         } catch (Exception e) {
             DebugUtil.debugLog("[ScoreboardManager] Error getting playtime data: " + e.getMessage());
         }
@@ -566,10 +865,21 @@ public class ScoreboardManager {
         if (server != null) {
             result = result
                 .replace("%online%", String.valueOf(server.getPlayerCount()))
+                .replace("{server_players}", String.valueOf(server.getPlayerCount()))
                 .replace("%max%", String.valueOf(server.getMaxPlayers()))
+                .replace("{server_max_players}", String.valueOf(server.getMaxPlayers()))
                 .replace("%tps%", String.format("%.1f", getCurrentTPS()))
-                .replace("%uptime%", formatTime(getServerUptime()));
+                .replace("{server_tps}", String.format("%.1f", getCurrentTPS()))
+                .replace("%uptime%", formatTime(getServerUptime()))
+                .replace("{server_uptime}", formatTime(getServerUptime()));
         }
+        
+        // Time placeholders
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        result = result
+            .replace("{time}", now.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss")))
+            .replace("{date}", now.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+            .replace("{datetime}", now.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         
         return result;
     }
@@ -679,8 +989,284 @@ public class ScoreboardManager {
     private static class ScoreboardCache {
         long lastUpdate = 0;
         boolean needsUpdate = true;
-        String lastTitle = "";
-        List<String> lastLines = new ArrayList<>();
+    }
+    
+    /**
+     * ScoreboardState class to track individual player's scoreboard state
+     */
+    public static class ScoreboardState {
+        public String lastTitle = "";
+        public List<String> lastLines = new ArrayList<>();
+    }
+    
+    /**
+     * Get animated title if title animations are enabled
+     */
+    private String getAnimatedTitle() {
+        if (config == null || config.scoreboard == null || config.scoreboard.titleAnimations == null || 
+            !config.scoreboard.titleAnimations.enabled) {
+            return null;
+        }
+        
+        List<String> frames = config.scoreboard.titleAnimations.frames;
+        if (frames == null || frames.isEmpty()) return null;
+        
+        long currentTime = System.currentTimeMillis();
+        double duration = config.scoreboard.titleAnimations.duration * 1000; // Convert to milliseconds
+        int frameIndex = (int) ((currentTime / duration) % frames.size());
+        
+        return frames.get(frameIndex);
+    }
+    
+    /**
+     * Process conditional logic in scoreboard lines
+     */
+    private String processConditionalLogic(String line, ServerPlayer player) {
+        if (config == null || config.scoreboard == null || config.scoreboard.conditional_logic == null) return line;
+        
+        // Look for ${condition_name} patterns
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\$\\{([^}]+)\\}");
+        java.util.regex.Matcher matcher = pattern.matcher(line);
+        
+        String result = line;
+        while (matcher.find()) {
+            String conditionName = matcher.group(1);
+            String conditionLogic = config.scoreboard.conditional_logic.get(conditionName);
+            
+            if (conditionLogic != null) {
+                boolean conditionMet = evaluateCondition(conditionLogic, player);
+                // For now, replace with indicator. This could be expanded to show/hide entire lines
+                String replacement = conditionMet ? "&a✓" : "&c✗";
+                result = result.replace("${" + conditionName + "}", replacement);
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Evaluate conditional logic expressions
+     */
+    private boolean evaluateCondition(String condition, ServerPlayer player) {
+        try {
+            // Handle permission checks
+            if (condition.startsWith("permission:")) {
+                String permission = condition.substring(11);
+                return hasPermissionMethod(player, permission);
+            }
+            
+            // Handle health checks
+            if (condition.contains("health")) {
+                float health = player.getHealth();
+                if (condition.contains("< 6")) {
+                    return health < 6.0f;
+                } else if (condition.contains("> 15")) {
+                    return health > 15.0f;
+                }
+            }
+            
+            // Handle food checks
+            if (condition.contains("food")) {
+                int food = player.getFoodData().getFoodLevel();
+                if (condition.contains("< 6")) {
+                    return food < 6;
+                } else if (condition.contains("> 15")) {
+                    return food > 15;
+                }
+            }
+            
+            // Handle FTB checks
+            if (condition.contains("ftb_has_team == true")) {
+                String teamPlaceholder = processPlaceholders("{ftb_has_team}", player);
+                return "true".equals(teamPlaceholder);
+            }
+            
+            if (condition.contains("ftb_has_rank == true")) {
+                String rankPlaceholder = processPlaceholders("{ftb_has_rank}", player);
+                return "true".equals(rankPlaceholder);
+            }
+            
+        } catch (Exception e) {
+            DebugUtil.debugLog("[ScoreboardManager] Error evaluating condition '" + condition + "': " + e.getMessage());
+        }
+        
+        return false; // Default to false for safety
+    }
+    
+    /**
+     * Process animations in scoreboard lines
+     */
+    private String processAnimations(String line, ServerPlayer player) {
+        if (config == null || config.scoreboard == null || config.scoreboard.animations == null || 
+            !config.scoreboard.animations.enabled) {
+            return line;
+        }
+        
+        // Look for animation placeholders like {animation:health_indicator}
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\{animation:([^}]+)\\}");
+        java.util.regex.Matcher matcher = pattern.matcher(line);
+        
+        String result = line;
+        while (matcher.find()) {
+            String animationId = matcher.group(1);
+            String animationFrame = getAnimationFrame(animationId, player);
+            if (animationFrame != null) {
+                result = result.replace("{animation:" + animationId + "}", animationFrame);
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Get current frame for an animation sequence
+     */
+    private String getAnimationFrame(String animationId, ServerPlayer player) {
+        if (config == null || config.scoreboard == null || config.scoreboard.animations == null || 
+            config.scoreboard.animations.sequences == null) return null;
+        
+        for (com.zerog.neoessentials.config.TablistConfig.AnimationSequence sequence : config.scoreboard.animations.sequences) {
+            if (animationId.equals(sequence.id)) {
+                // Check if condition is met (if any)
+                if (sequence.id.equals("health_indicator")) {
+                    if (player.getHealth() >= 6.0f) continue; // Only show when health is low
+                }
+                
+                List<String> frames = sequence.frames;
+                if (frames == null || frames.isEmpty()) continue;
+                
+                long currentTime = System.currentTimeMillis();
+                double duration = sequence.duration * 1000; // Convert to milliseconds
+                int frameIndex = (int) ((currentTime / duration) % frames.size());
+                
+                return frames.get(frameIndex);
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Send unified scoreboard update to player
+     */
+    private void sendScoreboardUpdateUnified(ServerPlayer player, String title, List<String> lines) {
+        try {
+            Scoreboard scoreboard = player.getScoreboard();
+            String objectiveName = "neoessentials_sb";
+            
+            // Remove existing objective
+            Objective existingObjective = scoreboard.getObjective(objectiveName);
+            if (existingObjective != null) {
+                scoreboard.removeObjective(existingObjective);
+            }
+            
+            // Create new objective
+            Objective objective = scoreboard.addObjective(objectiveName, 
+                ObjectiveCriteria.DUMMY, Component.literal(title.replace('&', '§')), 
+                ObjectiveCriteria.RenderType.INTEGER, true, null);
+            
+            // Set display slot
+            scoreboard.setDisplayObjective(DisplaySlot.SIDEBAR, objective);
+            
+            // Add lines (in reverse order for proper display)
+            for (int i = 0; i < Math.min(lines.size(), 15); i++) {
+                String line = lines.get(i);
+                if (line.trim().isEmpty()) {
+                    // Empty line - use spaces with different counts
+                    line = " ".repeat(i + 1);
+                }
+                
+                String entryName = "§" + i + "§r" + line;
+                // Use a dummy score holder for the scoreboard entry
+                net.minecraft.world.scores.ScoreHolder scoreHolder = net.minecraft.world.scores.ScoreHolder.forNameOnly(entryName);
+                ScoreAccess score = scoreboard.getOrCreatePlayerScore(scoreHolder, objective);
+                score.set(lines.size() - i);
+            }
+            
+        } catch (Exception e) {
+            DebugUtil.errorLog("[ScoreboardManager] Error sending unified scoreboard update: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Check if player has permission (wrapper method)
+     */
+    private boolean hasPermissionMethod(ServerPlayer player, String permission) {
+        try {
+            com.zerog.neoessentials.permissions.CustomPermissionsManager permMgr = 
+                com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
+            return permMgr.hasPermission(player, permission);
+        } catch (Exception e) {
+            DebugUtil.debugLog("[ScoreboardManager] Error checking permission: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Update scoreboard with Discord integration
+     */
+    public void updateScoreboardWithDiscordNotification(ServerPlayer player, String reason) {
+        try {
+            // Update the scoreboard
+            updateScoreboard(player);
+
+            // Notify Discord integration
+            com.zerog.neoessentials.integration.DiscordIntegrationManager discordMgr = 
+                com.zerog.neoessentials.integration.DiscordIntegrationManager.getInstance();
+            
+            if (discordMgr.isEnabled()) {
+                Map<String, Object> data = new HashMap<>();
+                data.put("layout_name", getCurrentLayoutName(player));
+                data.put("update_type", reason);
+                data.put("animation_active", hasActiveAnimations());
+                discordMgr.sendEnrichedNotification("scoreboard_update", player, data);
+            }
+
+        } catch (Exception e) {
+            DebugUtil.errorLog("[ScoreboardManager] Error updating scoreboard with Discord notification: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get current layout name for a player
+     */
+    private String getCurrentLayoutName(ServerPlayer player) {
+        try {
+            // Get the active layout based on player data
+            return "unified_scoreboard";
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
+    /**
+     * Check if there are active animations
+     */
+    private boolean hasActiveAnimations() {
+        // Check if any animation tasks are active
+        return false; // Simplified for now
+    }
+
+    /**
+     * Notify Discord of scoreboard changes for all players
+     */
+    public void notifyDiscordScoreboardUpdate(String reason) {
+        try {
+            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server == null) return;
+
+            com.zerog.neoessentials.integration.DiscordIntegrationManager discordMgr = 
+                com.zerog.neoessentials.integration.DiscordIntegrationManager.getInstance();
+            
+            if (discordMgr.isEnabled()) {
+                for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                    updateScoreboardWithDiscordNotification(player, reason);
+                }
+            }
+
+        } catch (Exception e) {
+            DebugUtil.errorLog("[ScoreboardManager] Error notifying Discord of scoreboard updates: " + e.getMessage());
+        }
     }
     
     /**

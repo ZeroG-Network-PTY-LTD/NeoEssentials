@@ -41,9 +41,9 @@ public class ChatFormattingListener {
      */
     @net.neoforged.bus.api.SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.HIGHEST, receiveCanceled = true)
     public static void onServerChat(net.neoforged.neoforge.event.ServerChatEvent event) {
-            // ...existing code...
+            // Use unified configuration system
             java.nio.file.Path configPath = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfigPath();
-            java.io.File configFile = configPath.resolve("main.json").toFile();
+            java.io.File configFile = configPath.resolve("config.json").toFile();
             com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG config file path being used: " + configFile.getAbsolutePath());
             com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG config file exists: " + configFile.exists());
     // ...existing formatting logic...

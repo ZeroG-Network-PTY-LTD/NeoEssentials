@@ -33,10 +33,10 @@ public class NeoEssentialsAPIFactory {
         try {
             LOGGER.info("Initializing NeoEssentials API Factory...");
             
-            // Register default providers
-            registerProvider(IEconomyProvider.class, new DefaultEconomyProvider());
-            registerProvider(IPlayerDataProvider.class, new DefaultPlayerDataProvider());
-            registerProvider(IPlaceholderProvider.class, new DefaultPlaceholderProvider());
+            // Register providers (will be implemented when managers are available)
+            // registerProvider(IEconomyProvider.class, new DefaultEconomyProvider());
+            // registerProvider(IPlayerDataProvider.class, new DefaultPlayerDataProvider());
+            // registerProvider(IPlaceholderProvider.class, new DefaultPlaceholderProvider());
             
             initialized = true;
             LOGGER.info("NeoEssentials API Factory initialized successfully");
@@ -72,27 +72,24 @@ public class NeoEssentialsAPIFactory {
      * Get the economy provider
      * @return Economy provider
      */
-    public static IEconomyProvider getEconomyProvider() {
-        return getProvider(IEconomyProvider.class)
-            .orElseThrow(() -> new RuntimeException("Economy provider not available"));
+    public static Optional<IEconomyProvider> getEconomyProvider() {
+        return getProvider(IEconomyProvider.class);
     }
     
     /**
      * Get the player data provider
      * @return Player data provider
      */
-    public static IPlayerDataProvider getPlayerDataProvider() {
-        return getProvider(IPlayerDataProvider.class)
-            .orElseThrow(() -> new RuntimeException("Player data provider not available"));
+    public static Optional<IPlayerDataProvider> getPlayerDataProvider() {
+        return getProvider(IPlayerDataProvider.class);
     }
     
     /**
      * Get the placeholder provider
      * @return Placeholder provider
      */
-    public static IPlaceholderProvider getPlaceholderProvider() {
-        return getProvider(IPlaceholderProvider.class)
-            .orElseThrow(() -> new RuntimeException("Placeholder provider not available"));
+    public static Optional<IPlaceholderProvider> getPlaceholderProvider() {
+        return getProvider(IPlaceholderProvider.class);
     }
     
     /**
@@ -149,7 +146,7 @@ public class NeoEssentialsAPIFactory {
     public static boolean isNeoEssentialsReady() {
         try {
             return initialized && 
-                   FeatureManager.getInstance().isInitialized() &&
+                   FeatureManager.getInstance() != null &&
                    NeoEssentialsAPI.isAvailable();
         } catch (Exception e) {
             return false;

@@ -1,34 +1,595 @@
 {
-  "enableTablist": true,
-  "tablistFormat": "[{group}] {player_name} | Ping: {ping}",
-  "enableScoreboard": true,
-  "scoreboardFormat": "Score: {score} | Player: {player_name}",
-  "enableBossbar": true,
-  "bossbarFormat": "Boss: {bossbar} | {message} [{progress}%]",
-  "tablistLayouts": [
-    {
-      "priority": 100,
-      "conditionType": "permission",
-      "condition": "neoessentials.tablist.staff",
-      "header": ["&6Staff | &e{player_name}"],
-      "footer": ["&7Online: {online_count}"]
+  "_comment": "Comprehensive Tablist, Scoreboard, and Bossbar Configuration",
+  "_description": "All display elements are configured in this single file with full multiline support",
+  
+  "tablist": {
+    "enabled": true,
+    "updateInterval": 20,
+    "format": "{ftb_combined_prefix}[{team_name}] {player_name}{ftb_combined_suffix}",
+    "layouts": [
+      {
+        "priority": 300,
+        "conditionType": "permission",
+        "condition": "neoessentials.tablist.admin",
+        "header": [
+          "&c&l╔═══════════════════════════════════╗",
+          "&c&l║           &f&lADMIN PANEL          &c&l║",
+          "&c&l╠═══════════════════════════════════╣",
+          "&c&l║ &f&lWelcome &e{player_name}           &c&l║",
+          "&c&l║ &7Team: &b{ftb_team_display_name}                &c&l║",
+          "&c&l║ &7Rank: &a{ftb_rank_display_name}                &c&l║",
+          "&c&l║ &7Role: &6{ftb_team_role}                 &c&l║",
+          "&c&l╚═══════════════════════════════════╝"
+        ],
+        "footer": [
+          "&c&l╔═══════════════════════════════════╗",
+          "&c&l║ &7Server: &a{server_name}           &c&l║",
+          "&c&l║ &7Online: &e{server_players}&7/&e{server_max_players}              &c&l║",
+          "&c&l║ &7TPS: &a{server_tps}                   &c&l║",
+          "&c&l║ &7Memory: &e{server_memory_percent}%            &c&l║",
+          "&c&l║ &7Time: &f{time}                   &c&l║",
+          "&c&l╚═══════════════════════════════════╝"
+        ]
+      },
+      {
+        "priority": 250,
+        "conditionType": "permission",
+        "condition": "neoessentials.tablist.staff",
+        "header": [
+          "&6&l╔═══════════════════════════════════╗",
+          "&6&l║          &f&lSTAFF MEMBER         &6&l║",
+          "&6&l╠═══════════════════════════════════╣",
+          "&6&l║ &f&lWelcome &e{player_name}           &6&l║",
+          "&6&l║ &7Team: &b{ftb_team_display_name}                &6&l║",
+          "&6&l║ &7Rank: &a{ftb_rank_display_name}                &6&l║",
+          "&6&l║ &7Role: &9{ftb_team_role}                 &6&l║",
+          "&6&l╚═══════════════════════════════════╝"
+        ],
+        "footer": [
+          "&6&l╔═══════════════════════════════════╗",
+          "&6&l║ &7Players: &e{server_players}&7/&e{server_max_players}            &6&l║",
+          "&6&l║ &7Your Ping: &a{player_ping}ms             &6&l║",
+          "&6&l║ &7Team Members: &e{ftb_team_members}           &6&l║",
+          "&6&l║ &7Date: &f{date}                  &6&l║",
+          "&6&l╚═══════════════════════════════════╝"
+        ]
+      },
+      {
+        "priority": 200,
+        "conditionType": "placeholder",
+        "condition": "ftb_team_role:Owner",
+        "header": [
+          "&e&l╔═══════════════════════════════════╗",
+          "&e&l║         &f&lTEAM OWNER           &e&l║",
+          "&e&l╠═══════════════════════════════════╣",
+          "&e&l║ &f&lWelcome &6{player_name}           &e&l║",
+          "&e&l║ &7Team: &b{ftb_team_display_name}                &e&l║",
+          "&e&l║ &7Rank: &a{ftb_rank_display_name}                &e&l║",
+          "&e&l║ &7Members: &e{ftb_team_members}               &e&l║",
+          "&e&l╚═══════════════════════════════════╝"
+        ],
+        "footer": [
+          "&e&l╔═══════════════════════════════════╗",
+          "&e&l║ &7Your Role: &c&lOWNER             &e&l║",
+          "&e&l║ &7Rank Weight: &e{ftb_rank_weight}            &e&l║",
+          "&e&l║ &7Online: &a{server_players}&7/&a{server_max_players}              &e&l║",
+          "&e&l║ &7Time: &f{time}                   &e&l║",
+          "&e&l╚═══════════════════════════════════╝"
+        ]
+      },
+      {
+        "priority": 150,
+        "conditionType": "placeholder",
+        "condition": "ftb_team_role:Moderator",
+        "header": [
+          "&9&l╔═══════════════════════════════════╗",
+          "&9&l║       &f&lTEAM MODERATOR        &9&l║",
+          "&9&l╠═══════════════════════════════════╣",
+          "&9&l║ &f&lWelcome &b{player_name}           &9&l║",
+          "&9&l║ &7Team: &b{ftb_team_display_name}                &9&l║",
+          "&9&l║ &7Rank: &a{ftb_rank_display_name}                &9&l║",
+          "&9&l║ &7Members: &e{ftb_team_members}               &9&l║",
+          "&9&l╚═══════════════════════════════════╝"
+        ],
+        "footer": [
+          "&9&l╔═══════════════════════════════════╗",
+          "&9&l║ &7Your Role: &9&lMODERATOR         &9&l║",
+          "&9&l║ &7Rank Weight: &e{ftb_rank_weight}            &9&l║",
+          "&9&l║ &7Online: &a{server_players}&7/&a{server_max_players}              &9&l║",
+          "&9&l║ &7Time: &f{time}                   &9&l║",
+          "&9&l╚═══════════════════════════════════╝"
+        ]
+      },
+      {
+        "priority": 100,
+        "conditionType": "placeholder",
+        "condition": "ftb_has_team:true",
+        "header": [
+          "&a&l╔═══════════════════════════════════╗",
+          "&a&l║        &f&lTEAM MEMBER          &a&l║",
+          "&a&l╠═══════════════════════════════════╣",
+          "&a&l║ &f&lWelcome &2{player_name}           &a&l║",
+          "&a&l║ &7Team: &b{ftb_team_display_name}                &a&l║",
+          "&a&l║ &7Rank: &e{ftb_rank_display_name}                &a&l║",
+          "&a&l║ &7Members: &e{ftb_team_members}               &a&l║",
+          "&a&l╚═══════════════════════════════════╝"
+        ],
+        "footer": [
+          "&a&l╔═══════════════════════════════════╗",
+          "&a&l║ &7Your Role: &a&lMEMBER            &a&l║",
+          "&a&l║ &7Team Color: {ftb_team_color}●               &a&l║",
+          "&a&l║ &7Online: &e{server_players}&7/&e{server_max_players}              &a&l║",
+          "&a&l║ &7Time: &f{time}                   &a&l║",
+          "&a&l╚═══════════════════════════════════╝"
+        ]
+      },
+      {
+        "priority": 50,
+        "conditionType": "placeholder",
+        "condition": "ftb_has_rank:true",
+        "header": [
+          "&f&l╔═══════════════════════════════════╗",
+          "&f&l║       &7&lRANKED PLAYER         &f&l║",
+          "&f&l╠═══════════════════════════════════╣",
+          "&f&l║ &7Welcome &f{player_name}             &f&l║",
+          "&f&l║ &7Rank: &a{ftb_rank_display_name}                &f&l║",
+          "&f&l║ &7Weight: &e{ftb_rank_weight}                &f&l║",
+          "&f&l║ &7Permissions: &e{ftb_rank_permissions}         &f&l║",
+          "&f&l╚═══════════════════════════════════╝"
+        ],
+        "footer": [
+          "&f&l╔═══════════════════════════════════╗",
+          "&f&l║ &7Your Rank: &a{ftb_rank_display_name}           &f&l║",
+          "&f&l║ &7Join a team to unlock more!     &f&l║",
+          "&f&l║ &7Online: &e{server_players}&7/&e{server_max_players}              &f&l║",
+          "&f&l║ &7Time: &f{time}                   &f&l║",
+          "&f&l╚═══════════════════════════════════╝"
+        ]
+      },
+      {
+        "priority": 1,
+        "conditionType": "default",
+        "header": [
+          "&7&l╔═══════════════════════════════════╗",
+          "&7&l║       &8&lDEFAULT PLAYER        &7&l║",
+          "&7&l╠═══════════════════════════════════╣",
+          "&7&l║ &8Welcome &7{player_name}             &7&l║",
+          "&7&l║ &8No team or rank assigned        &7&l║",
+          "&7&l║ &8Join a team to get started!     &7&l║",
+          "&7&l╚═══════════════════════════════════╝"
+        ],
+        "footer": [
+          "&7&l╔═══════════════════════════════════╗",
+          "&7&l║ &8Use /team create <name>         &7&l║",
+          "&7&l║ &8to create your own team!        &7&l║",
+          "&7&l║ &8Online: &7{server_players}&8/&7{server_max_players}              &7&l║",
+          "&7&l║ &8Time: &7{time}                   &7&l║",
+          "&7&l╚═══════════════════════════════════╝"
+        ]
+      }
+    ],
+    "playerOrder": [
+      { "placeholder": "ftb_rank_weight", "direction": "desc", "asNumber": true },
+      { "placeholder": "ftb_team_role", "direction": "desc" },
+      { "placeholder": "player_name", "direction": "asc" },
+      { "placeholder": "ping", "direction": "asc", "asNumber": true }
+    ]
+  },
+
+  "scoreboard": {
+    "enabled": true,
+    "updateInterval": 20,
+    "title": "&6&lNeoEssentials",
+    "layouts": [
+      {
+        "priority": 200,
+        "conditionType": "permission",
+        "condition": "neoessentials.scoreboard.admin",
+        "lines": [
+          "&7&m─────────────────",
+          "&c&lADMIN PANEL",
+          "&7&m─────────────────",
+          "&f● &7Player: &e{player_name}",
+          "&f● &7Rank: &a{ftb_rank_display_name}",
+          "&f● &7Team: &b{ftb_team_display_name}",
+          "&f● &7Role: &6{ftb_team_role}",
+          "",
+          "&f● &7TPS: &a{server_tps}",
+          "&f● &7Memory: &e{server_memory_percent}%",
+          "&f● &7Players: &e{server_players}&7/&e{server_max_players}",
+          "",
+          "&f● &7Location:",
+          "&f  &7X: &e{player_x}",
+          "&f  &7Y: &e{player_y}",
+          "&f  &7Z: &e{player_z}",
+          "&f  &7World: &e{player_world}",
+          "&7&m─────────────────"
+        ]
+      },
+      {
+        "priority": 150,
+        "conditionType": "placeholder",
+        "condition": "ftb_has_team:true",
+        "lines": [
+          "&7&m─────────────────",
+          "&b&lTEAM INFO",
+          "&7&m─────────────────",
+          "&f● &7Player: &e{player_name}",
+          "&f● &7Team: &b{ftb_team_display_name}",
+          "&f● &7Role: &a{ftb_team_role}",
+          "&f● &7Members: &e{ftb_team_members}",
+          "",
+          "&f● &7Rank: &a{ftb_rank_display_name}",
+          "&f● &7Weight: &e{ftb_rank_weight}",
+          "",
+          "&f● &7Health: &c{player_health}&7/&c{player_max_health}",
+          "&f● &7Food: &6{player_food}",
+          "&f● &7Level: &a{player_level}",
+          "&f● &7Ping: &e{player_ping}ms",
+          "",
+          "&f● &7Time: &f{time}",
+          "&7&m─────────────────"
+        ]
+      },
+      {
+        "priority": 100,
+        "conditionType": "placeholder",
+        "condition": "ftb_has_rank:true",
+        "lines": [
+          "&7&m─────────────────",
+          "&a&lRANK INFO",
+          "&7&m─────────────────",
+          "&f● &7Player: &e{player_name}",
+          "&f● &7Rank: &a{ftb_rank_display_name}",
+          "&f● &7Weight: &e{ftb_rank_weight}",
+          "&f● &7Permissions: &e{ftb_rank_permissions}",
+          "",
+          "&f● &7Health: &c{player_health}&7/&c{player_max_health}",
+          "&f● &7Food: &6{player_food}",
+          "&f● &7Level: &a{player_level}",
+          "",
+          "&f● &7Location: &e{player_world}",
+          "&f● &7X: &e{player_x} &7Z: &e{player_z}",
+          "",
+          "&f● &7Join a team for more features!",
+          "&7&m─────────────────"
+        ]
+      },
+      {
+        "priority": 1,
+        "conditionType": "default",
+        "lines": [
+          "&7&m─────────────────",
+          "&e&lPLAYER INFO",
+          "&7&m─────────────────",
+          "&f● &7Player: &e{player_name}",
+          "&f● &7Level: &a{player_level}",
+          "&f● &7Health: &c{player_health}&7/&c{player_max_health}",
+          "&f● &7Food: &6{player_food}",
+          "",
+          "&f● &7Location: &e{player_world}",
+          "&f● &7X: &e{player_x} &7Z: &e{player_z}",
+          "",
+          "&f● &7Online: &e{server_players}&7/&e{server_max_players}",
+          "&f● &7Ping: &e{player_ping}ms",
+          "",
+          "&f● &7Create a team with &a/team create",
+          "&7&m─────────────────"
+        ]
+      }
+    ]
+  },
+
+  "bossbar": {
+    "enabled": true,
+    "updateInterval": 20,
+    "layouts": [
+      {
+        "priority": 300,
+        "conditionType": "permission",
+        "condition": "neoessentials.bossbar.admin",
+        "bars": [
+          {
+            "id": "admin_main",
+            "text": "&c&lADMIN &7| &f{player_name} &7| &aTPS: {server_tps} &7| &eMemory: {server_memory_percent}%",
+            "color": "RED",
+            "style": "PROGRESS",
+            "progress": 1.0
+          }
+        ]
+      },
+      {
+        "priority": 250,
+        "conditionType": "permission",
+        "condition": "neoessentials.bossbar.staff",
+        "bars": [
+          {
+            "id": "staff_main",
+            "text": "&6&lSTAFF &7| &f{player_name} &7| &bTeam: {ftb_team_display_name} &7| &aRank: {ftb_rank_display_name}",
+            "color": "YELLOW",
+            "style": "PROGRESS",
+            "progress": 1.0
+          }
+        ]
+      },
+      {
+        "priority": 200,
+        "conditionType": "placeholder",
+        "condition": "ftb_team_role:Owner",
+        "bars": [
+          {
+            "id": "team_owner",
+            "text": "&e&lTEAM OWNER &7| &f{player_name} &7| &bTeam: {ftb_team_display_name} &7| &eMembers: {ftb_team_members}",
+            "color": "YELLOW",
+            "style": "SEGMENTED_10",
+            "progress": 1.0
+          }
+        ]
+      },
+      {
+        "priority": 150,
+        "conditionType": "placeholder",
+        "condition": "ftb_team_role:Moderator",
+        "bars": [
+          {
+            "id": "team_mod",
+            "text": "&9&lTEAM MOD &7| &f{player_name} &7| &bTeam: {ftb_team_display_name} &7| &eMembers: {ftb_team_members}",
+            "color": "BLUE",
+            "style": "SEGMENTED_10",
+            "progress": 0.8
+          }
+        ]
+      },
+      {
+        "priority": 100,
+        "conditionType": "placeholder",
+        "condition": "ftb_has_team:true",
+        "bars": [
+          {
+            "id": "team_member",
+            "text": "&a&lTEAM MEMBER &7| &f{player_name} &7| &bTeam: {ftb_team_display_name} &7| &aRole: {ftb_team_role}",
+            "color": "GREEN",
+            "style": "SEGMENTED_6",
+            "progress": 0.6
+          }
+        ]
+      },
+      {
+        "priority": 50,
+        "conditionType": "placeholder",
+        "condition": "ftb_has_rank:true",
+        "bars": [
+          {
+            "id": "ranked_player",
+            "text": "&f&lRANKED &7| &f{player_name} &7| &aRank: {ftb_rank_display_name} &7| &eWeight: {ftb_rank_weight}",
+            "color": "WHITE",
+            "style": "PROGRESS",
+            "progress": 0.4
+          }
+        ]
+      },
+      {
+        "priority": 1,
+        "conditionType": "default",
+        "bars": [
+          {
+            "id": "default_player",
+            "text": "&7Welcome &f{player_name} &7| &eOnline: {server_players}/{server_max_players} &7| &fTime: {time}",
+            "color": "WHITE",
+            "style": "PROGRESS",
+            "progress": 0.2
+          }
+        ]
+      }
+    ]
+  },
+
+  "animations": {
+    "enabled": true,
+    "updateInterval": 5,
+    "sequences": [
+      {
+        "id": "server_status",
+        "frames": [
+          "&a●",
+          "&e●",
+          "&6●",
+          "&c●"
+        ],
+        "duration": 0.5
+      },
+      {
+        "id": "loading_dots",
+        "frames": [
+          "&7.",
+          "&7..",
+          "&7...",
+          "&7"
+        ],
+        "duration": 0.3
+      },
+      {
+        "id": "rainbow_star",
+        "frames": [
+          "&c★",
+          "&6★",
+          "&e★",
+          "&a★",
+          "&b★",
+          "&9★",
+          "&5★"
+        ],
+        "duration": 0.2
+      }
+    ]
+  },
+
+  "conditional_placeholders": {
+    "online_count": "{server_players}",
+    "max_players": "{server_max_players}",
+    "team_status": {
+      "has_team": "&aIn Team",
+      "no_team": "&7No Team"
     },
-    {
-      "priority": 50,
-      "conditionType": "permission",
-      "condition": "neoessentials.tablist.vip",
-      "header": ["&bVIP | &e{player_name}"],
-      "footer": ["&7Enjoy your perks!"]
-    },
-    {
-      "priority": 1,
-      "conditionType": "default",
-      "header": ["&fPlayer | &e{player_name}"],
-      "footer": ["&7Welcome to the server!"]
+    "rank_status": {
+      "has_rank": "&aRanked",
+      "no_rank": "&7Unranked"
     }
-  ],
-  "playerOrder": [
-    { "placeholder": "group", "direction": "desc" },
-    { "placeholder": "ping", "direction": "asc", "asNumber": true }
-  ]
+  },
+  "discordIntegration": {
+    "enabled": true,
+    "messageFormatting": {
+      "useEmbeds": true,
+      "timestampFormat": "yyyy-MM-dd HH:mm:ss",
+      "includePlayerStats": true,
+      "includeTeamInfo": true,
+      "includeRankInfo": true
+    },
+    "notifications": {
+      "tablistUpdates": {
+        "enabled": true,
+        "channel": "general",
+        "format": "🔄 **{player_name}** | Tablist updated | Team: **{ftb_team_display_name}** | Rank: **{ftb_rank_display_name}**"
+      },
+      "scoreboardUpdates": {
+        "enabled": true,
+        "channel": "general",
+        "format": "📊 **{player_name}** | Scoreboard updated | Layout: **{layout_name}**"
+      },
+      "playerJoin": {
+        "enabled": true,
+        "channel": "general",
+        "format": "✅ **{player_name}** joined! | Team: **{ftb_team_display_name}** | Rank: **{ftb_rank_display_name}** | Health: **{player_health}/{player_max_health}** ❤️"
+      },
+      "playerLeave": {
+        "enabled": true,
+        "channel": "general",
+        "format": "❌ **{player_name}** left | Session: **{session_time}** | Team: **{ftb_team_display_name}**"
+      },
+      "teamUpdates": {
+        "enabled": true,
+        "channel": "general",
+        "format": "👥 **{player_name}** | Team updated | Old: **{old_team}** → New: **{ftb_team_display_name}**"
+      },
+      "rankUpdates": {
+        "enabled": true,
+        "channel": "general",
+        "format": "🎖️ **{player_name}** | Rank updated | Old: **{old_rank}** → New: **{ftb_rank_display_name}**"
+      },
+      "permissionChanges": {
+        "enabled": true,
+        "channel": "admin",
+        "format": "🔐 **{player_name}** | Permission **{permission}** | Action: **{action}** | By: **{admin}**"
+      },
+      "achievements": {
+        "enabled": true,
+        "channel": "general",
+        "format": "🏆 **{player_name}** earned **{achievement}**! | Team: **{ftb_team_display_name}**"
+      }
+    },
+    "roleSync": {
+      "enabled": true,
+      "syncOnJoin": true,
+      "syncInterval": 300,
+      "bidirectional": true,
+      "roleMappings": {
+        "Owner": {
+          "minecraftPermission": "neoessentials.admin",
+          "priority": 1000,
+          "tablistPrefix": "&4[OWNER]&r",
+          "scoreboardTitle": "&4&lOWNER"
+        },
+        "Admin": {
+          "minecraftPermission": "neoessentials.moderator",
+          "priority": 800,
+          "tablistPrefix": "&c[ADMIN]&r",
+          "scoreboardTitle": "&c&lADMIN"
+        },
+        "Moderator": {
+          "minecraftPermission": "neoessentials.helper",
+          "priority": 600,
+          "tablistPrefix": "&6[MOD]&r",
+          "scoreboardTitle": "&6&lMODERATOR"
+        },
+        "VIP": {
+          "minecraftPermission": "neoessentials.vip",
+          "priority": 400,
+          "tablistPrefix": "&d[VIP]&r",
+          "scoreboardTitle": "&d&lVIP"
+        },
+        "Member": {
+          "minecraftPermission": "neoessentials.member",
+          "priority": 200,
+          "tablistPrefix": "&a[MEMBER]&r",
+          "scoreboardTitle": "&a&lMEMBER"
+        },
+        "Verified": {
+          "minecraftPermission": "neoessentials.verified",
+          "priority": 100,
+          "tablistPrefix": "&7[VERIFIED]&r",
+          "scoreboardTitle": "&7&lVERIFIED"
+        }
+      },
+      "fallbackRole": {
+        "minecraftPermission": "neoessentials.default",
+        "priority": 0,
+        "tablistPrefix": "&8[GUEST]&r",
+        "scoreboardTitle": "&8&lGUEST"
+      }
+    },
+    "chatSync": {
+      "enabled": true,
+      "includeTeamInfo": true,
+      "includeRankInfo": true,
+      "format": "**[{ftb_rank_display_name}]** {player_name}: {message}",
+      "filterProfanity": true,
+      "maxMessageLength": 2000
+    },
+    "statusUpdates": {
+      "enabled": true,
+      "updateInterval": 60,
+      "channel": "status",
+      "embedStyle": {
+        "color": "#00ff00",
+        "title": "🎮 NeoEssentials Server Status",
+        "fields": [
+          {
+            "name": "👥 Players Online",
+            "value": "{players_online}/{max_players}",
+            "inline": true
+          },
+          {
+            "name": "🏆 Top Team",
+            "value": "{top_team_name} ({top_team_members} members)",
+            "inline": true
+          },
+          {
+            "name": "⚡ Server Health",
+            "value": "TPS: {server_tps} | RAM: {used_memory}/{max_memory}MB",
+            "inline": false
+          },
+          {
+            "name": "📊 Active Layouts",
+            "value": "Tablist: {active_tablist_layouts} | Scoreboard: {active_scoreboard_layouts}",
+            "inline": false
+          }
+        ],
+        "footer": "Last updated: {timestamp}",
+        "thumbnail": "https://i.imgur.com/server-icon.png"
+      }
+    },
+    "webhooks": {
+      "enabled": true,
+      "useWebhookForChat": true,
+      "useWebhookForNotifications": true,
+      "avatarPlaceholder": "https://minotar.net/helm/{player_name}/64.png",
+      "defaultAvatar": "https://i.imgur.com/default-avatar.png"
+    },
+    "errorHandling": {
+      "retryAttempts": 3,
+      "retryDelay": 5000,
+      "logErrors": true,
+      "fallbackToBasicMessage": true
+    }
+  }
 }
