@@ -9,7 +9,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.player.PlayerData;
 import com.zerog.neoessentials.player.PlayerDataManager;
 import com.zerog.neoessentials.player.PlaytimeTracker;
-import com.zerog.neoessentials.util.MessageUtils;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -105,11 +105,11 @@ public class PlaytimeCommand {
             Component currentSession = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.session", PlaytimeTracker.formatTime(sessionTime)));
             source.sendSuccess(() -> currentSession, false);
             if (playerData.getFirstJoin() > 0) {
-                Component firstJoin = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.first_join", MessageUtils.formatTimestamp(playerData.getFirstJoin())));
+                Component firstJoin = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.first_join", MessageUtil.formatTimestamp(playerData.getFirstJoin())));
                 source.sendSuccess(() -> firstJoin, false);
             }
             if (playerData.getLastSeen() > 0) {
-                Component lastSeen = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.last_seen", MessageUtils.formatTimestamp(playerData.getLastSeen())));
+                Component lastSeen = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(targetPlayer, "neoessentials.playtime.last_seen", MessageUtil.formatTimestamp(playerData.getLastSeen())));
                 source.sendSuccess(() -> lastSeen, false);
             }
             return 1;

@@ -5,6 +5,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.concurrent.TimeUnit;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 // Removed unused imports
 // import com.zerog.neoessentials.util.ColorService;
 // import com.zerog.neoessentials.util.ColorPermission;
@@ -17,6 +21,9 @@ import java.util.concurrent.TimeUnit;
  * @since 2.0.0
  */
 public class MessageUtil {
+    private static final DateTimeFormatter TIMESTAMP_FORMATTER = 
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    
     // Centralized color service instance (should be initialized from mod setup)
     private static ColorService colorService = new ColorService(
         java.util.Map.of(
@@ -188,10 +195,15 @@ public class MessageUtil {
     /**
      * Broadcast message to all online players
      */
-    public static void broadcast(String message) {
-        // This would need server instance to get all players
-        // Placeholder implementation
-    }
+        public static void broadcast(String message) {
+    if (message == null || message.isEmpty()) return;
+    // Get Minecraft server instance (NeoForge 1.21.1)
+    net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+    if (server == null) return;
+    // Translate color codes (& -> §) and format as Component
+    net.minecraft.network.chat.Component formatted = com.zerog.neoessentials.util.ColorUtil.colorize(message);
+    server.getPlayerList().broadcastSystemMessage(formatted, false);
+        }
     
     /**
      * Format number with thousands separators
@@ -205,5 +217,24 @@ public class MessageUtil {
      */
     public static String formatNumber(double number) {
         return String.format("%,.2f", number);
+    }
+    
+    /**
+     * Format a timestamp to a readable string
+     */
+    public static String formatTimestamp(long timestamp) {
+        LocalDateTime dateTime = LocalDateTime.ofInstant(
+            Instant.ofEpochMilli(timestamp), 
+            ZoneId.systemDefault()
+        );
+        return TIMESTAMP_FORMATTER.format(dateTime);
+    }
+    
+    /**
+     * Format a message with color codes (enhanced from MessageUtils)
+     * Uses ColorUtil for proper color processing
+     */
+    public static Component format(String message) {
+        return ColorUtil.colorize(message);
     }
 }

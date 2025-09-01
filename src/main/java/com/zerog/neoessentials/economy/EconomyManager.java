@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import com.zerog.neoessentials.economy.currency.CurrencyManager;
 import com.zerog.neoessentials.economy.transactions.TransactionManager;
 // import com.zerog.neoessentials.economy.shops.ShopManager; // Now uses managers.EconomyManager
-import com.zerog.neoessentials.economy.auction.AuctionManager;
 import com.zerog.neoessentials.storage.StorageManager;
 
 import java.util.*;
@@ -33,7 +32,7 @@ public class EconomyManager {
     private final CurrencyManager currencyManager;
     private final TransactionManager transactionManager;
     // private final ShopManager shopManager; // Now uses managers.EconomyManager
-    private final AuctionManager auctionManager;
+    // Auction manager removed as per feature cleanup
     
     // Configuration and data
     private final StorageManager storageManager;
@@ -53,7 +52,7 @@ public class EconomyManager {
         this.currencyManager = new CurrencyManager(this);
         this.transactionManager = new TransactionManager(this);
         // ShopManager now uses managers.EconomyManager - removed initialization
-        this.auctionManager = new AuctionManager(this);
+        // Auction manager removed as per feature cleanup
         
         this.analytics = new EconomyAnalytics();
         this.economyEnabled = true;
@@ -83,7 +82,7 @@ public class EconomyManager {
 
             // Initialize market systems
             // shopManager.initialize(); // Now uses managers.EconomyManager
-            auctionManager.initialize();
+            // Auction system removed as per feature cleanup
 
             // Start background tasks
             startBackgroundTasks();
@@ -117,7 +116,8 @@ public class EconomyManager {
             while (economyEnabled) {
                 try {
                     Thread.sleep(60 * 1000); // Default: 60 seconds
-                    auctionManager.processExpiredAuctions();
+                    // Auction processing removed as per feature cleanup
+                    // Process other economy tasks here if needed
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -350,7 +350,7 @@ public class EconomyManager {
     public CurrencyManager getCurrencyManager() { return currencyManager; }
     public TransactionManager getTransactionManager() { return transactionManager; }
     // public ShopManager getShopManager() { return shopManager; } // Now uses managers.EconomyManager
-    public AuctionManager getAuctionManager() { return auctionManager; }
+    // Auction manager removed as per feature cleanup
     public EconomyAnalytics getAnalytics() { return analytics; }
     
     // Compatibility methods for GUI classes (using default currency)
@@ -397,7 +397,7 @@ public class EconomyManager {
             }
             
             // Shutdown managers
-            auctionManager.shutdown();
+            // Auction manager removed as per feature cleanup
             
             LOGGER.info("Economy System shutdown completed");
         } catch (Exception e) {

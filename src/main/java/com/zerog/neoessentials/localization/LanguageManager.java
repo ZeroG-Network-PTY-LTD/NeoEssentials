@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 // ...existing code...
@@ -37,28 +36,9 @@ public class LanguageManager {
     private final Map<UUID, String> playerLocales = new ConcurrentHashMap<>();
     private final Path languageDirectory;
     private String defaultLanguage = "en_US";
-    // ...existing code...
-    
-    private static final String[] SUPPORTED_LANGUAGES = {
-        "en_US", "es_ES", "fr_FR", "de_DE", "it_IT", "pt_BR", 
-        "ru_RU", "ja_JP", "ko_KR", "zh_CN", "zh_TW", "nl_NL"
-    };
     
     private LanguageManager(Path configPath) {
         this.languageDirectory = configPath.resolve("languages");
-        // Also check resources directory for additional language files
-        try {
-            Path resourcesLangPath = Paths.get("src/main/resources/assets/neoessentials/lang");
-            if (!Files.exists(resourcesLangPath)) {
-                // Try relative to working directory
-                resourcesLangPath = Paths.get("../src/main/resources/assets/neoessentials/lang");
-            }
-            if (Files.exists(resourcesLangPath)) {
-                LOGGER.info("Found additional language files in resources directory: {}", resourcesLangPath);
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Could not access resources language directory: {}", e.getMessage());
-        }
         initializeLanguageSystem();
     }
     
@@ -88,17 +68,14 @@ public class LanguageManager {
      */
     private void initializeLanguageSystem() {
         try {
-            // Create language directory if it doesn't exist
+            // Create language directory if it doesn't exist (for custom overrides only)
             if (!Files.exists(languageDirectory)) {
                 Files.createDirectories(languageDirectory);
-                LOGGER.info("Created language directory: {}", languageDirectory);
+                LOGGER.info("Created language directory for custom overrides: {}", languageDirectory);
             }
             
-            // Load all language files
+            // Load all language files (prioritize resources, then config overrides)
             loadLanguageFiles();
-            
-            // Create default language files if they don't exist
-            createDefaultLanguageFiles();
             
             LOGGER.info("Language system initialized with {} languages", languageFiles.size());
             
@@ -108,19 +85,20 @@ public class LanguageManager {
     }
     
     /**
-     * Load all language files from both config and resources directories
+     * Load all language files from both resources and config directories
+     * Priority: Resources (mod defaults) first, then config overrides
      */
     private void loadLanguageFiles() {
         try {
-            // Load from config directory (runtime generated)
+            // First load from resources directory (mod defaults)
+            loadResourceLanguageFiles();
+            
+            // Then load from config directory (custom overrides)
             if (Files.exists(languageDirectory)) {
                 Files.list(languageDirectory)
                     .filter(path -> path.toString().endsWith(".properties"))
                     .forEach(this::loadLanguageFile);
             }
-            
-            // Load from resources directory (mod defaults)
-            loadResourceLanguageFiles();
                 
         } catch (IOException e) {
             LOGGER.error("Failed to load language files", e);
@@ -128,61 +106,114 @@ public class LanguageManager {
     }
     
     /**
-     * Load language files from resources directory
+     * Load language files from resources directory using class loader
      */
     private void loadResourceLanguageFiles() {
         try {
-            // Try multiple possible paths for resources
-            Path[] possiblePaths = {
-                Paths.get("src/main/resources/assets/neoessentials/lang"),
-                Paths.get("../src/main/resources/assets/neoessentials/lang"),
-                Paths.get("resources/assets/neoessentials/lang"),
-                Paths.get("assets/neoessentials/lang")
-            };
+            // Use class loader to access resources within the JAR
+            ClassLoader classLoader = getClass().getClassLoader();
             
-            for (Path resourcesLangPath : possiblePaths) {
-                if (Files.exists(resourcesLangPath)) {
-                    LOGGER.info("Loading language files from resources: {}", resourcesLangPath);
-                    Files.list(resourcesLangPath)
-                        .filter(path -> path.toString().endsWith(".properties") || path.toString().endsWith(".json"))
-                        .forEach(this::loadResourceLanguageFile);
-                    break;
+            // Try to load en_us.json from resources
+            try (InputStream input = classLoader.getResourceAsStream("assets/neoessentials/lang/en_us.json")) {
+                if (input != null) {
+                    Properties properties = loadJsonLanguageFile(input);
+                    if (properties != null && !properties.isEmpty()) {
+                        languageFiles.put("en_US", properties);
+                        LOGGER.info("Loaded en_US language from resources (converted from JSON)");
+                    }
+                } else {
+                    LOGGER.warn("Could not find en_us.json in resources");
                 }
             }
-        } catch (IOException e) {
-            LOGGER.warn("Could not load resource language files: {}", e.getMessage());
+            
+            // Create basic fallback if no resources found
+            if (languageFiles.isEmpty()) {
+                LOGGER.warn("No language files found in resources, creating basic fallback");
+                Properties fallback = createBasicFallbackLanguage();
+                languageFiles.put("en_US", fallback);
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to load resource language files", e);
+            // Create emergency fallback
+            Properties emergency = createBasicFallbackLanguage();
+            languageFiles.put("en_US", emergency);
         }
     }
     
     /**
-     * Load a language file from resources (could be .properties or .json)
+     * Load JSON language file and convert to properties
      */
-    private void loadResourceLanguageFile(Path languageFile) {
-        String fileName = languageFile.getFileName().toString();
-        String language = fileName.replaceAll("\\.(properties|json)$", "");
-        
-        try (InputStream input = Files.newInputStream(languageFile)) {
+    private Properties loadJsonLanguageFile(InputStream input) {
+        try {
+            // Read JSON content
+            StringBuilder content = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, "UTF-8"))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line);
+                }
+            }
+            
+            // Parse JSON manually (simple key-value extraction)
             Properties properties = new Properties();
+            String jsonContent = content.toString().trim();
             
-            if (fileName.endsWith(".json")) {
-                // For JSON files, we'd need to parse JSON and convert to properties
-                // For now, we'll log and skip JSON files or implement simple JSON parsing
-                LOGGER.debug("Found JSON language file (not yet supported): {}", fileName);
-                return;
-            } else {
-                properties.load(new InputStreamReader(input, "UTF-8"));
+            if (jsonContent.startsWith("{") && jsonContent.endsWith("}")) {
+                // Remove outer braces
+                jsonContent = jsonContent.substring(1, jsonContent.length() - 1);
+                
+                // Split by commas and extract key-value pairs
+                String[] entries = jsonContent.split(",(?=\\s*\")");
+                for (String entry : entries) {
+                    entry = entry.trim();
+                    if (entry.contains(":")) {
+                        String[] parts = entry.split(":", 2);
+                        if (parts.length == 2) {
+                            String key = parts[0].trim().replaceAll("\"", "");
+                            String value = parts[1].trim().replaceAll("\"", "");
+                            properties.setProperty(key, value);
+                        }
+                    }
+                }
             }
             
-            // Only add if we don't already have this language from config
-            if (!languageFiles.containsKey(language)) {
-                languageFiles.put(language, properties);
-                LOGGER.debug("Loaded resource language file: {}", fileName);
-            } else {
-                LOGGER.debug("Config language file takes precedence over resource file: {}", fileName);
-            }
-        } catch (IOException e) {
-            LOGGER.error("Failed to load resource language file: {}", fileName, e);
+            return properties;
+        } catch (Exception e) {
+            LOGGER.error("Failed to parse JSON language file", e);
+            return null;
         }
+    }
+    
+    /**
+     * Create a basic fallback language to prevent missing messages
+     */
+    private Properties createBasicFallbackLanguage() {
+        Properties fallback = new Properties();
+        
+        // Essential messages
+        fallback.setProperty("general.prefix", "&6[NeoEssentials]&r");
+        fallback.setProperty("general.no_permission", "&cYou don't have permission to use this command!");
+        fallback.setProperty("general.player_not_found", "&cPlayer '{0}' not found!");
+        fallback.setProperty("general.invalid_usage", "&cInvalid usage! Use: {0}");
+        fallback.setProperty("general.console_only", "&cThis command can only be used from console!");
+        fallback.setProperty("general.player_only", "&cThis command can only be used by players!");
+        
+        // Command messages
+        fallback.setProperty("command.teleport.success", "&aTeleported to {0}!");
+        fallback.setProperty("command.heal.success", "&aYou have been healed!");
+        fallback.setProperty("command.feed.success", "&aYou have been fed!");
+        fallback.setProperty("command.fly.enabled", "&aFlight enabled!");
+        fallback.setProperty("command.fly.disabled", "&cFlight disabled!");
+        
+        // Shop messages
+        fallback.setProperty("shop.invalid", "&cInvalid shop sign!");
+        fallback.setProperty("shop.no_permission", "&cYou don't have permission to use this shop!");
+        fallback.setProperty("shop.out_of_stock", "&cThis shop is out of stock!");
+        fallback.setProperty("shop.not_enough_money", "&cYou don't have enough money!");
+        
+        LOGGER.info("Created basic fallback language with {} entries", fallback.size());
+        return fallback;
     }
     
     /**
@@ -200,175 +231,6 @@ public class LanguageManager {
         } catch (IOException e) {
             LOGGER.error("Failed to load language file: {}", fileName, e);
         }
-    }
-    
-    /**
-     * Create default language files with common messages
-     */
-    private void createDefaultLanguageFiles() {
-        for (String language : SUPPORTED_LANGUAGES) {
-            Path languageFile = languageDirectory.resolve(language + ".properties");
-            if (!Files.exists(languageFile)) {
-                createLanguageFile(language, languageFile);
-            }
-        }
-    }
-    
-    /**
-     * Create a language file with default messages
-     */
-    private void createLanguageFile(String language, Path languageFile) {
-        Properties defaultMessages = getDefaultMessages(language);
-        
-        try (OutputStreamWriter writer = new OutputStreamWriter(
-                Files.newOutputStream(languageFile), "UTF-8")) {
-            
-            // Write header
-            writer.write("# NeoEssentials Language File - " + language + "\n");
-            writer.write("# Generated on " + new Date() + "\n");
-            writer.write("# Edit this file to customize messages for your server\n\n");
-            
-            // Write messages in categories
-            writeMessagesCategory(writer, "# === GENERAL MESSAGES ===", defaultMessages, "general.");
-            writeMessagesCategory(writer, "# === COMMAND MESSAGES ===", defaultMessages, "command.");
-            writeMessagesCategory(writer, "# === ERROR MESSAGES ===", defaultMessages, "error.");
-            writeMessagesCategory(writer, "# === SUCCESS MESSAGES ===", defaultMessages, "success.");
-            writeMessagesCategory(writer, "# === NOTIFICATION MESSAGES ===", defaultMessages, "notification.");
-            
-            LOGGER.info("Created default language file: {}", language);
-            
-        } catch (IOException e) {
-            LOGGER.error("Failed to create language file: {}", language, e);
-        }
-    }
-    
-    /**
-     * Write a category of messages to the language file
-     */
-    private void writeMessagesCategory(OutputStreamWriter writer, String header, 
-                                     Properties messages, String prefix) throws IOException {
-        writer.write(header + "\n");
-        
-        messages.entrySet().stream()
-            .filter(entry -> entry.getKey().toString().startsWith(prefix))
-            .sorted((e1, e2) -> e1.getKey().toString().compareTo(e2.getKey().toString()))
-            .forEach(entry -> {
-                try {
-                    writer.write(entry.getKey() + "=" + entry.getValue() + "\n");
-                } catch (IOException e) {
-                    LOGGER.error("Failed to write message: {}", entry.getKey(), e);
-                }
-            });
-        
-        writer.write("\n");
-    }
-    
-    /**
-     * Get default messages for a language
-     */
-    private Properties getDefaultMessages(String language) {
-        Properties messages = new Properties();
-        
-        switch (language) {
-            case "en_US":
-                addEnglishMessages(messages);
-                break;
-            case "es_ES":
-                addSpanishMessages(messages);
-                break;
-            case "fr_FR":
-                addFrenchMessages(messages);
-                break;
-            case "de_DE":
-                addGermanMessages(messages);
-                break;
-            default:
-                addEnglishMessages(messages); // Fallback to English
-        }
-        
-        return messages;
-    }
-    
-    /**
-     * Add English messages
-     */
-    private void addEnglishMessages(Properties messages) {
-        // General messages
-        messages.setProperty("general.prefix", "&6[NeoEssentials]&r");
-        messages.setProperty("general.no_permission", "&cYou don't have permission to use this command!");
-        messages.setProperty("general.player_not_found", "&cPlayer '{PLAYER}' not found!");
-        messages.setProperty("general.invalid_usage", "&cInvalid usage! Use: {USAGE}");
-        messages.setProperty("general.console_only", "&cThis command can only be used from console!");
-        messages.setProperty("general.player_only", "&cThis command can only be used by players!");
-        
-        // Command messages
-        messages.setProperty("command.teleport.success", "&aTeleported to {PLAYER}!");
-        messages.setProperty("command.heal.success", "&aYou have been healed!");
-        messages.setProperty("command.feed.success", "&aYou have been fed!");
-        messages.setProperty("command.fly.enabled", "&aFlight enabled!");
-        messages.setProperty("command.fly.disabled", "&cFlight disabled!");
-        messages.setProperty("command.gamemode.changed", "&aGamemode changed to {GAMEMODE}!");
-        
-        // Error messages
-        messages.setProperty("error.command_failed", "&cCommand failed: {ERROR}");
-        messages.setProperty("error.database_error", "&cDatabase error occurred!");
-        messages.setProperty("error.file_not_found", "&cFile not found: {FILE}");
-        messages.setProperty("error.invalid_number", "&c'{VALUE}' is not a valid number!");
-        
-        // Success messages
-        messages.setProperty("success.config_reloaded", "&aConfiguration reloaded successfully!");
-        messages.setProperty("success.player_banned", "&aPlayer {PLAYER} has been banned!");
-        messages.setProperty("success.player_unbanned", "&aPlayer {PLAYER} has been unbanned!");
-        
-        // Notification messages
-        messages.setProperty("notification.player_joined", "&e{PLAYER} joined the server");
-        messages.setProperty("notification.player_left", "&e{PLAYER} left the server");
-        messages.setProperty("notification.server_restart", "&cServer restart in {TIME} minutes!");
-    }
-    
-    /**
-     * Add Spanish messages
-     */
-    private void addSpanishMessages(Properties messages) {
-        messages.setProperty("general.prefix", "&6[NeoEssentials]&r");
-        messages.setProperty("general.no_permission", "&c¡No tienes permisos para usar este comando!");
-        messages.setProperty("general.player_not_found", "&c¡Jugador '{PLAYER}' no encontrado!");
-        messages.setProperty("general.invalid_usage", "&c¡Uso inválido! Usa: {USAGE}");
-        messages.setProperty("command.teleport.success", "&a¡Teletransportado a {PLAYER}!");
-        messages.setProperty("command.heal.success", "&a¡Has sido curado!");
-        messages.setProperty("command.feed.success", "&a¡Has sido alimentado!");
-        messages.setProperty("notification.player_joined", "&e{PLAYER} se unió al servidor");
-        messages.setProperty("notification.player_left", "&e{PLAYER} dejó el servidor");
-    }
-    
-    /**
-     * Add French messages
-     */
-    private void addFrenchMessages(Properties messages) {
-        messages.setProperty("general.prefix", "&6[NeoEssentials]&r");
-        messages.setProperty("general.no_permission", "&cVous n'avez pas la permission d'utiliser cette commande!");
-        messages.setProperty("general.player_not_found", "&cJoueur '{PLAYER}' introuvable!");
-        messages.setProperty("general.invalid_usage", "&cUtilisation invalide! Utilisez: {USAGE}");
-        messages.setProperty("command.teleport.success", "&aTéléporté vers {PLAYER}!");
-        messages.setProperty("command.heal.success", "&aVous avez été soigné!");
-        messages.setProperty("command.feed.success", "&aVous avez été nourri!");
-        messages.setProperty("notification.player_joined", "&e{PLAYER} a rejoint le serveur");
-        messages.setProperty("notification.player_left", "&e{PLAYER} a quitté le serveur");
-    }
-    
-    /**
-     * Add German messages
-     */
-    private void addGermanMessages(Properties messages) {
-        messages.setProperty("general.prefix", "&6[NeoEssentials]&r");
-        messages.setProperty("general.no_permission", "&cDu hast keine Berechtigung für diesen Befehl!");
-        messages.setProperty("general.player_not_found", "&cSpieler '{PLAYER}' nicht gefunden!");
-        messages.setProperty("general.invalid_usage", "&cUngültige Verwendung! Verwende: {USAGE}");
-        messages.setProperty("command.teleport.success", "&aZu {PLAYER} teleportiert!");
-        messages.setProperty("command.heal.success", "&aDu wurdest geheilt!");
-        messages.setProperty("command.feed.success", "&aDu wurdest gefüttert!");
-        messages.setProperty("notification.player_joined", "&e{PLAYER} ist dem Server beigetreten");
-        messages.setProperty("notification.player_left", "&e{PLAYER} hat den Server verlassen");
     }
     
     /**
@@ -560,7 +422,7 @@ public class LanguageManager {
         stats.put("available_languages", languageFiles.size());
         stats.put("default_language", defaultLanguage);
         stats.put("player_locales", playerLocales.size());
-        stats.put("supported_languages", Arrays.asList(SUPPORTED_LANGUAGES));
+        stats.put("loaded_languages", new ArrayList<>(languageFiles.keySet()));
         
         // Count messages per language
         Map<String, Integer> messageCounts = new HashMap<>();

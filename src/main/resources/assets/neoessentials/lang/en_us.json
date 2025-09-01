@@ -165,5 +165,7 @@
   "neoessentials.nick.list_header": "Nicknames:",
   "neoessentials.nick.list_entry": "{0}: {1}",
   "neoessentials.socialspy.enabled": "SocialSpy enabled.",
-  "neoessentials.socialspy.disabled": "SocialSpy disabled."
+  "neoessentials.socialspy.disabled": "SocialSpy disabled.",
+  "neoessentials.afk.now_afk": "{0} is now AFK.",
+  "neoessentials.afk.back": "{0} is no longer AFK."
 }

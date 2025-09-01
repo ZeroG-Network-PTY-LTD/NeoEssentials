@@ -22,10 +22,12 @@ public class AchievementSystem {
     
     private final Map<String, Achievement> achievements;
     private final PlayerDataManager playerDataManager;
+    private final StatisticsManager statisticsManager;
     
     private AchievementSystem() {
         this.achievements = new ConcurrentHashMap<>();
         this.playerDataManager = PlayerDataManager.getInstance();
+        this.statisticsManager = StatisticsManager.getInstance();
         
         // Initialize default achievements
         initializeDefaultAchievements();
@@ -55,6 +57,45 @@ public class AchievementSystem {
         registerAchievement(new Achievement("veteran", "Veteran", 
             "Play for 100 hours", 360000, AchievementCategory.PLAYTIME));
         
+        // Combat achievements
+        registerAchievement(new Achievement("first_kill", "First Blood", 
+            "Kill your first player", 1, AchievementCategory.COMBAT));
+        
+        registerAchievement(new Achievement("serial_killer", "Serial Killer", 
+            "Kill 10 players", 10, AchievementCategory.COMBAT));
+        
+        registerAchievement(new Achievement("massacre", "Massacre", 
+            "Kill 100 players", 100, AchievementCategory.COMBAT));
+        
+        registerAchievement(new Achievement("survivor", "Survivor", 
+            "Maintain a K/D ratio above 2.0", 2, AchievementCategory.COMBAT));
+        
+        registerAchievement(new Achievement("mob_hunter", "Mob Hunter", 
+            "Kill 100 mobs", 100, AchievementCategory.COMBAT));
+        
+        // Building achievements
+        registerAchievement(new Achievement("first_block", "First Steps", 
+            "Break your first block", 1, AchievementCategory.BUILDING));
+        
+        registerAchievement(new Achievement("demolition", "Demolition Expert", 
+            "Break 1,000 blocks", 1000, AchievementCategory.BUILDING));
+        
+        registerAchievement(new Achievement("architect", "Architect", 
+            "Place 10,000 blocks", 10000, AchievementCategory.BUILDING));
+        
+        registerAchievement(new Achievement("master_builder", "Master Builder", 
+            "Place 100,000 blocks", 100000, AchievementCategory.BUILDING));
+        
+        // Movement achievements
+        registerAchievement(new Achievement("wanderer", "Wanderer", 
+            "Travel 1,000 blocks", 1000, AchievementCategory.EXPLORATION));
+        
+        registerAchievement(new Achievement("explorer", "Explorer", 
+            "Travel 10,000 blocks", 10000, AchievementCategory.EXPLORATION));
+        
+        registerAchievement(new Achievement("world_walker", "World Walker", 
+            "Travel 100,000 blocks", 100000, AchievementCategory.EXPLORATION));
+        
         // Economy achievements
         registerAchievement(new Achievement("first_payment", "First Transaction", 
             "Send your first payment to another player", 1, AchievementCategory.ECONOMY));
@@ -67,7 +108,7 @@ public class AchievementSystem {
         
         // Social achievements
         registerAchievement(new Achievement("social", "Social Butterfly", 
-            "Send 100 private messages", 100, AchievementCategory.SOCIAL));
+            "Send 100 chat messages", 100, AchievementCategory.SOCIAL));
         
         registerAchievement(new Achievement("helpful", "Helpful Player", 
             "Help 10 new players", 10, AchievementCategory.SOCIAL));
@@ -76,7 +117,7 @@ public class AchievementSystem {
         registerAchievement(new Achievement("homey", "Home Sweet Home", 
             "Set your first home", 1, AchievementCategory.TELEPORTATION));
         
-        registerAchievement(new Achievement("explorer", "Explorer", 
+        registerAchievement(new Achievement("teleporter", "Teleporter", 
             "Use 50 warps", 50, AchievementCategory.TELEPORTATION));
         
         // Admin achievements
@@ -276,6 +317,9 @@ public class AchievementSystem {
     public void checkAutomaticAchievements(ServerPlayer player) {
         UUID playerUUID = player.getUUID();
         
+        // Get player statistics
+        StatisticsManager.PlayerStatistics stats = statisticsManager.getPlayerStatistics(playerUUID);
+        
         // Check playtime achievements
         PlaytimeTracker playtimeTracker = PlaytimeTracker.getInstance();
         long totalPlaytimeSeconds = playtimeTracker.getTotalPlaytime(playerUUID) / 1000;
@@ -283,6 +327,34 @@ public class AchievementSystem {
         updateProgress(playerUUID, "first_hour", (int) totalPlaytimeSeconds);
         updateProgress(playerUUID, "dedication", (int) totalPlaytimeSeconds);
         updateProgress(playerUUID, "veteran", (int) totalPlaytimeSeconds);
+        
+        // Combat achievements
+        updateProgress(playerUUID, "first_kill", stats.getKills());
+        updateProgress(playerUUID, "serial_killer", stats.getKills());
+        updateProgress(playerUUID, "massacre", stats.getKills());
+        updateProgress(playerUUID, "mob_hunter", stats.getMobKills());
+        
+        // Check K/D ratio for survivor achievement
+        if (stats.getKDR() >= 2.0 && !hasAchievement(playerUUID, "survivor")) {
+            awardAchievement(player, "survivor");
+        }
+        
+        // Building achievements
+        updateProgress(playerUUID, "first_block", stats.getBlocksBroken());
+        updateProgress(playerUUID, "demolition", stats.getBlocksBroken());
+        updateProgress(playerUUID, "architect", stats.getBlocksPlaced());
+        updateProgress(playerUUID, "master_builder", stats.getBlocksPlaced());
+        
+        // Movement achievements
+        updateProgress(playerUUID, "wanderer", (int) stats.getDistanceTraveled());
+        updateProgress(playerUUID, "explorer", (int) stats.getDistanceTraveled());
+        updateProgress(playerUUID, "world_walker", (int) stats.getDistanceTraveled());
+        
+        // Social achievements
+        Object chatMessages = stats.getStatistic("chat_messages");
+        if (chatMessages instanceof Number) {
+            updateProgress(playerUUID, "social", ((Number) chatMessages).intValue());
+        }
         
         // First join achievement
         if (!hasAchievement(playerUUID, "first_join")) {

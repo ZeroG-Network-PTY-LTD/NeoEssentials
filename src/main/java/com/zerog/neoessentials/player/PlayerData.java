@@ -255,6 +255,9 @@ public class PlayerData {
         statistics.put(key, value);
     }
     
+    /**
+     * Increment a statistic value safely
+     */
     public void incrementStatistic(String key, Number amount) {
         Object current = getStatistic(key);
         if (current instanceof Number) {
@@ -264,10 +267,65 @@ public class PlayerData {
                 setStatistic(key, ((Long) current) + amount.longValue());
             } else if (current instanceof Double) {
                 setStatistic(key, ((Double) current) + amount.doubleValue());
+            } else if (current instanceof Float) {
+                setStatistic(key, ((Float) current) + amount.floatValue());
             }
         } else {
             setStatistic(key, amount);
         }
+    }
+    
+    /**
+     * Get statistic as integer with default value
+     */
+    public int getStatisticAsInt(String key, int defaultValue) {
+        Object stat = getStatistic(key);
+        return stat instanceof Number ? ((Number) stat).intValue() : defaultValue;
+    }
+    
+    /**
+     * Get statistic as double with default value
+     */
+    public double getStatisticAsDouble(String key, double defaultValue) {
+        Object stat = getStatistic(key);
+        return stat instanceof Number ? ((Number) stat).doubleValue() : defaultValue;
+    }
+    
+    /**
+     * Check if player has any kills
+     */
+    public boolean hasKills() {
+        return getStatisticAsInt("player_kills", 0) > 0;
+    }
+    
+    /**
+     * Check if player has any deaths
+     */
+    public boolean hasDeaths() {
+        return getStatisticAsInt("player_deaths", 0) > 0;
+    }
+    
+    /**
+     * Get kill/death ratio
+     */
+    public double getKDR() {
+        int kills = getStatisticAsInt("player_kills", 0);
+        int deaths = getStatisticAsInt("player_deaths", 0);
+        return deaths > 0 ? (double) kills / deaths : kills;
+    }
+    
+    /**
+     * Get formatted KDR string
+     */
+    public String getFormattedKDR() {
+        return String.format("%.2f", getKDR());
+    }
+    
+    /**
+     * Get total blocks interacted with
+     */
+    public int getTotalBlocksInteracted() {
+        return getStatisticAsInt("blocks_broken", 0) + getStatisticAsInt("blocks_placed", 0);
     }
     
     // Utility methods

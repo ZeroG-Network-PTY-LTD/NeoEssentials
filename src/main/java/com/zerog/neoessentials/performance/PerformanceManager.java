@@ -146,7 +146,7 @@ public class PerformanceManager {
      */
     public void clearCache() {
         cache.clear();
-        LOGGER.info("Performance cache cleared");
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Performance cache cleared");
     }
     
     /**
@@ -207,7 +207,7 @@ public class PerformanceManager {
         // Suggest garbage collection
         System.gc();
         
-        LOGGER.info("Memory cleanup performed");
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Memory cleanup performed");
     }
     
     /**

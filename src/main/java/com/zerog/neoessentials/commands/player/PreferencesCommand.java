@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.zerog.neoessentials.player.PlayerDataManager;
 import com.zerog.neoessentials.player.PlayerData;
 import com.zerog.neoessentials.player.PlayerPreferences;
-import com.zerog.neoessentials.util.MessageUtils;
+import com.zerog.neoessentials.util.MessageUtil;
 
 import java.util.Map;
 
@@ -183,7 +183,7 @@ public class PreferencesCommand {
             }
         } catch (Exception e) {
             LOGGER.error("Error resetting preference for player " + player.getName().getString(), e);
-            Component error = MessageUtils.format("&cError resetting preference.");
+            Component error = MessageUtil.format("&cError resetting preference.");
             player.sendSystemMessage(error);
             return 0;
         }

@@ -6,14 +6,7 @@ import com.mojang.logging.LogUtils;
 import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigurationUnifier;
 
-import java.nio.file.Path;
-import com.zerog.neoessentials.features.CustomBossbarManager;
-import com.zerog.neoessentials.listeners.NotificationEventListener;
-import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.managers.*;
-import com.zerog.neoessentials.notifications.NotificationManager;
-import com.zerog.neoessentials.permissions.CustomPermissionsManager;
-import com.zerog.neoessentials.storage.PlayerDataManager;
 
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -42,11 +35,15 @@ public class NeoEssentials {
         // Register for server events
         NeoForge.EVENT_BUS.register(this);
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.listeners.CommandOverrideListener.class);
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.listeners.ServerTickListener.class);
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.NameTagFormattingListener());
-        LOGGER.info("Chat formatting system initialized");
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Chat formatting system initialized");
         // Initialize unified config system (only once)
         ConfigurationUnifier.getInstance().initialize();
-        LOGGER.info("Unified Configuration System initialized");
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Unified Configuration System initialized");
+        // Initialize server tick listener for animated placeholders
+        com.zerog.neoessentials.listeners.ServerTickListener.initialize();
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Server tick listener initialized");
         LOGGER.info("NeoEssentials initialized successfully!");
     }
     
@@ -59,70 +56,87 @@ public class NeoEssentials {
         LOGGER.info("NeoEssentials server starting setup...");
         try {
             // Unified config system already initialized in constructor
-            // Initialize storage systems
-            PlayerDataManager.getInstance();
-            LOGGER.info("Player data manager initialized");
+            // Initialize all features using the new FeatureManager
+            FeatureManager.getInstance().initializeFeatures();
         } catch (Exception e) {
             LOGGER.error("Error during NeoEssentials server starting setup", e);
         }
-        // Initialize Enhanced Language System (Phase 4)
-        Path configPath = ConfigurationUnifier.getInstance().getConfigPath();
-        LanguageManager.getInstance(configPath).initialize();
-        LOGGER.info("Language System initialized");
-        // Initialize all managers using unified config
-        com.zerog.neoessentials.managers.EconomyManager.getInstance();
-        HomeManager.getInstance();
-        WarpManager.getInstance();
-        KitManager.getInstance();
-        ModerationManager.getInstance();
-        MessagingManager.getInstance();
-        SpawnManager.getInstance();
-        TeleportRequestManager.getInstance();
-        LOGGER.info("Teleport Request Manager initialized");
-        com.zerog.neoessentials.storage.StorageManager.getInstance();
-        LOGGER.info("Storage Manager initialized");
-        com.zerog.neoessentials.security.SecurityManager.getInstance();
-        LOGGER.info("Security Manager initialized");
-        WebDashboardManager.getInstance();
-        LOGGER.info("Web Dashboard Manager initialized");
-        com.zerog.neoessentials.performance.PerformanceManager.getInstance();
-        LOGGER.info("Performance Manager initialized");
-        com.zerog.neoessentials.performance.AsyncOperationManager.getInstance();
-        LOGGER.info("Async Operation Manager initialized");
-        LanguageManager.getInstance().initialize();
-        PluginCompatibilityManager.getInstance().initialize();
-        CustomPermissionsManager.getInstance();
-        LOGGER.info("Custom Permissions Manager initialized");
-        com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
-        LOGGER.info("Placeholder System initialized");
-        CustomBossbarManager.getInstance();
-        LOGGER.info("Custom Bossbar Manager initialized");
-        LOGGER.info("Enhanced Bossbar Manager ready");
-        LOGGER.info("GUI system skipped - using sign-based shops only");
-        LOGGER.info("Config GUI system skipped - using command-based configuration");
-        LOGGER.info("Configuration GUI Manager initialized");
-        NotificationManager notificationManager = NotificationManager.getInstance(ConfigurationUnifier.getInstance().getConfigManager().getMainConfig());
-        notificationManager.notifyServerStart();
-        NotificationEventListener.getInstance();
-        NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.PermissionEventListener());
-        LOGGER.info("Permission Event Listener initialized");
-        LOGGER.info("Shop Sign Event Handling consolidated into NeoEssentialsEventHandler");
-    // Register shop/signshop event handler
-    NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.shops.ShopEventHandler());
-        // Initialize new PlaceholderManager, TabListManager, ScoreboardManager, BossBarManager
-        com.zerog.neoessentials.features.PlaceholderManager placeholderManager = new com.zerog.neoessentials.features.PlaceholderManager();
-        com.zerog.neoessentials.features.TabListManager tabListManager = new com.zerog.neoessentials.features.TabListManager();
-        com.zerog.neoessentials.features.ScoreboardManager scoreboardManager = new com.zerog.neoessentials.features.ScoreboardManager();
-        com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
-        // Register UI event handler for tablist, scoreboard, bossbar
-        NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.features.UIEventHandler(
-            tabListManager,
-            scoreboardManager,
-            bossBarManager,
-            placeholderManager
-        ));
+        
+        // Setup tablist system using coordinated managers
+        setupTablistSystem();
     }
-    // ...existing code...
+    
+    /**
+     * Setup the improved tablist system with coordinated managers
+     */
+    private void setupTablistSystem() {
+        try {
+            FeatureManager featureManager = FeatureManager.getInstance();
+            
+            // Get managers from FeatureManager
+            com.zerog.neoessentials.tablist.HeaderFooterManager headerFooterManager = 
+                featureManager.getManager("headerFooter", com.zerog.neoessentials.tablist.HeaderFooterManager.class);
+            com.zerog.neoessentials.placeholders.PlaceholderManager placeholderManager = 
+                featureManager.getManager("placeholders", com.zerog.neoessentials.placeholders.PlaceholderManager.class);
+            
+            if (headerFooterManager != null && placeholderManager != null) {
+                // Create tablist orchestration system
+                com.zerog.neoessentials.tablist.AnimationScheduler animationScheduler = 
+                    new com.zerog.neoessentials.tablist.AnimationScheduler(headerFooterManager, placeholderManager);
+                com.zerog.neoessentials.tablist.TabUpdateOrchestrator tabUpdateOrchestrator = 
+                    new com.zerog.neoessentials.tablist.TabUpdateOrchestrator(headerFooterManager, placeholderManager, animationScheduler);
+                
+                // Set header/footer templates (config-driven)
+                tabUpdateOrchestrator.setHeaderTemplate(new String[]{"Welcome to NeoEssentials!", "Enjoy your stay!"}, 1000);
+                tabUpdateOrchestrator.setFooterTemplate(new String[]{"Online: ${server_players}", "TPS: ${server_tps}"}, 1000);
+                
+                // Register event listeners for tablist updates
+                registerTablistEvents(tabUpdateOrchestrator);
+                
+                com.zerog.neoessentials.util.DebugUtil.debugLog("Enhanced tablist system initialized");
+            } else {
+                com.zerog.neoessentials.util.DebugUtil.warnLog("Failed to initialize tablist system - managers not available");
+            }
+            
+            // Register additional event handlers
+            NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.PermissionEventListener());
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Permission Event Listener initialized");
+            
+            NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.shops.ShopEventHandler());
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Shop Event Handler initialized");
+            
+        } catch (Exception e) {
+            LOGGER.error("Error setting up tablist system", e);
+        }
+    }
+    
+    /**
+     * Register tablist event handlers
+     */
+    private void registerTablistEvents(com.zerog.neoessentials.tablist.TabUpdateOrchestrator tabUpdateOrchestrator) {
+        NeoForge.EVENT_BUS.register(new Object() {
+            @SubscribeEvent
+            public void onPlayerJoin(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
+                if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                    tabUpdateOrchestrator.onPlayerJoin(player);
+                }
+            }
+            
+            @SubscribeEvent
+            public void onPlayerQuit(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+                if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                    tabUpdateOrchestrator.onPlayerQuit(player);
+                }
+            }
+            
+            @SubscribeEvent
+            public void onPermissionUpdate(com.zerog.neoessentials.features.PermissionUpdateEvent event) {
+                if (event.getPlayer() instanceof net.minecraft.server.level.ServerPlayer player) {
+                    tabUpdateOrchestrator.onPermissionUpdate(player);
+                }
+            }
+        });
+    }
     
     /**
      * Command registration event handler

@@ -3,6 +3,8 @@ package com.zerog.neoessentials.features;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
+
+import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 
 public class UIEventHandler {
