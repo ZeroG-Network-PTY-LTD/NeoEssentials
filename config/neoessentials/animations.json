@@ -1,4 +1,300 @@
 {
-  "enabled": true,
-  "animations": []
+  "_comment": "Animation Configuration for NeoEssentials",
+  "_version": "2.0.0",
+  "_description": "Defines animated text sequences for tablist, scoreboard, bossbar, and other features",
+  
+  "global": {
+    "enabled": true,
+    "defaultSpeed": 20,
+    "enableRainbowColors": true,
+    "enableGradients": true,
+    "enableTypewriter": true,
+    "maxAnimationLength": 100
+  },
+  
+  "tablist": {
+    "header": {
+      "enabled": true,
+      "animations": [
+        {
+          "name": "rainbow_welcome",
+          "type": "rainbow",
+          "text": "Welcome to NeoEssentials Server!",
+          "speed": 20,
+          "colors": ["&c", "&6", "&e", "&a", "&b", "&9", "&d"],
+          "loop": true
+        },
+        {
+          "name": "gradient_server",
+          "type": "gradient",
+          "text": "Premium Minecraft Experience",
+          "speed": 30,
+          "startColor": "#FF0080",
+          "endColor": "#0080FF",
+          "loop": true
+        }
+      ]
+    },
+    "footer": {
+      "enabled": true,
+      "animations": [
+        {
+          "name": "player_count",
+          "type": "text",
+          "frames": [
+            "&7Players Online: &a%neoessentials_players_online%",
+            "&7Total Players: &b%neoessentials_players_total%",
+            "&7Welcome &e%player%&7!"
+          ],
+          "speed": 60,
+          "loop": true
+        },
+        {
+          "name": "discord_info",
+          "type": "text",
+          "frames": [
+            "&7Join our Discord: &9discord.gg/yourserver",
+            "&7Discord Members: &a%discord_members%",
+            "&7Online on Discord: &b%discord_online%"
+          ],
+          "speed": 80,
+          "loop": true
+        }
+      ]
+    }
+  },
+  
+  "scoreboard": {
+    "title": {
+      "enabled": true,
+      "animations": [
+        {
+          "name": "server_title",
+          "type": "rainbow",
+          "text": "NeoEssentials",
+          "speed": 15,
+          "colors": ["&c", "&6", "&e", "&a", "&b", "&9", "&d"],
+          "loop": true
+        },
+        {
+          "name": "gradient_title",
+          "type": "gradient",
+          "text": "Premium Server",
+          "speed": 25,
+          "startColor": "#FF6B35",
+          "endColor": "#F7931E",
+          "loop": true
+        }
+      ]
+    },
+    "lines": {
+      "enabled": true,
+      "animations": [
+        {
+          "name": "balance_animation",
+          "type": "typewriter",
+          "text": "&7Balance: &a$%neoessentials_balance%",
+          "speed": 5,
+          "cursor": "&f_",
+          "loop": false
+        },
+        {
+          "name": "rank_animation",
+          "type": "text",
+          "frames": [
+            "&7Rank: &e%neoessentials_rank%",
+            "&7Level: &b%neoessentials_level%",
+            "&7Playtime: &d%neoessentials_playtime%"
+          ],
+          "speed": 40,
+          "loop": true
+        }
+      ]
+    }
+  },
+  
+  "bossbar": {
+    "enabled": true,
+    "animations": [
+      {
+        "name": "welcome_bar",
+        "type": "gradient",
+        "text": "Welcome to NeoEssentials Server!",
+        "speed": 20,
+        "startColor": "#00FF00",
+        "endColor": "#0080FF",
+        "color": "GREEN",
+        "style": "PROGRESS",
+        "progress": 1.0,
+        "duration": 100,
+        "loop": false
+      },
+      {
+        "name": "event_bar",
+        "type": "rainbow",
+        "text": "Special Event Active!",
+        "speed": 15,
+        "colors": ["&c", "&6", "&e", "&a", "&b", "&9", "&d"],
+        "color": "YELLOW",
+        "style": "SEGMENTED_20",
+        "progress": 0.75,
+        "duration": 200,
+        "loop": true
+      }
+    ]
+  },
+  
+  "chat": {
+    "enabled": true,
+    "animations": [
+      {
+        "name": "join_message",
+        "type": "gradient",
+        "text": "&e%player% &7joined the server!",
+        "speed": 10,
+        "startColor": "#FFD700",
+        "endColor": "#FFA500",
+        "loop": false
+      },
+      {
+        "name": "leave_message",
+        "type": "fade",
+        "text": "&e%player% &7left the server!",
+        "speed": 15,
+        "startOpacity": 1.0,
+        "endOpacity": 0.3,
+        "loop": false
+      }
+    ]
+  },
+  
+  "actionbar": {
+    "enabled": true,
+    "animations": [
+      {
+        "name": "welcome_actionbar",
+        "type": "typewriter",
+        "text": "&aWelcome %player%! &7Use &e/help &7for commands",
+        "speed": 3,
+        "cursor": "&f|",
+        "loop": false
+      },
+      {
+        "name": "stats_actionbar",
+        "type": "text",
+        "frames": [
+          "&7Balance: &a$%neoessentials_balance% &8| &7Rank: &e%neoessentials_rank%",
+          "&7Homes: &b%neoessentials_homes% &8| &7Warps: &d%neoessentials_warps%",
+          "&7Playtime: &6%neoessentials_playtime% &8| &7Level: &c%neoessentials_level%"
+        ],
+        "speed": 60,
+        "loop": true
+      }
+    ]
+  },
+  
+  "signs": {
+    "enabled": true,
+    "animations": [
+      {
+        "name": "server_info",
+        "type": "text",
+        "frames": [
+          "&c&lNeoEssentials",
+          "&6&lServer Info",
+          "&a&lOnline: %neoessentials_players_online%",
+          "&b&lDiscord: Available"
+        ],
+        "speed": 40,
+        "loop": true
+      }
+    ]
+  },
+  
+  "titles": {
+    "enabled": true,
+    "animations": [
+      {
+        "name": "welcome_title",
+        "type": "gradient",
+        "title": "Welcome to NeoEssentials!",
+        "subtitle": "Enjoy your premium experience",
+        "speed": 20,
+        "startColor": "#FF0080",
+        "endColor": "#0080FF",
+        "fadeIn": 20,
+        "stay": 60,
+        "fadeOut": 20
+      },
+      {
+        "name": "event_title",
+        "type": "rainbow",
+        "title": "Special Event!",
+        "subtitle": "Join now for rewards",
+        "speed": 15,
+        "colors": ["&c", "&6", "&e", "&a", "&b", "&9", "&d"],
+        "fadeIn": 10,
+        "stay": 40,
+        "fadeOut": 10
+      }
+    ]
+  },
+  
+  "discord": {
+    "enabled": true,
+    "animations": [
+      {
+        "name": "discord_status",
+        "type": "text",
+        "frames": [
+          "🟢 Server Online - %neoessentials_players_online% players",
+          "💬 Join our Discord for updates!",
+          "🎮 Playing on NeoEssentials Server"
+        ],
+        "speed": 120,
+        "loop": true
+      }
+    ]
+  },
+  
+  "presets": {
+    "rainbow": {
+      "colors": ["&c", "&6", "&e", "&a", "&b", "&9", "&d"],
+      "defaultSpeed": 20
+    },
+    "fire": {
+      "colors": ["&c", "&6", "&e", "&6"],
+      "defaultSpeed": 15
+    },
+    "water": {
+      "colors": ["&1", "&9", "&b", "&3"],
+      "defaultSpeed": 25
+    },
+    "nature": {
+      "colors": ["&2", "&a", "&e", "&6"],
+      "defaultSpeed": 30
+    },
+    "purple": {
+      "colors": ["&5", "&d", "&b", "&9"],
+      "defaultSpeed": 20
+    },
+    "gradient_presets": {
+      "sunset": {
+        "startColor": "#FF6B35",
+        "endColor": "#F7931E"
+      },
+      "ocean": {
+        "startColor": "#00C9FF",
+        "endColor": "#92FE9D"
+      },
+      "forest": {
+        "startColor": "#56AB2F",
+        "endColor": "#A8E6CF"
+      },
+      "purple_haze": {
+        "startColor": "#667eea",
+        "endColor": "#764ba2"
+      }
+    }
+  }
 }

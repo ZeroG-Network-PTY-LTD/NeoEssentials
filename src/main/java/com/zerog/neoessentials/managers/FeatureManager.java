@@ -185,8 +185,8 @@ public class FeatureManager {
         managers.put("moderation", moderationManager);
         
         // Shop system
-        com.zerog.neoessentials.shops.ShopManager shopManager = 
-            com.zerog.neoessentials.shops.ShopManager.getInstance();
+        com.zerog.neoessentials.economy.shops.ShopManager shopManager = 
+            com.zerog.neoessentials.economy.shops.ShopManager.getInstance();
         managers.put("shops", shopManager);
         
         // Tablist and UI features (using HeaderFooterManager for tablist functionality)

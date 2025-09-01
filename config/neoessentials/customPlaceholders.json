@@ -1,48 +1,368 @@
 {
-  "_comment": "NeoEssentials Custom Placeholders Example File. Define your own placeholders for tablist, chat, GUIs, etc. Supported types: conditional, animated, static. See examples below.",
+  "_comment": "Custom Placeholders Configuration for NeoEssentials",
+  "_version": "2.0.0",
+  "_description": "Define custom placeholders for tablist, scoreboard, chat, GUIs, and Discord integration. Supports conditional, animated, static, and calculated types.",
+  
+  "settings": {
+    "enabled": true,
+    "refreshInterval": 20,
+    "enableCaching": true,
+    "cacheTimeout": 60,
+    "enableDebug": false,
+    "maxPlaceholderLength": 256
+  },
+  
   "customPlaceholders": {
-    "afk_tag": {
+    "server_status": {
       "type": "conditional",
-      "condition": "${player essentials_afk}",
-      "true": "&7|&oaway",
-      "false": ""
+      "condition": "${server_tps} >= 18.0",
+      "true": "&a&l●&r &aOnline",
+      "false": "&c&l●&r &cLag Detected",
+      "description": "Shows server status based on TPS"
     },
-    "viewer_colored_ping": {
+    
+    "player_health_status": {
       "type": "conditional",
-      "condition": "${viewer ping} < 150",
-      "true": "${viewer_colored_ping0}",
-      "false": "&c${viewer ping}"
+      "condition": "${player_health} > 15",
+      "true": "&a❤ &aHealthy",
+      "false": {
+        "condition": "${player_health} > 5",
+        "true": "&e❤ &eInjured",
+        "false": "&c❤ &cCritical"
+      },
+      "description": "Shows player health status with colors and icons"
     },
-    "viewer_colored_ping0": {
+    
+    "team_status_indicator": {
       "type": "conditional",
-      "condition": "${viewer ping} < 50",
-      "true": "&a${viewer ping}",
-      "false": "&e${viewer ping}"
+      "condition": "${ftb_has_team}",
+      "true": "&b[TEAM] &f${ftb_team_display_name}",
+      "false": "&7[NO TEAM]",
+      "description": "Shows team membership status"
     },
+    
+    "rank_display": {
+      "type": "conditional",
+      "condition": "${ftb_has_rank}",
+      "true": "&6[${ftb_rank_display_name}]",
+      "false": "&8[Unranked]",
+      "description": "Shows player rank with brackets"
+    },
+    
+    "discord_status": {
+      "type": "conditional",
+      "condition": "${discord_linked}",
+      "true": "&9Discord: &a✓",
+      "false": "&9Discord: &c✗",
+      "description": "Shows Discord account linking status"
+    },
+    
+    "discord_role_display": {
+      "type": "conditional",
+      "condition": "${discord_has_role}",
+      "true": "&d[${discord_top_role}]",
+      "false": "&7[No Discord Role]",
+      "description": "Shows highest Discord role"
+    },
+    
     "welcome_animation": {
       "type": "animated",
       "frames": [
-        "&cWelcome &f${viewer name}",
-        "&eW&celcome &f${viewer name}",
-        "&eWe&clcome &f${viewer name}",
-        "&eWel&ccome &f${viewer name}",
-        "&eWelc&come &f${viewer name}",
-        "&eWelco&cme &f${viewer name}",
-        "&eWelcom&ce &f${viewer name}",
-        "&eWelcome &f${viewer name}",
-        "&cW&eelcome &f${viewer name}",
-        "&cWe&elcome &f${viewer name}",
-        "&cWel&ecome &f${viewer name}",
-        "&cWelc&eome &f${viewer name}",
-        "&cWelco&eme &f${viewer name}",
-        "&cWelcom&ee &f${viewer name}",
-        "&cWelcome &f${viewer name}"
+        "&cWelcome &f${player_name}",
+        "&eW&celcome &f${player_name}",
+        "&eWe&clcome &f${player_name}",
+        "&eWel&ccome &f${player_name}",
+        "&eWelc&come &f${player_name}",
+        "&eWelco&cme &f${player_name}",
+        "&eWelcom&ce &f${player_name}",
+        "&eWelcome &f${player_name}",
+        "&cW&eelcome &f${player_name}",
+        "&cWe&elcome &f${player_name}",
+        "&cWel&ecome &f${player_name}",
+        "&cWelc&eome &f${player_name}",
+        "&cWelco&eme &f${player_name}",
+        "&cWelcom&ee &f${player_name}",
+        "&cWelcome &f${player_name}"
       ],
-      "interval": 0.2
+      "interval": 0.2,
+      "loop": true,
+      "description": "Animated welcome message with color cycling"
     },
-    "static_example": {
+    
+    "rainbow_server_name": {
+      "type": "animated",
+      "frames": [
+        "&cN&6e&eo&aE&bs&9s&de&cn&6t&ei&aa&bl&9s",
+        "&6N&ee&ao&bE&9s&ds&ce&6n&et&ai&ba&9l&ds",
+        "&eN&ae&bo&9E&ds&cs&6e&en&at&bi&9a&dl&cs",
+        "&aN&be&9o&dE&cs&6s&ee&an&bt&9i&da&cl&6s",
+        "&bN&9e&do&cE&6s&es&ae&bn&9t&di&ca&6l&es",
+        "&9N&de&co&6E&es&as&be&9n&dt&ci&6a&el&as",
+        "&dN&ce&6o&eE&as&bs&9e&dn&ct&6i&ea&al&bs"
+      ],
+      "interval": 0.3,
+      "loop": true,
+      "description": "Rainbow animated server name"
+    },
+    
+    "ping_indicator": {
+      "type": "conditional",
+      "condition": "${player_ping} < 50",
+      "true": "&a${player_ping}ms ●●●",
+      "false": {
+        "condition": "${player_ping} < 150",
+        "true": "&e${player_ping}ms ●●○",
+        "false": "&c${player_ping}ms ●○○"
+      },
+      "description": "Ping indicator with visual bars"
+    },
+    
+    "balance_formatted": {
+      "type": "calculated",
+      "expression": "format_currency(${player_balance})",
+      "format": "&a$%,.2f",
+      "description": "Formatted player balance with currency symbol"
+    },
+    
+    "playtime_formatted": {
+      "type": "calculated",
+      "expression": "format_time(${player_playtime_seconds})",
+      "format": "%dd %hh %mm",
+      "description": "Formatted playtime in days, hours, minutes"
+    },
+    
+    "team_role_colored": {
+      "type": "conditional",
+      "condition": "${ftb_team_role} == 'Owner'",
+      "true": "&c&lOWNER",
+      "false": {
+        "condition": "${ftb_team_role} == 'Moderator'",
+        "true": "&6&lMODERATOR",
+        "false": {
+          "condition": "${ftb_team_role} == 'Member'",
+          "true": "&a&lMEMBER",
+          "false": "&7&lGUEST"
+        }
+      },
+      "description": "Colored team role display"
+    },
+    
+    "server_info": {
       "type": "static",
-      "value": "This is a static placeholder value."
+      "value": "&6NeoEssentials &7- &bPremium Minecraft Experience",
+      "description": "Static server information"
+    },
+    
+    "afk_status": {
+      "type": "conditional",
+      "condition": "${player_afk}",
+      "true": "&7[AFK]",
+      "false": "",
+      "description": "AFK status indicator"
+    },
+    
+    "vanish_status": {
+      "type": "conditional",
+      "condition": "${player_vanished}",
+      "true": "&8[VANISHED]",
+      "false": "",
+      "description": "Vanish status indicator for staff"
+    },
+    
+    "world_display": {
+      "type": "conditional",
+      "condition": "${player_world} == 'overworld'",
+      "true": "&a🌍 Overworld",
+      "false": {
+        "condition": "${player_world} == 'the_nether'",
+        "true": "&c🔥 Nether",
+        "false": {
+          "condition": "${player_world} == 'the_end'",
+          "true": "&d⭐ End",
+          "false": "&7🌐 ${player_world}"
+        }
+      },
+      "description": "Colored world display with icons"
+    },
+    
+    "time_period": {
+      "type": "conditional",
+      "condition": "${time_hour} < 6",
+      "true": "&8🌙 Night",
+      "false": {
+        "condition": "${time_hour} < 12",
+        "true": "&e☀ Morning",
+        "false": {
+          "condition": "${time_hour} < 18",
+          "true": "&6☀ Afternoon",
+          "false": "&c🌅 Evening"
+        }
+      },
+      "description": "Time period indicator with icons"
+    },
+    
+    "weather_status": {
+      "type": "conditional",
+      "condition": "${world_weather} == 'clear'",
+      "true": "&a☀ Clear",
+      "false": {
+        "condition": "${world_weather} == 'rain'",
+        "true": "&b🌧 Rain",
+        "false": "&8⚡ Storm"
+      },
+      "description": "Weather status with icons"
+    },
+    
+    "permission_level": {
+      "type": "conditional",
+      "condition": "${player_op}",
+      "true": "&c&lOP",
+      "false": {
+        "condition": "${permission:neoessentials.admin}",
+        "true": "&4&lADMIN",
+        "false": {
+          "condition": "${permission:neoessentials.moderator}",
+          "true": "&6&lMOD",
+          "false": "&a&lPLAYER"
+        }
+      },
+      "description": "Permission level indicator"
+    },
+    
+    "economy_status": {
+      "type": "conditional",
+      "condition": "${player_balance} >= 10000",
+      "true": "&a💰 Rich",
+      "false": {
+        "condition": "${player_balance} >= 1000",
+        "true": "&e💰 Wealthy",
+        "false": {
+          "condition": "${player_balance} >= 100",
+          "true": "&7💰 Poor",
+          "false": "&c💰 Broke"
+        }
+      },
+      "description": "Economy status based on balance"
+    },
+    
+    "homes_count": {
+      "type": "calculated",
+      "expression": "${player_homes_count}/${player_homes_max}",
+      "format": "&7Homes: &e%s",
+      "description": "Home count with maximum"
+    },
+    
+    "warps_count": {
+      "type": "calculated",
+      "expression": "${server_warps_count}",
+      "format": "&7Warps: &e%d available",
+      "description": "Available warps count"
+    },
+    
+    "discord_members": {
+      "type": "conditional",
+      "condition": "${discord_enabled}",
+      "true": "&9Discord: &e${discord_member_count} members",
+      "false": "&7Discord: &cDisabled",
+      "description": "Discord member count"
+    },
+    
+    "discord_online": {
+      "type": "conditional",
+      "condition": "${discord_enabled}",
+      "true": "&9Online: &a${discord_online_count}",
+      "false": "&7Discord: &cOffline",
+      "description": "Discord online count"
+    },
+    
+    "team_stats": {
+      "type": "conditional",
+      "condition": "${ftb_has_team}",
+      "true": "&bTeam: &f${ftb_team_display_name} &7(${ftb_team_members} members)",
+      "false": "&7No team - &a/team create &7to start!",
+      "description": "Team statistics display"
+    },
+    
+    "level_progress": {
+      "type": "calculated",
+      "expression": "(${player_exp} / ${player_exp_to_next}) * 100",
+      "format": "&aLevel ${player_level} &7(%.1f%%)",
+      "description": "Level progress percentage"
+    },
+    
+    "location_coords": {
+      "type": "static",
+      "value": "&7X: &e${player_x} &7Y: &e${player_y} &7Z: &e${player_z}",
+      "description": "Player coordinates"
+    },
+    
+    "server_performance": {
+      "type": "conditional",
+      "condition": "${server_tps} >= 19.5",
+      "true": "&a⚡ Excellent",
+      "false": {
+        "condition": "${server_tps} >= 18.0",
+        "true": "&e⚡ Good",
+        "false": {
+          "condition": "${server_tps} >= 15.0",
+          "true": "&6⚡ Fair",
+          "false": "&c⚡ Poor"
+        }
+      },
+      "description": "Server performance indicator"
     }
+  },
+  
+  "aliases": {
+    "neo_welcome": "welcome_animation",
+    "neo_status": "server_status",
+    "neo_team": "team_status_indicator",
+    "neo_rank": "rank_display",
+    "neo_discord": "discord_status",
+    "neo_ping": "ping_indicator",
+    "neo_balance": "balance_formatted",
+    "neo_time": "playtime_formatted"
+  },
+  
+  "categories": {
+    "player": [
+      "player_health_status",
+      "ping_indicator",
+      "balance_formatted",
+      "playtime_formatted",
+      "afk_status",
+      "vanish_status",
+      "permission_level",
+      "economy_status",
+      "level_progress",
+      "location_coords"
+    ],
+    "team": [
+      "team_status_indicator",
+      "team_role_colored",
+      "team_stats"
+    ],
+    "server": [
+      "server_status",
+      "server_info",
+      "server_performance",
+      "homes_count",
+      "warps_count"
+    ],
+    "discord": [
+      "discord_status",
+      "discord_role_display",
+      "discord_members",
+      "discord_online"
+    ],
+    "world": [
+      "world_display",
+      "time_period",
+      "weather_status"
+    ],
+    "animations": [
+      "welcome_animation",
+      "rainbow_server_name"
+    ]
   }
 }

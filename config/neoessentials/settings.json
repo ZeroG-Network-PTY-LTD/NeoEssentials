@@ -1,14 +1,227 @@
 {
-  "settings": {
-    "motd": "Welcome to NeoEssentials!",
+  "_comment": "General Settings Configuration for NeoEssentials",
+  "_version": "2.0.0",
+  "_description": "General settings and feature toggles for NeoEssentials mod",
+  
+  "general": {
+    "pluginName": "NeoEssentials",
+    "version": "2.0.0",
+    "language": "en",
+    "enableDebugMode": false,
+    "enableMetrics": true,
+    "enableUpdateChecker": true,
+    "motd": {
+      "enabled": true,
+      "message": "&6Welcome to &eNeoEssentials&6! Type &a/help &6for commands.",
+      "showOnJoin": true,
+      "delay": 20
+    }
+  },
+  
+  "features": {
     "tablist": {
       "enabled": true,
-      "header": "Welcome %player%",
-      "footer": "Enjoy your stay!"
+      "useUnifiedConfig": true,
+      "enableHeader": true,
+      "enableFooter": true,
+      "enableAnimations": true,
+      "updateInterval": 20,
+      "maxPlayers": 60
     },
-    "integrations": {
-      "sdlink": true,
-      "ftbteams": false
+    "scoreboard": {
+      "enabled": true,
+      "useUnifiedConfig": true,
+      "enableAnimations": true,
+      "updateInterval": 20,
+      "maxLines": 15,
+      "enableConditional": true
+    },
+    "bossbar": {
+      "enabled": true,
+      "useUnifiedConfig": true,
+      "enableAnimations": true,
+      "updateInterval": 20,
+      "defaultColor": "YELLOW",
+      "defaultStyle": "PROGRESS"
+    },
+    "chat": {
+      "enabled": true,
+      "enableColors": true,
+      "enableRGB": true,
+      "enableEmojis": false,
+      "enableClickableMessages": true,
+      "enableHoverMessages": true,
+      "maxMessageLength": 256,
+      "spamProtection": true
+    },
+    "economy": {
+      "enabled": true,
+      "startingBalance": 1000.0,
+      "currencyName": "Coins",
+      "currencySymbol": "$",
+      "enableInterest": false,
+      "interestRate": 0.05,
+      "enableBaltop": true
+    },
+    "homes": {
+      "enabled": true,
+      "defaultMaxHomes": 3,
+      "enableMultiworld": true,
+      "enableSafety": true,
+      "enableCosts": true,
+      "enableCooldowns": true
+    },
+    "warps": {
+      "enabled": true,
+      "enablePublicWarps": true,
+      "enablePrivateWarps": true,
+      "enableCosts": true,
+      "enableCooldowns": true,
+      "enablePermissions": true
+    },
+    "kits": {
+      "enabled": true,
+      "enableCooldowns": true,
+      "enableOneTimeUse": false,
+      "enablePermissions": true,
+      "enableCosts": false
+    },
+    "teleportation": {
+      "enabled": true,
+      "enableTPA": true,
+      "enableRTP": true,
+      "enableBack": true,
+      "enableSafety": true,
+      "enableWarmup": true,
+      "enableCosts": true,
+      "enableCooldowns": true
+    },
+    "moderation": {
+      "enabled": true,
+      "enableBan": true,
+      "enableKick": true,
+      "enableMute": true,
+      "enableWarn": true,
+      "enableJail": false,
+      "enableTempPunishments": true
     }
+  },
+  
+  "integrations": {
+    "discord": {
+      "enabled": true,
+      "useSimpleDiscordLink": true,
+      "enableEnhancedIntegration": true,
+      "enableRoleSync": true,
+      "enableNotifications": true,
+      "enableStatusUpdates": true,
+      "enableChatSync": true
+    },
+    "ftbTeams": {
+      "enabled": true,
+      "syncWithTablist": true,
+      "syncWithScoreboard": true,
+      "enableTeamPlaceholders": true,
+      "enableTeamEvents": true
+    },
+    "ftbRanks": {
+      "enabled": true,
+      "syncWithPermissions": true,
+      "syncWithTablist": true,
+      "syncWithScoreboard": true,
+      "enableRankPlaceholders": true
+    },
+    "luckPerms": {
+      "enabled": false,
+      "disableNativePermissions": false,
+      "syncGroups": true,
+      "syncPrefixSuffix": true
+    },
+    "vault": {
+      "enabled": false,
+      "disableNativeEconomy": false,
+      "useVaultEconomy": true
+    },
+    "worldEdit": {
+      "enabled": true,
+      "enableSelectionLimits": true,
+      "maxSelectionSize": 1000000,
+      "enableAsyncOperations": true
+    },
+    "journeyMap": {
+      "enabled": true,
+      "enableWaypointSync": true,
+      "enableMarkerSync": true
+    },
+    "jei": {
+      "enabled": true,
+      "enableRecipeIntegration": true,
+      "enableItemSearchIntegration": true
+    }
+  },
+  
+  "performance": {
+    "enableAsyncOperations": true,
+    "enableCaching": true,
+    "cacheTimeout": 300,
+    "maxCacheSize": 1000,
+    "enablePlaceholderOptimization": true,
+    "enableDatabaseOptimization": true,
+    "enableMetrics": false,
+    "maxThreadPoolSize": 4
+  },
+  
+  "security": {
+    "enableAntiSpam": true,
+    "enableCommandThrottle": true,
+    "enableLoginSecurity": false,
+    "enableIPWhitelist": false,
+    "enableCommandLogging": true,
+    "enableActionLogging": true,
+    "logLevel": "INFO"
+  },
+  
+  "database": {
+    "type": "JSON",
+    "host": "localhost",
+    "port": 3306,
+    "database": "neoessentials",
+    "username": "neoessentials",
+    "password": "password",
+    "enableSSL": false,
+    "connectionTimeout": 30,
+    "maxConnections": 10,
+    "enableBackup": true,
+    "backupInterval": 3600,
+    "maxBackups": 24
+  },
+  
+  "advanced": {
+    "enableExperimentalFeatures": false,
+    "enableBetaFeatures": false,
+    "enableDeveloperMode": false,
+    "enableProfiler": false,
+    "enableAdvancedLogging": false,
+    "customDataFolder": "",
+    "enableCustomCommands": true,
+    "enableCustomPlaceholders": true
+  },
+  
+  "compatibility": {
+    "disableIfEssentialsFound": true,
+    "disableIfEssentialsXFound": true,
+    "disableIfCMIFound": true,
+    "enableFallbackMode": false,
+    "enableCompatibilityMode": false,
+    "priorityLevel": "NORMAL"
+  },
+  
+  "updates": {
+    "enableAutoUpdate": false,
+    "updateChannel": "STABLE",
+    "checkInterval": 3600,
+    "enableNotifications": true,
+    "enableDowngrade": false,
+    "backupBeforeUpdate": true
   }
 }

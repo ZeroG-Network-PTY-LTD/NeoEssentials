@@ -1,12 +1,12 @@
 package com.zerog.neoessentials.placeholders;
 
 import com.zerog.neoessentials.config.CustomPlaceholderConfig;
+import com.zerog.neoessentials.integration.FTBIntegrationHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -518,12 +518,220 @@ public class PlaceholderManager {
             java.util.List.of("§c★", "§6★", "§e★", "§a★", "§b★", "§9★", "§5★"), 0.2
         ));
         
+        // FTB Integration placeholders
+        registerFTBPlaceholders();
+        
         // Essentials AFK placeholder (returns true/false or custom value)
         registerPlaceholder("essentials_afk", ctx -> {
             // Replace with your AFK detection logic
             // Example: return ctx.getPlayer().getData("afk") ? "true" : "false";
             // For now, always return "false" (not AFK)
             return "false";
+        });
+    }
+    
+    /**
+     * Register FTB-specific placeholders for Teams, Ranks, and Chunks integration
+     */
+    private void registerFTBPlaceholders() {
+        if (!FTBIntegrationHelper.isFTBTeamsLoaded() && !FTBIntegrationHelper.isFTBRanksLoaded()) {
+            return; // Skip FTB placeholders if neither FTB Teams nor Ranks are available
+        }
+        
+        // FTB Teams placeholders
+        registerPlaceholder("ftb_team_name", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.TeamInfo teamInfo = FTBIntegrationHelper.getTeamInfo(ctx.getPlayer());
+                return teamInfo != null ? teamInfo.teamName : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_team_display_name", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.TeamInfo teamInfo = FTBIntegrationHelper.getTeamInfo(ctx.getPlayer());
+                return teamInfo != null ? teamInfo.teamDisplayName : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_team_role", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.TeamInfo teamInfo = FTBIntegrationHelper.getTeamInfo(ctx.getPlayer());
+                if (teamInfo != null) {
+                    if (teamInfo.isTeamOwner) return "Owner";
+                    if (teamInfo.isTeamModerator) return "Moderator";
+                    return "Member";
+                }
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_team_members", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.TeamInfo teamInfo = FTBIntegrationHelper.getTeamInfo(ctx.getPlayer());
+                return teamInfo != null ? String.valueOf(teamInfo.teamMembers.size()) : "0";
+            }
+            return "0";
+        });
+        
+        registerPlaceholder("ftb_team_prefix", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.TeamInfo teamInfo = FTBIntegrationHelper.getTeamInfo(ctx.getPlayer());
+                return teamInfo != null ? teamInfo.teamPrefix : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_team_suffix", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.TeamInfo teamInfo = FTBIntegrationHelper.getTeamInfo(ctx.getPlayer());
+                return teamInfo != null ? teamInfo.teamSuffix : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_team_color", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.TeamInfo teamInfo = FTBIntegrationHelper.getTeamInfo(ctx.getPlayer());
+                return teamInfo != null ? teamInfo.teamColor : "";
+            }
+            return "";
+        });
+        
+        // FTB Ranks placeholders
+        registerPlaceholder("ftb_rank_name", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.RankInfo rankInfo = FTBIntegrationHelper.getRankInfo(ctx.getPlayer());
+                return rankInfo != null ? rankInfo.rankName : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_rank_display_name", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.RankInfo rankInfo = FTBIntegrationHelper.getRankInfo(ctx.getPlayer());
+                return rankInfo != null ? rankInfo.rankDisplayName : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_rank_prefix", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.RankInfo rankInfo = FTBIntegrationHelper.getRankInfo(ctx.getPlayer());
+                return rankInfo != null ? rankInfo.rankPrefix : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_rank_suffix", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.RankInfo rankInfo = FTBIntegrationHelper.getRankInfo(ctx.getPlayer());
+                return rankInfo != null ? rankInfo.rankSuffix : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_rank_color", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.RankInfo rankInfo = FTBIntegrationHelper.getRankInfo(ctx.getPlayer());
+                return rankInfo != null ? rankInfo.rankColor : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_rank_weight", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.RankInfo rankInfo = FTBIntegrationHelper.getRankInfo(ctx.getPlayer());
+                return rankInfo != null ? String.valueOf(rankInfo.rankWeight) : "0";
+            }
+            return "0";
+        });
+        
+        registerPlaceholder("ftb_rank_permissions", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.RankInfo rankInfo = FTBIntegrationHelper.getRankInfo(ctx.getPlayer());
+                return rankInfo != null ? String.valueOf(rankInfo.rankPermissions.size()) : "0";
+            }
+            return "0";
+        });
+        
+        // Combined FTB placeholders (for integration with existing systems)
+        registerPlaceholder("ftb_combined_prefix", ctx -> {
+            if (ctx.getPlayer() != null) {
+                return FTBIntegrationHelper.getEffectivePrefix(ctx.getPlayer());
+            }
+            return "";
+        });
+        
+        registerPlaceholder("ftb_combined_suffix", ctx -> {
+            if (ctx.getPlayer() != null) {
+                return FTBIntegrationHelper.getEffectiveSuffix(ctx.getPlayer());
+            }
+            return "";
+        });
+        
+        // FTB Chunks placeholders (if available)
+        registerPlaceholder("ftb_chunks_claimed", ctx -> {
+            if (ctx.getPlayer() != null) {
+                // This would require FTB Chunks integration - placeholder for now
+                return "0"; // TODO: Implement FTB Chunks integration
+            }
+            return "0";
+        });
+        
+        registerPlaceholder("ftb_chunks_loaded", ctx -> {
+            if (ctx.getPlayer() != null) {
+                // This would require FTB Chunks integration - placeholder for now
+                return "0"; // TODO: Implement FTB Chunks integration
+            }
+            return "0";
+        });
+        
+        // Status placeholders
+        registerPlaceholder("ftb_has_team", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.TeamInfo teamInfo = FTBIntegrationHelper.getTeamInfo(ctx.getPlayer());
+                return teamInfo != null ? "true" : "false";
+            }
+            return "false";
+        });
+        
+        registerPlaceholder("ftb_has_rank", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.RankInfo rankInfo = FTBIntegrationHelper.getRankInfo(ctx.getPlayer());
+                return rankInfo != null ? "true" : "false";
+            }
+            return "false";
+        });
+        
+        // Legacy aliases for compatibility
+        registerPlaceholder("team_name", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.TeamInfo teamInfo = FTBIntegrationHelper.getTeamInfo(ctx.getPlayer());
+                return teamInfo != null ? teamInfo.teamName : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("rank_name", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.RankInfo rankInfo = FTBIntegrationHelper.getRankInfo(ctx.getPlayer());
+                return rankInfo != null ? rankInfo.rankName : "";
+            }
+            return "";
+        });
+        
+        registerPlaceholder("team_role", ctx -> {
+            if (ctx.getPlayer() != null) {
+                FTBIntegrationHelper.TeamInfo teamInfo = FTBIntegrationHelper.getTeamInfo(ctx.getPlayer());
+                if (teamInfo != null) {
+                    if (teamInfo.isTeamOwner) return "Owner";
+                    if (teamInfo.isTeamModerator) return "Moderator";
+                    return "Member";
+                }
+            }
+            return "";
         });
     }
     

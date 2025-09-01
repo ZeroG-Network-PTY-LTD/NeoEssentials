@@ -1,10 +1,13 @@
 package com.zerog.neoessentials.api;
 
+import com.zerog.neoessentials.api.interfaces.*;
+import com.zerog.neoessentials.events.NeoEssentialsEventHandler;
 import com.zerog.neoessentials.managers.*;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import com.zerog.neoessentials.utils.PerformanceMonitor;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +37,10 @@ public class NeoEssentialsAPI {
     private final com.zerog.neoessentials.placeholders.PlaceholderManager placeholderManager;
     private final PerformanceMonitor performanceMonitor;
     
+    // Enhanced API components
+    private final NeoEssentialsEventHandler eventHandler;
+    private boolean eventSystemInitialized = false;
+    
     private NeoEssentialsAPI() {
         this.homeManager = HomeManager.getInstance();
         this.economyManager = EconomyManager.getInstance();
@@ -42,10 +49,16 @@ public class NeoEssentialsAPI {
         this.messagingManager = MessagingManager.getInstance();
         this.spawnManager = SpawnManager.getInstance();
         this.moderationManager = ModerationManager.getInstance();
-    this.placeholderManager = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
+        this.placeholderManager = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
         this.performanceMonitor = PerformanceMonitor.getInstance();
         
-        LOGGER.info("NeoEssentials API initialized");
+        // Initialize enhanced API components
+        this.eventHandler = new NeoEssentialsEventHandler();
+        
+        // Initialize API factory
+        NeoEssentialsAPIFactory.initialize();
+        
+        LOGGER.info("NeoEssentials API initialized with enhanced features");
     }
     
     /**
@@ -56,6 +69,26 @@ public class NeoEssentialsAPI {
             instance = new NeoEssentialsAPI();
         }
         return instance;
+    }
+    
+    /**
+     * Initialize the event system
+     * Should be called during mod initialization
+     */
+    public void initializeEventSystem() {
+        if (!eventSystemInitialized) {
+            NeoForge.EVENT_BUS.register(eventHandler);
+            eventSystemInitialized = true;
+            LOGGER.info("NeoEssentials event system initialized");
+        }
+    }
+    
+    /**
+     * Get the event handler for firing custom events
+     * @return Event handler instance
+     */
+    public NeoEssentialsEventHandler getEventHandler() {
+        return eventHandler;
     }
     
     /**
@@ -73,7 +106,7 @@ public class NeoEssentialsAPI {
      * Get API version (static method)
      */
     public static String getAPIVersion() {
-        return "2.0.0";
+        return "2.1.0";
     }
     
     /**

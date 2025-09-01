@@ -262,6 +262,12 @@ public final class PermissionNodes {
     public static final String SMITHING = "neoessentials.smithing";
     public static final String STONECUTTER = "neoessentials.stonecutter";
     
+    // AFK System
+    public static final String AFK = "neoessentials.afk";
+    public static final String AFK_OTHERS = "neoessentials.afk.others";
+    public static final String AFK_EXEMPT = "neoessentials.afk.exempt";
+    public static final String AFK_ALL = "neoessentials.afk.*";
+    
     // ==============================
     // KIT SYSTEM
     // ==============================
