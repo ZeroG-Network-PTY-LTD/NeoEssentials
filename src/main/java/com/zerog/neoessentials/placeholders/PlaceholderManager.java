@@ -1,10 +1,12 @@
 package com.zerog.neoessentials.placeholders;
 
+import com.zerog.neoessentials.config.CustomPlaceholderConfig;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -21,6 +23,54 @@ import java.util.regex.Pattern;
  * @since 2.1.0
  */
 public class PlaceholderManager {
+    /**
+     * Tick all animated placeholders to update their frames.
+     * Call this from AnimationScheduler.
+     */
+    // ...existing code...
+    /**
+     * Tick all animated placeholders to update their frames.
+     * Call this from AnimationScheduler.
+     */
+    public void tickAnimatedPlaceholders(long now) {
+        for (Function<PlaceholderContext, String> fn : placeholders.values()) {
+            if (fn instanceof AnimatedPlaceholder anim) {
+                anim.tick(now);
+            }
+        }
+    }
+    /**
+     * Reload custom placeholders from config and refresh tablist for all players
+     */
+    public void reload() {
+        loadCustomPlaceholders();
+        // After reload, update tablist and header/footer for all online players
+        net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server != null) {
+            java.util.List<net.minecraft.server.level.ServerPlayer> players = server.getPlayerList().getPlayers();
+            com.zerog.neoessentials.features.TabListManager.getInstance().refreshTablistForAll(players);
+            com.zerog.neoessentials.features.ScoreboardManager.getInstance().updateAllScoreboards();
+        }
+        LOGGER.info("Custom placeholders reloaded and tablist/scoreboard refreshed for all players.");
+    }
+    // TPS tracking fields
+    private double currentTPS = 20.0;
+    private long lastTickTime = System.nanoTime();
+    private int tickCount = 0;
+
+    /**
+     * Call this from a server tick event to update TPS
+     */
+    public void onServerTick() {
+        tickCount++;
+        long now = System.nanoTime();
+        if (tickCount >= 20) {
+            double seconds = (now - lastTickTime) / 1_000_000_000.0;
+            currentTPS = 20.0 / seconds * tickCount;
+            lastTickTime = now;
+            tickCount = 0;
+        }
+    }
     /**
      * Example customPlaceholders.json config:
      *
@@ -72,128 +122,255 @@ public class PlaceholderManager {
     // Built-in placeholder functions
     private final Map<String, Function<PlaceholderContext, String>> placeholders;
     
+
     private PlaceholderManager() {
         this.placeholders = new HashMap<>();
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] Initializing...");
         registerBuiltInPlaceholders();
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] Built-in placeholders registered: " + placeholders.keySet());
         loadCustomPlaceholders();
-        LOGGER.info("PlaceholderManager initialized with {} built-in placeholders", placeholders.size());
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] Custom placeholders loaded: " + placeholders.keySet());
+        LOGGER.info("PlaceholderManager initialized with {} total placeholders", placeholders.size());
+
     }
+
+        // Demo: Broadcast animated placeholder to all online players every 0.2s
     /**
-     * Load custom placeholders from config/neoessentials/customPlaceholders.json
+     * Call this after all managers are initialized to start animated placeholder refresh.
      */
-    private void loadCustomPlaceholders() {
-        java.nio.file.Path configDir = java.nio.file.Paths.get("config", "neoessentials");
-        java.nio.file.Path configPath = configDir.resolve("customPlaceholders.json");
-        if (!java.nio.file.Files.exists(configPath)) {
-            try {
-                LOGGER.info("customPlaceholders.json not found at {}. Attempting to create directory {}...", configPath, configDir);
-                java.nio.file.Files.createDirectories(configDir);
-                LOGGER.info("Directory created or already exists: {}", configDir);
-                // Write default file
-                String defaultJson = "{\n  \"info\": \"Edit or add custom placeholders here. Use type: static, conditional, or animated. Example usage: ${afk_tag}, ${player_prefix}, etc. Conditional placeholders use 'condition', animated use 'frames'. See documentation for details.\",\n  \"customPlaceholders\": {\n    \"afk_tag\": {\n      \"type\": \"conditional\",\n      \"condition\": \"${player essentials_afk}\",\n      \"true\": \"&7|&oaway\",\n      \"false\": \"\"\n    },\n    \"welcome_animation\": {\n      \"type\": \"animated\",\n      \"frames\": [\n        \"&cWelcome &f${viewer name}\",\n        \"&eW&celcome &f${viewer name}\"\n      ],\n      \"interval\": 0.2\n    },\n    \"static_example\": {\n      \"type\": \"static\",\n      \"value\": \"This is a static placeholder value.\"\n    },\n    \"player_prefix\": {\n      \"type\": \"static\",\n      \"value\": \"&7[Player]\"\n    },\n    \"player_suffix\": {\n      \"type\": \"static\",\n      \"value\": \"&f\"\n    },\n    \"player_status\": {\n      \"type\": \"conditional\",\n      \"condition\": \"${player online}\",\n      \"true\": \"&aOnline\",\n      \"false\": \"&cOffline\"\n    },\n    \"player_rank\": {\n      \"type\": \"static\",\n      \"value\": \"Member\"\n    },\n    \"player_points\": {\n      \"type\": \"static\",\n      \"value\": \"0\"\n    },\n    \"player_joined\": {\n      \"type\": \"static\",\n      \"value\": \"${player name} joined the server!\"\n    }\n  }\n}";
-                java.nio.file.Files.writeString(configPath, defaultJson);
-                LOGGER.info("Successfully generated default customPlaceholders.json at {}", configPath);
-            } catch (Exception e) {
-                LOGGER.error("Failed to generate default customPlaceholders.json at {}: {}", configPath, e);
-                return;
-            }
-        } else {
-            LOGGER.info("customPlaceholders.json already exists at {}. Skipping generation.", configPath);
-        }
-        try {
-            String json = new String(java.nio.file.Files.readAllBytes(configPath));
-            com.google.gson.JsonObject root = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
-            if (!root.has("customPlaceholders")) return;
-            com.google.gson.JsonObject placeholdersObj = root.getAsJsonObject("customPlaceholders");
-            for (String key : placeholdersObj.keySet()) {
-                com.google.gson.JsonObject def = placeholdersObj.getAsJsonObject(key);
-                String type = def.has("type") ? def.get("type").getAsString() : "static";
-                if ("conditional".equals(type)) {
-                    String condition = def.has("condition") ? def.get("condition").getAsString() : "";
-                    String trueValue = def.has("true") ? def.get("true").getAsString() : "";
-                    String falseValue = def.has("false") ? def.get("false").getAsString() : "";
-                    registerPlaceholder(key, ctx -> {
-                        boolean cond = evaluateCondition(condition, ctx);
-                        String value = cond ? trueValue : falseValue;
-                        return processPlaceholders(value, ctx);
-                    });
-                } else if ("animated".equals(type)) {
-                    // Animated placeholder: cycles through frames
-                    java.util.List<String> frames = new java.util.ArrayList<>();
-                    if (def.has("frames") && def.get("frames").isJsonArray()) {
-                        for (var el : def.getAsJsonArray("frames")) {
-                            frames.add(el.getAsString());
-                        }
+    public void startAnimatedPlaceholderRefreshForAll() {
+        for (String key : placeholders.keySet()) {
+            Function<PlaceholderContext, String> fn = placeholders.get(key);
+            if (fn instanceof AnimatedPlaceholder) {
+                double interval = ((AnimatedPlaceholder) fn).interval;
+                try {
+                    com.zerog.neoessentials.features.TabListManager tlm = com.zerog.neoessentials.features.TabListManager.getInstance();
+                    if (tlm != null) {
+                        tlm.startAnimatedPlaceholderRefresh(key, interval);
                     }
-                    double interval = def.has("interval") ? def.get("interval").getAsDouble() : 1.0;
-                    registerPlaceholder(key, new AnimatedPlaceholder(frames, interval));
-                } else {
-                    // Static placeholder
-                    String value = def.has("value") ? def.get("value").getAsString() : "";
-                    registerPlaceholder(key, ctx -> processPlaceholders(value, ctx));
+                } catch (Exception e) {
+                    LOGGER.error("Failed to start animated placeholder refresh for {}: {}", key, e.getMessage());
                 }
-                LOGGER.info("Registered custom placeholder: {} (type: {})", key, type);
             }
-        } catch (Exception e) {
-            LOGGER.error("Failed to load custom placeholders: {}", e.getMessage());
         }
     }
 
     /**
-     * Evaluate a simple condition string, e.g. "${player ping} < 150"
+     * Load custom placeholders from CustomPlaceholderConfig
+     */
+    public void loadCustomPlaceholders() {
+        com.zerog.neoessentials.config.CustomPlaceholderConfig configLoader = com.zerog.neoessentials.config.CustomPlaceholderConfig.getInstance();
+        java.nio.file.Path chosenPath = configLoader.getConfigPath();
+        boolean fileExists = chosenPath != null && java.nio.file.Files.exists(chosenPath);
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] PlaceholderManager diagnostics:");
+        com.zerog.neoessentials.util.DebugUtil.debugLog("  Chosen config path: " + (chosenPath != null ? chosenPath.toAbsolutePath() : "null") + " exists=" + fileExists);
+        if (!fileExists) {
+            // Only write default template if neither file exists
+            LOGGER.warn("No customPlaceholders.json found. Generating default template at {}.", chosenPath);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("  No customPlaceholders.json found. Generating default template at " + chosenPath);
+            if (chosenPath != null) {
+                try {
+                    java.nio.file.Files.writeString(chosenPath, com.zerog.neoessentials.config.CustomPlaceholderConfig.DEFAULT_TEMPLATE);
+                    LOGGER.info("Generated default customPlaceholders.json at {}", chosenPath);
+                    System.out.println("  Generated default customPlaceholders.json at " + chosenPath);
+                } catch (Exception e) {
+                    LOGGER.error("Failed to write default customPlaceholders.json: {}", e.getMessage());
+                    System.out.println("  ERROR writing default customPlaceholders.json: " + e.getMessage());
+                }
+            }
+        } else if (chosenPath != null) {
+            try {
+                if (java.nio.file.Files.size(chosenPath) == 0) {
+                    LOGGER.warn("customPlaceholders.json exists but is empty at {}. Please manually populate it; no overwrite will occur.", chosenPath);
+                    System.out.println("  customPlaceholders.json exists but is empty at " + chosenPath);
+                }
+            } catch (java.io.IOException e) {
+                LOGGER.error("Error checking customPlaceholders.json file size: {}", e.getMessage());
+                System.out.println("  ERROR checking customPlaceholders.json file size: " + e.getMessage());
+            }
+        }
+        CustomPlaceholderConfig config = CustomPlaceholderConfig.getInstance();
+        com.google.gson.JsonObject root = config.getConfigData();
+        if (root == null) {
+            LOGGER.error("CustomPlaceholderConfig.getConfigData() returned null. No placeholders loaded.");
+            System.out.println("  ERROR: CustomPlaceholderConfig.getConfigData() returned null. No placeholders loaded.");
+            return;
+        }
+        if (!root.has("customPlaceholders")) {
+            LOGGER.warn("customPlaceholders.json does not contain 'customPlaceholders' object. No placeholders loaded.");
+            System.out.println("  customPlaceholders.json does not contain 'customPlaceholders' object. No placeholders loaded.");
+            return;
+        }
+        com.google.gson.JsonObject placeholdersObj = root.getAsJsonObject("customPlaceholders");
+        LOGGER.info("Loading custom placeholders from config. Found {} entries.", placeholdersObj.size());
+        System.out.println("  Loading custom placeholders from config. Found " + placeholdersObj.size() + " entries.");
+        for (String key : placeholdersObj.keySet()) {
+            com.google.gson.JsonObject def = placeholdersObj.getAsJsonObject(key);
+            String type = def.has("type") ? def.get("type").getAsString() : "static";
+            LOGGER.info("Registering custom placeholder: {} (type: {})", key, type);
+            System.out.println("    Registering custom placeholder: " + key + " (type: " + type + ")");
+            if ("conditional".equals(type)) {
+                String condition = def.has("condition") ? def.get("condition").getAsString() : "";
+                String trueValue = def.has("true") ? def.get("true").getAsString() : "";
+                String falseValue = def.has("false") ? def.get("false").getAsString() : "";
+                registerPlaceholder(key, ctx -> {
+                    boolean cond = evaluateCondition(condition, ctx);
+                    String value = cond ? trueValue : falseValue;
+                    return processPlaceholders(value, ctx);
+                });
+            } else if ("animated".equals(type)) {
+                java.util.List<String> frames = new java.util.ArrayList<>();
+                if (def.has("frames") && def.get("frames").isJsonArray()) {
+                    for (var el : def.getAsJsonArray("frames")) {
+                        frames.add(el.getAsString());
+                    }
+                }
+                double interval = def.has("interval") ? def.get("interval").getAsDouble() : 1.0;
+                registerPlaceholder(key, new AnimatedPlaceholder(frames, interval));
+            } else {
+                String value = def.has("value") ? def.get("value").getAsString() : "";
+                registerPlaceholder(key, ctx -> processPlaceholders(value, ctx));
+            }
+        }
+        LOGGER.info("Custom placeholder loading complete.");
+        System.out.println("  Custom placeholder loading complete.");
+    }
+
+    /**
+     * Evaluate a condition string with support for various operators and boolean logic
      */
     private boolean evaluateCondition(String condition, PlaceholderContext ctx) {
         if (condition == null || condition.isEmpty()) return false;
-        // Replace placeholders in condition
-        String expr = processPlaceholders(condition, ctx);
-    expr = expr.replaceAll("[^0-9<>=!.]+", "").trim();
+        
         try {
-            if (expr.contains("<")) {
-                String[] parts = expr.split("<");
-                double left = Double.parseDouble(parts[0].trim());
-                double right = Double.parseDouble(parts[1].trim());
-                return left < right;
-            } else if (expr.contains(">")) {
-                String[] parts = expr.split(">");
-                double left = Double.parseDouble(parts[0].trim());
-                double right = Double.parseDouble(parts[1].trim());
-                return left > right;
-            } else if (expr.contains("==")) {
-                String[] parts = expr.split("==");
-                return parts[0].trim().equals(parts[1].trim());
+            // Replace placeholders in condition first
+            String expr = processPlaceholders(condition, ctx).trim();
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Evaluating condition: '" + condition + "' -> '" + expr + "'");
+            
+            // Handle boolean values directly
+            if ("true".equalsIgnoreCase(expr)) return true;
+            if ("false".equalsIgnoreCase(expr)) return false;
+            
+            // Handle numeric comparisons
+            if (expr.contains(">=")) {
+                String[] parts = expr.split(">=", 2);
+                if (parts.length == 2) {
+                    double left = parseNumber(parts[0].trim());
+                    double right = parseNumber(parts[1].trim());
+                    return left >= right;
+                }
+            } else if (expr.contains("<=")) {
+                String[] parts = expr.split("<=", 2);
+                if (parts.length == 2) {
+                    double left = parseNumber(parts[0].trim());
+                    double right = parseNumber(parts[1].trim());
+                    return left <= right;
+                }
             } else if (expr.contains("!=")) {
-                String[] parts = expr.split("!=");
-                return !parts[0].trim().equals(parts[1].trim());
-            } else if (expr.equals("true")) {
-                return true;
-            } else if (expr.equals("false")) {
-                return false;
+                String[] parts = expr.split("!=", 2);
+                if (parts.length == 2) {
+                    String left = parts[0].trim();
+                    String right = parts[1].trim();
+                    // Try numeric comparison first
+                    try {
+                        double leftNum = parseNumber(left);
+                        double rightNum = parseNumber(right);
+                        return leftNum != rightNum;
+                    } catch (NumberFormatException e) {
+                        // Fallback to string comparison
+                        return !left.equals(right);
+                    }
+                }
+            } else if (expr.contains("==")) {
+                String[] parts = expr.split("==", 2);
+                if (parts.length == 2) {
+                    String left = parts[0].trim();
+                    String right = parts[1].trim();
+                    // Try numeric comparison first
+                    try {
+                        double leftNum = parseNumber(left);
+                        double rightNum = parseNumber(right);
+                        return leftNum == rightNum;
+                    } catch (NumberFormatException e) {
+                        // Fallback to string comparison
+                        return left.equals(right);
+                    }
+                }
+            } else if (expr.contains("<")) {
+                String[] parts = expr.split("<", 2);
+                if (parts.length == 2) {
+                    double left = parseNumber(parts[0].trim());
+                    double right = parseNumber(parts[1].trim());
+                    return left < right;
+                }
+            } else if (expr.contains(">")) {
+                String[] parts = expr.split(">", 2);
+                if (parts.length == 2) {
+                    double left = parseNumber(parts[0].trim());
+                    double right = parseNumber(parts[1].trim());
+                    return left > right;
+                }
             }
+            
+            // If no operators found, try to parse as boolean or number
+            try {
+                double num = parseNumber(expr);
+                return num != 0; // Non-zero is true
+            } catch (NumberFormatException e) {
+                // Last resort: non-empty string is true
+                return !expr.isEmpty();
+            }
+            
         } catch (Exception e) {
-            LOGGER.warn("Failed to evaluate condition: {}", condition);
+            LOGGER.warn("Failed to evaluate condition '{}': {}", condition, e.getMessage());
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Condition evaluation error: " + e.getMessage());
         }
         return false;
+    }
+    
+    /**
+     * Parse a string as a number, handling various formats
+     */
+    private double parseNumber(String str) throws NumberFormatException {
+        if (str == null || str.isEmpty()) {
+            throw new NumberFormatException("Empty string");
+        }
+        
+        // Remove common non-numeric suffixes
+        String cleaned = str.replaceAll("(?i)(ms|px|%|°)$", "").trim();
+        
+        // Handle boolean strings
+        if ("true".equalsIgnoreCase(cleaned)) return 1.0;
+        if ("false".equalsIgnoreCase(cleaned)) return 0.0;
+        
+        return Double.parseDouble(cleaned);
     }
 
     /**
      * Animated placeholder implementation
      */
-    private static class AnimatedPlaceholder implements java.util.function.Function<PlaceholderContext, String> {
+    public static class AnimatedPlaceholder implements java.util.function.Function<PlaceholderContext, String> {
         private final java.util.List<String> frames;
-        private final double interval;
-        private long startTime;
+        public final double interval;
+    // ...existing code...
+        private int frameIdx = 0;
+        private long lastUpdateTs = 0;
         public AnimatedPlaceholder(java.util.List<String> frames, double interval) {
             this.frames = frames;
             this.interval = interval;
-            this.startTime = System.currentTimeMillis();
+            // Removed unused assignment to startTime
+        }
+        public void tick(long now) {
+            long intervalMs = (long)(interval * 1000);
+            if (frames.size() > 1 && now - lastUpdateTs >= intervalMs) {
+                frameIdx = (frameIdx + 1) % frames.size();
+                lastUpdateTs = now;
+            }
         }
         @Override
         public String apply(PlaceholderContext ctx) {
             if (frames.isEmpty()) return "";
-            long now = System.currentTimeMillis();
-            int idx = (int)(((now - startTime) / 1000.0 / interval) % frames.size());
-            String frame = frames.get(idx);
-            return frame;
+            return frames.get(frameIdx);
         }
     }
     
@@ -229,6 +406,12 @@ public class PlaceholderManager {
         registerPlaceholder("player_y", ctx -> ctx.getPlayer() != null ? String.valueOf((int) ctx.getPlayer().getY()) : "0");
         registerPlaceholder("player_z", ctx -> ctx.getPlayer() != null ? String.valueOf((int) ctx.getPlayer().getZ()) : "0");
         registerPlaceholder("player_world", ctx -> ctx.getPlayer() != null ? ctx.getPlayer().level().dimension().location().getPath() : "unknown");
+        registerPlaceholder("player_ping", ctx -> {
+            if (ctx.getPlayer() != null) {
+                return String.valueOf(ctx.getPlayer().connection.latency());
+            }
+            return "0";
+        });
         
         // Time placeholders
         registerPlaceholder("time", ctx -> LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
@@ -283,10 +466,7 @@ public class PlaceholderManager {
         });
         
         // Performance placeholders
-        registerPlaceholder("server_tps", ctx -> {
-            // Simplified TPS calculation - in production would use proper server metrics
-            return "20.0";
-        });
+    registerPlaceholder("server_tps", ctx -> String.format("%.2f", currentTPS));
         registerPlaceholder("server_memory_used", ctx -> {
             Runtime runtime = Runtime.getRuntime();
             long used = runtime.totalMemory() - runtime.freeMemory();
@@ -326,6 +506,25 @@ public class PlaceholderManager {
         registerPlaceholder("neoessentials_version", ctx -> "2.1.0");
         registerPlaceholder("neoessentials_features", ctx -> "12");
         registerPlaceholder("neoessentials_commands", ctx -> "50+");
+        
+        // Animated placeholders for testing
+        registerPlaceholder("server_status", new AnimatedPlaceholder(
+            java.util.List.of("§a●", "§e●", "§6●", "§c●"), 0.5
+        ));
+        registerPlaceholder("loading_dots", new AnimatedPlaceholder(
+            java.util.List.of("§7.", "§7..", "§7...", "§7"), 0.3
+        ));
+        registerPlaceholder("rainbow_star", new AnimatedPlaceholder(
+            java.util.List.of("§c★", "§6★", "§e★", "§a★", "§b★", "§9★", "§5★"), 0.2
+        ));
+        
+        // Essentials AFK placeholder (returns true/false or custom value)
+        registerPlaceholder("essentials_afk", ctx -> {
+            // Replace with your AFK detection logic
+            // Example: return ctx.getPlayer().getData("afk") ? "true" : "false";
+            // For now, always return "false" (not AFK)
+            return "false";
+        });
     }
     
     /**
@@ -348,7 +547,10 @@ public class PlaceholderManager {
      * Process placeholders in text
      */
     public String processPlaceholders(String text, ServerPlayer player) {
-        return processPlaceholders(text, new PlaceholderContext(player));
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] processPlaceholders called: input='" + text + "'");
+        String result = processPlaceholders(text, new PlaceholderContext(player));
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] processPlaceholders output: '" + result + "'");
+        return result;
     }
     
     /**
@@ -358,17 +560,15 @@ public class PlaceholderManager {
         if (text == null || text.isEmpty()) {
             return text;
         }
-        
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(text);
         StringBuffer result = new StringBuffer();
-        
         while (matcher.find()) {
             String placeholder = matcher.group(1);
             String replacement = resolvePlaceholder(placeholder, context);
+            LOGGER.info("Processing placeholder: '{}' -> '{}'", placeholder, replacement);
             matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(result);
-        
         return result.toString();
     }
     
@@ -376,6 +576,7 @@ public class PlaceholderManager {
      * Resolve a single placeholder
      */
     private String resolvePlaceholder(String placeholder, PlaceholderContext context) {
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] resolvePlaceholder called: '" + placeholder + "'");
         // Remove placeholder delimiters
         String identifier = placeholder;
         if (identifier.startsWith("%") && identifier.endsWith("%")) {
@@ -383,13 +584,14 @@ public class PlaceholderManager {
         } else if (identifier.startsWith("{") && identifier.endsWith("}")) {
             identifier = identifier.substring(1, identifier.length() - 1);
         }
-        
         // Handle parameters (e.g., %player_health_formatted:1%)
         String[] parts = identifier.split(":");
         String baseIdentifier = parts[0].toLowerCase();
         String parameter = parts.length > 1 ? parts[1] : null;
-        
         Function<PlaceholderContext, String> function = placeholders.get(baseIdentifier);
+        if (function == null) {
+            LOGGER.warn("[PlaceholderManager] Placeholder not registered: '{}'", baseIdentifier);
+        }
         if (function != null) {
             try {
                 String value = function.apply(context);
@@ -399,9 +601,8 @@ public class PlaceholderManager {
                 return placeholder; // Return original placeholder on error
             }
         }
-        
         // Placeholder not found
-        LOGGER.debug("Unknown placeholder: {}", identifier);
+        LOGGER.warn("Unknown placeholder: {}", identifier);
         return placeholder; // Return original placeholder
     }
     
@@ -449,8 +650,59 @@ public class PlaceholderManager {
     }
     
     /**
-     * Context class for placeholder resolution
+     * Returns a set of animated placeholder IDs found in the given text.
      */
+    public java.util.Set<String> getAnimatedPlaceholderIdsInText(String text) {
+        java.util.Set<String> result = new java.util.HashSet<>();
+        if (text == null || text.isEmpty()) return result;
+        Matcher matcher = PLACEHOLDER_PATTERN.matcher(text);
+        while (matcher.find()) {
+            String placeholder = matcher.group(1);
+            String identifier = placeholder;
+            if (identifier.startsWith("%") && identifier.endsWith("%")) {
+                identifier = identifier.substring(1, identifier.length() - 1);
+            } else if (identifier.startsWith("{") && identifier.endsWith("}")) {
+                identifier = identifier.substring(1, identifier.length() - 1);
+            }
+            Function<PlaceholderContext, String> fn = placeholders.get(identifier.toLowerCase());
+            if (fn instanceof AnimatedPlaceholder) {
+                result.add(identifier.toLowerCase());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the animation interval for a given animated placeholder ID, or 1.0s if not found.
+     */
+    public double getAnimationInterval(String placeholderId) {
+        Function<PlaceholderContext, String> fn = placeholders.get(placeholderId.toLowerCase());
+        if (fn instanceof AnimatedPlaceholder) {
+            return ((AnimatedPlaceholder) fn).interval;
+        }
+        return 1.0;
+    }
+    
+    /**
+     * Reload custom placeholders from configuration
+     */
+    public void reloadCustomPlaceholders() {
+        LOGGER.info("Reloading custom placeholders...");
+        
+        // Clear existing custom placeholders (keep built-in ones)
+        java.util.Set<String> customPlaceholderNames = com.zerog.neoessentials.config.CustomPlaceholderConfig.getInstance().getCustomPlaceholderNames();
+        for (String name : customPlaceholderNames) {
+            placeholders.remove(name.toLowerCase());
+        }
+        
+        // Reload custom placeholder config
+        com.zerog.neoessentials.config.CustomPlaceholderConfig.getInstance().reloadConfig();
+        
+        // Load custom placeholders again
+        loadCustomPlaceholders();
+        
+        LOGGER.info("Custom placeholders reloaded. Total placeholders: {}", placeholders.size());
+    }
     public static class PlaceholderContext {
         private final ServerPlayer player;
         private final Map<String, Object> customData;
@@ -476,4 +728,8 @@ public class PlaceholderManager {
             return new HashMap<>(customData);
         }
     }
+
+    /**
+     * Returns the path to the customPlaceholders.json config file (workspace path)
+     */
 }

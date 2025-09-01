@@ -6,7 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.api.NeoEssentialsAPI;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.utils.PerformanceMonitor;
-import com.zerog.neoessentials.utils.PlaceholderManager;
+import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import com.zerog.neoessentials.utils.TabCompletionUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
@@ -16,7 +16,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * NeoEssentials administrative command
@@ -122,7 +121,7 @@ public class NeoEssentialsCommand {
         try {
             ConfigManager.getInstance().reloadAll();
             com.zerog.neoessentials.features.TabListManager.getInstance().reloadConfig();
-            // Animation system removed
+            com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance().reload();
             source.sendSuccess(() -> Component.literal(
                 player != null ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.reload.success") : "§aConfiguration reloaded successfully!"
             ), true);
@@ -136,8 +135,8 @@ public class NeoEssentialsCommand {
     
     private static int listPlaceholders(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
-        PlaceholderManager placeholderManager = PlaceholderManager.getInstance();
-        Map<String, ?> placeholders = placeholderManager.getRegisteredPlaceholders();
+    PlaceholderManager placeholderManager = PlaceholderManager.getInstance();
+    java.util.Set<String> placeholders = placeholderManager.getRegisteredPlaceholders();
         ServerPlayer player = source.getPlayer();
         source.sendSuccess(() -> Component.literal(
             player != null ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.placeholders.header") : "§d=== Available Placeholders ==="
@@ -154,7 +153,7 @@ public class NeoEssentialsCommand {
             player != null ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.placeholders.common.header") : "§7Common Placeholders:"
         ), false);
         for (String placeholder : commonPlaceholders) {
-            if (placeholderManager.hasPlaceholder(placeholder.replace("%", ""))) {
+            if (placeholders.contains(placeholder.replace("%", ""))) {
                 source.sendSuccess(() -> Component.literal(
                     player != null ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.placeholders.common.entry", placeholder) : "  §e" + placeholder
                 ), false);
@@ -177,8 +176,8 @@ public class NeoEssentialsCommand {
             ));
             return 0;
         }
-        PlaceholderManager placeholderManager = PlaceholderManager.getInstance();
-        String result = placeholderManager.processPlaceholders(player, placeholderText);
+    PlaceholderManager placeholderManager = PlaceholderManager.getInstance();
+    String result = placeholderManager.processPlaceholders(placeholderText, player);
         source.sendSuccess(() -> Component.literal(
             com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.testplayer.input", placeholderText)
         ), false);

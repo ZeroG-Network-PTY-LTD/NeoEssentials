@@ -105,6 +105,10 @@ public class ConfigManager {
 							   break;
 						   }
 					   }
+					   // Always keep customPlaceholders.json
+					   if (file.getName().equals("customPlaceholders.json")) {
+						   keep = true;
+					   }
 					   if (!keep) {
 						   file.delete();
 						   LOGGER.info("Deleted unwanted config file: {}", file.getName());

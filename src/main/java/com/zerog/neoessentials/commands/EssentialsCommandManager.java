@@ -37,7 +37,6 @@ public class EssentialsCommandManager {
         // Essential admin commands
         ItemCommand.register(dispatcher, context);
         RepairCommand.register(dispatcher, context);
-        NotificationCommand.register(dispatcher);
         
         // Kit system
         KitCommand.register(dispatcher);

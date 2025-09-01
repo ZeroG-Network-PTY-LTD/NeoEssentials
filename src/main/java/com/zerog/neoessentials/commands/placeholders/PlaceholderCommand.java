@@ -228,12 +228,16 @@ public class PlaceholderCommand {
      */
     private static int reloadPlaceholders(CommandContext<CommandSourceStack> context) {
         try {
-            // In a full implementation, this would reload from config files
             PlaceholderManager manager = PlaceholderManager.getInstance();
+            
+            // Reload custom placeholders from config
+            manager.reloadCustomPlaceholders();
+            
             int count = manager.getPlaceholderCount();
             
             sendMessage(context.getSource(), "§a§l=== Placeholder System Reloaded ===");
-            sendMessage(context.getSource(), "§7Reloaded §e" + count + "§7 placeholders");
+            sendMessage(context.getSource(), "§7Reloaded custom placeholders from configuration");
+            sendMessage(context.getSource(), "§7Total placeholders available: §e" + count);
             sendMessage(context.getSource(), "§7System status: §aOperational");
             
             LOGGER.info("Placeholder system reloaded by {}", context.getSource().getDisplayName().getString());

@@ -133,12 +133,78 @@ public class PlayerDataManager {
     }
     
     /**
-     * Update and save player data
+     * Update and save player data with statistics validation
      */
     public void updatePlayerData(PlayerData data) {
         if (data != null) {
             data.setLastUpdated(System.currentTimeMillis());
+            validateStatistics(data);
             savePlayerData(data);
+        }
+    }
+    
+    /**
+     * Validate and fix statistics data integrity
+     */
+    private void validateStatistics(PlayerData data) {
+        Map<String, Object> stats = data.getStatistics();
+        
+        // Ensure core statistics exist and are valid
+        ensureStatistic(stats, "player_kills", 0);
+        ensureStatistic(stats, "player_deaths", 0);
+        ensureStatistic(stats, "mob_kills", 0);
+        ensureStatistic(stats, "pvp_kills", 0);
+        ensureStatistic(stats, "blocks_broken", 0);
+        ensureStatistic(stats, "blocks_placed", 0);
+        ensureStatistic(stats, "distance_traveled", 0.0);
+        ensureStatistic(stats, "jumps", 0);
+        ensureStatistic(stats, "items_crafted", 0);
+        ensureStatistic(stats, "damage_dealt", 0.0);
+        ensureStatistic(stats, "damage_taken", 0.0);
+        
+        // Validate that statistics are non-negative
+        validateNonNegative(stats, "player_kills");
+        validateNonNegative(stats, "player_deaths");
+        validateNonNegative(stats, "mob_kills");
+        validateNonNegative(stats, "pvp_kills");
+        validateNonNegative(stats, "blocks_broken");
+        validateNonNegative(stats, "blocks_placed");
+        validateNonNegative(stats, "distance_traveled");
+        validateNonNegative(stats, "jumps");
+        validateNonNegative(stats, "items_crafted");
+        validateNonNegative(stats, "damage_dealt");
+        validateNonNegative(stats, "damage_taken");
+    }
+    
+    /**
+     * Ensure a statistic exists with a default value
+     */
+    private void ensureStatistic(Map<String, Object> stats, String key, Object defaultValue) {
+        if (!stats.containsKey(key) || stats.get(key) == null) {
+            stats.put(key, defaultValue);
+        }
+    }
+    
+    /**
+     * Validate that a statistic is non-negative
+     */
+    private void validateNonNegative(Map<String, Object> stats, String key) {
+        Object value = stats.get(key);
+        if (value instanceof Number) {
+            Number num = (Number) value;
+            if (num.doubleValue() < 0) {
+                if (value instanceof Integer) {
+                    stats.put(key, 0);
+                } else if (value instanceof Long) {
+                    stats.put(key, 0L);
+                } else if (value instanceof Double) {
+                    stats.put(key, 0.0);
+                } else if (value instanceof Float) {
+                    stats.put(key, 0.0f);
+                }
+                LOGGER.warn("Reset negative statistic {} for player {}", key, 
+                           stats.containsKey("playerUUID") ? stats.get("playerUUID") : "unknown");
+            }
         }
     }
     
@@ -157,7 +223,7 @@ public class PlayerDataManager {
      * Save all cached player data
      */
     public void saveAllPlayerData() {
-        LOGGER.info("Saving all cached player data ({} players)...", playerDataCache.size());
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Saving all cached player data (" + playerDataCache.size() + " players)...");
         
         int saved = 0;
         for (PlayerData data : playerDataCache.values()) {
@@ -169,7 +235,7 @@ public class PlayerDataManager {
             }
         }
         
-        LOGGER.info("Saved {} player data files", saved);
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Saved " + saved + " player data files");
     }
     
     /**
@@ -185,7 +251,7 @@ public class PlayerDataManager {
     public void clearCache() {
         saveAllPlayerData(); // Save before clearing
         playerDataCache.clear();
-        LOGGER.info("Cleared player data cache");
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Cleared player data cache");
     }
     
     /**

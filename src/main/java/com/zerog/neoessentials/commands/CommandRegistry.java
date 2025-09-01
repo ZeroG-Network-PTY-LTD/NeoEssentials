@@ -201,10 +201,6 @@ public class CommandRegistry {
             EconomyCommands.register(dispatcher);
             LOGGER.info("Registered economy commands");
             
-            // Analytics commands
-            AnalyticsCommands.register(dispatcher);
-            LOGGER.info("Registered analytics commands");
-            
             // Kit commands
             KitCommand.register(dispatcher);
             LOGGER.info("Registered kit commands");
@@ -227,10 +223,6 @@ public class CommandRegistry {
             
             // Enhanced admin commands - Using existing AdminCommand
             LOGGER.info("Enhanced admin commands available through existing commands");
-            
-            // Security management commands
-            com.zerog.neoessentials.commands.security.SecurityCommand.register(dispatcher);
-            LOGGER.info("Registered security management commands");
             
             // Web Dashboard management commands
             com.zerog.neoessentials.commands.WebDashboardCommand.register(dispatcher);

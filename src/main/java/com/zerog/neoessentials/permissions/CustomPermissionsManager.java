@@ -135,7 +135,7 @@ public class CustomPermissionsManager {
      * Initialize the permissions system
      */
     public void initialize() {
-        LOGGER.info("Initializing Custom Permissions Manager...");
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Initializing Custom Permissions Manager...");
         
         createDefaultGroups();
         loadPermissionsFromConfig();

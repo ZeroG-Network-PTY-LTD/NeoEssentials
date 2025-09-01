@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.listeners;
 
 import com.zerog.neoessentials.permissions.CustomPermissionsManager;
+import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import com.zerog.neoessentials.player.PlayerData;
 import com.zerog.neoessentials.player.PlayerDataManager;
 import net.minecraft.server.level.ServerPlayer;
@@ -67,12 +68,12 @@ public class PermissionEventListener {
                 com.zerog.neoessentials.util.DebugUtil.infoLog("Loaded " + savedPermissions.size() + " individual permissions for player " + player.getName().getString());
             }
             // --- New manager integration ---
-            com.zerog.neoessentials.features.PlaceholderManager placeholderManager = new com.zerog.neoessentials.features.PlaceholderManager();
+            PlaceholderManager placeholderManager = PlaceholderManager.getInstance();
             com.zerog.neoessentials.features.TabListManager tabListManager = new com.zerog.neoessentials.features.TabListManager();
             com.zerog.neoessentials.features.ScoreboardManager scoreboardManager = new com.zerog.neoessentials.features.ScoreboardManager();
             com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
             String rawDisplayName = com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(player);
-            String displayName = placeholderManager.parse(player, rawDisplayName);
+            String displayName = placeholderManager.processPlaceholders(rawDisplayName, player);
             // Use parsed displayName in tablist and scoreboard updates
             tabListManager.updateHeaderFooter(player, displayName);
             tabListManager.updatePlayerEntry(player);

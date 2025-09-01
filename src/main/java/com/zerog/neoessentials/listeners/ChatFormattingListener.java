@@ -33,6 +33,9 @@ public class ChatFormattingListener {
     private static final Map<UUID, String> lastMessage = new ConcurrentHashMap<>();
     private static final Map<UUID, Integer> messageCount = new ConcurrentHashMap<>();
 
+    // Player-specific animated placeholder tracking for chat prefixes/suffixes
+    private static final Map<UUID, Map<String, String>> playerChatFormats = new ConcurrentHashMap<>();
+
     /**
      * Handle server chat events for formatting
      */
@@ -135,16 +138,33 @@ public class ChatFormattingListener {
             }
             String formattedMessage = messageFormat.replace("{MESSAGE}", filteredMessage);
             String fullChat = formattedName + " " + formattedMessage;
-            String formattedText = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance().processPlaceholders(fullChat, player);
+            // Always process placeholders for full chat message before colorizing
+            String processedChat = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance().processPlaceholders(fullChat, player);
             event.setCanceled(true);
             MinecraftServer server = player.getServer();
             if (server != null) {
-                net.minecraft.network.chat.Component coloredComponent = com.zerog.neoessentials.util.ColorUtil.colorize(formattedText);
+                net.minecraft.network.chat.Component coloredComponent = com.zerog.neoessentials.util.ColorUtil.colorize(processedChat);
                 server.getPlayerList().broadcastSystemMessage(coloredComponent, false);
             }
+            // Store format for potential animated placeholder updates
+            playerChatFormats.put(player.getUUID(), Map.of(
+                "name", formattedName,
+                "message", formattedMessage,
+                "full", fullChat
+            ));
         } catch (Exception e) {
             LOGGER.error("Error formatting chat message for player: {}", player.getName().getString(), e);
             // Let the original message through on error
+        }
+    }
+
+    /**
+     * Handle player logout to clean up stored chat formats
+     */
+    @net.neoforged.bus.api.SubscribeEvent
+    public static void onPlayerLogout(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            playerChatFormats.remove(player.getUUID());
         }
     }
 

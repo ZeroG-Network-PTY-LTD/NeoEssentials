@@ -1,0 +1,183 @@
+package com.zerog.neoessentials.api;
+
+import com.zerog.neoessentials.api.interfaces.*;
+import com.zerog.neoessentials.managers.FeatureManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
+
+/**
+ * Factory for creating and managing API providers
+ * Provides a centralized way to access all NeoEssentials API features
+ * 
+ * @author ZeroG
+ * @since 2.1.0
+ */
+public class NeoEssentialsAPIFactory {
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentialsAPIFactory.class);
+    private static final Map<Class<?>, Object> providers = new ConcurrentHashMap<>();
+    private static boolean initialized = false;
+    
+    /**
+     * Initialize the API factory
+     */
+    public static void initialize() {
+        if (initialized) {
+            return;
+        }
+        
+        try {
+            LOGGER.info("Initializing NeoEssentials API Factory...");
+            
+            // Register default providers
+            registerProvider(IEconomyProvider.class, new DefaultEconomyProvider());
+            registerProvider(IPlayerDataProvider.class, new DefaultPlayerDataProvider());
+            registerProvider(IPlaceholderProvider.class, new DefaultPlaceholderProvider());
+            
+            initialized = true;
+            LOGGER.info("NeoEssentials API Factory initialized successfully");
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize NeoEssentials API Factory", e);
+        }
+    }
+    
+    /**
+     * Register a provider implementation
+     * @param interfaceClass Provider interface class
+     * @param implementation Provider implementation
+     * @param <T> Provider type
+     */
+    public static <T> void registerProvider(Class<T> interfaceClass, T implementation) {
+        providers.put(interfaceClass, implementation);
+        LOGGER.info("Registered provider for {}: {}", interfaceClass.getSimpleName(), implementation.getClass().getSimpleName());
+    }
+    
+    /**
+     * Get a provider implementation
+     * @param interfaceClass Provider interface class
+     * @param <T> Provider type
+     * @return Optional containing the provider, or empty if not found
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> getProvider(Class<T> interfaceClass) {
+        return Optional.ofNullable((T) providers.get(interfaceClass));
+    }
+    
+    /**
+     * Get the economy provider
+     * @return Economy provider
+     */
+    public static IEconomyProvider getEconomyProvider() {
+        return getProvider(IEconomyProvider.class)
+            .orElseThrow(() -> new RuntimeException("Economy provider not available"));
+    }
+    
+    /**
+     * Get the player data provider
+     * @return Player data provider
+     */
+    public static IPlayerDataProvider getPlayerDataProvider() {
+        return getProvider(IPlayerDataProvider.class)
+            .orElseThrow(() -> new RuntimeException("Player data provider not available"));
+    }
+    
+    /**
+     * Get the placeholder provider
+     * @return Placeholder provider
+     */
+    public static IPlaceholderProvider getPlaceholderProvider() {
+        return getProvider(IPlaceholderProvider.class)
+            .orElseThrow(() -> new RuntimeException("Placeholder provider not available"));
+    }
+    
+    /**
+     * Check if the API factory is initialized
+     * @return true if initialized
+     */
+    public static boolean isInitialized() {
+        return initialized;
+    }
+    
+    /**
+     * Get all registered provider types
+     * @return Array of provider interface classes
+     */
+    public static Class<?>[] getRegisteredProviderTypes() {
+        return providers.keySet().toArray(new Class<?>[0]);
+    }
+    
+    /**
+     * Check if a provider is available
+     * @param interfaceClass Provider interface class
+     * @return true if provider is available
+     */
+    public static boolean isProviderAvailable(Class<?> interfaceClass) {
+        return providers.containsKey(interfaceClass);
+    }
+    
+    /**
+     * Unregister a provider
+     * @param interfaceClass Provider interface class
+     * @return true if provider was removed
+     */
+    public static boolean unregisterProvider(Class<?> interfaceClass) {
+        Object removed = providers.remove(interfaceClass);
+        if (removed != null) {
+            LOGGER.info("Unregistered provider for {}", interfaceClass.getSimpleName());
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Get the main NeoEssentials API instance
+     * @return NeoEssentials API instance
+     */
+    public static NeoEssentialsAPI getMainAPI() {
+        return NeoEssentialsAPI.getInstance();
+    }
+    
+    /**
+     * Check if NeoEssentials is loaded and ready
+     * @return true if fully loaded
+     */
+    public static boolean isNeoEssentialsReady() {
+        try {
+            return initialized && 
+                   FeatureManager.getInstance().isInitialized() &&
+                   NeoEssentialsAPI.isAvailable();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Get API status information
+     * @return Status information map
+     */
+    public static Map<String, Object> getAPIStatus() {
+        Map<String, Object> status = new ConcurrentHashMap<>();
+        status.put("initialized", initialized);
+        status.put("neoessentials_ready", isNeoEssentialsReady());
+        status.put("api_version", NeoEssentialsAPI.getAPIVersion());
+        status.put("mod_version", NeoEssentialsAPI.getModVersion());
+        status.put("registered_providers", providers.size());
+        status.put("provider_types", getRegisteredProviderTypes());
+        return status;
+    }
+    
+    /**
+     * Shutdown the API factory
+     */
+    public static void shutdown() {
+        LOGGER.info("Shutting down NeoEssentials API Factory...");
+        providers.clear();
+        initialized = false;
+        LOGGER.info("NeoEssentials API Factory shutdown complete");
+    }
+}

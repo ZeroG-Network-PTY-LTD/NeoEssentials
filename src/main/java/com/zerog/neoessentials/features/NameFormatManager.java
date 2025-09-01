@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.features;
 
+
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -28,7 +29,9 @@ public class NameFormatManager {
     }
     public String getDisplayName(ServerPlayer player) {
     String nickname = getNickname(player);
-    return nickname.replace('&', '\u00A7');
+    // Process placeholders in nickname (including animated)
+    String processed = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance().processPlaceholders(nickname, new com.zerog.neoessentials.placeholders.PlaceholderManager.PlaceholderContext(player));
+    return processed.replace('&', '\u00A7');
     }
     /**
      * Get formatted name for tablist, chat, etc. using a format string.

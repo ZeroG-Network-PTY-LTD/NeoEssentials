@@ -2,7 +2,7 @@ package com.zerog.neoessentials.api;
 
 import com.zerog.neoessentials.managers.*;
 import com.zerog.neoessentials.util.LocationUtil;
-import com.zerog.neoessentials.utils.PlaceholderManager;
+import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import com.zerog.neoessentials.utils.PerformanceMonitor;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * Main API interface for NeoEssentials
@@ -31,7 +31,7 @@ public class NeoEssentialsAPI {
     private final MessagingManager messagingManager;
     private final SpawnManager spawnManager;
     private final ModerationManager moderationManager;
-    private final PlaceholderManager placeholderManager;
+    private final com.zerog.neoessentials.placeholders.PlaceholderManager placeholderManager;
     private final PerformanceMonitor performanceMonitor;
     
     private NeoEssentialsAPI() {
@@ -42,7 +42,7 @@ public class NeoEssentialsAPI {
         this.messagingManager = MessagingManager.getInstance();
         this.spawnManager = SpawnManager.getInstance();
         this.moderationManager = ModerationManager.getInstance();
-        this.placeholderManager = PlaceholderManager.getInstance();
+    this.placeholderManager = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
         this.performanceMonitor = PerformanceMonitor.getInstance();
         
         LOGGER.info("NeoEssentials API initialized");
@@ -273,7 +273,7 @@ public class NeoEssentialsAPI {
     /**
      * Register a custom placeholder
      */
-    public void registerPlaceholder(String identifier, BiFunction<ServerPlayer, String, String> function) {
+    public void registerPlaceholder(String identifier, Function<com.zerog.neoessentials.placeholders.PlaceholderManager.PlaceholderContext, String> function) {
         placeholderManager.registerPlaceholder(identifier, function);
         LOGGER.info("Registered custom placeholder: {}", identifier);
     }
@@ -282,13 +282,13 @@ public class NeoEssentialsAPI {
      * Process placeholders in text
      */
     public String processPlaceholders(ServerPlayer player, String text) {
-        return placeholderManager.processPlaceholders(player, text);
+    return placeholderManager.processPlaceholders(text, player);
     }
     
     /**
      * Get all registered placeholders
      */
-    public Map<String, BiFunction<ServerPlayer, String, String>> getRegisteredPlaceholders() {
+    public java.util.Set<String> getRegisteredPlaceholders() {
         return placeholderManager.getRegisteredPlaceholders();
     }
     

@@ -289,8 +289,8 @@ public class BossbarCommand {
             CustomBossbarManager.BossbarTemplate template = new CustomBossbarManager.BossbarTemplate(
                 "Custom",
                 text,
-                0, // color as int (e.g., 0 for GREEN)
-                0  // style as int (e.g., 0 for PROGRESS)
+                net.minecraft.world.BossEvent.BossBarColor.GREEN, // Use BossBarColor enum
+                net.minecraft.world.BossEvent.BossBarOverlay.PROGRESS  // Use BossBarOverlay enum
             );
             // Show bossbar using template name
             CustomBossbarManager.getInstance().showBossbar(player, template.name, 10);

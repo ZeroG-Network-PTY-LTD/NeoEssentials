@@ -158,7 +158,7 @@ public class ShopManager {
         SignShop removed = signShops.remove(signPos);
         if (removed != null) {
             saveShopsToStorage();
-            LOGGER.info("Removed sign shop at {}", signPos);
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Removed sign shop at " + signPos);
             return true;
         }
         return false;
@@ -172,8 +172,7 @@ public class ShopManager {
         boolean success = economyManager.withdrawBalance(UUID.fromString(playerId), BigDecimal.valueOf(totalPrice), 
             "Shop purchase: " + quantity + "x " + item.getDisplayName().getString());
         
-        LOGGER.info("Processing shop transaction: Player {}, Amount: {}, Success: {}", 
-                   playerId, totalPrice, success);
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Processing shop transaction: Player " + playerId + ", Amount: " + totalPrice + ", Success: " + success);
         
         if (success) {
             dailyTransactions++;
