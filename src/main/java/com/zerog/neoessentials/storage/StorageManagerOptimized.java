@@ -25,10 +25,10 @@ import java.lang.ref.SoftReference;
  * @author ZeroG
  * @since 2.0.0
  */
-public class StorageManager {
+public class StorageManagerOptimized {
     
     // Singleton instance with thread-safe lazy initialization
-    private static volatile StorageManager instance;
+    private static volatile StorageManagerOptimized instance;
     
     // Optimized Gson instance with better memory usage
     private final Gson gson;
@@ -46,7 +46,7 @@ public class StorageManager {
     private final ThreadLocal<StringBuilder> stringBuilder = 
         ThreadLocal.withInitial(() -> new StringBuilder(256));
     
-    private StorageManager() {
+    private StorageManagerOptimized() {
         // Initialize Gson with memory-efficient settings
         this.gson = new GsonBuilder()
             .setPrettyPrinting()
@@ -65,11 +65,11 @@ public class StorageManager {
     /**
      * Thread-safe singleton accessor with double-checked locking
      */
-    public static StorageManager getInstance() {
+    public static StorageManagerOptimized getInstance() {
         if (instance == null) {
-            synchronized (StorageManager.class) {
+            synchronized (StorageManagerOptimized.class) {
                 if (instance == null) {
-                    instance = new StorageManager();
+                    instance = new StorageManagerOptimized();
                 }
             }
         }

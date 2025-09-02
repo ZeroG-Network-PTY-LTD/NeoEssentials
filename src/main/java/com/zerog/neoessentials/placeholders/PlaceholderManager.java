@@ -149,7 +149,10 @@ public class PlaceholderManager {
                         tlm.startAnimatedPlaceholderRefresh(key, interval);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Failed to start animated placeholder refresh for {}: {}", key, e.getMessage());
+                    com.zerog.neoessentials.util.ErrorHandler.handleError(
+                        com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.PLACEHOLDER,
+                        com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.MEDIUM,
+                        "Animated Placeholder Refresh", e);
                 }
             }
         }
@@ -174,8 +177,10 @@ public class PlaceholderManager {
                     LOGGER.info("Generated default customPlaceholders.json at {}", chosenPath);
                     System.out.println("  Generated default customPlaceholders.json at " + chosenPath);
                 } catch (Exception e) {
-                    LOGGER.error("Failed to write default customPlaceholders.json: {}", e.getMessage());
-                    System.out.println("  ERROR writing default customPlaceholders.json: " + e.getMessage());
+                    com.zerog.neoessentials.util.ErrorHandler.handleError(
+                        com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.FILE_IO,
+                        com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.MEDIUM,
+                        "Placeholder Config File Write", e);
                 }
             }
         } else if (chosenPath != null) {

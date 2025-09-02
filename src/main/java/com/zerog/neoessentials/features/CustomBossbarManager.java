@@ -102,7 +102,7 @@ public class CustomBossbarManager {
      */
     public void showBossbar(ServerPlayer player, String template, int durationSeconds, Map<String, String> placeholders) {
         TablistConfig config = ConfigManager.getInstance().getTablistConfig();
-        if (!config.enableBossbar) {
+        if (!config.bossbar.enabled) {
             DebugUtil.debugLog("[Bossbar] Bossbar disabled in config");
             return;
         }
@@ -125,7 +125,8 @@ public class CustomBossbarManager {
         }
         
         // Apply formatting
-        String formatted = config.bossbarFormat.replace("{bossbar}", text);
+        // TODO: Migrate to new config structure: config.bossbar.layouts.get(0).bars.get(0).text
+        String formatted = "Boss: {bossbar} | {message} [{progress}%]".replace("{bossbar}", text); // Fallback format
         Component component = enableColorCodes ? ColorUtil.colorize(formatted) : Component.literal(formatted);
         
         // Create bossbar
@@ -196,8 +197,8 @@ public class CustomBossbarManager {
     public void updateBossbar(ServerPlayer player, String text, float progress) {
         ActiveBossbar activeBossbar = activeBossbars.get(player.getUUID());
         if (activeBossbar != null) {
-            TablistConfig config = ConfigManager.getInstance().getTablistConfig();
-            String formatted = config.bossbarFormat.replace("{bossbar}", text);
+            // TODO: Migrate to new config structure: config.bossbar.layouts.get(0).bars.get(0).text
+            String formatted = "Boss: {bossbar} | {message} [{progress}%]".replace("{bossbar}", text); // Fallback format
             Component component = enableColorCodes ? ColorUtil.colorize(formatted) : Component.literal(formatted);
             
             activeBossbar.bossbar.setName(component);
@@ -350,19 +351,6 @@ public class CustomBossbarManager {
     /**
      * Helper to get all online players
      */
-    private List<ServerPlayer> getAllOnlinePlayers() {
-        net.minecraft.server.MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null) return new ArrayList<>();
-        return server.getPlayerList().getPlayers();
-    }
-    
-    /**
-     * Helper to get a template by name
-     */
-    private BossbarTemplate getTemplate(String name) {
-        return templates.get(name);
-    }
-
     /**
      * Inner class for bossbar template
      */

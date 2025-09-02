@@ -179,6 +179,12 @@ public class EconomyAnalyticsCommand {
                     case WITHDRAWAL:
                         totalWithdrawals.updateAndGet(current -> current.add(transaction.amount));
                         break;
+                    case PURCHASE:
+                        totalWithdrawals.updateAndGet(current -> current.add(transaction.amount));
+                        break;
+                    case SALE:
+                        totalDeposits.updateAndGet(current -> current.add(transaction.amount));
+                        break;
                     case SHOP_PURCHASE:
                         shopPurchases.incrementAndGet();
                         totalWithdrawals.updateAndGet(current -> current.add(transaction.amount));
@@ -186,11 +192,23 @@ public class EconomyAnalyticsCommand {
                     case SHOP_SALE:
                         totalDeposits.updateAndGet(current -> current.add(transaction.amount));
                         break;
+                    case TRANSFER_IN:
+                        totalDeposits.updateAndGet(current -> current.add(transaction.amount));
+                        break;
+                    case TRANSFER_OUT:
+                        totalWithdrawals.updateAndGet(current -> current.add(transaction.amount));
+                        break;
                     case TRANSFER_SENT:
                         totalWithdrawals.updateAndGet(current -> current.add(transaction.amount));
                         break;
                     case TRANSFER_RECEIVED:
                         totalDeposits.updateAndGet(current -> current.add(transaction.amount));
+                        break;
+                    case ADMIN_GIVE:
+                        totalDeposits.updateAndGet(current -> current.add(transaction.amount));
+                        break;
+                    case ADMIN_TAKE:
+                        totalWithdrawals.updateAndGet(current -> current.add(transaction.amount));
                         break;
                     case FEE:
                     case COMMAND_COST:

@@ -225,7 +225,10 @@ public class SignShopHandler {
                                         isAdminShop ? "ADMIN" : "PLAYER", shop.getSignPos());
                         }
                     } catch (Exception e) {
-                        LOGGER.warn("Failed to refresh sign at {}: {}", shop.getSignPos(), e.getMessage());
+                        com.zerog.neoessentials.util.ErrorHandler.handleError(
+                            com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.ECONOMY,
+                            com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.MEDIUM,
+                            "Shop Sign Refresh", e);
                     }
                 }
             }
@@ -234,7 +237,10 @@ public class SignShopHandler {
             return refreshedCount;
             
         } catch (Exception e) {
-            LOGGER.error("Error refreshing all shop signs: {}", e.getMessage(), e);
+            com.zerog.neoessentials.util.ErrorHandler.handleError(
+                com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.ECONOMY,
+                com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.HIGH,
+                "Shop Signs Refresh", e);
             return 0;
         }
     }

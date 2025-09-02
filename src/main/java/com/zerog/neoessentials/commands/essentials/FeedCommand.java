@@ -20,7 +20,32 @@ import net.minecraft.world.effect.MobEffects;
  * @author ZeroG
  * @since 2.0.0
  */
-public class FeedCommand {
+public class FeedCommand implements IEssentialCommand {
+    
+    @Override
+    public String getCommandName() {
+        return "feed";
+    }
+    
+    @Override
+    public String getDescription() {
+        return "Restore a player's hunger and saturation to full";
+    }
+    
+    @Override
+    public String getUsage() {
+        return "/feed [player]";
+    }
+    
+    @Override
+    public String[] getAliases() {
+        return new String[0];
+    }
+    
+    @Override
+    public String getPermission() {
+        return PermissionNodes.MODERATION_BASIC;
+    }
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /feed - Feed yourself

@@ -356,6 +356,18 @@ public final class PermissionNodes {
     public static final String STATUS_ADMIN = "neoessentials.status.admin";
     public static final String STATUS_ALL = "neoessentials.status.*";
     
+    // Cleanup and Maintenance System
+    public static final String ADMIN_CLEANUP = "neoessentials.admin.cleanup";
+    public static final String ADMIN_CLEANUP_ALL = "neoessentials.admin.cleanup.all";
+    public static final String ADMIN_CLEANUP_MEMORY = "neoessentials.admin.cleanup.memory";
+    public static final String ADMIN_CLEANUP_CACHE = "neoessentials.admin.cleanup.cache";
+    public static final String ADMIN_CLEANUP_FILES = "neoessentials.admin.cleanup.files";
+    public static final String ADMIN_CLEANUP_DATA = "neoessentials.admin.cleanup.data";
+    public static final String ADMIN_CLEANUP_SCOREBOARD = "neoessentials.admin.cleanup.scoreboard";
+    public static final String ADMIN_CLEANUP_AUTO = "neoessentials.admin.cleanup.auto";
+    public static final String ADMIN_CLEANUP_INFO = "neoessentials.admin.cleanup.info";
+    public static final String ADMIN_CLEANUP_FORCE = "neoessentials.admin.cleanup.force";
+    
     // Analytics
     public static final String ANALYTICS_VIEW = "neoessentials.analytics.view";
     public static final String ANALYTICS_ADMIN = "neoessentials.analytics.admin";
@@ -517,6 +529,9 @@ public final class PermissionNodes {
             WHOIS, SEEN, REALNAME,
             NICK, NICK_OTHERS, NICK_COLOR, NICK_MAGIC,
             
+            // AFK System
+            AFK, AFK_OTHERS, AFK_EXEMPT, AFK_ALL,
+            
             // Kit System
             KIT, KIT_LIST, KIT_PREVIEW,
             KIT_CREATE, KIT_DELETE, KIT_EDIT, KIT_GIVE, KIT_ALL,
@@ -537,6 +552,12 @@ public final class PermissionNodes {
             LANGUAGE_SET, LANGUAGE_LIST, LANGUAGE_RELOAD, LANGUAGE_ALL,
             PERFORMANCE_VIEW, PERFORMANCE_ADMIN, PERFORMANCE_ALL,
             STATUS_VIEW, STATUS_ADMIN, STATUS_ALL,
+            
+            // Cleanup and Maintenance
+            ADMIN_CLEANUP, ADMIN_CLEANUP_ALL, ADMIN_CLEANUP_MEMORY, ADMIN_CLEANUP_CACHE,
+            ADMIN_CLEANUP_FILES, ADMIN_CLEANUP_DATA, ADMIN_CLEANUP_SCOREBOARD,
+            ADMIN_CLEANUP_AUTO, ADMIN_CLEANUP_INFO, ADMIN_CLEANUP_FORCE,
+            
             ANALYTICS_VIEW, ANALYTICS_ADMIN, ANALYTICS_ALL,
             
             // Player Features

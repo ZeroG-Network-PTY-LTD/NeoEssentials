@@ -25,14 +25,17 @@ public class APIExampleIntegration {
                 return;
             }
             
-            // Get the main API instance
-            NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
-            
             // Check API availability
             if (!NeoEssentialsAPI.isAvailable()) {
                 LOGGER.warn("NeoEssentials API not available");
                 return;
             }
+            
+            // Get the main API instance
+            NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
+            
+            // Example usage of the API instance
+            LOGGER.info("API instance class: {}", api.getClass().getSimpleName());
             
             // Get API version information
             String apiVersion = NeoEssentialsAPI.getAPIVersion();

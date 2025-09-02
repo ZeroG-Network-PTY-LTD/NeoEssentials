@@ -1,6 +1,5 @@
 package com.zerog.neoessentials.features;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import java.util.HashMap;
 import java.util.Map;

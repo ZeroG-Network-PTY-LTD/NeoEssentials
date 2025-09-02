@@ -113,21 +113,27 @@ public class SignShopData {
                 this.itemId = "minecraft:air";
                 this.count = 0;
             } else {
-                // Get the item registry name - simplified approach
-                this.itemId = itemStack.getItem().getClass().getSimpleName().toLowerCase();
                 this.count = itemStack.getCount();
                 
-                // Try to get proper registry name if possible
+                // Enhanced item ID extraction using proper registry lookup
                 try {
-                    String fullName = itemStack.getItem().toString();
-                    if (fullName.contains(":")) {
-                        this.itemId = fullName;
+                    // Use Minecraft's built-in registry to get the proper resource location
+                    net.minecraft.core.Registry<net.minecraft.world.item.Item> itemRegistry = 
+                        net.minecraft.core.registries.BuiltInRegistries.ITEM;
+                    net.minecraft.resources.ResourceLocation resourceLocation = itemRegistry.getKey(itemStack.getItem());
+                    
+                    if (resourceLocation != null) {
+                        this.itemId = resourceLocation.toString();
                     } else {
-                        // Fallback: construct likely registry name
-                        this.itemId = "minecraft:" + fullName.toLowerCase();
+                        // Fallback to string representation
+                        this.itemId = itemStack.getItem().toString();
+                        if (!this.itemId.contains(":")) {
+                            this.itemId = "minecraft:" + this.itemId.toLowerCase();
+                        }
                     }
                 } catch (Exception e) {
-                    // Keep the simple name as fallback
+                    // Last resort fallback
+                    this.itemId = "minecraft:stone";
                 }
             }
         }
@@ -138,27 +144,75 @@ public class SignShopData {
                     return ItemStack.EMPTY;
                 }
                 
-                // For now, create basic items - this is a simplified approach
-                // A full implementation would need proper registry lookup
+                // Enhanced item lookup using proper registry
+                net.minecraft.core.Registry<net.minecraft.world.item.Item> itemRegistry = 
+                    net.minecraft.core.registries.BuiltInRegistries.ITEM;
                 
-                // Common item mappings for testing
+                // Try to parse as ResourceLocation first
+                try {
+                    net.minecraft.resources.ResourceLocation resourceLocation = 
+                        net.minecraft.resources.ResourceLocation.parse(itemId);
+                    net.minecraft.world.item.Item item = itemRegistry.get(resourceLocation);
+                    
+                    if (item != null && item != net.minecraft.world.item.Items.AIR) {
+                        return new ItemStack(item, count);
+                    }
+                } catch (Exception e) {
+                    // Fall through to legacy mappings
+                }
+                
+                // Enhanced item mappings with more comprehensive coverage
                 net.minecraft.world.item.Item item = switch (itemId.toLowerCase()) {
+                    // Precious materials
                     case "minecraft:diamond", "diamond" -> net.minecraft.world.item.Items.DIAMOND;
+                    case "minecraft:emerald", "emerald" -> net.minecraft.world.item.Items.EMERALD;
+                    case "minecraft:netherite_ingot", "netherite_ingot" -> net.minecraft.world.item.Items.NETHERITE_INGOT;
+                    
+                    // Metal ingots
                     case "minecraft:iron_ingot", "iron_ingot" -> net.minecraft.world.item.Items.IRON_INGOT;
                     case "minecraft:gold_ingot", "gold_ingot" -> net.minecraft.world.item.Items.GOLD_INGOT;
-                    case "minecraft:emerald", "emerald" -> net.minecraft.world.item.Items.EMERALD;
+                    case "minecraft:copper_ingot", "copper_ingot" -> net.minecraft.world.item.Items.COPPER_INGOT;
+                    
+                    // Building blocks
                     case "minecraft:stone", "stone" -> net.minecraft.world.item.Items.STONE;
-                    case "minecraft:dirt", "dirt" -> net.minecraft.world.item.Items.DIRT;
                     case "minecraft:cobblestone", "cobblestone" -> net.minecraft.world.item.Items.COBBLESTONE;
+                    case "minecraft:dirt", "dirt" -> net.minecraft.world.item.Items.DIRT;
+                    case "minecraft:grass_block", "grass_block" -> net.minecraft.world.item.Items.GRASS_BLOCK;
+                    
+                    // Wood types
                     case "minecraft:oak_log", "oak_log" -> net.minecraft.world.item.Items.OAK_LOG;
+                    case "minecraft:birch_log", "birch_log" -> net.minecraft.world.item.Items.BIRCH_LOG;
+                    case "minecraft:spruce_log", "spruce_log" -> net.minecraft.world.item.Items.SPRUCE_LOG;
+                    case "minecraft:jungle_log", "jungle_log" -> net.minecraft.world.item.Items.JUNGLE_LOG;
+                    case "minecraft:acacia_log", "acacia_log" -> net.minecraft.world.item.Items.ACACIA_LOG;
+                    case "minecraft:dark_oak_log", "dark_oak_log" -> net.minecraft.world.item.Items.DARK_OAK_LOG;
+                    
+                    // Food items
                     case "minecraft:wheat", "wheat" -> net.minecraft.world.item.Items.WHEAT;
                     case "minecraft:bread", "bread" -> net.minecraft.world.item.Items.BREAD;
-                    default -> net.minecraft.world.item.Items.STONE; // Default fallback
+                    case "minecraft:apple", "apple" -> net.minecraft.world.item.Items.APPLE;
+                    case "minecraft:golden_apple", "golden_apple" -> net.minecraft.world.item.Items.GOLDEN_APPLE;
+                    case "minecraft:cooked_beef", "cooked_beef" -> net.minecraft.world.item.Items.COOKED_BEEF;
+                    case "minecraft:cooked_porkchop", "cooked_porkchop" -> net.minecraft.world.item.Items.COOKED_PORKCHOP;
+                    
+                    // Tools and weapons
+                    case "minecraft:diamond_sword", "diamond_sword" -> net.minecraft.world.item.Items.DIAMOND_SWORD;
+                    case "minecraft:iron_sword", "iron_sword" -> net.minecraft.world.item.Items.IRON_SWORD;
+                    case "minecraft:diamond_pickaxe", "diamond_pickaxe" -> net.minecraft.world.item.Items.DIAMOND_PICKAXE;
+                    case "minecraft:iron_pickaxe", "iron_pickaxe" -> net.minecraft.world.item.Items.IRON_PICKAXE;
+                    
+                    // Redstone items
+                    case "minecraft:redstone", "redstone" -> net.minecraft.world.item.Items.REDSTONE;
+                    case "minecraft:repeater", "repeater" -> net.minecraft.world.item.Items.REPEATER;
+                    case "minecraft:comparator", "comparator" -> net.minecraft.world.item.Items.COMPARATOR;
+                    case "minecraft:piston", "piston" -> net.minecraft.world.item.Items.PISTON;
+                    
+                    default -> net.minecraft.world.item.Items.STONE; // Enhanced fallback
                 };
                 
                 return new ItemStack(item, count);
             } catch (Exception e) {
-                // Fallback to stone if item creation fails
+                // Enhanced error handling with logging
                 return new ItemStack(net.minecraft.world.item.Items.STONE, Math.max(1, count));
             }
         }

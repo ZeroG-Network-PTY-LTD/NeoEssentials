@@ -146,6 +146,10 @@ public class CommandValidator {
             return ValidationResult.success();
             
         } catch (Exception e) {
+            com.zerog.neoessentials.util.ErrorHandler.handleError(
+                com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.VALIDATION,
+                com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.LOW,
+                "Time Duration Validation", e);
             return ValidationResult.failure(
                 "Invalid time format", 
                 "Use format: number + unit (30s, 5m, 2h, 1d)"

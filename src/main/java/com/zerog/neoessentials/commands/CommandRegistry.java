@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.zerog.neoessentials.commands.admin.AdminCommandManager;
 import com.zerog.neoessentials.commands.admin.NeoEssentialsCommand;
 import com.zerog.neoessentials.commands.admin.StatusCommand;
 import com.zerog.neoessentials.commands.permissions.PermissionsCommand;
@@ -139,6 +140,10 @@ public class CommandRegistry {
             NickCommand.register(dispatcher);
             LOGGER.info("Registered nick command");
             
+            // AFK command
+            com.zerog.neoessentials.commands.essentials.AFKCommand.register(dispatcher);
+            LOGGER.info("Registered AFK command");
+            
             // Permission test command
             com.zerog.neoessentials.commands.permissions.PermissionTestCommand.register(dispatcher);
             LOGGER.info("Registered permission test command");
@@ -217,12 +222,13 @@ public class CommandRegistry {
             // CompatibilityCommand.register(dispatcher, PluginCompatibilityManager.getInstance()); // DISABLED - Compilation issues
             // LOGGER.info("Registered plugin compatibility commands");
             
-            // Admin commands
-            NeoEssentialsCommand.register(dispatcher);
-            LOGGER.info("Registered admin commands");
+            // Admin commands - Centralized admin command management
+            AdminCommandManager.getInstance().registerCommands(dispatcher);
+            LOGGER.info("Registered centralized admin command system");
             
-            // Enhanced admin commands - Using existing AdminCommand
-            LOGGER.info("Enhanced admin commands available through existing commands");
+            // Legacy admin commands for backwards compatibility
+            NeoEssentialsCommand.register(dispatcher);
+            LOGGER.info("Registered legacy admin commands");
             
             // Web Dashboard management commands
             com.zerog.neoessentials.commands.WebDashboardCommand.register(dispatcher);
@@ -297,7 +303,10 @@ public class CommandRegistry {
             LOGGER.info("All NeoEssentials commands registered successfully!");
             
         } catch (Exception e) {
-            LOGGER.error("Failed to register commands", e);
+            com.zerog.neoessentials.util.ErrorHandler.handleError(
+                com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.INITIALIZATION,
+                com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.CRITICAL,
+                "Command Registration", e);
         }
     }
 }

@@ -52,7 +52,7 @@ public class BossBarManager {
 
     public void showBossBar(ServerPlayer player, String id, String title, float progress, int color) {
         com.zerog.neoessentials.config.TablistConfig config = com.zerog.neoessentials.features.TabListManager.getInstance().config;
-        if (config == null || !config.enableBossbar) {
+        if (config == null || !config.bossbar.enabled) {
             com.zerog.neoessentials.util.DebugUtil.debugLog("[BossBarManager] Bossbar is disabled in config, skipping showBossBar for " + player.getName().getString());
             return;
         }

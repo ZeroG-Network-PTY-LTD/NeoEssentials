@@ -89,7 +89,10 @@ public class PlayerDataManager {
                 return data;
             }
         } catch (IOException | JsonSyntaxException e) {
-            LOGGER.error("Failed to load player data for UUID: {}", playerUUID, e);
+            com.zerog.neoessentials.util.ErrorHandler.handleError(
+                com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.PLAYER_MANAGEMENT,
+                com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.HIGH,
+                "Player Data Loading", e);
         }
         
         // Fallback to new data if loading failed
@@ -114,7 +117,10 @@ public class PlayerDataManager {
             playerDataCache.put(data.getPlayerUUID(), data);
             LOGGER.debug("Saved player data for UUID: {}", data.getPlayerUUID());
         } catch (IOException e) {
-            LOGGER.error("Failed to save player data for UUID: {}", data.getPlayerUUID(), e);
+            com.zerog.neoessentials.util.ErrorHandler.handleError(
+                com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.PLAYER_MANAGEMENT,
+                com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.HIGH,
+                "Player Data Saving", e);
         }
     }
     

@@ -56,7 +56,10 @@ public class TransactionManager {
             startBackgroundProcessing();
             
         } catch (Exception e) {
-            System.err.println("Failed to initialize Transaction Manager: " + e.getMessage());
+            com.zerog.neoessentials.util.ErrorHandler.handleError(
+                com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.INITIALIZATION,
+                com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.CRITICAL,
+                "Transaction Manager Initialization", e);
         }
     }
     
@@ -95,7 +98,10 @@ public class TransactionManager {
             return true;
             
         } catch (Exception e) {
-            System.err.println("Failed to record transaction: " + e.getMessage());
+            com.zerog.neoessentials.util.ErrorHandler.handleError(
+                com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.ECONOMY,
+                com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.HIGH,
+                "Transaction Recording", e);
             return false;
         }
     }
