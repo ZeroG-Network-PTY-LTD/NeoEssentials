@@ -2,7 +2,6 @@ package com.zerog.neoessentials.util;
 
 import com.zerog.neoessentials.permissions.CustomPermissionsManager;
 import com.zerog.neoessentials.permissions.PermissionNodes;
-import com.zerog.neoessentials.util.ErrorHandler;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.commands.CommandSourceStack;
 

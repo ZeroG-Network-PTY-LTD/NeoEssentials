@@ -128,7 +128,7 @@ public class ErrorHandler {
         if (player != null) {
             try {
                 String message = LanguageManager.getInstance()
-                    .getMessage(player, "error.validation", operation, details);
+                    .getMessage(player, "neoessentials.error.validation", operation, details);
                 MessageUtil.sendMessage(player, message);
             } catch (Exception e) {
                 // Fallback message if language system fails
@@ -147,7 +147,7 @@ public class ErrorHandler {
         if (player != null) {
             try {
                 String message = LanguageManager.getInstance()
-                    .getMessage(player, "error.permission", operation);
+                    .getMessage(player, "neoessentials.error.permission", operation);
                 MessageUtil.sendMessage(player, message);
             } catch (Exception e) {
                 // Fallback message
@@ -200,10 +200,10 @@ public class ErrorHandler {
                                    String operation, ErrorSeverity severity) {
         try {
             String messageKey = switch (severity) {
-                case MEDIUM -> "error.operation.medium";
-                case HIGH -> "error.operation.high";
-                case CRITICAL -> "error.operation.critical";
-                default -> "error.operation.general";
+                case MEDIUM -> "neoessentials.error.operation.medium";
+                case HIGH -> "neoessentials.error.operation.high";
+                case CRITICAL -> "neoessentials.error.operation.critical";
+                default -> "neoessentials.error.operation.general";
             };
             
             String message = LanguageManager.getInstance()

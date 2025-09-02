@@ -42,7 +42,7 @@ public class CreateShopCommand {
             CommandSourceStack source = context.getSource();
             
             if (!(source.getEntity() instanceof Player player)) {
-                source.sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "shop.create.player_only")));
+                source.sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "neoessentials.shop.create.player_only")));
                 return 0;
             }
             net.minecraft.server.level.ServerPlayer serverPlayer = (player instanceof net.minecraft.server.level.ServerPlayer sp) ? sp : null;
@@ -54,14 +54,14 @@ public class CreateShopCommand {
             // Get the item the player is holding
             ItemStack heldItem = player.getMainHandItem();
                 if (heldItem.isEmpty()) {
-                    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "shop.create.hold_item")));
+                    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "neoessentials.shop.create.hold_item")));
                 return 0;
             }
             
             // Get the block the player is looking at
             HitResult hitResult = player.pick(5.0, 0.0F, false);
                 if (!(hitResult instanceof BlockHitResult blockHit)) {
-                    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "shop.create.look_sign")));
+                    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "neoessentials.shop.create.look_sign")));
                 return 0;
             }
             
@@ -77,7 +77,7 @@ public class CreateShopCommand {
             if (player.level().getBlockEntity(signPos) instanceof SignBlockEntity signEntity) {
                 net.minecraft.network.chat.Component[] lines = signEntity.getFrontText().getMessages(false);
                 if (lines.length > 0 && "[SHOP]".equals(lines[0].getString())) {
-                        player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "shop.create.already_shop")));
+                        player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "neoessentials.shop.create.already_shop")));
                     return 0;
                 }
             }
@@ -90,23 +90,23 @@ public class CreateShopCommand {
                 boolean success = shopHandler.createSignShop(player, signPos, heldItem, buyPrice, sellPrice, quantity);
                 
                 if (success) {
-                    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "shop.create.success", heldItem.getDisplayName().getString(), buyPrice, sellPrice, quantity)));
+                    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "neoessentials.shop.create.success", heldItem.getDisplayName().getString(), buyPrice, sellPrice, quantity)));
                     LOGGER.info("Player {} created shop at {} for {} (Buy: ${}, Sell: ${}, Qty: {})",
                                player.getName().getString(), signPos, heldItem.getDisplayName().getString(),
                                buyPrice, sellPrice, quantity);
                     return 1;
                 } else {
-                    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "shop.create.failed_generic")));
+                    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "neoessentials.shop.create.failed_generic")));
                     return 0;
                 }
             } else {
-                player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "shop.create.manager_unavailable")));
+                player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(serverPlayer, "neoessentials.shop.create.manager_unavailable")));
                 return 0;
             }
             
         } catch (Exception e) {
             LOGGER.error("Error executing createshop command", e);
-            context.getSource().sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "shop.create.error_generic", e.getMessage())));
+            context.getSource().sendFailure(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en", "neoessentials.shop.create.error_generic", e.getMessage())));
             return 0;
         }
     }

@@ -80,8 +80,8 @@ public class MessagingManager {
             return false;
         }
         // Send messages
-        MessageUtil.sendTranslatedMessage(sender, "pm.format.sender", target.getName().getString(), message);
-        MessageUtil.sendTranslatedMessage(target, "pm.format.receiver", sender.getName().getString(), message);
+        MessageUtil.sendTranslatedMessage(sender, "neoessentials.pm.format.sender", target.getName().getString(), message);
+        MessageUtil.sendTranslatedMessage(target, "neoessentials.pm.format.receiver", sender.getName().getString(), message);
         // Update last messaged
         lastMessaged.put(sender.getUUID(), target.getUUID());
         lastMessaged.put(target.getUUID(), sender.getUUID());
@@ -337,7 +337,7 @@ public class MessagingManager {
      * Send message to social spy users
      */
     private void sendToSocialSpy(ServerPlayer sender, ServerPlayer target, String message) {
-        String spyMessage = LanguageManager.getInstance().getMessage(sender, "pm.format.socialspy", sender.getName().getString(), target.getName().getString(), message);
+        String spyMessage = LanguageManager.getInstance().getMessage(sender, "neoessentials.pm.format.socialspy", sender.getName().getString(), target.getName().getString(), message);
         for (Map.Entry<UUID, Boolean> entry : socialSpyEnabled.entrySet()) {
             if (entry.getValue()) {
                 ServerPlayer spy = getPlayerByUuid(entry.getKey());

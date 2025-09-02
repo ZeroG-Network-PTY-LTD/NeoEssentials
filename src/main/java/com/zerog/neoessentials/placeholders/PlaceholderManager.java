@@ -679,16 +679,14 @@ public class PlaceholderManager {
         // FTB Chunks placeholders (if available)
         registerPlaceholder("ftb_chunks_claimed", ctx -> {
             if (ctx.getPlayer() != null) {
-                // This would require FTB Chunks integration - placeholder for now
-                return "0"; // TODO: Implement FTB Chunks integration
+                return String.valueOf(FTBIntegrationHelper.getClaimedChunksCount(ctx.getPlayer()));
             }
             return "0";
         });
         
         registerPlaceholder("ftb_chunks_loaded", ctx -> {
             if (ctx.getPlayer() != null) {
-                // This would require FTB Chunks integration - placeholder for now
-                return "0"; // TODO: Implement FTB Chunks integration
+                return String.valueOf(FTBIntegrationHelper.getLoadedChunksCount(ctx.getPlayer()));
             }
             return "0";
         });

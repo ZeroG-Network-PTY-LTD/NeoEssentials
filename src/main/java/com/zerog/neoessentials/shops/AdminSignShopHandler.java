@@ -24,14 +24,14 @@ public class AdminSignShopHandler {
             com.zerog.neoessentials.managers.EconomyManager.getInstance();
         
         if (economyManager == null) {
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.economy.unavailable")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.economy.unavailable")));
             return false;
         }
         
         // Check if player has sufficient balance
         if (!economyManager.hasBalance(player.getUUID(), totalPrice)) {
             double currentBalance = economyManager.getBalance(player.getUUID()).doubleValue();
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.not.enough.money", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice), economyManager.formatCurrency(currentBalance))));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.not.enough.money", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice), economyManager.formatCurrency(currentBalance))));
             return false;
         }
         
@@ -41,7 +41,7 @@ public class AdminSignShopHandler {
         
         // Give item to player
         if (!player.getInventory().add(itemToGive)) {
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.inventory.full")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.inventory.full")));
             return false;
         }
         
@@ -54,13 +54,13 @@ public class AdminSignShopHandler {
         if (!withdrawSuccess) {
             // Remove the item we just gave since payment failed
             removeItemFromInventory(player, signShop.getItem(), quantity);
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.payment.failed.cancelled")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.payment.failed.cancelled")));
             return false;
         }
         
         // No need to update stock for admin shops - infinite
         
-    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.bought", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice))));
+    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.bought", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice))));
         
         // Record transaction
         com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
@@ -74,7 +74,7 @@ public class AdminSignShopHandler {
     public static boolean handleSellTransaction(Player player, SignShop signShop, Level level, int quantity) {
         // Check if player has items to sell
         if (!hasItemInInventory(player, signShop.getItem(), quantity)) {
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.not.enough.to.sell", signShop.getItem().getDisplayName().getString())));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.not.enough.to.sell", signShop.getItem().getDisplayName().getString())));
             return false;
         }
         
@@ -85,7 +85,7 @@ public class AdminSignShopHandler {
             com.zerog.neoessentials.managers.EconomyManager.getInstance();
         
         if (economyManager == null || !economyManager.isEnabled()) {
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.economy.unavailable")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.economy.unavailable")));
             return false;
         }
         
@@ -93,7 +93,7 @@ public class AdminSignShopHandler {
         
         // Remove items from player inventory first (payment-first security model)
         if (!removeItemFromInventory(player, signShop.getItem(), quantity)) {
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.remove.items.failed")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.remove.items.failed")));
             return false;
         }
         
@@ -106,11 +106,11 @@ public class AdminSignShopHandler {
             ItemStack returnItem = signShop.getItem().copy();
             returnItem.setCount(quantity);
             player.getInventory().add(returnItem);
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.payment.failed.items.returned")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.payment.failed.items.returned")));
             return false;
         }
         
-    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.sold", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalEarnings))));
+    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.sold", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalEarnings))));
         
         // Record transaction
         com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);

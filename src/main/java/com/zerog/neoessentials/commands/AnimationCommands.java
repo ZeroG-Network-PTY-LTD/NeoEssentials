@@ -40,11 +40,11 @@ public class AnimationCommands {
         try {
             CustomBossbarManager.getInstance().reloadAnimations();
             ServerPlayer player = context.getSource().getPlayerOrException();
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.reload.success"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.reload.success"));
         } catch (Exception e) {
             ServerPlayer player = null;
             try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.reload.failure", e.getMessage()));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.reload.failure", e.getMessage()));
         }
         return 1;
     }
@@ -53,12 +53,12 @@ public class AnimationCommands {
         try {
             String bossbarStats = CustomBossbarManager.getInstance().getAnimationStats();
             ServerPlayer player = context.getSource().getPlayerOrException();
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.header"));
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.bossbar", bossbarStats));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.stats.header"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.stats.bossbar", bossbarStats));
         } catch (Exception e) {
             ServerPlayer player = null;
             try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.stats.failure", e.getMessage()));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.stats.failure", e.getMessage()));
         }
         return 1;
     }
@@ -67,14 +67,14 @@ public class AnimationCommands {
         try {
             List<String> bossbarAnimations = CustomBossbarManager.getInstance().getAvailableAnimations();
             ServerPlayer player = context.getSource().getPlayerOrException();
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.header"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.list.header"));
             if (bossbarAnimations != null && !bossbarAnimations.isEmpty()) {
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.bossbar", String.join(", ", bossbarAnimations)));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.list.bossbar", String.join(", ", bossbarAnimations)));
             }
         } catch (Exception e) {
             ServerPlayer player = null;
             try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.list.failure", e.getMessage()));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.list.failure", e.getMessage()));
         }
         return 1;
     }
@@ -98,11 +98,11 @@ public class AnimationCommands {
     private static int showHelp(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.help"));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.help"));
         } catch (Exception e) {
             ServerPlayer player = null;
             try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "animation.help.failure", e.getMessage()));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.help.failure", e.getMessage()));
         }
         return 1;
     }

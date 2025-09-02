@@ -93,7 +93,7 @@ public class FeedCommand implements IEssentialCommand {
                 
                 // Send confirmation to both players
                 source.sendSuccess(() -> Component.literal("§a🍖 You have fed " + target.getName().getString() + "! They are now fully satisfied."), true);
-                target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.feed.success", executor.getName().getString())));
+                target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.command.feed.success", executor.getName().getString())));
                 
                 return 1;
             }

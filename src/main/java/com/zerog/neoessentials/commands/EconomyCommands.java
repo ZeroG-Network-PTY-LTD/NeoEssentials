@@ -115,7 +115,7 @@ public class EconomyCommands {
         BigDecimal balance = economyManager.getBalance(player.getUUID());
         String formattedBalance = economyManager.formatCurrency(balance);
         
-        MessageUtil.sendMessage(player, "&aYour balance: &e" + formattedBalance);
+        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.economy.balance.your", formattedBalance));
         return 1;
     }
     
@@ -126,7 +126,7 @@ public class EconomyCommands {
         BigDecimal balance = economyManager.getBalance(target.getUUID());
         String formattedBalance = economyManager.formatCurrency(balance);
         
-        MessageUtil.sendMessage(sender, "&a" + target.getName().getString() + "'s balance: &e" + formattedBalance);
+        MessageUtil.sendMessage(sender, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(sender, "neoessentials.economy.balance.other", target.getName().getString(), formattedBalance));
         return 1;
     }
     
@@ -135,15 +135,14 @@ public class EconomyCommands {
         EconomyManager economyManager = EconomyManager.getInstance();
         
         if (sender.getUUID().equals(target.getUUID())) {
-            MessageUtil.sendMessage(sender, "&cYou cannot pay yourself!");
+            MessageUtil.sendMessage(sender, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(sender, "neoessentials.economy.pay.error.self"));
             return 0;
         }
         
         BigDecimal payAmount = BigDecimal.valueOf(amount);
         
         if (!economyManager.hasBalance(sender.getUUID(), amount)) {
-            MessageUtil.sendMessage(sender, "&cYou don't have enough money! You need " + 
-                economyManager.formatCurrency(payAmount));
+            MessageUtil.sendMessage(sender, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(sender, "neoessentials.economy.pay.error.insufficient", economyManager.formatCurrency(payAmount)));
             return 0;
         }
         
@@ -152,8 +151,8 @@ public class EconomyCommands {
         economyManager.depositBalance(target.getUUID(), amount, "Payment from " + sender.getName().getString());
         
         String formattedAmount = economyManager.formatCurrency(payAmount);
-        MessageUtil.sendMessage(sender, "&aYou paid &e" + formattedAmount + " &ato " + target.getName().getString());
-        MessageUtil.sendMessage(target, "&aYou received &e" + formattedAmount + " &afrom " + sender.getName().getString());
+        MessageUtil.sendMessage(sender, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(sender, "neoessentials.economy.pay.success.sender", formattedAmount, target.getName().getString()));
+        MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.economy.pay.success.receiver", formattedAmount, sender.getName().getString()));
         
         return 1;
     }
@@ -166,8 +165,8 @@ public class EconomyCommands {
         economyManager.depositBalance(target.getUUID(), amount, "Admin give by " + admin.getName().getString());
         
         String formattedAmount = economyManager.formatCurrency(giveAmount);
-        MessageUtil.sendMessage(admin, "&aGave &e" + formattedAmount + " &ato " + target.getName().getString());
-        MessageUtil.sendMessage(target, "&aYou received &e" + formattedAmount + " &afrom an admin");
+        MessageUtil.sendMessage(admin, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(admin, "neoessentials.economy.admin.give.success", formattedAmount, target.getName().getString()));
+        MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.economy.admin.give.received", formattedAmount));
         
         return 1;
     }
@@ -180,8 +179,8 @@ public class EconomyCommands {
         economyManager.withdrawBalance(target.getUUID(), amount, "Admin take by " + admin.getName().getString());
         
         String formattedAmount = economyManager.formatCurrency(takeAmount);
-        MessageUtil.sendMessage(admin, "&aTook &e" + formattedAmount + " &afrom " + target.getName().getString());
-        MessageUtil.sendMessage(target, "&cAn admin took &e" + formattedAmount + " &cfrom your account");
+        MessageUtil.sendMessage(admin, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(admin, "neoessentials.economy.admin.take.success", formattedAmount, target.getName().getString()));
+        MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.economy.admin.take.notification", formattedAmount));
         
         return 1;
     }
@@ -194,8 +193,8 @@ public class EconomyCommands {
         economyManager.setBalance(target.getUUID(), setAmount);
         
         String formattedAmount = economyManager.formatCurrency(setAmount);
-        MessageUtil.sendMessage(admin, "&aSet " + target.getName().getString() + "'s balance to &e" + formattedAmount);
-        MessageUtil.sendMessage(target, "&aYour balance has been set to &e" + formattedAmount);
+        MessageUtil.sendMessage(admin, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(admin, "neoessentials.economy.admin.set.success", target.getName().getString(), formattedAmount));
+        MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.economy.admin.set.notification", formattedAmount));
         
         return 1;
     }
@@ -211,12 +210,12 @@ public class EconomyCommands {
         var topBalances = economyManager.getTopBalances(limit);
         
         if (topBalances.isEmpty()) {
-            MessageUtil.sendMessage(player, "&cNo economy data available");
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.economy.baltop.no_data"));
             return 0;
         }
         
-        MessageUtil.sendMessage(player, "&6&l=== Economy Leaderboard ===");
-        MessageUtil.sendMessage(player, "&7Showing top " + Math.min(limit, topBalances.size()) + " players:");
+        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.economy.baltop.header"));
+        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.economy.baltop.showing", String.valueOf(Math.min(limit, topBalances.size()))));
         MessageUtil.sendMessage(player, "");
         
         int position = 1;
@@ -246,12 +245,12 @@ public class EconomyCommands {
             String formattedBalance = economyManager.formatCurrency(balance);
             String positionColor = position <= 3 ? "&6" : "&f"; // Gold for top 3, white for others
             
-            MessageUtil.sendMessage(player, positionColor + "#" + position + " &a" + playerName + " &7- &e" + formattedBalance);
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.economy.baltop.entry", positionColor, String.valueOf(position), playerName, formattedBalance));
             position++;
         }
         
         MessageUtil.sendMessage(player, "");
-        MessageUtil.sendMessage(player, "&7Use &a/baltop <number> &7to see more entries (1-50)");
+        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.economy.baltop.footer"));
         
         return 1;
     }

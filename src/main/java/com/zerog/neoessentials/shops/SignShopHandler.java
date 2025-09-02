@@ -67,7 +67,7 @@ public class SignShopHandler {
         }
         
         if (shopOptional == null || shopOptional.isEmpty()) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.invalid", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.invalid", new Object[]{}));
             return InteractionResult.FAIL;
         }
         
@@ -75,14 +75,14 @@ public class SignShopHandler {
         
         // Validate shop integrity
         if (!validateShopIntegrity(level, signShop)) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.integrity.failed", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.integrity.failed", new Object[]{}));
             LOGGER.error("Shop at {} failed integrity check - transaction blocked", signShop.getSignPos());
             return InteractionResult.FAIL;
         }
         
         // Check permissions
         if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_USE)) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.no.permission", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.no.permission", new Object[]{}));
             return InteractionResult.FAIL;
         }
         
@@ -95,11 +95,11 @@ public class SignShopHandler {
                     
                     // Display stock status with color coding
                     if (actualStock == 0) {
-                MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.out.of.stock", new Object[]{}));
+                MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.out.of.stock", new Object[]{}));
                     } else if (actualStock < signShop.getQuantity()) {
-                MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.low.stock", new Object[]{actualStock, signShop.getQuantity()}));
+                MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.low.stock", new Object[]{actualStock, signShop.getQuantity()}));
                     } else {
-                MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.in.stock", new Object[]{actualStock}));
+                MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.in.stock", new Object[]{actualStock}));
                     }
                 }
             }
@@ -112,7 +112,7 @@ public class SignShopHandler {
         if (isSelling) {
             // Player wants to sell to the shop
             if (signShop.getSellPrice() <= 0) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.not.buying", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.not.buying", new Object[]{}));
                 return InteractionResult.FAIL;
             }
             
@@ -127,7 +127,7 @@ public class SignShopHandler {
         } else {
             // Player wants to buy from the shop
             if (signShop.getBuyPrice() <= 0) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.not.selling", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.not.selling", new Object[]{}));
                 return InteractionResult.FAIL;
             }
             
@@ -136,11 +136,11 @@ public class SignShopHandler {
                 if (level.getBlockEntity(signShop.getChestPos()) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
                     int actualStock = PlayerSignShopHandler.countItemsInChest(chestEntity, signShop.getItem());
                     if (actualStock == 0) {
-                MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.transaction.blocked.empty", new Object[]{}));
+                MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.transaction.blocked.empty", new Object[]{}));
                         return InteractionResult.FAIL;
                     }
                     if (actualStock < signShop.getQuantity()) {
-                MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.transaction.blocked.partial", new Object[]{actualStock, signShop.getQuantity()}));
+                MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.transaction.blocked.partial", new Object[]{actualStock, signShop.getQuantity()}));
                         return InteractionResult.FAIL;
                     }
                 }

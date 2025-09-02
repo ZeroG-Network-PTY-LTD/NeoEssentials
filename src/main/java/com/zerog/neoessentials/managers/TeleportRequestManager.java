@@ -212,7 +212,7 @@ public class TeleportRequestManager {
         List<TeleportRequest> requests = pendingRequests.get(targetId);
         
         if (requests == null || requests.isEmpty()) {
-            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "teleport.no_pending_requests"));
+            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_requests"));
             return false;
         }
         
@@ -220,7 +220,7 @@ public class TeleportRequestManager {
         requests.removeIf(TeleportRequest::isExpired);
         
         if (requests.isEmpty()) {
-            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "teleport.no_pending_requests"));
+            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_requests"));
             return false;
         }
         
@@ -234,7 +234,7 @@ public class TeleportRequestManager {
                 .orElse(null);
                 
             if (request == null) {
-                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "teleport.no_pending_from", requesterName));
+                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_from", requesterName));
                 return false;
             }
         } else {
@@ -247,11 +247,11 @@ public class TeleportRequestManager {
         if (server != null) {
             ServerPlayer requester = server.getPlayerList().getPlayer(request.requesterId);
             if (requester != null) {
-                MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "teleport.request_denied_by_target", target.getName().getString()));
+                MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.request_denied_by_target", target.getName().getString()));
             }
         }
         
-    MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "teleport.denied", request.requesterName));
+    MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.denied", request.requesterName));
         
         // Remove the request
         requests.remove(request);
@@ -322,14 +322,14 @@ public class TeleportRequestManager {
                 requester.teleportTo(target.serverLevel(), 
                     target.getX(), target.getY(), target.getZ(), 
                     target.getYRot(), target.getXRot());
-                MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "teleport.success", target.getName().getString()));
-                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "teleport.success_to_you", requester.getName().getString()));
+                MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.success", target.getName().getString()));
+                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.success_to_you", requester.getName().getString()));
             } else { // TPAHERE
                 target.teleportTo(requester.serverLevel(), 
                     requester.getX(), requester.getY(), requester.getZ(), 
                     requester.getYRot(), requester.getXRot());
-                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "teleport.success", requester.getName().getString()));
-                MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "teleport.success_to_you", target.getName().getString()));
+                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.success", requester.getName().getString()));
+                MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.success_to_you", target.getName().getString()));
             }
             
             LOGGER.info("TPA teleport completed: {} (type: {})", request.requesterName, request.type);
@@ -337,8 +337,8 @@ public class TeleportRequestManager {
             
         } catch (Exception e) {
             LOGGER.error("Failed to perform TPA teleport", e);
-            MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "teleport.failed"));
-            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "teleport.failed"));
+            MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.failed"));
+            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.failed"));
             return false;
         }
     }

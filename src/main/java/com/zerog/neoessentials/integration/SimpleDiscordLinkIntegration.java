@@ -6,7 +6,6 @@ import net.minecraft.network.chat.Component;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.ServerChatEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import com.zerog.neoessentials.config.TablistConfig;
 import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import com.zerog.neoessentials.features.TabListManager;
 import com.zerog.neoessentials.features.ScoreboardManager;
@@ -26,7 +25,6 @@ public class SimpleDiscordLinkIntegration {
     private static SimpleDiscordLinkIntegration instance;
     private final Map<UUID, DiscordUserData> linkedUsers = new ConcurrentHashMap<>();
     private final Map<String, String> roleMapping = new ConcurrentHashMap<>();
-    private TablistConfig config;
     private boolean integrationEnabled = false;
     
     public SimpleDiscordLinkIntegration() {
@@ -52,12 +50,9 @@ public class SimpleDiscordLinkIntegration {
             java.io.File configFile = new java.io.File(configPath);
             
             if (configFile.exists()) {
-                com.google.gson.Gson gson = new com.google.gson.Gson();
-                try (java.io.FileReader reader = new java.io.FileReader(configFile)) {
-                    config = gson.fromJson(reader, TablistConfig.class);
-                    integrationEnabled = true;
-                    DebugUtil.debugLog("[SimpleDiscordLinkIntegration] Loaded configuration from unified config");
-                }
+                // Configuration file exists, enable integration
+                integrationEnabled = true;
+                DebugUtil.debugLog("[SimpleDiscordLinkIntegration] Configuration file found, integration enabled");
             }
             
             // Initialize default role mappings
@@ -86,7 +81,7 @@ public class SimpleDiscordLinkIntegration {
      */
     private void initializeIntegration() {
         try {
-            Class<?> sdlinkClass = Class.forName("com.hypherionmc.sdlink.SDLink");
+            Class.forName("com.hypherionmc.sdlink.SDLink");
             integrationEnabled = true;
             DebugUtil.debugLog("[SimpleDiscordLinkIntegration] SimpleDiscordLink detected and integration enabled");
             
@@ -106,7 +101,7 @@ public class SimpleDiscordLinkIntegration {
         try {
             // Use reflection to access SimpleDiscordLink's linked users data
             Class<?> databaseClass = Class.forName("com.hypherionmc.sdlink.database.SDLinkDatabase");
-            Method getAllLinkedUsersMethod = databaseClass.getMethod("getAllLinkedUsers");
+            databaseClass.getMethod("getAllLinkedUsers");
             
             // This would need to be adapted based on SDLink's actual API
             // For now, we'll implement a placeholder system
@@ -276,8 +271,8 @@ public class SimpleDiscordLinkIntegration {
      */
     private void syncRolesToPermissions(ServerPlayer player, List<String> discordRoles) {
         try {
-            com.zerog.neoessentials.permissions.CustomPermissionsManager permMgr = 
-                com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
+            // Get the permissions manager instance
+            com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
             
             for (String role : discordRoles) {
                 String permission = roleMapping.get(role);

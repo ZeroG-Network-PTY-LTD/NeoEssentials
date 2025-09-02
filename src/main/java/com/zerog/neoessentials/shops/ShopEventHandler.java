@@ -56,8 +56,8 @@ public class ShopEventHandler {
         net.minecraft.network.chat.Component[] newLines = new net.minecraft.network.chat.Component[4];
         newLines[0] = net.minecraft.network.chat.Component.literal(shop.type().toString());
         newLines[1] = net.minecraft.network.chat.Component.literal(shop.amount() + "x " + shop.itemSpec().getHoverName().getString());
-        newLines[2] = net.minecraft.network.chat.Component.literal("Price: $" + String.format("%.2f", shop.price()));
-        newLines[3] = net.minecraft.network.chat.Component.literal("Chest: " + chestPos.getX() + "," + chestPos.getY() + "," + chestPos.getZ());
+        newLines[2] = net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.shop.price_format", String.format("%.2f", shop.price())));
+        newLines[3] = net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.shop.chest_location", chestPos.getX(), chestPos.getY(), chestPos.getZ()));
         signEntity.updateText(frontText -> frontText
             .setMessage(0, newLines[0])
             .setMessage(1, newLines[1])
@@ -67,7 +67,7 @@ public class ShopEventHandler {
         level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
         // Send feedback to player
         if (event.getEntity() instanceof ServerPlayer player) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Shop created: " + shop.type() + " " + shop.amount() + "x " + shop.itemSpec().getHoverName().getString() + " for $" + shop.price()));
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.shop.created", shop.type(), shop.amount(), shop.itemSpec().getHoverName().getString(), shop.price())));
         }
     }
 
@@ -123,12 +123,12 @@ public class ShopEventHandler {
         var econ = com.zerog.neoessentials.managers.EconomyManager.getInstance();
         boolean hasFunds = econ.hasBalance(buyer.getUUID(), shop.price());
         if (!hasFunds) {
-            buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal("Insufficient funds."));
+            buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(buyer, "neoessentials.shop.insufficient_funds")));
             return;
         }
         boolean withdrawn = econ.withdrawBalance(buyer.getUUID(), shop.price(), "Shop purchase");
         if (!withdrawn) {
-            buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal("Failed to withdraw funds."));
+            buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(buyer, "neoessentials.shop.withdraw_failed")));
             return;
         }
         // Chest check
@@ -146,7 +146,7 @@ public class ShopEventHandler {
         } else {
             // Not enough stock
             econ.depositBalance(buyer.getUUID(), shop.price(), "Shop refund");
-            buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal("Shop out of stock."));
+            buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(buyer, "neoessentials.shop.out_of_stock")));
             return;
         }
         // Remove items from chest unless admin shop
@@ -171,7 +171,7 @@ public class ShopEventHandler {
     // For tax, use a fixed UUID (server account)
     UUID taxAccount = new UUID(0, 0); // Replace with actual tax account if needed
     econ.depositBalance(taxAccount, tax, "Shop tax");
-    buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal("Purchase successful!"));
+    buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(buyer, "neoessentials.shop.purchase_successful")));
     }
     private void sellFlow(ServerPlayer seller, Level level, Shop shop) {
         // EconomyService integration (stub)
@@ -180,7 +180,7 @@ public class ShopEventHandler {
         var econ = com.zerog.neoessentials.managers.EconomyManager.getInstance();
         boolean deposited = econ.depositBalance(seller.getUUID(), shop.price(), "Shop sale");
         if (!deposited) {
-            seller.sendSystemMessage(net.minecraft.network.chat.Component.literal("Failed to deposit funds."));
+            seller.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(seller, "neoessentials.shop.deposit_failed")));
             return;
         }
         // Remove items from seller
@@ -238,6 +238,6 @@ public class ShopEventHandler {
     UUID taxAccount = new UUID(0, 0); // Replace with actual tax account if needed
     econ.depositBalance(taxAccount, tax, "Shop tax");
     // Admin shop logic: infinite stock, no chest required (already handled above)
-    seller.sendSystemMessage(net.minecraft.network.chat.Component.literal("Sale successful!"));
+    seller.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(seller, "neoessentials.shop.sale_successful")));
     }
 }

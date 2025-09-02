@@ -7,8 +7,6 @@ import com.zerog.neoessentials.player.PlayerDataManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.UUID;
@@ -22,8 +20,6 @@ import java.util.List;
  * @since 2.0.0
  */
 public class PermissionEventListener {
-    
-    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionEventListener.class);
     
     /**
      * Handle player join - load their permission data from storage

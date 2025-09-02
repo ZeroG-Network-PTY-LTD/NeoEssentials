@@ -61,7 +61,7 @@ public class ChatFormattingListener {
             LOGGER.info("[NeoEssentials] ChatFormattingListener: Chat is DISABLED. Cancelling event and notifying player.");
             event.setCanceled(true);
             ServerPlayer player = event.getPlayer();
-            com.zerog.neoessentials.util.MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "chat.disabled"));
+            com.zerog.neoessentials.util.MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.chat.disabled"));
             return;
         }
     com.zerog.neoessentials.config.MainConfig.ChatSettings config = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().chatSettings;
@@ -81,7 +81,7 @@ public class ChatFormattingListener {
             com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] AntiSpam enabled: " + config.antiSpam.enabled);
             if (config.antiSpam.enabled && isSpam(player, originalMessage, config)) {
                 event.setCanceled(true);
-                com.zerog.neoessentials.util.MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "chat.spam"));
+                com.zerog.neoessentials.util.MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.chat.spam"));
                 com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] Message blocked for spam: " + originalMessage);
                 return;
             }
@@ -89,7 +89,7 @@ public class ChatFormattingListener {
             String filteredMessage = config.filter.enabled ? filterMessage(originalMessage, config) : originalMessage;
             if (filteredMessage == null) {
                 event.setCanceled(true);
-                com.zerog.neoessentials.util.MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "chat.filter.blocked"));
+                com.zerog.neoessentials.util.MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.chat.filter.blocked"));
                 com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] Message blocked by filter: " + originalMessage);
                 return;
             }

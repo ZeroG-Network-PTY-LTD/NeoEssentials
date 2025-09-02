@@ -152,7 +152,7 @@ public class CleanupCommand {
                 long startTime = System.currentTimeMillis();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.all.starting", force ? " (FORCED)" : "")), false);
+                    "neoessentials.cleanup.all.starting", force ? " (FORCED)" : "")), false);
                 
                 // Perform cleanup asynchronously to avoid blocking
                 CompletableFuture.runAsync(() -> {
@@ -181,7 +181,7 @@ public class CleanupCommand {
                         
                         // Send completion message
                         source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                            "cleanup.all.completed", 
+                            "neoessentials.cleanup.all.completed", 
                             FORMAT.format(result.itemsCleaned),
                             DECIMAL_FORMAT.format(result.bytesFreed / 1024.0 / 1024.0),
                             duration)), false);
@@ -192,7 +192,7 @@ public class CleanupCommand {
                     } catch (Exception e) {
                         LOGGER.error("Error during comprehensive cleanup", e);
                         source.sendFailure(Component.literal(getLocalizedMessage(player, 
-                            "cleanup.all.error", e.getMessage())));
+                            "neoessentials.cleanup.all.error", e.getMessage())));
                     }
                 });
                 
@@ -223,7 +223,7 @@ public class CleanupCommand {
                 CleanupResult result = performMemoryCleanup(aggressive);
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.memory.completed",
+                    "neoessentials.cleanup.memory.completed",
                     DECIMAL_FORMAT.format(result.bytesFreed / 1024.0 / 1024.0),
                     aggressive ? " (AGGRESSIVE)" : "")), false);
                 
@@ -254,7 +254,7 @@ public class CleanupCommand {
                 CleanupResult result = performCacheCleanup(allCaches);
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.cache.completed",
+                    "neoessentials.cleanup.cache.completed",
                     FORMAT.format(result.itemsCleaned),
                     allCaches ? " (ALL CACHES)" : "")), false);
                 
@@ -277,7 +277,7 @@ public class CleanupCommand {
                 CleanupResult result = performFileCleanup();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.files.completed",
+                    "neoessentials.cleanup.files.completed",
                     FORMAT.format(result.itemsCleaned),
                     DECIMAL_FORMAT.format(result.bytesFreed / 1024.0 / 1024.0))), false);
                 
@@ -306,7 +306,7 @@ public class CleanupCommand {
                 CleanupResult result = performLogCleanup(days);
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.logs.completed",
+                    "neoessentials.cleanup.logs.completed",
                     FORMAT.format(result.itemsCleaned),
                     days,
                     DECIMAL_FORMAT.format(result.bytesFreed / 1024.0 / 1024.0))), false);
@@ -327,7 +327,7 @@ public class CleanupCommand {
                 CleanupResult result = performTempFileCleanup();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.temp.completed",
+                    "neoessentials.cleanup.temp.completed",
                     FORMAT.format(result.itemsCleaned),
                     DECIMAL_FORMAT.format(result.bytesFreed / 1024.0 / 1024.0))), false);
                 
@@ -347,7 +347,7 @@ public class CleanupCommand {
                 CleanupResult result = performOrphanedConfigCleanup();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.configs.completed",
+                    "neoessentials.cleanup.configs.completed",
                     FORMAT.format(result.itemsCleaned))), false);
                 
                 return 1;
@@ -378,7 +378,7 @@ public class CleanupCommand {
                 CleanupResult result = performPlayerDataCleanup(days);
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.playerdata.completed",
+                    "neoessentials.cleanup.playerdata.completed",
                     FORMAT.format(result.itemsCleaned),
                     days,
                     DECIMAL_FORMAT.format(result.bytesFreed / 1024.0 / 1024.0))), false);
@@ -399,7 +399,7 @@ public class CleanupCommand {
                 CleanupResult result = performCorruptedDataCleanup();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.corrupted.completed",
+                    "neoessentials.cleanup.corrupted.completed",
                     FORMAT.format(result.itemsCleaned))), false);
                 
                 return 1;
@@ -418,7 +418,7 @@ public class CleanupCommand {
                 CleanupResult result = performPlayerDataOptimization();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.optimize.completed",
+                    "neoessentials.cleanup.optimize.completed",
                     FORMAT.format(result.itemsCleaned),
                     DECIMAL_FORMAT.format(result.bytesFreed / 1024.0 / 1024.0))), false);
                 
@@ -441,7 +441,7 @@ public class CleanupCommand {
                 CleanupResult result = performScoreboardCleanup();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.scoreboard.completed",
+                    "neoessentials.cleanup.scoreboard.completed",
                     FORMAT.format(result.itemsCleaned))), false);
                 
                 return 1;
@@ -460,7 +460,7 @@ public class CleanupCommand {
                 CleanupResult result = performTeamsCleanup();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.teams.completed",
+                    "neoessentials.cleanup.teams.completed",
                     FORMAT.format(result.itemsCleaned))), false);
                 
                 return 1;
@@ -479,7 +479,7 @@ public class CleanupCommand {
                 CleanupResult result = performObjectivesCleanup();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.objectives.completed",
+                    "neoessentials.cleanup.objectives.completed",
                     FORMAT.format(result.itemsCleaned))), false);
                 
                 return 1;
@@ -510,7 +510,7 @@ public class CleanupCommand {
                 enableAutoCleanup(intervalMinutes);
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.auto.enabled", intervalMinutes)), false);
+                    "neoessentials.cleanup.auto.enabled", intervalMinutes)), false);
                 
                 return 1;
             }
@@ -528,7 +528,7 @@ public class CleanupCommand {
                 disableAutoCleanup();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.auto.disabled")), false);
+                    "neoessentials.cleanup.auto.disabled")), false);
                 
                 return 1;
             }
@@ -544,7 +544,7 @@ public class CleanupCommand {
                 ServerPlayer player = source.getPlayer();
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.auto.status", autoCleanupEnabled ? "ENABLED" : "DISABLED")), false);
+                    "neoessentials.cleanup.auto.status", autoCleanupEnabled ? "ENABLED" : "DISABLED")), false);
                 
                 return 1;
             }
@@ -565,13 +565,13 @@ public class CleanupCommand {
                 source.sendSuccess(() -> Component.literal("§b=== Cleanup Statistics ==="), false);
                 source.sendSuccess(() -> Component.literal(""), false);
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.stats.total", FORMAT.format(totalCleanupsPerformed.get()))), false);
+                    "neoessentials.cleanup.stats.total", FORMAT.format(totalCleanupsPerformed.get()))), false);
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.stats.items", FORMAT.format(totalItemsCleaned.sum()))), false);
+                    "neoessentials.cleanup.stats.items", FORMAT.format(totalItemsCleaned.sum()))), false);
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.stats.bytes", DECIMAL_FORMAT.format(totalBytesFreed.sum() / 1024.0 / 1024.0))), false);
+                    "neoessentials.cleanup.stats.bytes", DECIMAL_FORMAT.format(totalBytesFreed.sum() / 1024.0 / 1024.0))), false);
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.stats.auto", autoCleanupEnabled ? "ENABLED" : "DISABLED")), false);
+                    "neoessentials.cleanup.stats.auto", autoCleanupEnabled ? "ENABLED" : "DISABLED")), false);
                 
                 return 1;
             }
@@ -597,7 +597,7 @@ public class CleanupCommand {
                 double memoryUsagePercent = (double) usedMemory / runtime.maxMemory() * 100;
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.analysis.memory", 
+                    "neoessentials.cleanup.analysis.memory", 
                     DECIMAL_FORMAT.format(usedMemory / 1024.0 / 1024.0),
                     DECIMAL_FORMAT.format(runtime.maxMemory() / 1024.0 / 1024.0),
                     DECIMAL_FORMAT.format(memoryUsagePercent))), false);
@@ -605,12 +605,12 @@ public class CleanupCommand {
                 String memoryStatus = memoryUsagePercent > 90 ? "§cCRITICAL" : 
                                     memoryUsagePercent > 75 ? "§eHIGH" : "§aNORMAL";
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.analysis.memory.status", memoryStatus)), false);
+                    "neoessentials.cleanup.analysis.memory.status", memoryStatus)), false);
                 
                 // Analyze cache health
                 PerformanceManager.PerformanceStats stats = PerformanceManager.getInstance().getPerformanceStats();
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
-                    "cleanup.analysis.cache", FORMAT.format(stats.getCacheSize()))), false);
+                    "neoessentials.cleanup.analysis.cache", FORMAT.format(stats.getCacheSize()))), false);
                 
                 // Recommendations
                 source.sendSuccess(() -> Component.literal(""), false);
@@ -1035,7 +1035,7 @@ public class CleanupCommand {
     private static String getLocalizedMessage(ServerPlayer player, String key, Object... args) {
         try {
             if (player != null) {
-                return LanguageManager.getInstance().getMessage(player, "cleanup." + key, args);
+                return LanguageManager.getInstance().getMessage(player, "neoessentials.cleanup." + key, args);
             } else {
                 // Fallback messages for console
                 return switch (key) {

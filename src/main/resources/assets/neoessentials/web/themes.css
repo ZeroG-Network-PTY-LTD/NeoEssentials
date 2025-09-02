@@ -1,0 +1,173 @@
+/* NeoEssentials Dashboard - Dark Theme */
+.theme-dark {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-accent: #3a3a3a;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #888888;
+    --accent-color: #4a9eff;
+    --success-color: #4caf50;
+    --warning-color: #ff9800;
+    --error-color: #f44336;
+    --border-color: #444444;
+}
+
+/* NeoEssentials Dashboard - Light Theme */
+.theme-light {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-accent: #e0e0e0;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --accent-color: #2196f3;
+    --success-color: #4caf50;
+    --warning-color: #ff9800;
+    --error-color: #f44336;
+    --border-color: #ddd;
+}
+
+/* NeoEssentials Dashboard - Neo Theme */
+.theme-neo {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-accent: #21262d;
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --accent-color: #58a6ff;
+    --success-color: #3fb950;
+    --warning-color: #d29922;
+    --error-color: #f85149;
+    --border-color: #30363d;
+}
+
+/* NeoEssentials Dashboard - Classic Theme */
+.theme-classic {
+    --bg-primary: #2c3e50;
+    --bg-secondary: #34495e;
+    --bg-accent: #3a556e;
+    --text-primary: #ecf0f1;
+    --text-secondary: #bdc3c7;
+    --text-muted: #95a5a6;
+    --accent-color: #3498db;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --error-color: #e74c3c;
+    --border-color: #48637a;
+}
+
+/* Global theme application */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.dashboard-container {
+    background: transparent;
+}
+
+.header, .stat-card, .widget {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.stat-card h3, .widget h3 {
+    color: var(--text-primary);
+    border-bottom-color: var(--border-color);
+}
+
+.stat-value {
+    color: var(--accent-color);
+}
+
+.stat-label {
+    color: var(--text-muted);
+}
+
+.performance-meter, .event-item, .player-item {
+    background-color: var(--bg-accent);
+    border: 1px solid var(--border-color);
+}
+
+.event-time, .player-status {
+    color: var(--text-muted);
+}
+
+.event-message, .player-name {
+    color: var(--text-secondary);
+}
+
+.refresh-btn {
+    background: linear-gradient(135deg, var(--accent-color), var(--success-color));
+    border: 1px solid var(--border-color);
+}
+
+.refresh-btn:hover {
+    filter: brightness(1.1);
+}
+
+/* Status indicators */
+.status-online {
+    color: var(--success-color);
+}
+
+.status-warning {
+    color: var(--warning-color);
+}
+
+.status-error {
+    color: var(--error-color);
+}
+
+/* Meter fills with theme colors */
+.meter-fill.theme-accent {
+    background: linear-gradient(90deg, var(--accent-color), var(--success-color));
+}
+
+.meter-fill.theme-success {
+    background: linear-gradient(90deg, var(--success-color), #45a049);
+}
+
+.meter-fill.theme-warning {
+    background: linear-gradient(90deg, var(--warning-color), #e68900);
+}
+
+.meter-fill.theme-error {
+    background: linear-gradient(90deg, var(--error-color), #d32f2f);
+}
+
+/* Animation effects */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.loading {
+    animation: pulse 2s infinite;
+    color: var(--text-muted);
+}
+
+.stat-card:hover, .widget:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 10px;
+    }
+    
+    .stat-card, .widget {
+        padding: 20px;
+    }
+    
+    .header h1 {
+        font-size: 1.8rem;
+    }
+}
