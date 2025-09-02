@@ -2,10 +2,9 @@ package com.zerog.neoessentials.util;
 
 import com.zerog.neoessentials.permissions.CustomPermissionsManager;
 import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.util.ErrorHandler;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.commands.CommandSourceStack;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for handling permissions
@@ -15,7 +14,6 @@ import org.slf4j.LoggerFactory;
  * @since 2.0.0
  */
 public class PermissionUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionUtil.class);
     
     /**
      * Check if player has a specific permission
@@ -30,8 +28,10 @@ public class PermissionUtil {
         try {
             return CustomPermissionsManager.getInstance().hasPermission(player, permission);
         } catch (Exception e) {
-            LOGGER.warn("Permission check failed for player {} permission {}, using fallback: {}", 
-                player.getName().getString(), permission, e.getMessage());
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.PERMISSIONS,
+                ErrorHandler.ErrorSeverity.MEDIUM,
+                "Permission Check", e);
             // Fallback to basic permission check if Custom Permissions Manager fails
             return fallbackPermissionCheck(player, permission);
         }
@@ -55,6 +55,10 @@ public class PermissionUtil {
             ServerPlayer player = source.getPlayerOrException();
             return hasPermission(player, permission);
         } catch (Exception e) {
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.PERMISSIONS,
+                ErrorHandler.ErrorSeverity.LOW,
+                "Command Source Permission Check", e);
             return false;
         }
     }
@@ -92,6 +96,10 @@ public class PermissionUtil {
             ServerPlayer player = source.getPlayerOrException();
             return hasPermissionOrOp(player, permission);
         } catch (Exception e) {
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.PERMISSIONS,
+                ErrorHandler.ErrorSeverity.LOW,
+                "Command Source Op Permission Check", e);
             return false;
         }
     }

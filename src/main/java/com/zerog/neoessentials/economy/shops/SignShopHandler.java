@@ -32,91 +32,140 @@ public class SignShopHandler {
     }
     
     /**
-     * Handle player interaction with a sign
+     * Handle player interaction with a sign with enhanced error handling
      */
     public InteractionResult handleSignInteraction(Player player, Level level, BlockPos pos, InteractionHand hand) {
         if (level.isClientSide) return InteractionResult.PASS;
-        BlockState blockState = level.getBlockState(pos);
-        if (!(blockState.getBlock() instanceof SignBlock)) {
-            return InteractionResult.PASS;
-        }
-        if (!(level.getBlockEntity(pos) instanceof SignBlockEntity signEntity)) {
-            return InteractionResult.PASS;
-        }
-        Component[] lines = signEntity.getFrontText().getMessages(false);
-        if (lines.length == 0 || (!lines[0].getString().equals(SHOP_HEADER) && !lines[0].getString().equals("[Admin Shop]"))) {
-            return InteractionResult.PASS;
-        }
         
-        // Permission check for shop use
-        if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_SIGN_USE)) {
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to use sign shops!"));
+        try {
+            BlockState blockState = level.getBlockState(pos);
+            if (!(blockState.getBlock() instanceof SignBlock)) {
+                return InteractionResult.PASS;
+            }
+            
+            if (!(level.getBlockEntity(pos) instanceof SignBlockEntity signEntity)) {
+                player.sendSystemMessage(Component.literal("§cError: Sign data could not be loaded!"));
+                return InteractionResult.FAIL;
+            }
+            
+            Component[] lines = signEntity.getFrontText().getMessages(false);
+            if (lines.length == 0 || (!lines[0].getString().equals(SHOP_HEADER) && !lines[0].getString().equals("[ADMIN SHOP]"))) {
+                return InteractionResult.PASS;
+            }
+            
+            // Enhanced permission check with better feedback
+            if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_SIGN_USE)) {
+                player.sendSystemMessage(Component.literal("§c✗ Access Denied!")
+                    .append(Component.literal("\n§7You don't have permission to use sign shops.")));
+                return InteractionResult.FAIL;
+            }
+            
+            // Enhanced shop retrieval with error recovery
+            ShopManager.SignShop signShop = shopManager.getSignShop(pos);
+            if (signShop == null) {
+                player.sendSystemMessage(Component.literal("§c✗ Shop Error!")
+                    .append(Component.literal("\n§7This shop sign is not properly configured."))
+                    .append(Component.literal("\n§7Please contact an administrator.")));
+                LOGGER.warn("Sign shop at {} not found in registry for player {}", pos, player.getName().getString());
+                return InteractionResult.FAIL;
+            }
+            
+            return handleShopTransaction(player, signShop, player.isCrouching());
+            
+        } catch (Exception e) {
+            player.sendSystemMessage(Component.literal("§c✗ Unexpected Error!")
+                .append(Component.literal("\n§7An error occurred while accessing the shop."))
+                .append(Component.literal("\n§7Please try again or contact an administrator.")));
+            LOGGER.error("Unexpected error in sign shop interaction for player {} at {}", 
+                        player.getName().getString(), pos, e);
             return InteractionResult.FAIL;
         }
-        
-        // Get the shop directly using the sign position (more efficient and reliable)
-        ShopManager.SignShop signShop = shopManager.getSignShop(pos);
-        if (signShop == null) {
-            player.sendSystemMessage(Component.literal("§cThis shop sign is not properly configured!"));
-            return InteractionResult.FAIL;
-        }
-        return handleShopTransaction(player, signShop, player.isCrouching());
     }
     
     /**
-     * Create a new sign shop
+     * Create a new sign shop with enhanced validation and user guidance
      */
     public boolean createSignShop(Player player, BlockPos signPos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
-        if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_SIGN_CREATE)) {
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to create sign shops!"));
-            return false;
-        }
-        
-        // Validate prices
-        if (buyPrice <= 0 && sellPrice <= 0) {
-            player.sendSystemMessage(Component.literal("§cAt least one price (buy or sell) must be greater than 0!"));
-            return false;
-        }
-        
-        if (buyPrice > 0 && sellPrice > 0 && buyPrice <= sellPrice) {
-            player.sendSystemMessage(Component.literal("§cBuy price must be higher than sell price!"));
-            return false;
-        }
-        
-        // Validate quantity
-        if (quantity <= 0 || quantity > 64) {
-            player.sendSystemMessage(Component.literal("§cQuantity must be between 1 and 64!"));
-            return false;
-        }
-        
-        LOGGER.info("Creating sign shop for player {} at {} with item {}, buyPrice: {}, sellPrice: {}, quantity: {}", 
-                   player.getName().getString(), signPos, item.getDisplayName().getString(), buyPrice, sellPrice, quantity);
-        
-        // Create the shop
-        boolean success = shopManager.createSignShop(player, signPos, item, buyPrice, sellPrice, quantity);
-        
-        if (success) {
-            try {
-                updateSignText(player.level(), signPos, item, buyPrice, sellPrice, quantity);
-                player.sendSystemMessage(Component.literal("§aSign shop created successfully!"));
-                LOGGER.info("Player {} successfully created a sign shop at {} for item {}", 
-                           player.getName().getString(), signPos, item.getDisplayName().getString());
-            } catch (Exception e) {
-                LOGGER.error("Error updating sign text after creating shop", e);
-                player.sendSystemMessage(Component.literal("§aSign shop created, but there was an error updating the sign text."));
-            }
-        } else {
-            player.sendSystemMessage(Component.literal("§cFailed to create sign shop! Check that there's a chest nearby and no existing shop at this location."));
-            LOGGER.warn("Failed to create sign shop for player {} at {}", player.getName().getString(), signPos);
-        }
-        
         try {
-            shopManager.saveShopsToStorage();
+            if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_SIGN_CREATE)) {
+                player.sendSystemMessage(Component.literal("§c✗ Permission Denied!")
+                    .append(Component.literal("\n§7You don't have permission to create sign shops."))
+                    .append(Component.literal("\n§7Contact an administrator for access.")));
+                return false;
+            }
+            
+            // Enhanced price validation with specific guidance
+            if (buyPrice <= 0 && sellPrice <= 0) {
+                player.sendSystemMessage(Component.literal("§c✗ Invalid Pricing!")
+                    .append(Component.literal("\n§7At least one price (buy or sell) must be greater than 0."))
+                    .append(Component.literal("\n§7Example: /signshop create diamond 1 10.0 5.0")));
+                return false;
+            }
+            
+            if (buyPrice > 0 && sellPrice > 0 && buyPrice <= sellPrice) {
+                player.sendSystemMessage(Component.literal("§c✗ Invalid Price Logic!")
+                    .append(Component.literal("\n§7Buy price must be higher than sell price."))
+                    .append(Component.literal("\n§7Current: Buy $" + formatPrice(buyPrice) + ", Sell $" + formatPrice(sellPrice)))
+                    .append(Component.literal("\n§7Suggestion: Increase buy price or decrease sell price.")));
+                return false;
+            }
+            
+            // Enhanced quantity validation
+            if (quantity <= 0 || quantity > 64) {
+                player.sendSystemMessage(Component.literal("§c✗ Invalid Quantity!")
+                    .append(Component.literal("\n§7Quantity must be between 1 and 64."))
+                    .append(Component.literal("\n§7You specified: " + quantity)));
+                return false;
+            }
+            
+            LOGGER.info("Creating sign shop for player {} at {} with item {}, buyPrice: {}, sellPrice: {}, quantity: {}", 
+                       player.getName().getString(), signPos, item.getDisplayName().getString(), buyPrice, sellPrice, quantity);
+            
+            // Create the shop
+            boolean success = shopManager.createSignShop(player, signPos, item, buyPrice, sellPrice, quantity);
+            
+            if (success) {
+                try {
+                    updateSignText(player.level(), signPos, item, buyPrice, sellPrice, quantity);
+                    player.sendSystemMessage(Component.literal("§a✓ Shop Created Successfully!")
+                        .append(Component.literal("\n§7├ Item: §f" + quantity + "x " + item.getDisplayName().getString()))
+                        .append(Component.literal("\n§7├ Buy Price: §a$" + (buyPrice > 0 ? formatPrice(buyPrice) : "N/A")))
+                        .append(Component.literal("\n§7├ Sell Price: §c$" + (sellPrice > 0 ? formatPrice(sellPrice) : "N/A")))
+                        .append(Component.literal("\n§7└ Location: §f" + signPos.toShortString())));
+                    LOGGER.info("Player {} successfully created a sign shop at {} for item {}", 
+                               player.getName().getString(), signPos, item.getDisplayName().getString());
+                } catch (Exception e) {
+                    LOGGER.error("Error updating sign text after creating shop", e);
+                    player.sendSystemMessage(Component.literal("§a✓ Shop Created!")
+                        .append(Component.literal("\n§7Shop created successfully, but sign display may need refresh.")));
+                }
+            } else {
+                player.sendSystemMessage(Component.literal("§c✗ Shop Creation Failed!")
+                    .append(Component.literal("\n§7Common causes:"))
+                    .append(Component.literal("\n§7• No chest found within 3 blocks"))
+                    .append(Component.literal("\n§7• Shop already exists at this location"))
+                    .append(Component.literal("\n§7• Insufficient permissions")));
+                LOGGER.warn("Failed to create sign shop for player {} at {}", player.getName().getString(), signPos);
+            }
+            
+            try {
+                shopManager.saveShopsToStorage();
+            } catch (Exception e) {
+                LOGGER.error("Error saving shops to storage", e);
+                if (success) {
+                    player.sendSystemMessage(Component.literal("§6⚠ Warning: Shop created but save failed. Contact an administrator."));
+                }
+            }
+            
+            return success;
         } catch (Exception e) {
-            LOGGER.error("Error saving shops to storage", e);
+            player.sendSystemMessage(Component.literal("§c✗ Unexpected Error!")
+                .append(Component.literal("\n§7Failed to create shop due to an internal error."))
+                .append(Component.literal("\n§7Please try again or contact an administrator.")));
+            LOGGER.error("Unexpected error creating sign shop for player {} at {}", 
+                        player.getName().getString(), signPos, e);
+            return false;
         }
-        
-        return success;
     }
     
     /**
@@ -185,25 +234,38 @@ public class SignShopHandler {
     }
     
     /**
-     * Handle a transaction with a sign shop
+     * Handle a transaction with a sign shop with enhanced validation
      */
     private InteractionResult handleShopTransaction(Player player, ShopManager.SignShop signShop, boolean isSelling) {
-        if (isSelling) {
-            // Player wants to sell to the shop
-            if (signShop.getSellPrice() <= 0) {
-                player.sendSystemMessage(Component.literal("§cThis shop doesn't buy items!"));
-                return InteractionResult.FAIL;
+        try {
+            if (isSelling) {
+                // Player wants to sell to the shop
+                if (signShop.getSellPrice() <= 0) {
+                    player.sendSystemMessage(Component.literal("§c✗ Transaction Unavailable!")
+                        .append(Component.literal("\n§7This shop doesn't purchase items."))
+                        .append(Component.literal("\n§7Try left-clicking to buy instead.")));
+                    return InteractionResult.FAIL;
+                }
+                
+                return handleSellTransaction(player, signShop);
+            } else {
+                // Player wants to buy from the shop
+                if (signShop.getBuyPrice() <= 0) {
+                    player.sendSystemMessage(Component.literal("§c✗ Transaction Unavailable!")
+                        .append(Component.literal("\n§7This shop doesn't sell items."))
+                        .append(Component.literal("\n§7Try shift+left-clicking to sell instead.")));
+                    return InteractionResult.FAIL;
+                }
+                
+                return handleBuyTransaction(player, signShop);
             }
-            
-            return handleSellTransaction(player, signShop);
-        } else {
-            // Player wants to buy from the shop
-            if (signShop.getBuyPrice() <= 0) {
-                player.sendSystemMessage(Component.literal("§cThis shop doesn't sell items!"));
-                return InteractionResult.FAIL;
-            }
-            
-            return handleBuyTransaction(player, signShop);
+        } catch (Exception e) {
+            player.sendSystemMessage(Component.literal("§c✗ Transaction Failed!")
+                .append(Component.literal("\n§7An error occurred during the transaction."))
+                .append(Component.literal("\n§7Your items and money are safe.")));
+            LOGGER.error("Error in shop transaction for player {} with shop at {}", 
+                        player.getName().getString(), signShop.getSignPos(), e);
+            return InteractionResult.FAIL;
         }
     }
     
@@ -345,9 +407,13 @@ public class SignShopHandler {
             // Keep UUID if name lookup fails
         }
         
-        player.sendSystemMessage(Component.literal("§aSuccessfully purchased " + 
-                signShop.getQuantity() + "x " + signShop.getItem().getDisplayName().getString() + 
-                " for $" + String.format("%.2f", totalPrice) + " from " + shopOwnerName + "'s shop"));
+        // Enhanced success message with detailed feedback
+        player.sendSystemMessage(Component.literal("§a✓ Purchase Successful!")
+            .append(Component.literal("\n§7├ Item: §f" + signShop.getQuantity() + "x " + signShop.getItem().getDisplayName().getString()))
+            .append(Component.literal("\n§7├ Cost: §e$" + String.format("%.2f", totalPrice)))
+            .append(Component.literal("\n§7├ Shop Owner: §b" + shopOwnerName))
+            .append(Component.literal("\n§7└ New Balance: §a$" + economyManager.formatCurrency(economyManager.getBalance(player.getUUID()))))
+        );
         
         LOGGER.info("Player {} purchased {}x {} for {} from shop owned by {}", 
                    player.getName().getString(), signShop.getQuantity(), 
@@ -444,12 +510,13 @@ public class SignShopHandler {
                     return InteractionResult.FAIL;
                 }
                 
-                player.sendSystemMessage(Component.literal(String.format(
-                        "§aSold %dx %s to admin shop for %s!",
-                        quantityToSell,
-                        shopItem.getDisplayName().getString(),
-                        economyManager.formatCurrency(earnings)
-                )));
+                // Enhanced success message for admin shop sales
+                player.sendSystemMessage(Component.literal("§a✓ Sale to Admin Shop Successful!")
+                    .append(Component.literal("\n§7├ Sold: §f" + quantityToSell + "x " + shopItem.getDisplayName().getString()))
+                    .append(Component.literal("\n§7├ Earned: §a$" + economyManager.formatCurrency(earnings)))
+                    .append(Component.literal("\n§7├ Shop Type: §6Admin Shop"))
+                    .append(Component.literal("\n§7└ New Balance: §a$" + economyManager.formatCurrency(economyManager.getBalance(player.getUUID()))))
+                );
                 
                 return InteractionResult.SUCCESS;
             } else {
@@ -539,26 +606,29 @@ public class SignShopHandler {
                     // Keep default name if we can't get the actual name
                 }
             
-                if (depositSuccess) {
-                    player.sendSystemMessage(Component.literal("§aSold " + quantityToSell + "x " + shopItem.getDisplayName().getString() + 
-                        " to " + shopOwnerName + "'s shop for $" + String.format("%.2f", earnings)));
-                    
-                    LOGGER.info("Player {} sold {}x {} for {} to {} shop at {}", 
-                               player.getName().getString(), quantityToSell, 
-                               shopItem.getDisplayName().getString(), 
-                               String.format("%.2f", earnings),
-                               shopOwnerName,
-                               signShop.getSignPos());
-                    
-                    return InteractionResult.SUCCESS;
-                } else {
-                    // This should not happen since we already checked depositSuccess above
-                    // But included for safety
-                    player.sendSystemMessage(Component.literal("§cUnexpected transaction error!"));
-                    return InteractionResult.FAIL;
-                }
+            if (depositSuccess) {
+                // Enhanced success message for player shop sales
+                player.sendSystemMessage(Component.literal("§a✓ Sale to Player Shop Successful!")
+                    .append(Component.literal("\n§7├ Sold: §f" + quantityToSell + "x " + shopItem.getDisplayName().getString()))
+                    .append(Component.literal("\n§7├ Earned: §a$" + String.format("%.2f", earnings)))
+                    .append(Component.literal("\n§7├ Shop Owner: §b" + shopOwnerName))
+                    .append(Component.literal("\n§7└ New Balance: §a$" + economyManager.formatCurrency(economyManager.getBalance(player.getUUID()))))
+                );
                 
-                } catch (Exception e) {
+                LOGGER.info("Player {} sold {}x {} for {} to {} shop at {}", 
+                           player.getName().getString(), quantityToSell, 
+                           shopItem.getDisplayName().getString(), 
+                           String.format("%.2f", earnings),
+                           shopOwnerName,
+                           signShop.getSignPos());
+                
+                return InteractionResult.SUCCESS;
+            } else {
+                // This should not happen since we already checked depositSuccess above
+                // But included for safety
+                player.sendSystemMessage(Component.literal("§cUnexpected transaction error!"));
+                return InteractionResult.FAIL;
+            }                } catch (Exception e) {
                     // Return items to player on any error
                     ItemStack itemToReturn = shopItem.copy();
                     itemToReturn.setCount(quantityToSell);
@@ -585,24 +655,29 @@ public class SignShopHandler {
     }
     
     /**
-     * Update the text on a sign shop
+     * Update the text on a sign shop with enhanced visual feedback
      */
     private void updateSignText(Level level, BlockPos pos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
         if (level.getBlockEntity(pos) instanceof SignBlockEntity signEntity) {
             Component[] newLines = new Component[4];
             
-            newLines[0] = Component.literal(SHOP_HEADER).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_BLUE));
-            newLines[1] = Component.literal(quantity + "x " + getShortItemName(item)).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE));
+            // Enhanced header with better styling
+            newLines[0] = Component.literal("[SHOP]").setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_BLUE).withBold(true));
             
+            // Enhanced item display with quantity and smart abbreviation
+            String itemDisplay = quantity + "x " + getShortItemName(item);
+            newLines[1] = Component.literal(itemDisplay).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE));
+            
+            // Enhanced pricing display with better formatting
             if (buyPrice > 0 && sellPrice > 0) {
-                newLines[2] = Component.literal("Buy: $" + String.format("%.2f", buyPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
-                newLines[3] = Component.literal("Sell: $" + String.format("%.2f", sellPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                newLines[2] = Component.literal("Buy: $" + formatPrice(buyPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
+                newLines[3] = Component.literal("Sell: $" + formatPrice(sellPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
             } else if (buyPrice > 0) {
-                newLines[2] = Component.literal("Buy: $" + String.format("%.2f", buyPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
-                newLines[3] = Component.literal("(Buy Only)").setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY));
+                newLines[2] = Component.literal("Buy: $" + formatPrice(buyPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
+                newLines[3] = Component.literal("(Buy Only)").setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY).withItalic(true));
             } else {
-                newLines[2] = Component.literal("Sell: $" + String.format("%.2f", sellPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
-                newLines[3] = Component.literal("(Sell Only)").setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY));
+                newLines[2] = Component.literal("Sell: $" + formatPrice(sellPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                newLines[3] = Component.literal("(Sell Only)").setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY).withItalic(true));
             }
             
             // Update sign text using the correct method  
@@ -618,38 +693,91 @@ public class SignShopHandler {
     }
     
     /**
-     * Get a shortened item name for display on signs
+     * Format price for display with smart decimal handling
      */
-    private String getShortItemName(ItemStack item) {
-        String fullName = item.getDisplayName().getString();
-        return fullName.length() > 12 ? fullName.substring(0, 12) : fullName;
+    private String formatPrice(double price) {
+        if (price == (long) price) {
+            return String.format("%.0f", price);
+        } else {
+            return String.format("%.2f", price);
+        }
     }
     
     /**
-     * Update the text on a sign shop with admin shop support
+     * Get a shortened item name for display on signs with smart abbreviation
+     */
+    private String getShortItemName(ItemStack item) {
+        String fullName = item.getDisplayName().getString();
+        
+        // Enhanced name shortening with intelligent abbreviations
+        if (fullName.length() <= 12) {
+            return fullName;
+        }
+        
+        // Smart abbreviations for common items
+        String shortName = fullName
+            .replace("Minecraft:", "")
+            .replace("Block of ", "")
+            .replace("Cooked ", "C.")
+            .replace("Diamond ", "Dia.")
+            .replace("Iron ", "Fe.")
+            .replace("Gold ", "Au.")
+            .replace("Emerald ", "Em.")
+            .replace("Netherite ", "Neth.")
+            .replace("Enchanted ", "Ench.")
+            .replace("Potion of ", "Pot.")
+            .replace("Sword", "Swd")
+            .replace("Pickaxe", "Pick")
+            .replace("Shovel", "Shvl")
+            .replace("Helmet", "Helm")
+            .replace("Chestplate", "Chest")
+            .replace("Leggings", "Legs")
+            .replace("Boots", "Boot");
+        
+        // If still too long, use first 12 characters with ellipsis indicator
+        if (shortName.length() > 12) {
+            shortName = shortName.substring(0, 9) + "...";
+        }
+        
+        return shortName;
+    }
+    
+    /**
+     * Update the text on a sign shop with admin shop support and enhanced visuals
      */
     private void updateSignText(Level level, BlockPos pos, ItemStack item, double buyPrice, double sellPrice, int quantity, boolean isAdminShop) {
         if (level.getBlockEntity(pos) instanceof SignBlockEntity signEntity) {
             Component[] newLines = new Component[4];
             
-            // Set header based on shop type
+            // Enhanced header based on shop type with better styling
             if (isAdminShop) {
-                newLines[0] = Component.literal("[Admin Shop]").setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD));
+                newLines[0] = Component.literal("[ADMIN SHOP]").setStyle(Style.EMPTY.withColor(ChatFormatting.GOLD).withBold(true));
             } else {
-                newLines[0] = Component.literal(SHOP_HEADER).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_BLUE));
+                newLines[0] = Component.literal(SHOP_HEADER).setStyle(Style.EMPTY.withColor(ChatFormatting.DARK_BLUE).withBold(true));
             }
             
-            newLines[1] = Component.literal(quantity + "x " + getShortItemName(item)).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE));
+            // Enhanced item display with quantity and smart abbreviation
+            String itemDisplay = quantity + "x " + getShortItemName(item);
+            newLines[1] = Component.literal(itemDisplay).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE));
             
+            // Enhanced pricing display with better formatting
             if (buyPrice > 0 && sellPrice > 0) {
-                newLines[2] = Component.literal("Buy: $" + String.format("%.2f", buyPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
-                newLines[3] = Component.literal("Sell: $" + String.format("%.2f", sellPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                newLines[2] = Component.literal("Buy: $" + formatPrice(buyPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
+                newLines[3] = Component.literal("Sell: $" + formatPrice(sellPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
             } else if (buyPrice > 0) {
-                newLines[2] = Component.literal("Buy: $" + String.format("%.2f", buyPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
-                newLines[3] = Component.literal("(Buy Only)").setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY));
+                newLines[2] = Component.literal("Buy: $" + formatPrice(buyPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
+                if (isAdminShop) {
+                    newLines[3] = Component.literal("(∞ Stock)").setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA).withItalic(true));
+                } else {
+                    newLines[3] = Component.literal("(Buy Only)").setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY).withItalic(true));
+                }
             } else {
-                newLines[2] = Component.literal("Sell: $" + String.format("%.2f", sellPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
-                newLines[3] = Component.literal("(Sell Only)").setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY));
+                newLines[2] = Component.literal("Sell: $" + formatPrice(sellPrice)).setStyle(Style.EMPTY.withColor(ChatFormatting.RED));
+                if (isAdminShop) {
+                    newLines[3] = Component.literal("(∞ Funds)").setStyle(Style.EMPTY.withColor(ChatFormatting.AQUA).withItalic(true));
+                } else {
+                    newLines[3] = Component.literal("(Sell Only)").setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY).withItalic(true));
+                }
             }
             
             // Update sign text using the correct method  
@@ -665,7 +793,7 @@ public class SignShopHandler {
     }
     
     /**
-     * Check if the shop's chest has enough items for a purchase
+     * Check if the shop's chest has enough items for a purchase with enhanced efficiency
      */
     private boolean hasChestStock(Level level, ShopManager.SignShop signShop) {
         // Admin shops have unlimited stock
@@ -679,7 +807,7 @@ public class SignShopHandler {
             return false; // No chest connected
         }
         
-        LOGGER.info("STOCK CHECK: Checking chest at {} for shop at {} owned by {}", 
+        LOGGER.debug("STOCK CHECK: Checking chest at {} for shop at {} owned by {}", 
                    chestPos, signShop.getSignPos(), signShop.getOwnerId());
         
         if (level.getBlockEntity(chestPos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
@@ -687,18 +815,25 @@ public class SignShopHandler {
             int requiredQuantity = signShop.getQuantity();
             int availableCount = 0;
             
-            // Count matching items in chest
+            // Enhanced counting with early exit optimization
             for (int i = 0; i < chestEntity.getContainerSize(); i++) {
                 ItemStack stack = chestEntity.getItem(i);
                 if (ItemStack.isSameItem(stack, shopItem)) {
                     availableCount += stack.getCount();
+                    // Early exit if we already have enough
+                    if (availableCount >= requiredQuantity) {
+                        LOGGER.debug("STOCK RESULT: Early exit - found sufficient stock ({} >= {})", 
+                                   availableCount, requiredQuantity);
+                        return true;
+                    }
                 }
             }
             
-            LOGGER.info("STOCK RESULT: Shop needs {} {}, chest has {} - Stock available: {}", 
-                       requiredQuantity, shopItem.getDisplayName().getString(), availableCount, availableCount >= requiredQuantity);
+            boolean hasStock = availableCount >= requiredQuantity;
+            LOGGER.debug("STOCK RESULT: Shop needs {} {}, chest has {} - Stock available: {}", 
+                       requiredQuantity, shopItem.getDisplayName().getString(), availableCount, hasStock);
             
-            return availableCount >= requiredQuantity;
+            return hasStock;
         }
         
         LOGGER.warn("STOCK CHECK: No chest entity found at {}", chestPos);

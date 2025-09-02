@@ -25,7 +25,32 @@ import net.minecraft.world.effect.MobEffects;
  * @author ZeroG
  * @since 2.0.0
  */
-public class HealCommand {
+public class HealCommand implements IEssentialCommand {
+    
+    @Override
+    public String getCommandName() {
+        return "heal";
+    }
+    
+    @Override
+    public String getDescription() {
+        return "Restore a player's health and hunger to full";
+    }
+    
+    @Override
+    public String getUsage() {
+        return "/heal [player]";
+    }
+    
+    @Override
+    public String[] getAliases() {
+        return new String[0];
+    }
+    
+    @Override
+    public String getPermission() {
+        return PermissionNodes.HEAL_SELF;
+    }
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /heal - Heal yourself

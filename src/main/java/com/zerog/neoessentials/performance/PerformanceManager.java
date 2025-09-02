@@ -14,7 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.LinkedHashMap;
 
 /**
  * Performance monitoring and optimization system for NeoEssentials
@@ -26,35 +27,54 @@ import java.util.concurrent.atomic.AtomicLong;
 public class PerformanceManager {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(PerformanceManager.class);
-    private static PerformanceManager instance;
+    private static volatile PerformanceManager instance;
     
     // Performance monitoring
     private final ScheduledExecutorService scheduler;
     private final MemoryMXBean memoryBean;
-    private final Map<String, Long> commandExecutionTimes;
-    private final Map<String, AtomicLong> commandExecutionCounts;
     
-    // Caching system
+    // Optimized command tracking - using LongAdder for better performance under contention
+    private final Map<String, LongAdder> commandExecutionCounts;
+    private final Map<String, LongAdder> commandExecutionTimes;
+    
+    // Optimized LRU cache with better memory usage
     private final Map<String, CacheEntry> cache;
-    private final long cacheMaxSize;
+    private final int cacheMaxSize;
     private final long cacheExpirationTime;
     
-    // Performance metrics
-    private final AtomicLong totalCommandsExecuted;
-    private final AtomicLong totalExecutionTime;
+    // Performance metrics - using LongAdder for better concurrent performance
+    private final LongAdder totalCommandsExecuted;
+    private final LongAdder totalExecutionTime;
     private volatile double averageCommandTime;
     private volatile boolean performanceMonitoringEnabled;
+    
+    // Memory optimization: Reuse objects
+    private final ThreadLocal<StringBuilder> stringBuilder = ThreadLocal.withInitial(() -> new StringBuilder(256));
+    private volatile long lastCleanupTime = 0;
+    private static final long CLEANUP_INTERVAL = 60000; // 1 minute
     
     private PerformanceManager() {
         this.scheduler = Executors.newScheduledThreadPool(2);
         this.memoryBean = ManagementFactory.getMemoryMXBean();
+        
+        // Initialize optimized collections
         this.commandExecutionTimes = new ConcurrentHashMap<>();
         this.commandExecutionCounts = new ConcurrentHashMap<>();
-        this.cache = new ConcurrentHashMap<>();
-        this.cacheMaxSize = 1000; // Maximum cache entries
-        this.cacheExpirationTime = 300000; // 5 minutes in milliseconds
-        this.totalCommandsExecuted = new AtomicLong(0);
-        this.totalExecutionTime = new AtomicLong(0);
+        
+        // Initialize LRU cache with memory optimization
+        this.cacheMaxSize = 1000; // Limit cache size
+        this.cacheExpirationTime = 300000; // 5 minutes
+        this.cache = new LinkedHashMap<String, CacheEntry>(16, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String, CacheEntry> eldest) {
+                return size() > cacheMaxSize || 
+                       System.currentTimeMillis() - eldest.getValue().timestamp > cacheExpirationTime;
+            }
+        };
+        
+        // Initialize performance counters with better concurrency
+        this.totalCommandsExecuted = new LongAdder();
+        this.totalExecutionTime = new LongAdder();
         this.performanceMonitoringEnabled = true;
         
         startPerformanceMonitoring();
@@ -82,15 +102,22 @@ public class PerformanceManager {
     }
     
     /**
-     * Track command execution time
+     * Track command execution time - optimized for memory and concurrency
      */
     public void trackCommandExecution(String commandName, long executionTimeMs) {
         if (!performanceMonitoringEnabled) return;
         
-        commandExecutionTimes.put(commandName + "_" + System.currentTimeMillis(), executionTimeMs);
-        commandExecutionCounts.computeIfAbsent(commandName, k -> new AtomicLong(0)).incrementAndGet();
-        totalCommandsExecuted.incrementAndGet();
-        totalExecutionTime.addAndGet(executionTimeMs);
+        // Store execution time efficiently using LongAdder
+        LongAdder timeAdder = commandExecutionTimes.computeIfAbsent(commandName, k -> new LongAdder());
+        timeAdder.add(executionTimeMs);
+        
+        // Increment command count
+        LongAdder countAdder = commandExecutionCounts.computeIfAbsent(commandName, k -> new LongAdder());
+        countAdder.increment();
+        
+        // Update totals efficiently
+        totalCommandsExecuted.increment();
+        totalExecutionTime.add(executionTimeMs);
     }
     
     /**
@@ -154,7 +181,7 @@ public class PerformanceManager {
      */
     public PerformanceStats getPerformanceStats() {
         return new PerformanceStats(
-            totalCommandsExecuted.get(),
+            totalCommandsExecuted.sum(),
             averageCommandTime,
             getMemoryUsagePercentage(),
             cache.size(),
@@ -211,12 +238,36 @@ public class PerformanceManager {
     }
     
     /**
-     * Cleanup expired cache entries
+     * Cleanup expired cache entries with optimized timing
      */
     private void cleanupCache() {
         long currentTime = System.currentTimeMillis();
-        cache.entrySet().removeIf(entry -> 
-            currentTime - entry.getValue().timestamp > cacheExpirationTime);
+        
+        // Only cleanup if enough time has passed (rate limiting)
+        if (currentTime - lastCleanupTime < CLEANUP_INTERVAL) {
+            return;
+        }
+        
+        // Use StringBuilder for efficient string operations
+        StringBuilder logBuilder = stringBuilder.get();
+        logBuilder.setLength(0); // Reset
+        
+        cache.entrySet().removeIf(entry -> {
+            boolean expired = currentTime - entry.getValue().timestamp > cacheExpirationTime;
+            if (expired) {
+                if (logBuilder.length() == 0) {
+                    logBuilder.append("Cleaned expired cache entries: ");
+                }
+                logBuilder.append(entry.getKey()).append(" ");
+            }
+            return expired;
+        });
+        
+        lastCleanupTime = currentTime;
+        
+        if (logBuilder.length() > 0) {
+            LOGGER.debug(logBuilder.toString());
+        }
     }
     
     /**
@@ -235,8 +286,8 @@ public class PerformanceManager {
      * Calculate performance metrics
      */
     private void calculateMetrics() {
-        long totalCommands = totalCommandsExecuted.get();
-        long totalTime = totalExecutionTime.get();
+        long totalCommands = totalCommandsExecuted.sum();
+        long totalTime = totalExecutionTime.sum();
         
         if (totalCommands > 0) {
             averageCommandTime = (double) totalTime / totalCommands;
@@ -258,16 +309,14 @@ public class PerformanceManager {
         Map<String, Double> averageTimes = new HashMap<>();
         
         // Calculate average execution time per command
-        for (Map.Entry<String, AtomicLong> entry : commandExecutionCounts.entrySet()) {
+        for (Map.Entry<String, LongAdder> entry : commandExecutionCounts.entrySet()) {
             String command = entry.getKey();
-            long count = entry.getValue().get();
+            long count = entry.getValue().sum();
             
-            long totalTimeForCommand = commandExecutionTimes.entrySet().stream()
-                .filter(e -> e.getKey().startsWith(command + "_"))
-                .mapToLong(Map.Entry::getValue)
-                .sum();
-            
-            if (count > 0) {
+            // Get total time for this command
+            LongAdder timeAdder = commandExecutionTimes.get(command);
+            if (timeAdder != null && count > 0) {
+                long totalTimeForCommand = timeAdder.sum();
                 averageTimes.put(command, (double) totalTimeForCommand / count);
             }
         }
@@ -283,10 +332,10 @@ public class PerformanceManager {
      */
     private Map<String, Long> getMostUsedCommands(int limit) {
         return commandExecutionCounts.entrySet().stream()
-            .sorted(Map.Entry.<String, AtomicLong>comparingByValue((a, b) -> 
-                Long.compare(b.get(), a.get())))
+            .sorted(Map.Entry.<String, LongAdder>comparingByValue((a, b) -> 
+                Long.compare(b.sum(), a.sum())))
             .limit(limit)
-            .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue().get()), HashMap::putAll);
+            .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue().sum()), HashMap::putAll);
     }
     
     /**
@@ -312,7 +361,7 @@ public class PerformanceManager {
         metrics.put("cacheMaxSize", cacheMaxSize);
         
         // Performance metrics
-        metrics.put("totalCommands", totalCommandsExecuted.get());
+        metrics.put("totalCommands", totalCommandsExecuted.sum());
         metrics.put("averageCommandTime", averageCommandTime);
         
         return metrics;

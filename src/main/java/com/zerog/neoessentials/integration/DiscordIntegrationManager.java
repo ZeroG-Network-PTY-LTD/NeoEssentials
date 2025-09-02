@@ -1,10 +1,8 @@
 package com.zerog.neoessentials.integration;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
 import com.zerog.neoessentials.config.TablistConfig;
 import com.zerog.neoessentials.placeholders.PlaceholderManager;
@@ -27,8 +25,6 @@ public class DiscordIntegrationManager {
     private static DiscordIntegrationManager instance;
     private TablistConfig.DiscordIntegration config;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
-    private final Map<UUID, DiscordPlayerData> playerDataCache = new ConcurrentHashMap<>();
-    private long lastStatusUpdate = 0;
     private int tickCounter = 0;
     
     private DiscordIntegrationManager() {
@@ -321,7 +317,6 @@ public class DiscordIntegrationManager {
             JsonObject embed = createStatusEmbed();
             sendDiscordEmbed(embed, config.statusUpdates.channel);
             
-            lastStatusUpdate = System.currentTimeMillis();
             DebugUtil.debugLog("[DiscordIntegrationManager] Sent status update to Discord");
             
         } catch (Exception e) {

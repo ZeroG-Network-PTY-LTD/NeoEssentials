@@ -230,7 +230,7 @@ public class SignShopCommand {
     }
     
     /**
-     * Get information about a sign shop
+     * Get detailed information about a sign shop with enhanced display
      */
     private static int getSignShopInfo(CommandContext<CommandSourceStack> context) {
         if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
@@ -238,48 +238,130 @@ public class SignShopCommand {
             return 0;
         }
         
-        // Get the sign the player is looking at
-        HitResult hitResult = player.pick(5.0, 0.0f, false);
-        if (!(hitResult instanceof BlockHitResult blockHit)) {
-            player.sendSystemMessage(Component.literal("§cYou must be looking at a sign!"));
+        try {
+            // Get the sign the player is looking at
+            HitResult hitResult = player.pick(5.0, 0.0f, false);
+            if (!(hitResult instanceof BlockHitResult blockHit)) {
+                player.sendSystemMessage(Component.literal("§c✗ No Target!")
+                    .append(Component.literal("\n§7You must be looking at a sign shop.")));
+                return 0;
+            }
+            
+            BlockPos signPos = blockHit.getBlockPos();
+            ShopManager shopManager = ShopManager.getInstance();
+            if (shopManager == null) {
+                player.sendSystemMessage(Component.literal("§c✗ System Error!")
+                    .append(Component.literal("\n§7Shop system is not available.")));
+                return 0;
+            }
+            
+            // Find the sign shop with enhanced error handling
+            ShopManager.SignShop signShop = shopManager.getSignShops().stream()
+                    .filter(shop -> shop.getSignPos().equals(signPos))
+                    .findFirst()
+                    .orElse(null);
+            
+            if (signShop == null) {
+                player.sendSystemMessage(Component.literal("§c✗ Not a Shop!")
+                    .append(Component.literal("\n§7No sign shop found at this location."))
+                    .append(Component.literal("\n§7Make sure you're looking at a shop sign.")));
+                return 0;
+            }
+            
+            // Enhanced shop information display
+            boolean isAdminShop = "SERVER".equals(signShop.getOwnerId());
+            
+            player.sendSystemMessage(Component.literal("§6╔═══════════════════════════════════════╗"));
+            player.sendSystemMessage(Component.literal("§6║           §lSHOP INFORMATION§r§6           ║"));
+            player.sendSystemMessage(Component.literal("§6╚═══════════════════════════════════════╝"));
+            player.sendSystemMessage(Component.literal(""));
+            
+            // Shop type and ownership
+            if (isAdminShop) {
+                player.sendSystemMessage(Component.literal("§6✦ Type: §eAdmin Shop §7(Server-owned)"));
+            } else {
+                player.sendSystemMessage(Component.literal("§9✦ Type: §bPlayer Shop"));
+                // Try to get owner name
+                String ownerName = signShop.getOwnerId();
+                try {
+                    java.util.UUID ownerUUID = java.util.UUID.fromString(signShop.getOwnerId());
+                    net.minecraft.server.MinecraftServer server = player.getServer();
+                    if (server != null) {
+                        net.minecraft.server.level.ServerPlayer ownerPlayer = server.getPlayerList().getPlayer(ownerUUID);
+                        if (ownerPlayer != null) {
+                            ownerName = ownerPlayer.getName().getString();
+                        }
+                    }
+                } catch (Exception e) {
+                    // Keep UUID if name lookup fails
+                }
+                player.sendSystemMessage(Component.literal("§9✦ Owner: §f" + ownerName));
+            }
+            
+            // Item information
+            player.sendSystemMessage(Component.literal("§a✦ Item: §f" + signShop.getItem().getDisplayName().getString()));
+            player.sendSystemMessage(Component.literal("§a✦ Quantity per Transaction: §f" + signShop.getQuantity()));
+            
+            // Stock information
+            if (isAdminShop) {
+                player.sendSystemMessage(Component.literal("§b✦ Stock: §e∞ §7(Unlimited)"));
+            } else {
+                // Check actual chest stock
+                if (signShop.getChestPos() != null) {
+                    try {
+                        int actualStock = 0;
+                        if (player.level().getBlockEntity(signShop.getChestPos()) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity) {
+                            for (int i = 0; i < chestEntity.getContainerSize(); i++) {
+                                ItemStack stack = chestEntity.getItem(i);
+                                if (ItemStack.isSameItem(stack, signShop.getItem())) {
+                                    actualStock += stack.getCount();
+                                }
+                            }
+                        }
+                        
+                        String stockStatus = actualStock >= signShop.getQuantity() ? "§a✓ In Stock" : "§c✗ Low Stock";
+                        player.sendSystemMessage(Component.literal("§b✦ Stock: §f" + actualStock + " §7(" + stockStatus + "§7)"));
+                    } catch (Exception e) {
+                        player.sendSystemMessage(Component.literal("§b✦ Stock: §7Could not check chest"));
+                    }
+                } else {
+                    player.sendSystemMessage(Component.literal("§b✦ Stock: §c✗ No chest connected"));
+                }
+            }
+            
+            // Pricing information
+            player.sendSystemMessage(Component.literal(""));
+            if (signShop.getBuyPrice() > 0) {
+                String costPerItem = String.format("%.2f", signShop.getBuyPrice() / signShop.getQuantity());
+                player.sendSystemMessage(Component.literal("§2▸ Buy Price: §a$" + String.format("%.2f", signShop.getBuyPrice()) + 
+                    " §7($" + costPerItem + " per item)"));
+            } else {
+                player.sendSystemMessage(Component.literal("§2▸ Buy Price: §7Not available"));
+            }
+            
+            if (signShop.getSellPrice() > 0) {
+                String pricePerItem = String.format("%.2f", signShop.getSellPrice() / signShop.getQuantity());
+                player.sendSystemMessage(Component.literal("§4▸ Sell Price: §c$" + String.format("%.2f", signShop.getSellPrice()) + 
+                    " §7($" + pricePerItem + " per item)"));
+            } else {
+                player.sendSystemMessage(Component.literal("§4▸ Sell Price: §7Not available"));
+            }
+            
+            // Location information
+            player.sendSystemMessage(Component.literal(""));
+            player.sendSystemMessage(Component.literal("§e✦ Location: §f" + signShop.getSignPos().toShortString()));
+            if (signShop.getChestPos() != null) {
+                player.sendSystemMessage(Component.literal("§e✦ Connected Chest: §f" + signShop.getChestPos().toShortString()));
+            }
+            
+            return 1;
+        } catch (Exception e) {
+            player.sendSystemMessage(Component.literal("§c✗ Error!")
+                .append(Component.literal("\n§7Failed to retrieve shop information."))
+                .append(Component.literal("\n§7Please try again.")));
+            LOGGER.error("Error getting shop info for player {}", player.getName().getString(), e);
             return 0;
         }
-        
-        BlockPos signPos = blockHit.getBlockPos();
-        ShopManager shopManager = ShopManager.getInstance();
-        if (shopManager == null) {
-            player.sendSystemMessage(Component.literal("§cShop system is not available!"));
-            return 0;
-        }
-        
-        // Find the sign shop
-        ShopManager.SignShop signShop = shopManager.getSignShops().stream()
-                .filter(shop -> shop.getSignPos().equals(signPos))
-                .findFirst()
-                .orElse(null);
-        
-        if (signShop == null) {
-            player.sendSystemMessage(Component.literal("§cNo sign shop found at this location!"));
-            return 0;
-        }
-        
-        // Display shop information
-        player.sendSystemMessage(Component.literal("§6=== Sign Shop Information ==="));
-        player.sendSystemMessage(Component.literal("§eItem: §f" + signShop.getItem().getDisplayName().getString()));
-        player.sendSystemMessage(Component.literal("§eQuantity: §f" + signShop.getQuantity()));
-        player.sendSystemMessage(Component.literal("§eStock: §f" + signShop.getStock()));
-        
-        if (signShop.getBuyPrice() > 0) {
-            player.sendSystemMessage(Component.literal("§eBuy Price: §a$" + String.format("%.2f", signShop.getBuyPrice())));
-        }
-        
-        if (signShop.getSellPrice() > 0) {
-            player.sendSystemMessage(Component.literal("§eSell Price: §c$" + String.format("%.2f", signShop.getSellPrice())));
-        }
-        
-        player.sendSystemMessage(Component.literal("§eOwner: §f" + signShop.getOwnerId()));
-        
-        return 1;
     }
     
     /**
@@ -368,25 +450,57 @@ public class SignShopCommand {
     }
     
     /**
-     * Show help for sign shop commands
+     * Show enhanced help for sign shop commands with detailed guidance
      */
     private static int showHelp(CommandContext<CommandSourceStack> context) {
-        context.getSource().sendSuccess(() -> Component.literal("§6=== Sign Shop Commands ==="), false);
-        context.getSource().sendSuccess(() -> Component.literal("§e/signshop create <item> <quantity> <buy_price> [sell_price]"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§7  Create a new sign shop (look at a sign)"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§e/signshop adminshop create <item> <quantity> <buy_price> [sell_price]"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§7  Create an admin shop with unlimited stock"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§e/signshop remove"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§7  Remove a sign shop (look at the sign)"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§e/signshop info"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§7  Get information about a sign shop"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§e/signshop list [player]"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§7  List all sign shops or shops for a player"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§6╔═══════════════════════════════════════╗"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§6║           §lSIGN SHOP SYSTEM§r§6           ║"), false);
+        context.getSource().sendSuccess(() -> Component.literal("§6╚═══════════════════════════════════════╝"), false);
         context.getSource().sendSuccess(() -> Component.literal(""), false);
-        context.getSource().sendSuccess(() -> Component.literal("§6Sign Shop Usage:"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§7- Left click to buy from shop"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§7- Sneak + left click to sell to shop"), false);
-        context.getSource().sendSuccess(() -> Component.literal("§7- Admin shops have unlimited stock"), false);
+        
+        context.getSource().sendSuccess(() -> Component.literal("§a✦ Creating Shops:"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §e/signshop create <item> <qty> <buy_price> [sell_price]"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7└ Create a player shop (look at a sign, need nearby chest)"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7└ Example: §f/signshop create diamond 1 10.0 5.0"), false);
+        context.getSource().sendSuccess(() -> Component.literal(""), false);
+        
+        context.getSource().sendSuccess(() -> Component.literal("  §e/signshop adminshop create <item> <qty> <buy_price> [sell_price]"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7└ Create an admin shop (unlimited stock/funds)"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7└ Requires admin permissions"), false);
+        context.getSource().sendSuccess(() -> Component.literal(""), false);
+        
+        context.getSource().sendSuccess(() -> Component.literal("§b✦ Managing Shops:"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §e/signshop remove"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7└ Remove a shop (look at the sign, must be owner/admin)"), false);
+        context.getSource().sendSuccess(() -> Component.literal(""), false);
+        
+        context.getSource().sendSuccess(() -> Component.literal("  §e/signshop info"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7└ Get detailed information about a shop"), false);
+        context.getSource().sendSuccess(() -> Component.literal(""), false);
+        
+        context.getSource().sendSuccess(() -> Component.literal("  §e/signshop list [player]"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7└ List all shops or shops for a specific player"), false);
+        context.getSource().sendSuccess(() -> Component.literal(""), false);
+        
+        context.getSource().sendSuccess(() -> Component.literal("  §e/signshop refresh"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7└ Refresh all shop sign displays (admin only)"), false);
+        context.getSource().sendSuccess(() -> Component.literal(""), false);
+        
+        context.getSource().sendSuccess(() -> Component.literal("§d✦ Using Shops:"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §a▸ Left Click§7: Buy items from the shop"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §c▸ Shift + Left Click§7: Sell items to the shop"), false);
+        context.getSource().sendSuccess(() -> Component.literal(""), false);
+        
+        context.getSource().sendSuccess(() -> Component.literal("§f✦ Shop Types:"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §9[SHOP]§7: Player shop (limited by chest contents)"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §6[ADMIN SHOP]§7: Server shop (unlimited stock/funds)"), false);
+        context.getSource().sendSuccess(() -> Component.literal(""), false);
+        
+        context.getSource().sendSuccess(() -> Component.literal("§e✦ Tips:"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7• Place a chest within 3 blocks of your sign"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7• Buy price must be higher than sell price"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7• Use §f/signshop info§7 to troubleshoot issues"), false);
+        context.getSource().sendSuccess(() -> Component.literal("  §7• Stock depends on chest contents for player shops"), false);
         
         return 1;
     }

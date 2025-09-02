@@ -7,50 +7,95 @@ import java.util.stream.Collectors;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
 import com.zerog.neoessentials.util.MessageUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.util.ErrorHandler;
 
 /**
- * NeoEssentials Summary Command - Shows all available features
+ * NeoEssentials Main Command - Shows all available commands with tab completion
  * 
  * Commands:
  * - /neoessentials - Shows main information and feature list
+ * - /neoessentials <command> - Tab completion for all available commands
  * - /ne - Alias for /neoessentials
  * 
  * @author ZeroG
  * @since 2.0.0
  */
 public class NeoEssentialsCommand {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentialsCommand.class);
+    
+    // All available NeoEssentials commands for tab completion
+    private static final List<String> ALL_COMMANDS = Arrays.asList(
+        // Essential utility commands
+        "heal", "feed", "god", "vanish", "fly", "speed", "gamemode", "gm", "gmc", "gms", "gma", "gmsp",
+        "repair", "time", "weather", "give", "workbench", "anvil",
+        
+        // Moderation commands  
+        "ban", "kick", "mute", "list", "whois", "seen",
+        
+        // Help and info commands
+        "help", "info", "serverinfo", "motd", "rules",
+        
+        // Communication commands
+        "msg", "tell", "reply", "r", "mail", "broadcast", "ignore", "unignore",
+        
+        // Teleportation commands
+        "teleport", "tp", "tpa", "tpaccept", "tpdeny", "back", "spawn", "setspawn",
+        
+        // Home and warp commands
+        "home", "sethome", "delhome", "homes", "warp", "setwarp", "delwarp", "warps",
+        
+        // Economy commands
+        "balance", "bal", "pay", "economy", "eco", "kit", "kits",
+        
+        // Player features
+        "nick", "afk", "playtime", "achievements", "preferences",
+        
+        // Admin commands
+        "config", "language", "lang", "permissions", "bossbar", "neoanimations",
+        "placeholder", "webdashboard", "status",
+        
+        // Shop commands
+        "signshop", "shop",
+        
+        // NeoEssentials specific commands
+        "neoessentials", "ne", "version", "features", "commands"
+    );
+    
+    // Tab completion suggestion provider for all commands
+    private static final SuggestionProvider<CommandSourceStack> COMMAND_SUGGESTIONS = (context, builder) -> {
+        return SharedSuggestionProvider.suggest(ALL_COMMANDS, builder);
+    };
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // Main command
+        // Main command with tab completion for all available commands
         dispatcher.register(Commands.literal("neoessentials")
             .executes(NeoEssentialsCommand::executeMainCommand)
-        );
-        
-        // Alias
-        dispatcher.register(Commands.literal("ne")
-            .executes(NeoEssentialsCommand::executeMainCommand)
-        );
-        
-        // Version command
-        dispatcher.register(Commands.literal("neoessentials")
+            .then(Commands.argument("command", StringArgumentType.word())
+                .suggests(COMMAND_SUGGESTIONS)
+                .executes(NeoEssentialsCommand::executeCommandHelp))
             .then(Commands.literal("version")
                 .executes(NeoEssentialsCommand::executeVersionCommand))
-        );
-        
-        // Features command
-        dispatcher.register(Commands.literal("neoessentials")
             .then(Commands.literal("features")
                 .executes(NeoEssentialsCommand::executeFeaturesCommand))
+            .then(Commands.literal("commands")
+                .executes(NeoEssentialsCommand::executeCommandsCommand))
         );
         
-        // Commands list
-        dispatcher.register(Commands.literal("neoessentials")
+        // Alias with same functionality
+        dispatcher.register(Commands.literal("ne")
+            .executes(NeoEssentialsCommand::executeMainCommand)
+            .then(Commands.argument("command", StringArgumentType.word())
+                .suggests(COMMAND_SUGGESTIONS)
+                .executes(NeoEssentialsCommand::executeCommandHelp))
+            .then(Commands.literal("version")
+                .executes(NeoEssentialsCommand::executeVersionCommand))
+            .then(Commands.literal("features")
+                .executes(NeoEssentialsCommand::executeFeaturesCommand))
             .then(Commands.literal("commands")
                 .executes(NeoEssentialsCommand::executeCommandsCommand))
         );
@@ -64,6 +109,9 @@ public class NeoEssentialsCommand {
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.main.title"));
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.main.subtitle"));
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.main.header"));
+                MessageUtil.sendMessage(player, "");
+                MessageUtil.sendMessage(player, "§6Available Commands (use tab completion):§r");
+                MessageUtil.sendMessage(player, "§7Type §e/neoessentials <command>§7 and press TAB to see all available commands§r");
                 MessageUtil.sendMessage(player, "");
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.main.available.commands"));
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.main.features"));
@@ -81,7 +129,55 @@ public class NeoEssentialsCommand {
             
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Error executing NeoEssentials main command", e);
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.COMMAND_EXECUTION,
+                ErrorHandler.ErrorSeverity.MEDIUM,
+                "NeoEssentials Main Command", e, context.getSource().getPlayer());
+            return 0;
+        }
+    }
+    
+    private static int executeCommandHelp(CommandContext<CommandSourceStack> context) {
+        try {
+            var player = context.getSource().getPlayer();
+            String commandName = StringArgumentType.getString(context, "command");
+            
+            if (player != null) {
+                MessageUtil.sendMessage(player, "§6=== NeoEssentials Command Help ===§r");
+                MessageUtil.sendMessage(player, "§7Command: §e/" + commandName + "§r");
+                MessageUtil.sendMessage(player, "");
+                
+                if (ALL_COMMANDS.contains(commandName.toLowerCase())) {
+                    MessageUtil.sendMessage(player, "§aThis command is available in NeoEssentials!§r");
+                    MessageUtil.sendMessage(player, "§7Try running: §e/" + commandName + "§r");
+                    MessageUtil.sendMessage(player, "");
+                    MessageUtil.sendMessage(player, "§7For detailed help on this command, try:§r");
+                    MessageUtil.sendMessage(player, "§e/" + commandName + " help§r (if available)");
+                    MessageUtil.sendMessage(player, "§e/help " + commandName + "§r");
+                } else {
+                    MessageUtil.sendMessage(player, "§cCommand not found in NeoEssentials.§r");
+                    MessageUtil.sendMessage(player, "§7Available commands:§r");
+                    
+                    // Show similar commands
+                    List<String> similar = ALL_COMMANDS.stream()
+                        .filter(cmd -> cmd.contains(commandName.toLowerCase()) || commandName.toLowerCase().contains(cmd))
+                        .collect(Collectors.toList());
+                    
+                    if (!similar.isEmpty()) {
+                        MessageUtil.sendMessage(player, "§7Did you mean: §e" + String.join("§7, §e", similar) + "§r");
+                    }
+                }
+                
+                MessageUtil.sendMessage(player, "");
+                MessageUtil.sendMessage(player, "§7Use §e/neoessentials commands§7 to see all available commands§r");
+            }
+            
+            return 1;
+        } catch (Exception e) {
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.COMMAND_EXECUTION,
+                ErrorHandler.ErrorSeverity.MEDIUM,
+                "Command Help", e, context.getSource().getPlayer());
             return 0;
         }
     }
@@ -114,7 +210,10 @@ public class NeoEssentialsCommand {
             
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Error executing version command", e);
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.COMMAND_EXECUTION,
+                ErrorHandler.ErrorSeverity.MEDIUM,
+                "Version Command", e, context.getSource().getPlayer());
             return 0;
         }
     }
@@ -160,7 +259,10 @@ public class NeoEssentialsCommand {
             }
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Error executing features command", e);
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.COMMAND_EXECUTION,
+                ErrorHandler.ErrorSeverity.MEDIUM,
+                "Features Command", e, context.getSource().getPlayer());
             return 0;
         }
     }
@@ -173,41 +275,68 @@ public class NeoEssentialsCommand {
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.title"));
                 MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.separator"));
                 MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.utility.header"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.utility.heal"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.utility.feed"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.utility.god"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.utility.vanish"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.utility.fly"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.utility.speed"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.utility.give"));
+                
+                // Show all available commands in organized categories
+                MessageUtil.sendMessage(player, "§6=== Essential Utility Commands ===§r");
+                MessageUtil.sendMessage(player, "§e/heal, /feed, /god, /vanish, /fly, /speed§r");
+                MessageUtil.sendMessage(player, "§e/gamemode (/gm, /gmc, /gms, /gma, /gmsp)§r");
+                MessageUtil.sendMessage(player, "§e/repair, /give, /workbench, /anvil§r");
                 MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.world.header"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.world.time"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.world.weather"));
+                
+                MessageUtil.sendMessage(player, "§6=== World Management ===§r");
+                MessageUtil.sendMessage(player, "§e/time, /weather§r");
                 MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.interface.header"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.interface.workbench"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.interface.anvil"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.interface.enderchest"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.interface.invsee"));
+                
+                MessageUtil.sendMessage(player, "§6=== Moderation Commands ===§r");
+                MessageUtil.sendMessage(player, "§e/ban, /kick, /mute§r");
+                MessageUtil.sendMessage(player, "§e/list, /whois, /seen§r");
                 MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.gui.header"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.gui.shop"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.gui.menu"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.gui.stats"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.gui.kits"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.gui.warps"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.gui.economy"));
+                
+                MessageUtil.sendMessage(player, "§6=== Communication ===§r");
+                MessageUtil.sendMessage(player, "§e/msg (/tell), /reply (/r), /mail§r");
+                MessageUtil.sendMessage(player, "§e/broadcast, /ignore, /unignore§r");
                 MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.discord.header"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.discord.menu"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.discord.link"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.commands.discord.broadcast"));
+                
+                MessageUtil.sendMessage(player, "§6=== Teleportation ===§r");
+                MessageUtil.sendMessage(player, "§e/teleport (/tp), /tpa, /tpaccept, /tpdeny§r");
+                MessageUtil.sendMessage(player, "§e/back, /spawn, /setspawn§r");
+                MessageUtil.sendMessage(player, "");
+                
+                MessageUtil.sendMessage(player, "§6=== Homes & Warps ===§r");
+                MessageUtil.sendMessage(player, "§e/home, /sethome, /delhome, /homes§r");
+                MessageUtil.sendMessage(player, "§e/warp, /setwarp, /delwarp, /warps§r");
+                MessageUtil.sendMessage(player, "");
+                
+                MessageUtil.sendMessage(player, "§6=== Economy & Items ===§r");
+                MessageUtil.sendMessage(player, "§e/balance (/bal), /pay, /economy (/eco)§r");
+                MessageUtil.sendMessage(player, "§e/kit, /kits, /shop, /signshop§r");
+                MessageUtil.sendMessage(player, "");
+                
+                MessageUtil.sendMessage(player, "§6=== Player Features ===§r");
+                MessageUtil.sendMessage(player, "§e/nick, /afk, /playtime§r");
+                MessageUtil.sendMessage(player, "§e/achievements, /preferences§r");
+                MessageUtil.sendMessage(player, "");
+                
+                MessageUtil.sendMessage(player, "§6=== Information & Help ===§r");
+                MessageUtil.sendMessage(player, "§e/help, /info (/serverinfo), /motd, /rules§r");
+                MessageUtil.sendMessage(player, "§e/neoessentials (/ne), /version, /features§r");
+                MessageUtil.sendMessage(player, "");
+                
+                MessageUtil.sendMessage(player, "§6=== Admin Commands ===§r");
+                MessageUtil.sendMessage(player, "§e/config, /language (/lang), /permissions§r");
+                MessageUtil.sendMessage(player, "§e/bossbar, /neoanimations, /placeholder§r");
+                MessageUtil.sendMessage(player, "§e/webdashboard, /status§r");
+                MessageUtil.sendMessage(player, "");
+                
+                MessageUtil.sendMessage(player, "§7Use §e/neoessentials <command>§7 with tab completion to explore!§r");
+                MessageUtil.sendMessage(player, "§7Total Commands Available: §e" + ALL_COMMANDS.size() + "§r");
             }
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Error executing commands command", e);
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.COMMAND_EXECUTION,
+                ErrorHandler.ErrorSeverity.MEDIUM,
+                "Commands List", e, context.getSource().getPlayer());
             return 0;
         }
     }

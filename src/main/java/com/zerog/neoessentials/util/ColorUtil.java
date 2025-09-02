@@ -34,7 +34,10 @@ public class ColorUtil {
         try {
             return parseColoredText(text);
         } catch (Exception e) {
-            com.zerog.neoessentials.util.DebugUtil.warnLog("Failed to parse colored text: " + text + ", error: " + e.getMessage());
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.VALIDATION,
+                ErrorHandler.ErrorSeverity.LOW,
+                "Color Text Parsing", e);
             return Component.literal(text);
         }
     }
@@ -115,7 +118,10 @@ public class ColorUtil {
             }
             return null;
         } catch (Exception e) {
-            com.zerog.neoessentials.util.DebugUtil.debugLog("Failed to parse color code: " + colorCode + ", error: " + e.getMessage());
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.VALIDATION,
+                ErrorHandler.ErrorSeverity.LOW,
+                "Color Code Parsing", e);
             return null;
         }
     }
@@ -128,7 +134,10 @@ public class ColorUtil {
             int color = Integer.parseInt(hex, 16);
             return Style.EMPTY.withColor(TextColor.fromRgb(color));
         } catch (NumberFormatException e) {
-            com.zerog.neoessentials.util.DebugUtil.debugLog("Invalid hex color: " + hex);
+            ErrorHandler.handleError(
+                ErrorHandler.ErrorCategory.VALIDATION,
+                ErrorHandler.ErrorSeverity.LOW,
+                "Hex Color Parsing", e);
             return null;
         }
     }

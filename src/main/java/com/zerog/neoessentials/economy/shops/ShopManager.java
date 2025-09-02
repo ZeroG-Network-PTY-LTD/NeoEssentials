@@ -342,36 +342,49 @@ public class ShopManager {
     }
     
     public void saveShopsToStorage() {
+        if (signShops.isEmpty()) {
+            LOGGER.debug("No shops to save - skipping storage operation");
+            return;
+        }
+        
         LOGGER.debug("Saving {} sign shops to storage...", signShops.size());
         
         try {
             com.zerog.neoessentials.storage.StorageManager storageManager = 
                 com.zerog.neoessentials.storage.StorageManager.getInstance();
             
-            // Convert SignShop objects to serializable data
+            // Enhanced: Convert SignShop objects to serializable data with error handling
             java.util.Map<String, SignShopData> shopDataMap = new java.util.HashMap<>();
             
             for (ShopManager.SignShop signShop : signShops.values()) {
-                String key = signShop.getSignPos().toShortString();
-                SignShopData shopData = new SignShopData(signShop);
-                shopDataMap.put(key, shopData);
+                try {
+                    String key = signShop.getSignPos().toShortString();
+                    SignShopData shopData = new SignShopData(signShop);
+                    shopDataMap.put(key, shopData);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to serialize shop at {}: {}", signShop.getSignPos(), e.getMessage());
+                    // Continue with other shops instead of failing completely
+                }
             }
             
-            // Save asynchronously
+            LOGGER.debug("Successfully serialized {} out of {} shops for storage", 
+                        shopDataMap.size(), signShops.size());
+            
+            // Enhanced async save with better error handling
             storageManager.saveDataAsync("shops", "signshops", shopDataMap)
                 .thenAccept(success -> {
                     if (success) {
                         LOGGER.debug("Successfully saved {} sign shops to storage", shopDataMap.size());
                     } else {
-                        LOGGER.error("Failed to save sign shops to storage");
+                        LOGGER.error("Failed to save sign shops to storage - storage operation returned false");
                     }
                 })
                 .exceptionally(throwable -> {
-                    LOGGER.error("Exception while saving sign shops to storage", throwable);
+                    LOGGER.error("Exception while saving sign shops to storage: {}", throwable.getMessage());
                     return null;
                 });
         } catch (Exception e) {
-            LOGGER.error("Failed to initialize sign shop saving", e);
+            LOGGER.error("Failed to initialize sign shop saving: {}", e.getMessage(), e);
         }
     }
     
@@ -449,7 +462,7 @@ public class ShopManager {
     
     /**
      * Find the chest that this sign is meant to be connected to
-     * This uses a more precise approach similar to ChestShop plugin
+     * Enhanced with better performance and more intelligent detection
      */
     private BlockPos findNearbyChest(Level level, BlockPos signPos) {
         // First, try to find a chest the sign is directly attached to (for wall signs)
@@ -460,7 +473,7 @@ public class ShopManager {
             net.minecraft.core.Direction facing = signState.getValue(net.minecraft.world.level.block.WallSignBlock.FACING);
             BlockPos attachedPos = signPos.relative(facing.getOpposite());
             
-            LOGGER.info("CHEST DETECTION: Wall sign at {} facing {}, checking attached block at {}", 
+            LOGGER.debug("CHEST DETECTION: Wall sign at {} facing {}, checking attached block at {}", 
                        signPos, facing, attachedPos);
             
             if (level.getBlockState(attachedPos).getBlock() instanceof ChestBlock) {
@@ -469,10 +482,11 @@ public class ShopManager {
             }
         }
         
-        // If not attached to a chest, search for nearby chests in order of proximity
-        // Check directly adjacent blocks first (1 block away in all 6 directions)
+        // Enhanced search pattern: prioritize closer positions first
+        // Check directly adjacent blocks first (6 directions)
         BlockPos[] adjacentPositions = {
-            signPos.north(), signPos.south(), signPos.east(), signPos.west(), signPos.above(), signPos.below()
+            signPos.north(), signPos.south(), signPos.east(), 
+            signPos.west(), signPos.below(), signPos.above()
         };
         
         for (BlockPos checkPos : adjacentPositions) {
@@ -482,22 +496,28 @@ public class ShopManager {
             }
         }
         
-        // If no adjacent chest, search in a smaller 2x2x2 area (more precise than before)
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    if (x == 0 && y == 0 && z == 0) continue; // Skip the sign position itself
-                    
-                    BlockPos checkPos = signPos.offset(x, y, z);
-                    if (level.getBlockState(checkPos).getBlock() instanceof ChestBlock) {
-                        LOGGER.info("CHEST DETECTION: Found nearby chest at {} for sign at {}", checkPos, signPos);
-                        return checkPos;
+        // Enhanced search pattern: check 2-block radius with intelligent ordering
+        // Search in layers: first all positions 2 blocks away, then corners
+        for (int distance = 2; distance <= 3; distance++) {
+            for (int x = -distance; x <= distance; x++) {
+                for (int y = -1; y <= 1; y++) { // Limit Y search to reasonable range
+                    for (int z = -distance; z <= distance; z++) {
+                        // Skip already checked positions
+                        if (Math.abs(x) <= distance - 1 && Math.abs(z) <= distance - 1) continue;
+                        if (x == 0 && y == 0 && z == 0) continue; // Skip sign position
+                        
+                        BlockPos checkPos = signPos.offset(x, y, z);
+                        if (level.getBlockState(checkPos).getBlock() instanceof ChestBlock) {
+                            LOGGER.info("CHEST DETECTION: Found nearby chest at {} (distance {}) for sign at {}", 
+                                      checkPos, distance, signPos);
+                            return checkPos;
+                        }
                     }
                 }
             }
         }
         
-        LOGGER.warn("CHEST DETECTION: No chest found for sign at {}", signPos);
+        LOGGER.warn("CHEST DETECTION: No chest found within 3 blocks for sign at {}", signPos);
         return null; // No chest found
     }
     

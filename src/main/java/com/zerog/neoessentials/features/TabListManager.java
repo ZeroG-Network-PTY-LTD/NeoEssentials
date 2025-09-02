@@ -64,8 +64,8 @@ public class TabListManager {
 
 		// Schedule header/footer refresh if any tablist layout uses this animated placeholder
 		boolean usedInHeaderFooter = false;
-		if (config != null && config.tablistLayouts != null) {
-			for (com.zerog.neoessentials.config.TablistConfig.TablistLayout layout : config.tablistLayouts) {
+		if (config != null && config.tablist.layouts != null) {
+			for (com.zerog.neoessentials.config.TablistConfig.Layout layout : config.tablist.layouts) {
 				for (String headerLine : layout.header) {
 					if (headerLine.contains("${" + placeholderId + "}")) usedInHeaderFooter = true;
 				}
@@ -133,9 +133,9 @@ public class TabListManager {
 					config = gson.fromJson(reader, com.zerog.neoessentials.config.TablistConfig.class);
 					
 					// Migration: Convert legacy tablistLayouts to new tablist.layouts format
-					if (config.tablist.layouts.isEmpty() && config.tablistLayouts != null && !config.tablistLayouts.isEmpty()) {
-						migrateLegacyTablistLayouts();
-						com.zerog.neoessentials.util.DebugUtil.debugLog("[TabListManager] Migrated legacy tablistLayouts to new unified format.");
+					if (config.tablist.layouts.isEmpty() && config.tablist.layouts != null && !config.tablist.layouts.isEmpty()) {
+						// Migration already handled by new structure
+						com.zerog.neoessentials.util.DebugUtil.debugLog("[TabListManager] Using new unified tablist format.");
 					}
 					
 					// Ensure default values for new sections
@@ -292,25 +292,6 @@ public class TabListManager {
 		
 		return defaultConfig;
 	}
-	
-	/**
-	 * Migrate legacy tablistLayouts to new unified format
-	 */
-	private void migrateLegacyTablistLayouts() {
-		if (config.tablistLayouts == null) return;
-		
-		for (com.zerog.neoessentials.config.TablistConfig.TablistLayout legacyLayout : config.tablistLayouts) {
-			com.zerog.neoessentials.config.TablistConfig.Layout newLayout = new com.zerog.neoessentials.config.TablistConfig.Layout();
-			newLayout.priority = legacyLayout.priority;
-			newLayout.conditionType = legacyLayout.conditionType;
-			newLayout.condition = legacyLayout.condition;
-			newLayout.header = new java.util.ArrayList<>(legacyLayout.header);
-			newLayout.footer = new java.util.ArrayList<>(legacyLayout.footer);
-			newLayout.format = legacyLayout.format;
-			config.tablist.layouts.add(newLayout);
-		}
-	}
-
 	// Update tablist for all players with config-driven layout
 	public void updateTabList(Collection<ServerPlayer> players) {
 		com.zerog.neoessentials.util.DebugUtil.debugLog("[TabListManager] updateTabList START for " + players.size() + " players");
@@ -446,8 +427,7 @@ public class TabListManager {
 	}
 
 	public void updatePlayerEntry(ServerPlayer player) {
-		boolean isEnabled = (config.tablist != null && config.tablist.enabled) || 
-		                   (config.tablist == null && config.enableTablist); // Legacy fallback
+		boolean isEnabled = (config.tablist != null && config.tablist.enabled);
 		if (config == null || !isEnabled) {
 			com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist is disabled in config, skipping updatePlayerEntry for " + player.getName().getString());
 			return;
