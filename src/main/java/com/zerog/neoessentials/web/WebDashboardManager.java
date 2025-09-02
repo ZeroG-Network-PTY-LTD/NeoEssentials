@@ -2,26 +2,77 @@ package com.zerog.neoessentials.web;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /**
- * Web Dashboard Manager for NeoEssentials
- * Provides web-based administration interface
+ * Enhanced Web Dashboard Manager for NeoEssentials
+ * Provides comprehensive web-based administration interface with real-time monitoring
  */
 public class WebDashboardManager {
-    // LOGGER removed; now using DebugUtil for all logging
     private static WebDashboardManager instance;
     
     private final Map<String, DashboardSession> activeSessions;
     private final Map<String, Object> dashboardData;
+    private final Map<String, Long> performanceHistory;
+    private final List<Map<String, Object>> alertHistory;
+    private final Map<String, Object> widgets;
+    private final ScheduledExecutorService scheduler;
+    
     private boolean dashboardEnabled;
     private int port;
+    private String bindAddress;
+    private String theme;
+    private boolean enableSSL;
+    private boolean enableAuth;
+    private String adminPassword;
+    private int maxSessions;
+    private long sessionTimeout;
+    private boolean enableRealTimeUpdates;
+    private int updateInterval;
+    
     
     private WebDashboardManager() {
         this.activeSessions = new ConcurrentHashMap<>();
         this.dashboardData = new ConcurrentHashMap<>();
+        this.widgets = new ConcurrentHashMap<>();
+        this.performanceHistory = new ConcurrentHashMap<>();
+        this.alertHistory = Collections.synchronizedList(new ArrayList<>());
+        this.scheduler = Executors.newScheduledThreadPool(2);
+        
+        // Default configuration
         this.dashboardEnabled = false;
         this.port = 8080;
-    com.zerog.neoessentials.util.DebugUtil.infoLog("WebDashboardManager initialized");
+        this.bindAddress = "0.0.0.0";
+        this.theme = "dark";
+        this.enableSSL = false;
+        this.enableAuth = true;
+        this.adminPassword = "admin123"; // Should be changed in production
+        this.maxSessions = 10;
+        this.sessionTimeout = 3600000; // 1 hour
+        this.enableRealTimeUpdates = true;
+        this.updateInterval = 5; // 5 seconds
+        
+        // Register for server events
+        NeoForge.EVENT_BUS.register(this);
+        
+        // Initialize widgets
+        initializeWidgets();
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced WebDashboardManager initialized with advanced features");
+    }
+    
+    @SubscribeEvent
+    public void onServerStopped(ServerStoppedEvent event) {
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdown();
+        }
     }
     
     public static WebDashboardManager getInstance() {
@@ -32,7 +83,7 @@ public class WebDashboardManager {
     }
     
     /**
-     * Start the web dashboard
+     * Enhanced start method with better configuration and monitoring
      */
     public boolean start() {
         if (dashboardEnabled) {
@@ -41,32 +92,329 @@ public class WebDashboardManager {
         }
         
         try {
-            // Initialize dashboard data
-            initializeDashboardData();
+            // Validate configuration
+            if (!validateConfiguration()) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Invalid dashboard configuration");
+                return false;
+            }
+            
+            // Initialize enhanced dashboard data
+            initializeEnhancedDashboardData();
+            
+            // Start performance monitoring
+            startPerformanceMonitoring();
+            
+            // Start real-time updates if enabled
+            if (enableRealTimeUpdates) {
+                startRealTimeUpdates();
+            }
+            
             dashboardEnabled = true;
-            com.zerog.neoessentials.util.DebugUtil.infoLog("Web dashboard started on port " + port);
+            
+            // Add startup event
+            addRealTimeEvent("SYSTEM", "Web Dashboard started on port " + port, "INFO");
+            
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced web dashboard started on " + bindAddress + ":" + port);
             return true;
         } catch (Exception e) {
-            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to start web dashboard: " + e.getMessage());
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to start enhanced web dashboard: " + e.getMessage());
             return false;
         }
     }
     
     /**
-     * Stop the web dashboard
+     * Enhanced stop method with proper cleanup
      */
     public void stop() {
         if (!dashboardEnabled) {
             return;
         }
         
-        activeSessions.clear();
-        dashboardEnabled = false;
-    com.zerog.neoessentials.util.DebugUtil.infoLog("Web dashboard stopped");
+        try {
+            // Stop schedulers
+            if (scheduler != null && !scheduler.isShutdown()) {
+                scheduler.shutdown();
+                try {
+                    if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                        scheduler.shutdownNow();
+                    }
+                } catch (InterruptedException e) {
+                    scheduler.shutdownNow();
+                    Thread.currentThread().interrupt();
+                }
+            }
+            
+            // Clear sessions and data
+            activeSessions.clear();
+            performanceHistory.clear();
+            
+            dashboardEnabled = false;
+            
+            // Add stop event
+            addRealTimeEvent("SYSTEM", "Web Dashboard stopped", "INFO");
+            
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced web dashboard stopped and cleaned up");
+        } catch (Exception e) {
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Error stopping dashboard: " + e.getMessage());
+        }
     }
     
     /**
-     * Initialize dashboard data
+     * Validate dashboard configuration
+     */
+    private boolean validateConfiguration() {
+        if (port < 1024 || port > 65535) {
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Invalid port number: " + port);
+            return false;
+        }
+        
+        if (maxSessions < 1 || maxSessions > 100) {
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Invalid max sessions: " + maxSessions);
+            return false;
+        }
+        
+        if (sessionTimeout < 60000) { // Minimum 1 minute
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Session timeout too short: " + sessionTimeout);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Initialize widgets for the dashboard
+     */
+    private void initializeWidgets() {
+        // Server Status Widget
+        Map<String, Object> serverWidget = new HashMap<>();
+        serverWidget.put("type", "server_status");
+        serverWidget.put("title", "Server Status");
+        serverWidget.put("position", Map.of("x", 0, "y", 0, "width", 6, "height", 4));
+        serverWidget.put("refreshRate", 5000);
+        widgets.put("server_status", serverWidget);
+        
+        // Performance Widget
+        Map<String, Object> perfWidget = new HashMap<>();
+        perfWidget.put("type", "performance");
+        perfWidget.put("title", "Performance Metrics");
+        perfWidget.put("position", Map.of("x", 6, "y", 0, "width", 6, "height", 4));
+        perfWidget.put("refreshRate", 2000);
+        widgets.put("performance", perfWidget);
+        
+        // Economy Widget
+        Map<String, Object> econWidget = new HashMap<>();
+        econWidget.put("type", "economy");
+        econWidget.put("title", "Economy Overview");
+        econWidget.put("position", Map.of("x", 0, "y", 4, "width", 8, "height", 4));
+        econWidget.put("refreshRate", 10000);
+        widgets.put("economy", econWidget);
+        
+        // Recent Events Widget
+        Map<String, Object> eventsWidget = new HashMap<>();
+        eventsWidget.put("type", "events");
+        eventsWidget.put("title", "Recent Events");
+        eventsWidget.put("position", Map.of("x", 8, "y", 4, "width", 4, "height", 8));
+        eventsWidget.put("refreshRate", 3000);
+        widgets.put("events", eventsWidget);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Dashboard widgets initialized");
+    }
+    
+    /**
+     * Start performance monitoring
+     */
+    private void startPerformanceMonitoring() {
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                collectPerformanceMetrics();
+                checkPerformanceAlerts();
+            } catch (Exception e) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Error in performance monitoring: " + e.getMessage());
+            }
+        }, 0, updateInterval, TimeUnit.SECONDS);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Performance monitoring started");
+    }
+    
+    /**
+     * Start real-time updates
+     */
+    private void startRealTimeUpdates() {
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                updateRealTimeData();
+                broadcastUpdates();
+            } catch (Exception e) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Error in real-time updates: " + e.getMessage());
+            }
+        }, 0, updateInterval, TimeUnit.SECONDS);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Real-time updates started");
+    }
+    
+    /**
+     * Initialize enhanced dashboard data
+     */
+    private void initializeEnhancedDashboardData() {
+        // Call original initialization
+        initializeDashboardData();
+        
+        // Add enhanced data
+        dashboardData.put("dashboard_version", "2.0");
+        dashboardData.put("start_time", System.currentTimeMillis());
+        dashboardData.put("theme", theme);
+        dashboardData.put("ssl_enabled", enableSSL);
+        dashboardData.put("auth_enabled", enableAuth);
+        dashboardData.put("max_sessions", maxSessions);
+        dashboardData.put("session_timeout", sessionTimeout);
+        dashboardData.put("real_time_enabled", enableRealTimeUpdates);
+        dashboardData.put("update_interval", updateInterval);
+        
+        // Initialize performance history
+        dashboardData.put("performance_history", new ArrayList<>());
+        dashboardData.put("alert_history", new ArrayList<>());
+        dashboardData.put("session_history", new ArrayList<>());
+        
+        // Initialize API endpoints
+        dashboardData.put("api_endpoints", initializeAPIEndpoints());
+        
+        // Initialize security metrics
+        dashboardData.put("security_events", new ArrayList<>());
+        dashboardData.put("failed_logins", 0);
+        dashboardData.put("successful_logins", 0);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced dashboard data initialized");
+    }
+    
+    /**
+     * Collect performance metrics
+     */
+    private void collectPerformanceMetrics() {
+        long currentTime = System.currentTimeMillis();
+        
+        // Collect system metrics
+        Runtime runtime = Runtime.getRuntime();
+        long totalMemory = runtime.totalMemory();
+        long freeMemory = runtime.freeMemory();
+        long usedMemory = totalMemory - freeMemory;
+        
+        double memoryUsagePercent = (double) usedMemory / totalMemory * 100;
+        
+        // Store in performance history
+        performanceHistory.put("memory_" + currentTime, (long) memoryUsagePercent);
+        
+        // Update dashboard data
+        dashboardData.put("memory_usage_percent", memoryUsagePercent);
+        dashboardData.put("memory_used_mb", usedMemory / 1024 / 1024);
+        dashboardData.put("memory_total_mb", totalMemory / 1024 / 1024);
+        dashboardData.put("last_performance_update", currentTime);
+        
+        // Clean old performance history (keep last 100 entries)
+        if (performanceHistory.size() > 100) {
+            performanceHistory.entrySet().removeIf(entry -> 
+                currentTime - Long.parseLong(entry.getKey().split("_")[1]) > 600000); // 10 minutes
+        }
+    }
+    
+    /**
+     * Check for performance alerts
+     */
+    private void checkPerformanceAlerts() {
+        double memoryUsage = (double) dashboardData.getOrDefault("memory_usage_percent", 0.0);
+        double tps = (double) dashboardData.getOrDefault("tps", 20.0);
+        
+        // Memory usage alert
+        if (memoryUsage > 90) {
+            createAlert("HIGH_MEMORY_USAGE", "Memory usage critical: " + String.format("%.1f%%", memoryUsage), "ERROR");
+        } else if (memoryUsage > 75) {
+            createAlert("MEDIUM_MEMORY_USAGE", "Memory usage high: " + String.format("%.1f%%", memoryUsage), "WARN");
+        }
+        
+        // TPS alert
+        if (tps < 15) {
+            createAlert("LOW_TPS", "Server TPS critically low: " + String.format("%.1f", tps), "ERROR");
+        } else if (tps < 18) {
+            createAlert("MEDIUM_TPS", "Server TPS low: " + String.format("%.1f", tps), "WARN");
+        }
+    }
+    
+    /**
+     * Update real-time data
+     */
+    private void updateRealTimeData() {
+        long currentTime = System.currentTimeMillis();
+        
+        // Update uptime
+        long startTime = (long) dashboardData.getOrDefault("start_time", currentTime);
+        dashboardData.put("uptime_seconds", (currentTime - startTime) / 1000);
+        
+        // Update session count
+        dashboardData.put("active_sessions", activeSessions.size());
+        
+        // Update timestamp
+        dashboardData.put("last_update", currentTime);
+        dashboardData.put("last_update_formatted", 
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+    }
+    
+    /**
+     * Broadcast updates to connected sessions
+     */
+    private void broadcastUpdates() {
+        // In a real implementation, this would send WebSocket updates
+        // For now, we just log the update
+        int activeSessionCount = activeSessions.size();
+        if (activeSessionCount > 0) {
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Broadcasting updates to " + activeSessionCount + " active sessions");
+        }
+    }
+    
+    /**
+     * Initialize API endpoints
+     */
+    private Map<String, Object> initializeAPIEndpoints() {
+        Map<String, Object> endpoints = new HashMap<>();
+        
+        endpoints.put("/api/status", "Server status information");
+        endpoints.put("/api/performance", "Performance metrics");
+        endpoints.put("/api/economy", "Economy statistics");
+        endpoints.put("/api/players", "Online players information");
+        endpoints.put("/api/events", "Recent events");
+        endpoints.put("/api/alerts", "System alerts");
+        endpoints.put("/api/sessions", "Active sessions");
+        endpoints.put("/api/config", "Dashboard configuration");
+        endpoints.put("/api/widgets", "Dashboard widgets");
+        endpoints.put("/api/security", "Security metrics");
+        
+        return endpoints;
+    }
+    
+    /**
+     * Create an alert
+     */
+    private void createAlert(String type, String message, String severity) {
+        Map<String, Object> alert = new HashMap<>();
+        alert.put("type", type);
+        alert.put("message", message);
+        alert.put("severity", severity);
+        alert.put("timestamp", System.currentTimeMillis());
+        alert.put("acknowledged", false);
+        
+        alertHistory.add(alert);
+        
+        // Keep only last 50 alerts
+        if (alertHistory.size() > 50) {
+            alertHistory.remove(0);
+        }
+        
+        // Also add as real-time event
+        addRealTimeEvent("ALERT", message, severity);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Alert created: [" + severity + "] " + type + " - " + message);
+    }
+    
+    /**
+     * Initialize dashboard data (original method)
      */
     private void initializeDashboardData() {
         dashboardData.put("server_status", "online");
@@ -94,7 +442,7 @@ public class WebDashboardManager {
         dashboardData.put("login_attempts", 0);
         dashboardData.put("suspicious_activity", 0);
         
-    com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced dashboard data initialized with shop and economy metrics");
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced dashboard data initialized with shop and economy metrics");
     }
     
     /**
@@ -112,18 +460,32 @@ public class WebDashboardManager {
     }
     
     /**
-     * Create a new dashboard session
+     * Enhanced session creation with better security
      */
-    public String createSession(String username) {
+    public String createSession(String username, String ipAddress) {
+        // Check session limits
+        if (activeSessions.size() >= maxSessions) {
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Maximum sessions reached, rejecting new session for: " + username);
+            return null;
+        }
+        
         String sessionId = UUID.randomUUID().toString();
-        DashboardSession session = new DashboardSession(sessionId, username, System.currentTimeMillis());
+        DashboardSession session = new DashboardSession(sessionId, username, System.currentTimeMillis(), ipAddress);
         activeSessions.put(sessionId, session);
-    com.zerog.neoessentials.util.DebugUtil.infoLog("Created dashboard session for user: " + username);
+        
+        // Log successful login
+        int successfulLogins = (int) dashboardData.getOrDefault("successful_logins", 0);
+        dashboardData.put("successful_logins", successfulLogins + 1);
+        
+        // Add security event
+        addSecurityEvent("LOGIN_SUCCESS", "User " + username + " logged in from " + ipAddress, "INFO");
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Created dashboard session for user: " + username + " from " + ipAddress);
         return sessionId;
     }
     
     /**
-     * Validate a dashboard session
+     * Enhanced session validation with configurable timeout
      */
     public boolean validateSession(String sessionId) {
         DashboardSession session = activeSessions.get(sessionId);
@@ -131,14 +493,132 @@ public class WebDashboardManager {
             return false;
         }
         
-        // Check if session is expired (1 hour)
+        // Check if session is expired
         long sessionAge = System.currentTimeMillis() - session.getCreatedTime();
-        if (sessionAge > 3600000) { // 1 hour in milliseconds
+        if (sessionAge > sessionTimeout) {
             activeSessions.remove(sessionId);
+            addSecurityEvent("SESSION_EXPIRED", "Session expired for user: " + session.getUsername(), "INFO");
             return false;
         }
         
+        // Update last activity
+        session.updateLastActivity();
         return true;
+    }
+    
+    /**
+     * Get all dashboard widgets
+     */
+    public Map<String, Object> getWidgets() {
+        return new HashMap<>(widgets);
+    }
+    
+    /**
+     * Get performance history
+     */
+    public Map<String, Long> getPerformanceHistory() {
+        return new HashMap<>(performanceHistory);
+    }
+    
+    /**
+     * Get alert history
+     */
+    public List<Map<String, Object>> getAlertHistory() {
+        return new ArrayList<>(alertHistory);
+    }
+    
+    /**
+     * Get security events
+     */
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> getSecurityEvents() {
+        return (List<Map<String, Object>>) dashboardData.getOrDefault("security_events", new ArrayList<>());
+    }
+    
+    /**
+     * Add security event
+     */
+    private void addSecurityEvent(String type, String message, String severity) {
+        Map<String, Object> event = new HashMap<>();
+        event.put("type", type);
+        event.put("message", message);
+        event.put("severity", severity);
+        event.put("timestamp", System.currentTimeMillis());
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> securityEvents = (List<Map<String, Object>>) 
+                dashboardData.computeIfAbsent("security_events", k -> new ArrayList<>());
+        
+        securityEvents.add(0, event);
+        if (securityEvents.size() > 100) {
+            securityEvents.remove(securityEvents.size() - 1);
+        }
+    }
+    
+    /**
+     * Get dashboard configuration
+     */
+    public Map<String, Object> getConfiguration() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("port", port);
+        config.put("bind_address", bindAddress);
+        config.put("theme", theme);
+        config.put("ssl_enabled", enableSSL);
+        config.put("auth_enabled", enableAuth);
+        config.put("max_sessions", maxSessions);
+        config.put("session_timeout", sessionTimeout);
+        config.put("real_time_enabled", enableRealTimeUpdates);
+        config.put("update_interval", updateInterval);
+        return config;
+    }
+    
+    /**
+     * Update dashboard configuration
+     */
+    public boolean updateConfiguration(Map<String, Object> newConfig) {
+        try {
+            if (newConfig.containsKey("theme")) {
+                theme = (String) newConfig.get("theme");
+            }
+            if (newConfig.containsKey("max_sessions")) {
+                maxSessions = (int) newConfig.get("max_sessions");
+            }
+            if (newConfig.containsKey("session_timeout")) {
+                sessionTimeout = (long) newConfig.get("session_timeout");
+            }
+            if (newConfig.containsKey("real_time_enabled")) {
+                enableRealTimeUpdates = (boolean) newConfig.get("real_time_enabled");
+            }
+            if (newConfig.containsKey("update_interval")) {
+                updateInterval = (int) newConfig.get("update_interval");
+            }
+            
+            addRealTimeEvent("CONFIG", "Dashboard configuration updated", "INFO");
+            return true;
+        } catch (Exception e) {
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to update configuration: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Authenticate user with password
+     */
+    public boolean authenticateUser(String username, String password) {
+        if (!enableAuth) {
+            return true; // Auth disabled
+        }
+        
+        // Simple password check (in production, use proper hashing)
+        boolean authenticated = "admin".equals(username) && adminPassword.equals(password);
+        
+        if (!authenticated) {
+            int failedLogins = (int) dashboardData.getOrDefault("failed_logins", 0);
+            dashboardData.put("failed_logins", failedLogins + 1);
+            addSecurityEvent("LOGIN_FAILED", "Failed login attempt for user: " + username, "WARN");
+        }
+        
+        return authenticated;
     }
     
     /**
@@ -324,17 +804,27 @@ public class WebDashboardManager {
     }
     
     /**
-     * Dashboard session class
+     * Enhanced Dashboard session class with IP tracking and activity monitoring
      */
     public static class DashboardSession {
         private final String sessionId;
         private final String username;
         private final long createdTime;
+        private final String ipAddress;
+        private long lastActivity;
+        private int requestCount;
         
         public DashboardSession(String sessionId, String username, long createdTime) {
+            this(sessionId, username, createdTime, "unknown");
+        }
+        
+        public DashboardSession(String sessionId, String username, long createdTime, String ipAddress) {
             this.sessionId = sessionId;
             this.username = username;
             this.createdTime = createdTime;
+            this.ipAddress = ipAddress;
+            this.lastActivity = createdTime;
+            this.requestCount = 0;
         }
         
         public String getSessionId() {
@@ -347,6 +837,31 @@ public class WebDashboardManager {
         
         public long getCreatedTime() {
             return createdTime;
+        }
+        
+        public String getIpAddress() {
+            return ipAddress;
+        }
+        
+        public long getLastActivity() {
+            return lastActivity;
+        }
+        
+        public void updateLastActivity() {
+            this.lastActivity = System.currentTimeMillis();
+            this.requestCount++;
+        }
+        
+        public int getRequestCount() {
+            return requestCount;
+        }
+        
+        public long getSessionDuration() {
+            return System.currentTimeMillis() - createdTime;
+        }
+        
+        public boolean isExpired(long timeoutMs) {
+            return (System.currentTimeMillis() - lastActivity) > timeoutMs;
         }
     }
 }

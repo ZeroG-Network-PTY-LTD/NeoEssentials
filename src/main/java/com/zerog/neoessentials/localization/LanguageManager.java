@@ -207,10 +207,10 @@ public class LanguageManager {
         fallback.setProperty("command.fly.disabled", "&cFlight disabled!");
         
         // Shop messages
-        fallback.setProperty("shop.invalid", "&cInvalid shop sign!");
-        fallback.setProperty("shop.no_permission", "&cYou don't have permission to use this shop!");
-        fallback.setProperty("shop.out_of_stock", "&cThis shop is out of stock!");
-        fallback.setProperty("shop.not_enough_money", "&cYou don't have enough money!");
+        fallback.setProperty("neoessentials.shop.invalid", "&cInvalid shop sign!");
+        fallback.setProperty("neoessentials.shop.no_permission", "&cYou don't have permission to use this shop!");
+        fallback.setProperty("neoessentials.shop.out_of_stock", "&cThis shop is out of stock!");
+        fallback.setProperty("neoessentials.shop.not_enough_money", "&cYou don't have enough money!");
         
         LOGGER.info("Created basic fallback language with {} entries", fallback.size());
         return fallback;

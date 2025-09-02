@@ -87,20 +87,21 @@ public class LanguageCommand {
             if (source.getEntity() instanceof ServerPlayer player) {
                 String currentLocale = manager.getPlayerLocale(player);
                 Set<String> availableLanguages = manager.getAvailableLanguages();
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.info.header"));
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.info.current", currentLocale));
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.info.available", availableLanguages.size()));
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.info.default", manager.getDefaultLanguage()));
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.info.list_hint"));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.info.header"));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.info.current", currentLocale));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.info.available", availableLanguages.size()));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.info.default", manager.getDefaultLanguage()));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.info.list_hint"));
             } else {
                 source.sendSuccess(() -> Component.literal(
-                    manager.getMessage("en_US", "language.info.active", manager.getAvailableLanguages().size())
+                    manager.getMessage("en_US", "neoessentials.language.info.active", manager.getAvailableLanguages().size())
                 ), false);
             }
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error showing language info: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error showing language information"));
+            LanguageManager manager = LanguageManager.getInstance();
+            context.getSource().sendFailure(Component.literal(manager.getMessage("en_US", "neoessentials.language.error.show_info")));
             return 0;
         }
     }
@@ -114,20 +115,20 @@ public class LanguageCommand {
             String language = StringArgumentType.getString(context, "language");
             LanguageManager manager = LanguageManager.getInstance();
             if (!(source.getEntity() instanceof ServerPlayer player)) {
-                source.sendFailure(Component.literal(manager.getMessage("en_US", "language.set.only_players")));
+                source.sendFailure(Component.literal(manager.getMessage("en_US", "neoessentials.language.set.only_players")));
                 return 0;
             }
             Set<String> availableLanguages = manager.getAvailableLanguages();
             if (!availableLanguages.contains(language)) {
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.set.not_available", language));
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.set.available_list", String.join(", ", availableLanguages)));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.set.not_available", language));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.set.available_list", String.join(", ", availableLanguages)));
                 return 0;
             }
             manager.setPlayerLocale(player, language);
             String successMessage = manager.getMessage(player, "command.language.changed", "LANGUAGE", language);
             final String finalMessage;
             if (successMessage.contains("[Missing:")) {
-                finalMessage = manager.getMessage(player, "language.set.success_fallback", language);
+                finalMessage = manager.getMessage(player, "neoessentials.language.set.success_fallback", language);
             } else {
                 finalMessage = successMessage;
             }
@@ -135,7 +136,8 @@ public class LanguageCommand {
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error setting player language: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error setting language"));
+            LanguageManager manager = LanguageManager.getInstance();
+            context.getSource().sendFailure(Component.literal(manager.getMessage("en_US", "neoessentials.language.error.set")));
             return 0;
         }
     }
@@ -151,20 +153,20 @@ public class LanguageCommand {
             ServerPlayer player = source.getEntity() instanceof ServerPlayer p ? p : null;
             String current = player != null ? manager.getPlayerLocale(player) : "";
             if (player != null) {
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.list.header"));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.list.header"));
                 for (String language : languages) {
                     String indicator = language.equals(current) ? "► " : "- ";
                     String languageName = getLanguageDisplayName(language);
-                    MessageUtil.sendMessage(player, manager.getMessage(player, "language.list.entry", indicator, languageName, language));
+                    MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.list.entry", indicator, languageName, language));
                 }
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.list.set_hint"));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.list.set_hint"));
             } else {
-                source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "language.list.header")), false);
+                source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "neoessentials.language.list.header")), false);
             }
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error listing languages: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error listing languages"));
+            context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage("en_US", "neoessentials.language.error.list")));
             return 0;
         }
     }
@@ -177,13 +179,13 @@ public class LanguageCommand {
             CommandSourceStack source = context.getSource();
             LanguageManager manager = LanguageManager.getInstance();
             manager.reloadLanguages();
-            source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "language.reload.success")), false);
-            source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "language.reload.loaded", manager.getAvailableLanguages().size())), false);
+            source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "neoessentials.language.reload.success")), false);
+            source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "neoessentials.language.reload.loaded", manager.getAvailableLanguages().size())), false);
             LOGGER.info("Language files reloaded by {}", source.getTextName());
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error reloading languages: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error reloading languages: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage("en_US", "neoessentials.language.error.reload", e.getMessage())));
             return 0;
         }
     }
@@ -198,23 +200,23 @@ public class LanguageCommand {
             Map<String, Object> stats = manager.getLanguageStats();
             ServerPlayer player = source.getEntity() instanceof ServerPlayer p ? p : null;
             if (player != null) {
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.header"));
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.available", stats.get("available_languages")));
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.default", stats.get("default_language")));
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.player_locales", stats.get("player_locales")));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.stats.header"));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.stats.available", stats.get("available_languages")));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.stats.default", stats.get("default_language")));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.stats.player_locales", stats.get("player_locales")));
                 @SuppressWarnings("unchecked")
                 Map<String, Integer> messageCounts = (Map<String, Integer>) stats.get("message_counts");
-                MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.message_counts_header"));
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.stats.message_counts_header"));
                 messageCounts.forEach((language, count) -> {
-                    MessageUtil.sendMessage(player, manager.getMessage(player, "language.stats.message_count_entry", language, count));
+                    MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.stats.message_count_entry", language, count));
                 });
             } else {
-                source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "language.stats.header")), false);
+                source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "neoessentials.language.stats.header")), false);
             }
             return 1;
         } catch (Exception e) {
             LOGGER.error("Error showing language stats: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error showing language statistics"));
+            context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage("en_US", "neoessentials.language.error.stats")));
             return 0;
         }
     }
@@ -229,34 +231,34 @@ public class LanguageCommand {
             LanguageManager manager = LanguageManager.getInstance();
             
             if (source.getEntity() instanceof ServerPlayer player) {
-                MessageUtil.sendMessage(player, "&6Testing language key: &f" + key);
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.test.key", key));
                 String playerLocale = manager.getPlayerLocale(player);
                 String message = manager.getRawMessage(playerLocale, key);
-                MessageUtil.sendMessage(player, "&eYour language (" + playerLocale + "): &f" + message);
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.test.your_language", playerLocale, message));
                 // Show in default language
                 String defaultMessage = manager.getRawMessage(manager.getDefaultLanguage(), key);
-                MessageUtil.sendMessage(player, "&eDefault (" + manager.getDefaultLanguage() + "): &f" + defaultMessage);
+                MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.test.default", manager.getDefaultLanguage(), defaultMessage));
                 // Show in other languages
                 Set<String> languages = manager.getAvailableLanguages();
                 if (languages.size() > 2) {
-                    MessageUtil.sendMessage(player, "&eOther languages:");
+                    MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.test.other_header"));
                     languages.stream()
                         .filter(lang -> !lang.equals(manager.getDefaultLanguage()))
                         .limit(3)
                         .forEach(lang -> {
                             String msg = manager.getRawMessage(lang, key);
-                            MessageUtil.sendMessage(player, "&7- " + lang + ": &f" + msg);
+                            MessageUtil.sendMessage(player, manager.getMessage(player, "neoessentials.language.test.other_entry", lang, msg));
                         });
                 }
             } else {
-                source.sendSuccess(() -> Component.literal("&6Testing language key: &f" + key), false);
+                source.sendSuccess(() -> Component.literal(manager.getMessage("en_US", "neoessentials.language.test.key", key)), false);
             }
             
             return 1;
             
         } catch (Exception e) {
             LOGGER.error("Error testing language key: " + e.getMessage(), e);
-            context.getSource().sendFailure(Component.literal("Error testing language key"));
+            context.getSource().sendFailure(Component.literal(LanguageManager.getInstance().getMessage("en_US", "neoessentials.language.error.test")));
             return 0;
         }
     }

@@ -39,11 +39,11 @@ public class CompatibilityCommand {
     
     private static void showStatus(CommandSourceStack source, PluginCompatibilityManager manager) {
         source.sendSuccess(() -> Component.literal(
-            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.status.header")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.compat.status.header")
         ), false);
         manager.getDetectedPlugins().forEach(plugin -> {
             String statusKey = plugin.getStatus() == com.zerog.neoessentials.data.PluginStatusEnum.INTEGRATED ?
-                "compat.status.integrated" : "compat.status.available";
+                "neoessentials.compat.status.integrated" : "neoessentials.compat.status.available";
             source.sendSuccess(() -> Component.literal(
                 com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", statusKey, plugin.getName())
             ), false);
@@ -52,35 +52,35 @@ public class CompatibilityCommand {
     
     private static void refreshIntegrations(CommandSourceStack source, PluginCompatibilityManager manager) {
         source.sendSuccess(() -> Component.literal(
-            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.refresh.start")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.compat.refresh.start")
         ), false);
         manager.refreshIntegrations();
         source.sendSuccess(() -> Component.literal(
-            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.refresh.success")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.compat.refresh.success")
         ), false);
     }
     
     private static void generateReport(CommandSourceStack source, PluginCompatibilityManager manager) {
         var report = manager.generateCompatibilityReport();
         source.sendSuccess(() -> Component.literal(
-            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.header")
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.compat.report.header")
         ), false);
         source.sendSuccess(() -> Component.literal(
-            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.total", report.getTotalPlugins())
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.compat.report.total", report.getTotalPlugins())
         ), false);
         source.sendSuccess(() -> Component.literal(
-            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.integrated", report.getIntegratedPlugins())
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.compat.report.integrated", report.getIntegratedPlugins())
         ), false);
         source.sendSuccess(() -> Component.literal(
-            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.failed", report.getFailedPlugins())
+            com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.compat.report.failed", report.getFailedPlugins())
         ), false);
         if (!report.getIssues().isEmpty()) {
             source.sendSuccess(() -> Component.literal(
-                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.issues.header")
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.compat.report.issues.header")
             ), false);
             report.getIssues().forEach(issue -> {
                 source.sendSuccess(() -> Component.literal(
-                    com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "compat.report.issue", issue)
+                    com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.compat.report.issue", issue)
                 ), false);
             });
         }

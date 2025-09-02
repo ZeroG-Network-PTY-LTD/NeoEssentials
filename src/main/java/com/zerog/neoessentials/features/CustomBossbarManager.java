@@ -125,8 +125,7 @@ public class CustomBossbarManager {
         }
         
         // Apply formatting
-        // TODO: Migrate to new config structure: config.bossbar.layouts.get(0).bars.get(0).text
-        String formatted = "Boss: {bossbar} | {message} [{progress}%]".replace("{bossbar}", text); // Fallback format
+        String formatted = getBossbarFormat().replace("{bossbar}", text);
         Component component = enableColorCodes ? ColorUtil.colorize(formatted) : Component.literal(formatted);
         
         // Create bossbar
@@ -197,8 +196,7 @@ public class CustomBossbarManager {
     public void updateBossbar(ServerPlayer player, String text, float progress) {
         ActiveBossbar activeBossbar = activeBossbars.get(player.getUUID());
         if (activeBossbar != null) {
-            // TODO: Migrate to new config structure: config.bossbar.layouts.get(0).bars.get(0).text
-            String formatted = "Boss: {bossbar} | {message} [{progress}%]".replace("{bossbar}", text); // Fallback format
+            String formatted = getBossbarFormat().replace("{bossbar}", text);
             Component component = enableColorCodes ? ColorUtil.colorize(formatted) : Component.literal(formatted);
             
             activeBossbar.bossbar.setName(component);
@@ -349,8 +347,29 @@ public class CustomBossbarManager {
     }
     
     /**
-     * Helper to get all online players
+     * Get bossbar format from the new config structure
+     * Falls back to default format if configuration is missing or invalid
      */
+    private String getBossbarFormat() {
+        TablistConfig config = ConfigManager.getInstance().getTablistConfig();
+        
+        // Try to get format from new bossbar structure
+        if (config != null && config.bossbar != null && 
+            config.bossbar.layouts != null && !config.bossbar.layouts.isEmpty()) {
+            
+            TablistConfig.BossbarLayout layout = config.bossbar.layouts.get(0);
+            if (layout.bars != null && !layout.bars.isEmpty()) {
+                TablistConfig.BossbarInfo bar = layout.bars.get(0);
+                if (bar.text != null && !bar.text.isEmpty()) {
+                    return bar.text;
+                }
+            }
+        }
+        
+        // Fallback to default format
+        return "Boss: {bossbar} | {message} [{progress}%]";
+    }
+    
     /**
      * Inner class for bossbar template
      */

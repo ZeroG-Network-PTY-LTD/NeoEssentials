@@ -130,7 +130,7 @@ public class LanguageCommand {
             String displayName = languageManager.getLanguageDisplayName(language);
             
             // Send confirmation in the new language
-            String message = languageManager.getMessage(player, "language.changed", 
+            String message = languageManager.getMessage(player, "neoessentials.language.changed", 
                 "LANGUAGE", displayName);
             
             player.sendSystemMessage(Component.literal(message)

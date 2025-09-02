@@ -480,4 +480,90 @@ public class FTBIntegrationHelper {
             player.sendSystemMessage(Component.literal("§cError retrieving rank information."));
         }
     }
+    
+    /**
+     * Get the number of claimed chunks for a player
+     */
+    public static int getClaimedChunksCount(ServerPlayer player) {
+        if (!isFTBChunksLoaded()) {
+            return 0;
+        }
+        
+        try {
+            // Use reflection to safely access FTB Chunks API
+            Class<?> chunkManagerClass = Class.forName("dev.ftb.mods.ftbchunks.data.ClaimedChunkManager");
+            Object chunkManager = chunkManagerClass.getMethod("getInstance").invoke(null);
+            
+            // Get player's team info to determine ownership
+            TeamInfo teamInfo = getTeamInfo(player);
+            Object teamId;
+            
+            if (teamInfo.teamName.isEmpty()) {
+                // Player doesn't have a team, use player UUID
+                teamId = player.getUUID();
+            } else {
+                // Player has a team, get team ID
+                Class<?> teamManagerClass = Class.forName("dev.ftb.mods.ftbteams.data.TeamManager");
+                Object teamManager = teamManagerClass.getMethod("getInstance").invoke(null);
+                Object team = teamManagerClass.getMethod("getTeamByName", String.class).invoke(teamManager, teamInfo.teamName);
+                teamId = team != null ? team.getClass().getMethod("getId").invoke(team) : player.getUUID();
+            }
+            
+            // Get all claimed chunks for the team/player
+            Object claimedChunks = chunkManagerClass.getMethod("getClaimedChunks", Object.class).invoke(chunkManager, teamId);
+            
+            if (claimedChunks instanceof Collection) {
+                return ((Collection<?>) claimedChunks).size();
+            }
+            
+            return 0;
+            
+        } catch (Exception e) {
+            LOGGER.debug("Failed to get claimed chunks count for player {}: {}", player.getName().getString(), e.getMessage());
+            return 0;
+        }
+    }
+    
+    /**
+     * Get the number of loaded chunks for a player
+     */
+    public static int getLoadedChunksCount(ServerPlayer player) {
+        if (!isFTBChunksLoaded()) {
+            return 0;
+        }
+        
+        try {
+            // Use reflection to safely access FTB Chunks API
+            Class<?> chunkManagerClass = Class.forName("dev.ftb.mods.ftbchunks.data.ClaimedChunkManager");
+            Object chunkManager = chunkManagerClass.getMethod("getInstance").invoke(null);
+            
+            // Get player's team info to determine ownership
+            TeamInfo teamInfo = getTeamInfo(player);
+            Object teamId;
+            
+            if (teamInfo.teamName.isEmpty()) {
+                // Player doesn't have a team, use player UUID
+                teamId = player.getUUID();
+            } else {
+                // Player has a team, get team ID
+                Class<?> teamManagerClass = Class.forName("dev.ftb.mods.ftbteams.data.TeamManager");
+                Object teamManager = teamManagerClass.getMethod("getInstance").invoke(null);
+                Object team = teamManagerClass.getMethod("getTeamByName", String.class).invoke(teamManager, teamInfo.teamName);
+                teamId = team != null ? team.getClass().getMethod("getId").invoke(team) : player.getUUID();
+            }
+            
+            // Get all loaded chunks for the team/player
+            Object loadedChunks = chunkManagerClass.getMethod("getLoadedChunks", Object.class).invoke(chunkManager, teamId);
+            
+            if (loadedChunks instanceof Collection) {
+                return ((Collection<?>) loadedChunks).size();
+            }
+            
+            return 0;
+            
+        } catch (Exception e) {
+            LOGGER.debug("Failed to get loaded chunks count for player {}: {}", player.getName().getString(), e.getMessage());
+            return 0;
+        }
+    }
 }

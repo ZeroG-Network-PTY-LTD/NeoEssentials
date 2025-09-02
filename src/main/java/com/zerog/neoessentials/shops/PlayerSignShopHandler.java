@@ -25,12 +25,12 @@ public class PlayerSignShopHandler {
         // Check if shop has enough stock - but do REAL-TIME check, not just recorded stock
         BlockPos chestPos = signShop.getChestPos();
         if (chestPos == null) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.chest.not.connected", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.not.connected", new Object[]{}));
             return false;
         }
         
         if (!(level.getBlockEntity(chestPos) instanceof ChestBlockEntity chestEntity)) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.chest.not.found", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.not.found", new Object[]{}));
             return false;
         }
         
@@ -40,14 +40,14 @@ public class PlayerSignShopHandler {
                    player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), actualItemsInChest);
         
         if (actualItemsInChest == 0) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.chest.empty.dupe.protection", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.empty.dupe.protection", new Object[]{}));
             LOGGER.warn("BLOCKED POTENTIAL DUPE: Player {} tried to buy from empty chest at {}", 
                        player.getName().getString(), chestPos);
             return false;
         }
         
         if (actualItemsInChest < quantity) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.chest.insufficient.stock", new Object[]{actualItemsInChest, signShop.getItem().getDisplayName().getString(), quantity}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.insufficient.stock", new Object[]{actualItemsInChest, signShop.getItem().getDisplayName().getString(), quantity}));
             LOGGER.warn("BLOCKED INSUFFICIENT STOCK: Player {} tried to buy {}x but chest only has {}x at {}", 
                        player.getName().getString(), quantity, actualItemsInChest, chestPos);
             return false;
@@ -55,7 +55,7 @@ public class PlayerSignShopHandler {
         
         // Legacy recorded stock check (keeping for compatibility)
         if (!signShop.hasStock() || signShop.getStock() < quantity) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.legacy.not.enough.stock", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.legacy.not.enough.stock", new Object[]{}));
             return false;
         }
         
@@ -66,21 +66,21 @@ public class PlayerSignShopHandler {
             com.zerog.neoessentials.managers.EconomyManager.getInstance();
         
         if (economyManager == null) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.economy.unavailable", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.economy.unavailable", new Object[]{}));
             return false;
         }
         
         // Check if player has sufficient balance
         if (!economyManager.hasBalance(player.getUUID(), totalPrice)) {
             double currentBalance = economyManager.getBalance(player.getUUID()).doubleValue();
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.not.enough.money", new Object[]{quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice), economyManager.formatCurrency(currentBalance)}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.not.enough.money", new Object[]{quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice), economyManager.formatCurrency(currentBalance)}));
             return false;
         }
         
         // Check chest inventory for items (redundant check for extra safety)
         int availableItems = countItemsInChest(chestEntity, signShop.getItem());
         if (availableItems < quantity) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.chest.only.has", new Object[]{availableItems, signShop.getItem().getDisplayName().getString()}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.only.has", new Object[]{availableItems, signShop.getItem().getDisplayName().getString()}));
             return false;
         }
         
@@ -93,7 +93,7 @@ public class PlayerSignShopHandler {
             "Bought " + quantity + "x " + signShop.getItem().getDisplayName().getString() + " from player shop");
         
         if (!withdrawSuccess) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.payment.failed", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.payment.failed", new Object[]{}));
             return false;
         }
         
@@ -101,7 +101,7 @@ public class PlayerSignShopHandler {
         if (!removeItemsFromChest(chestEntity, signShop.getItem(), quantity)) {
             // Failed to remove items - refund player
             economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Shop out of stock");
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.remove.items.failed.refunded", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.remove.items.failed.refunded", new Object[]{}));
             return false;
         }
         
@@ -115,7 +115,7 @@ public class PlayerSignShopHandler {
             returnItem.setCount(quantity);
             addItemsToChest(chestEntity, returnItem);
             economyManager.depositBalance(player.getUUID(), totalPrice, "Refund: Inventory full");
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.inventory.full.refunded", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.inventory.full.refunded", new Object[]{}));
             return false;
         }
         
@@ -132,7 +132,7 @@ public class PlayerSignShopHandler {
         // Update shop stock
         com.zerog.neoessentials.economy.shops.ShopManager.getInstance().updateSignShopStock(signShop.getSignPos(), signShop.getStock() - quantity);
         
-    MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.bought", new Object[]{quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice)}));
+    MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.bought", new Object[]{quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice)}));
         
         // Record transaction
         com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
@@ -146,7 +146,7 @@ public class PlayerSignShopHandler {
     public static boolean handleSellTransaction(Player player, SignShop signShop, Level level, int quantity) {
         // Check if player has items to sell
         if (!hasItemInInventory(player, signShop.getItem(), quantity)) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.not.enough.to.sell", new Object[]{signShop.getItem().getDisplayName().getString()}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.not.enough.to.sell", new Object[]{signShop.getItem().getDisplayName().getString()}));
             return false;
         }
         
@@ -157,26 +157,26 @@ public class PlayerSignShopHandler {
             com.zerog.neoessentials.managers.EconomyManager.getInstance();
         
         if (economyManager == null || !economyManager.isEnabled()) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.economy.unavailable", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.economy.unavailable", new Object[]{}));
             return false;
         }
         
         // Check if shop owner has enough money
         UUID shopOwnerUUID = UUID.fromString(signShop.getOwnerId());
         if (!economyManager.hasBalance(shopOwnerUUID, totalEarnings)) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.owner.not.enough.money", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.owner.not.enough.money", new Object[]{}));
             return false;
         }
         
         // Check if chest has space for items
         BlockPos chestPos = signShop.getChestPos();
         if (chestPos == null) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.chest.not.connected", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.not.connected", new Object[]{}));
             return false;
         }
         
         if (!(level.getBlockEntity(chestPos) instanceof ChestBlockEntity chestEntity)) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.chest.not.found", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.not.found", new Object[]{}));
             return false;
         }
         
@@ -184,7 +184,7 @@ public class PlayerSignShopHandler {
         ItemStack testItem = signShop.getItem().copy();
         testItem.setCount(quantity);
         if (!canChestFitItem(chestEntity, testItem)) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "shop.chest.full", new Object[]{}));
+            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.full", new Object[]{}));
             return false;
         }
         
@@ -194,7 +194,7 @@ public class PlayerSignShopHandler {
         
         // STEP 1: Remove items from player inventory first (payment-first security model)
         if (!removeItemFromInventory(player, signShop.getItem(), quantity)) {
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.remove.items.failed.inventory")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.remove.items.failed.inventory")));
             return false;
         }
         
@@ -207,7 +207,7 @@ public class PlayerSignShopHandler {
             ItemStack returnItem = signShop.getItem().copy();
             returnItem.setCount(quantity);
             player.getInventory().add(returnItem);
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.owner.payment.failed.items.returned")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.owner.payment.failed.items.returned")));
             return false;
         }
         
@@ -221,7 +221,7 @@ public class PlayerSignShopHandler {
             ItemStack returnItem = signShop.getItem().copy();
             returnItem.setCount(quantity);
             player.getInventory().add(returnItem);
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.payment.failed.items.returned")));
+            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.payment.failed.items.returned")));
             return false;
         }
         
@@ -230,7 +230,7 @@ public class PlayerSignShopHandler {
         itemsToAdd.setCount(quantity);
         addItemsToChest(chestEntity, itemsToAdd);
         
-    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "shop.sold", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalEarnings))));
+    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.sold", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalEarnings))));
         
         // Record transaction
         com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);

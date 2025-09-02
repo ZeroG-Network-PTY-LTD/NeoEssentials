@@ -29,7 +29,7 @@ public class NeoEssentialsEventHandler {
             ModerationManager moderationManager = ModerationManager.getInstance();
             if (moderationManager.isPlayerJailed(player.getUUID())) {
                 event.setCanceled(true);
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "jail.cannot.break"));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.jail.cannot.break"));
                 return;
             }
             
@@ -59,7 +59,7 @@ public class NeoEssentialsEventHandler {
             ModerationManager moderationManager = ModerationManager.getInstance();
             if (moderationManager.isPlayerJailed(player.getUUID())) {
                 event.setCanceled(true);
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "jail.cannot.place"));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.jail.cannot.place"));
                 return;
             }
         } catch (Exception e) {

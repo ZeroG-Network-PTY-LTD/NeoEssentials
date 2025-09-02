@@ -173,7 +173,7 @@ public class SpawnManager {
         if (spawnLocation != null) {
             teleportToLocation(player, spawnLocation);
             if (config.newPlayer.giveWelcomeMessage) {
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "spawn.welcome", spawnLocation.world, String.valueOf((int) spawnLocation.x), String.valueOf((int) spawnLocation.y), String.valueOf((int) spawnLocation.z)));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.spawn.welcome", spawnLocation.world, String.valueOf((int) spawnLocation.x), String.valueOf((int) spawnLocation.y), String.valueOf((int) spawnLocation.z)));
             }
             LOGGER.info("Player {} teleported to spawn on first join", player.getName().getString());
         }

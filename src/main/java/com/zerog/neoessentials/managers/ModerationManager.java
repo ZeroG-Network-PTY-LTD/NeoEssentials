@@ -194,19 +194,19 @@ public class ModerationManager {
     public boolean jailPlayer(UUID targetUuid, String targetName, ServerPlayer moderator, String jailName, String reason, long duration) {
         boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
         if (!moderationModuleEnabled) {
-            MessageUtil.sendMessage(moderator, "&cJail system is disabled.");
+            MessageUtil.sendMessage(moderator, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(moderator, "neoessentials.moderation.jail.disabled"));
             return false;
         }
         
         // Check permission
         if (!PermissionUtil.hasPermission(moderator, PermissionNodes.JAIL)) {
-            MessageUtil.sendMessage(moderator, "&cYou do not have permission to jail players.");
+            MessageUtil.sendMessage(moderator, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(moderator, "neoessentials.moderation.jail.no_permission"));
             return false;
         }
         
         // Check if already jailed
         if (isPlayerJailed(targetUuid)) {
-            MessageUtil.sendMessage(moderator, "&c" + targetName + " is already jailed!");
+            MessageUtil.sendMessage(moderator, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(moderator, "neoessentials.moderation.jail.already_jailed", targetName));
             return false;
         }
         
