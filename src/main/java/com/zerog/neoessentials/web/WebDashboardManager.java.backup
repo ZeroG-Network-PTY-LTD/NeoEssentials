@@ -1,0 +1,1795 @@
+package com.zerog.neoessentials.web;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.io.*;
+import java.net.*;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+
+/**
+ * Enhanced Web Dashboard Manager for NeoEssentials
+ * Provides comprehensive web-based administration interface with real-time monitoring
+ */
+public class WebDashboardManager {
+    private static WebDashboardManager instance;
+    
+    private HttpServer httpServer;
+    private final Map<String, DashboardSession> activeSessions;
+    private final Map<String, Object> dashboardData;
+    private final Map<String, Long> performanceHistory;
+    private final List<Map<String, Object>> alertHistory;
+    private final Map<String, Object> widgets;
+    private final ScheduledExecutorService scheduler;
+    
+    private boolean dashboardEnabled;
+    private int port;
+    private String bindAddress;
+    private String theme;
+    private boolean enableSSL;
+    private boolean enableAuth;
+    private String adminPassword;
+    private int maxSessions;
+    private long sessionTimeout;
+    private boolean enableRealTimeUpdates;
+    private int updateInterval;
+    
+    
+    private WebDashboardManager() {
+        this.activeSessions = new ConcurrentHashMap<>();
+        this.dashboardData = new ConcurrentHashMap<>();
+        this.widgets = new ConcurrentHashMap<>();
+        this.performanceHistory = new ConcurrentHashMap<>();
+        this.alertHistory = Collections.synchronizedList(new ArrayList<>());
+        this.scheduler = Executors.newScheduledThreadPool(2);
+        
+        // Default configuration
+        this.dashboardEnabled = false;
+        this.port = 8080;
+        this.bindAddress = "0.0.0.0";
+        this.theme = "dark";
+        this.enableSSL = false;
+        this.enableAuth = true;
+        this.adminPassword = "admin123"; // Should be changed in production
+        this.maxSessions = 10;
+        this.sessionTimeout = 3600000; // 1 hour
+        this.enableRealTimeUpdates = true;
+        this.updateInterval = 5; // 5 seconds
+        
+        // Register for server events
+        NeoForge.EVENT_BUS.register(this);
+        
+        // Initialize widgets
+        initializeWidgets();
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced WebDashboardManager initialized with advanced features");
+    }
+    
+    @SubscribeEvent
+    public void onServerStopped(ServerStoppedEvent event) {
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdown();
+        }
+    }
+    
+    public static WebDashboardManager getInstance() {
+        if (instance == null) {
+            instance = new WebDashboardManager();
+        }
+        return instance;
+    }
+    
+    /**
+     * Enhanced start method with actual HTTP server implementation
+     */
+    public boolean start() {
+        if (dashboardEnabled) {
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Dashboard is already running on port " + port);
+            return false;
+        }
+        
+        try {
+            // Validate configuration
+            if (!validateConfiguration()) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Invalid dashboard configuration");
+                return false;
+            }
+            
+            // Create and configure HTTP server
+            InetSocketAddress address = new InetSocketAddress(bindAddress, port);
+            httpServer = HttpServer.create(address, 0);
+            
+            // Set up request handlers
+            setupHttpHandlers();
+            
+            // Start the HTTP server
+            httpServer.setExecutor(Executors.newFixedThreadPool(4));
+            httpServer.start();
+            
+            // Initialize enhanced dashboard data
+            initializeEnhancedDashboardData();
+            
+            // Start performance monitoring
+            startPerformanceMonitoring();
+            
+            // Start real-time updates if enabled
+            if (enableRealTimeUpdates) {
+                startRealTimeUpdates();
+            }
+            
+            dashboardEnabled = true;
+            
+            // Add startup event
+            addRealTimeEvent("SYSTEM", "Web Dashboard started on port " + port, "INFO");
+            
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced web dashboard started on " + bindAddress + ":" + port);
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Dashboard accessible at: http://localhost:" + port);
+            return true;
+        } catch (Exception e) {
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to start enhanced web dashboard: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Enhanced stop method with proper cleanup
+     */
+    public void stop() {
+        if (!dashboardEnabled) {
+            return;
+        }
+        
+        try {
+            // Stop HTTP server
+            if (httpServer != null) {
+                httpServer.stop(2); // 2 second delay
+                httpServer = null;
+                com.zerog.neoessentials.util.DebugUtil.infoLog("HTTP server stopped");
+            }
+            
+            // Stop schedulers
+            if (scheduler != null && !scheduler.isShutdown()) {
+                scheduler.shutdown();
+                try {
+                    if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                        scheduler.shutdownNow();
+                    }
+                } catch (InterruptedException e) {
+                    scheduler.shutdownNow();
+                    Thread.currentThread().interrupt();
+                }
+            }
+            
+            // Clear sessions and data
+            activeSessions.clear();
+            performanceHistory.clear();
+            
+            dashboardEnabled = false;
+            
+            // Add stop event
+            addRealTimeEvent("SYSTEM", "Web Dashboard stopped", "INFO");
+            
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced web dashboard stopped and cleaned up");
+        } catch (Exception e) {
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Error stopping dashboard: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Set up HTTP request handlers
+     */
+    private void setupHttpHandlers() {
+        // Main dashboard page
+        httpServer.createContext("/", new DashboardHandler());
+        
+        // API endpoints
+        httpServer.createContext("/api/data", new ApiDataHandler());
+        httpServer.createContext("/api/stats", new ApiStatsHandler());
+        httpServer.createContext("/api/players", new ApiPlayersHandler());
+        
+        // Static resources
+        httpServer.createContext("/css", new StaticResourceHandler("css"));
+        httpServer.createContext("/js", new StaticResourceHandler("js"));
+        httpServer.createContext("/assets", new StaticResourceHandler("assets"));
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("HTTP handlers configured");
+    }
+    
+    /**
+     * Validate dashboard configuration
+     */
+    private boolean validateConfiguration() {
+        if (port < 1024 || port > 65535) {
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Invalid port number: " + port);
+            return false;
+        }
+        
+        if (maxSessions < 1 || maxSessions > 100) {
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Invalid max sessions: " + maxSessions);
+            return false;
+        }
+        
+        if (sessionTimeout < 60000) { // Minimum 1 minute
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Session timeout too short: " + sessionTimeout);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Initialize widgets for the dashboard
+     */
+    private void initializeWidgets() {
+        // Server Status Widget
+        Map<String, Object> serverWidget = new HashMap<>();
+        serverWidget.put("type", "server_status");
+        serverWidget.put("title", "Server Status");
+        serverWidget.put("position", Map.of("x", 0, "y", 0, "width", 6, "height", 4));
+        serverWidget.put("refreshRate", 5000);
+        widgets.put("server_status", serverWidget);
+        
+        // Performance Widget
+        Map<String, Object> perfWidget = new HashMap<>();
+        perfWidget.put("type", "performance");
+        perfWidget.put("title", "Performance Metrics");
+        perfWidget.put("position", Map.of("x", 6, "y", 0, "width", 6, "height", 4));
+        perfWidget.put("refreshRate", 2000);
+        widgets.put("performance", perfWidget);
+        
+        // Economy Widget
+        Map<String, Object> econWidget = new HashMap<>();
+        econWidget.put("type", "economy");
+        econWidget.put("title", "Economy Overview");
+        econWidget.put("position", Map.of("x", 0, "y", 4, "width", 8, "height", 4));
+        econWidget.put("refreshRate", 10000);
+        widgets.put("economy", econWidget);
+        
+        // Recent Events Widget
+        Map<String, Object> eventsWidget = new HashMap<>();
+        eventsWidget.put("type", "events");
+        eventsWidget.put("title", "Recent Events");
+        eventsWidget.put("position", Map.of("x", 8, "y", 4, "width", 4, "height", 8));
+        eventsWidget.put("refreshRate", 3000);
+        widgets.put("events", eventsWidget);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Dashboard widgets initialized");
+    }
+    
+    /**
+     * Start performance monitoring
+     */
+    private void startPerformanceMonitoring() {
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                collectPerformanceMetrics();
+                checkPerformanceAlerts();
+            } catch (Exception e) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Error in performance monitoring: " + e.getMessage());
+            }
+        }, 0, updateInterval, TimeUnit.SECONDS);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Performance monitoring started");
+    }
+    
+    /**
+     * Start real-time updates
+     */
+    private void startRealTimeUpdates() {
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                updateRealTimeData();
+                broadcastUpdates();
+            } catch (Exception e) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Error in real-time updates: " + e.getMessage());
+            }
+        }, 0, updateInterval, TimeUnit.SECONDS);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Real-time updates started");
+    }
+    
+    /**
+     * Initialize enhanced dashboard data
+     */
+    private void initializeEnhancedDashboardData() {
+        // Call original initialization
+        initializeDashboardData();
+        
+        // Add enhanced data
+        dashboardData.put("dashboard_version", "2.0");
+        dashboardData.put("start_time", System.currentTimeMillis());
+        dashboardData.put("theme", theme);
+        dashboardData.put("ssl_enabled", enableSSL);
+        dashboardData.put("auth_enabled", enableAuth);
+        dashboardData.put("max_sessions", maxSessions);
+        dashboardData.put("session_timeout", sessionTimeout);
+        dashboardData.put("real_time_enabled", enableRealTimeUpdates);
+        dashboardData.put("update_interval", updateInterval);
+        
+        // Initialize performance history
+        dashboardData.put("performance_history", new ArrayList<>());
+        dashboardData.put("alert_history", new ArrayList<>());
+        dashboardData.put("session_history", new ArrayList<>());
+        
+        // Initialize API endpoints
+        dashboardData.put("api_endpoints", initializeAPIEndpoints());
+        
+        // Initialize security metrics
+        dashboardData.put("security_events", new ArrayList<>());
+        dashboardData.put("failed_logins", 0);
+        dashboardData.put("successful_logins", 0);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced dashboard data initialized");
+    }
+    
+    /**
+     * Collect performance metrics
+     */
+    private void collectPerformanceMetrics() {
+        long currentTime = System.currentTimeMillis();
+        
+        // Collect system metrics
+        Runtime runtime = Runtime.getRuntime();
+        long maxMemory = runtime.maxMemory();
+        long totalMemory = runtime.totalMemory();
+        long freeMemory = runtime.freeMemory();
+        long usedMemory = totalMemory - freeMemory;
+        
+        // Calculate percentages
+        double memoryUsagePercent = (double) usedMemory / maxMemory * 100;
+        
+        // Update dashboard data with real metrics
+        dashboardData.put("memory_usage", Math.round(memoryUsagePercent * 100.0) / 100.0);
+        dashboardData.put("memory_used_mb", usedMemory / (1024 * 1024));
+        dashboardData.put("memory_max_mb", maxMemory / (1024 * 1024));
+        
+        // Get server instance if available
+        net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
+        if (server != null) {
+            // Get real player count
+            int playerCount = server.getPlayerCount();
+            int maxPlayers = server.getMaxPlayers();
+            dashboardData.put("player_count", playerCount);
+            dashboardData.put("max_players", maxPlayers);
+            
+            // Get real TPS (approximation based on tick time)
+            long[] tickTimes = server.getTickTimesNanos();
+            if (tickTimes.length > 0) {
+                double averageTickTime = 0;
+                for (long tickTime : tickTimes) {
+                    averageTickTime += tickTime;
+                }
+                averageTickTime /= tickTimes.length;
+                // Convert nanoseconds to TPS (50ms = 20 TPS)
+                double tps = Math.min(20.0, 1000000000.0 / Math.max(50000000.0, averageTickTime));
+                dashboardData.put("tps", Math.round(tps * 100.0) / 100.0);
+            }
+            
+            // Get world information
+            if (!server.getAllLevels().isEmpty()) {
+                net.minecraft.server.level.ServerLevel overworld = server.getAllLevels().iterator().next();
+                dashboardData.put("world_time", overworld.getDayTime());
+                dashboardData.put("world_day", overworld.getDayTime() / 24000);
+                dashboardData.put("loaded_chunks", overworld.getChunkSource().getLoadedChunksCount());
+                dashboardData.put("entities", overworld.getEntityCount());
+            }
+            
+            // Server uptime
+            long uptimeMs = System.currentTimeMillis() - server.getServerStartTime();
+            dashboardData.put("uptime", uptimeMs);
+            dashboardData.put("uptime_formatted", formatUptime(uptimeMs));
+        }
+        
+        // CPU usage estimation (simplified)
+        double cpuUsage = Math.random() * 30 + 10; // Placeholder - real CPU monitoring requires JMX
+        dashboardData.put("cpu_usage", Math.round(cpuUsage * 100.0) / 100.0);
+        
+        // Store in performance history
+        performanceHistory.put("memory_" + currentTime, (long) memoryUsagePercent);
+        performanceHistory.put("cpu_" + currentTime, (long) cpuUsage);
+        
+        // Cleanup old history (keep last 100 entries)
+        if (performanceHistory.size() > 200) {
+            performanceHistory.entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Long>comparingByKey())
+                .limit(performanceHistory.size() - 100)
+                .map(Map.Entry::getKey)
+                .forEach(performanceHistory::remove);
+        }
+    }
+    /**
+     * Format uptime in human readable format
+     */
+    private String formatUptime(long uptimeMs) {
+        long seconds = uptimeMs / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+        
+        if (days > 0) {
+            return String.format("%dd %02dh %02dm", days, hours % 24, minutes % 60);
+        } else if (hours > 0) {
+            return String.format("%dh %02dm %02ds", hours, minutes % 60, seconds % 60);
+        } else {
+            return String.format("%dm %02ds", minutes, seconds % 60);
+        }
+    }
+    
+    /**
+     * Get performance metrics for API
+     */
+    private Map<String, Object> getPerformanceMetrics() {
+        Map<String, Object> metrics = new HashMap<>();
+        
+        // Current memory usage
+        Runtime runtime = Runtime.getRuntime();
+        long maxMemory = runtime.maxMemory();
+        long totalMemory = runtime.totalMemory();
+        long freeMemory = runtime.freeMemory();
+        long usedMemory = totalMemory - freeMemory;
+        double memoryUsagePercent = (double) usedMemory / maxMemory * 100;
+        
+        metrics.put("memory_used", usedMemory);
+        metrics.put("memory_max", maxMemory);
+        metrics.put("memory_percent", Math.round(memoryUsagePercent * 100.0) / 100.0);
+        
+        // CPU usage estimate (simplified)
+        metrics.put("cpu_percent", Math.random() * 50 + 10); // Placeholder
+        
+        // Performance history
+        metrics.put("history", new HashMap<>(performanceHistory));
+        
+        return metrics;
+    }
+
+    /**
+     * Check for performance alerts
+     */
+    private void checkPerformanceAlerts() {
+        double memoryUsage = (double) dashboardData.getOrDefault("memory_usage_percent", 0.0);
+        double tps = (double) dashboardData.getOrDefault("tps", 20.0);
+        
+        // Memory usage alert
+        if (memoryUsage > 90) {
+            createAlert("HIGH_MEMORY_USAGE", "Memory usage critical: " + String.format("%.1f%%", memoryUsage), "ERROR");
+        } else if (memoryUsage > 75) {
+            createAlert("MEDIUM_MEMORY_USAGE", "Memory usage high: " + String.format("%.1f%%", memoryUsage), "WARN");
+        }
+        
+        // TPS alert
+        if (tps < 15) {
+            createAlert("LOW_TPS", "Server TPS critically low: " + String.format("%.1f", tps), "ERROR");
+        } else if (tps < 18) {
+            createAlert("MEDIUM_TPS", "Server TPS low: " + String.format("%.1f", tps), "WARN");
+        }
+    }
+    
+    /**
+     * Update real-time data
+     */
+    private void updateRealTimeData() {
+        long currentTime = System.currentTimeMillis();
+        
+        // Update uptime
+        long startTime = (long) dashboardData.getOrDefault("start_time", currentTime);
+        dashboardData.put("uptime_seconds", (currentTime - startTime) / 1000);
+        
+        // Update session count
+        dashboardData.put("active_sessions", activeSessions.size());
+        
+        // Update timestamp
+        dashboardData.put("last_update", currentTime);
+        dashboardData.put("last_update_formatted", 
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+    }
+    
+    /**
+     * Broadcast updates to connected sessions
+     */
+    private void broadcastUpdates() {
+        // In a real implementation, this would send WebSocket updates
+        // For now, we just log the update
+        int activeSessionCount = activeSessions.size();
+        if (activeSessionCount > 0) {
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Broadcasting updates to " + activeSessionCount + " active sessions");
+        }
+    }
+    
+    /**
+     * Initialize API endpoints
+     */
+    private Map<String, Object> initializeAPIEndpoints() {
+        Map<String, Object> endpoints = new HashMap<>();
+        
+        endpoints.put("/api/status", "Server status information");
+        endpoints.put("/api/performance", "Performance metrics");
+        endpoints.put("/api/economy", "Economy statistics");
+        endpoints.put("/api/players", "Online players information");
+        endpoints.put("/api/events", "Recent events");
+        endpoints.put("/api/alerts", "System alerts");
+        endpoints.put("/api/sessions", "Active sessions");
+        endpoints.put("/api/config", "Dashboard configuration");
+        endpoints.put("/api/widgets", "Dashboard widgets");
+        endpoints.put("/api/security", "Security metrics");
+        
+        return endpoints;
+    }
+    
+    /**
+     * Create an alert
+     */
+    private void createAlert(String type, String message, String severity) {
+        Map<String, Object> alert = new HashMap<>();
+        alert.put("type", type);
+        alert.put("message", message);
+        alert.put("severity", severity);
+        alert.put("timestamp", System.currentTimeMillis());
+        alert.put("acknowledged", false);
+        
+        alertHistory.add(alert);
+        
+        // Keep only last 50 alerts
+        if (alertHistory.size() > 50) {
+            alertHistory.remove(0);
+        }
+        
+        // Also add as real-time event
+        addRealTimeEvent("ALERT", message, severity);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Alert created: [" + severity + "] " + type + " - " + message);
+    }
+    
+    /**
+     * Initialize dashboard data (original method)
+     */
+    private void initializeDashboardData() {
+        dashboardData.put("server_status", "online");
+        dashboardData.put("player_count", 0);
+        dashboardData.put("uptime", System.currentTimeMillis());
+        dashboardData.put("version", "1.0.2");
+        
+        // Enhanced shop and economy data
+        dashboardData.put("total_shops", 0);
+        dashboardData.put("active_shops", 0);
+        dashboardData.put("daily_transactions", 0);
+        dashboardData.put("daily_revenue", 0.0);
+        dashboardData.put("total_economy_balance", 0.0);
+        dashboardData.put("active_auctions", 0);
+        dashboardData.put("pending_trades", 0);
+        
+        // Performance metrics
+        dashboardData.put("tps", 20.0);
+        dashboardData.put("memory_usage", 0);
+        dashboardData.put("cpu_usage", 0);
+        dashboardData.put("disk_usage", 0);
+        
+        // Security metrics
+        dashboardData.put("banned_players", 0);
+        dashboardData.put("login_attempts", 0);
+        dashboardData.put("suspicious_activity", 0);
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Enhanced dashboard data initialized with shop and economy metrics");
+    }
+    
+    /**
+     * Update dashboard data
+     */
+    public void updateData(String key, Object value) {
+        dashboardData.put(key, value);
+    }
+    
+    /**
+     * Get dashboard data
+     */
+    public Map<String, Object> getDashboardData() {
+        return new HashMap<>(dashboardData);
+    }
+    
+    /**
+     * Enhanced session creation with better security
+     */
+    public String createSession(String username, String ipAddress) {
+        // Check session limits
+        if (activeSessions.size() >= maxSessions) {
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Maximum sessions reached, rejecting new session for: " + username);
+            return null;
+        }
+        
+        String sessionId = UUID.randomUUID().toString();
+        DashboardSession session = new DashboardSession(sessionId, username, System.currentTimeMillis(), ipAddress);
+        activeSessions.put(sessionId, session);
+        
+        // Log successful login
+        int successfulLogins = (int) dashboardData.getOrDefault("successful_logins", 0);
+        dashboardData.put("successful_logins", successfulLogins + 1);
+        
+        // Add security event
+        addSecurityEvent("LOGIN_SUCCESS", "User " + username + " logged in from " + ipAddress, "INFO");
+        
+        com.zerog.neoessentials.util.DebugUtil.infoLog("Created dashboard session for user: " + username + " from " + ipAddress);
+        return sessionId;
+    }
+    
+    /**
+     * Enhanced session validation with configurable timeout
+     */
+    public boolean validateSession(String sessionId) {
+        DashboardSession session = activeSessions.get(sessionId);
+        if (session == null) {
+            return false;
+        }
+        
+        // Check if session is expired
+        long sessionAge = System.currentTimeMillis() - session.getCreatedTime();
+        if (sessionAge > sessionTimeout) {
+            activeSessions.remove(sessionId);
+            addSecurityEvent("SESSION_EXPIRED", "Session expired for user: " + session.getUsername(), "INFO");
+            return false;
+        }
+        
+        // Update last activity
+        session.updateLastActivity();
+        return true;
+    }
+    
+    /**
+     * Get all dashboard widgets
+     */
+    public Map<String, Object> getWidgets() {
+        return new HashMap<>(widgets);
+    }
+    
+    /**
+     * Get performance history
+     */
+    public Map<String, Long> getPerformanceHistory() {
+        return new HashMap<>(performanceHistory);
+    }
+    
+    /**
+     * Get alert history
+     */
+    public List<Map<String, Object>> getAlertHistory() {
+        return new ArrayList<>(alertHistory);
+    }
+    
+    /**
+     * Get security events
+     */
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> getSecurityEvents() {
+        return (List<Map<String, Object>>) dashboardData.getOrDefault("security_events", new ArrayList<>());
+    }
+    
+    /**
+     * Add security event
+     */
+    private void addSecurityEvent(String type, String message, String severity) {
+        Map<String, Object> event = new HashMap<>();
+        event.put("type", type);
+        event.put("message", message);
+        event.put("severity", severity);
+        event.put("timestamp", System.currentTimeMillis());
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> securityEvents = (List<Map<String, Object>>) 
+                dashboardData.computeIfAbsent("security_events", k -> new ArrayList<>());
+        
+        securityEvents.add(0, event);
+        if (securityEvents.size() > 100) {
+            securityEvents.remove(securityEvents.size() - 1);
+        }
+    }
+    
+    /**
+     * Get dashboard configuration
+     */
+    public Map<String, Object> getConfiguration() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("port", port);
+        config.put("bind_address", bindAddress);
+        config.put("theme", theme);
+        config.put("ssl_enabled", enableSSL);
+        config.put("auth_enabled", enableAuth);
+        config.put("max_sessions", maxSessions);
+        config.put("session_timeout", sessionTimeout);
+        config.put("real_time_enabled", enableRealTimeUpdates);
+        config.put("update_interval", updateInterval);
+        return config;
+    }
+    
+    /**
+     * Update dashboard configuration
+     */
+    public boolean updateConfiguration(Map<String, Object> newConfig) {
+        try {
+            if (newConfig.containsKey("theme")) {
+                theme = (String) newConfig.get("theme");
+            }
+            if (newConfig.containsKey("max_sessions")) {
+                maxSessions = (int) newConfig.get("max_sessions");
+            }
+            if (newConfig.containsKey("session_timeout")) {
+                sessionTimeout = (long) newConfig.get("session_timeout");
+            }
+            if (newConfig.containsKey("real_time_enabled")) {
+                enableRealTimeUpdates = (boolean) newConfig.get("real_time_enabled");
+            }
+            if (newConfig.containsKey("update_interval")) {
+                updateInterval = (int) newConfig.get("update_interval");
+            }
+            
+            addRealTimeEvent("CONFIG", "Dashboard configuration updated", "INFO");
+            return true;
+        } catch (Exception e) {
+            com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to update configuration: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Authenticate user with password
+     */
+    public boolean authenticateUser(String username, String password) {
+        if (!enableAuth) {
+            return true; // Auth disabled
+        }
+        
+        // Simple password check (in production, use proper hashing)
+        boolean authenticated = "admin".equals(username) && adminPassword.equals(password);
+        
+        if (!authenticated) {
+            int failedLogins = (int) dashboardData.getOrDefault("failed_logins", 0);
+            dashboardData.put("failed_logins", failedLogins + 1);
+            addSecurityEvent("LOGIN_FAILED", "Failed login attempt for user: " + username, "WARN");
+        }
+        
+        return authenticated;
+    }
+    
+    /**
+     * Remove a dashboard session
+     */
+    public void removeSession(String sessionId) {
+        activeSessions.remove(sessionId);
+    }
+    
+    /**
+     * Get active sessions count
+     */
+    public int getActiveSessionsCount() {
+        return activeSessions.size();
+    }
+    
+    /**
+     * Check if dashboard is enabled
+     */
+    public boolean isDashboardEnabled() {
+        return dashboardEnabled;
+    }
+    
+    /**
+     * Set dashboard port
+     */
+    public void setPort(int port) {
+        if (!dashboardEnabled) {
+            this.port = port;
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Dashboard port set to " + port);
+        } else {
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Cannot change port while dashboard is running");
+        }
+    }
+    
+    /**
+     * Get dashboard port
+     */
+    public int getPort() {
+        return port;
+    }
+    
+    /**
+     * Get shop analytics data
+     */
+    public Map<String, Object> getShopAnalytics() {
+        Map<String, Object> analytics = new HashMap<>();
+        analytics.put("total_shops", dashboardData.getOrDefault("total_shops", 0));
+        analytics.put("active_shops", dashboardData.getOrDefault("active_shops", 0));
+        analytics.put("daily_transactions", dashboardData.getOrDefault("daily_transactions", 0));
+        analytics.put("daily_revenue", dashboardData.getOrDefault("daily_revenue", 0.0));
+        analytics.put("average_transaction", calculateAverageTransaction());
+        analytics.put("top_selling_category", getTopSellingCategory());
+        analytics.put("most_active_shop", getMostActiveShop());
+        return analytics;
+    }
+    
+    /**
+     * Get economy health metrics
+     */
+    public Map<String, Object> getEconomyHealth() {
+        Map<String, Object> health = new HashMap<>();
+        health.put("total_balance", dashboardData.getOrDefault("total_economy_balance", 0.0));
+        health.put("average_balance", calculateAveragePlayerBalance());
+        health.put("inflation_rate", calculateInflationRate());
+        health.put("money_velocity", calculateMoneyVelocity());
+        health.put("economy_status", getEconomyStatus());
+        return health;
+    }
+    
+    /**
+     * Get server performance data
+     */
+    public Map<String, Object> getServerPerformance() {
+        Map<String, Object> performance = new HashMap<>();
+        performance.put("tps", dashboardData.getOrDefault("tps", 20.0));
+        performance.put("memory_usage", dashboardData.getOrDefault("memory_usage", 0));
+        performance.put("cpu_usage", dashboardData.getOrDefault("cpu_usage", 0));
+        performance.put("disk_usage", dashboardData.getOrDefault("disk_usage", 0));
+        performance.put("network_io", getNetworkIO());
+        performance.put("chunk_loading", getChunkLoadingStats());
+        return performance;
+    }
+    
+    /**
+     * Update shop metrics
+     */
+    public void updateShopMetrics(int totalShops, int activeShops, int dailyTransactions, double dailyRevenue) {
+        dashboardData.put("total_shops", totalShops);
+        dashboardData.put("active_shops", activeShops);
+        dashboardData.put("daily_transactions", dailyTransactions);
+        dashboardData.put("daily_revenue", dailyRevenue);
+    com.zerog.neoessentials.util.DebugUtil.debugLog("Updated shop metrics: " + totalShops + " total, " + activeShops + " active, " + dailyTransactions + " transactions, $" + dailyRevenue);
+    }
+    
+    /**
+     * Update performance metrics
+     */
+    public void updatePerformanceMetrics(double tps, int memoryUsage, int cpuUsage) {
+        dashboardData.put("tps", tps);
+        dashboardData.put("memory_usage", memoryUsage);
+        dashboardData.put("cpu_usage", cpuUsage);
+    }
+    
+    /**
+     * Add real-time event for dashboard
+     */
+    public void addRealTimeEvent(String eventType, String message, String severity) {
+        Map<String, Object> event = new HashMap<>();
+        event.put("type", eventType);
+        event.put("message", message);
+        event.put("severity", severity);
+        event.put("timestamp", System.currentTimeMillis());
+        
+        // Store recent events (last 50)
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> events = (List<Map<String, Object>>) 
+                dashboardData.computeIfAbsent("recent_events", k -> new ArrayList<>());
+        
+        events.add(0, event); // Add to front
+        if (events.size() > 50) {
+            events.remove(events.size() - 1); // Remove oldest
+        }
+        
+    com.zerog.neoessentials.util.DebugUtil.infoLog("Dashboard event: [" + severity + "] " + eventType + " - " + message);
+    }
+    
+    // Helper methods for analytics
+    private double calculateAverageTransaction() {
+        int transactions = (int) dashboardData.getOrDefault("daily_transactions", 0);
+        double revenue = (double) dashboardData.getOrDefault("daily_revenue", 0.0);
+        return transactions > 0 ? revenue / transactions : 0.0;
+    }
+    
+    private String getTopSellingCategory() {
+        // Placeholder - would integrate with shop system
+        return "General Items";
+    }
+    
+    private String getMostActiveShop() {
+        // Placeholder - would integrate with shop system
+        return "Server Economy Hub";
+    }
+    
+    private double calculateAveragePlayerBalance() {
+        // Placeholder - would integrate with economy system
+        return 1500.0;
+    }
+    
+    private double calculateInflationRate() {
+        // Placeholder - would calculate based on price history
+        return 2.3;
+    }
+    
+    private double calculateMoneyVelocity() {
+        // Placeholder - would calculate money circulation speed
+        return 1.2;
+    }
+    
+    private String getEconomyStatus() {
+        double totalBalance = (double) dashboardData.getOrDefault("total_economy_balance", 0.0);
+        if (totalBalance > 100000) return "Healthy";
+        if (totalBalance > 50000) return "Stable";
+        if (totalBalance > 10000) return "Growing";
+        return "New";
+    }
+    
+    private Map<String, Object> getNetworkIO() {
+        Map<String, Object> network = new HashMap<>();
+        network.put("bytes_sent", 0);
+        network.put("bytes_received", 0);
+        network.put("packets_sent", 0);
+        network.put("packets_received", 0);
+        return network;
+    }
+    
+    private Map<String, Object> getChunkLoadingStats() {
+        Map<String, Object> chunks = new HashMap<>();
+        chunks.put("loaded_chunks", 0);
+        chunks.put("generated_chunks", 0);
+        chunks.put("chunk_generation_rate", 0);
+        return chunks;
+    }
+    
+    /**
+     * Get online players information
+     */
+    private List<Map<String, Object>> getOnlinePlayers() {
+        List<Map<String, Object>> players = new ArrayList<>();
+        
+        try {
+            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server != null && server.getPlayerList() != null) {
+                for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
+                    Map<String, Object> playerData = new HashMap<>();
+                    playerData.put("name", player.getName().getString());
+                    playerData.put("uuid", player.getUUID().toString());
+                    playerData.put("dimension", player.level().dimension().location().toString());
+                    playerData.put("x", (int) player.getX());
+                    playerData.put("y", (int) player.getY());
+                    playerData.put("z", (int) player.getZ());
+                    playerData.put("health", player.getHealth());
+                    playerData.put("gamemode", player.gameMode.getGameModeForPlayer().getName());
+                    players.add(playerData);
+                }
+            }
+        } catch (Exception e) {
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Error getting online players: " + e.getMessage());
+        }
+        
+        return players;
+    }
+    
+    /**
+     * Enhanced Dashboard session class with IP tracking and activity monitoring
+     */
+    public static class DashboardSession {
+        private final String sessionId;
+        private final String username;
+        private final long createdTime;
+        private final String ipAddress;
+        private long lastActivity;
+        private int requestCount;
+        
+        public DashboardSession(String sessionId, String username, long createdTime) {
+            this(sessionId, username, createdTime, "unknown");
+        }
+        
+        public DashboardSession(String sessionId, String username, long createdTime, String ipAddress) {
+            this.sessionId = sessionId;
+            this.username = username;
+            this.createdTime = createdTime;
+            this.ipAddress = ipAddress;
+            this.lastActivity = createdTime;
+            this.requestCount = 0;
+        }
+        
+        public String getSessionId() {
+            return sessionId;
+        }
+        
+        public String getUsername() {
+            return username;
+        }
+        
+        public long getCreatedTime() {
+            return createdTime;
+        }
+        
+        public String getIpAddress() {
+            return ipAddress;
+        }
+        
+        public long getLastActivity() {
+            return lastActivity;
+        }
+        
+        public void updateLastActivity() {
+            this.lastActivity = System.currentTimeMillis();
+            this.requestCount++;
+        }
+        
+        public int getRequestCount() {
+            return requestCount;
+        }
+        
+        public long getSessionDuration() {
+            return System.currentTimeMillis() - createdTime;
+        }
+        
+        public boolean isExpired(long timeoutMs) {
+            return (System.currentTimeMillis() - lastActivity) > timeoutMs;
+        }
+    }
+    
+    /**
+     * Main dashboard page handler
+     */
+    private class DashboardHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String method = exchange.getRequestMethod();
+            
+            if ("GET".equals(method)) {
+                try {
+                    // Load dashboard HTML
+                    String html = WebDashboardManager.this.getEmbeddedDashboardHtml();
+                    
+                    // Set response headers
+                    exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
+                    exchange.getResponseHeaders().set("Cache-Control", "no-cache");
+                    
+                    // Send response
+                    byte[] response = html.getBytes(StandardCharsets.UTF_8);
+                    exchange.sendResponseHeaders(200, response.length);
+                    
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(response);
+                    }
+                } catch (Exception e) {
+                    com.zerog.neoessentials.util.DebugUtil.errorLog("Error serving dashboard: " + e.getMessage());
+                    WebDashboardManager.this.sendErrorResponse(exchange, 500, "Internal Server Error");
+                }
+            } else {
+                WebDashboardManager.this.sendErrorResponse(exchange, 405, "Method Not Allowed");
+            }
+        }
+    }
+    
+    /**
+     * API data handler for dashboard updates
+     */
+    private class ApiDataHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String method = exchange.getRequestMethod();
+            
+            if ("GET".equals(method)) {
+                try {
+                    // Refresh data before serving
+                    collectPerformanceMetrics();
+                    
+                    // Get current dashboard data
+                    Map<String, Object> data = WebDashboardManager.this.getDashboardData();
+                    
+                    // Add additional real-time data
+                    net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
+                    if (server != null) {
+                        // Add recent events
+                        List<Map<String, Object>> events = new ArrayList<>();
+                        events.add(Map.of("message", "Server running smoothly", "time", System.currentTimeMillis()));
+                        events.add(Map.of("message", "Performance monitoring active", "time", System.currentTimeMillis() - 30000));
+                        events.add(Map.of("message", "Dashboard connected", "time", System.currentTimeMillis() - 60000));
+                        data.put("events", events);
+                        
+                        // Add current timestamp
+                        data.put("timestamp", System.currentTimeMillis());
+                        data.put("server_start_time", server.getServerStartTime());
+                        
+                        // Add more detailed server info
+                        data.put("minecraft_version", server.getServerVersion());
+                        data.put("difficulty", server.getWorldData().getDifficulty().getDisplayName().getString());
+                        data.put("gamemode", server.getWorldData().getSettings().gameType().getName());
+                        data.put("hardcore", server.getWorldData().isHardcore());
+                        
+                        // Add dimension count
+                        data.put("dimension_count", server.getAllLevels().size());
+                        
+                        // Add total world size info
+                        long totalChunks = 0;
+                        long totalEntities = 0;
+                        for (net.minecraft.server.level.ServerLevel level : server.getAllLevels()) {
+                            totalChunks += level.getChunkSource().getLoadedChunksCount();
+                            totalEntities += level.getEntityCount();
+                        }
+                        data.put("total_loaded_chunks", totalChunks);
+                        data.put("total_entities", totalEntities);
+                    }
+                    
+                    // Convert to JSON
+                    String json = WebDashboardManager.this.mapToJson(data);
+                    
+                    // Set response headers
+                    exchange.getResponseHeaders().set("Content-Type", "application/json");
+                    exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                    exchange.getResponseHeaders().set("Cache-Control", "no-cache");
+                    
+                    // Send response
+                    byte[] response = json.getBytes(StandardCharsets.UTF_8);
+                    exchange.sendResponseHeaders(200, response.length);
+                    
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(response);
+                    }
+                } catch (Exception e) {
+                    com.zerog.neoessentials.util.DebugUtil.errorLog("Error serving API data: " + e.getMessage());
+                    WebDashboardManager.this.sendErrorResponse(exchange, 500, "Internal Server Error");
+                }
+            } else {
+                WebDashboardManager.this.sendErrorResponse(exchange, 405, "Method Not Allowed");
+            }
+        }
+    }
+    
+    /**
+     * API stats handler for performance metrics
+     */
+    private class ApiStatsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String method = exchange.getRequestMethod();
+            
+            if ("GET".equals(method)) {
+                try {
+                    // Get performance metrics
+                    Map<String, Object> stats = WebDashboardManager.this.getPerformanceMetrics();
+                    
+                    // Convert to JSON
+                    String json = WebDashboardManager.this.mapToJson(stats);
+                    
+                    // Set response headers
+                    exchange.getResponseHeaders().set("Content-Type", "application/json");
+                    exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                    
+                    // Send response
+                    byte[] response = json.getBytes(StandardCharsets.UTF_8);
+                    exchange.sendResponseHeaders(200, response.length);
+                    
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(response);
+                    }
+                } catch (Exception e) {
+                    com.zerog.neoessentials.util.DebugUtil.errorLog("Error serving API stats: " + e.getMessage());
+                    WebDashboardManager.this.sendErrorResponse(exchange, 500, "Internal Server Error");
+                }
+            } else {
+                WebDashboardManager.this.sendErrorResponse(exchange, 405, "Method Not Allowed");
+            }
+        }
+    }
+    
+    /**
+     * API players handler for online players
+     */
+    private class ApiPlayersHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String method = exchange.getRequestMethod();
+            
+            if ("GET".equals(method)) {
+                try {
+                    // Get online players with enhanced data
+                    List<Map<String, Object>> players = new ArrayList<>();
+                    
+                    net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+                    if (server != null && server.getPlayerList() != null) {
+                        for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
+                            Map<String, Object> playerData = new HashMap<>();
+                            playerData.put("name", player.getName().getString());
+                            playerData.put("uuid", player.getUUID().toString());
+                            playerData.put("world", player.level().dimension().location().getPath());
+                            playerData.put("x", Math.round(player.getX()));
+                            playerData.put("y", Math.round(player.getY()));
+                            playerData.put("z", Math.round(player.getZ()));
+                            playerData.put("health", Math.round(player.getHealth() * 10) / 10.0);
+                            playerData.put("max_health", Math.round(player.getMaxHealth() * 10) / 10.0);
+                            playerData.put("food", player.getFoodData().getFoodLevel());
+                            playerData.put("level", player.experienceLevel);
+                            playerData.put("gamemode", player.gameMode.getGameModeForPlayer().getName());
+                            playerData.put("ping", player.connection.latency());
+                            
+                            // Add playtime if available
+                            playerData.put("playtime", "N/A"); // Could be enhanced with actual playtime tracking
+                            
+                            players.add(playerData);
+                        }
+                    }
+                    
+                    // Create response object
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("players", players);
+                    response.put("count", players.size());
+                    response.put("max_players", server != null ? server.getMaxPlayers() : 20);
+                    response.put("timestamp", System.currentTimeMillis());
+                    
+                    // Convert to JSON
+                    String json = WebDashboardManager.this.mapToJson(response);
+                    
+                    // Set response headers
+                    exchange.getResponseHeaders().set("Content-Type", "application/json");
+                    exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                    exchange.getResponseHeaders().set("Cache-Control", "no-cache");
+                    
+                    // Send response
+                    byte[] responseBytes = json.getBytes(StandardCharsets.UTF_8);
+                    exchange.sendResponseHeaders(200, responseBytes.length);
+                    
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(responseBytes);
+                    }
+                } catch (Exception e) {
+                    com.zerog.neoessentials.util.DebugUtil.errorLog("Error serving API players: " + e.getMessage());
+                    WebDashboardManager.this.sendErrorResponse(exchange, 500, "Internal Server Error");
+                }
+            } else {
+                WebDashboardManager.this.sendErrorResponse(exchange, 405, "Method Not Allowed");
+            }
+        }
+    }
+    
+    /**
+     * Static resource handler for CSS, JS, and other assets
+     */
+    private class StaticResourceHandler implements HttpHandler {
+        private final String resourceType;
+        
+        public StaticResourceHandler(String resourceType) {
+            this.resourceType = resourceType;
+        }
+        
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String method = exchange.getRequestMethod();
+            
+            if ("GET".equals(method)) {
+                String path = exchange.getRequestURI().getPath();
+                try {
+                    String content = loadStaticResource(path);
+                    String contentType = getContentType(path);
+                    
+                    // Set response headers
+                    exchange.getResponseHeaders().set("Content-Type", contentType);
+                    exchange.getResponseHeaders().set("Cache-Control", "public, max-age=3600");
+                    
+                    // Send response
+                    byte[] response = content.getBytes(StandardCharsets.UTF_8);
+                    exchange.sendResponseHeaders(200, response.length);
+                    
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(response);
+                    }
+                } catch (Exception e) {
+                    com.zerog.neoessentials.util.DebugUtil.errorLog("Error serving static resource " + path + ": " + e.getMessage());
+                    sendErrorResponse(exchange, 404, "Not Found");
+                }
+            } else {
+                sendErrorResponse(exchange, 405, "Method Not Allowed");
+            }
+        }
+    }
+    
+    /**
+     * Load dashboard HTML content
+     */
+    private String loadDashboardHtml() throws IOException {
+        // Try to load from resources first
+        try (InputStream is = getClass().getResourceAsStream("/assets/neoessentials/web/dashboard.html")) {
+            if (is != null) {
+                return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Could not load dashboard.html from resources: " + e.getMessage());
+        }
+        
+        // Fallback to embedded HTML
+        return getEmbeddedDashboardHtml();
+    }
+    
+    /**
+     * Load static resource content
+     */
+    private String loadStaticResource(String path) throws IOException {
+        // Try to load from resources
+        try (InputStream is = getClass().getResourceAsStream("/assets/neoessentials/web" + path)) {
+            if (is != null) {
+                return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Could not load static resource " + path + ": " + e.getMessage());
+        }
+        
+        throw new IOException("Resource not found: " + path);
+    }
+    
+    /**
+     * Get content type for file extension
+     */
+    private String getContentType(String path) {
+        if (path.endsWith(".css")) return "text/css";
+        if (path.endsWith(".js")) return "application/javascript";
+        if (path.endsWith(".html")) return "text/html";
+        if (path.endsWith(".json")) return "application/json";
+        if (path.endsWith(".png")) return "image/png";
+        if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
+        if (path.endsWith(".svg")) return "image/svg+xml";
+        return "text/plain";
+    }
+    
+    /**
+     * Send error response
+     */
+    private void sendErrorResponse(HttpExchange exchange, int code, String message) throws IOException {
+        String response = "<html><body><h1>" + code + " " + message + "</h1></body></html>";
+        exchange.getResponseHeaders().set("Content-Type", "text/html");
+        byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(code, responseBytes.length);
+        
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(responseBytes);
+        }
+    }
+    
+    /**
+     * Convert map to JSON string (simple implementation)
+     */
+    private String mapToJson(Map<String, Object> map) {
+        StringBuilder json = new StringBuilder("{");
+        boolean first = true;
+        
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (!first) json.append(",");
+            json.append("\"").append(entry.getKey()).append("\":");
+            json.append(objectToJson(entry.getValue()));
+            first = false;
+        }
+        
+        json.append("}");
+        return json.toString();
+    }
+    
+    /**
+     * Convert list to JSON string
+     */
+    private String listToJson(List<?> list) {
+        StringBuilder json = new StringBuilder("[");
+        boolean first = true;
+        
+        for (Object item : list) {
+            if (!first) json.append(",");
+            json.append(objectToJson(item));
+            first = false;
+        }
+        
+        json.append("]");
+        return json.toString();
+    }
+    
+    /**
+     * Convert object to JSON representation
+     */
+    private String objectToJson(Object obj) {
+        if (obj == null) return "null";
+        if (obj instanceof String) return "\"" + obj.toString().replace("\"", "\\\"") + "\"";
+        if (obj instanceof Number || obj instanceof Boolean) return obj.toString();
+        if (obj instanceof Map) return mapToJson((Map<String, Object>) obj);
+        if (obj instanceof List) return listToJson((List<?>) obj);
+        return "\"" + obj.toString().replace("\"", "\\\"") + "\"";
+    }
+    
+    /**
+     * Get embedded dashboard HTML when resources are not available
+     */
+    private String getEmbeddedDashboardHtml() {
+        return """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>NeoEssentials Dashboard</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+                        min-height: 100vh; color: #333; padding: 20px; overflow-x: hidden;
+                    }
+                    .container { max-width: 1400px; margin: 0 auto; }
+                    .header { 
+                        background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+                        border-radius: 20px; padding: 30px; margin-bottom: 30px;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.1); text-align: center;
+                        border: 1px solid rgba(255,255,255,0.2);
+                    }
+                    .header h1 { 
+                        color: #2d3748; font-size: 3rem; margin-bottom: 10px; 
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                        background-clip: text;
+                    }
+                    .header p { color: #718096; font-size: 1.1rem; }
+                    .stats-grid { 
+                        display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                        gap: 25px; margin-bottom: 30px;
+                    }
+                    .stat-card { 
+                        background: rgba(255,255,255,0.95); backdrop-filter: blur(20px);
+                        border-radius: 20px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+                        transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.2);
+                        position: relative; overflow: hidden;
+                    }
+                    .stat-card::before {
+                        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                    }
+                    .stat-card:hover { transform: translateY(-10px); box-shadow: 0 30px 80px rgba(0,0,0,0.15); }
+                    .stat-card h3 { 
+                        color: #4a5568; margin-bottom: 20px; font-size: 1.1rem;
+                        text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+                    }
+                    .stat-value { 
+                        font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+                        background-clip: text;
+                    }
+                    .stat-label { color: #718096; font-size: 0.9rem; }
+                    .stat-trend { font-size: 0.8rem; margin-top: 5px; }
+                    .trend-up { color: #48bb78; }
+                    .trend-down { color: #f56565; }
+                    .refresh-btn { 
+                        background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+                        border: none; border-radius: 15px; padding: 15px 30px; font-size: 1.1rem;
+                        cursor: pointer; margin: 20px auto; display: block; 
+                        transition: all 0.3s ease; font-weight: 600;
+                        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+                    }
+                    .refresh-btn:hover { 
+                        transform: translateY(-3px); 
+                        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+                    }
+                    .loading { text-align: center; color: #718096; padding: 20px; }
+                    .content-grid {
+                        display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px;
+                    }
+                    .events-list, .players-list { 
+                        background: rgba(255,255,255,0.95); border-radius: 20px; padding: 25px;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.1); backdrop-filter: blur(20px);
+                        border: 1px solid rgba(255,255,255,0.2);
+                    }
+                    .events-list h3, .players-list h3 {
+                        color: #4a5568; margin-bottom: 20px; font-size: 1.3rem;
+                        padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;
+                    }
+                    .events-container, .players-container { 
+                        max-height: 400px; overflow-y: auto; padding-right: 10px;
+                    }
+                    .event-item, .player-item { 
+                        background: linear-gradient(135deg, #f7fafc, #edf2f7); 
+                        border-radius: 12px; padding: 15px; margin-bottom: 12px;
+                        border-left: 4px solid #4299e1; transition: all 0.2s ease;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                    }
+                    .event-item:hover, .player-item:hover {
+                        transform: translateX(5px); box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                    }
+                    .event-time { color: #718096; font-size: 0.85rem; font-weight: 600; }
+                    .event-message { color: #4a5568; margin-top: 5px; }
+                    .player-name { color: #4a5568; font-weight: 600; font-size: 1.1rem; }
+                    .player-info { color: #718096; font-size: 0.9rem; margin-top: 3px; }
+                    .status-indicator {
+                        display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+                        margin-right: 8px; animation: pulse 2s infinite;
+                    }
+                    .status-online { background: #48bb78; }
+                    .status-warning { background: #ed8936; }
+                    .status-error { background: #f56565; }
+                    @keyframes pulse {
+                        0% { opacity: 1; }
+                        50% { opacity: 0.5; }
+                        100% { opacity: 1; }
+                    }
+                    .progress-bar {
+                        width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px;
+                        overflow: hidden; margin-top: 10px;
+                    }
+                    .progress-fill {
+                        height: 100%; background: linear-gradient(135deg, #667eea, #764ba2);
+                        transition: width 0.3s ease; border-radius: 4px;
+                    }
+                    @media (max-width: 768px) {
+                        .content-grid { grid-template-columns: 1fr; }
+                        .stats-grid { grid-template-columns: 1fr; }
+                        .header h1 { font-size: 2rem; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>NeoEssentials Dashboard</h1>
+                        <p>Real-time Server Monitoring & Management</p>
+                        <div style="margin-top: 15px;">
+                            <span class="status-indicator status-online" id="connection-status"></span>
+                            <span id="connection-text">Connected</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Server Status</h3>
+                            <div class="stat-value" id="server-status">Online</div>
+                            <div class="stat-label">Current Status</div>
+                            <div class="stat-trend trend-up" id="uptime-display">Uptime: Loading...</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Players Online</h3>
+                            <div class="stat-value" id="player-count">0</div>
+                            <div class="stat-label">Connected Players</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="player-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Server Performance</h3>
+                            <div class="stat-value" id="server-tps">20.0</div>
+                            <div class="stat-label">Ticks Per Second</div>
+                            <div class="stat-trend" id="tps-trend">Optimal</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Memory Usage</h3>
+                            <div class="stat-value" id="memory-usage">0%</div>
+                            <div class="stat-label" id="memory-details">0 MB / 0 MB</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="memory-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>World Information</h3>
+                            <div class="stat-value" id="world-day">Day 0</div>
+                            <div class="stat-label" id="world-time">00:00</div>
+                            <div class="stat-trend" id="world-info">Loading...</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Server Load</h3>
+                            <div class="stat-value" id="cpu-usage">0%</div>
+                            <div class="stat-label">CPU Usage</div>
+                            <div class="stat-trend" id="entities-count">Entities: 0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="content-grid">
+                        <div class="events-list">
+                            <h3>Recent Server Events</h3>
+                            <div class="events-container" id="events-container">
+                                <div class="loading">Loading events...</div>
+                            </div>
+                        </div>
+                        
+                        <div class="players-list">
+                            <h3>Online Players</h3>
+                            <div class="players-container" id="players-container">
+                                <div class="loading">Loading players...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="refresh-btn" onclick="refreshData()">🔄 Refresh Dashboard</button>
+                </div>
+                
+                <script>
+                    let lastRefresh = Date.now();
+                    
+                    function updateElement(id, value) {
+                        const el = document.getElementById(id);
+                        if (el) el.textContent = value;
+                    }
+                    
+                    function updateElementHTML(id, html) {
+                        const el = document.getElementById(id);
+                        if (el) el.innerHTML = html;
+                    }
+                    
+                    function addEvent(message, type = 'info') {
+                        const container = document.getElementById('events-container');
+                        if (!container) return;
+                        
+                        if (container.querySelector('.loading')) {
+                            container.innerHTML = '';
+                        }
+                        
+                        const eventDiv = document.createElement('div');
+                        eventDiv.className = 'event-item';
+                        eventDiv.innerHTML = `
+                            <div class="event-time">${new Date().toLocaleTimeString()}</div>
+                            <div class="event-message">${message}</div>
+                        `;
+                        container.insertBefore(eventDiv, container.firstChild);
+                        
+                        while (container.children.length > 15) {
+                            container.removeChild(container.lastChild);
+                        }
+                    }
+                    
+                    function addPlayer(playerData) {
+                        const container = document.getElementById('players-container');
+                        if (!container) return;
+                        
+                        if (container.querySelector('.loading')) {
+                            container.innerHTML = '';
+                        }
+                        
+                        const playerDiv = document.createElement('div');
+                        playerDiv.className = 'player-item';
+                        playerDiv.innerHTML = `
+                            <div class="player-name">${playerData.name || playerData}</div>
+                            <div class="player-info">${playerData.world || 'Unknown World'} • Ping: ${playerData.ping || 'N/A'}ms</div>
+                        `;
+                        container.appendChild(playerDiv);
+                    }
+                    
+                    function formatUptime(ms) {
+                        const seconds = Math.floor(ms / 1000);
+                        const minutes = Math.floor(seconds / 60);
+                        const hours = Math.floor(minutes / 60);
+                        const days = Math.floor(hours / 24);
+                        
+                        if (days > 0) {
+                            return `${days}d ${hours % 24}h ${minutes % 60}m`;
+                        } else if (hours > 0) {
+                            return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+                        } else {
+                            return `${minutes}m ${seconds % 60}s`;
+                        }
+                    }
+                    
+                    function formatWorldTime(ticks) {
+                        const totalMinutes = Math.floor(ticks / 16.67); // 1 minute = ~16.67 ticks
+                        const hours = Math.floor((totalMinutes + 360) / 60) % 24; // Start at 6:00 AM
+                        const minutes = totalMinutes % 60;
+                        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                    }
+                    
+                    async function refreshData() {
+                        try {
+                            // Update connection status
+                            updateElement('connection-text', 'Refreshing...');
+                            
+                            // Fetch dashboard data
+                            const response = await fetch('/api/data');
+                            if (response.ok) {
+                                const data = await response.json();
+                                
+                                // Update basic stats
+                                updateElement('player-count', data.player_count || 0);
+                                updateElement('server-tps', (data.tps || 20).toFixed(1));
+                                updateElement('memory-usage', (data.memory_usage || 0).toFixed(1) + '%');
+                                
+                                // Update memory details
+                                const memUsed = data.memory_used_mb || 0;
+                                const memMax = data.memory_max_mb || 0;
+                                updateElement('memory-details', `${memUsed} MB / ${memMax} MB`);
+                                
+                                // Update progress bars
+                                const memProgress = document.getElementById('memory-progress');
+                                if (memProgress) memProgress.style.width = (data.memory_usage || 0) + '%';
+                                
+                                const playerProgress = document.getElementById('player-progress');
+                                const maxPlayers = data.max_players || 20;
+                                const playerPercent = ((data.player_count || 0) / maxPlayers) * 100;
+                                if (playerProgress) playerProgress.style.width = playerPercent + '%';
+                                
+                                // Update uptime
+                                if (data.uptime) {
+                                    updateElement('uptime-display', 'Uptime: ' + formatUptime(data.uptime));
+                                }
+                                
+                                // Update world information
+                                if (data.world_time !== undefined) {
+                                    const worldTime = formatWorldTime(data.world_time);
+                                    updateElement('world-time', worldTime);
+                                    updateElement('world-day', `Day ${Math.floor((data.world_day || 0) + 1)}`);
+                                }
+                                
+                                // Update world info
+                                const chunks = data.loaded_chunks || 0;
+                                const entities = data.entities || 0;
+                                updateElement('world-info', `Chunks: ${chunks} • Entities: ${entities}`);
+                                updateElement('entities-count', `Entities: ${entities}`);
+                                
+                                // Update CPU usage
+                                updateElement('cpu-usage', (data.cpu_usage || 0).toFixed(1) + '%');
+                                
+                                // Update TPS trend
+                                const tps = data.tps || 20;
+                                const tpsTrend = document.getElementById('tps-trend');
+                                if (tpsTrend) {
+                                    if (tps >= 19) {
+                                        tpsTrend.textContent = 'Excellent';
+                                        tpsTrend.className = 'stat-trend trend-up';
+                                    } else if (tps >= 15) {
+                                        tpsTrend.textContent = 'Good';
+                                        tpsTrend.className = 'stat-trend';
+                                    } else {
+                                        tpsTrend.textContent = 'Poor';
+                                        tpsTrend.className = 'stat-trend trend-down';
+                                    }
+                                }
+                                
+                                // Add events if available
+                                if (data.events) {
+                                    data.events.forEach(event => addEvent(event.message || event));
+                                }
+                            }
+                            
+                            // Fetch players
+                            const playersResponse = await fetch('/api/players');
+                            if (playersResponse.ok) {
+                                const players = await playersResponse.json();
+                                const container = document.getElementById('players-container');
+                                if (container && players.players) {
+                                    container.innerHTML = '';
+                                    if (players.players.length === 0) {
+                                        container.innerHTML = '<div class="loading">No players online</div>';
+                                    } else {
+                                        players.players.forEach(player => addPlayer(player));
+                                    }
+                                }
+                            }
+                            
+                            // Update connection status
+                            updateElement('connection-text', 'Connected');
+                            lastRefresh = Date.now();
+                            
+                        } catch (error) {
+                            console.error('Failed to refresh data:', error);
+                            updateElement('connection-text', 'Connection Error');
+                            addEvent('Failed to refresh dashboard data', 'error');
+                        }
+                    }
+                    
+                    // Initial load
+                    document.addEventListener('DOMContentLoaded', () => {
+                        refreshData();
+                        addEvent('Dashboard initialized successfully');
+                        
+                        // Auto-refresh every 10 seconds
+                        setInterval(refreshData, 10000);
+                        
+                        // Update last refresh time every second
+                        setInterval(() => {
+                            const timeSince = Math.floor((Date.now() - lastRefresh) / 1000);
+                            if (timeSince > 30) {
+                                updateElement('connection-text', `Last update: ${timeSince}s ago`);
+                            }
+                        }, 1000);
+                    });
+                </script>
+            </body>
+            </html>
+            """;
+    }
+}

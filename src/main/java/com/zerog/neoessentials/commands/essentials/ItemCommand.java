@@ -4,7 +4,7 @@ package com.zerog.neoessentials.commands.essentials;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.zerog.neoessentials.config.ConfigurationUnifier;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.config.MainConfig;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
@@ -29,7 +29,7 @@ import java.util.Optional;
  */
 public class ItemCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
-    MainConfig.ItemManagementConfig itemConfig = ConfigurationUnifier.getInstance().getConfigManager().getMainConfig().itemManagement;
+    MainConfig.ItemManagementConfig itemConfig = ConfigManager.getInstance().getMainConfig().itemManagement;
     int maxAmount = itemConfig.maxStackSize;
     boolean allowLore = itemConfig.allowEnchantments; // Use config-driven option for lore/enchantments
         // /item <item> <amount> [lore] [player]

@@ -373,6 +373,14 @@ public final class PermissionNodes {
     public static final String ANALYTICS_ADMIN = "neoessentials.analytics.admin";
     public static final String ANALYTICS_ALL = "neoessentials.analytics.*";
     
+    // Professional Scoreboard System
+    public static final String ADMIN_SCOREBOARD = "neoessentials.admin.scoreboard";
+    public static final String ADMIN_SCOREBOARD_RELOAD = "neoessentials.admin.scoreboard.reload";
+    public static final String ADMIN_SCOREBOARD_TOGGLE = "neoessentials.admin.scoreboard.toggle";
+    public static final String ADMIN_SCOREBOARD_UPDATE = "neoessentials.admin.scoreboard.update";
+    public static final String ADMIN_SCOREBOARD_TEST = "neoessentials.admin.scoreboard.test";
+    public static final String ADMIN_SCOREBOARD_ALL = "neoessentials.admin.scoreboard.*";
+    
     // ==============================
     // PLAYER FEATURES
     // ==============================
@@ -559,6 +567,10 @@ public final class PermissionNodes {
             ADMIN_CLEANUP_AUTO, ADMIN_CLEANUP_INFO, ADMIN_CLEANUP_FORCE,
             
             ANALYTICS_VIEW, ANALYTICS_ADMIN, ANALYTICS_ALL,
+            
+            // Professional Scoreboard System
+            ADMIN_SCOREBOARD, ADMIN_SCOREBOARD_RELOAD, ADMIN_SCOREBOARD_TOGGLE,
+            ADMIN_SCOREBOARD_UPDATE, ADMIN_SCOREBOARD_TEST, ADMIN_SCOREBOARD_ALL,
             
             // Player Features
             PLAYTIME_VIEW, PLAYTIME_OTHERS, PLAYTIME_TOP, PLAYTIME_ALL,

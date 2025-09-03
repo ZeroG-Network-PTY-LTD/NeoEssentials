@@ -457,14 +457,15 @@ public class DiscordIntegrationManager {
     }
     
     /**
-     * Get role mapping configuration
+     * Get role mapping configuration using Discord role ID
      */
-    public TablistConfig.RoleMapping getRoleMapping(String discordRole) {
+    public TablistConfig.RoleMapping getRoleMapping(String discordRoleId) {
         if (config == null || config.roleSync == null || config.roleSync.roleMappings == null) {
             return config.roleSync.fallbackRole;
         }
         
-        return config.roleSync.roleMappings.getOrDefault(discordRole, config.roleSync.fallbackRole);
+        // Now expects Discord role ID as the key instead of role name
+        return config.roleSync.roleMappings.getOrDefault(discordRoleId, config.roleSync.fallbackRole);
     }
     
     /**

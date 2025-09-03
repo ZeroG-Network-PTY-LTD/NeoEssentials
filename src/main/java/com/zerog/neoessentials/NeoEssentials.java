@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 import com.zerog.neoessentials.commands.CommandRegistry;
-import com.zerog.neoessentials.config.ConfigurationUnifier;
+import com.zerog.neoessentials.config.ConfigManager;
 
 import com.zerog.neoessentials.managers.*;
 
@@ -36,15 +36,46 @@ public class NeoEssentials {
         NeoForge.EVENT_BUS.register(this);
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.listeners.CommandOverrideListener.class);
         NeoForge.EVENT_BUS.register(com.zerog.neoessentials.listeners.ServerTickListener.class);
+        
+        // Initialize unified config system first
+        // Initialize configuration system directly
+        ConfigManager.getInstance().initialize();
+        
+        LOGGER.info("NeoEssentials configuration system initialized");
+        com.zerog.neoessentials.util.DebugUtil.debugLog("Unified Configuration System initialized");
+        
+        // Initialize core managers early to avoid null pointer exceptions
+        initializeEarlyManagers();
+        
+        // Now register listeners that depend on managers
         NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.NameTagFormattingListener());
         com.zerog.neoessentials.util.DebugUtil.debugLog("Chat formatting system initialized");
-        // Initialize unified config system (only once)
-        ConfigurationUnifier.getInstance().initialize();
-        com.zerog.neoessentials.util.DebugUtil.debugLog("Unified Configuration System initialized");
+        
         // Initialize server tick listener for animated placeholders
         com.zerog.neoessentials.listeners.ServerTickListener.initialize();
         com.zerog.neoessentials.util.DebugUtil.debugLog("Server tick listener initialized");
         LOGGER.info("NeoEssentials initialized successfully!");
+    }
+    
+    /**
+     * Initialize early managers that other components depend on
+     */
+    private void initializeEarlyManagers() {
+        try {
+            // Initialize TabListManager early to prevent null pointer exceptions
+            new com.zerog.neoessentials.features.TabListManager();
+            com.zerog.neoessentials.util.DebugUtil.debugLog("TabListManager initialized early");
+            
+            // Initialize other critical managers
+            com.zerog.neoessentials.features.NameFormatManager.getInstance();
+            com.zerog.neoessentials.util.DebugUtil.debugLog("NameFormatManager initialized early");
+            
+            com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
+            com.zerog.neoessentials.util.DebugUtil.debugLog("PlaceholderManager initialized early");
+            
+        } catch (Exception e) {
+            LOGGER.error("Error initializing early managers", e);
+        }
     }
     
     /**

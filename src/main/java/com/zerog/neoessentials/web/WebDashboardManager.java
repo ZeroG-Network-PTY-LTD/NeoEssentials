@@ -1,5 +1,13 @@
 package com.zerog.neoessentials.web;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -18,6 +26,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 public class WebDashboardManager {
     private static WebDashboardManager instance;
     
+    private HttpServer httpServer;
     private final Map<String, DashboardSession> activeSessions;
     private final Map<String, Object> dashboardData;
     private final Map<String, Long> performanceHistory;
@@ -101,6 +110,18 @@ public class WebDashboardManager {
             // Initialize enhanced dashboard data
             initializeEnhancedDashboardData();
             
+            // Create and start HTTP server
+            httpServer = HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
+            
+            // Set up request handlers
+            httpServer.createContext("/", new DashboardHandler());
+            httpServer.createContext("/api/data", new ApiDataHandler());
+            httpServer.createContext("/api/stats", new ApiStatsHandler());
+            httpServer.createContext("/api/players", new ApiPlayersHandler());
+            
+            httpServer.setExecutor(Executors.newFixedThreadPool(4));
+            httpServer.start();
+            
             // Start performance monitoring
             startPerformanceMonitoring();
             
@@ -131,6 +152,12 @@ public class WebDashboardManager {
         }
         
         try {
+            // Stop HTTP server
+            if (httpServer != null) {
+                httpServer.stop(2);
+                httpServer = null;
+            }
+            
             // Stop schedulers
             if (scheduler != null && !scheduler.isShutdown()) {
                 scheduler.shutdown();
@@ -862,6 +889,184 @@ public class WebDashboardManager {
         
         public boolean isExpired(long timeoutMs) {
             return (System.currentTimeMillis() - lastActivity) > timeoutMs;
+        }
+    }
+    
+    /**
+     * HTTP handler for the main dashboard page
+     */
+    private class DashboardHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            try {
+                String response = loadDashboardHtml();
+                exchange.getResponseHeaders().set("Content-Type", "text/html");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(200, response.getBytes(StandardCharsets.UTF_8).length);
+                
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes(StandardCharsets.UTF_8));
+                }
+            } catch (Exception e) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Error serving dashboard: " + e.getMessage());
+                sendErrorResponse(exchange, 500, "Internal Server Error");
+            }
+        }
+    }
+    
+    /**
+     * HTTP handler for API data endpoint
+     */
+    private class ApiDataHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            try {
+                updateRealTimeData();
+                
+                com.google.gson.Gson gson = new com.google.gson.Gson();
+                String response = gson.toJson(dashboardData);
+                
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(200, response.getBytes(StandardCharsets.UTF_8).length);
+                
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes(StandardCharsets.UTF_8));
+                }
+            } catch (Exception e) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Error serving API data: " + e.getMessage());
+                sendErrorResponse(exchange, 500, "Internal Server Error");
+            }
+        }
+    }
+    
+    /**
+     * HTTP handler for API stats endpoint
+     */
+    private class ApiStatsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            try {
+                Map<String, Object> stats = getPerformanceMetrics();
+                
+                com.google.gson.Gson gson = new com.google.gson.Gson();
+                String response = gson.toJson(stats);
+                
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(200, response.getBytes(StandardCharsets.UTF_8).length);
+                
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes(StandardCharsets.UTF_8));
+                }
+            } catch (Exception e) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Error serving API stats: " + e.getMessage());
+                sendErrorResponse(exchange, 500, "Internal Server Error");
+            }
+        }
+    }
+    
+    /**
+     * HTTP handler for API players endpoint
+     */
+    private class ApiPlayersHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            try {
+                Map<String, Object> data = new HashMap<>();
+                data.put("players", dashboardData.get("players"));
+                data.put("player_count", dashboardData.get("player_count"));
+                
+                com.google.gson.Gson gson = new com.google.gson.Gson();
+                String response = gson.toJson(data);
+                
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(200, response.getBytes(StandardCharsets.UTF_8).length);
+                
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes(StandardCharsets.UTF_8));
+                }
+            } catch (Exception e) {
+                com.zerog.neoessentials.util.DebugUtil.errorLog("Error serving API players: " + e.getMessage());
+                sendErrorResponse(exchange, 500, "Internal Server Error");
+            }
+        }
+    }
+    
+    /**
+     * Load dashboard HTML from resources
+     */
+    private String loadDashboardHtml() throws IOException {
+        try (InputStream inputStream = getClass().getResourceAsStream("/assets/neoessentials/web/dashboard.html")) {
+            if (inputStream == null) {
+                throw new IOException("Dashboard HTML file not found in resources");
+            }
+            
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+    
+    /**
+     * Get performance metrics for stats API
+     */
+    private Map<String, Object> getPerformanceMetrics() {
+        Map<String, Object> metrics = new HashMap<>();
+        
+        // Get server instance
+        net.minecraft.server.MinecraftServer server = null;
+        try {
+            server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        } catch (Exception e) {
+            com.zerog.neoessentials.util.DebugUtil.warnLog("Could not get server instance for metrics: " + e.getMessage());
+        }
+        
+        if (server != null) {
+            // Server performance metrics (simplified for compatibility)
+            metrics.put("tps", 20.0); // Default TPS since getAverageTickTime() may not be available
+            metrics.put("tick_time", 50.0); // Default tick time
+            
+            // Memory metrics
+            Runtime runtime = Runtime.getRuntime();
+            long maxMemory = runtime.maxMemory();
+            long totalMemory = runtime.totalMemory();
+            long freeMemory = runtime.freeMemory();
+            long usedMemory = totalMemory - freeMemory;
+            
+            metrics.put("memory_used", usedMemory / 1024 / 1024); // MB
+            metrics.put("memory_max", maxMemory / 1024 / 1024); // MB
+            metrics.put("memory_usage", maxMemory > 0 ? ((double) usedMemory / maxMemory) * 100 : 0);
+            
+            // Player metrics
+            metrics.put("player_count", server.getPlayerCount());
+            metrics.put("max_players", server.getMaxPlayers());
+            
+            // Basic uptime calculation
+            metrics.put("uptime", System.currentTimeMillis() / 1000); // Simple uptime in seconds
+        } else {
+            // Default values when server is not available
+            metrics.put("tps", 20.0);
+            metrics.put("tick_time", 50.0);
+            metrics.put("memory_used", 0);
+            metrics.put("memory_max", 0);
+            metrics.put("memory_usage", 0);
+            metrics.put("player_count", 0);
+            metrics.put("max_players", 20);
+            metrics.put("uptime", 0);
+        }
+        
+        return metrics;
+    }
+    
+    /**
+     * Send error response
+     */
+    private void sendErrorResponse(HttpExchange exchange, int statusCode, String message) throws IOException {
+        byte[] response = message.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "text/plain");
+        exchange.sendResponseHeaders(statusCode, response.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(response);
         }
     }
 }

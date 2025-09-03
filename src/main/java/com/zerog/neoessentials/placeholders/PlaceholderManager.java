@@ -250,7 +250,10 @@ public class PlaceholderManager {
         try {
             // Replace placeholders in condition first
             String expr = processPlaceholders(condition, ctx).trim();
-            com.zerog.neoessentials.util.DebugUtil.debugLog("Evaluating condition: '" + condition + "' -> '" + expr + "'");
+            // Only log in debug mode
+            if (Boolean.getBoolean("neoessentials.debug.placeholders")) {
+                com.zerog.neoessentials.util.DebugUtil.debugLog("Evaluating condition: '" + condition + "' -> '" + expr + "'");
+            }
             
             // Handle boolean values directly
             if ("true".equalsIgnoreCase(expr)) return true;
@@ -327,8 +330,11 @@ public class PlaceholderManager {
             }
             
         } catch (Exception e) {
-            LOGGER.warn("Failed to evaluate condition '{}': {}", condition, e.getMessage());
-            com.zerog.neoessentials.util.DebugUtil.debugLog("Condition evaluation error: " + e.getMessage());
+            // Only log condition errors if debug mode is enabled
+            if (Boolean.getBoolean("neoessentials.debug.placeholders")) {
+                LOGGER.warn("Failed to evaluate condition '{}': {}", condition, e.getMessage());
+                com.zerog.neoessentials.util.DebugUtil.debugLog("Condition evaluation error: " + e.getMessage());
+            }
         }
         return false;
     }
@@ -758,9 +764,14 @@ public class PlaceholderManager {
      * Process placeholders in text
      */
     public String processPlaceholders(String text, ServerPlayer player) {
-        com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] processPlaceholders called: input='" + text + "'");
+        // Only log if debug placeholders is specifically enabled
+        if (Boolean.getBoolean("neoessentials.debug.placeholders")) {
+            com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] processPlaceholders called: input='" + text + "'");
+        }
         String result = processPlaceholders(text, new PlaceholderContext(player));
-        com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] processPlaceholders output: '" + result + "'");
+        if (Boolean.getBoolean("neoessentials.debug.placeholders")) {
+            com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] processPlaceholders output: '" + result + "'");
+        }
         return result;
     }
     
@@ -776,7 +787,10 @@ public class PlaceholderManager {
         while (matcher.find()) {
             String placeholder = matcher.group(1);
             String replacement = resolvePlaceholder(placeholder, context);
-            LOGGER.info("Processing placeholder: '{}' -> '{}'", placeholder, replacement);
+            // Only log placeholder processing if debug mode is enabled
+            if (Boolean.getBoolean("neoessentials.debug.placeholders")) {
+                LOGGER.debug("Processing placeholder: '{}' -> '{}'", placeholder, replacement);
+            }
             matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
         }
         matcher.appendTail(result);
@@ -787,7 +801,10 @@ public class PlaceholderManager {
      * Resolve a single placeholder
      */
     private String resolvePlaceholder(String placeholder, PlaceholderContext context) {
-        com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] resolvePlaceholder called: '" + placeholder + "'");
+        // Only log if debug placeholders is specifically enabled
+        if (Boolean.getBoolean("neoessentials.debug.placeholders")) {
+            com.zerog.neoessentials.util.DebugUtil.debugLog("[PlaceholderManager] resolvePlaceholder called: '" + placeholder + "'");
+        }
         // Remove placeholder delimiters
         String identifier = placeholder;
         if (identifier.startsWith("%") && identifier.endsWith("%")) {
@@ -800,20 +817,23 @@ public class PlaceholderManager {
         String baseIdentifier = parts[0].toLowerCase();
         String parameter = parts.length > 1 ? parts[1] : null;
         Function<PlaceholderContext, String> function = placeholders.get(baseIdentifier);
-        if (function == null) {
-            LOGGER.warn("[PlaceholderManager] Placeholder not registered: '{}'", baseIdentifier);
-        }
         if (function != null) {
             try {
                 String value = function.apply(context);
                 return formatValue(value, parameter);
             } catch (Exception e) {
-                LOGGER.warn("Error processing placeholder '{}': {}", identifier, e.getMessage());
+                // Only log placeholder processing errors if debug logging is enabled
+                if (Boolean.getBoolean("neoessentials.debug.placeholders")) {
+                    LOGGER.warn("Error processing placeholder '{}': {}", identifier, e.getMessage());
+                }
                 return placeholder; // Return original placeholder on error
             }
         }
-        // Placeholder not found
-        LOGGER.warn("Unknown placeholder: {}", identifier);
+        
+        // Placeholder not found - only log if debug mode enabled to reduce spam
+        if (Boolean.getBoolean("neoessentials.debug.placeholders")) {
+            LOGGER.warn("[PlaceholderManager] Placeholder not registered: '{}'", baseIdentifier);
+        }
         return placeholder; // Return original placeholder
     }
     

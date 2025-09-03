@@ -32,7 +32,7 @@ public class CustomPlaceholderConfig {
     private void loadConfig() {
         try {
             // Use ConfigurationUnifier to get proper config path
-            Path configDir = com.zerog.neoessentials.config.ConfigurationUnifier.getInstance().getConfigPath().resolve("neoessentials");
+            Path configDir = com.zerog.neoessentials.config.ConfigManager.getInstance().getConfigPath().resolve("neoessentials");
             Path configFile = configDir.resolve(CONFIG_FILE);
             
             // Ensure config directory exists

@@ -147,14 +147,24 @@ public class StorageManager {
         return CompletableFuture.supplyAsync(() -> {
             String cacheKey = category + "/" + filename;
             Path filePath = dataDirectory.resolve(category).resolve(filename + ".json");
+            Path tempPath = dataDirectory.resolve(category).resolve(filename + ".json.tmp");
             
             try {
                 createDirectoryIfNotExists(filePath.getParent());
                 
-                // Use streaming JSON writer for better memory efficiency
-                try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(filePath, 
+                // Write to temporary file first for atomic saves
+                try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempPath, 
                         StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
                     gson.toJson(data, data.getClass(), writer);
+                }
+                
+                // Atomic move from temp to final location
+                try {
+                    Files.move(tempPath, filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING, 
+                              java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+                } catch (UnsupportedOperationException e) {
+                    // Fallback for filesystems that don't support atomic moves
+                    Files.move(tempPath, filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 }
                 
                 cachePut(cacheKey, data);
@@ -162,6 +172,12 @@ public class StorageManager {
                 
             } catch (IOException e) {
                 handleError("saveDataAsync", e);
+                // Clean up temp file if it exists
+                try {
+                    Files.deleteIfExists(tempPath);
+                } catch (IOException cleanupError) {
+                    // Ignore cleanup errors
+                }
                 return false;
             }
         }, ASYNC_EXECUTOR);

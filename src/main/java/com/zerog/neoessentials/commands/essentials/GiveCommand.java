@@ -29,7 +29,7 @@ import java.util.Optional;
 public class GiveCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
-    var mainConfig = com.zerog.neoessentials.config.ConfigurationUnifier.getInstance().getConfigManager().getMainConfig();
+    var mainConfig = com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig();
     int maxAmount = mainConfig.maxGiveAmount;
     boolean allowEnchantments = mainConfig.allowGiveEnchantments;
         dispatcher.register(

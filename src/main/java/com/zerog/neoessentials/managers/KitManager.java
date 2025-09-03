@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.managers;
 
-import com.zerog.neoessentials.config.ConfigurationUnifier;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.config.MainConfig;
 // import removed: KitConfig is now centralized in MainConfig
 import com.zerog.neoessentials.storage.PlayerDataManager;
@@ -21,12 +21,12 @@ public class KitManager {
     // Logger removed, not used after refactor
     private static KitManager instance;
     
-    private final ConfigurationUnifier configUnifier;
+    private final ConfigManager configManager;
     private final PlayerDataManager playerDataManager;
     private final Map<UUID, Map<String, Long>> kitCooldowns;
     
     private KitManager() {
-        this.configUnifier = ConfigurationUnifier.getInstance();
+        this.configManager = ConfigManager.getInstance();
         this.playerDataManager = PlayerDataManager.getInstance();
         this.kitCooldowns = new ConcurrentHashMap<>();
     }
@@ -42,7 +42,7 @@ public class KitManager {
      * Give a kit to a player
      */
     public boolean giveKit(ServerPlayer player, String kitName) {
-        boolean kitModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.kits;
+        boolean kitModuleEnabled = configManager.getMainConfig().modules.kits;
         if (!kitModuleEnabled) {
             player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.kit.disabled"));
             return false;
@@ -98,7 +98,7 @@ public class KitManager {
      * Give first join kit if enabled
      */
     public void giveFirstJoinKit(ServerPlayer player) {
-        MainConfig.KitSettings kitSettings = configUnifier.getConfigManager().getMainConfig().kitSettings;
+        MainConfig.KitSettings kitSettings = configManager.getMainConfig().kitSettings;
         if (!kitSettings.giveKitOnFirstJoin || kitSettings.firstJoinKit.isEmpty()) {
             return;
         }

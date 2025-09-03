@@ -296,49 +296,57 @@
     "syncInterval": 300,
     "bidirectional": true,
     "roleMapping": {
-      "Owner": {
+      "123456789012345678": {
+        "roleName": "Owner",
         "minecraftGroup": "owner",
         "priority": 1000,
         "autoAssign": true,
         "permissions": ["neoessentials.*"]
       },
-      "Admin": {
+      "123456789012345679": {
+        "roleName": "Admin",
         "minecraftGroup": "admin",
         "priority": 800,
         "autoAssign": true,
         "permissions": ["neoessentials.admin.*"]
       },
-      "Moderator": {
+      "123456789012345680": {
+        "roleName": "Moderator",
         "minecraftGroup": "moderator",
         "priority": 600,
         "autoAssign": true,
         "permissions": ["neoessentials.moderator.*"]
       },
-      "Helper": {
+      "123456789012345681": {
+        "roleName": "Helper",
         "minecraftGroup": "helper",
         "priority": 400,
         "autoAssign": true,
         "permissions": ["neoessentials.helper.*"]
       },
-      "VIP": {
+      "123456789012345682": {
+        "roleName": "VIP",
         "minecraftGroup": "vip",
         "priority": 300,
         "autoAssign": true,
         "permissions": ["neoessentials.vip.*"]
       },
-      "Premium": {
+      "123456789012345683": {
+        "roleName": "Premium",
         "minecraftGroup": "premium",
         "priority": 200,
         "autoAssign": true,
         "permissions": ["neoessentials.premium.*"]
       },
-      "Member": {
+      "123456789012345684": {
+        "roleName": "Member",
         "minecraftGroup": "member",
         "priority": 150,
         "autoAssign": true,
         "permissions": ["neoessentials.member.*"]
       },
-      "Verified": {
+      "123456789012345685": {
+        "roleName": "Verified",
         "minecraftGroup": "verified",
         "priority": 100,
         "autoAssign": true,

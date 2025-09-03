@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.managers;
 
-import com.zerog.neoessentials.config.ConfigurationUnifier;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -26,13 +26,13 @@ public class ModerationManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModerationManager.class);
     private static ModerationManager instance;
     
-    private final ConfigurationUnifier configUnifier;
+    private final ConfigManager configManager;
     private final PlayerDataManager playerDataManager;
     private final Map<UUID, MuteData> activeMutes;
     private final Map<UUID, JailData> activeJails;
     
     private ModerationManager() {
-        this.configUnifier = ConfigurationUnifier.getInstance();
+        this.configManager = ConfigManager.getInstance();
         this.playerDataManager = PlayerDataManager.getInstance();
         this.activeMutes = new ConcurrentHashMap<>();
         this.activeJails = new ConcurrentHashMap<>();
@@ -49,7 +49,7 @@ public class ModerationManager {
      * Kick a player from the server
      */
     public boolean kickPlayer(ServerPlayer target, ServerPlayer moderator, String reason) {
-        boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
+        boolean moderationModuleEnabled = configManager.getMainConfig().modules.moderation;
         if (!moderationModuleEnabled) {
             MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.disabled");
             return false;
@@ -90,7 +90,7 @@ public class ModerationManager {
      * Mute a player
      */
     public boolean mutePlayer(UUID targetUuid, String targetName, ServerPlayer moderator, String reason, long duration) {
-        boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
+        boolean moderationModuleEnabled = configManager.getMainConfig().modules.moderation;
         if (!moderationModuleEnabled) {
             MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.disabled");
             return false;
@@ -192,7 +192,7 @@ public class ModerationManager {
      * Jail a player
      */
     public boolean jailPlayer(UUID targetUuid, String targetName, ServerPlayer moderator, String jailName, String reason, long duration) {
-        boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
+        boolean moderationModuleEnabled = configManager.getMainConfig().modules.moderation;
         if (!moderationModuleEnabled) {
             MessageUtil.sendMessage(moderator, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(moderator, "neoessentials.moderation.jail.disabled"));
             return false;
@@ -313,7 +313,7 @@ public class ModerationManager {
      * Temporarily ban a player for a specified duration
      */
     public boolean tempBanPlayer(ServerPlayer target, ServerPlayer moderator, String reason, long durationMinutes) {
-        boolean moderationModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.moderation;
+        boolean moderationModuleEnabled = configManager.getMainConfig().modules.moderation;
         if (!moderationModuleEnabled) {
             MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.tempban.disabled");
             return false;
