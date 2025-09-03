@@ -172,7 +172,7 @@ public class PreferencesCommand {
             
             boolean success = resetPreferenceValue(prefs, key);
             if (success) {
-                PlayerDataManager.getInstance().savePlayerData(playerData);
+                PlayerDataManager.getInstance().savePlayerData(player.getUUID(), playerData);
                 Component message = Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "preferences.reset.success", key));
                 player.sendSystemMessage(message);
                 return 1;

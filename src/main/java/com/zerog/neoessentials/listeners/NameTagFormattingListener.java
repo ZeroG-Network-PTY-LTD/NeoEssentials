@@ -24,11 +24,26 @@ public class NameTagFormattingListener {
     @SubscribeEvent
     public void onNameFormat(PlayerEvent.NameFormat event) {
         Player player = event.getEntity();
-        com.zerog.neoessentials.config.TablistConfig config = com.zerog.neoessentials.features.TabListManager.getInstance().config;
-        if (config == null || !config.enableNametag) {
-            com.zerog.neoessentials.util.DebugUtil.debugLog("[NameTagFormattingListener] Nametag is disabled in config, skipping display name for " + player.getName().getString());
+        
+        // Add null safety check for TabListManager
+        com.zerog.neoessentials.features.TabListManager tabListManager = com.zerog.neoessentials.features.TabListManager.getInstance();
+        if (tabListManager == null) {
+            // Only log in debug mode to prevent spam
+            if (System.getProperty("neoessentials.debug", "false").equals("true")) {
+                com.zerog.neoessentials.util.DebugUtil.debugLog("[NameTagFormattingListener] TabListManager not initialized yet");
+            }
             return;
         }
+        
+        com.zerog.neoessentials.config.TablistConfig config = tabListManager.config;
+        if (config == null || !config.enableNametag) {
+            // Only log in debug mode to prevent spam
+            if (System.getProperty("neoessentials.debug", "false").equals("true")) {
+                com.zerog.neoessentials.util.DebugUtil.debugLog("[NameTagFormattingListener] Nametag disabled for " + player.getName().getString());
+            }
+            return;
+        }
+        
         String displayName;
         if (player instanceof ServerPlayer serverPlayer) {
             displayName = com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(serverPlayer);
@@ -66,52 +81,61 @@ public class NameTagFormattingListener {
      * Schedules animated placeholder refresh for name tags containing animated placeholders
      */
     private static void scheduleAnimatedNameRefresh(String nameFormat, ServerPlayer player) {
-        com.zerog.neoessentials.placeholders.PlaceholderManager pm = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
-        java.util.Set<String> animatedPlaceholders = pm.getAnimatedPlaceholderIdsInText(nameFormat);
-        
-        if (!animatedPlaceholders.isEmpty()) {
-            String taskKey = "nametag_" + player.getUUID();
-            
-            // Cancel existing task if any
-            java.util.concurrent.ScheduledFuture<?> existingFuture = animatedNameTasks.get(taskKey);
-            if (existingFuture != null) {
-                existingFuture.cancel(false);
+        try {
+            com.zerog.neoessentials.placeholders.PlaceholderManager pm = com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
+            if (pm == null) {
+                com.zerog.neoessentials.util.DebugUtil.debugLog("[NameTagFormattingListener] PlaceholderManager not available, skipping animated refresh");
+                return;
             }
             
-            // Find the fastest refresh rate among all animated placeholders
-            double minInterval = animatedPlaceholders.stream()
-                .mapToDouble(pm::getAnimationInterval)
-                .min()
-                .orElse(1.0);
+            java.util.Set<String> animatedPlaceholders = pm.getAnimatedPlaceholderIdsInText(nameFormat);
             
-            java.util.concurrent.ScheduledFuture<?> future = nameScheduler.scheduleAtFixedRate(() -> {
-                try {
-                    net.minecraft.server.MinecraftServer server = player.getServer();
-                    if (player.isRemoved() || server == null || !server.getPlayerList().getPlayers().contains(player)) {
-                        // Player is no longer valid, cancel this task
-                        animatedNameTasks.remove(taskKey);
-                        return;
-                    }
-                    
-                    String currentFormat = playerNameFormats.get(player.getUUID());
-                    if (currentFormat != null) {
-                        String refreshedName = pm.processPlaceholders(currentFormat, player);
-                        // Update the player's display name
-                        net.minecraft.network.chat.Component newDisplayName = com.zerog.neoessentials.util.ColorUtil.colorize(refreshedName);
-                        
-                        // Force a name update by refreshing the player's tab list entry
-                        if (server != null) {
-                            // Update custom name for name tag display
-                            player.setCustomName(newDisplayName);
-                            player.setCustomNameVisible(true);
-                        }
-                    }
-                } catch (Exception e) {
-                    com.zerog.neoessentials.util.DebugUtil.debugLog("Error refreshing animated name tag: " + e.getMessage());
+            if (!animatedPlaceholders.isEmpty()) {
+                String taskKey = "nametag_" + player.getUUID();
+                
+                // Cancel existing task if any
+                java.util.concurrent.ScheduledFuture<?> existingFuture = animatedNameTasks.get(taskKey);
+                if (existingFuture != null) {
+                    existingFuture.cancel(false);
                 }
-            }, (long)(minInterval * 1000), (long)(minInterval * 1000), java.util.concurrent.TimeUnit.MILLISECONDS);
-            
-            animatedNameTasks.put(taskKey, future);
+                
+                // Find the fastest refresh rate among all animated placeholders
+                double minInterval = animatedPlaceholders.stream()
+                    .mapToDouble(pm::getAnimationInterval)
+                    .min()
+                    .orElse(1.0);
+                
+                java.util.concurrent.ScheduledFuture<?> future = nameScheduler.scheduleAtFixedRate(() -> {
+                    try {
+                        net.minecraft.server.MinecraftServer server = player.getServer();
+                        if (player.isRemoved() || server == null || !server.getPlayerList().getPlayers().contains(player)) {
+                            // Player is no longer valid, cancel this task
+                            animatedNameTasks.remove(taskKey);
+                            return;
+                        }
+                        
+                        String currentFormat = playerNameFormats.get(player.getUUID());
+                        if (currentFormat != null && pm != null) {
+                            String refreshedName = pm.processPlaceholders(currentFormat, player);
+                            // Update the player's display name
+                            net.minecraft.network.chat.Component newDisplayName = com.zerog.neoessentials.util.ColorUtil.colorize(refreshedName);
+                            
+                            // Force a name update by refreshing the player's tab list entry
+                            if (server != null) {
+                                // Update custom name for name tag display
+                                player.setCustomName(newDisplayName);
+                                player.setCustomNameVisible(true);
+                            }
+                        }
+                    } catch (Exception e) {
+                        com.zerog.neoessentials.util.DebugUtil.debugLog("Error refreshing animated name tag: " + e.getMessage());
+                    }
+                }, (long)(minInterval * 1000), (long)(minInterval * 1000), java.util.concurrent.TimeUnit.MILLISECONDS);
+                
+                animatedNameTasks.put(taskKey, future);
+            }
+        } catch (Exception e) {
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Error setting up animated name refresh: " + e.getMessage());
         }
     }
 }

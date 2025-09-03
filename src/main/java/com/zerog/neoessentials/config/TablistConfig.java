@@ -51,8 +51,160 @@ public class TablistConfig {
         public boolean enabled = true;
         public int updateInterval = 20;
         public String format = "{ftb_combined_prefix}[{team_name}] {player_name}{ftb_combined_suffix}";
-        public java.util.List<Layout> layouts = new java.util.ArrayList<>();
+        
+        // New permission-based system
+        public java.util.Map<String, PermissionSet> permissionSets = new java.util.HashMap<>();
+        public java.util.Map<String, Layout> layouts = new java.util.HashMap<>();
+        public FTBIntegration ftbIntegration = new FTBIntegration();
+        public PermissionSetIntegration permissionSetIntegration = new PermissionSetIntegration();
+        
         public java.util.List<PlayerOrder> playerOrder = new java.util.ArrayList<>();
+        
+        public TablistSection() {
+            // Initialize default permission sets
+            initializeDefaultPermissionSets();
+            initializeDefaultLayouts();
+        }
+        
+        private void initializeDefaultPermissionSets() {
+            permissionSets.put("owner", new PermissionSet(1000, "neoessentials.tablist.owner", "permission", "owner_layout"));
+            permissionSets.put("admin", new PermissionSet(900, "neoessentials.tablist.admin", "permission", "admin_layout"));
+            permissionSets.put("moderator", new PermissionSet(800, "neoessentials.tablist.moderator", "permission", "moderator_layout"));
+            permissionSets.put("helper", new PermissionSet(700, "neoessentials.tablist.helper", "permission", "helper_layout"));
+            permissionSets.put("vip", new PermissionSet(600, "neoessentials.tablist.vip", "permission", "vip_layout"));
+            permissionSets.put("member", new PermissionSet(500, "neoessentials.tablist.member", "permission", "member_layout"));
+            permissionSets.put("verified", new PermissionSet(400, "neoessentials.tablist.verified", "permission", "verified_layout"));
+            permissionSets.put("default", new PermissionSet(0, "", "default", "default_layout"));
+        }
+        
+        private void initializeDefaultLayouts() {
+            layouts.put("default_layout", createDefaultLayout());
+            layouts.put("vip_layout", createVipLayout());
+        }
+        
+        private Layout createDefaultLayout() {
+            Layout layout = new Layout();
+            layout.priority = 0;
+            layout.conditionType = "default";
+            layout.condition = "";
+            layout.header = java.util.Arrays.asList(
+                "&6&l╔═══════════════════════════════════╗",
+                "&6&l║         &f&lNeoEssentials         &6&l║",
+                "&6&l║ &7Welcome &e{player_name}           &6&l║",
+                "&6&l║              &e{player_health_bar}           &6&l║",
+                "&6&l╚═══════════════════════════════════╝"
+            );
+            layout.footer = java.util.Arrays.asList(
+                "&6&l╔═══════════════════════════════════╗",
+                "&6&l║ &7Online: &e{server_players}&7/&e{server_max_players}              &6&l║",
+                "&6&l║ &7Time: &f{time}                   &6&l║",
+                "&6&l╚═══════════════════════════════════╝"
+            );
+            return layout;
+        }
+        
+        private Layout createVipLayout() {
+            Layout layout = new Layout();
+            layout.priority = 600;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.vip";
+            layout.header = java.util.Arrays.asList(
+                "&d&l════════════════════════════════════════════════",
+                "&d&l║                &f&lVIP PANEL                  &d&l║",
+                "&d&l║            &e&lNEOESSENTIALS SERVER            &d&l║",
+                "&d&l════════════════════════════════════════════════",
+                "",
+                "&f💎 &7VIP: &d&l{player_name} &5[VIP]",
+                "&f💎 &7Rank: &e{ftb_rank_display_name} &7| &bTeam: &3{ftb_team_display_name}",
+                "&f❤️ &7Health: &c{player_health}&7/&c{player_max_health} &7| &f🍖 Food: &6{player_food}",
+                "&f📍 &7Location: &a{player_x}&7, &a{player_y}&7, &a{player_z} &7in &e{player_world}",
+                "&f⚡ &7Ping: &{ping_colored}{player_ping}ms &7| &fLevel: &a{player_level}",
+                "",
+                "&f🌟 &7VIP Perks Active:",
+                "&f├─ &7Players Online: &a{server_players}&7/&a{server_max_players}",
+                "&f└─ &7Server TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}"
+            );
+            layout.footer = java.util.Arrays.asList(
+                "&d&l════════════════════════════════════════════════",
+                "&f🔗 &d&lVIP FEATURES &7&m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+                "&f├─ &7Kit Access: &d/kit vip",
+                "&f├─ &7Homes: &d{player_homes}/10",
+                "&f└─ &7VIP Chat: &d/vipc",
+                "",
+                "&f⏰ &7Current Time: &f{datetime}",
+                "&d&l════════════════════════════════════════════════"
+            );
+            return layout;
+        }
+    }
+
+    /**
+     * Permission Set Configuration for new system
+     */
+    public static class PermissionSet {
+        public int priority;
+        public String permission;
+        public String conditionType;
+        public String layoutId;
+        
+        public PermissionSet() {}
+        
+        public PermissionSet(int priority, String permission, String conditionType, String layoutId) {
+            this.priority = priority;
+            this.permission = permission;
+            this.conditionType = conditionType;
+            this.layoutId = layoutId;
+        }
+    }
+    
+    /**
+     * FTB Integration Configuration
+     */
+    public static class FTBIntegration {
+        public boolean enabled = true;
+        public int updateInterval = 30;
+        public boolean syncWithPermissionSets = true;
+        public boolean teamColorForPrefix = true;
+        public String rankPrefixFormat = "[{rank_display_name}]";
+        public String teamPrefixFormat = "{team_color}[{team_display_name}]";
+        public String suffixFormat = "";
+        public String combinedFormat = "{ftb_rank_prefix} {ftb_team_prefix}";
+        public java.util.Map<String, PermissionMapping> permissionMappings = new java.util.HashMap<>();
+        
+        public FTBIntegration() {
+            // Initialize default FTB permission mappings
+            permissionMappings.put("ftb_admin", new PermissionMapping("admin", 900));
+            permissionMappings.put("ftb_moderator", new PermissionMapping("moderator", 800));
+            permissionMappings.put("ftb_member", new PermissionMapping("member", 500));
+        }
+    }
+    
+    /**
+     * Permission mapping for FTB integration
+     */
+    public static class PermissionMapping {
+        public String targetPermissionSet;
+        public int priority;
+        
+        public PermissionMapping() {}
+        
+        public PermissionMapping(String targetPermissionSet, int priority) {
+            this.targetPermissionSet = targetPermissionSet;
+            this.priority = priority;
+        }
+    }
+    
+    /**
+     * Permission Set Integration Configuration
+     */
+    public static class PermissionSetIntegration {
+        public boolean enabled = true;
+        public int updateInterval = 20;
+        public boolean syncWithDiscord = true;
+        public boolean syncWithFTB = true;
+        public boolean priorityBasedSelection = true;
+        public boolean fallbackToDefault = true;
+        public boolean debugMode = false;
     }
 
     /**
@@ -63,10 +215,93 @@ public class TablistConfig {
         public int updateInterval = 20;
         public int maxLines = 15;
         public String title = "&6&lNeoEssentials";
-        public java.util.List<Layout> layouts = new java.util.ArrayList<>();
+        public java.util.Map<String, Layout> layouts = new java.util.HashMap<>();
         public TitleAnimations titleAnimations = new TitleAnimations();
         public AnimationConfig animations = new AnimationConfig();
         public java.util.Map<String, String> conditional_logic = new java.util.HashMap<>();
+        
+        public ScoreboardSection() {
+            // Initialize default scoreboard layouts
+            initializeDefaultScoreboardLayouts();
+        }
+        
+        private void initializeDefaultScoreboardLayouts() {
+            layouts.put("default_scoreboard", createDefaultScoreboardLayout());
+            layouts.put("vip_scoreboard", createVipScoreboardLayout());
+            layouts.put("admin_scoreboard", createAdminScoreboardLayout());
+        }
+        
+        private Layout createDefaultScoreboardLayout() {
+            Layout layout = new Layout();
+            layout.priority = 0;
+            layout.conditionType = "default";
+            layout.condition = "";
+            layout.title = "&e&lNeoEssentials";
+            layout.lines = java.util.Arrays.asList(
+                "",
+                "&7Player: &f{player_name}",
+                "&7Health: &c{player_health}&7/&c{player_max_health}",
+                "&7Level: &a{player_level}",
+                "&7Ping: &{ping_colored}{player_ping}ms",
+                "",
+                "&7Players: &a{server_players}&7/&a{server_max_players}",
+                "&7TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}",
+                "",
+                "&7Time: &f{time}",
+                ""
+            );
+            return layout;
+        }
+        
+        private Layout createVipScoreboardLayout() {
+            Layout layout = new Layout();
+            layout.priority = 600;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.vip";
+            layout.title = "&d&lVIP &5&lEssentials";
+            layout.lines = java.util.Arrays.asList(
+                "",
+                "&7VIP: &d&l{player_name}",
+                "&7Rank: &e{ftb_rank_display_name}",
+                "&7Team: &3{ftb_team_display_name}",
+                "&7Health: &c{player_health}&7/&c{player_max_health}",
+                "&7Level: &a{player_level}",
+                "&7Ping: &{ping_colored}{player_ping}ms",
+                "",
+                "&7Players: &a{server_players}&7/&a{server_max_players}",
+                "&7TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}",
+                "&7Memory: &b{server_memory_percent}%",
+                "",
+                "&7Time: &f{time}",
+                "&7Balance: &a${player_balance}",
+                ""
+            );
+            return layout;
+        }
+        
+        private Layout createAdminScoreboardLayout() {
+            Layout layout = new Layout();
+            layout.priority = 900;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.admin";
+            layout.title = "&c&lAdmin &f&lPanel";
+            layout.lines = java.util.Arrays.asList(
+                "",
+                "&7Admin: &c&l{player_name}",
+                "&7Rank: &e{ftb_rank_display_name}",
+                "&7Team: &3{ftb_team_display_name}",
+                "",
+                "&7Server Management:",
+                "&7├ Players: &a{server_players}&7/&a{server_max_players}",
+                "&7├ TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}",
+                "&7├ Memory: &b{server_memory_percent}%",
+                "&7└ Uptime: &a{server_uptime}",
+                "",
+                "&7Time: &f{time}",
+                ""
+            );
+            return layout;
+        }
     }
 
     /**
@@ -75,7 +310,54 @@ public class TablistConfig {
     public static class BossbarSection {
         public boolean enabled = true;
         public int updateInterval = 20;
-        public java.util.List<BossbarLayout> layouts = new java.util.ArrayList<>();
+        public java.util.Map<String, BossbarLayout> layouts = new java.util.HashMap<>();
+        
+        public BossbarSection() {
+            // Initialize default bossbar layouts
+            initializeDefaultBossbarLayouts();
+        }
+        
+        private void initializeDefaultBossbarLayouts() {
+            layouts.put("default_bossbar", createDefaultBossbarLayout());
+            layouts.put("vip_bossbar", createVipBossbarLayout());
+            layouts.put("staff_bossbar", createStaffBossbarLayout());
+        }
+        
+        private BossbarLayout createDefaultBossbarLayout() {
+            BossbarLayout layout = new BossbarLayout();
+            layout.priority = 0;
+            layout.conditionType = "default";
+            layout.condition = "";
+            layout.message = "&eWelcome to NeoEssentials! &7| &fOnline: &a{server_players}&7/&a{server_max_players}";
+            layout.color = "YELLOW";
+            layout.style = "SOLID";
+            layout.progress = 1.0;
+            return layout;
+        }
+        
+        private BossbarLayout createVipBossbarLayout() {
+            BossbarLayout layout = new BossbarLayout();
+            layout.priority = 600;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.vip";
+            layout.message = "&d&lVIP Status Active! &7| &fServer TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}";
+            layout.color = "PURPLE";
+            layout.style = "SEGMENTED_6";
+            layout.progress = 1.0;
+            return layout;
+        }
+        
+        private BossbarLayout createStaffBossbarLayout() {
+            BossbarLayout layout = new BossbarLayout();
+            layout.priority = 800;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.moderator";
+            layout.message = "&6&lStaff Panel Active &7| &fMemory: &b{server_memory_percent}% &7| &fTPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}";
+            layout.color = "BLUE";
+            layout.style = "SEGMENTED_10";
+            layout.progress = 1.0;
+            return layout;
+        }
     }
 
     /**
@@ -108,7 +390,11 @@ public class TablistConfig {
         public int priority = 1;
         public String conditionType = "default";
         public String condition = "";
-        public java.util.List<BossbarInfo> bars = new java.util.ArrayList<>();
+        public String message = "";
+        public String color = "WHITE";
+        public String style = "PROGRESS";
+        public double progress = 1.0;
+        public java.util.List<BossbarInfo> bars = new java.util.ArrayList<>(); // For backward compatibility
     }
 
     /**
@@ -254,6 +540,10 @@ public class TablistConfig {
      */
     public static class DiscordIntegration {
         public boolean enabled = true;
+        public boolean syncWithPermissionSets = true;
+        public int updateInterval = 60;
+        public java.util.Map<String, DiscordRoleMapping> roleMappings = new java.util.HashMap<>();
+        public String fallbackPermissionSet = "default";
         public MessageFormatting messageFormatting = new MessageFormatting();
         public Notifications notifications = new Notifications();
         public RoleSync roleSync = new RoleSync();
@@ -261,6 +551,35 @@ public class TablistConfig {
         public StatusUpdates statusUpdates = new StatusUpdates();
         public Webhooks webhooks = new Webhooks();
         public ErrorHandling errorHandling = new ErrorHandling();
+        
+        public DiscordIntegration() {
+            // Initialize default Discord role ID mappings to permission sets
+            // Replace these example role IDs with your actual Discord role IDs
+            roleMappings.put("1234567890123456789", new DiscordRoleMapping("owner", 1000, "neoessentials.discord.owner"));      // Owner Role ID
+            roleMappings.put("1234567890123456790", new DiscordRoleMapping("admin", 900, "neoessentials.discord.admin"));       // Admin Role ID
+            roleMappings.put("1234567890123456791", new DiscordRoleMapping("moderator", 800, "neoessentials.discord.moderator")); // Moderator Role ID
+            roleMappings.put("1234567890123456792", new DiscordRoleMapping("helper", 700, "neoessentials.discord.helper"));     // Helper Role ID
+            roleMappings.put("1234567890123456793", new DiscordRoleMapping("vip", 600, "neoessentials.discord.vip"));           // VIP Role ID
+            roleMappings.put("1234567890123456794", new DiscordRoleMapping("member", 500, "neoessentials.discord.member"));     // Member Role ID
+            roleMappings.put("1234567890123456795", new DiscordRoleMapping("verified", 400, "neoessentials.discord.verified")); // Verified Role ID
+        }
+    }
+    
+    /**
+     * Discord Role Mapping to Permission Sets
+     */
+    public static class DiscordRoleMapping {
+        public String targetPermissionSet;
+        public int priority;
+        public String requiresMinecraftPermission;
+        
+        public DiscordRoleMapping() {}
+        
+        public DiscordRoleMapping(String targetPermissionSet, int priority, String requiresMinecraftPermission) {
+            this.targetPermissionSet = targetPermissionSet;
+            this.priority = priority;
+            this.requiresMinecraftPermission = requiresMinecraftPermission;
+        }
     }
 
     public static class MessageFormatting {
@@ -273,13 +592,15 @@ public class TablistConfig {
 
     public static class Notifications {
         public NotificationConfig tablistUpdates = new NotificationConfig(true, "general", 
-            "🔄 **{player_name}** | Tablist updated | Team: **{ftb_team_display_name}** | Rank: **{ftb_rank_display_name}**");
+            "🔄 **{player_name}** | Tablist updated | Layout: **{layout_name}** | Permission Set: **{permission_set}**");
+        public NotificationConfig permissionSetChanges = new NotificationConfig(true, "admin",
+            "� **{player_name}** | Permission Set: **{old_set}** → **{new_set}** | Priority: **{priority}**");
+        public NotificationConfig playerJoin = new NotificationConfig(true, "general",
+            "✅ **{player_name}** joined! | Permission Set: **{permission_set}** | Layout: **{layout_name}**");
         public NotificationConfig scoreboardUpdates = new NotificationConfig(true, "general",
             "📊 **{player_name}** | Scoreboard updated | Layout: **{layout_name}**");
-        public NotificationConfig playerJoin = new NotificationConfig(true, "general",
-            "✅ **{player_name}** joined! | Team: **{ftb_team_display_name}** | Rank: **{ftb_rank_display_name}** | Health: **{player_health}/{player_max_health}** ❤️");
         public NotificationConfig playerLeave = new NotificationConfig(true, "general",
-            "❌ **{player_name}** left | Session: **{session_time}** | Team: **{ftb_team_display_name}**");
+            "❌ **{player_name}** left | Session: **{session_time}** | Permission Set: **{permission_set}**");
         public NotificationConfig teamUpdates = new NotificationConfig(true, "general",
             "👥 **{player_name}** | Team updated | Old: **{old_team}** → New: **{ftb_team_display_name}**");
         public NotificationConfig rankUpdates = new NotificationConfig(true, "general",
@@ -287,7 +608,7 @@ public class TablistConfig {
         public NotificationConfig permissionChanges = new NotificationConfig(true, "admin",
             "🔐 **{player_name}** | Permission **{permission}** | Action: **{action}** | By: **{admin}**");
         public NotificationConfig achievements = new NotificationConfig(true, "general",
-            "🏆 **{player_name}** earned **{achievement}**! | Team: **{ftb_team_display_name}**");
+            "🏆 **{player_name}** earned **{achievement}**! | Permission Set: **{permission_set}**");
     }
 
     public static class NotificationConfig {
@@ -308,17 +629,19 @@ public class TablistConfig {
         public boolean syncOnJoin = true;
         public int syncInterval = 300;
         public boolean bidirectional = true;
+        public boolean usePermissionSets = true;
         public java.util.Map<String, RoleMapping> roleMappings = new java.util.HashMap<>();
         public RoleMapping fallbackRole = new RoleMapping("neoessentials.default", 0, "&8[GUEST]&r", "&8&lGUEST");
 
         public RoleSync() {
-            // Initialize default role mappings
-            roleMappings.put("Owner", new RoleMapping("neoessentials.admin", 1000, "&4[OWNER]&r", "&4&lOWNER"));
-            roleMappings.put("Admin", new RoleMapping("neoessentials.moderator", 800, "&c[ADMIN]&r", "&c&lADMIN"));
-            roleMappings.put("Moderator", new RoleMapping("neoessentials.helper", 600, "&6[MOD]&r", "&6&lMODERATOR"));
-            roleMappings.put("VIP", new RoleMapping("neoessentials.vip", 400, "&d[VIP]&r", "&d&lVIP"));
-            roleMappings.put("Member", new RoleMapping("neoessentials.member", 200, "&a[MEMBER]&r", "&a&lMEMBER"));
-            roleMappings.put("Verified", new RoleMapping("neoessentials.verified", 100, "&7[VERIFIED]&r", "&7&lVERIFIED"));
+            // Initialize default role ID mappings (Discord Role ID -> Minecraft permissions)
+            // Replace these example role IDs with your actual Discord role IDs
+            roleMappings.put("1234567890123456789", new RoleMapping("neoessentials.admin", 1000, "&4[OWNER]&r", "&4&lOWNER"));      // Owner Role ID
+            roleMappings.put("1234567890123456790", new RoleMapping("neoessentials.moderator", 800, "&c[ADMIN]&r", "&c&lADMIN"));  // Admin Role ID
+            roleMappings.put("1234567890123456791", new RoleMapping("neoessentials.helper", 600, "&6[MOD]&r", "&6&lMODERATOR"));   // Moderator Role ID
+            roleMappings.put("1234567890123456792", new RoleMapping("neoessentials.vip", 400, "&d[VIP]&r", "&d&lVIP"));            // VIP Role ID
+            roleMappings.put("1234567890123456793", new RoleMapping("neoessentials.member", 200, "&a[MEMBER]&r", "&a&lMEMBER"));   // Member Role ID
+            roleMappings.put("1234567890123456794", new RoleMapping("neoessentials.verified", 100, "&7[VERIFIED]&r", "&7&lVERIFIED")); // Verified Role ID
         }
     }
 

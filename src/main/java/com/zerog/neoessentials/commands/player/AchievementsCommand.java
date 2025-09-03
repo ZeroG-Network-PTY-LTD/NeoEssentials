@@ -24,6 +24,7 @@ import java.util.Map;
 /**
  * Command for viewing and managing achievements
  */
+@SuppressWarnings("deprecation")
 public class AchievementsCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(AchievementsCommand.class);
     

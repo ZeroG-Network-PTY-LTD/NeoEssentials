@@ -198,10 +198,10 @@ public class EconomyAnalyticsCommand {
                     case TRANSFER_OUT:
                         totalWithdrawals.updateAndGet(current -> current.add(transaction.amount));
                         break;
-                    case TRANSFER_SENT:
+                    case EconomyManager.TransactionType.TRANSFER_SENT:
                         totalWithdrawals.updateAndGet(current -> current.add(transaction.amount));
                         break;
-                    case TRANSFER_RECEIVED:
+                    case EconomyManager.TransactionType.TRANSFER_RECEIVED:
                         totalDeposits.updateAndGet(current -> current.add(transaction.amount));
                         break;
                     case ADMIN_GIVE:
@@ -211,7 +211,7 @@ public class EconomyAnalyticsCommand {
                         totalWithdrawals.updateAndGet(current -> current.add(transaction.amount));
                         break;
                     case FEE:
-                    case COMMAND_COST:
+                    case EconomyManager.TransactionType.COMMAND_COST:
                         totalWithdrawals.updateAndGet(current -> current.add(transaction.amount));
                         break;
                 }

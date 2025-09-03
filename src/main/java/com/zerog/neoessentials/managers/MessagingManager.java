@@ -2,7 +2,7 @@ package com.zerog.neoessentials.managers;
 
 import net.minecraft.network.chat.Component;
 
-import com.zerog.neoessentials.config.ConfigurationUnifier;
+import com.zerog.neoessentials.config.ConfigManager;
 // import removed: MessagingConfig is now centralized in MainConfig
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
@@ -28,13 +28,13 @@ public class MessagingManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessagingManager.class);
     private static MessagingManager instance;
     
-    private final ConfigurationUnifier configUnifier;
+    private final ConfigManager configManager;
     private final PlayerDataManager playerDataManager;
     private final Map<UUID, UUID> lastMessaged;
     private final Map<UUID, Boolean> socialSpyEnabled;
     
     private MessagingManager() {
-        this.configUnifier = ConfigurationUnifier.getInstance();
+        this.configManager = ConfigManager.getInstance();
         this.playerDataManager = PlayerDataManager.getInstance();
         this.lastMessaged = new ConcurrentHashMap<>();
         this.socialSpyEnabled = new ConcurrentHashMap<>();
@@ -52,7 +52,7 @@ public class MessagingManager {
      */
     public boolean sendPrivateMessage(ServerPlayer sender, String targetName, String message) {
     // ...existing code...
-        com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
+        com.zerog.neoessentials.config.MainConfig mainConfig = configManager.getMainConfig();
         boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat;
         if (!chatEnabled) {
             MessageUtil.sendTranslatedMessage(sender, "chat.disabled");
@@ -116,7 +116,7 @@ public class MessagingManager {
      * Send mail to a player
      */
     public boolean sendMail(ServerPlayer sender, String targetName, String message) {
-        com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
+        com.zerog.neoessentials.config.MainConfig mainConfig = configManager.getMainConfig();
         boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat;
         if (!chatEnabled) {
             MessageUtil.sendTranslatedMessage(sender, "chat.disabled");
@@ -207,7 +207,7 @@ public class MessagingManager {
      */
     public void broadcast(ServerPlayer sender, String message) {
     // ...existing code...
-        com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
+        com.zerog.neoessentials.config.MainConfig mainConfig = configManager.getMainConfig();
         boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat;
         if (!chatEnabled) {
             MessageUtil.sendTranslatedMessage(sender, "chat.disabled");
@@ -247,7 +247,7 @@ public class MessagingManager {
      */
     public boolean ignorePlayer(ServerPlayer player, String targetName) {
     // ...existing code...
-        com.zerog.neoessentials.config.MainConfig mainConfig = configUnifier.getConfigManager().getMainConfig();
+        com.zerog.neoessentials.config.MainConfig mainConfig = configManager.getMainConfig();
         boolean chatEnabled = mainConfig != null && mainConfig.modules != null && mainConfig.modules.chat;
         if (!chatEnabled) {
             MessageUtil.sendTranslatedMessage(player, "chat.disabled");

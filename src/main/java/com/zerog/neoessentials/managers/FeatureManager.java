@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.managers;
 
-import com.zerog.neoessentials.config.ConfigurationUnifier;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.util.DebugUtil;
 
@@ -78,11 +78,11 @@ public class FeatureManager {
         DebugUtil.debugLog("Phase 1: Initializing core services...");
         
         // Configuration system (should already be initialized)
-        ConfigurationUnifier configUnifier = ConfigurationUnifier.getInstance();
-        managers.put("config", configUnifier);
+        ConfigManager configManager = ConfigManager.getInstance();
+        managers.put("config", configManager);
         
         // Language system - initialize with config path
-        LanguageManager languageManager = LanguageManager.getInstance(configUnifier.getConfigPath());
+        LanguageManager languageManager = LanguageManager.getInstance(configManager.getConfigPath());
         managers.put("language", languageManager);
         
         // Player data management

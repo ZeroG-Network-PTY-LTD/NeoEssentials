@@ -24,7 +24,8 @@ public class SimpleDiscordLinkIntegration {
     
     private static SimpleDiscordLinkIntegration instance;
     private final Map<UUID, DiscordUserData> linkedUsers = new ConcurrentHashMap<>();
-    private final Map<String, String> roleMapping = new ConcurrentHashMap<>();
+    private final Map<String, String> roleIdMapping = new ConcurrentHashMap<>(); // Discord Role ID -> Minecraft Permission
+    private final Map<String, String> roleIdToName = new ConcurrentHashMap<>(); // Discord Role ID -> Role Name (for display)
     private boolean integrationEnabled = false;
     
     public SimpleDiscordLinkIntegration() {
@@ -41,7 +42,7 @@ public class SimpleDiscordLinkIntegration {
     }
     
     /**
-     * Load integration configuration
+     * Load integration configuration and Discord role ID mappings
      */
     private void loadConfig() {
         try {
@@ -53,27 +54,64 @@ public class SimpleDiscordLinkIntegration {
                 // Configuration file exists, enable integration
                 integrationEnabled = true;
                 DebugUtil.debugLog("[SimpleDiscordLinkIntegration] Configuration file found, integration enabled");
+                
+                // Load role ID mappings from config file
+                loadRoleIdMappingsFromConfig(configFile);
             }
             
-            // Initialize default role mappings
-            initializeDefaultRoleMappings();
+            // Initialize default role mappings (fallback if config loading fails)
+            if (roleIdMapping.isEmpty()) {
+                initializeDefaultRoleMappings();
+            }
             
         } catch (Exception e) {
             DebugUtil.errorLog("[SimpleDiscordLinkIntegration] Error loading config: " + e.getMessage());
             integrationEnabled = false;
+            // Still initialize defaults as fallback
+            initializeDefaultRoleMappings();
         }
     }
     
     /**
-     * Initialize default Discord role to Minecraft permission mappings
+     * Load Discord role ID mappings from the configuration file
+     */
+    private void loadRoleIdMappingsFromConfig(java.io.File configFile) {
+        try {
+            // Parse the JSON configuration to extract role ID mappings
+            // This would need to be implemented with a JSON parser
+            DebugUtil.debugLog("[SimpleDiscordLinkIntegration] Loading Discord role ID mappings from config...");
+            
+            // For now, use the default mappings
+            // In a full implementation, this would parse the "roleMappings" section
+            // and extract the Discord role IDs as keys instead of role names
+            
+        } catch (Exception e) {
+            DebugUtil.errorLog("[SimpleDiscordLinkIntegration] Failed to load role ID mappings from config: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Initialize default Discord role ID to Minecraft permission mappings
+     * Replace these with your actual Discord role IDs
      */
     private void initializeDefaultRoleMappings() {
-        roleMapping.put("Owner", "neoessentials.admin");
-        roleMapping.put("Admin", "neoessentials.moderator");
-        roleMapping.put("Moderator", "neoessentials.helper");
-        roleMapping.put("VIP", "neoessentials.vip");
-        roleMapping.put("Member", "neoessentials.member");
-        roleMapping.put("Verified", "neoessentials.verified");
+        // Example Discord Role IDs - replace with your actual role IDs
+        roleIdMapping.put("1234567890123456789", "neoessentials.admin");    // Owner role ID
+        roleIdMapping.put("1234567890123456790", "neoessentials.moderator"); // Admin role ID
+        roleIdMapping.put("1234567890123456791", "neoessentials.helper");    // Moderator role ID
+        roleIdMapping.put("1234567890123456792", "neoessentials.vip");       // VIP role ID
+        roleIdMapping.put("1234567890123456793", "neoessentials.member");    // Member role ID
+        roleIdMapping.put("1234567890123456794", "neoessentials.verified");  // Verified role ID
+        
+        // Role ID to display name mapping for logging and notifications
+        roleIdToName.put("1234567890123456789", "Owner");
+        roleIdToName.put("1234567890123456790", "Admin");
+        roleIdToName.put("1234567890123456791", "Moderator");
+        roleIdToName.put("1234567890123456792", "VIP");
+        roleIdToName.put("1234567890123456793", "Member");
+        roleIdToName.put("1234567890123456794", "Verified");
+        
+        DebugUtil.debugLog("[SimpleDiscordLinkIntegration] Initialized Discord Role ID mappings for " + roleIdMapping.size() + " roles");
     }
     
     /**
@@ -227,7 +265,7 @@ public class SimpleDiscordLinkIntegration {
     }
     
     /**
-     * Synchronize Discord roles with Minecraft permissions
+     * Synchronize Discord roles with Minecraft permissions using role IDs
      */
     public void synchronizeRoles(ServerPlayer player) {
         if (!integrationEnabled) return;
@@ -237,12 +275,20 @@ public class SimpleDiscordLinkIntegration {
             DiscordUserData userData = linkedUsers.get(playerId);
             
             if (userData != null) {
-                List<String> discordRoles = getDiscordRoles(userData.discordId);
-                syncRolesToPermissions(player, discordRoles);
+                List<String> discordRoleIds = getDiscordRoleIds(userData.discordId);
+                syncRoleIdsToPermissions(player, discordRoleIds);
+                
+                // Create role names list for notification display
+                List<String> roleNames = new ArrayList<>();
+                for (String roleId : discordRoleIds) {
+                    String roleName = roleIdToName.getOrDefault(roleId, "Unknown Role (" + roleId + ")");
+                    roleNames.add(roleName);
+                }
                 
                 // Send notification
                 Map<String, Object> data = new HashMap<>();
-                data.put("discord_roles", String.join(", ", discordRoles));
+                data.put("discord_roles", String.join(", ", roleNames));
+                data.put("discord_role_ids", String.join(", ", discordRoleIds));
                 sendNeoEssentialsNotification("role_sync", player, data);
             }
             
@@ -252,40 +298,45 @@ public class SimpleDiscordLinkIntegration {
     }
     
     /**
-     * Get Discord roles for a user
+     * Get Discord role IDs for a user (updated to return role IDs instead of names)
      */
-    private List<String> getDiscordRoles(String discordId) {
+    private List<String> getDiscordRoleIds(String discordId) {
         try {
             // Use reflection to access SimpleDiscordLink's Discord role data
             // This would need to be implemented based on SDLink's actual API
-            return Arrays.asList("Member", "Verified"); // Placeholder
+            // The API should return role IDs instead of role names
+            return Arrays.asList("1234567890123456793", "1234567890123456794"); // Placeholder role IDs
             
         } catch (Exception e) {
-            DebugUtil.debugLog("[SimpleDiscordLinkIntegration] Could not get Discord roles: " + e.getMessage());
+            DebugUtil.debugLog("[SimpleDiscordLinkIntegration] Could not get Discord role IDs: " + e.getMessage());
             return new ArrayList<>();
         }
     }
     
     /**
-     * Sync Discord roles to Minecraft permissions
+     * Sync Discord role IDs to Minecraft permissions
      */
-    private void syncRolesToPermissions(ServerPlayer player, List<String> discordRoles) {
+    private void syncRoleIdsToPermissions(ServerPlayer player, List<String> discordRoleIds) {
         try {
             // Get the permissions manager instance
             com.zerog.neoessentials.permissions.CustomPermissionsManager.getInstance();
             
-            for (String role : discordRoles) {
-                String permission = roleMapping.get(role);
+            for (String roleId : discordRoleIds) {
+                String permission = roleIdMapping.get(roleId);
+                String roleName = roleIdToName.getOrDefault(roleId, "Unknown Role");
+                
                 if (permission != null) {
-                    // Add permission based on Discord role
+                    // Add permission based on Discord role ID
                     // This would need to be implemented based on your permission system
-                    DebugUtil.debugLog("[SimpleDiscordLinkIntegration] Synced Discord role '" + role + 
-                                      "' to permission '" + permission + "' for " + player.getName().getString());
+                    DebugUtil.debugLog("[SimpleDiscordLinkIntegration] Synced Discord role ID '" + roleId + 
+                                      "' (" + roleName + ") to permission '" + permission + "' for " + player.getName().getString());
+                } else {
+                    DebugUtil.debugLog("[SimpleDiscordLinkIntegration] No permission mapping found for Discord role ID: " + roleId);
                 }
             }
             
         } catch (Exception e) {
-            DebugUtil.errorLog("[SimpleDiscordLinkIntegration] Error syncing roles to permissions: " + e.getMessage());
+            DebugUtil.errorLog("[SimpleDiscordLinkIntegration] Error syncing role IDs to permissions: " + e.getMessage());
         }
     }
     

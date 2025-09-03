@@ -1,6 +1,6 @@
 package com.zerog.neoessentials.managers;
 
-import com.zerog.neoessentials.config.ConfigurationUnifier;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.config.MainConfig;
 // import removed: WarpConfig is now centralized in MainConfig
 import com.zerog.neoessentials.permissions.PermissionNodes;
@@ -26,13 +26,13 @@ public class WarpManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(WarpManager.class);
     private static WarpManager instance;
     
-    private final ConfigurationUnifier configUnifier;
+    private final ConfigManager configManager;
     private final EconomyManager economyManager;
     private final Map<String, WarpData> warps; // All server warps
     private final Map<UUID, Long> warpCooldowns;
     
     private WarpManager() {
-        this.configUnifier = ConfigurationUnifier.getInstance();
+        this.configManager = ConfigManager.getInstance();
         this.economyManager = EconomyManager.getInstance();
         this.warps = new ConcurrentHashMap<>();
         this.warpCooldowns = new ConcurrentHashMap<>();
@@ -49,8 +49,8 @@ public class WarpManager {
      * Create a new warp
      */
     public boolean createWarp(ServerPlayer player, String warpName, String category) {
-    MainConfig.WarpConfig config = configUnifier.getConfigManager().getMainConfig().warpConfig;
-        boolean warpModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.warps;
+    MainConfig.WarpConfig config = configManager.getMainConfig().warpConfig;
+        boolean warpModuleEnabled = configManager.getMainConfig().modules.warps;
         if (!warpModuleEnabled) {
             player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.warp.disabled"));
             return false;
@@ -127,7 +127,7 @@ public class WarpManager {
      */
     public boolean deleteWarp(ServerPlayer player, String warpName) {
     // ...existing code...
-        boolean warpModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.warps;
+        boolean warpModuleEnabled = configManager.getMainConfig().modules.warps;
         if (!warpModuleEnabled) {
             player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.warp.disabled"));
             return false;
@@ -155,8 +155,8 @@ public class WarpManager {
      * Teleport player to a warp
      */
     public boolean teleportToWarp(ServerPlayer player, String warpName) {
-    MainConfig.WarpConfig config = configUnifier.getConfigManager().getMainConfig().warpConfig;
-        boolean warpModuleEnabled = configUnifier.getConfigManager().getMainConfig().modules.warps;
+    MainConfig.WarpConfig config = configManager.getMainConfig().warpConfig;
+        boolean warpModuleEnabled = configManager.getMainConfig().modules.warps;
         if (!warpModuleEnabled) {
             player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.warp.disabled"));
             return false;
@@ -246,7 +246,7 @@ public class WarpManager {
      * Check if location is safe for teleportation
      */
     private boolean isLocationSafe(LocationUtil.Location location) {
-    MainConfig.WarpConfig config = configUnifier.getConfigManager().getMainConfig().warpConfig;
+    MainConfig.WarpConfig config = configManager.getMainConfig().warpConfig;
         
         if (!config.requireSafeLocation) {
             return true;
@@ -265,7 +265,7 @@ public class WarpManager {
      * Check warp cooldown
      */
     private boolean hasWarpCooldown(UUID playerId) {
-    MainConfig.WarpConfig config = configUnifier.getConfigManager().getMainConfig().warpConfig;
+    MainConfig.WarpConfig config = configManager.getMainConfig().warpConfig;
         
         if (config.teleportWarpCooldown <= 0) {
             return false;
@@ -284,7 +284,7 @@ public class WarpManager {
      * Get remaining cooldown time
      */
     private long getWarpCooldownRemaining(UUID playerId) {
-    MainConfig.WarpConfig config = configUnifier.getConfigManager().getMainConfig().warpConfig;
+    MainConfig.WarpConfig config = configManager.getMainConfig().warpConfig;
         
         Long lastUse = warpCooldowns.get(playerId);
         if (lastUse == null) {

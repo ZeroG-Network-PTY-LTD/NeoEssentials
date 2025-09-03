@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.player;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -20,10 +21,17 @@ public class PlayerData {
     private long lastSeen;
     private long lastUpdated;
     
+    // Economy data
+    private BigDecimal balance = BigDecimal.ZERO;
+    
     // Playtime tracking
     private long totalPlaytime; // in milliseconds
     private long sessionStartTime;
     private boolean isOnline;
+    
+    // AFK tracking
+    private boolean afk = false;
+    private long afkTime = 0L;
     
     // Player preferences
     private PlayerPreferences preferences;
@@ -51,6 +59,7 @@ public class PlayerData {
         this.totalPlaytime = 0L;
         this.sessionStartTime = 0L;
         this.isOnline = false;
+        this.balance = BigDecimal.ZERO;
         
         this.preferences = new PlayerPreferences();
         this.achievements = new HashMap<>();
@@ -61,6 +70,11 @@ public class PlayerData {
         // Initialize permission data
         this.permissionGroup = "default"; // Default group
         this.playerPermissions = new HashMap<>();
+    }
+    
+    // Compatibility constructor
+    public PlayerData() {
+        this(UUID.randomUUID());
     }
     
     // Getters and Setters
@@ -389,9 +403,48 @@ public class PlayerData {
         this.playerPermissions.remove(permission);
     }
     
+    // Economy methods
+    public BigDecimal getBalance() {
+        return balance;
+    }
+    
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+    
+    // Compatibility methods for legacy code
+    public void setPlayerId(UUID playerId) {
+        setPlayerUUID(playerId);
+    }
+    
+    public String getPlayerName() {
+        return getLastKnownName();
+    }
+    
+    public void setPlayerName(String playerName) {
+        setLastKnownName(playerName);
+    }
+    
+    // AFK-related methods
+    public boolean isAFK() {
+        return afk;
+    }
+    
+    public void setAFK(boolean afk) {
+        this.afk = afk;
+    }
+    
+    public long getAfkTime() {
+        return afkTime;
+    }
+    
+    public void setAfkTime(long afkTime) {
+        this.afkTime = afkTime;
+    }
+    
     @Override
     public String toString() {
-        return String.format("PlayerData{uuid=%s, name=%s, totalPlaytime=%s, online=%s}", 
-            playerUUID, lastKnownName, getFormattedPlaytime(), isOnline);
+        return String.format("PlayerData{uuid=%s, name=%s, totalPlaytime=%s, online=%s, balance=%s}", 
+            playerUUID, lastKnownName, getFormattedPlaytime(), isOnline, balance);
     }
 }

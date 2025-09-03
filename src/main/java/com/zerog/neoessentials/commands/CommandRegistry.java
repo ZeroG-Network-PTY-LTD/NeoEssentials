@@ -140,6 +140,18 @@ public class CommandRegistry {
             NickCommand.register(dispatcher);
             LOGGER.info("Registered nick command");
             
+            // Debug command for tablist testing
+            com.zerog.neoessentials.commands.debug.TablistTestCommand.register(dispatcher);
+            LOGGER.info("Registered tablisttest command");
+            
+            // Debug command for scoreboard testing
+            com.zerog.neoessentials.commands.debug.ScoreboardTestCommand.register(dispatcher);
+            LOGGER.info("Registered scoreboardtest command");
+            
+            // Professional Scoreboard command
+            ScoreboardCommand.register(dispatcher);
+            LOGGER.info("Registered scoreboard command");
+            
             // AFK command
             com.zerog.neoessentials.commands.essentials.AFKCommand.register(dispatcher);
             LOGGER.info("Registered AFK command");

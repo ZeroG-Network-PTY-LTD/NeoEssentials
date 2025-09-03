@@ -357,8 +357,21 @@ public class CustomBossbarManager {
         if (config != null && config.bossbar != null && 
             config.bossbar.layouts != null && !config.bossbar.layouts.isEmpty()) {
             
-            TablistConfig.BossbarLayout layout = config.bossbar.layouts.get(0);
-            if (layout.bars != null && !layout.bars.isEmpty()) {
+            // Try to get default layout first
+            TablistConfig.BossbarLayout layout = config.bossbar.layouts.get("default_bossbar");
+            
+            // If default layout not found, get any available layout
+            if (layout == null) {
+                layout = config.bossbar.layouts.values().iterator().next();
+            }
+            
+            // Use the message field directly from the layout
+            if (layout != null && layout.message != null && !layout.message.isEmpty()) {
+                return layout.message;
+            }
+            
+            // Fallback to checking legacy bars structure for backward compatibility
+            if (layout != null && layout.bars != null && !layout.bars.isEmpty()) {
                 TablistConfig.BossbarInfo bar = layout.bars.get(0);
                 if (bar.text != null && !bar.text.isEmpty()) {
                     return bar.text;

@@ -744,7 +744,7 @@ public class CustomPermissionsManager {
                     Map<String, Boolean> playerPermsMap = getPlayerPermissionsMap(playerId);
                     playerData.setPlayerPermissions(playerPermsMap);
                     
-                    playerDataManager.savePlayerData(playerData);
+                    playerDataManager.savePlayerData(playerId, playerData);
                 }
             }
             

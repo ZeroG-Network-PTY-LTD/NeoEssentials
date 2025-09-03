@@ -1,0 +1,184 @@
+{
+  "_comment": "Dedicated Bossbar Configuration for NeoEssentials",
+  "_description": "Advanced bossbar system with conditional displays and animations",
+  
+  "bossbar": {
+    "enabled": true,
+    "updateInterval": 20,
+    "maxBossbars": 3,
+    "fadeInTime": 20,
+    "fadeOutTime": 20,
+    
+    "layouts": {
+      "admin_bossbar": {
+        "priority": 300,
+        "conditionType": "permission",
+        "condition": "neoessentials.bossbar.admin",
+        "bars": [
+          {
+            "id": "admin_main",
+            "text": "&c&lADMIN PANEL &7| &f{player_name} &7| &aTPS: {server_tps} &7| &eMemory: {server_memory_percent}%",
+            "color": "RED",
+            "style": "PROGRESS",
+            "progress": 1.0,
+            "visibility": "ALWAYS"
+          }
+        ]
+      },
+      
+      "staff_bossbar": {
+        "priority": 250,
+        "conditionType": "permission",
+        "condition": "neoessentials.bossbar.staff",
+        "bars": [
+          {
+            "id": "staff_main",
+            "text": "&6&lSTAFF PANEL &7| &f{player_name} &7| &bTeam: {ftb_team_display_name} &7| &aRank: {ftb_rank_display_name}",
+            "color": "YELLOW",
+            "style": "PROGRESS",
+            "progress": 1.0,
+            "visibility": "ALWAYS"
+          }
+        ]
+      },
+      
+      "team_owner_bossbar": {
+        "priority": 200,
+        "conditionType": "placeholder",
+        "condition": "ftb_team_role:Owner",
+        "bars": [
+          {
+            "id": "team_owner",
+            "text": "&e&lTEAM OWNER &7| &f{player_name} &7| &bTeam: {ftb_team_display_name} &7| &eMembers: {ftb_team_members}",
+            "color": "YELLOW",
+            "style": "SEGMENTED_10",
+            "progress": 1.0,
+            "visibility": "ALWAYS"
+          }
+        ]
+      },
+      
+      "team_moderator_bossbar": {
+        "priority": 150,
+        "conditionType": "placeholder",
+        "condition": "ftb_team_role:Moderator",
+        "bars": [
+          {
+            "id": "team_mod",
+            "text": "&9&lTEAM MODERATOR &7| &f{player_name} &7| &bTeam: {ftb_team_display_name} &7| &eMembers: {ftb_team_members}",
+            "color": "BLUE",
+            "style": "SEGMENTED_10",
+            "progress": 0.8,
+            "visibility": "ALWAYS"
+          }
+        ]
+      },
+      
+      "team_member_bossbar": {
+        "priority": 100,
+        "conditionType": "placeholder",
+        "condition": "ftb_has_team:true",
+        "bars": [
+          {
+            "id": "team_member",
+            "text": "&a&lTEAM MEMBER &7| &f{player_name} &7| &bTeam: {ftb_team_display_name} &7| &aRole: {ftb_team_role}",
+            "color": "GREEN",
+            "style": "SEGMENTED_6",
+            "progress": 0.6,
+            "visibility": "ALWAYS"
+          }
+        ]
+      },
+      
+      "ranked_player_bossbar": {
+        "priority": 50,
+        "conditionType": "placeholder",
+        "condition": "ftb_has_rank:true",
+        "bars": [
+          {
+            "id": "ranked_player",
+            "text": "&f&lRANKED PLAYER &7| &f{player_name} &7| &aRank: {ftb_rank_display_name} &7| &eWeight: {ftb_rank_weight}",
+            "color": "WHITE",
+            "style": "PROGRESS",
+            "progress": 0.4,
+            "visibility": "ALWAYS"
+          }
+        ]
+      },
+      
+      "default_bossbar": {
+        "priority": 1,
+        "conditionType": "default",
+        "bars": [
+          {
+            "id": "default_player",
+            "text": "&7Welcome &f{player_name} &7| &eOnline: {server_players}/{server_max_players} &7| &fTime: {time}",
+            "color": "WHITE",
+            "style": "PROGRESS",
+            "progress": 0.2,
+            "visibility": "ALWAYS"
+          }
+        ]
+      }
+    },
+    
+    "animations": {
+      "enabled": true,
+      "updateInterval": 5,
+      "sequences": [
+        {
+          "id": "progress_pulse",
+          "frames": [0.8, 0.9, 1.0, 0.9],
+          "duration": 1.0,
+          "loop": true
+        },
+        {
+          "id": "color_cycle",
+          "frames": ["RED", "YELLOW", "GREEN", "BLUE", "PURPLE"],
+          "duration": 2.0,
+          "loop": true
+        }
+      ]
+    },
+    
+    "conditional_logic": {
+      "health_critical": "health <= 4",
+      "health_low": "health <= 10",
+      "team_large": "team_members >= 5",
+      "admin_online": "permission:neoessentials.admin"
+    },
+    
+    "special_events": {
+      "player_join": {
+        "enabled": true,
+        "duration": 100,
+        "bar": {
+          "text": "&a&lWelcome &f{player_name} &a&lto the server!",
+          "color": "GREEN",
+          "style": "PROGRESS",
+          "progress": 1.0
+        }
+      },
+      "achievement_unlock": {
+        "enabled": true,
+        "duration": 80,
+        "bar": {
+          "text": "&6&l🏆 &f{player_name} &6&lunlocked: &e{achievement}",
+          "color": "YELLOW",
+          "style": "SEGMENTED_10",
+          "progress": 1.0
+        }
+      },
+      "level_up": {
+        "enabled": true,
+        "duration": 60,
+        "bar": {
+          "text": "&a&l⬆ &f{player_name} &a&lreached level &e{player_level}&a&l!",
+          "color": "GREEN",
+          "style": "PROGRESS",
+          "progress": 1.0
+        }
+      }
+    }
+  }
+}

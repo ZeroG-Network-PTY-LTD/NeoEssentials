@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.text.DecimalFormat;
 
-import com.zerog.neoessentials.config.ConfigurationUnifier;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.config.MainConfig;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.storage.StorageManager;
@@ -28,7 +28,7 @@ public class EconomyManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(EconomyManager.class);
     private static volatile EconomyManager instance;
     
-    private final ConfigurationUnifier configUnifier;
+    private final ConfigManager configManager;
     private final PlayerDataManager playerDataManager;
     
     // Memory-optimized cache with size limits
@@ -50,7 +50,7 @@ public class EconomyManager {
         ThreadLocal.withInitial(() -> new DecimalFormat("#,##0.00"));
     
     private EconomyManager() {
-        this.configUnifier = ConfigurationUnifier.getInstance();
+        this.configManager = ConfigManager.getInstance();
         this.playerDataManager = PlayerDataManager.getInstance();
         
         // Initialize optimized data structures
@@ -127,7 +127,7 @@ public class EconomyManager {
      * Check if economy system is enabled
      */
     public boolean isEnabled() {
-        return configUnifier.getConfigManager().getMainConfig().modules.economy;
+        return configManager.getMainConfig().modules.economy;
     }
     
     /**
@@ -208,7 +208,7 @@ public class EconomyManager {
         if (balance == null && !hasBeenInitialized(playerUUID)) {
             // New player - set starting balance from config and mark as initialized
             initializePlayerBalance(playerUUID);
-            balance = BigDecimal.valueOf(configUnifier.getConfigManager().getMainConfig().economySettings.startingBalance);
+            balance = BigDecimal.valueOf(configManager.getMainConfig().economySettings.startingBalance);
         } else if (balance == null) {
             // Player exists but balance is null (corrupted data) - set to zero, don't reset to starting balance
             balance = BigDecimal.ZERO;
@@ -235,7 +235,7 @@ public class EconomyManager {
             return;
         }
         
-        MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
+        MainConfig.EconomySettings config = configManager.getMainConfig().economySettings;
         
         // Validate amount
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
@@ -270,7 +270,7 @@ public class EconomyManager {
         BigDecimal currentBalance = getBalance(playerUUID);
         BigDecimal newBalance = currentBalance.add(amount);
         
-        MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
+        MainConfig.EconomySettings config = configManager.getMainConfig().economySettings;
         if (newBalance.compareTo(BigDecimal.valueOf(config.maxBalance)) > 0) {
             newBalance = BigDecimal.valueOf(config.maxBalance);
         }
@@ -343,7 +343,7 @@ public class EconomyManager {
      */
     public String formatCurrency(BigDecimal amount) {
         DecimalFormat format = formatter.get();
-        MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
+        MainConfig.EconomySettings config = configManager.getMainConfig().economySettings;
         return config.currencySymbol + format.format(amount);
     }
     
@@ -366,7 +366,7 @@ public class EconomyManager {
      * Initialize player balance for truly new players
      */
     private void initializePlayerBalance(UUID playerUUID) {
-        MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
+        MainConfig.EconomySettings config = configManager.getMainConfig().economySettings;
         BigDecimal startingBalance = BigDecimal.valueOf(config.startingBalance);
         
         playerDataManager.setBalance(playerUUID, startingBalance);
@@ -416,7 +416,7 @@ public class EconomyManager {
      * Clean up inactive accounts
      */
     public void cleanup() {
-        MainConfig.EconomySettings config = configUnifier.getConfigManager().getMainConfig().economySettings;
+        MainConfig.EconomySettings config = configManager.getMainConfig().economySettings;
         
         // Remove small balances if configured
         if (config.cleanupInactiveAccounts) {

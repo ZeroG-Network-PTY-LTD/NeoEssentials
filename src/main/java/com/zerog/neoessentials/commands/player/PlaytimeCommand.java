@@ -24,6 +24,7 @@ import java.util.List;
  * Command for viewing playtime statistics
  * Supports viewing own playtime or other players' playtime (with permission)
  */
+@SuppressWarnings("deprecation")
 public class PlaytimeCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlaytimeCommand.class);
     

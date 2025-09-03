@@ -33,7 +33,7 @@ public class PermissionEventListener {
             
             // Load player data
             PlayerDataManager playerDataManager = PlayerDataManager.getInstance();
-            PlayerData playerData = playerDataManager.loadPlayerData(playerUUID);
+            PlayerData playerData = playerDataManager.getPlayerData(playerUUID);
             
             // Load permission data into the permission system
             CustomPermissionsManager permManager = CustomPermissionsManager.getInstance();
@@ -66,7 +66,7 @@ public class PermissionEventListener {
             // --- New manager integration ---
             PlaceholderManager placeholderManager = PlaceholderManager.getInstance();
             com.zerog.neoessentials.features.TabListManager tabListManager = new com.zerog.neoessentials.features.TabListManager();
-            com.zerog.neoessentials.features.ScoreboardManager scoreboardManager = new com.zerog.neoessentials.features.ScoreboardManager();
+            com.zerog.neoessentials.features.ScoreboardManager scoreboardManager = com.zerog.neoessentials.features.ScoreboardManager.getInstance();
             com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
             String rawDisplayName = com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(player);
             String displayName = placeholderManager.processPlaceholders(rawDisplayName, player);
@@ -126,7 +126,7 @@ public class PermissionEventListener {
                 com.zerog.neoessentials.util.DebugUtil.debugLog("Saved " + currentPermissions.size() + " individual permissions for player " + player.getName().getString());
             }
             // Trigger save to persistent storage
-            playerDataManager.savePlayerData(playerData);
+            playerDataManager.savePlayerData(player.getUUID(), playerData);
             
             com.zerog.neoessentials.util.DebugUtil.infoLog("Successfully saved permission data for player " + player.getName().getString());
             // --- Remove bossbar on leave ---
