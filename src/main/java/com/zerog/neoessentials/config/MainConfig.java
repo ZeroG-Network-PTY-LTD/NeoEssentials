@@ -28,6 +28,19 @@ public class MainConfig {
 
     /** Example: Configuration for warp features */
     public static class WarpConfig {
+        // Essential fields that code depends on
+        public boolean enabled = true;
+        public int maxWarpsPerPlayer = 5;
+        public boolean allowCrossWorld = true;
+        public double setWarpCost = 100.0;
+        public double teleportCost = 10.0;
+        public int warpCooldown = 30;
+        public boolean requireSafeLocation = true;
+        public java.util.List<String> restrictedWorlds = new java.util.ArrayList<>();
+        public boolean allowPublicWarps = true;
+        public boolean allowPrivateWarps = true;
+        public boolean allowAdminWarps = true;
+        
         /** Maximum length for warp names */
         public int maxWarpNameLength = 16;
         /** Allow spaces in warp names */
@@ -54,28 +67,6 @@ public class MainConfig {
             public String warpListHeader = "warp.list.header";
             public String warpListEntry = "warp.list.entry";
         }
-        /** Enable/disable warps */
-        public boolean enabled = true;
-        /** Maximum warps per player */
-        public int maxWarpsPerPlayer = 10;
-        /** Allow cross-world warps */
-        public boolean allowCrossWorld = true;
-        /** Cost to set a warp */
-        public double setWarpCost = 0.0;
-        /** Cost to teleport to a warp */
-        public double teleportCost = 0.0;
-        /** Cooldown in seconds between warp teleports */
-        public int warpCooldown = 10;
-        /** Require safe location for teleport */
-        public boolean requireSafeLocation = true;
-        /** List of restricted worlds for warps */
-        public java.util.List<String> restrictedWorlds = new java.util.ArrayList<>();
-        /** Allow public warps */
-        public boolean allowPublicWarps = true;
-        /** Allow private warps */
-        public boolean allowPrivateWarps = true;
-        /** Allow admin warps */
-        public boolean allowAdminWarps = true;
     }
     /** Example: Spawn settings configuration */
     public SpawnConfig spawnConfig = new SpawnConfig();
@@ -138,22 +129,16 @@ public class MainConfig {
         public double teleportCost = 10.0;
         /** Allow cross-world homes */
         public boolean allowCrossWorld = false;
-    /** List of restricted worlds for homes */
-    public java.util.List<String> restrictedWorlds = new java.util.ArrayList<>();
-    /** Use cost to set home */
-    public boolean useSetHomeCost = true;
-    /** Cost to teleport to a home */
-    public double teleportHomeCost = 10.0;
-    /** Require safe location for teleport */
-    public boolean requireSafeLocation = true;
-    /** Warmup time in seconds before teleport */
-    public int teleportWarmup = 5;
-    /** Maximum homes for admin */
-    public int maxHomesAdmin = 10;
-    /** Maximum homes for VIP */
-    public int maxHomesVip = 5;
-    /** Cooldown in seconds for home teleport */
-    public int teleportHomeCooldown = 30;
+        
+        // Additional fields that code depends on
+        public java.util.List<String> restrictedWorlds = new java.util.ArrayList<>();
+        public boolean useSetHomeCost = true;
+        public double teleportHomeCost = 10.0;
+        public boolean requireSafeLocation = true;
+        public int teleportWarmup = 3;
+        public int maxHomesAdmin = 20;
+        public int maxHomesVip = 10;
+        public int teleportHomeCooldown = 60;
     }
     /** Example: Economy settings configuration */
     public EconomySettings economySettings = new EconomySettings();
@@ -206,24 +191,18 @@ public class MainConfig {
 
     /** Example: Configuration for chat and private messages */
     public static class ChatSettings {
-    /** Group-based chat formats */
-    public java.util.Map<String, String> groupFormats = new java.util.HashMap<>();
-        /** Format for sender in private messages */
-        public String pmFormatSender = "[PM to {RECEIVER}] {MESSAGE}";
-        /** Format for receiver in private messages */
-        public String pmFormatReceiver = "[PM from {SENDER}] {MESSAGE}";
-        /** Enable/disable private messaging */
+        // Essential individual fields that code depends on
+        public boolean isEnabled = true;
+        public String chatFormat = "{MESSAGE}";
+        public String chatname = "{prefix} {player_name}";
+        public boolean enableColors = true;
+        public String pmFormatSender = "&7[&6PM&7] &7To {target}: {MESSAGE}";
+        public String pmFormatReceiver = "&7[&6PM&7] &7From {sender}: {MESSAGE}";
         public boolean enablePrivateMessages = true;
-        /** Enable/disable chat formatting */
         public boolean enableChatFormatting = true;
-    /** Chat format string (only formats the message) */
-    public String chatFormat = "{MESSAGE}";
-    /** Chat name format string (formats the name brackets) */
-    public String chatname = "<{PREFIX}{DISPLAYNAME}{SUFFIX}>";
-    /** Enable/disable chat formatting */
-    public boolean isEnabled = true;
-    /** Enable/disable chat colors */
-    public boolean enableColors = true;
+        
+        /** Group-based chat formats */
+        public java.util.Map<String, String> groupFormats = new java.util.HashMap<>();
 
         /** Anti-spam settings */
         public AntiSpam antiSpam = new AntiSpam();
@@ -270,27 +249,16 @@ public class MainConfig {
 
     /** Example: Configuration for kits */
     public static class KitSettings {
-    /** Enable cooldowns for kits */
-    public boolean enableCooldowns = true;
-    /** Automatically equip kit items */
-    public boolean autoEquip = true;
-    /** Give kit on first join */
-    public boolean giveKitOnFirstJoin = true;
-    /** Name of kit to give on first join */
-    public String firstJoinKit = "starter";
-    /** Commands to run when kit is given */
-    public java.util.List<String> commands = new java.util.ArrayList<>();
-
-        /** Enable/disable kits */
+        // Essential fields that code depends on
         public boolean enabled = true;
-        /** Default kit given on first join */
-        /** Cooldown in seconds between kit uses */
-        public int kitCooldown = 3600;
-        /** Maximum kits per player */
-        public int maxKitsPerPlayer = 5;
-        /** Allow kit preview */
+        public boolean giveKitOnFirstJoin = true;
+        public String firstJoinKit = "starter";
+        public boolean enableCooldowns = true;
+        public boolean autoEquip = false;
+        public java.util.List<String> commands = new java.util.ArrayList<>();
+        public int kitCooldown = 300;
+        public int maxKitsPerPlayer = 10;
         public boolean allowPreview = true;
-        /** Allow kit permissions */
         public boolean usePermissions = true;
     }
     /** Example: Item management configuration */
@@ -339,27 +307,6 @@ public class MainConfig {
     /** Enable/disable modules */
     public Modules modules = new Modules();
 
-    /** Example: Home settings */
-    public int maxHomes = 3; // Maximum homes per player
-    public int homeCooldown = 60; // Cooldown in seconds
-    public double setHomeCost = 50.0; // Cost to set a home
-
-    /** Example: Economy settings */
-    public boolean economyEnabled = true;
-    public String currencySymbol = "$";
-    public double startingBalance = 100.0;
-
-    /** Example: Kit settings */
-    public boolean kitsEnabled = true;
-    public String firstJoinKit = "starter";
-
-    /** Example: Warp settings */
-    public boolean warpsEnabled = true;
-    public int maxWarps = 10;
-
-    /** Example: Chat format */
-    public String chatFormat = "<{PREFIX}{DISPLAYNAME}{SUFFIX}> {MESSAGE}";
-
     // Tablist, scoreboard, and bossbar config are now controlled via TabListConfig and tablist.json
     // Tablist
 
@@ -368,15 +315,6 @@ public class MainConfig {
     // Bossbar
 
     // Bossbar welcome message
-
-    /** Example: Permissions system */
-    public boolean permissionsEnabled = true;
-
-    /** Example: Animated placeholders */
-    public boolean enableAnimations = true;
-
-    /** Example: Custom placeholders */
-    public java.util.Map<String, String> customPlaceholders = new java.util.HashMap<>();
 
     /** Example: Modules used in NeoEssentials */
     public static class Modules {

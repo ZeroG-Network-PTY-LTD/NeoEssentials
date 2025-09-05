@@ -46,8 +46,12 @@ public class CurrencyManager {
     }
     
     private void createDefaultCurrencies() {
-        // Primary currency - Coins
-        addCurrency(new Currency("coins", "Coins", "¢", true, true, 
+        // Get config settings for primary currency
+        com.zerog.neoessentials.config.MainConfig.EconomySettings config = 
+            com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().economySettings;
+        
+        // Primary currency - use config values
+        addCurrency(new Currency("coins", "Coins", config.currencySymbol, true, true, 
                    CurrencyType.STANDARD, new BigDecimal("1000000")));
         
         // Secondary currency - Gems

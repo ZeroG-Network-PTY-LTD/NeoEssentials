@@ -7,7 +7,10 @@ import com.zerog.neoessentials.economy.transactions.TransactionManager;
 // import com.zerog.neoessentials.economy.shops.ShopManager; // Now uses managers.EconomyManager
 import com.zerog.neoessentials.storage.StorageManager;
 
-import java.util.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.math.BigDecimal;
@@ -246,11 +249,15 @@ public class EconomyManager {
     }
     
     private BigDecimal calculateTransferFee(BigDecimal amount) {
-    BigDecimal feeRate = new BigDecimal("0.01"); // Default: 1%
-    BigDecimal fee = amount.multiply(feeRate);
-    BigDecimal maxFee = new BigDecimal("100.00"); // Default: $100 max fee
+        // Get fee rate from config
+        com.zerog.neoessentials.config.MainConfig.EconomySettings config = 
+            com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().economySettings;
+        
+        BigDecimal feeRate = BigDecimal.valueOf(config.transactionFeePercent / 100.0);
+        BigDecimal fee = amount.multiply(feeRate);
+        BigDecimal maxFee = BigDecimal.valueOf(config.maxTransferAmount * 0.1); // 10% of max transfer as max fee
 
-    return fee.min(maxFee);
+        return fee.min(maxFee);
     }
     
     // Player Data Management
@@ -259,8 +266,10 @@ public class EconomyManager {
             PlayerEconomyData data = loadPlayerDataFromStorage(id);
             if (data == null) {
                 data = new PlayerEconomyData(id);
-                // Set default balance for primary currency
-                data.setBalance(currencyManager.getPrimaryCurrency(), new BigDecimal("100.00")); // Default: $100
+                // Set starting balance from config for primary currency
+                com.zerog.neoessentials.config.MainConfig.EconomySettings config = 
+                    com.zerog.neoessentials.config.ConfigManager.getInstance().getMainConfig().economySettings;
+                data.setBalance(currencyManager.getPrimaryCurrency(), BigDecimal.valueOf(config.startingBalance));
             }
             return data;
         });

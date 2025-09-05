@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import com.zerog.neoessentials.features.TabListManager;
-import com.zerog.neoessentials.features.ScoreboardManager;
+// import com.zerog.neoessentials.features.ScoreboardManager; // Removed as part of cleanup
 
 public class AFKManager {
     private static AFKManager instance;
@@ -32,7 +32,7 @@ public class AFKManager {
         }
         // Always update tablist and scoreboard when AFK status changes
         TabListManager.getInstance().updateTabList(java.util.Collections.singletonList(player));
-        ScoreboardManager.getInstance().updateScoreboard(player);
+        // ScoreboardManager.getInstance().updateScoreboard(player); // Removed as part of cleanup
     }
 
     public boolean isAFK(ServerPlayer player) {

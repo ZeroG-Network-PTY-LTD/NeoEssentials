@@ -5,8 +5,7 @@ import com.mojang.logging.LogUtils;
 
 import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigManager;
-
-import com.zerog.neoessentials.managers.*;
+import com.zerog.neoessentials.managers.FeatureManager;
 
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;

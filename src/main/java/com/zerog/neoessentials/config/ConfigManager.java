@@ -8,34 +8,23 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.Map;
+import java.util.HashMap;
 
 public class ConfigManager {
 		private final ConfigStatus configStatus = new ConfigStatus();
 
 	public void saveAll() {
-		saveConfig("config.json", unifiedConfig != null ? unifiedConfig : new UnifiedConfig());
-		saveConfig("commands.json", commandsConfig != null ? commandsConfig : new CommandsConfig());
-		saveConfig("permissions.json", permissionsConfig != null ? permissionsConfig : new PermissionsConfig());
-		saveConfig("placeholders.json", placeholdersConfig != null ? placeholdersConfig : new PlaceholdersConfig());
-		saveConfig("settings.json", settingsConfig != null ? settingsConfig : new SettingsConfig());
-		saveConfig("animations.json", animationsConfig != null ? animationsConfig : new AnimationsConfig());
-		saveConfig("scoreboard.json", scoreboardConfig != null ? scoreboardConfig : new ScoreboardConfig());
-		saveConfig("shops.json", shopsConfig != null ? shopsConfig : new ShopsConfig());
-		// Use TabListManager to create tablist config with comprehensive examples
-		if (tablistConfig == null || (tablistConfig.tablist != null && tablistConfig.tablist.layouts.isEmpty())) {
-			// Get the comprehensive default configuration from TabListManager
-			try {
-				LOGGER.info("Generating comprehensive tablist configuration with multi-line examples...");
-				tablistConfig = com.zerog.neoessentials.features.TabListManager.createDefaultUnifiedConfigStatic();
-			} catch (Exception e) {
-				LOGGER.warn("Failed to create comprehensive tablist config, using basic default", e);
-				tablistConfig = new TablistConfig();
-			}
-		}
-		saveConfig("tablist.json", tablistConfig);
+		LOGGER.info("Saving individual configuration files (no merging)...");
 		
-		// Generate all the unified config files from our templates
-		generateUnifiedConfigs();
+		// Save separate config files that load independently
+		saveConfig("general.json", createGeneralConfig());
+		saveConfig("economy.json", createEconomyConfig());
+		saveConfig("shops.json", shopsConfig != null ? shopsConfig : new ShopsConfig());
+		saveConfig("teleports.json", createTeleportsConfig());
+		saveConfig("tablist.json", createTablistConfig());
+		
+		LOGGER.info("All configuration files saved as separate JSONs");
 	}	public void reloadAll() {
 		loadAllConfigurations();
 		// Bossbar disable logic on config reload
@@ -57,9 +46,12 @@ public class ConfigManager {
 
 	public String[] getAllConfigFiles() {
 		return new String[] {
+			// Legacy config files (maintained for backward compatibility)
 			"config.json", "commands.json", "permissions.json", "placeholders.json", 
 			"customPlaceholders.json", "tablist.json", "scoreboard.json", 
-			"animations.json", "settings.json", "shops.json"
+			"animations.json", "settings.json", "shops.json",
+			// Phase 2: Consolidated config files
+			"core.json", "features.json", "display.json"
 		};
 	}
 
@@ -87,27 +79,65 @@ public class ConfigManager {
 	private final Gson gson;
 	private final Path configPath = FMLPaths.CONFIGDIR.get().resolve("neoessentials");
 
-		private MainConfig mainConfig;
-		private TablistConfig tablistConfig;
-		private UnifiedConfig unifiedConfig;
-		private CommandsConfig commandsConfig;
-		private PermissionsConfig permissionsConfig;
-		private PlaceholdersConfig placeholdersConfig;
-		private SettingsConfig settingsConfig;
-		private AnimationsConfig animationsConfig;
-		private ScoreboardConfig scoreboardConfig;
-		private ShopsConfig shopsConfig;
+	// Legacy configuration fields (maintained for backward compatibility)
+	private MainConfig mainConfig;
+	private TablistConfig tablistConfig;
+	private UnifiedConfig unifiedConfig;
+	private CommandsConfig commandsConfig;
+	private PermissionsConfig permissionsConfig;
+	private PlaceholdersConfig placeholdersConfig;
+	private SettingsConfig settingsConfig;
+	private AnimationsConfig animationsConfig;
+	private ScoreboardConfig scoreboardConfig;
+	private ShopsConfig shopsConfig;
+	
+	// Phase 2: Consolidated configuration fields
+	private CoreConfig coreConfig;
+	private FeatureConfig featureConfig;
+	private DisplayConfig displayConfig;
 		
-		// Getters for new configs
-		public TablistConfig getTablistConfig() { return tablistConfig != null ? tablistConfig : new TablistConfig(); }
-		public UnifiedConfig getUnifiedConfig() { return unifiedConfig != null ? unifiedConfig : new UnifiedConfig(); }
-		public CommandsConfig getCommandsConfig() { return commandsConfig != null ? commandsConfig : new CommandsConfig(); }
-		public PermissionsConfig getPermissionsConfig() { return permissionsConfig != null ? permissionsConfig : new PermissionsConfig(); }
-		public PlaceholdersConfig getPlaceholdersConfig() { return placeholdersConfig != null ? placeholdersConfig : new PlaceholdersConfig(); }
-		public SettingsConfig getSettingsConfig() { return settingsConfig != null ? settingsConfig : new SettingsConfig(); }
-		public AnimationsConfig getAnimationsConfig() { return animationsConfig != null ? animationsConfig : new AnimationsConfig(); }
-		public ScoreboardConfig getScoreboardConfig() { return scoreboardConfig != null ? scoreboardConfig : new ScoreboardConfig(); }
-		public ShopsConfig getShopsConfig() { return shopsConfig != null ? shopsConfig : new ShopsConfig(); }
+	// Getters for legacy configs (maintained for backward compatibility)
+	public TablistConfig getTablistConfig() { return tablistConfig != null ? tablistConfig : new TablistConfig(); }
+	public UnifiedConfig getUnifiedConfig() { return unifiedConfig != null ? unifiedConfig : new UnifiedConfig(); }
+	public CommandsConfig getCommandsConfig() { return commandsConfig != null ? commandsConfig : new CommandsConfig(); }
+	public PermissionsConfig getPermissionsConfig() { return permissionsConfig != null ? permissionsConfig : new PermissionsConfig(); }
+	public PlaceholdersConfig getPlaceholdersConfig() { return placeholdersConfig != null ? placeholdersConfig : new PlaceholdersConfig(); }
+	public SettingsConfig getSettingsConfig() { return settingsConfig != null ? settingsConfig : new SettingsConfig(); }
+	public AnimationsConfig getAnimationsConfig() { return animationsConfig != null ? animationsConfig : new AnimationsConfig(); }
+	public ScoreboardConfig getScoreboardConfig() { return scoreboardConfig != null ? scoreboardConfig : new ScoreboardConfig(); }
+	public ShopsConfig getShopsConfig() { return shopsConfig != null ? shopsConfig : new ShopsConfig(); }
+	
+	// Phase 2: Consolidated configuration getters
+	public CoreConfig getCoreConfig() { return coreConfig != null ? coreConfig : new CoreConfig(); }
+	public FeatureConfig getFeatureConfig() { return featureConfig != null ? featureConfig : new FeatureConfig(); }
+	public DisplayConfig getDisplayConfig() { return displayConfig != null ? displayConfig : new DisplayConfig(); }
+	
+	/**
+	 * Phase 2 Consolidation: Enhanced configuration access patterns
+	 * This method demonstrates the improved architecture with 3 logical config groups
+	 */
+	public void demonstrateConsolidatedConfigAccess() {
+		// Core system settings access
+		CoreConfig core = getCoreConfig();
+		boolean discordEnabled = core.discord.enabled;
+		String serverName = core.general.serverName;
+		boolean asyncOperations = core.performance.enableAsyncOperations;
+		
+		// Feature configuration access
+		FeatureConfig features = getFeatureConfig();
+		boolean economyEnabled = features.economy.enabled;
+		double setHomeCost = features.homes.setHomeCost;
+		int maxHomesAdmin = features.homes.maxHomesAdmin;
+		
+		// Display configuration access
+		DisplayConfig display = getDisplayConfig();
+		boolean tablistEnabled = display.tablist.enabled;
+		String scoreboardTitle = display.scoreboard.title;
+		boolean animationsEnabled = display.animations.enabled;
+		
+		LOGGER.info("Phase 2 Consolidated Config System Active - Core: {}, Features: {}, Display: {}", 
+			core != null, features != null, display != null);
+	}
 
 	private ConfigManager() {
 		this.gson = new GsonBuilder().setPrettyPrinting().create();
@@ -168,8 +198,8 @@ public class ConfigManager {
 		}
 	}
 
-	   private void loadAllConfigurations() {
-		// Load from the new unified config system
+	private void loadAllConfigurations() {
+		// Load from the legacy unified config system (maintained for backward compatibility)
 		mainConfig = loadConfig("config.json", MainConfig.class);
 		unifiedConfig = loadConfig("config.json", UnifiedConfig.class);
 		commandsConfig = loadConfig("commands.json", CommandsConfig.class);
@@ -181,8 +211,88 @@ public class ConfigManager {
 		shopsConfig = loadConfig("shops.json", ShopsConfig.class);
 		tablistConfig = loadConfig("tablist.json", TablistConfig.class);
 		
-		// Unified configuration system - no legacy bridge needed
-	   }
+		// Phase 2: Load consolidated configs
+		coreConfig = loadConfig("core.json", CoreConfig.class);
+		featureConfig = loadConfig("features.json", FeatureConfig.class);
+		displayConfig = loadConfig("display.json", DisplayConfig.class);
+		
+		// Load separate configuration files independently
+		LOGGER.info("Configuration files loaded separately - no unified config generation");
+	}
+
+	/**
+	 * Create general configuration
+	 */
+	private MainConfig createGeneralConfig() {
+		if (mainConfig != null) return mainConfig;
+		
+		MainConfig general = new MainConfig();
+		// Set basic server settings
+		general.serverName = "NeoEssentials Server";
+		general.defaultLanguage = "en";
+		general.debugMode = false;
+		
+		// Disable features we're removing
+		if (general.modules == null) general.modules = new MainConfig.Modules();
+		general.modules.bossbar = false;
+		
+		return general;
+	}
+	
+	/**
+	 * Create economy configuration with enhancements
+	 */
+	private Object createEconomyConfig() {
+		Map<String, Object> economyConfig = new HashMap<>();
+		economyConfig.put("enabled", true);
+		economyConfig.put("currencySymbol", "$");
+		economyConfig.put("startingBalance", 100.0);
+		economyConfig.put("enableTaxes", true);
+		economyConfig.put("transactionTaxRate", 0.02); // 2% tax on transactions
+		economyConfig.put("payCommandEnabled", true);
+		economyConfig.put("balanceCommandEnabled", true);
+		economyConfig.put("economyCommandEnabled", true);
+		return economyConfig;
+	}
+	
+	/**
+	 * Create teleports configuration
+	 */
+	private Object createTeleportsConfig() {
+		Map<String, Object> teleportsConfig = new HashMap<>();
+		teleportsConfig.put("homesEnabled", true);
+		teleportsConfig.put("warpsEnabled", true);
+		teleportsConfig.put("backEnabled", true);
+		teleportsConfig.put("spawnEnabled", true);
+		teleportsConfig.put("tpEnabled", true);
+		teleportsConfig.put("maxHomes", 5);
+		teleportsConfig.put("maxWarps", 10);
+		teleportsConfig.put("homeCost", 50.0);
+		teleportsConfig.put("warpCost", 25.0);
+		return teleportsConfig;
+	}
+	
+	/**
+	 * Create tablist configuration (keeping tablist, removing scoreboard/bossbar)
+	 */
+	private TablistConfig createTablistConfig() {
+		if (tablistConfig != null) return tablistConfig;
+		
+		try {
+			TablistConfig config = com.zerog.neoessentials.features.TabListManager.createDefaultUnifiedConfigStatic();
+			// Disable scoreboard and bossbar sections
+			if (config.scoreboard != null) {
+				config.scoreboard.enabled = false;
+			}
+			if (config.bossbar != null) {
+				config.bossbar.enabled = false;
+			}
+			return config;
+		} catch (Exception e) {
+			LOGGER.warn("Failed to create tablist config, using basic default", e);
+			return new TablistConfig();
+		}
+	}
 
 	/**
 	 * Generate all unified configuration files
@@ -475,24 +585,162 @@ public class ConfigManager {
 	private void generateScoreboardConfig() {
 		String configContent = """
 		{
-		  "_comment": "Dedicated Scoreboard Configuration",
-		  "_description": "Advanced scoreboard configuration with multiline support, animations, and conditional displays",
+		  "_comment": "Enhanced Admin Scoreboard Configuration for NeoEssentials",
+		  "_description": "Comprehensive scoreboard system with permission-based layouts, animations, and admin controls",
+		  "_version": "2.0.0",
 		  
 		  "scoreboard": {
 		    "enabled": true,
 		    "updateInterval": 20,
 		    "maxLines": 15,
 		    "title": "&6&lNeoEssentials Server",
+		    "enableAnimations": true,
+		    "enablePlaceholders": true,
+		    "enableConditionalDisplay": true,
+		    
+		    "titleAnimation": {
+		      "enabled": true,
+		      "frames": [
+		        "&6&lNeoEssentials Server",
+		        "&e&lNeoEssentials Server",
+		        "&f&lNeoEssentials Server",
+		        "&e&lNeoEssentials Server"
+		      ],
+		      "duration": 2.0,
+		      "loop": true
+		    },
+		    
+		    "adminSettings": {
+		      "allowPlayerToggle": true,
+		      "debugMode": false,
+		      "logUpdates": false,
+		      "maxUpdateFrequency": 5,
+		      "enableAutoReload": true,
+		      "adminCommand": "/neoessentials scoreboard"
+		    },
 		    
 		    "layouts": [
 		      {
+		        "priority": 1000,
+		        "conditionType": "permission",
+		        "condition": "neoessentials.scoreboard.owner",
+		        "title": "&c&lOWNER PANEL",
+		        "enabled": true,
+		        "description": "Server owner administrative panel with full server info",
+		        "lines": [
+		          "&c&m─────────────────────",
+		          "&c&l● OWNER PANEL ●",
+		          "&c&m─────────────────────",
+		          "",
+		          "&f▶ &7Server: &a{server_name}",
+		          "&f▶ &7TPS: &e{server_tps}",
+		          "&f▶ &7RAM: &b{server_memory_used}&7/&b{server_memory_max}",
+		          "&f▶ &7Players: &e{server_players}&7/&e{server_max_players}",
+		          "",
+		          "&f▶ &7Admin Level: &cOWNER",
+		          "&f▶ &7Permissions: &aALL",
+		          "&f▶ &7Balance: &6${player_balance}",
+		          "",
+		          "&f▶ &7Coords: &f{player_x}&7, &f{player_y}&7, &f{player_z}",
+		          "&c&m─────────────────────"
+		        ]
+		      },
+		      {
+		        "priority": 800,
+		        "conditionType": "permission",
+		        "condition": "neoessentials.scoreboard.admin",
+		        "title": "&6&lADMIN PANEL",
+		        "enabled": true,
+		        "description": "Server administrator panel with management info",
+		        "lines": [
+		          "&6&m─────────────────────",
+		          "&6&l● ADMIN PANEL ●",
+		          "&6&m─────────────────────",
+		          "",
+		          "&f▶ &7Player: &f{player_name}",
+		          "&f▶ &7Rank: &6ADMIN",
+		          "&f▶ &7Balance: &6${player_balance}",
+		          "&f▶ &7Playtime: &e{player_playtime}",
+		          "",
+		          "&f▶ &7Server Info:",
+		          "&f  &7TPS: &a{server_tps}",
+		          "&f  &7Players: &e{server_players}&7/&e{server_max_players}",
+		          "&f  &7Uptime: &b{server_uptime}",
+		          "",
+		          "&6&m─────────────────────"
+		        ]
+		      },
+		      {
+		        "priority": 600,
+		        "conditionType": "permission",
+		        "condition": "neoessentials.scoreboard.moderator",
+		        "title": "&e&lMODERATOR",
+		        "enabled": true,
+		        "description": "Moderator panel with player management info",
+		        "lines": [
+		          "&e&m─────────────────────",
+		          "&e&l● MODERATOR PANEL ●",
+		          "&e&m─────────────────────",
+		          "",
+		          "&f▶ &7Player: &f{player_name}",
+		          "&f▶ &7Rank: &eMODERATOR",
+		          "&f▶ &7Health: &c{player_health}&7/&c{player_max_health}",
+		          "&f▶ &7Level: &a{player_level}",
+		          "",
+		          "&f▶ &7Online Players: &e{server_players}",
+		          "&f▶ &7World: &b{player_world}",
+		          "&f▶ &7Location: &f{player_x}&7, &f{player_z}",
+		          "",
+		          "&e&m─────────────────────"
+		        ]
+		      },
+		      {
+		        "priority": 400,
+		        "conditionType": "permission",
+		        "condition": "neoessentials.scoreboard.vip",
+		        "title": "&d&lVIP PLAYER",
+		        "enabled": true,
+		        "description": "VIP member panel with enhanced features",
+		        "lines": [
+		          "&d&m─────────────────────",
+		          "&d&l● VIP PANEL ●",
+		          "&d&m─────────────────────",
+		          "",
+		          "&f▶ &7Player: &d{player_name}",
+		          "&f▶ &7Status: &dVIP MEMBER",
+		          "&f▶ &7Balance: &6${player_balance}",
+		          "&f▶ &7Homes: &b{player_homes}&7/&b{player_max_homes}",
+		          "",
+		          "&f▶ &7Health: &c{player_health}",
+		          "&f▶ &7Experience: &a{player_exp}",
+		          "&f▶ &7Playtime: &e{player_playtime}",
+		          "",
+		          "&d&m─────────────────────"
+		        ]
+		      },
+		      {
 		        "priority": 1,
 		        "conditionType": "default",
+		        "condition": "",
 		        "title": "&7&lPLAYER INFO",
+		        "enabled": true,
+		        "description": "Default player information panel",
 		        "lines": [
-		          "&7Player: &f{player_name}",
-		          "&7Health: &c{player_health}",
-		          "&7Online: &e{server_players}"
+		          "&7&m─────────────────────",
+		          "&7&l● PLAYER INFO ●",
+		          "&7&m─────────────────────",
+		          "",
+		          "&f▶ &7Player: &f{player_name}",
+		          "&f▶ &7Level: &a{player_level}",
+		          "&f▶ &7Health: &c{player_health}&7/&c20",
+		          "&f▶ &7Food: &6{player_food}&7/&620",
+		          "",
+		          "&f▶ &7Location:",
+		          "&f  &7World: &e{player_world}",
+		          "&f  &7X: &e{player_x} &7Y: &e{player_y} &7Z: &e{player_z}",
+		          "",
+		          "&f▶ &7Online: &e{server_players}&7/&e{server_max_players}",
+		          "&7&m─────────────────────"
 		        ]
 		      }
 		    ]

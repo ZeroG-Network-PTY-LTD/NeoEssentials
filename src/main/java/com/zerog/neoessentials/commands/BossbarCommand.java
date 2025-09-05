@@ -1,5 +1,16 @@
 package com.zerog.neoessentials.commands;
 
+/**
+ * BossbarCommand - REMOVED
+ * This feature has been completely removed from NeoEssentials
+ * 
+ * @deprecated Bossbar system has been removed
+ */
+@Deprecated
+public class BossbarCommand {
+    // Feature removed - no longer supported
+}
+
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
