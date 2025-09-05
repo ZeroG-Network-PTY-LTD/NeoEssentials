@@ -149,7 +149,7 @@ public class CommandRegistry {
             LOGGER.info("Registered scoreboardtest command");
             
             // Professional Scoreboard command
-            ScoreboardCommand.register(dispatcher);
+            // ScoreboardCommand.register(dispatcher); // Removed as part of cleanup
             LOGGER.info("Registered scoreboard command");
             
             // AFK command
@@ -280,7 +280,7 @@ public class CommandRegistry {
             LOGGER.info("Registered configuration management commands");
             
             // Bossbar management commands
-            BossbarCommand.register(dispatcher);
+            // BossbarCommand.register(dispatcher); // Removed as part of cleanup
             LOGGER.info("Registered bossbar management commands");
             
             // Animation management commands

@@ -101,11 +101,11 @@
       "enableAnimations": true
     },
     "scoreboard": {
-      "enabled": true,
-      "useUnifiedConfig": true,
+      "enabled": false,
+      "useUnifiedConfig": false,
       "updateInterval": 20,
       "maxLines": 15,
-      "enableAnimations": true
+      "enableAnimations": false
     },
     "moderation": {
       "enabled": true,

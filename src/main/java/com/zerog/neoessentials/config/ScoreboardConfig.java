@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * Scoreboard Configuration for NeoEssentials
+ * Clean Scoreboard Configuration for NeoEssentials
  * Represents the scoreboard.json file structure
  */
 public class ScoreboardConfig {
@@ -19,7 +19,7 @@ public class ScoreboardConfig {
         public List<Layout> layouts = new ArrayList<>();
         
         public Scoreboard() {
-            // Initialize with default layout
+            // Initialize with basic admin-friendly layouts
             Layout defaultLayout = new Layout();
             defaultLayout.priority = 1;
             defaultLayout.conditionType = "default";
@@ -27,6 +27,7 @@ public class ScoreboardConfig {
             defaultLayout.lines = List.of(
                 "&7Player: &f{player_name}",
                 "&7Health: &c{player_health}",
+                "&7Level: &a{player_level}",
                 "&7Online: &e{server_players}"
             );
             layouts.add(defaultLayout);
@@ -35,6 +36,7 @@ public class ScoreboardConfig {
         public static class Layout {
             public int priority;
             public String conditionType;
+            public String condition;
             public String title;
             public List<String> lines;
         }

@@ -9,7 +9,7 @@ import java.util.List;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.zerog.neoessentials.features.CustomBossbarManager;
+// import com.zerog.neoessentials.features.CustomBossbarManager; // Removed as part of cleanup
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
@@ -38,7 +38,8 @@ public class AnimationCommands {
     
     private static int reloadAnimations(CommandContext<CommandSourceStack> context) {
         try {
-            CustomBossbarManager.getInstance().reloadAnimations();
+            // CustomBossbarManager.getInstance().reloadAnimations(); // Removed as part of cleanup
+            context.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Animation reload disabled - bossbar system removed"), false);
             ServerPlayer player = context.getSource().getPlayerOrException();
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.reload.success"));
         } catch (Exception e) {
@@ -51,7 +52,8 @@ public class AnimationCommands {
     
     private static int showStats(CommandContext<CommandSourceStack> context) {
         try {
-            String bossbarStats = CustomBossbarManager.getInstance().getAnimationStats();
+            // String bossbarStats = CustomBossbarManager.getInstance().getAnimationStats(); // Removed as part of cleanup
+            String bossbarStats = "Bossbar system removed as part of cleanup";
             ServerPlayer player = context.getSource().getPlayerOrException();
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.stats.header"));
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.stats.bossbar", bossbarStats));
@@ -65,7 +67,8 @@ public class AnimationCommands {
     
     private static int listAnimations(CommandContext<CommandSourceStack> context) {
         try {
-            List<String> bossbarAnimations = CustomBossbarManager.getInstance().getAvailableAnimations();
+            // List<String> bossbarAnimations = CustomBossbarManager.getInstance().getAvailableAnimations(); // Removed as part of cleanup
+            java.util.List<String> bossbarAnimations = java.util.Arrays.asList("Bossbar system removed");
             ServerPlayer player = context.getSource().getPlayerOrException();
             MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.list.header"));
             if (bossbarAnimations != null && !bossbarAnimations.isEmpty()) {
@@ -83,8 +86,8 @@ public class AnimationCommands {
         String animationName = StringArgumentType.getString(context, "animation");
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
             // Test animation by showing a bossbar with the animation
-            CustomBossbarManager.getInstance().showBossbar(player, "test", 5);
-            MessageUtil.sendMessage(player, "&a✓ Testing animation: " + animationName);
+            // CustomBossbarManager.getInstance().showBossbar(player, "test", 5); // Removed as part of cleanup
+            MessageUtil.sendMessage(player, "&c✗ Animation testing disabled - bossbar system removed");
         } else {
             try {
                 MessageUtil.sendMessage(context.getSource().getPlayerOrException(), "&c✗ This command can only be used by players");

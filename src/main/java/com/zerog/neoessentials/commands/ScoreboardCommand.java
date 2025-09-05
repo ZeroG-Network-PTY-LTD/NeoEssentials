@@ -1,5 +1,16 @@
 package com.zerog.neoessentials.commands;
 
+/**
+ * ScoreboardCommand - REMOVED
+ * This feature has been completely removed from NeoEssentials
+ * 
+ * @deprecated Scoreboard system has been removed
+ */
+@Deprecated
+public class ScoreboardCommand {
+    // Feature removed - no longer supported
+}
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;

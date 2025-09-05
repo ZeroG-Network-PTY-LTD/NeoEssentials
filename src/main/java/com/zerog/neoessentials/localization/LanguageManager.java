@@ -267,8 +267,78 @@ public class LanguageManager {
             }
         }
         
-        // Final fallback
+        // Try to generate a reasonable fallback for common key patterns
+        String fallback = generateFallbackMessage(key);
+        if (fallback != null) {
+            return fallback;
+        }
+        
+        // Final fallback - only log missing keys in debug mode to reduce spam
+        if (Boolean.getBoolean("neoessentials.debug.messages")) {
+            LOGGER.warn("Missing language key: {} for locale: {}", key, locale);
+        }
+        
+        // Track missing keys for admin review
+        missingKeys.add(key);
+        
         return "&c[Missing: " + key + "]";
+    }
+    
+    /**
+     * Generate reasonable fallback messages for common key patterns
+     */
+    private String generateFallbackMessage(String key) {
+        if (key == null || key.isEmpty()) {
+            return null;
+        }
+        
+        // Handle common patterns
+        if (key.contains(".feature.tag")) {
+            return "Feature";
+        }
+        if (key.contains(".enabled")) {
+            return "&aEnabled";
+        }
+        if (key.contains(".disabled")) {
+            return "&cDisabled";
+        }
+        if (key.contains(".success")) {
+            return "&aSuccess";
+        }
+        if (key.contains(".error") || key.contains(".failed")) {
+            return "&cError";
+        }
+        if (key.contains(".permission") || key.contains(".no_permission")) {
+            return "&cNo permission";
+        }
+        if (key.contains(".not_found")) {
+            return "&cNot found";
+        }
+        if (key.contains(".invalid")) {
+            return "&cInvalid";
+        }
+        if (key.contains(".reload")) {
+            return "&aReloaded";
+        }
+        
+        // Extract the last part of the key as a fallback
+        String[] parts = key.split("\\.");
+        if (parts.length > 0) {
+            String lastPart = parts[parts.length - 1];
+            // Convert snake_case to Title Case
+            String[] words = lastPart.split("_");
+            StringBuilder result = new StringBuilder();
+            for (String word : words) {
+                if (!word.isEmpty()) {
+                    if (result.length() > 0) result.append(" ");
+                    result.append(Character.toUpperCase(word.charAt(0)))
+                          .append(word.substring(1).toLowerCase());
+                }
+            }
+            return result.toString();
+        }
+        
+        return null;
     }
     
     /**
@@ -389,11 +459,32 @@ public class LanguageManager {
     public void setDefaultLanguage(String language) {
         if (languageFiles.containsKey(language)) {
             this.defaultLanguage = language;
-            LOGGER.info("Default language set to: {}", language);
+            LOGGER.info("Default language changed to: {}", language);
+        } else {
+            LOGGER.warn("Cannot set default language to '{}' - not available", language);
         }
     }
     
     /**
+     * Check if a key exists in any language file
+     */
+    public boolean hasKey(String key) {
+        for (Properties props : languageFiles.values()) {
+            if (props.containsKey(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Get all missing keys that have been requested
+     */
+    public java.util.Set<String> getMissingKeys() {
+        return new java.util.HashSet<>(missingKeys);
+    }
+    
+    private final java.util.Set<String> missingKeys = java.util.concurrent.ConcurrentHashMap.newKeySet();    /**
      * Get a display name for a language code
      */
     public String getLanguageDisplayName(String languageCode) {
