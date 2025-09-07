@@ -289,5 +289,27 @@
   "neoessentials.compat.refresh.success": "&aKompatibilitäts-Aktualisierung abgeschlossen",
   "neoessentials.compat.report.header": "&bKompatibilitäts-Bericht:",
   "neoessentials.compat.report.total": "&7Gesamte Plugins: {0}",
-  "neoessentials.compat.report.integrated": "&7Integrierte Plugins: {0}"
+  "neoessentials.compat.report.integrated": "&7Integrierte Plugins: {0}",
+  
+  "neoessentials.home.set": "&aZuhause '{0}' gesetzt!",
+  "neoessentials.home.updated": "&aZuhause '{0}' aktualisiert!",
+  "neoessentials.home.not_found": "&cZuhause '{0}' nicht gefunden!",
+  "neoessentials.home.deleted": "&aZuhause '{0}' gelöscht!",
+  "neoessentials.home.disabled": "&cDas Zuhause-System ist deaktiviert!",
+  "neoessentials.home.invalid_name": "&cUngültiger Zuhause-Name: {0}",
+  "neoessentials.home.max_homes_reached": "&cDu hast die maximale Anzahl von Zuhause erreicht ({0})!",
+  "neoessentials.home.warmup": "&aTeleportiere in {0} Sekunden...",
+  "neoessentials.home.list_none": "&cDu hast keine Zuhause gesetzt.",
+  "neoessentials.home.list_header": "&aDeine Zuhause ({0}/{1}):",
+  "neoessentials.home.list_entry": "&7- {0}",
+  "neoessentials.home.insufficient_funds": "&cDu hast nicht genug Geld! Erforderlich: {0}",
+  "neoessentials.home.restricted_world": "&cDu kannst in dieser Welt keine Zuhause setzen!",
+  "neoessentials.home.unsafe_location": "&cDieser Ort ist nicht sicher für die Teleportation!",
+  "neoessentials.home.cooldown_active": "&cDu musst {0} warten bevor du wieder zur Zuhause teleportieren kannst!",
+  "neoessentials.home.teleporting_named": "&aTeleportiere zu Zuhause '{0}'...",
+  "neoessentials.home.teleport": "&aTeleportiert zu deinem Zuhause '{0}'",
+  "neoessentials.home.limit_reached": "&cDu hast die maximale Anzahl von Zuhause erreicht ({0})",
+  "neoessentials.home.failed": "&cTeleportation fehlgeschlagen! Bitte versuche es erneut.",
+  "neoessentials.home.target_world_not_found": "&cZielwelt nicht gefunden!",
+  "neoessentials.home.delete_success": "&aZuhause '{0}' gelöscht!"
 }

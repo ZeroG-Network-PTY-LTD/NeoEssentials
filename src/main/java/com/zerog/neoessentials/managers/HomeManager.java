@@ -87,10 +87,10 @@ public class HomeManager {
             }
         
         // Check cost
-    if (config.useSetHomeCost && config.setHomeCost > 0) {
+        if (config.useSetHomeCost && config.setHomeCost > 0) {
             EconomyManager economyManager = EconomyManager.getInstance();
                 if (!economyManager.hasBalance(player.getUUID(), config.setHomeCost)) {
-                    player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.insufficient_funds", economyManager.formatCurrency(config.setHomeCost)));
+                    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.insufficient_funds", economyManager.formatCurrency(config.setHomeCost)));
                     return false;
                 }
             economyManager.withdrawBalance(player.getUUID(), config.setHomeCost, "Home creation: " + homeName);
@@ -110,8 +110,8 @@ public class HomeManager {
         // Save home
         playerDataManager.setHome(player.getUUID(), homeName, homeLocation);
         
-    String message = isNewHome ? "neoessentials.home.set" : "neoessentials.home.set";
-        player.sendSystemMessage(net.minecraft.network.chat.Component.translatable(message, homeName));
+    String message = isNewHome ? "neoessentials.home.set" : "neoessentials.home.updated";
+        MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, message, homeName));
         
         LOGGER.info("Player {} {} home '{}' at {} in {}", 
             player.getName().getString(),
@@ -136,7 +136,7 @@ public class HomeManager {
             }
         
             if (!playerDataManager.hasHome(player.getUUID(), homeName)) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.not_found", homeName));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.not_found", homeName));
                 return false;
             }
         
@@ -162,7 +162,7 @@ public class HomeManager {
         // Check if home exists
     LocationUtil.Location home = playerDataManager.getHome(player.getUUID(), homeName);
             if (home == null) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.not_found", homeName));
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.not_found", homeName));
                 return false;
             }
         
@@ -177,7 +177,7 @@ public class HomeManager {
     if (config.teleportHomeCost > 0) {
             EconomyManager economyManager = EconomyManager.getInstance();
                 if (!economyManager.hasBalance(player.getUUID(), config.teleportHomeCost)) {
-                    player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.insufficient_funds", economyManager.formatCurrency(config.teleportHomeCost)));
+                    MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.home.insufficient_funds", economyManager.formatCurrency(config.teleportHomeCost)));
                     return false;
                 }
         }

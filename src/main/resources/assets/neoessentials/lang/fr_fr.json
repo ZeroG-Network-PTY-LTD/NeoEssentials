@@ -289,5 +289,27 @@
   "neoessentials.compat.refresh.success": "&aActualisation de compatibilité terminée",
   "neoessentials.compat.report.header": "&bRapport de Compatibilité:",
   "neoessentials.compat.report.total": "&7Total des plugins: {0}",
-  "neoessentials.compat.report.integrated": "&7Plugins intégrés: {0}"
+  "neoessentials.compat.report.integrated": "&7Plugins intégrés: {0}",
+  
+  "neoessentials.home.set": "&aMaison '{0}' définie!",
+  "neoessentials.home.updated": "&aMaison '{0}' mise à jour!",
+  "neoessentials.home.not_found": "&cMaison '{0}' introuvable!",
+  "neoessentials.home.deleted": "&aMaison '{0}' supprimée!",
+  "neoessentials.home.disabled": "&cLe système de maisons est désactivé!",
+  "neoessentials.home.invalid_name": "&cNom de maison invalide: {0}",
+  "neoessentials.home.max_homes_reached": "&cVous avez atteint le nombre maximum de maisons ({0})!",
+  "neoessentials.home.warmup": "&aTéléportation dans {0} secondes...",
+  "neoessentials.home.list_none": "&cVous n'avez aucune maison définie.",
+  "neoessentials.home.list_header": "&aVos maisons ({0}/{1}):",
+  "neoessentials.home.list_entry": "&7- {0}",
+  "neoessentials.home.insufficient_funds": "&cVous n'avez pas assez d'argent! Requis: {0}",
+  "neoessentials.home.restricted_world": "&cVous ne pouvez pas définir de maisons dans ce monde!",
+  "neoessentials.home.unsafe_location": "&cCet emplacement n'est pas sûr pour la téléportation!",
+  "neoessentials.home.cooldown_active": "&cVous devez attendre {0} avant d'utiliser la téléportation vers la maison à nouveau!",
+  "neoessentials.home.teleporting_named": "&aTéléportation vers la maison '{0}'...",
+  "neoessentials.home.teleport": "&aTéléporté vers votre maison '{0}'",
+  "neoessentials.home.limit_reached": "&cVous avez atteint la limite maximale de maisons ({0})",
+  "neoessentials.home.failed": "&cÉchec de la téléportation! Veuillez réessayer.",
+  "neoessentials.home.target_world_not_found": "&cMonde cible introuvable!",
+  "neoessentials.home.delete_success": "&aMaison '{0}' supprimée!"
 }

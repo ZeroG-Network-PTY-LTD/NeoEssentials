@@ -1,93 +1,79 @@
 package com.zerog.neoessentials.config;
 
-// ...existing code...
-
-
-/**
- * Main configuration for NeoEssentials mod
- * Based on EssentialsX configuration structure
- * 
- * @author ZeroG
- * @since 2.0.0
- */
 public class MainConfig {
-    // Tablist, scoreboard, and bossbar config are now controlled via TablistConfig and tablist.json
-    // ...existing code...
-    /** Example: Color permissions configuration */
-    public ColorPermissionsConfig colorPermissionsConfig = new ColorPermissionsConfig();
+    public final HomeSettings homeSettings = new HomeSettings();
+    public final EconomySettings economySettings = new EconomySettings();
+    public final WarpConfig warpConfig = new WarpConfig();
+    public final SpawnConfig spawnConfig = new SpawnConfig();
+    public final KitSettings kitSettings = new KitSettings();
+    public final ChatSettings chatSettings = new ChatSettings();
+    public final ItemManagementConfig itemManagement = new ItemManagementConfig();
+    public final InvseeConfig invseeConfig = new InvseeConfig();
+    public final ColorPermissionsConfig colorPermissionsConfig = new ColorPermissionsConfig();
+    public final Modules modules = new Modules();
+    public int maxGiveAmount = 64;
+    public boolean allowGiveEnchantments = true;
+    public boolean debugMode = false;
 
-    /** Example: Configuration for color and formatting permissions */
-    public static class ColorPermissionsConfig {
-        /** Allow chat color codes */
+    public static class Modules {
+        public boolean homes = true;
+        public boolean economy = true;
+        public boolean warps = true;
+        public boolean kits = true;
         public boolean chat = true;
-        /** Allow RGB color codes */
-        public boolean rgb = true;
+        public boolean spawn = true;
+        public boolean moderation = true;
     }
-    /** Example: Warp settings configuration */
-    public WarpConfig warpConfig = new WarpConfig();
 
-    /** Example: Configuration for warp features */
+    public static class HomeSettings {
+        public int maxHomes = 5;
+        public double setHomeCost = 0.0;
+        public boolean enabled = true;
+        public java.util.List<String> restrictedWorlds = new java.util.ArrayList<>();
+        public boolean useSetHomeCost = true;
+        public double teleportHomeCost = 10.0;
+        public boolean requireSafeLocation = true;
+        public int teleportWarmup = 3;
+        public int maxHomesAdmin = 20;
+        public int maxHomesVip = 10;
+        public int teleportHomeCooldown = 60;
+    }
+    
+    public static class EconomySettings {
+        public boolean enabled = true;
+        public double startingBalance = 100.0;
+        public String currencySymbol = "$";
+        public double maxBalance = 100000.0;
+        public boolean cleanupInactiveAccounts = true;
+        public double transactionFeePercent = 1.0;
+        public double maxTransferAmount = 10000.0;
+    }
+    
     public static class WarpConfig {
-        // Essential fields that code depends on
         public boolean enabled = true;
         public int maxWarpsPerPlayer = 5;
-        public boolean allowCrossWorld = true;
         public double setWarpCost = 100.0;
-        public double teleportCost = 10.0;
-        public int warpCooldown = 30;
-        public boolean requireSafeLocation = true;
-        public java.util.List<String> restrictedWorlds = new java.util.ArrayList<>();
-        public boolean allowPublicWarps = true;
-        public boolean allowPrivateWarps = true;
-        public boolean allowAdminWarps = true;
-        
-        /** Maximum length for warp names */
         public int maxWarpNameLength = 16;
-        /** Allow spaces in warp names */
         public boolean allowSpacesInNames = false;
-        /** List of banned warp names */
         public java.util.List<String> bannedWarpNames = new java.util.ArrayList<>();
-        /** Cost to create a warp */
+        public java.util.List<String> restrictedWorlds = new java.util.ArrayList<>();
         public Double createWarpCost = 0.0;
-        /** Cost to teleport to a warp */
         public Double teleportWarpCost = 0.0;
-        /** List of worlds where teleport is not allowed */
+        public boolean requireSafeLocation = true;
         public java.util.List<String> noTeleportWorlds = new java.util.ArrayList<>();
-        /** Teleport warmup in seconds */
         public int teleportWarmup = 0;
-        /** Teleport cooldown in seconds */
         public int teleportWarpCooldown = 0;
-        /** Check for void when teleporting */
         public boolean checkForVoid = true;
-        /** Messages for warp system (deprecated, use lang keys) */
-        public Messages messages = new Messages();
-        public static class Messages {
-            public String warpCreated = "warp.created";
-            public String warpListEmpty = "warp.list.empty";
-            public String warpListHeader = "warp.list.header";
-            public String warpListEntry = "warp.list.entry";
-        }
     }
-    /** Example: Spawn settings configuration */
-    public SpawnConfig spawnConfig = new SpawnConfig();
-
-    /** Example: Configuration for spawn features */
+    
     public static class SpawnConfig {
-        /** Enable/disable spawn system */
         public boolean enabled = true;
-        /** Set spawn on first join */
         public boolean setSpawnOnFirstJoin = true;
-        /** Set spawn on respawn */
         public boolean setSpawnOnRespawn = true;
-        /** Set spawn on death */
         public boolean setSpawnOnDeath = false;
-        /** Main spawn location */
         public SpawnLocation mainSpawn = new SpawnLocation();
-        /** New player settings */
         public NewPlayer newPlayer = new NewPlayer();
-        /** Safety settings */
         public Safety safety = new Safety();
-        /** Respawn settings */
         public Respawn respawn = new Respawn();
 
         public static class SpawnLocation {
@@ -112,222 +98,54 @@ public class MainConfig {
             public boolean respectBedSpawns = true;
         }
     }
-    /** Example: Home settings configuration */
-    public HomeSettings homeSettings = new HomeSettings();
-
-    /** Example: Configuration for home features */
-    public static class HomeSettings {
-        /** Enable/disable homes */
+    
+    public static class KitSettings {
         public boolean enabled = true;
-        /** Maximum homes per player */
-        public int maxHomes = 3;
-        /** Cooldown in seconds between home teleports */
-        public int homeCooldown = 60;
-        /** Cost to set a home */
-        public double setHomeCost = 50.0;
-        /** Cost to teleport to a home */
-        public double teleportCost = 10.0;
-        /** Allow cross-world homes */
-        public boolean allowCrossWorld = false;
-        
-        // Additional fields that code depends on
-        public java.util.List<String> restrictedWorlds = new java.util.ArrayList<>();
-        public boolean useSetHomeCost = true;
-        public double teleportHomeCost = 10.0;
-        public boolean requireSafeLocation = true;
-        public int teleportWarmup = 3;
-        public int maxHomesAdmin = 20;
-        public int maxHomesVip = 10;
-        public int teleportHomeCooldown = 60;
+        public int kitCooldown = 300;
+        public boolean giveKitOnFirstJoin = true;
+        public String firstJoinKit = "starter";
     }
-    /** Example: Economy settings configuration */
-    public EconomySettings economySettings = new EconomySettings();
-
-    /** Example: Configuration for economy features */
-    public static class EconomySettings {
-        /** Enable/disable economy */
-        public boolean enabled = true;
-        /** Currency symbol */
-        public String currencySymbol = "$";
-        /** Starting balance for new players */
-        public double startingBalance = 100.0;
-        /** Transaction fee percentage */
-        public double transactionFeePercent = 1.0;
-        /** Maximum transfer amount */
-        public double maxTransferAmount = 10000.0;
-        /** Enable/disable banking system */
-        public boolean bankingEnabled = true;
-        /** Enable/disable auction house */
-        public boolean auctionEnabled = true;
-        /** Enable/disable player shops */
-        public boolean shopsEnabled = true;
-        /** Enable/disable cross-server sync */
-        public boolean crossServerSync = false;
-        /** Tax rate percentage */
-        public double taxRatePercent = 5.0;
-        /** Economy analytics enabled */
-        public boolean analyticsEnabled = true;
-        /** Maximum balance allowed per player */
-        public double maxBalance = 100000.0;
-        /** Transfer fee percent (for money transfers) */
-        public double transferFeePercent = 1.0;
-        /** Currency format string for display */
-        public String currencyFormat = "#,##0.00";
-        /** Command costs (map of command name to cost) */
-        public java.util.Map<String, java.math.BigDecimal> commandCosts = new java.util.HashMap<>();
-        /** Bank settings */
-        public BankSettings bank = new BankSettings();
-        public static class BankSettings {
-            public boolean enabled = true;
-            public double interestRate = 2.5;
-            public double minimumBalance = 100.0;
-            public double maxInterestPayout = 500.0;
-        }
-        /** Cleanup inactive accounts */
-        public boolean cleanupInactiveAccounts = true;
-    }
-    /** Example: Chat settings configuration */
-    public ChatSettings chatSettings = new ChatSettings();
-
-    /** Example: Configuration for chat and private messages */
+    
     public static class ChatSettings {
-        // Essential individual fields that code depends on
-        public boolean isEnabled = true;
-        public String chatFormat = "{MESSAGE}";
-        public String chatname = "{prefix} {player_name}";
-        public boolean enableColors = true;
-        public String pmFormatSender = "&7[&6PM&7] &7To {target}: {MESSAGE}";
-        public String pmFormatReceiver = "&7[&6PM&7] &7From {sender}: {MESSAGE}";
-        public boolean enablePrivateMessages = true;
         public boolean enableChatFormatting = true;
-        
-        /** Group-based chat formats */
+        public boolean enableSpamFilter = true;
+        public int spamThreshold = 3;
+        public int spamTimeWindow = 5000;
+        public java.util.List<String> blockedWords = new java.util.ArrayList<>();
+        public String chatFormat = "[{group}] {player_name}: {message}";
+        public boolean isEnabled = true;
+        public String chatname = "[{group}] {player_name}";
+        public AntiSpamSettings antiSpam = new AntiSpamSettings();
+        public FilterSettings filter = new FilterSettings();
         public java.util.Map<String, String> groupFormats = new java.util.HashMap<>();
 
-        /** Anti-spam settings */
-        public AntiSpam antiSpam = new AntiSpam();
-        public static class AntiSpam {
+        public static class AntiSpamSettings {
             public boolean enabled = true;
             public int maxMessagesPerSecond = 2;
             public int maxDuplicateMessages = 3;
         }
 
-        /** Chat filter settings */
-        public Filter filter = new Filter();
-        public static class Filter {
+        public static class FilterSettings {
             public boolean enabled = true;
+            public java.util.List<String> blockedWords = new java.util.ArrayList<>();
             public boolean caseSensitive = false;
             public boolean censorMode = true;
-            public String censorReplacement = "*";
-            public java.util.List<String> blockedWords = new java.util.ArrayList<>();
-        }
-
-        /** Nickname settings */
-        public Nicknames nicknames = new Nicknames();
-        public static class Nicknames {
-            public boolean enabled = true;
-            public boolean showInChat = true;
-            public boolean allowColors = true;
-        }
-
-        /** Prefix/suffix settings */
-        public PrefixSuffix prefixSuffix = new PrefixSuffix();
-        public static class PrefixSuffix {
-            public boolean enabled = true;
-            public boolean colorEnabled = true;
-            public String defaultPrefix = "";
-            public String defaultSuffix = "";
-            public boolean permissionSystemEnabled = true;
-            public boolean groupSystemEnabled = false;
-            public boolean isPermissionSystemEnabled() { return permissionSystemEnabled; }
-            public boolean isGroupSystemEnabled() { return groupSystemEnabled; }
-            public boolean isColorEnabled() { return colorEnabled; }
+            public String censorReplacement = "***";
         }
     }
-    /** Example: Kit settings configuration */
-    public KitSettings kitSettings = new KitSettings();
-
-    /** Example: Configuration for kits */
-    public static class KitSettings {
-        // Essential fields that code depends on
-        public boolean enabled = true;
-        public boolean giveKitOnFirstJoin = true;
-        public String firstJoinKit = "starter";
-        public boolean enableCooldowns = true;
-        public boolean autoEquip = false;
-        public java.util.List<String> commands = new java.util.ArrayList<>();
-        public int kitCooldown = 300;
-        public int maxKitsPerPlayer = 10;
-        public boolean allowPreview = true;
-        public boolean usePermissions = true;
-    }
-    /** Example: Item management configuration */
-    public ItemManagementConfig itemManagement = new ItemManagementConfig();
-
-    /** Example: Configuration for item management features */
+    
     public static class ItemManagementConfig {
-        /** Enable/disable item commands */
         public boolean enabled = true;
-        /** Maximum stack size allowed for item commands */
         public int maxStackSize = 64;
-        /** Allow giving items with custom NBT */
-        public boolean allowCustomNbt = true;
-        /** Allow giving items with enchantments */
         public boolean allowEnchantments = true;
-        /** Cooldown in seconds between item commands */
-        public int commandCooldown = 10;
-    }
-    /** Example: InvSee command configuration */
-    public InvSeeConfig invseeConfig = new InvSeeConfig();
-
-    /** Example: Configuration for /invsee command */
-    public static class InvSeeConfig {
-        /** Enable/disable /invsee command */
-        public boolean enabled = true;
-        /** Maximum number of inventories a player can view per session */
-        public int maxViewsPerSession = 5;
-        /** Allow viewing ender chest */
-        public boolean allowEnderChest = true;
-        /** Allow editing target inventory */
-        public boolean allowEdit = false;
-        /** Cooldown in seconds between uses */
-        public int cooldownSeconds = 30;
-    }
-    /** Example: Maximum amount allowed for /give command */
-    public int maxGiveAmount = 64;
-    /** Example: Allow giving items with enchantments using /give */
-    public boolean allowGiveEnchantments = true;
-    // Example: Only show fields that are actually used and important for users
-    /** Example: Server name shown in tablist, bossbar, etc. */
-    public String serverName = "NeoServer";
-    /** Example: Default language for messages */
-    public String defaultLanguage = "en";
-    /** Enable debug logging */
-    public boolean debugMode = false;
-    /** Enable/disable modules */
-    public Modules modules = new Modules();
-
-    // Tablist, scoreboard, and bossbar config are now controlled via TabListConfig and tablist.json
-    // Tablist
-
-    // Scoreboard
-
-    // Bossbar
-
-    // Bossbar welcome message
-
-    /** Example: Modules used in NeoEssentials */
-    public static class Modules {
-    /** Enable/disable chat module */
-    public boolean chat = true;
-        public boolean economy = true;
-        public boolean homes = true;
-        public boolean kits = true;
-        public boolean warps = true;
-        public boolean moderation = true;
-        public boolean tablist = true;
-        public boolean bossbar = true;
-        public boolean spawn = true;
     }
 
+    public static class InvseeConfig {
+        public boolean allowEdit = true;
+    }
+
+    public static class ColorPermissionsConfig {
+        public boolean chat = true;
+        public boolean rgb = true;
+    }
 }

@@ -9,11 +9,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.UUID;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -206,7 +204,7 @@ public class CustomPermissionsManager {
         vipGroup.addPermission(PermissionNodes.HOME_MULTIPLE);
         vipGroup.addPermission(PermissionNodes.NICK);
         vipGroup.addPermission(PermissionNodes.NICK_COLOR);
-        vipGroup.addPermission(PermissionNodes.BOSSBAR_SHOW);
+        // BOSSBAR_SHOW removed - bossbar system eliminated
         vipGroup.addPermission(PermissionNodes.BYPASS_COOLDOWN_TELEPORT);
         groups.put(VIP_GROUP, vipGroup);
         
@@ -228,7 +226,7 @@ public class CustomPermissionsManager {
         modGroup.addPermission(PermissionNodes.TP_COORDS);
         modGroup.addPermission(PermissionNodes.SPAWN_OTHERS);
         modGroup.addPermission(PermissionNodes.LIST_HIDDEN);
-        modGroup.addPermission(PermissionNodes.BOSSBAR_BROADCAST);
+        // BOSSBAR_BROADCAST removed - bossbar system eliminated
         modGroup.addPermission(PermissionNodes.SECURITY_VIEW);
         modGroup.addPermission(PermissionNodes.PERFORMANCE_VIEW);
         modGroup.addPermission(PermissionNodes.STATUS_VIEW);

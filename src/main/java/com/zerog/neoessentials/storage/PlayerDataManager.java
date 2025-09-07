@@ -343,10 +343,72 @@ public class PlayerDataManager {
                 if (dataMap.get("lastSeen") != null) {
                     data.lastSeen = ((Number) dataMap.get("lastSeen")).longValue();
                 }
+                if (dataMap.get("nickname") != null) {
+                    data.nickname = dataMap.get("nickname").toString();
+                }
+                if (dataMap.get("afk") != null) {
+                    data.afk = Boolean.parseBoolean(dataMap.get("afk").toString());
+                }
+                if (dataMap.get("vanished") != null) {
+                    data.vanished = Boolean.parseBoolean(dataMap.get("vanished").toString());
+                }
+                if (dataMap.get("godMode") != null) {
+                    data.godMode = Boolean.parseBoolean(dataMap.get("godMode").toString());
+                }
+                if (dataMap.get("muted") != null) {
+                    data.muted = Boolean.parseBoolean(dataMap.get("muted").toString());
+                }
+                if (dataMap.get("jailed") != null) {
+                    data.jailed = Boolean.parseBoolean(dataMap.get("jailed").toString());
+                }
+                if (dataMap.get("afkTime") != null) {
+                    data.afkTime = ((Number) dataMap.get("afkTime")).longValue();
+                }
+                if (dataMap.get("muteExpiry") != null) {
+                    data.muteExpiry = ((Number) dataMap.get("muteExpiry")).longValue();
+                }
+                if (dataMap.get("jailExpiry") != null) {
+                    data.jailExpiry = ((Number) dataMap.get("jailExpiry")).longValue();
+                }
+                
+                // Load settings
                 if (dataMap.get("settings") != null) {
                     Map<String, Object> settingsData = (Map<String, Object>) dataMap.get("settings");
                     data.settings.clear();
                     data.settings.putAll(settingsData);
+                }
+                
+                // Load homes - THIS WAS MISSING!
+                if (dataMap.get("homes") != null) {
+                    Map<String, Map<String, Object>> homesData = (Map<String, Map<String, Object>>) dataMap.get("homes");
+                    data.homes.clear();
+                    for (Map.Entry<String, Map<String, Object>> entry : homesData.entrySet()) {
+                        Map<String, Object> locData = entry.getValue();
+                        LocationUtil.Location location = new LocationUtil.Location(
+                            locData.get("world").toString(),
+                            ((Number) locData.get("x")).doubleValue(),
+                            ((Number) locData.get("y")).doubleValue(),
+                            ((Number) locData.get("z")).doubleValue(),
+                            ((Number) locData.get("yaw")).floatValue(),
+                            ((Number) locData.get("pitch")).floatValue(),
+                            ((Number) locData.get("timestamp")).longValue()
+                        );
+                        data.homes.put(entry.getKey(), location);
+                    }
+                }
+                
+                // Load last location - THIS WAS ALSO MISSING!
+                if (dataMap.get("lastLocation") != null) {
+                    Map<String, Object> lastLocData = (Map<String, Object>) dataMap.get("lastLocation");
+                    data.lastLocation = new LocationUtil.Location(
+                        lastLocData.get("world").toString(),
+                        ((Number) lastLocData.get("x")).doubleValue(),
+                        ((Number) lastLocData.get("y")).doubleValue(),
+                        ((Number) lastLocData.get("z")).doubleValue(),
+                        ((Number) lastLocData.get("yaw")).floatValue(),
+                        ((Number) lastLocData.get("pitch")).floatValue(),
+                        ((Number) lastLocData.get("timestamp")).longValue()
+                    );
                 }
                 
                 LOGGER.debug("Loaded data for player {} from disk (sync)", playerUUID);

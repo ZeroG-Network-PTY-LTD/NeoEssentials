@@ -1,0 +1,86 @@
+{
+  "// Example: Conditional Tablist Configuration": "Shows how to use conditional placeholders",
+  "tablist": {
+    "enabled": true,
+    "updateInterval": 20,
+    "layouts": {
+      "owner_layout": {
+        "header": [
+          "§4§l════════════════════════════════════════",
+          "§4§l║              §f§lOWNER PANEL              §4§l║",
+          "§4§l║            §e§lNEOESSENTIALS SERVER            §4§l║",
+          "§4§l════════════════════════════════════════",
+          "",
+          "§f👑 §7Owner: §4§l{player_name} §c[OWNER] §7| {server_status_animation}",
+          "§f💎 §7Rank: {condition: is FTB_Active, value: '§e{ftb_rank_display_name} §7| §bTeam: §3{ftb_team_display_name}', else: '§c[OWNER]'}",
+          "§f❤️ §7Health: {condition: {player_health} > 15, value: '§a{player_health}§7/§a20 §a[Healthy]', else: {player_health} > 10 ? '§6{player_health}§7/§620 §6[Hurt]' : '§c{player_health}§7/§c20 §c[Critical]'}",
+          "§f📍 §7Location: §a{player_x}§7, §a{player_y}§7, §a{player_z} §7in §e{player_world}",
+          "§f⚡ §7Ping: {ping_colored} §7| §fLevel: §a{player_level}",
+          "",
+          "§f🔧 §7Admin Tools:",
+          "§f├─ §7Players Online: §a{server_players}§7/§a{server_max_players}",
+          "§f├─ §7Server TPS: {condition: {server_tps} > 18, value: '§a{server_tps} [Excellent]', else: {server_tps} > 15 ? '§6{server_tps} [Good]' : '§c{server_tps} [Poor]'}",
+          "§f└─ §7Memory: §e{server_memory_used}MB§7/§e{server_memory_max}MB"
+        ],
+        "footer": [
+          "§4§l════════════════════════════════════════",
+          "§f🌟 §4§lOWNER FEATURES §7▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+          "§f├─ §7All Commands Available",
+          "§f├─ §7FTB Integration: {condition: is FTB_Active, value: '§aActive', else: '§cDisabled'}",
+          "§f├─ §7Team Status: {condition: is ftb_has_team, value: '§aLeading §3{ftb_team_display_name}', else: '§7No team'}",
+          "§f└─ §7Server Control: §4Full Access",
+          "",
+          "§f⏰ §7Current Time: §f{datetime}",
+          "§4§l════════════════════════════════════════"
+        ]
+      },
+      
+      "vip_layout": {
+        "header": [
+          "§d§l════════════════════════════════════════════════",
+          "§d§l║                §f§lVIP PANEL                  §d§l║",
+          "§d§l║            §e§lNEOESSENTIALS SERVER            §d§l║",
+          "§d§l════════════════════════════════════════════════",
+          "",
+          "§f💎 §7VIP: §d§l{player_name} §5[VIP] §7| {server_status_animation}",
+          "§f💎 §7Rank: {condition: is FTB_Active, value: '§e{ftb_rank_display_name} §7| §bTeam: §3{ftb_team_display_name}', else: '§d[VIP]'}",
+          "§f❤️ §7Health: §c{player_health}§7/§c{player_max_health} §7| §f🍖 Food: §6{player_food}",
+          "§f📍 §7Location: §a{player_x}§7, §a{player_y}§7, §a{player_z} §7in §e{player_world}",
+          "§f⚡ §7Ping: {ping_colored} §7| §fLevel: §a{player_level}",
+          "",
+          "§f🌟 §7VIP Perks Active:",
+          "§f├─ §7Players Online: §a{server_players}§7/§a{server_max_players}",
+          "§f└─ §7Server TPS: {condition: {server_tps} > 18, value: '§a{server_tps}', else: {server_tps} > 15 ? '§6{server_tps}' : '§c{server_tps}'}{server_tps}"
+        ],
+        "footer": [
+          "§d§l════════════════════════════════════════════════",
+          "§f🔗 §d§lVIP FEATURES §7▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+          "§f├─ §7Kit Access: §d/kit vip",
+          "§f├─ §7Homes: §d{player_homes}/10",
+          "§f├─ §7VIP Chat: §d/vipc",
+          "§f└─ §7FTB Team: {condition: is ftb_has_team, value: '§a{ftb_team_display_name} (§e{ftb_team_members}§a members)', else: '§7None'}",
+          "",
+          "§f⏰ §7Current Time: §f{datetime}",
+          "§d§l════════════════════════════════════════════════"
+        ]
+      },
+      
+      "default_layout": {
+        "header": [
+          "§6§l╔═══════════════════════════════════╗",
+          "§6§l║         §f§lNeoEssentials         §6§l║",
+          "§6§l║ §7Welcome §e{player_name}           §6§l║",
+          "§6§l║ §7Rank: {condition: is FTB_Active, value: '§e{ftb_rank_display_name}', else: '§7[PLAYER]'}      §6§l║",
+          "§6§l╚═══════════════════════════════════╝"
+        ],
+        "footer": [
+          "§6§l╔═══════════════════════════════════╗",
+          "§6§l║ §7Online: §e{server_players}§7/§e{server_max_players}              §6§l║",
+          "§6§l║ §7Time: §f{time}                   §6§l║",
+          "§6§l║ §7FTB: {condition: is FTB_Active, value: '§aEnabled', else: '§cDisabled'}               §6§l║",
+          "§6§l╚═══════════════════════════════════╝"
+        ]
+      }
+    }
+  }
+}

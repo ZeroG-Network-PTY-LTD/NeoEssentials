@@ -2,8 +2,7 @@ package com.zerog.neoessentials.commands;
 
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
-import com.zerog.neoessentials.player.PlayerDataManager;
-import com.zerog.neoessentials.player.PlayerData;
+import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.MessageUtil;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -80,20 +79,20 @@ public class AFKCommand {
      */
     private static int toggleAFK(ServerPlayer executor, ServerPlayer target) {
         PlayerDataManager playerDataManager = PlayerDataManager.getInstance();
-        PlayerData playerData = playerDataManager.getPlayerData(target.getUUID());
+        PlayerDataManager.PlayerData playerData = playerDataManager.getPlayerData(target.getUUID());
         
-        boolean wasAFK = playerData.isAFK();
-        playerData.setAFK(!wasAFK);
+        boolean wasAFK = playerData.afk;
+        playerData.afk = !wasAFK;
         
         // Update AFK time
         if (!wasAFK) {
-            playerData.setAfkTime(System.currentTimeMillis());
+            playerData.afkTime = System.currentTimeMillis();
         } else {
-            playerData.setAfkTime(0);
+            playerData.afkTime = 0;
         }
         
         // Save the data
-        playerDataManager.savePlayerData(target.getUUID(), playerData);
+        playerDataManager.savePlayerData(target.getUUID());
         
         // Send messages
         if (!wasAFK) {

@@ -7,6 +7,8 @@ import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import com.zerog.neoessentials.permissions.CustomPermissionsManager;
 import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import com.zerog.neoessentials.util.ColorUtil;
@@ -53,6 +55,9 @@ public class TabListManager {
             return t;
         });
         
+        // Register for permission events
+        NeoForge.EVENT_BUS.register(this);
+        
         // Register custom tablist permissions
         initializeTablistPermissions();
         
@@ -61,7 +66,7 @@ public class TabListManager {
         
         instance = this;
         startUpdateTask();
-        DebugUtil.debugLog("[TabListManager] Professional TabList Manager initialized");
+        DebugUtil.debugLog("[TabListManager] Professional TabList Manager initialized and registered for permission events");
     }
     
     /**
@@ -174,19 +179,32 @@ public class TabListManager {
     }
     
     /**
-     * Start the update task for automatic tablist refreshing
+     * Start the update task - frequent updates for animations, static content updates on events
      */
     private void startUpdateTask() {
+        // Start high-frequency task for animations (every 500ms for smooth animations)
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
                 if (server != null && !server.getPlayerList().getPlayers().isEmpty()) {
-                    updateAllPlayers();
+                    updateAnimatedPlaceholdersOnly();
                 }
             } catch (Exception e) {
-                DebugUtil.errorLog("[TabListManager] Error in update task: " + e.getMessage());
+                DebugUtil.errorLog("[TabListManager] Error in animation update task: " + e.getMessage());
             }
-        }, updateInterval, updateInterval, TimeUnit.SECONDS);
+        }, 0, 500, TimeUnit.MILLISECONDS); // High frequency for smooth animations
+        
+        // Also start a slower task for general maintenance (every 20 seconds)
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+                if (server != null && !server.getPlayerList().getPlayers().isEmpty()) {
+                    updateAllPlayersMaintenanceTask();
+                }
+            } catch (Exception e) {
+                DebugUtil.errorLog("[TabListManager] Error in maintenance update task: " + e.getMessage());
+            }
+        }, 20, 20, TimeUnit.SECONDS);
     }
     
     /**
@@ -214,6 +232,157 @@ public class TabListManager {
         playerData.remove(player.getUUID());
         cleanupPlayerTeam(player);
         DebugUtil.debugLog("[TabListManager] Player left: " + player.getName().getString());
+    }
+    
+    /**
+     * Called when permissions change for a player - triggers immediate update
+     */
+    public void onPermissionChange(ServerPlayer player) {
+        if (!enabled) return;
+        
+        DebugUtil.debugLog("[TabListManager] Permission changed for: " + player.getName().getString() + " - clearing cache and updating tablist");
+        
+        // Clear cached data to force comparison and updates
+        PlayerTabData data = playerData.get(player.getUUID());
+        if (data != null) {
+            data.clearCache(); // This will force the interval-style comparison to detect changes
+        }
+        
+        updatePlayer(player);
+    }
+    
+    /**
+     * Called when a player's group/team changes - triggers immediate update  
+     */
+    public void onPlayerGroupChange(ServerPlayer player) {
+        if (!enabled) return;
+        
+        DebugUtil.debugLog("[TabListManager] Group/Team changed for: " + player.getName().getString() + " - clearing cache and updating tablist");
+        
+        // Clear cached data to force comparison and updates
+        PlayerTabData data = playerData.get(player.getUUID());
+        if (data != null) {
+            data.clearCache(); // This will force the interval-style comparison to detect changes
+        }
+        
+        updatePlayer(player);
+    }
+    
+    /**
+     * Event handler for permission updates - automatically called when permissions change
+     * Uses interval-style update approach but triggered by permission events
+     */
+    @SubscribeEvent
+    public void onPermissionUpdate(PermissionUpdateEvent event) {
+        if (!enabled) return;
+        
+        ServerPlayer player = event.getPlayer();
+        DebugUtil.debugLog("[TabListManager] PermissionUpdateEvent received for: " + player.getName().getString() + " - updating tablist with interval-style approach");
+        
+        // Clear cached data to force comparison and updates
+        PlayerTabData data = playerData.get(player.getUUID());
+        if (data != null) {
+            data.clearCache(); // This will force the interval-style comparison to detect changes
+        }
+        
+        // Update using interval-style approach
+        updatePlayer(player);
+    }
+    
+    /**
+     * Update only animated placeholders without refreshing static tablist content
+     */
+    private void updateAnimatedPlaceholdersOnly() {
+        if (!enabled) return;
+        
+        synchronized (updateLock) {
+            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+            if (server == null) return;
+            
+            List<ServerPlayer> players = server.getPlayerList().getPlayers();
+            if (players.isEmpty()) return;
+            
+            // Only update players who have animated placeholders in their current layout
+            for (ServerPlayer player : players) {
+                PlayerTabData data = playerData.get(player.getUUID());
+                if (data != null && hasAnimatedPlaceholders(data)) {
+                    updatePlayerHeaderFooter(player); // Only update header/footer for animations
+                }
+            }
+        }
+    }
+    
+    /**
+     * Maintenance task for general updates (non-animated content)
+     */
+    private void updateAllPlayersMaintenanceTask() {
+        if (!enabled) return;
+        
+        synchronized (updateLock) {
+            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+            if (server == null) return;
+            
+            List<ServerPlayer> players = server.getPlayerList().getPlayers();
+            if (players.isEmpty()) return;
+            
+            // General maintenance updates for all players
+            for (ServerPlayer player : players) {
+                PlayerTabData data = playerData.get(player.getUUID());
+                if (data != null) {
+                    // Update team info (prefix/suffix) which might change less frequently
+                    updatePlayerTeam(player, data);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Check if a player's current cached content contains animated placeholders
+     */
+    private boolean hasAnimatedPlaceholders(PlayerTabData data) {
+        // Check cached header and footer for animated placeholders
+        boolean hasAnimated = containsAnimatedPlaceholder(data.lastHeader) || 
+                              containsAnimatedPlaceholder(data.lastFooter);
+        
+        // If no cached animated content, check if we should force an update anyway
+        // This handles cases where placeholders are added/changed dynamically
+        if (!hasAnimated) {
+            // Check if current layout content has animations (fallback check)
+            return checkCurrentLayoutForAnimations(data);
+        }
+        
+        return hasAnimated;
+    }
+    
+    /**
+     * Check if current layout content might have animations (fallback method)
+     */
+    private boolean checkCurrentLayoutForAnimations(PlayerTabData data) {
+        // This is a fallback - in most cases the cached content check should work
+        // But this helps catch cases where animations are added to layouts
+        return true; // For now, assume all players might have animations to ensure updates
+    }
+    
+    /**
+     * Check if a line contains animated placeholders that need constant updates
+     */
+    private boolean containsAnimatedPlaceholder(String content) {
+        if (content == null || content.isEmpty()) return false;
+        
+        // Check for our specific animation placeholders
+        return content.contains("server_status_animation") || 
+               content.contains("test_animation") ||
+               content.contains("welcome_animation") ||
+               // Generic animation patterns
+               content.contains("_animation") || 
+               content.contains("{animated_") ||
+               content.contains("_animated}") ||
+               // Placeholder patterns that might contain animations
+               content.contains("${server_status_animation}") ||
+               content.contains("${test_animation}") ||
+               content.contains("${welcome_animation}") ||
+               // Any placeholder that ends with _animation
+               content.matches(".*\\$\\{[^}]*_animation\\}.*");
     }
     
     /**
@@ -312,61 +481,279 @@ public class TabListManager {
     }
     
     /**
-     * Update player's header and footer using new permission-based system
+     * Update player's header and footer using permission-based system with interval-style approach
      */
     private void updatePlayerHeaderFooter(ServerPlayer player) {
         PlayerTabData data = playerData.get(player.getUUID());
         if (data == null) return;
         
-        String header = defaultHeaderText;
-        String footer = defaultFooterText;
+        String header = getPlayerDynamicHeader(player);
+        String footer = getPlayerDynamicFooter(player);
         
-        // New permission-based layout selection
+        // Debug logging for header/footer selection
+        if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+            DebugUtil.debugLog("[TabListManager] Selected header for " + player.getName().getString() + ": " + 
+                (header != null ? header.substring(0, Math.min(50, header.length())) + "..." : "null"));
+            DebugUtil.debugLog("[TabListManager] Selected footer for " + player.getName().getString() + ": " + 
+                (footer != null ? footer.substring(0, Math.min(50, footer.length())) + "..." : "null"));
+        }
+        
+        // Process placeholders in header and footer
+        header = placeholderManager.processPlaceholders(header, player);
+        footer = placeholderManager.processPlaceholders(footer, player);
+        
+        // Check if header or footer changed (like interval update approach)
+        boolean headerChanged = !header.equals(data.lastHeader);
+        boolean footerChanged = !footer.equals(data.lastFooter);
+        
+        // Debug logging for change detection
+        if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+            DebugUtil.debugLog("[TabListManager] Change detection for " + player.getName().getString() + 
+                " - Header changed: " + headerChanged + ", Footer changed: " + footerChanged);
+            if (headerChanged) {
+                DebugUtil.debugLog("[TabListManager] Header change: '" + data.lastHeader + "' -> '" + header + "'");
+            }
+            if (footerChanged) {
+                DebugUtil.debugLog("[TabListManager] Footer change: '" + data.lastFooter + "' -> '" + footer + "'");
+            }
+        }
+        
+        // Only send packet if something actually changed
+        if (headerChanged || footerChanged) {
+            try {
+                // Send combined header/footer packet (interval approach)
+                Component headerComponent = (header != null && !header.isEmpty()) ? 
+                    ColorUtil.colorize(header) : Component.empty();
+                Component footerComponent = (footer != null && !footer.isEmpty()) ? 
+                    ColorUtil.colorize(footer) : Component.empty();
+                
+                player.connection.send(new ClientboundTabListPacket(headerComponent, footerComponent));
+                
+                // Update cached values
+                data.lastHeader = header;
+                data.lastFooter = footer;
+                
+                DebugUtil.debugLog("[TabListManager] Updated header/footer for " + player.getName().getString() + 
+                    " - Header changed: " + headerChanged + ", Footer changed: " + footerChanged);
+            } catch (Exception e) {
+                DebugUtil.debugLog("[TabListManager] Error updating header/footer for " + player.getName().getString() + ": " + e.getMessage());
+            }
+        } else {
+            if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                DebugUtil.debugLog("[TabListManager] No changes detected for " + player.getName().getString() + 
+                    " - skipping update");
+            }
+        }
+    }
+    
+    /**
+     * Get dynamic header content based on player's permissions and group
+     */
+    private String getPlayerDynamicHeader(ServerPlayer player) {
+        // First try to get header from permission-based layout
         if (config != null && config.tablist != null) {
             String selectedLayoutId = determinePlayerLayout(player);
-            com.zerog.neoessentials.config.TablistConfig.Layout selectedLayout = null;
             
             if (selectedLayoutId != null && config.tablist.layouts != null) {
-                selectedLayout = config.tablist.layouts.get(selectedLayoutId);
-            }
-            
-            // Use the selected layout
-            if (selectedLayout != null) {
-                if (Boolean.getBoolean("neoessentials.debug.tablist")) {
-                    DebugUtil.debugLog("[TabListManager] Using layout '" + selectedLayoutId + 
-                        "' with priority " + selectedLayout.priority + 
-                        " for player " + player.getName().getString());
-                }
+                com.zerog.neoessentials.config.TablistConfig.Layout selectedLayout = 
+                    config.tablist.layouts.get(selectedLayoutId);
                     
-                if (selectedLayout.header != null && !selectedLayout.header.isEmpty()) {
-                    header = String.join("\n", selectedLayout.header);
-                }
-                if (selectedLayout.footer != null && !selectedLayout.footer.isEmpty()) {
-                    footer = String.join("\n", selectedLayout.footer);
-                }
-            } else {
-                if (Boolean.getBoolean("neoessentials.debug.tablist")) {
-                    DebugUtil.debugLog("[TabListManager] No layout found for player " + player.getName().getString() + 
-                        " (selected layout ID: " + selectedLayoutId + "), using default");
+                if (selectedLayout != null && selectedLayout.header != null && !selectedLayout.header.isEmpty()) {
+                    if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                        DebugUtil.debugLog("[TabListManager] Using layout '" + selectedLayoutId + 
+                            "' header for player " + player.getName().getString());
+                    }
+                    return String.join("\n", selectedLayout.header);
                 }
             }
         }
         
-        // Process placeholders
-        header = placeholderManager.processPlaceholders(header, player);
-        footer = placeholderManager.processPlaceholders(footer, player);
+        // Fallback to permission-based header selection
+        return getPermissionBasedHeader(player);
+    }
+    
+    /**
+     * Get dynamic footer content based on player's permissions and group
+     */
+    private String getPlayerDynamicFooter(ServerPlayer player) {
+        // First try to get footer from permission-based layout
+        if (config != null && config.tablist != null) {
+            String selectedLayoutId = determinePlayerLayout(player);
+            
+            if (selectedLayoutId != null && config.tablist.layouts != null) {
+                com.zerog.neoessentials.config.TablistConfig.Layout selectedLayout = 
+                    config.tablist.layouts.get(selectedLayoutId);
+                    
+                if (selectedLayout != null && selectedLayout.footer != null && !selectedLayout.footer.isEmpty()) {
+                    if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                        DebugUtil.debugLog("[TabListManager] Using layout '" + selectedLayoutId + 
+                            "' footer for player " + player.getName().getString());
+                    }
+                    return String.join("\n", selectedLayout.footer);
+                }
+            }
+        }
         
-        // Check if changed
-        if (!header.equals(data.lastHeader) || !footer.equals(data.lastFooter)) {
-            // Send packet
-            Component headerComponent = ColorUtil.colorize(header);
-            Component footerComponent = ColorUtil.colorize(footer);
+        // Fallback to permission-based footer selection
+        return getPermissionBasedFooter(player);
+    }
+    
+    /**
+     * Get header content based on player's permission level (fallback system - uses config)
+     */
+    private String getPermissionBasedHeader(ServerPlayer player) {
+        // First try to get from config layouts using their defined conditions
+        if (config != null && config.tablist != null && config.tablist.layouts != null) {
             
-            player.connection.send(new ClientboundTabListPacket(headerComponent, footerComponent));
+            String bestLayoutId = null;
+            int highestPriority = -1;
             
-            // Update cached values
-            data.lastHeader = header;
-            data.lastFooter = footer;
+            if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                DebugUtil.debugLog("[TabListManager] Checking " + config.tablist.layouts.size() + 
+                    " layouts for header selection for " + player.getName().getString());
+            }
+            
+            // Check all layouts and find the highest priority one where player meets the condition
+            for (Map.Entry<String, com.zerog.neoessentials.config.TablistConfig.Layout> entry : config.tablist.layouts.entrySet()) {
+                String layoutId = entry.getKey();
+                com.zerog.neoessentials.config.TablistConfig.Layout layout = entry.getValue();
+                
+                boolean meetsCondition = playerMeetsLayoutCondition(player, layout);
+                
+                if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                    DebugUtil.debugLog("[TabListManager] Layout '" + layoutId + "' - Priority: " + layout.priority + 
+                        ", Meets condition: " + meetsCondition + ", Current best priority: " + highestPriority);
+                }
+                
+                if (layout.priority > highestPriority && meetsCondition) {
+                    bestLayoutId = layoutId;
+                    highestPriority = layout.priority;
+                    if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                        DebugUtil.debugLog("[TabListManager] New best layout: '" + layoutId + "' with priority " + layout.priority);
+                    }
+                }
+            }
+            
+            // Use the best matching layout
+            if (bestLayoutId != null) {
+                com.zerog.neoessentials.config.TablistConfig.Layout selectedLayout = config.tablist.layouts.get(bestLayoutId);
+                if (selectedLayout.header != null && !selectedLayout.header.isEmpty()) {
+                    String headerContent = String.join("\n", selectedLayout.header);
+                    DebugUtil.debugLog("[TabListManager] Using config layout '" + bestLayoutId + "' (priority " + highestPriority + ") header for " + player.getName().getString());
+                    return headerContent;
+                }
+            } else {
+                if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                    DebugUtil.debugLog("[TabListManager] No qualifying layout found for " + player.getName().getString());
+                }
+            }
+        }
+        
+        // Final fallback only if config is completely unavailable
+        DebugUtil.debugLog("[TabListManager] Config unavailable, using hardcoded fallback header for " + player.getName().getString());
+        return "&7&l╔═══════════════════════════════════╗\n" +
+               "&7&l║         &f&lNeoEssentials         &7&l║\n" +
+               "&7&l║ &fWelcome &e{player_name}           &7&l║\n" +
+               "&7&l╚═══════════════════════════════════╝";
+    }
+    
+    /**
+     * Get footer content based on player's permission level (fallback system - uses config)
+     */
+    private String getPermissionBasedFooter(ServerPlayer player) {
+        // First try to get from config layouts using their defined conditions
+        if (config != null && config.tablist != null && config.tablist.layouts != null) {
+            
+            String bestLayoutId = null;
+            int highestPriority = -1;
+            
+            if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                DebugUtil.debugLog("[TabListManager] Checking " + config.tablist.layouts.size() + 
+                    " layouts for footer selection for " + player.getName().getString());
+            }
+            
+            // Check all layouts and find the highest priority one where player meets the condition
+            for (Map.Entry<String, com.zerog.neoessentials.config.TablistConfig.Layout> entry : config.tablist.layouts.entrySet()) {
+                String layoutId = entry.getKey();
+                com.zerog.neoessentials.config.TablistConfig.Layout layout = entry.getValue();
+                
+                boolean meetsCondition = playerMeetsLayoutCondition(player, layout);
+                
+                if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                    DebugUtil.debugLog("[TabListManager] Layout '" + layoutId + "' - Priority: " + layout.priority + 
+                        ", Meets condition: " + meetsCondition + ", Current best priority: " + highestPriority);
+                }
+                
+                if (layout.priority > highestPriority && meetsCondition) {
+                    bestLayoutId = layoutId;
+                    highestPriority = layout.priority;
+                    if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                        DebugUtil.debugLog("[TabListManager] New best layout: '" + layoutId + "' with priority " + layout.priority);
+                    }
+                }
+            }
+            
+            // Use the best matching layout
+            if (bestLayoutId != null) {
+                com.zerog.neoessentials.config.TablistConfig.Layout selectedLayout = config.tablist.layouts.get(bestLayoutId);
+                if (selectedLayout.footer != null && !selectedLayout.footer.isEmpty()) {
+                    String footerContent = String.join("\n", selectedLayout.footer);
+                    DebugUtil.debugLog("[TabListManager] Using config layout '" + bestLayoutId + "' (priority " + highestPriority + ") footer for " + player.getName().getString());
+                    return footerContent;
+                }
+            } else {
+                if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                    DebugUtil.debugLog("[TabListManager] No qualifying layout found for " + player.getName().getString());
+                }
+            }
+        }
+        
+        // Final fallback only if config is completely unavailable
+        DebugUtil.debugLog("[TabListManager] Config unavailable, using hardcoded fallback footer for " + player.getName().getString());
+        String baseFooter = "&7&l╚═══════════════════════════════════╝\n" +
+                           "&f&l| &7TPS: &a{server_tps} &f&l| &7Ping: &e{player_ping}ms &f&l|\n" +
+                           "&f&l| &7Players: &b{server_players}/{server_max_players} &f&l|\n";
+        
+        return baseFooter + "&7&l| &fPlayer Access - Basic Features &7&l|\n" +
+               "&7&l╚═══════════════════════════════════╝";
+    }
+    
+    /**
+     * Check if a player meets the condition requirements for a layout
+     */
+    private boolean playerMeetsLayoutCondition(ServerPlayer player, com.zerog.neoessentials.config.TablistConfig.Layout layout) {
+        if (layout.conditionType == null) {
+            if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                DebugUtil.debugLog("[TabListManager] Layout has no condition - everyone qualifies");
+            }
+            return true; // No condition means everyone qualifies
+        }
+        
+        switch (layout.conditionType) {
+            case "default":
+                if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                    DebugUtil.debugLog("[TabListManager] Layout is default type - player " + 
+                        player.getName().getString() + " qualifies");
+                }
+                return true; // Everyone qualifies for default
+                
+            case "permission":
+                if (layout.condition != null && !layout.condition.isEmpty()) {
+                    boolean hasPermission = permissionManager.hasPermission(player, layout.condition);
+                    if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                        DebugUtil.debugLog("[TabListManager] Permission check for " + 
+                            player.getName().getString() + " - " + layout.condition + ": " + hasPermission);
+                    }
+                    return hasPermission;
+                }
+                if (Boolean.getBoolean("neoessentials.debug.tablist")) {
+                    DebugUtil.debugLog("[TabListManager] Permission type layout but no condition - everyone qualifies");
+                }
+                return true; // No specific permission means everyone qualifies
+                
+            default:
+                DebugUtil.debugLog("[TabListManager] Unknown condition type: " + layout.conditionType + " for layout");
+                return false;
         }
     }
     
@@ -583,6 +970,36 @@ public class TabListManager {
     }
     
     /**
+     * Force refresh a specific player with cache clearing (useful for permission/group changes)
+     */
+    public void forceRefreshPlayer(ServerPlayer player) {
+        if (!enabled || player == null) return;
+        
+        DebugUtil.debugLog("[TabListManager] Force refreshing player: " + player.getName().getString());
+        
+        // Clear cached data to force comparison and updates
+        PlayerTabData data = playerData.get(player.getUUID());
+        if (data != null) {
+            data.clearCache(); // This will force the interval-style comparison to detect changes
+            DebugUtil.debugLog("[TabListManager] Cleared cache for player: " + player.getName().getString());
+        }
+        
+        // Force update everything for this player
+        updatePlayer(player);
+        
+        DebugUtil.debugLog("[TabListManager] Force refresh completed for player: " + player.getName().getString());
+    }
+    
+    /**
+     * Test method to manually trigger permission change for a player
+     * This can be called from commands or other parts of the system
+     */
+    public void testPermissionChange(ServerPlayer player) {
+        DebugUtil.debugLog("[TabListManager] Manual permission change test triggered for: " + player.getName().getString());
+        onPermissionChange(player);
+    }
+    
+    /**
      * Enable/disable the tablist system
      */
     public void setEnabled(boolean enabled) {
@@ -698,6 +1115,54 @@ public class TabListManager {
     public void startAnimatedPlaceholderRefresh(String placeholderId, double intervalSeconds) {
         DebugUtil.debugLog("[TabListManager] Animated placeholder refresh requested for: " + placeholderId);
         // The new system updates automatically, so we just log this request
+    }
+    
+    /**
+     * Get debug information about the TabList system
+     */
+    public String getDebugInfo() {
+        StringBuilder debug = new StringBuilder();
+        debug.append("=== TabList Manager Debug Info ===\n");
+        debug.append("Enabled: ").append(enabled).append("\n");
+        debug.append("Update Interval: ").append(updateInterval).append(" ticks\n");
+        debug.append("Active Players: ").append(playerData.size()).append("\n");
+        debug.append("Scoreboard Teams: ").append(scoreboardTeams.size()).append("\n");
+        
+        if (config != null && config.tablist != null) {
+            debug.append("Config Loaded: true\n");
+            if (config.tablist.layouts != null) {
+                debug.append("Available Layouts: ").append(config.tablist.layouts.size()).append("\n");
+                for (String layoutId : config.tablist.layouts.keySet()) {
+                    debug.append("  - ").append(layoutId).append("\n");
+                }
+            }
+            if (config.tablist.permissionSets != null) {
+                debug.append("Permission Sets: ").append(config.tablist.permissionSets.size()).append("\n");
+                for (var entry : config.tablist.permissionSets.entrySet()) {
+                    var permSet = entry.getValue();
+                    debug.append("  - ").append(entry.getKey())
+                         .append(" (priority: ").append(permSet.priority)
+                         .append(", layout: ").append(permSet.layoutId).append(")\n");
+                }
+            }
+        } else {
+            debug.append("Config Loaded: false\n");
+        }
+        
+        debug.append("Default Header: ").append(defaultHeaderText.length()).append(" chars\n");
+        debug.append("Default Footer: ").append(defaultFooterText.length()).append(" chars\n");
+        
+        return debug.toString();
+    }
+    
+    /**
+     * Check if there are active config layouts available
+     */
+    public boolean hasActiveConfigLayouts() {
+        return config != null && 
+               config.tablist != null && 
+               config.tablist.layouts != null && 
+               !config.tablist.layouts.isEmpty();
     }
     
     /**

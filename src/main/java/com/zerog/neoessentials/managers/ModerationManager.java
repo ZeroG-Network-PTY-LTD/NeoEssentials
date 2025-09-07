@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.managers;
 
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.util.MessageUtil;
@@ -70,13 +71,13 @@ public class ModerationManager {
         String finalReason = reason != null && !reason.isEmpty() ? reason : "Kicked by administrator";
 
         // Kick the player
-        target.connection.disconnect(Component.translatable("neoessentials.moderation.kick.player", finalReason));
+        target.connection.disconnect(Component.literal(LanguageManager.getInstance().getMessage(target, "neoessentials.moderation.kick.player", finalReason)));
 
         // Log action
         logModerationAction("KICK", moderator, target, finalReason, 0);
 
         // Broadcast (always enabled for now)
-        broadcastAction(Component.translatable("neoessentials.moderation.kick.broadcast", target.getName().getString(), moderator.getName().getString(), finalReason).getString());
+        broadcastAction(LanguageManager.getInstance().getMessage("en_us", "neoessentials.moderation.kick.broadcast", target.getName().getString(), moderator.getName().getString(), finalReason));
 
         MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.kick.success", target.getName().getString(), finalReason);
 
@@ -140,9 +141,9 @@ public class ModerationManager {
 
         // Broadcast (always enabled for now)
         if (duration > 0) {
-            broadcastAction(Component.translatable("neoessentials.moderation.mute.broadcast.temp", targetName, moderator.getName().getString(), MessageUtil.formatTime(duration * 1000), finalReason).getString());
+            broadcastAction(LanguageManager.getInstance().getMessage("en_us", "neoessentials.moderation.mute.broadcast.temp", targetName, moderator.getName().getString(), MessageUtil.formatTime(duration * 1000), finalReason));
         } else {
-            broadcastAction(Component.translatable("neoessentials.moderation.mute.broadcast", targetName, moderator.getName().getString(), finalReason).getString());
+            broadcastAction(LanguageManager.getInstance().getMessage("en_us", "neoessentials.moderation.mute.broadcast", targetName, moderator.getName().getString(), finalReason));
         }
 
         if (duration > 0) {
@@ -363,13 +364,13 @@ public class ModerationManager {
             server.getPlayerList().getBans().add(banEntry);
 
             // Disconnect the player
-            target.connection.disconnect(Component.translatable("neoessentials.moderation.tempban.player", MessageUtil.formatTime(durationMs), finalReason));
+            target.connection.disconnect(Component.literal(LanguageManager.getInstance().getMessage(target, "neoessentials.moderation.tempban.player", MessageUtil.formatTime(durationMs), finalReason)));
 
             // Log action
             logModerationAction("TEMPBAN", moderator, target, finalReason, durationMinutes * 60);
 
             // Broadcast if enabled
-            broadcastAction(Component.translatable("neoessentials.moderation.tempban.broadcast", target.getName().getString(), moderator.getName().getString(), MessageUtil.formatTime(durationMs), finalReason).getString());
+            broadcastAction(LanguageManager.getInstance().getMessage("en_us", "neoessentials.moderation.tempban.broadcast", target.getName().getString(), moderator.getName().getString(), MessageUtil.formatTime(durationMs), finalReason));
 
             MessageUtil.sendTranslatedMessage(moderator, "neoessentials.moderation.tempban.success", target.getName().getString(), MessageUtil.formatTime(durationMs), finalReason);
 

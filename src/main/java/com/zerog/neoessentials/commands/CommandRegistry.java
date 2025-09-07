@@ -144,13 +144,10 @@ public class CommandRegistry {
             com.zerog.neoessentials.commands.debug.TablistTestCommand.register(dispatcher);
             LOGGER.info("Registered tablisttest command");
             
-            // Debug command for scoreboard testing
-            com.zerog.neoessentials.commands.debug.ScoreboardTestCommand.register(dispatcher);
-            LOGGER.info("Registered scoreboardtest command");
+            // Scoreboard test command removed - scoreboard system no longer used
             
-            // Professional Scoreboard command
-            // ScoreboardCommand.register(dispatcher); // Removed as part of cleanup
-            LOGGER.info("Registered scoreboard command");
+            // Professional Scoreboard command - removed as part of cleanup
+            LOGGER.info("Scoreboard-related commands removed");
             
             // AFK command
             com.zerog.neoessentials.commands.essentials.AFKCommand.register(dispatcher);

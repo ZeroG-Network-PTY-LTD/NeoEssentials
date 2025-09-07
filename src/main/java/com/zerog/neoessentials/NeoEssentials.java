@@ -11,6 +11,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 
 /**
@@ -85,6 +86,9 @@ public class NeoEssentials {
         
         LOGGER.info("NeoEssentials server starting setup...");
         try {
+            // Clean up any previous scoreboard/bossbar content first
+            com.zerog.neoessentials.util.ScoreboardCleanupUtil.cleanupAll(event.getServer());
+            
             // Unified config system already initialized in constructor
             // Initialize all features using the new FeatureManager
             FeatureManager.getInstance().initializeFeatures();
@@ -148,6 +152,10 @@ public class NeoEssentials {
             @SubscribeEvent
             public void onPlayerJoin(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
                 if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                    // Clean up any residual display elements for this player
+                    com.zerog.neoessentials.util.ScoreboardCleanupUtil.cleanupPlayerDisplays(player);
+                    
+                    // Then set up tablist
                     tabUpdateOrchestrator.onPlayerJoin(player);
                 }
             }
@@ -175,6 +183,21 @@ public class NeoEssentials {
     public void onRegisterCommands(RegisterCommandsEvent event) {
         LOGGER.info("Registering NeoEssentials commands...");
         CommandRegistry.registerCommands(event.getDispatcher(), event.getBuildContext());
+    }
+    
+    /**
+     * Server stopping event handler - cleanup resources
+     */
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent event) {
+        LOGGER.info("NeoEssentials shutting down...");
+        try {
+            // Shutdown cleanup command scheduler
+            com.zerog.neoessentials.commands.admin.CleanupCommand.shutdown();
+            LOGGER.info("NeoEssentials cleanup scheduler shut down successfully");
+        } catch (Exception e) {
+            LOGGER.error("Error during NeoEssentials shutdown", e);
+        }
     }
     
     /**

@@ -94,8 +94,15 @@ public class HeaderFooterManager {
     }
     /**
      * Enhanced tick method with better performance and animation handling
+     * SAFETY: Added check to prevent interference with TabListManager config-based layouts
      */
     public void tick(long now, com.zerog.neoessentials.placeholders.PlaceholderManager placeholderManager) {
+        // SAFETY CHECK: Don't interfere if TabListManager is handling tablist via config layouts
+        if (isTabListManagerActive()) {
+            DebugUtil.debugLog("[HeaderFooter] TabListManager config layouts active - HeaderFooterManager stepping back to prevent conflicts");
+            return;
+        }
+        
         // Animation frame advance (only if animations enabled)
         if (enableAnimations) {
             if (headerTemplate != null && headerTemplate.length > 1 && 
@@ -156,6 +163,21 @@ public class HeaderFooterManager {
             state.lastFooterText = footerStr;
             state.lastUpdateTs = now;
             state.needsUpdate = false;
+        }
+    }
+    
+    /**
+     * Check if TabListManager is handling tablist via config layouts
+     * This prevents conflicts between HeaderFooterManager and TabListManager
+     */
+    private boolean isTabListManagerActive() {
+        try {
+            var tablistManager = com.zerog.neoessentials.features.TabListManager.getInstance();
+            return tablistManager != null && tablistManager.hasActiveConfigLayouts();
+        } catch (Exception e) {
+            // If we can't check, assume it's not active to be safe
+            DebugUtil.warnLog("[HeaderFooter] Could not check TabListManager status: " + e.getMessage());
+            return false;
         }
     }
 
