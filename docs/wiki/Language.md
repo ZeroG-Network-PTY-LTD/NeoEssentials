@@ -1,13 +1,12 @@
 # Language System
 
-NeoEssentials includes comprehensive multi-language support, allowing server administrators to provide localized experiences for players from different regions. The language system supports dynamic switching, custom translations, and regional formatting.
+NeoEssentials includes comprehensive multi-language support, allowing server administrators to provide localized experiences for players from different regions. The language system supports dynamic switching, player-specific locale detection, placeholder replacement, and hot-reloading of language files.
 
 ## 🌍 Supported Languages
 
 ### Built-in Language Support
-NeoEssentials comes with built-in support for major languages:
+NeoEssentials comes with built-in JSON language files located in `src/main/resources/assets/neoessentials/lang/`:
 
-<<<<<<< HEAD
 #### **Fully Supported Languages** ✅
 - **English (en_US)** - Default language, 100% complete ✅
 - **Spanish (es_ES)** - Complete translation ✅
@@ -17,249 +16,302 @@ NeoEssentials comes with built-in support for major languages:
 - **Portuguese (pt_BR)** - Brazilian Portuguese ✅
 - **Russian (ru_RU)** - Complete translation ✅
 - **Japanese (ja_JP)** - Complete translation ✅
-- **Korean (ko_KR)** - Complete translation ✅
 - **Chinese Simplified (zh_CN)** - Complete translation ✅
-- **Chinese Traditional (zh_TW)** - Complete translation ✅
-- **Dutch (nl_NL)** - Complete translation ✅
 
-### Language File Format
+### Language File Structure
 
-NeoEssentials uses Properties file format for language files:
+NeoEssentials uses JSON format for language files with automatic conversion to Properties format:
 
-#### **Properties Format** (`.properties`)
-```properties
-# Example: en_US.properties
-general.prefix=&6[NeoEssentials]&r
-general.no_permission=&cYou don't have permission to do that!
-command.language.changed=&aLanguage changed to {LANGUAGE}!
-home.set=&aHome '{HOME}' set at your current location!
-command.heal.self=&aYou have been healed!
-command.feed.self=&aYou have been fed!
-```
-=======
-- **English (en_US)** - Default language, fully supported
-- **Spanish (es_ES)** - Complete translation
-- **French (fr_FR)** - Complete translation  
-- **German (de_DE)** - Complete translation
-- **Italian (it_IT)** - Complete translation
-- **Portuguese (pt_BR)** - Brazilian Portuguese
-- **Russian (ru_RU)** - Complete translation
-- **Chinese Simplified (zh_CN)** - Complete translation
-- **Chinese Traditional (zh_TW)** - Complete translation
-- **Japanese (ja_JP)** - Complete translation
-- **Korean (ko_KR)** - Complete translation
-- **Dutch (nl_NL)** - Complete translation
-
-### Regional Variants
-Some languages include regional variants:
-
-- **English**: en_US (American), en_GB (British), en_AU (Australian)
-- **Spanish**: es_ES (Spain), es_MX (Mexico), es_AR (Argentina)
-- **Portuguese**: pt_BR (Brazil), pt_PT (Portugal)
-- **Chinese**: zh_CN (Simplified), zh_TW (Traditional)
->>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
+#### **JSON Format** (`.json`) - Primary Format
+```json
+{
+  "neoessentials.main.header": "NeoEssentials - Main Header",
+  "general.no_permission": "You don't have permission to use this command!",
+  "command.language.changed": "Language changed to {0}!",
+  "neoessentials.home.set": "Home '{0}' set at your current location!",
+  "command.heal.self": "You have been healed!",
+  "command.feed.self": "You have been fed!",
+  "neoessentials.economy.balance": "Your balance: ${0}",
+  "neoessentials.warp.no_permission_use": "You do not have permission to use this warp."
+}
 
 ## 🎯 Language Management Commands
 
 ### Player Language Commands
 ```bash
-/language                       # Show current language
-/language list                  # List available languages
-/language set <code>            # Set your language
-/lang <code>                    # Alias for language set
-/language info                  # Show language information
-/language help                  # Language system help
+/language                       # Show current language information and available options
+/language set <code>            # Set your language to specified language code
+/language list                  # List all available languages with current indicator
+/language info                  # Show detailed language system information
 ```
 
 **Examples:**
 ```bash
-/language set es_ES             # Switch to Spanish
-/lang fr_FR                     # Switch to French
+/language                       # Show current language: "English (US) (en_US)"
+/language set es_ES             # Switch to Spanish (Spain)
+/language set pt_BR             # Switch to Portuguese (Brazil)
 /language set zh_CN             # Switch to Chinese Simplified
+/language list                  # Show all available languages with ► indicator for current
 ```
 
-### Admin Language Commands
+### Administrative Language Commands
 ```bash
-<<<<<<< HEAD
 /language reload                # Reload all language files from disk
+/language test <key>            # Test a specific language key across available languages
 ```
-**Permission**: `neoessentials.language.reload`
 
-#### `/language test <key>` - Test Language Keys
-```bash
-/language test <message_key>    # Test a specific language key across languages
-```
 **Examples:**
 ```bash
-/language test general.no_permission
-/language test home.set
-/language test command.language.changed
+/language reload                                    # Reload all language files
+/language test general.no_permission               # Test permission message across languages
+/language test neoessentials.economy.balance       # Test economy balance message
+/language test command.language.changed            # Test language change confirmation
 ```
 
-**Output Example:**
+**Permission Requirements:**
+- Basic commands: `neoessentials.moderation.basic` (or OP)
+- Administrative commands: `neoessentials.admin.basic` (or OP)
+- Reload functionality: `neoessentials.language.reload`
+
+---
+
+## 🏗️ Technical Architecture
+
+### LanguageManager System
+The language system is powered by a comprehensive `LanguageManager` singleton with the following features:
+
+#### **Multi-Source Loading**
+- **Resource Languages:** Built-in JSON files from `assets/neoessentials/lang/`
+- **Custom Overrides:** Optional `.properties` files in `config/neoessentials/languages/`
+- **Fallback System:** Automatic fallback to English (en_US) for missing translations
+- **Hot Reloading:** Dynamic reloading without server restart
+
+#### **Player-Specific Localization**
+- **Automatic Detection:** Attempts to detect player's client language settings
+- **Manual Override:** Players can set their preferred language via commands
+- **Persistent Storage:** Language preferences cached per-player UUID
+- **Real-time Switching:** Immediate language changes without reconnection required
+
+#### **Advanced Features**
+- **Placeholder Replacement:** Supports both indexed (`{0}`, `{1}`) and named (`{PLAYER}`, `{AMOUNT}`) placeholders
+- **Fallback Generation:** Intelligent fallback message generation for missing keys
+- **Missing Key Tracking:** Tracks requested keys that don't exist for admin review
+- **Statistics & Analytics:** Comprehensive language usage statistics
+- **Thread-Safe Operations:** Concurrent access safe for high-performance servers
+
+### File Structure
 ```
-Testing language key: general.no_permission
-Your language (de_DE): Du hast keine Berechtigung, das zu tun!
-Default (en_US): You don't have permission to do that!
-Other languages:
-- es_ES: ¡No tienes permiso para hacer eso!
-- fr_FR: Vous n'avez pas la permission de faire cela!
+config/neoessentials/languages/     # Custom language overrides (optional)
+├── en_US.properties                # English override example
+├── es_ES.properties                # Spanish override example
+└── custom_lang.properties          # Custom language files
+
+src/main/resources/assets/neoessentials/lang/    # Built-in languages
+├── en_us.json                      # English (Default)
+├── es_es.json                      # Spanish
+├── fr_fr.json                      # French
+├── de_de.json                      # German
+├── it_it.json                      # Italian
+├── pt_br.json                      # Portuguese (Brazil)
+├── ru_ru.json                      # Russian
+├── ja_jp.json                      # Japanese
+└── zh_cn.json                      # Chinese (Simplified)
 ```
 
-#### `/language stats` - Language Usage Statistics
-```bash
-/language stats                 # Show language system statistics
-=======
-/language admin                 # Open language admin panel
-/language reload                # Reload language files
-/language stats                 # Language usage statistics
-/language validate              # Validate language files
-/language export <lang>         # Export language file
-/language import <file>         # Import language file
->>>>>>> parent of 482ed14 (Implement SignShopData class for persistent storage of sign shop data, including serialization to/from JSON. Added BlockPosData and ItemStackData inner classes for handling position and item stack information.)
-```
-**Permission**: `neoessentials.language.admin`
-
-## 🔧 Language Configuration
-
-### Language File Structure
-Language files are stored in `config/neoessentials/languages/`:
-
-```
-config/neoessentials/languages/
-├── en_US.properties            # English (Default)
-├── es_ES.properties            # Spanish
-├── fr_FR.properties            # French
-├── de_DE.properties            # German
-├── it_IT.properties            # Italian
-├── pt_BR.properties            # Portuguese (Brazil)
-├── ru_RU.properties            # Russian
-├── ja_JP.properties            # Japanese
-├── ko_KR.properties            # Korean
-├── zh_CN.properties            # Chinese (Simplified)
-├── zh_TW.properties            # Chinese (Traditional)
-└── nl_NL.properties            # Dutch
-```
+---
 
 ## 📝 Translation Files
 
 ### Base Translation Structure
-Example from `en_US.properties`:
+Example from actual `en_us.json`:
 
-```properties
-# General Messages
-general.prefix=&8[&6NeoEssentials&8]&r
-general.no_permission=&cYou don't have permission to use this command.
-general.player_not_found=&cPlayer '{player}' not found.
-general.invalid_number=&cInvalid number: {input}
-general.command_disabled=&cThis command is currently disabled.
-
-# Command Messages
-command.heal.self=&aYou have been healed!
-command.heal.other=&a{player} has been healed!
-command.heal.broadcast=&7{healer} healed {player}
-
-command.feed.self=&aYou have been fed!
-command.feed.other=&a{player} has been fed!
-
-command.teleport.success=&aTeleported to {location}
-command.teleport.unsafe=&cUnsafe teleportation location!
-command.teleport.cooldown=&cYou must wait {time} before teleporting again.
-
-# Home System
-home.set=&aHome '{home}' set at your current location!
-home.deleted=&aHome '{home}' has been deleted.
-home.teleported=&aTeleported to home '{home}'.
-home.not_found=&cHome '{home}' not found.
-home.max_homes=&cYou have reached the maximum number of homes ({max}).
-
-# Economy Messages
-economy.balance=&eYour balance: &a${balance}
-economy.paid=&aYou paid &e{player} &a${amount}.
-economy.received=&aYou received &a${amount} &efrom {player}.
-economy.insufficient_funds=&cInsufficient funds! You need ${amount} more.
+```json
+{
+  "neoessentials.main.header": "NeoEssentials - Main Header",
+  "general.no_permission": "You don't have permission to use this command!",
+  "neoessentials.warp.no_permission_use": "You do not have permission to use this warp.",
+  "neoessentials.playtime.session": "Session Playtime: {0}",
+  "neoessentials.playtime.top_entry": "#{0}: {1} - {2}",
+  "neoessentials.economy.balance": "Your balance: ${0}",
+  "command.heal.self": "You have been healed!",
+  "command.feed.self": "You have been fed!"
+}
 ```
 
-### Custom Translation Creation
-Create custom translations by copying and modifying base files:
+### Custom Language Override Example
+Create custom `.properties` files in `config/neoessentials/languages/`:
 
 ```properties
 # custom_en_US.properties - Server-specific customizations
-command.heal.self=&6✨ You feel refreshed and renewed!
-command.heal.broadcast=&7⚡ {healer} channeled healing energy to {player}
+general.no_permission=&c⛔ Access denied! You lack the required permissions.
+command.heal.self=&a✨ Your wounds have been miraculously healed!
+neoessentials.economy.balance=&e💰 Your wallet contains: &a${0}
+```
 
-general.welcome=&eWelcome to our amazing server, {player}!
+### Placeholder System
+The language system supports comprehensive placeholder replacement:
+
+#### **Indexed Placeholders**
+```json
+{
+  "message.with.placeholders": "Player {0} paid {1} to {2}",
+  "usage.example": "Usage: {0} <required> [optional]"
+}
+```
+
+#### **Named Placeholders** (when using key-value pairs)
+```json
+{
+  "player.welcome": "Welcome {PLAYER}! Your balance is {BALANCE}",
+  "teleport.success": "Teleported to {LOCATION} in {WORLD}"
+}
 ```
 
 ## 🛠️ Translation Management
 
 ### Adding New Languages
-1. **Create Language File** - Copy `en_US.properties` to new language code
-2. **Translate Messages** - Replace English text with translated versions
-3. **Test Translations** - Use `/language test <key>` to verify translations
-4. **Reload Languages** - Use `/language reload` to load new files
+1. **Create JSON Language File** - Add new `.json` file in `src/main/resources/assets/neoessentials/lang/`
+2. **Follow Naming Convention** - Use lowercase with underscores (e.g., `ko_kr.json`)
+3. **Copy English Template** - Start with `en_us.json` as base template
+4. **Translate Messages** - Replace English text with target language translations
+5. **Test Translations** - Use `/language test <key>` to verify translations work
+6. **Reload System** - Use `/language reload` to load new language files
+
+### Custom Override System
+1. **Create Override Directory** - Files in `config/neoessentials/languages/` override built-in translations
+2. **Use Properties Format** - Override files use `.properties` format for easy editing
+3. **Partial Overrides** - Only include keys you want to customize
+4. **Priority System** - Config overrides take priority over built-in resources
+5. **Hot Reload** - Changes take effect immediately with `/language reload`
 
 ### Translation Workflow
-1. **Base Translation** - Start with English template
-2. **Community Translation** - Allow community contributions
-3. **Quality Review** - Review and approve translations
-4. **Testing** - Test translations in-game
-5. **Deployment** - Deploy to production server
+1. **Base Translation** - Start with English template from resources
+2. **Community Contributions** - Allow community members to contribute translations
+3. **Quality Review** - Review and approve community translations
+4. **Testing Phase** - Test translations in-game with `/language test`
+5. **Production Deployment** - Deploy approved translations to server
+
+---
 
 ## 🔒 Permission Integration
 
-### Language Permissions
-Control language access with permissions:
+### Language System Permissions
+Control language access with specific permission nodes:
 
 ```yaml
-# Basic language permissions
-neoessentials.language.use          # Use language commands
-neoessentials.language.change       # Change own language
-neoessentials.language.list         # List available languages
+# Basic Language Permissions
+neoessentials.moderation.basic     # Access to basic /language commands
+neoessentials.language.set         # Set own language preference  
+neoessentials.language.list        # List available languages
 
-# Admin permissions
-neoessentials.language.admin        # Language administration
-neoessentials.language.reload       # Reload language files
-neoessentials.language.test         # Test language keys
+# Administrative Permissions  
+neoessentials.admin.basic          # Advanced language administration
+neoessentials.language.reload      # Reload language files from disk
+neoessentials.language.*           # All language system permissions
+```
+
+### Permission Requirements by Command
+- `/language` - `neoessentials.moderation.basic` (or OP)
+- `/language set <lang>` - `neoessentials.moderation.basic` (or OP)
+- `/language list` - `neoessentials.moderation.basic` (or OP)  
+- `/language info` - `neoessentials.moderation.basic` (or OP)
+- `/language reload` - `neoessentials.admin.basic` (or OP)
+- `/language test <key>` - `neoessentials.admin.basic` (or OP)
+
+---
+
+## 💡 Usage Examples
+
+### Player Language Management
+```bash
+# Check current language settings
+/language
+# Output: "Current Language: English (US) (en_US)"
+
+# Switch to Spanish
+/language set es_ES  
+# Output: "Idioma cambiado a Español (España)!"
+
+# List all available languages
+/language list
+# Output: Shows all languages with ► indicator for current language
+```
+
+### Administrative Operations  
+```bash
+# Test a specific translation key
+/language test neoessentials.economy.balance
+# Output: Shows the message in your language and default language
+
+# Reload all language files after making changes
+/language reload
+# Output: "Reloaded X language files"
+
+# View detailed language system information
+/language info  
+# Output: Shows language statistics, player locale counts, etc.
 ```
 
 ## 🔧 Troubleshooting
 
 ### Common Language Issues
 
-#### Language Not Loading
-- Check language file syntax (Properties format)
-- Verify file encoding (UTF-8)
-- Check file permissions
-- Use `/language reload` to reload language system
+#### **Language Not Loading**
+- **Check file format:** Ensure JSON files are valid (resources) or Properties files are properly formatted (config)
+- **Verify file encoding:** All language files should use UTF-8 encoding
+- **Check file permissions:** Ensure server has read access to language files
+- **Use reload command:** Execute `/language reload` to refresh language system
+- **Review console logs:** Check for LanguageManager errors in server console
 
-#### Missing Translations
-- Check for translation keys in base language file
-- Verify placeholder syntax `{PLACEHOLDER}`
-- Use fallback language (en_US) for missing keys
-- Update translation files with missing keys
+#### **Missing Translations**
+- **Fallback system active:** Missing keys automatically fall back to English (en_US)
+- **Check key spelling:** Verify exact key names using `/language test <key>`
+- **Review placeholder syntax:** Ensure placeholders use correct format `{0}`, `{1}`, etc.
+- **Update language files:** Add missing keys to appropriate language files
+- **Missing key tracking:** System tracks requested keys that don't exist for admin review
 
-#### Character Display Issues
-- Ensure UTF-8 encoding for language files
-- Check client font support for special characters
-- Test with different clients
-- Verify color codes are properly formatted
+#### **Character Display Issues**
+- **UTF-8 encoding required:** Ensure all language files use UTF-8 encoding
+- **Client font support:** Verify player clients support special characters and Unicode
+- **Color code formatting:** Check that Minecraft color codes (`&a`, `&c`, etc.) are properly formatted
+- **Test with different clients:** Some clients may display characters differently
 
-### Debug Commands
+#### **Player Language Issues**
+- **Language detection:** System attempts automatic client language detection (currently defaults to English)
+- **Manual override:** Players can manually set language with `/language set <code>`
+- **Persistent storage:** Language preferences are cached per-player UUID
+- **Cache clearing:** Server restart clears language preference cache
+
+### Debug Information
 ```bash
-/language info                  # Show language system information
-/language test <key>            # Test specific translation key
-/language stats                 # Show language usage statistics
-/language reload                # Reload all language files
+# Language system information
+/language info                    # Show system stats and available languages
+/language test <key>              # Test specific translation key across languages  
+/language reload                  # Reload all language files and show count
 ```
+
+### Performance Considerations
+- **Resource loading:** Built-in JSON files loaded once at startup
+- **Hot reloading:** Config overrides can be reloaded without restart
+- **Caching system:** Player language preferences cached for optimal performance
+- **Thread safety:** All language operations are thread-safe for concurrent access
+- **Memory usage:** Language files stored in memory for fast access
+- **Fallback efficiency:** Fallback system designed to minimize performance impact
+
+### Advanced Configuration
+- **Custom fallback language:** Modify `defaultLanguage` in LanguageManager for non-English servers
+- **Debug mode:** Enable `neoessentials.debug.messages` system property for detailed missing key logging
+- **Override priority:** Config files always take priority over built-in resource files
+- **Placeholder optimization:** Placeholder replacement optimized for performance with minimal string operations
 
 ---
 
 ## 📚 Related Documentation
 
-- **[Configuration](Configuration.md)** - General configuration setup
-- **[Essential Commands](Essential-Commands.md)** - Available commands  
-- **[Placeholders](Placeholders.md)** - Placeholder system
-- **[Permissions](Permissions.md)** - Permission system setup
+- **[Configuration Guide](Configuration.md)** - Main configuration settings and JSON structure
+- **[Essential Commands](Essential-Commands.md)** - Complete command reference including language commands
+- **[Placeholders System](Placeholders.md)** - Custom placeholder system integration  
+- **[Permissions System](Permissions.md)** - Permission node details and configuration
+- **[API Documentation](API_DOCUMENTATION.md)** - Developer integration and language system API
 
-*Last Updated: August 9, 2025*
+*Documentation updated to reflect actual NeoEssentials 2.0.0 implementation*

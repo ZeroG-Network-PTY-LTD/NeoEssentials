@@ -2,7 +2,7 @@
 
 ## Overview
 
-The NeoEssentials API provides comprehensive access to all mod features for integration with other mods. The API has been enhanced with a comprehensive interface system, event system, and factory pattern for better developer experience.
+The NeoEssentials API provides comprehensive access to mod features for integration with other mods. The API uses a streamlined provider interface system for better developer experience and maintainability.
 
 ## API Version
 
@@ -24,20 +24,27 @@ if (NeoEssentialsAPI.isAvailable()) {
 
 // Initialize event system (call during mod initialization)
 api.initializeEventSystem();
+
+// Check API version compatibility
+if (NeoEssentialsAPI.isAPIVersionAtLeast("2.1.0")) {
+    // Use current API features
+}
 ```
 
 ### 2. NeoEssentialsAPIFactory (Provider Management)
 
 ```java
-// Get provider instances
+// Get provider instances (may be empty if not implemented)
 Optional<IEconomyProvider> economy = NeoEssentialsAPIFactory.getEconomyProvider();
 Optional<IPlayerDataProvider> playerData = NeoEssentialsAPIFactory.getPlayerDataProvider();
 Optional<IPlaceholderProvider> placeholders = NeoEssentialsAPIFactory.getPlaceholderProvider();
 
-// Register custom providers
-NeoEssentialsAPIFactory.registerProvider(IEconomyProvider.class, new MyEconomyProvider());
+// Check if NeoEssentials is fully loaded
+if (NeoEssentialsAPIFactory.isNeoEssentialsReady()) {
+    // Safe to use API
+}
 
-// Check API status
+// Get API status information
 Map<String, Object> status = NeoEssentialsAPIFactory.getAPIStatus();
 ```
 
@@ -45,138 +52,179 @@ Map<String, Object> status = NeoEssentialsAPIFactory.getAPIStatus();
 
 ### IEconomyProvider
 
-Comprehensive economy management interface:
+Economy management interface (simplified):
 
 ```java
 public interface IEconomyProvider {
-    // Basic balance operations
-    BigDecimal getBalance(UUID playerId);
-    TransactionRecord setBalance(UUID playerId, BigDecimal amount, String reason);
-    TransactionRecord deposit(UUID playerId, BigDecimal amount, String reason);
-    TransactionRecord withdraw(UUID playerId, BigDecimal amount, String reason);
-    TransactionRecord transfer(UUID fromPlayer, UUID toPlayer, BigDecimal amount, String reason);
-    
-    // Balance checking
-    boolean hasBalance(UUID playerId, BigDecimal amount);
-    
-    // Account management
-    boolean hasAccount(UUID playerId);
-    boolean createAccount(UUID playerId, String playerName);
-    boolean deleteAccount(UUID playerId);
-    
-    // History and statistics
-    List<TransactionRecord> getTransactionHistory(UUID playerId, int limit);
-    List<BalanceRecord> getTopBalances(int limit);
-    
     // Provider information
-    boolean isEnabled();
     String getProviderName();
     String getProviderVersion();
+    boolean isEnabled();
+    
+    // Currency information
     String getCurrencyNameSingular();
     String getCurrencyNamePlural();
     String getCurrencySymbol();
-    String formatCurrency(BigDecimal amount);
     boolean supportsFractionalCurrency();
+    String formatCurrency(BigDecimal amount);
+    
+    // Basic balance operations
+    BigDecimal getBalance(UUID playerUuid);
+    boolean hasBalance(UUID playerUuid, BigDecimal amount);
+    boolean withdraw(UUID playerUuid, BigDecimal amount, String reason);
+    boolean deposit(UUID playerUuid, BigDecimal amount, String reason);
+    boolean transfer(UUID fromUuid, UUID toUuid, BigDecimal amount, String reason);
+    boolean setBalance(UUID playerUuid, BigDecimal amount, String reason);
+    
+    // Account management
+    boolean hasAccount(UUID playerUuid);
+    boolean createAccount(UUID playerUuid, String playerName);
+    boolean deleteAccount(UUID playerUuid);
+    
+    // History and statistics
+    List<TransactionRecord> getTransactionHistory(UUID playerUuid, int limit);
+    List<BalanceRecord> getTopBalances(int limit);
     
     // Record classes
-    record TransactionRecord(UUID transactionId, UUID playerId, TransactionType type, 
-                           BigDecimal amount, BigDecimal oldBalance, BigDecimal newBalance, 
-                           String reason, LocalDateTime timestamp, boolean successful) {}
+    record TransactionRecord(long timestamp, String type, BigDecimal amount, 
+                           BigDecimal balanceBefore, BigDecimal balanceAfter, 
+                           String reason, UUID relatedPlayer) {}
     
-    record BalanceRecord(UUID playerId, BigDecimal balance, String currency, LocalDateTime lastUpdated) {}
-    
-    enum TransactionType { DEPOSIT, WITHDRAWAL, TRANSFER, SET }
+    record BalanceRecord(UUID playerUuid, String playerName, 
+                        BigDecimal balance, int rank) {}
 }
 ```
 
 ### IPlayerDataProvider
 
-Comprehensive player data management interface:
+Player data management interface:
 
 ```java
 public interface IPlayerDataProvider {
-    // Player data operations
-    CompletableFuture<PlayerData> getPlayerData(UUID playerId);
-    CompletableFuture<PlayerData> getPlayerData(String username);
-    CompletableFuture<Boolean> updatePlayerData(UUID playerId, PlayerData data);
-    CompletableFuture<Boolean> savePlayerData(PlayerData data);
-    CompletableFuture<Boolean> deletePlayerData(UUID playerId);
-    CompletableFuture<PlayerData> createPlayerData(ServerPlayer player);
+    // Basic player data access
+    Optional<PlayerData> getPlayerData(UUID playerUuid);
+    Optional<PlayerData> getPlayerData(String playerName);
+    boolean savePlayerData(PlayerData playerData);
+    boolean hasPlayerData(UUID playerUuid);
+    PlayerData createPlayerData(ServerPlayer player);
+    boolean deletePlayerData(UUID playerUuid);
     
     // Player queries
-    CompletableFuture<List<PlayerData>> getOnlinePlayers();
-    CompletableFuture<PlayerData> getPlayerByName(String username);
-    CompletableFuture<Boolean> isPlayerOnline(UUID playerId);
-    CompletableFuture<List<UUID>> getAllPlayerUUIDs();
-    CompletableFuture<Integer> getOfflinePlayersCount();
+    List<UUID> getAllPlayerUUIDs();
+    int getOnlinePlayersCount();
+    int getOfflinePlayersCount();
     
-    // Metadata management
-    CompletableFuture<Boolean> setPlayerMetadata(UUID playerId, String key, Object value);
-    CompletableFuture<Object> getPlayerMetadata(UUID playerId, String key);
-    
-    // Server player access
-    Optional<ServerPlayer> getServerPlayer(UUID playerId);
-    
-    // Player data record
-    record PlayerData(UUID playerId, String username, String displayName, 
-                     LocalDateTime joinDate, LocalDateTime lastSeen, long playTime,
-                     boolean isOnline, boolean isAfk, boolean isMuted, boolean isBanned,
-                     Map<String, Object> homes, Map<String, Object> kits, 
-                     Map<String, Object> metadata) {}
+    // PlayerData interface
+    interface PlayerData {
+        UUID getUUID();
+        String getName();
+        String getDisplayName();
+        void setDisplayName(String displayName);
+        
+        // Time tracking
+        long getFirstLogin();
+        long getLastLogin();
+        void setLastLogin(long timestamp);
+        long getLastLogout();
+        void setLastLogout(long timestamp);
+        long getTotalPlaytime();
+        void addPlaytime(long playtime);
+        
+        // Status
+        boolean isOnline();
+        void setOnline(boolean online);
+        boolean isAFK();
+        void setAFK(boolean afk);
+        long getAFKTime();
+        void setAFKTime(long timestamp);
+        
+        // Location and world
+        String getCurrentWorld();
+        void setCurrentWorld(String world);
+        String getIpAddress();
+        void setIpAddress(String ipAddress);
+        
+        // Moderation
+        boolean isMuted();
+        void setMuted(boolean muted);
+        long getMuteExpiration();
+        void setMuteExpiration(long expiration);
+        String getMuteReason();
+        void setMuteReason(String reason);
+        
+        // Custom data
+        Object getCustomData(String key);
+        void setCustomData(String key, Object value);
+        Object removeCustomData(String key);
+        boolean hasCustomData(String key);
+        List<String> getCustomDataKeys();
+    }
 }
 ```
 
 ### IPlaceholderProvider
 
-Comprehensive placeholder management interface:
+Placeholder management interface:
 
 ```java
 public interface IPlaceholderProvider {
+    // Provider information
+    String getProviderName();
+    String getProviderVersion();
+    
     // Placeholder registration
-    boolean registerPlaceholder(String identifier, PlaceholderProcessor processor);
+    boolean registerPlaceholder(String identifier, Function<PlaceholderContext, String> resolver);
     boolean unregisterPlaceholder(String identifier);
+    boolean isPlaceholderRegistered(String identifier);
+    String[] getRegisteredPlaceholders();
     
     // Placeholder processing
-    String processPlaceholder(String text, PlaceholderContext context);
+    String processPlaceholders(String text, PlaceholderContext context);
+    String processPlaceholders(String text, ServerPlayer player);
     
-    // Placeholder information
-    Set<String> getRegisteredPlaceholders();
-    boolean isPlaceholderRegistered(String identifier);
+    // Special placeholder types
+    boolean registerAnimatedPlaceholder(String identifier, String[] frames, double intervalSeconds);
+    boolean registerConditionalPlaceholder(String identifier, String condition, String trueValue, String falseValue);
     
-    // Context creation
-    PlaceholderContext createContext(ServerPlayer player);
-    PlaceholderContext createContext(ServerPlayer player, Map<String, Object> variables);
-    
-    // Functional interfaces
-    @FunctionalInterface
-    interface PlaceholderProcessor {
-        String process(PlaceholderContext context);
-    }
-    
-    // Context record
-    record PlaceholderContext(ServerPlayer player, Map<String, Object> variables) {
-        public ServerPlayer getPlayer() { return player; }
-        public Map<String, Object> getVariables() { return variables; }
-        public Object getVariable(String key) { return variables.get(key); }
-        public void setVariable(String key, Object value) { variables.put(key, value); }
+    // PlaceholderContext interface
+    interface PlaceholderContext {
+        ServerPlayer getPlayer();
+        Object getContextData(String key);
+        void setContextData(String key, Object value);
+        boolean hasContextData(String key);
+        ServerPlayer getViewer();
+        void setViewer(ServerPlayer viewer);
+        long getCurrentTime();
+        PlaceholderContext withPlayer(ServerPlayer player);
+        PlaceholderContext withData(String key, Object value);
     }
 }
 ```
 
 ## Event System
 
-### Comprehensive Event Structure
+### Current Event Structure
 
-The API provides extensive events for all major operations:
+The API provides basic events for core operations through the NeoEssentialsEventHandler:
 
 #### Economy Events
 ```java
 // Listen for balance changes
 @SubscribeEvent
-public void onBalanceChange(BalanceChangeEvent event) {
-    UUID playerId = event.getPlayerId();
+public void onBalanceChange(NeoEssentialsEventHandler.EconomyBalanceChangeEvent event) {
+    ServerPlayer player = event.getPlayer();
     BigDecimal oldBalance = event.getOldBalance();
     BigDecimal newBalance = event.getNewBalance();
+    String reason = event.getReason();
+    NeoEssentialsEventHandler.EconomyBalanceChangeEvent.TransactionType type = event.getType();
+    // Handle balance change (not cancellable)
+}
+
+// Listen for transactions (before they occur)
+@SubscribeEvent
+public void onTransaction(NeoEssentialsEventHandler.EconomyTransactionEvent event) {
+    ServerPlayer player = event.getPlayer();
+    BigDecimal amount = event.getAmount();
     String reason = event.getReason();
     
     // Event is cancellable
@@ -184,50 +232,24 @@ public void onBalanceChange(BalanceChangeEvent event) {
         event.setCanceled(true);
     }
 }
-
-// Listen for transactions
-@SubscribeEvent
-public void onTransaction(TransactionEvent event) {
-    IEconomyProvider.TransactionRecord transaction = event.getTransaction();
-    // Handle transaction
-}
 ```
 
-#### Player Events
-```java
-// Listen for AFK status changes
-@SubscribeEvent
-public void onAfkStatusChange(AfkStatusChangeEvent event) {
-    ServerPlayer player = event.getPlayer();
-    boolean isAfk = event.isAfk();
-    // Handle AFK change
-}
-
-// Listen for nickname changes
-@SubscribeEvent
-public void onNicknameChange(NicknameChangeEvent event) {
-    ServerPlayer player = event.getPlayer();
-    String oldNickname = event.getOldNickname();
-    String newNickname = event.getNewNickname();
-    // Handle nickname change
-}
-```
-
-#### Home and Warp Events
+#### Home and Location Events
 ```java
 // Listen for home operations
 @SubscribeEvent
-public void onHomeSet(HomeSetEvent event) {
+public void onHomeSet(NeoEssentialsEventHandler.HomeSetEvent event) {
     ServerPlayer player = event.getPlayer();
     String homeName = event.getHomeName();
-    // Handle home set
-}
-
-// Listen for warp operations
-@SubscribeEvent
-public void onWarpCreate(WarpCreateEvent event) {
-    String warpName = event.getWarpName();
-    // Handle warp creation
+    double x = event.getX();
+    double y = event.getY();
+    double z = event.getZ();
+    String world = event.getWorld();
+    
+    // Event is cancellable
+    if (!allowHomeHere) {
+        event.setCanceled(true);
+    }
 }
 ```
 
@@ -240,8 +262,13 @@ Register your event handlers with NeoForge:
 public class YourEventHandler {
     
     @SubscribeEvent
-    public static void onBalanceChange(BalanceChangeEvent event) {
+    public static void onBalanceChange(NeoEssentialsEventHandler.EconomyBalanceChangeEvent event) {
         // Handle event
+    }
+    
+    @SubscribeEvent
+    public static void onTransaction(NeoEssentialsEventHandler.EconomyTransactionEvent event) {
+        // Handle transaction - can be cancelled
     }
 }
 ```
@@ -251,22 +278,35 @@ public class YourEventHandler {
 ### Economy Integration
 
 ```java
-// Get economy provider
+// Get economy provider (may not be available)
 Optional<IEconomyProvider> economyOpt = NeoEssentialsAPIFactory.getEconomyProvider();
 if (economyOpt.isPresent()) {
     IEconomyProvider economy = economyOpt.get();
     
-    // Check player balance
-    BigDecimal balance = economy.getBalance(playerId);
-    
-    // Make a transaction
-    if (economy.hasBalance(playerId, new BigDecimal("100.00"))) {
-        IEconomyProvider.TransactionRecord transaction = 
-            economy.withdraw(playerId, new BigDecimal("100.00"), "Item purchase");
+    // Check if provider is ready
+    if (economy.isEnabled()) {
+        // Check player balance
+        BigDecimal balance = economy.getBalance(playerId);
         
-        if (transaction != null && transaction.successful()) {
-            // Transaction successful
+        // Make a transaction
+        if (economy.hasBalance(playerId, new BigDecimal("100.00"))) {
+            boolean success = economy.withdraw(playerId, new BigDecimal("100.00"), "Item purchase");
+            
+            if (success) {
+                // Transaction successful
+            }
         }
+        
+        // Format currency for display
+        String formatted = economy.formatCurrency(balance);
+    }
+} else {
+    // Economy provider not available - use alternative approach
+    // Access economy directly via API
+    NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
+    if (api.isFeatureAvailable("economy")) {
+        BigDecimal balance = api.getPlayerBalance(playerId);
+        // Use direct API methods
     }
 }
 ```
@@ -274,30 +314,35 @@ if (economyOpt.isPresent()) {
 ### Player Data Integration
 
 ```java
-// Get player data provider
+// Get player data provider (may not be available)
 Optional<IPlayerDataProvider> playerDataOpt = NeoEssentialsAPIFactory.getPlayerDataProvider();
 if (playerDataOpt.isPresent()) {
     IPlayerDataProvider playerData = playerDataOpt.get();
     
     // Get player information
-    playerData.getPlayerData(playerId).thenAccept(data -> {
-        if (data != null) {
-            String username = data.username();
-            boolean isOnline = data.isOnline();
-            long playTime = data.playTime();
-            // Use player data
-        }
-    });
-    
-    // Set custom metadata
-    playerData.setPlayerMetadata(playerId, "custom_score", 1000);
+    Optional<IPlayerDataProvider.PlayerData> dataOpt = playerData.getPlayerData(playerId);
+    if (dataOpt.isPresent()) {
+        IPlayerDataProvider.PlayerData data = dataOpt.get();
+        String username = data.getName();
+        boolean isOnline = data.isOnline();
+        long playTime = data.getTotalPlaytime();
+        
+        // Set custom metadata
+        data.setCustomData("custom_score", 1000);
+        playerData.savePlayerData(data);
+    }
+} else {
+    // Player data provider not available - use direct API access
+    NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
+    // Use direct manager access for advanced features
+    // Note: This bypasses the provider interface
 }
 ```
 
 ### Placeholder Integration
 
 ```java
-// Get placeholder provider
+// Get placeholder provider (may not be available)
 Optional<IPlaceholderProvider> placeholderOpt = NeoEssentialsAPIFactory.getPlaceholderProvider();
 if (placeholderOpt.isPresent()) {
     IPlaceholderProvider placeholders = placeholderOpt.get();
@@ -309,33 +354,60 @@ if (placeholderOpt.isPresent()) {
     });
     
     // Process placeholders in text
-    IPlaceholderProvider.PlaceholderContext context = 
-        placeholders.createContext(player);
-    String processed = placeholders.processPlaceholder(
-        "Hello %mymod_custom%!", context);
+    String processed = placeholders.processPlaceholders(
+        "Hello %mymod_custom%!", player);
+    
+    // Register animated placeholder
+    String[] frames = {"&cAnimated", "&eAnimated", "&aAnimated"};
+    placeholders.registerAnimatedPlaceholder("mymod_animated", frames, 1.0);
+    
+} else {
+    // Placeholder provider not available - use direct API access
+    NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
+    
+    // Register via direct API
+    api.registerPlaceholder("mymod_custom", context -> {
+        ServerPlayer player = context.getPlayer();
+        return "Custom value for " + player.getName().getString();
+    });
+    
+    // Process via direct API
+    String processed = api.processPlaceholders(player, "Hello %mymod_custom%!");
 }
 ```
 
 ## Error Handling
 
-All API methods include proper error handling:
+All API methods include proper error handling and null safety:
 
 ```java
 try {
     // API operations
     NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
     
-    // Check if components are available
-    if (!NeoEssentialsAPIFactory.isNeoEssentialsReady()) {
-        // NeoEssentials not fully loaded yet
+    // Always check if NeoEssentials is available
+    if (!NeoEssentialsAPI.isAvailable()) {
+        // NeoEssentials not loaded
         return;
     }
     
-    // Perform operations with null checks
+    // Check if NeoEssentials is fully ready
+    if (!NeoEssentialsAPIFactory.isNeoEssentialsReady()) {
+        // NeoEssentials not fully initialized
+        return;
+    }
+    
+    // Use providers with null checks
     Optional<IEconomyProvider> economy = NeoEssentialsAPIFactory.getEconomyProvider();
-    economy.ifPresent(provider -> {
+    if (economy.isPresent() && economy.get().isEnabled()) {
         // Use provider safely
-    });
+        BigDecimal balance = economy.get().getBalance(playerId);
+    } else {
+        // Provider not available - use direct API or fallback
+        if (api.isFeatureAvailable("economy")) {
+            BigDecimal balance = api.getPlayerBalance(playerId);
+        }
+    }
     
 } catch (Exception e) {
     // Handle errors gracefully
@@ -343,42 +415,82 @@ try {
 }
 ```
 
-## Thread Safety
+## Thread Safety and Async Operations
 
-- All API interfaces are designed to be thread-safe
-- CompletableFuture is used for asynchronous operations
-- Concurrent data structures are used where appropriate
-- Always check if components are available before use
+- The main API is designed to be thread-safe for basic operations
+- Most operations are synchronous, not asynchronous (no CompletableFuture)
+- Provider interfaces follow simple synchronous patterns
+- Always check availability before use in async contexts
 
 ## Version Compatibility
 
 ```java
 // Check API version compatibility
 if (NeoEssentialsAPI.isAPIVersionAtLeast("2.1.0")) {
-    // Use new API features
+    // Use current API features
 } else {
-    // Fallback to older API methods
+    // Use fallback methods or warn about compatibility
 }
+
+// Get version information
+String apiVersion = NeoEssentialsAPI.getAPIVersion();  // "2.1.0"
+String modVersion = NeoEssentialsAPI.getModVersion();  // "1.0.2"
+```
+
+## Direct API Access
+
+For advanced integrations, you can access managers directly:
+
+```java
+NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
+
+// Direct manager access (bypasses provider interfaces)
+HomeManager homeManager = api.getHomeManager();
+EconomyManager economyManager = api.getEconomyManager(); 
+WarpManager warpManager = api.getWarpManager();
+PlaceholderManager placeholderManager = api.getPlaceholderManager();
+
+// Use manager methods directly
+List<String> homes = homeManager.getPlayerHomes(playerId);
+boolean hasHome = homeManager.hasHome(playerId, "home");
 ```
 
 ## Best Practices
 
-1. **Always check availability**: Use `isAvailable()` and provider optionals
-2. **Handle async operations**: Use CompletableFuture properly
-3. **Register events early**: Initialize event system during mod setup
-4. **Use providers**: Access features through the provider interfaces
+1. **Always check availability**: Use `isAvailable()` and `isNeoEssentialsReady()` before API calls
+2. **Handle provider optionals**: Provider interfaces may not be implemented - use `Optional.isPresent()`
+3. **Use direct API as fallback**: If providers aren't available, use direct manager access
+4. **Initialize events early**: Call `initializeEventSystem()` during mod setup
 5. **Handle errors gracefully**: Include proper error handling and logging
 6. **Check versions**: Ensure API compatibility before using features
-7. **Clean up resources**: Unregister placeholders and providers when shutting down
+7. **Prefer synchronous operations**: Most API operations are synchronous, not async
+
+## Current Implementation Status
+
+### ✅ Implemented
+- Main NeoEssentialsAPI class with version checking
+- Basic event system for economy and home operations
+- API factory with provider management framework
+- Interface definitions for economy, player data, and placeholders
+- Direct manager access for advanced features
+
+### ⚠️ Partially Implemented
+- Provider interfaces exist but may not have implementations
+- Event system covers basic operations but not all features
+- Some advanced features require direct manager access
+
+### ❌ Not Implemented
+- Full provider implementations (providers may be empty)
+- Comprehensive async operations
+- All events mentioned in older documentation
 
 ## Migration from v2.0.0
 
-The v2.1.0 API is fully backward compatible with v2.0.0. New features:
+The v2.1.0 API maintains backward compatibility with v2.0.0. Key differences:
 
-- **Provider interfaces**: Clean, standardized access to features
-- **Enhanced event system**: Comprehensive events for all operations
-- **API factory**: Centralized provider management
-- **Better documentation**: Comprehensive API documentation
-- **Improved error handling**: More robust error handling and logging
+- **Provider pattern**: New provider interfaces (may be empty - use as fallback)
+- **Simplified events**: Focused on core operations rather than comprehensive coverage  
+- **Direct access maintained**: All features still accessible via direct API methods
+- **Version methods**: Enhanced version checking and compatibility methods
 
-Existing code will continue to work, but using the new interfaces is recommended for better maintainability and future compatibility.
+Existing code using direct API methods will continue to work. The provider interfaces offer a cleaner integration path when implemented.

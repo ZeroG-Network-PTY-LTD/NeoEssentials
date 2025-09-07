@@ -1,210 +1,904 @@
-<<<<<<< HEAD
-# Permissions
+# Permissions System
 
-NeoEssentials includes a comprehensive permission system that provides fine-grained control over player access to commands and features. The system supports group-based permissions with inheritance, individual player permissions, temporary permissions, and wildcard support.
+NeoEssentials includes a comprehensive built-in permission system with group-based management, inheritance, wildcards, and persistent storage. The system provides fine-grained control over player access to commands and features.
 
-## 📋 Permission System Overview
+## 🎯 System Overview
 
-### Features
-- **Group-based Permissions** - Organize players into permission groups
-- **Permission Inheritance** - Groups can inherit permissions from parent groups
-- **Individual Player Permissions** - Override group permissions for specific players
-- **Temporary Permissions** - Grant permissions for a limited time
-- **Wildcard Support** - Use `*` for broader permission grants
-- **Permission Caching** - Optimized performance through permission caching
-- **Prefix/Suffix Support** - Visual indicators for player groups
+### Key Features
+- **Group-based Permissions** - Organize players into hierarchical permission groups
+- **Permission Inheritance** - Groups can inherit permissions from parent groups  
+- **Individual Player Overrides** - Per-player permission customization
+- **Persistent Storage** - All permissions saved to JSON configuration files
+- **Permission Caching** - High-performance caching system for fast permission checks
+- **Prefix/Suffix Support** - Chat formatting with group prefixes and suffixes
+- **Wildcard Support** - Use `*` for broad permission grants
+- **Permission Validation** - Built-in validation for permission node format
 
-### Default Groups
-NeoEssentials comes with four default permission groups:
+### Storage System
+Permissions are stored in JSON format in `run/neoessentials/permissions/`:
+- `groups.json` - Permission group definitions and settings
+- `players.json` - Individual player permissions and group assignments
 
-- **default** - Basic player permissions
-- **vip** - Enhanced player permissions with some bypass abilities
-- **moderator** - Moderation permissions with user management capabilities
-- **admin** - Full administrative access to all features
+## 👥 Permission Groups
 
-## 🔧 Permission Commands
+NeoEssentials comes with five default permission groups configured out of the box:
+
+### Default Group
+**Name**: `default`  
+**Priority**: 0  
+**Prefix**: `§7[Player]`  
+**Permissions**: Basic player functionality
+```
+neoessentials.home            # Use homes
+neoessentials.sethome         # Set homes  
+neoessentials.delhome         # Delete homes
+neoessentials.homes           # List homes
+neoessentials.spawn           # Use spawn
+neoessentials.back            # Return to previous location
+neoessentials.warp            # Use warps
+neoessentials.warps           # List warps
+neoessentials.tpa             # Send TPA requests
+neoessentials.tpaccept        # Accept TPA requests
+neoessentials.tpdeny          # Deny TPA requests
+neoessentials.tpcancel        # Cancel TPA requests
+neoessentials.balance         # View balance
+neoessentials.pay             # Pay other players
+neoessentials.msg             # Send private messages
+neoessentials.reply           # Reply to messages
+neoessentials.mail.send       # Send mail
+neoessentials.mail.read       # Read mail
+neoessentials.kit             # Use kits
+neoessentials.kit.list        # List kits
+neoessentials.list            # View player list
+neoessentials.whois           # View player info
+neoessentials.seen            # Check when player was last online
+neoessentials.playtime.view   # View own playtime
+neoessentials.achievements.view # View own achievements
+neoessentials.preferences.set # Set preferences
+neoessentials.preferences.view # View preferences
+neoessentials.shop.sign.create # Create shop signs
+neoessentials.shop.sign.use   # Use shop signs
+```
+
+### VIP Group
+**Name**: `vip`  
+**Priority**: 10  
+**Prefix**: `&b[VIP]`  
+**Suffix**: ` &b♦`  
+**Inherits**: `default`  
+**Additional Permissions**:
+```
+neoessentials.fly             # Flight ability
+neoessentials.heal            # Heal self
+neoessentials.feed            # Feed self
+neoessentials.workbench       # Portable workbench
+neoessentials.anvil           # Portable anvil
+neoessentials.enderchest      # Portable ender chest
+neoessentials.repair          # Repair items
+neoessentials.speed.walk      # Change walk speed
+neoessentials.home.multiple   # Set multiple homes
+neoessentials.nick            # Set nickname
+neoessentials.nick.color      # Use colors in nicknames
+neoessentials.bypass.cooldown.teleport # Bypass teleport cooldowns
+```
+
+### Moderator Group
+**Name**: `moderator`  
+**Priority**: 50  
+**Prefix**: `&6[MOD]`  
+**Suffix**: ` &6★`  
+**Inherits**: `vip`  
+**Additional Permissions**:
+```
+neoessentials.kick            # Kick players
+neoessentials.mute            # Mute players
+neoessentials.unmute          # Unmute players
+neoessentials.jail            # Jail players
+neoessentials.unjail          # Unjail players
+neoessentials.tempban         # Temporary bans
+neoessentials.vanish          # Vanish mode
+neoessentials.vanish.see      # See vanished players
+neoessentials.socialspy       # Spy on private messages
+neoessentials.enderchest.others # Access others' ender chests
+neoessentials.tp              # Teleport to players
+neoessentials.tphere          # Teleport players to you
+neoessentials.tp.coords       # Teleport to coordinates
+neoessentials.spawn.others    # Teleport others to spawn
+neoessentials.list.hidden     # See vanished players in list
+neoessentials.security.view   # View security information
+neoessentials.performance.view # View performance metrics
+neoessentials.status.view     # View system status
+neoessentials.playtime.others # View others' playtime
+neoessentials.achievements.others # View others' achievements
+neoessentials.permissions.info # View permission information
+neoessentials.permissions.check # Check player permissions
+```
+
+### Admin Group
+**Name**: `admin`  
+**Priority**: 100  
+**Prefix**: `&c[ADMIN]`  
+**Suffix**: ` &c⚡`  
+**Inherits**: `moderator`  
+**Additional Permissions**:
+```
+neoessentials.*               # All NeoEssentials permissions
+*.admin                       # All admin permissions
+neoessentials.ban             # Ban players
+neoessentials.unban           # Unban players
+neoessentials.banip           # IP ban players
+neoessentials.give            # Give items
+neoessentials.give.unlimited  # Give items without limits
+neoessentials.time.*          # All time commands
+neoessentials.weather.*       # All weather commands
+neoessentials.setwarp         # Create warps
+neoessentials.delwarp         # Delete warps
+neoessentials.setspawn        # Set spawn point
+```
+
+### Owner Group (Optional)
+**Name**: `Owner`  
+**Priority**: 1000  
+**Prefix**: `&6[Owner] `  
+**Suffix**: ` 👑`  
+**Inherits**: `admin`  
+**Permissions**:
+```
+neoessentials.*               # All permissions
+```
+
+## 🎮 Commands
+
+### Permission Information
+
+#### `/permissions info [player]`
+Display permission information for yourself or another player.
+
+**Examples**:
+```bash
+# View your own permissions
+/permissions info
+
+# View another player's permissions
+/permissions info Steve
+```
+
+**Required Permission**: `neoessentials.permissions.info`
+
+#### `/permissions check <player> <permission>`
+Test if a player has a specific permission.
+
+**Example**:
+```bash
+/permissions check Steve neoessentials.fly
+```
+
+**Required Permission**: `neoessentials.permissions.check`
 
 ### Group Management
-Manage permission groups and their settings:
 
-```bash
-# List all groups
-/permissions group list
+#### `/permissions group list`
+List all available permission groups.
 
-# View group information
-/permissions group info <group>
-
-# Create a new group
-/permissions group create <name> <prefix>
-
-# Delete a group
-/permissions group delete <group>
-
-# Add permission to group
-/permissions group permission add <group> <permission>
-
-# Remove permission from group
-/permissions group permission remove <group> <permission>
-
-# Set group inheritance
-/permissions group inheritance <group> <parent>
-
-# Set group prefix/suffix
-/permissions group prefix <group> <prefix>
-/permissions group suffix <group> <suffix>
+**Example Output**:
 ```
+=== Permission Groups ===
+default (Priority: 0, Prefix: §7[Player])
+vip (Priority: 10, Prefix: &b[VIP])
+moderator (Priority: 50, Prefix: &6[MOD])
+admin (Priority: 100, Prefix: &c[ADMIN])
+```
+
+**Required Permission**: `neoessentials.permissions.group`
+
+#### `/permissions group info <group>`
+Show detailed information about a permission group.
+
+**Example**:
+```bash
+/permissions group info vip
+```
+
+**Required Permission**: `neoessentials.permissions.group`
+
+#### `/permissions group create <name> <prefix> [priority]`
+Create a new permission group.
+
+**Examples**:
+```bash
+# Create basic group
+/permissions group create Builder "&e[Builder] " 25
+
+# Create group with specific priority
+/permissions group create Helper "&b[Helper] " 30
+```
+
+**Required Permission**: `neoessentials.permissions.group`
+
+#### `/permissions group delete <group>`
+Delete a permission group (cannot delete if it has members).
+
+**Example**:
+```bash
+/permissions group delete Builder
+```
+
+**Required Permission**: `neoessentials.permissions.group`
+
+### Group Permission Management
+
+#### `/permissions group permission add <group> <permission>`
+Add a permission to a group.
+
+**Examples**:
+```bash
+# Add specific permission
+/permissions group permission add VIP neoessentials.speed
+
+# Add wildcard permission  
+/permissions group permission add Admin neoessentials.*
+```
+
+**Required Permission**: `neoessentials.permissions.group`
+
+#### `/permissions group permission remove <group> <permission>`
+Remove a permission from a group.
+
+**Example**:
+```bash
+/permissions group permission remove VIP neoessentials.speed
+```
+
+**Required Permission**: `neoessentials.permissions.group`
+
+### Group Inheritance
+
+#### `/permissions group inheritance <group> <parent>`
+Set inheritance for a permission group.
+
+**Examples**:
+```bash
+# Set VIP to inherit from Default
+/permissions group inheritance VIP default
+
+# Remove inheritance
+/permissions group inheritance Builder none
+```
+
+**Required Permission**: `neoessentials.permissions.group`
+
+### Group Display Settings
+
+#### `/permissions group prefix <group> <prefix>`
+Set the chat prefix for a group.
+
+**Example**:
+```bash
+/permissions group prefix VIP "&6[VIP] "
+```
+
+**Required Permission**: `neoessentials.permissions.group`
+
+#### `/permissions group suffix <group> <suffix>`
+Set the chat suffix for a group.
+
+**Example**:
+```bash
+/permissions group suffix VIP " &6★"
+```
+
+**Required Permission**: `neoessentials.permissions.group`
 
 ### User Management
-Manage individual player permissions:
 
+#### `/permissions user <player> info`
+Show detailed permission information for a user.
+
+**Example**:
 ```bash
-# View player permission info
-/permissions user <player> info
-
-# Set player's group
-/permissions user <player> group set <group>
-
-# Add permission to player
-/permissions user <player> permission add <permission>
-
-# Remove permission from player
-/permissions user <player> permission remove <permission>
-
-# Add temporary permission (in seconds)
-/permissions user <player> permission temp <permission> <duration>
-
-# Clear player's custom permissions
-/permissions user <player> clear
+/permissions user Steve info
 ```
+
+**Required Permission**: `neoessentials.permissions.user`
+
+#### `/permissions user <player> group set <group>`
+Set a player's permission group.
+
+**Examples**:
+```bash
+# Promote player to VIP
+/permissions user Steve group set vip
+
+# Demote player to Default  
+/permissions user Alex group set default
+```
+
+**Required Permission**: `neoessentials.permissions.user`
+
+#### `/permissions user <player> permission add <permission>`
+Add a direct permission to a player.
+
+**Example**:
+```bash
+/permissions user Steve permission add neoessentials.speed
+```
+
+**Required Permission**: `neoessentials.permissions.user`
+
+#### `/permissions user <player> permission remove <permission>`
+Remove a direct permission from a player.
+
+**Example**:
+```bash
+/permissions user Steve permission remove neoessentials.speed
+```
+
+**Required Permission**: `neoessentials.permissions.user`
+
+#### `/permissions user <player> clear`
+Remove all custom permissions from a player (keeps group permissions).
+
+**Example**:
+```bash
+/permissions user Steve clear
+```
+
+**Required Permission**: `neoessentials.permissions.user`
 
 ### System Commands
-System-level permission management:
 
-```bash
-# Check player's permission
-/permissions check <player> <permission>
+#### `/permissions reload`
+Reload the permission system configuration.
 
-# View permission statistics
-/permissions stats
+**Required Permission**: `neoessentials.permissions.reload`
 
-# List common permission nodes
-/permissions nodes
+#### `/permissions stats`
+Show permission system statistics and cache information.
 
-# Reload permission system
-/permissions reload
+**Required Permission**: `neoessentials.permissions.stats`
+
+#### `/permissions nodes`
+List common permission nodes with descriptions.
+
+**Required Permission**: Admin level access
+
+## 📋 Permission Nodes Reference
+
+### Core Permission Levels
 ```
-
-## 🎯 Permission Nodes
+neoessentials.player.default      # Basic player access level
+neoessentials.use                 # General NeoEssentials usage  
+neoessentials.moderation.basic    # Basic moderation access
+neoessentials.admin.basic         # Basic admin access
+neoessentials.admin.full          # Full admin access
+```
 
 ### Essential Commands
-Core utility commands for players:
 
+#### Health & Wellness
 ```
-neoessentials.heal              # Heal self
-neoessentials.heal.others       # Heal other players
-neoessentials.feed              # Feed self
-neoessentials.feed.others       # Feed other players
-neoessentials.god               # God mode for self
-neoessentials.god.others        # God mode for others
-neoessentials.fly               # Flight for self
-neoessentials.fly.others        # Flight for others
-neoessentials.vanish            # Vanish mode
-neoessentials.workbench         # Portable workbench
-neoessentials.anvil             # Portable anvil
-neoessentials.enderchest        # Portable ender chest
+neoessentials.heal                # Heal self
+neoessentials.heal.others         # Heal other players
+neoessentials.heal.*              # All heal permissions
+
+neoessentials.feed                # Feed self  
+neoessentials.feed.others         # Feed other players
+neoessentials.feed.*              # All feed permissions
+
+neoessentials.god                 # God mode for self
+neoessentials.god.others          # God mode for others
+neoessentials.god.*               # All god mode permissions
+```
+
+#### Movement & Visibility
+```
+neoessentials.fly                 # Flight for self
+neoessentials.fly.others          # Flight for others  
+neoessentials.fly.*               # All flight permissions
+
+neoessentials.speed.walk          # Walk speed modification
+neoessentials.speed.fly           # Fly speed modification
+neoessentials.speed.others        # Change speed for others
+neoessentials.speed.*             # All speed permissions
+
+neoessentials.vanish              # Vanish for self
+neoessentials.vanish.others       # Vanish others
+neoessentials.vanish.see          # See vanished players
+neoessentials.vanish.*            # All vanish permissions
+```
+
+#### Item & Environment Management
+```
+neoessentials.repair              # Repair item in hand
+neoessentials.repair.all          # Repair all items
+neoessentials.repair.others       # Repair items for others
+
+neoessentials.give                # Give items
+neoessentials.give.unlimited      # Give items without limits  
+neoessentials.give.*              # All give permissions
+
+neoessentials.time.set            # Set time
+neoessentials.time.add            # Add time
+neoessentials.time.query          # Query time
+neoessentials.time.*              # All time permissions
+
+neoessentials.weather.set         # Base weather command
+neoessentials.weather.clear       # Clear weather
+neoessentials.weather.rain        # Rain weather
+neoessentials.weather.thunder     # Thunder weather
+neoessentials.weather.*           # All weather permissions
+
+neoessentials.workbench           # Portable workbench
+neoessentials.anvil               # Portable anvil
+neoessentials.enderchest          # Personal ender chest
+neoessentials.enderchest.others   # View others' ender chests
 ```
 
 ### Teleportation System
-Teleportation and location-based commands:
 
+#### Basic Teleportation
 ```
-neoessentials.home              # Use homes
-neoessentials.sethome           # Set homes
-neoessentials.delhome           # Delete homes
-neoessentials.homes             # List homes
-neoessentials.spawn             # Use spawn
-neoessentials.spawn.set         # Set spawn point
-neoessentials.warp              # Use warps
-neoessentials.warp.set          # Create warps
-neoessentials.warp.delete       # Delete warps
-neoessentials.tp                # Basic teleportation
-neoessentials.tp.others         # Teleport others
-neoessentials.tpa               # TPA requests
-neoessentials.back              # Return to previous location
+neoessentials.tp                  # Teleport to players
+neoessentials.tp.others           # Teleport other players
+neoessentials.tp.coords           # Teleport to coordinates
+neoessentials.tphere              # Teleport players to you
+neoessentials.tp.*                # All teleport permissions
+```
+
+#### Home System
+```
+neoessentials.home                # Teleport to homes
+neoessentials.sethome             # Set home locations
+neoessentials.delhome             # Delete homes  
+neoessentials.homes               # List homes
+neoessentials.home.others         # Access others' homes
+neoessentials.home.multiple       # Set multiple homes
+neoessentials.home.*              # All home permissions
+```
+
+#### Warp System  
+```
+neoessentials.warp                # Teleport to warps
+neoessentials.setwarp             # Create warps (admin)
+neoessentials.delwarp             # Delete warps (admin)
+neoessentials.warps               # List warps
+neoessentials.warp.*              # All warp permissions
+```
+
+#### TPA (Teleport Request) System
+```
+neoessentials.tpa                 # Send teleport requests
+neoessentials.tpahere             # Request player to teleport to you
+neoessentials.tpaccept            # Accept teleport requests
+neoessentials.tpdeny              # Deny teleport requests  
+neoessentials.tpcancel            # Cancel pending requests
+neoessentials.tpa.*               # All TPA permissions
+```
+
+#### Spawn System
+```
+neoessentials.spawn               # Teleport to spawn
+neoessentials.setspawn            # Set spawn location (admin)
+neoessentials.spawn.others        # Teleport others to spawn
+neoessentials.spawn.*             # All spawn permissions
+```
+
+#### Back System
+```
+neoessentials.back                # Return to previous location
+neoessentials.back.ondeath        # Use /back after death
+neoessentials.back.onteleport     # Use /back after teleportation
 ```
 
 ### Moderation Commands
-Player management and moderation tools:
 
+#### Ban System
 ```
-neoessentials.kick              # Kick players
-neoessentials.ban               # Ban players
-neoessentials.tempban           # Temporary bans
-neoessentials.mute              # Mute players
-neoessentials.jail              # Jail players
-neoessentials.vanish.see        # See vanished players
+neoessentials.ban                 # Ban players
+neoessentials.tempban             # Temporary bans
+neoessentials.banip               # IP bans
+neoessentials.unban               # Unban players
+neoessentials.ban.exempt          # Exempt from being banned
+neoessentials.ban.*               # All ban permissions
+```
+
+#### Kick & Mute System
+```
+neoessentials.kick                # Kick players
+neoessentials.kick.exempt         # Exempt from being kicked
+
+neoessentials.mute                # Mute players
+neoessentials.unmute              # Unmute players  
+neoessentials.mute.exempt         # Exempt from being muted
+neoessentials.mute.*              # All mute permissions
+```
+
+#### Jail System
+```
+neoessentials.jail                # Jail players
+neoessentials.unjail              # Unjail players
+neoessentials.setjail             # Create jail locations
+neoessentials.deljail             # Delete jails
+neoessentials.jail.exempt         # Exempt from being jailed
+neoessentials.jail.*              # All jail permissions
 ```
 
 ### Economy System
-Economic features and shop management:
 
+#### Basic Economy
 ```
-neoessentials.balance           # View balance
-neoessentials.pay               # Pay other players
-neoessentials.eco.give          # Give money to players
-neoessentials.eco.take          # Take money from players
-neoessentials.shop.use          # Use shops
-neoessentials.shop.create       # Create shops
-neoessentials.shop.admin        # Shop administration
+neoessentials.balance             # View balance
+neoessentials.balance.others      # View others' balances
+neoessentials.pay                 # Send money to players
+neoessentials.balancetop          # View richest players
 ```
 
-### Administration
-Server administration and configuration:
-
+#### Economy Administration
 ```
-neoessentials.config.reload     # Reload configurations
-neoessentials.permissions.*     # Permission management
-neoessentials.performance.admin # Performance monitoring
-neoessentials.security.admin    # Security administration
-```
-
-### Wildcard Permissions
-Broad permission grants:
-
-```
-neoessentials.*                 # All NeoEssentials permissions
-neoessentials.teleport.*        # All teleportation permissions
-neoessentials.moderation.*      # All moderation permissions
-neoessentials.economy.*         # All economy permissions
-*                              # All permissions (use with caution)
+neoessentials.eco.give            # Give money to players
+neoessentials.eco.take            # Take money from players
+neoessentials.eco.set             # Set player balance
+neoessentials.eco.reset           # Reset balances
+neoessentials.eco.*               # All economy admin permissions
 ```
 
-## 🔐 Permission Groups
-
-### Default Group Configuration
-
-#### Default Group
-Basic permissions for all players:
+#### Shop System
 ```
-neoessentials.home
-neoessentials.sethome
-neoessentials.spawn
-neoessentials.balance
-neoessentials.pay
-neoessentials.msg
-neoessentials.reply
+neoessentials.shop.use            # Basic shop usage
+neoessentials.shop.buy            # Buy from shops
+neoessentials.shop.sell           # Sell to shops
+neoessentials.shop.create         # Create shops
+neoessentials.shop.delete         # Delete shops
+neoessentials.shop.edit           # Edit shops
+neoessentials.shop.browse         # Browse shops
+neoessentials.shop.search         # Search shops
+neoessentials.shop.sign.create    # Create shop signs
+neoessentials.shop.sign.use       # Use shop signs
+neoessentials.shop.sign.break     # Break shop signs
+neoessentials.shop.sign.admin     # Admin shop sign management
+neoessentials.shop.admin          # Full shop administration
+neoessentials.shop.manage.others  # Manage others' shops
+neoessentials.shop.bypass.limits  # Bypass shop limits
+neoessentials.shop.bypass.protection # Bypass shop protection
+neoessentials.shop.*              # All shop permissions
 ```
 
-#### VIP Group
-Enhanced permissions with bypass abilities:
+### Messaging System
+
+#### Private Messages
 ```
-Inherits: default
-Additional permissions:
-neoessentials.fly
-neoessentials.heal
-neoessentials.feed
-neoessentials.bypass.cooldown.teleport
-=======
+neoessentials.msg                 # Send private messages
+neoessentials.reply               # Reply to messages
+neoessentials.msgtoggle           # Toggle message reception
+neoessentials.socialspy           # Spy on private messages
+```
+
+#### Mail System
+```
+neoessentials.mail.send           # Send mail
+neoessentials.mail.read           # Read mail
+neoessentials.mail.clear          # Clear mailbox
+neoessentials.mail.*              # All mail permissions
+```
+
+#### Broadcasting
+```
+neoessentials.broadcast           # Server-wide messages
+neoessentials.broadcast.world     # World-specific messages
+```
+
+### Player Information Commands
+
+#### Player Lists & Information
+```
+neoessentials.list                # View online players
+neoessentials.list.hidden         # See hidden/vanished players in list
+
+neoessentials.whois               # Detailed player info
+neoessentials.seen                # When player was last online
+neoessentials.realname            # Find player by nickname
+```
+
+#### Nickname System
+```
+neoessentials.nick                # Set your nickname
+neoessentials.nick.others         # Set nicknames for others
+neoessentials.nick.color          # Use color codes in nicknames
+neoessentials.nick.magic          # Use magic/obfuscated formatting
+```
+
+### Kit System
+
+#### Kit Usage
+```
+neoessentials.kit                 # Use kits
+neoessentials.kit.list            # List available kits
+neoessentials.kit.preview         # Preview kit contents
+```
+
+#### Kit Administration
+```
+neoessentials.kit.create          # Create new kits
+neoessentials.kit.delete          # Delete kits
+neoessentials.kit.edit            # Modify kits
+neoessentials.kit.give            # Give kits to players
+neoessentials.kit.*               # All kit permissions
+```
+
+### NeoEssentials Features
+
+#### Placeholder System
+```
+neoessentials.placeholder.test    # Test placeholder values
+neoessentials.placeholder.list    # List available placeholders
+neoessentials.placeholder.info    # View placeholder information
+neoessentials.placeholder.reload  # Reload placeholder system
+neoessentials.placeholder.*       # All placeholder permissions
+```
+
+#### GUI System
+```
+neoessentials.gui.open            # Open GUI menus
+neoessentials.gui.admin           # Access admin GUI features
+neoessentials.gui.*               # All GUI permissions
+```
+
+#### Security System
+```
+neoessentials.security.view       # View security events and logs
+neoessentials.security.admin      # Security system administration
+neoessentials.security.alerts     # Receive security alerts
+neoessentials.security.*          # All security permissions
+```
+
+### Permission Management
+
+#### Permission Commands
+```
+neoessentials.permissions.info    # View permission info
+neoessentials.permissions.check   # Check player permissions
+neoessentials.permissions.user    # User permission management
+neoessentials.permissions.group   # Group permission management
+neoessentials.permissions.reload  # Reload permission system
+neoessentials.permissions.stats   # View permission statistics
+neoessentials.permissions.*       # All permission management
+```
+
+### Administration & Configuration
+
+#### Configuration Management
+```
+neoessentials.config.reload       # Reload configuration files
+neoessentials.config.save         # Save current configuration
+neoessentials.config.reset        # Reset configuration to defaults
+neoessentials.config.*            # All configuration permissions
+```
+
+#### Language System
+```
+neoessentials.language.set        # Set language preferences
+neoessentials.language.list       # List available languages
+neoessentials.language.reload     # Reload language files
+neoessentials.language.*          # All language permissions
+```
+
+#### Performance Monitoring
+```
+neoessentials.performance.view    # View performance metrics
+neoessentials.performance.admin   # Performance system administration
+neoessentials.performance.*       # All performance permissions
+```
+
+#### Status Monitoring
+```
+neoessentials.status.view         # View system status
+neoessentials.status.admin        # Status system administration
+neoessentials.status.*            # All status permissions
+```
+
+#### Cleanup and Maintenance
+```
+neoessentials.admin.cleanup       # Basic cleanup operations
+neoessentials.admin.cleanup.all   # All cleanup operations
+neoessentials.admin.cleanup.memory # Memory cleanup
+neoessentials.admin.cleanup.cache # Cache cleanup
+neoessentials.admin.cleanup.files # File cleanup
+neoessentials.admin.cleanup.data  # Data cleanup
+neoessentials.admin.cleanup.scoreboard # Scoreboard cleanup
+neoessentials.admin.cleanup.auto  # Automatic cleanup
+neoessentials.admin.cleanup.info  # Cleanup information
+neoessentials.admin.cleanup.force # Force cleanup operations
+```
+
+### Player Features
+
+#### Playtime Tracking
+```
+neoessentials.playtime.view       # View your playtime
+neoessentials.playtime.others     # View others' playtime
+neoessentials.playtime.top        # View playtime leaderboards
+neoessentials.playtime.*          # All playtime permissions
+```
+
+#### Achievement System
+```
+neoessentials.achievements.view   # View your achievements
+neoessentials.achievements.others # View others' achievements
+neoessentials.achievements.admin  # Achievement system administration
+neoessentials.achievements.*      # All achievement permissions
+```
+
+#### Player Preferences
+```
+neoessentials.preferences.set     # Set your preferences
+neoessentials.preferences.view    # View preference settings
+neoessentials.preferences.*       # All preference permissions
+```
+
+### Bypass Permissions
+
+#### Cooldown Bypasses
+```
+neoessentials.bypass.cooldown     # Bypass all cooldowns
+neoessentials.bypass.cooldown.teleport # Bypass teleportation cooldowns
+neoessentials.bypass.cooldown.command # Bypass command cooldowns
+```
+
+#### Limit Bypasses
+```
+neoessentials.bypass.limit.home   # Bypass home limits
+neoessentials.bypass.limit.warp   # Bypass warp limits
+```
+
+#### Cost Bypasses
+```
+neoessentials.bypass.cost         # Bypass all costs
+neoessentials.bypass.cost.teleport # Bypass teleportation costs
+neoessentials.bypass.cost.command # Bypass command costs
+```
+
+### Administrative Wildcard Permissions
+
+#### Category Wildcards
+```
+neoessentials.*                   # All NeoEssentials permissions
+neoessentials.teleport.*          # All teleportation permissions
+neoessentials.moderation.*        # All moderation permissions
+neoessentials.economy.*           # All economy permissions
+neoessentials.messaging.*         # All messaging permissions
+*.admin                           # All admin permissions across plugins
+```
+
+#### Ultimate Permission
+```
+*                                 # ALL permissions (use with extreme caution!)
+```
+
+## ⚙️ Configuration
+
+### Permission Storage Format
+
+The permission system uses JSON format for configuration files:
+
+#### groups.json Structure
+```json
+{
+  "groupname": {
+    "name": "groupname",
+    "prefix": "&6[PREFIX]",
+    "suffix": " &6★",
+    "priority": 10,
+    "inheritance": "parentgroup",
+    "permissions": [
+      "neoessentials.permission1",
+      "neoessentials.permission2"
+    ],
+    "lastUpdated": 1234567890123
+  }
+}
+```
+
+#### players.json Structure  
+```json
+{
+  "player-uuid": {
+    "uuid": "player-uuid",
+    "name": "PlayerName",
+    "group": "groupname",
+    "permissions": [
+      "additional.permission1",
+      "additional.permission2"
+    ],
+    "lastUpdated": 1234567890123
+  }
+}
+```
+
+### System Settings
+
+The permission system is built-in and configured automatically. Key settings:
+
+- **Cache Duration**: 5 minutes for optimal performance
+- **Storage**: JSON files in `run/neoessentials/permissions/`
+- **Auto-save**: Changes are saved immediately to persistent storage
+- **Validation**: All permission nodes validated on assignment
+- **Inheritance**: Supports unlimited inheritance depth
+
+### Integration
+
+The permission system integrates seamlessly with:
+- **Minecraft OP System** - OPs automatically receive admin permissions
+- **Chat Formatting** - Prefixes and suffixes appear in chat
+- **Command Registration** - Commands check permissions automatically
+- **External Plugins** - Compatible with permission-aware mods
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### Permission Not Working
+1. Check permission node spelling with `/permissions nodes`
+2. Verify group inheritance with `/permissions group info <group>`
+3. Use `/permissions check <player> <permission>` to debug
+4. Reload system with `/permissions reload`
+
+#### Group Inheritance Problems
+1. Verify parent group exists with `/permissions group list`
+2. Check for circular inheritance
+3. Review group priorities
+4. Use `/permissions user <player> info` for detailed breakdown
+
+#### Performance Issues
+1. Monitor with `/permissions stats`
+2. Check cache hit rates
+3. Reduce permission complexity if needed
+4. Restart server to clear cache if necessary
+
+### Debug Commands
+
+```bash
+# Check specific permission
+/permissions check Steve neoessentials.fly
+
+# View detailed user info
+/permissions user Steve info
+
+# Show group details
+/permissions group info vip
+
+# System statistics
+/permissions stats
+
+# List all permission nodes
+/permissions nodes
+```
+
+## 🛡️ Security Best Practices
+
+### Permission Security
+1. **Principle of Least Privilege** - Grant minimal necessary permissions
+2. **Regular Audits** - Review permissions periodically with `/permissions stats`
+3. **Group-based Management** - Prefer group permissions over individual grants
+4. **Wildcard Caution** - Use `*` permissions sparingly and only for trusted users
+5. **Permission Testing** - Test permissions before granting to groups
+
+### Group Management
+- Use inheritance to maintain clean permission structures
+- Set appropriate group priorities to avoid conflicts
+- Regularly review group memberships
+- Document custom permission assignments
+
+### Monitoring
+- Monitor permission usage through logs
+- Check for unusual permission patterns
+- Audit admin-level permissions regularly
+- Keep backups of permission configuration files
+
+---
+
+**Related Documentation**: [Essential Commands](Essential-Commands) | [Configuration](Configuration) | [API Documentation](API_DOCUMENTATION)
+
+*Last Updated: September 7, 2025*
 # Permissions System
 
 NeoEssentials includes a comprehensive permission system with group-based management, inheritance, wildcards, and temporary permissions. This system can work standalone or integrate with external permission plugins.
