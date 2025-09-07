@@ -2,123 +2,164 @@
 # NeoEssentials Animation System
 
 ## Overview
-Create dynamic, animated placeholders for tablist, scoreboard, and bossbar using config-driven, EssentialsX-style setup. All messages and labels are managed via the lang file for full localization support.
+Create dynamic, animated placeholders for tablist displays using a streamlined custom placeholder system. The animation system has been simplified to focus on tablist functionality with better performance and stability.
 
 ## Features
-- Multiple animation types: text cycle, color cycle, progress bar, conditional, health bar, weather, typewriter, gradient, wave, blink, and more
-- Works in tablist, scoreboard, bossbar, and any theme supporting placeholders
-- Fully configurable via `config/neoessentials/animations.json`
-- All messages, descriptions, and command outputs are lang-managed
+- Animated text cycling with customizable intervals
+- Conditional placeholders based on player/server state
+- Works in tablist headers, footers, and player formats
+- Fully configurable via `config/neoessentials/customPlaceholders.json`
+- Integrated with the main placeholder system for consistency
 
 ## Configuration
-**File:** `config/neoessentials/animations.json` (auto-generated on first run)
+**File:** `config/neoessentials/customPlaceholders.json` (auto-generated on first run)
 
-Edit this file to define custom animations, then use `/neoanimations reload` to apply changes instantly.
+Edit this file to define animated placeholders, then use `/neoanimations reload` to apply changes.
 
-### Example Animation
+### Example Animation Configuration
 ```json
 {
-  "animations": {
-    "rainbow_text": {
-      "type": "color_cycle",
-      "frames": ["&c{text}", "&6{text}", "&e{text}", "&a{text}", "&b{text}", "&9{text}", "&d{text}"],
-      "speed": 500,
-      "description": "Cycles through rainbow colors"
+  "customPlaceholders": {
+    "server_status_animation": {
+      "type": "animated",
+      "frames": [
+        "&a● &fOnline",
+        "&e● &fOnline", 
+        "&6● &fOnline",
+        "&c● &fOnline"
+      ],
+      "interval": 1.0
+    },
+    "welcome_animation": {
+      "type": "animated",
+      "frames": [
+        "&cWelcome &f${player_name}",
+        "&eWelcome &f${player_name}",
+        "&aWelcome &f${player_name}",
+        "&bWelcome &f${player_name}",
+        "&dWelcome &f${player_name}"
+      ],
+      "interval": 0.3
+    },
+    "tps_indicator": {
+      "type": "conditional",
+      "condition": "${server_tps} >= 18.0",
+      "trueValue": "&a⚡ &f${server_tps} TPS",
+      "falseValue": "&c⚡ &f${server_tps} TPS",
+      "interval": 0.0
     }
   }
 }
 ```
 
-### Placeholder Mapping
+### Animation Types
+- **animated**: Cycles through multiple frames with configurable intervals
+- **conditional**: Shows different content based on placeholder conditions  
+- **static**: Simple text replacement (interval 0.0)
+
+## Usage in Tablist
+Reference animated placeholders in your tablist configuration using the `${placeholder_name}` format:
+
 ```json
 {
-  "placeholder_mappings": {
-    "{animated_server_name}": "rainbow_text",
-    "{loading}": "loading_bar"
+  "tablist": {
+    "layouts": [
+      {
+        "priority": 1,
+        "conditionType": "default",
+        "header": [
+          "&6=== &e${welcome_animation} &6===",
+          "&7Status: ${server_status_animation}",
+          "&7TPS: ${tps_indicator}"
+        ],
+        "footer": [
+          "&7Performance: ${performance_bar}",
+          "&7Players: &a{server_players}&7/&a{server_max_players}",
+          "&7Time: &f{time}"
+        ]
+      }
+    ]
   }
 }
-```
-
-## Usage in Themes
-Reference animated placeholders in your tablist, scoreboard, or bossbar theme configs:
-
-```yaml
-tablist_themes:
-  animated_theme:
-    headers:
-      - "&6{animated_server_name}"
-      - "&e{status} {dots}"
-    footers:
-      - "&7Players: &f{online}&8/&f{max}"
-      - "&7Health: {health} &8| &7Weather: {weather}"
 ```
 
 ## Built-in Placeholders
-All standard NeoEssentials placeholders are supported:
-- `{player}` `{health}` `{max_health}` `{food}` `{level}` `{exp}` `{ping}`
-- `{online}` `{max}` `{tps}` `{time}` `{uptime}` `{world}` `{ram_used}` `{ram_max}`
-- `{weather}` `{session_time}` `{balance}`
+Standard NeoEssentials placeholders can be used within animation frames:
+- `{player_name}` `{player_health}` `{player_max_health}` `{player_food}` `{player_level}` `{player_ping}`
+- `{server_players}` `{server_max_players}` `{server_tps}` `{time}` `{date}` `{server_name}`
+- `{player_world}` `{player_x}` `{player_y}` `{player_z}`
 
-## Global Settings
-Configure animation system behavior in `animations.json`:
-```json
-{
-  "global_settings": {
-    "enable_animations": true,
-    "max_fps": 20,
-    "smooth_transitions": true,
-    "cache_animations": true,
-    "debug_mode": false
-  }
-}
-```
+## System Status
+The animation system has been streamlined for better performance:
+- ✅ **Tablist Animations**: Fully supported and active
+- ❌ **Scoreboard Animations**: Removed for performance optimization  
+- ❌ **Bossbar Animations**: Removed for performance optimization
 
 ## Commands
-All output/messages are lang-managed and permission-checked.
+Animation management is simplified with basic control commands:
 
 | Command | Description | Permission |
 |---------|-------------|------------|
-| `/neoanimations reload` | Reload animation config | `neoessentials.admin` |
-| `/neoanimations stats` | Show animation stats | `neoessentials.admin` |
-| `/neoanimations list` | List all animations | `neoessentials.admin` |
-| `/neoanimations test <animation>` | Test animation | `neoessentials.admin` |
-| `/neoanimations help` | Show help | `neoessentials.admin` |
+| `/neoanimations reload` | Reload animation system (tablist only) | `neoessentials.admin` |
+| `/neoanimations stats` | Show animation system status | `neoessentials.admin` |
+| `/neoanimations help` | Show available commands | `neoessentials.admin` |
 
 Server operators (level 3+) have access by default.
 
+**Note**: Scoreboard and bossbar animation commands have been removed.
+
 ## Troubleshooting
 **Animations not showing:**
-- Ensure `enable_animations` is true
-- Check placeholder mappings and animation names
-- Use `/neoanimations reload` after changes
+- Check that placeholders are defined in `customPlaceholders.json`
+- Verify JSON syntax is valid
+- Use `/neoanimations reload` after making changes
+- Ensure placeholders use the `${placeholder_name}` format in tablist configs
 
 **Performance issues:**
-- Lower `max_fps` or reduce frame count
-- Disable caching if memory is limited
+- Reduce animation intervals (increase interval values)
+- Limit the number of frames in animated placeholders
+- Consider using conditional placeholders instead of animations
 
 **Config errors:**
-- Validate JSON syntax
-- Check console for errors
+- Validate JSON syntax in `customPlaceholders.json`
+- Check console logs for specific error messages
+- Ensure interval values are positive numbers (0.0 for static content)
 
-Enable debug mode for detailed logs:
-```json
-{
-  "global_settings": { "debug_mode": true }
-}
-```
+## Current Limitations
+- Animations only work in tablist headers and footers
+- Scoreboard animations are no longer supported
+- Bossbar animations are no longer supported
+- Animation commands are limited to reload and status checking
 
-## Advanced & API Usage
-Extend with custom animation types, integrate with economy, permissions, weather, and player stats. All output/messages are lang-managed.
+## Advanced Usage & Integration
+The animation system integrates directly with the placeholder system for seamless functionality.
 
-**Java Example:**
+**Java Example (Plugin Integration):**
 ```java
-AnimationManager manager = TablistScoreboardManager.getInstance().getAnimationManager();
-String result = manager.processAnimatedText("{animated_placeholder}", player);
-Set<String> animations = manager.getAnimationNames();
+// Access the placeholder manager
+PlaceholderManager placeholderManager = PlaceholderManager.getInstance();
+
+// Process text containing animated placeholders
+String processedText = placeholderManager.processPlaceholders(
+    "${welcome_animation} - Server: ${server_status_animation}", 
+    new PlaceholderManager.PlaceholderContext(serverPlayer)
+);
+
+// Get animation interval for timing
+double interval = placeholderManager.getAnimationInterval("welcome_animation");
 ```
 
-## Example Configs
-See `docs/Example Configs/animations_prefix_examples.json` and the auto-generated `animations.json` for more templates.
+**Custom Placeholder Integration:**
+- Animated placeholders can reference other placeholders in their frames
+- Use `${placeholder_name}` syntax within animation frames
+- Conditional placeholders can use comparison operators (`>=`, `==`, etc.)
+
+## Configuration Examples
+See the auto-generated `config/neoessentials/customPlaceholders.json` for comprehensive examples of:
+- Animated text cycling
+- Conditional status indicators  
+- Server performance displays
+- Player-specific animations
 
 ---
-The NeoEssentials animation system is fully config-driven, permission-checked, and lang-managed for maximum flexibility and localization.
+The NeoEssentials animation system provides focused tablist animation support with streamlined configuration and optimal performance.
