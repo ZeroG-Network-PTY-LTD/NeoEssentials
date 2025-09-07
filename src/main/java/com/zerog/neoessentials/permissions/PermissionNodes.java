@@ -288,16 +288,9 @@ public final class PermissionNodes {
     // NEOESSENTIALS FEATURES
     // ==============================
     
-    // Bossbar System
-    public static final String BOSSBAR_SHOW = "neoessentials.bossbar.show";
-    public static final String BOSSBAR_SHOW_OTHERS = "neoessentials.bossbar.show.others";
-    public static final String BOSSBAR_HIDE = "neoessentials.bossbar.hide";
-    public static final String BOSSBAR_BROADCAST = "neoessentials.bossbar.broadcast";
-    public static final String BOSSBAR_CREATE = "neoessentials.bossbar.create";
-    public static final String BOSSBAR_UPDATE = "neoessentials.bossbar.update";
-    public static final String BOSSBAR_DELETE = "neoessentials.bossbar.delete";
-    public static final String BOSSBAR_TEMPLATES = "neoessentials.bossbar.templates";
-    public static final String BOSSBAR_ALL = "neoessentials.bossbar.*";
+    // === REMOVED FEATURES ===
+    // Bossbar and Scoreboard systems have been completely removed
+    // These permission nodes are no longer used and will be cleaned up
     
     // Placeholder System
     public static final String PLACEHOLDER_TEST = "neoessentials.placeholder.test";
@@ -544,9 +537,7 @@ public final class PermissionNodes {
             KIT, KIT_LIST, KIT_PREVIEW,
             KIT_CREATE, KIT_DELETE, KIT_EDIT, KIT_GIVE, KIT_ALL,
             
-            // NeoEssentials Features
-            BOSSBAR_SHOW, BOSSBAR_SHOW_OTHERS, BOSSBAR_HIDE, BOSSBAR_BROADCAST,
-            BOSSBAR_CREATE, BOSSBAR_UPDATE, BOSSBAR_DELETE, BOSSBAR_TEMPLATES, BOSSBAR_ALL,
+            // NeoEssentials Features (bossbar system removed)
             PLACEHOLDER_TEST, PLACEHOLDER_LIST, PLACEHOLDER_INFO, PLACEHOLDER_RELOAD, PLACEHOLDER_ALL,
             GUI_OPEN, GUI_ADMIN, GUI_ALL,
             SECURITY_VIEW, SECURITY_ADMIN, SECURITY_ALERTS, SECURITY_ALL,

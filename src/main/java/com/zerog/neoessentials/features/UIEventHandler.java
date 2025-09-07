@@ -1,57 +1,37 @@
 package com.zerog.neoessentials.features;
 
-
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
-
 import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 
 public class UIEventHandler {
+    private final TabListManager tabListManager;
+    private final PlaceholderManager placeholderManager;
+
+    public UIEventHandler(TabListManager tabListManager, PlaceholderManager placeholderManager) {
+        this.tabListManager = tabListManager;
+        this.placeholderManager = placeholderManager;
+    }
+
     @SubscribeEvent
     public void onPermissionUpdate(com.zerog.neoessentials.features.PermissionUpdateEvent event) {
-        com.zerog.neoessentials.util.DebugUtil.debugLog("[UIEventHandler] DEBUG: onPermissionUpdate fired. TabListManager instance: " + tabListManager);
+        com.zerog.neoessentials.util.DebugUtil.debugLog("[UIEventHandler] Permission update event received");
         ServerPlayer player = event.getPlayer();
         com.zerog.neoessentials.util.DebugUtil.debugLog("[UIEventHandler] onPermissionUpdate called for " + player.getName().getString() + " (UUID: " + player.getUUID() + ")");
-        com.zerog.neoessentials.util.DebugUtil.debugLog("[NeoEssentials] PermissionUpdateEvent received for player " + player.getUUID() + ". Updating tablist for affected player only.");
+        
         if (player != null) {
-            tabListManager.updateTabList(java.util.Collections.singletonList(player)); // Only update for affected player
-            tabListManager.updateHeaderFooter(player, com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(player));
-            tabListManager.updatePlayerEntry(player);
-            scoreboardManager.updateScoreboard(player);
+            // Use new event-based update method instead of full refresh
+            tabListManager.onPermissionChange(player);
         }
-        String displayName = DisplayNameManager.getDisplayName(player);
-        bossBarManager.showBossBar(player, displayName, 1.0f, 0x00FF00);
-    }
-    private final TabListManager tabListManager;
-    private final ScoreboardManager scoreboardManager;
-    private final BossBarManager bossBarManager;
-
-    public UIEventHandler(TabListManager tabListManager, ScoreboardManager scoreboardManager, BossBarManager bossBarManager, PlaceholderManager placeholderManager) {
-    this.tabListManager = tabListManager;
-    this.scoreboardManager = scoreboardManager;
-    this.bossBarManager = bossBarManager;
     }
 
     @SubscribeEvent
     private void onPlayerJoin(PlayerLoggedInEvent event) {
-    ServerPlayer player = (ServerPlayer) event.getEntity();
-    String displayName = DisplayNameManager.getDisplayName(player);
-    tabListManager.updateHeaderFooter(player, displayName);
-    tabListManager.updatePlayerEntry(player);
-    if (player.getServer() != null) {
-        scoreboardManager.updateScoreboard(player);
-    }
-    bossBarManager.showBossBar(player, displayName, 1.0f, 0x00FF00);
+        ServerPlayer player = (ServerPlayer) event.getEntity();
+        // Use TabListManager's onPlayerJoin method which handles everything properly
+        tabListManager.onPlayerJoin(player);
     }
 
-    @SubscribeEvent
-    private void onScoreUpdate(ScoreboardUpdateEvent event) {
-    // ScoreboardManager no longer supports setPlayerScore; implement score logic if needed
-    }
-
-    @SubscribeEvent
-    private void onBossBarEvent(CustomBossBarEvent event) {
-        bossBarManager.showBossBar(event.getPlayer(), event.getTitle(), event.getProgress(), event.getColor());
-    }
+    // Scoreboard and bossbar event handlers removed - keeping only tablist functionality
 }

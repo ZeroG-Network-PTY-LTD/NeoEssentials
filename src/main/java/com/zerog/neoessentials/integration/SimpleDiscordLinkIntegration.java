@@ -8,7 +8,7 @@ import net.neoforged.neoforge.event.ServerChatEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import com.zerog.neoessentials.features.TabListManager;
-import com.zerog.neoessentials.features.ScoreboardManager;
+// ScoreboardManager import removed - scoreboard system no longer used
 import com.zerog.neoessentials.util.DebugUtil;
 
 import java.lang.reflect.Field;
@@ -356,16 +356,7 @@ public class SimpleDiscordLinkIntegration {
                 sendNeoEssentialsNotification("tablist_update", player, new HashMap<>());
             }
             
-            // Update scoreboard with Discord-aware formatting
-            ScoreboardManager scoreboardMgr = ScoreboardManager.getInstance();
-            if (scoreboardMgr != null) {
-                scoreboardMgr.updateScoreboard(player);
-                
-                // Send notification
-                Map<String, Object> data = new HashMap<>();
-                data.put("layout", "discord_enhanced");
-                sendNeoEssentialsNotification("scoreboard_update", player, data);
-            }
+            // Scoreboard system removed - keeping only tablist functionality
             
         } catch (Exception e) {
             DebugUtil.errorLog("[SimpleDiscordLinkIntegration] Error updating displays: " + e.getMessage());

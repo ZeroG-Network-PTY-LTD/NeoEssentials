@@ -1,10 +1,23 @@
 package com.zerog.neoessentials.config;
 
+import com.zerog.neoessentials.util.DebugUtil;
+import java.util.*;
+
 /**
  * Unified Display Configuration for Tablist, Scoreboard, and Bossbar
  * Supports multiline layouts with FTB integration
  */
 public class TablistConfig {
+    
+    /**
+     * Ensures all required defaults are initialized
+     * Call this after loading config from JSON to fix missing defaults
+     */
+    public void ensureDefaults() {
+        if (tablist != null) {
+            tablist.ensureDefaultLayouts();
+        }
+    }
 
     // Legacy fields for backward compatibility
     @Deprecated
@@ -49,7 +62,7 @@ public class TablistConfig {
      */
     public static class TablistSection {
         public boolean enabled = true;
-        public int updateInterval = 20;
+        public int updateInterval = 60; // Reduced frequency - only for animations now
         public String format = "{ftb_combined_prefix}[{team_name}] {player_name}{ftb_combined_suffix}";
         
         // New permission-based system
@@ -61,9 +74,54 @@ public class TablistConfig {
         public java.util.List<PlayerOrder> playerOrder = new java.util.ArrayList<>();
         
         public TablistSection() {
+            DebugUtil.debugLog("[TablistConfig] TablistSection constructor called!");
             // Initialize default permission sets
             initializeDefaultPermissionSets();
             initializeDefaultLayouts();
+            DebugUtil.debugLog("[TablistConfig] TablistSection constructor completed - layouts count: " + 
+                (layouts != null ? layouts.size() : "null"));
+        }
+        
+        /**
+         * Ensures required layouts exist after deserialization
+         * Called to fix configs loaded from JSON that bypass constructor
+         */
+        public void ensureDefaultLayouts() {
+            DebugUtil.debugLog("[TablistConfig] ensureDefaultLayouts() called");
+            if (layouts == null) {
+                layouts = new LinkedHashMap<>();
+                DebugUtil.debugLog("[TablistConfig] layouts was null, created new LinkedHashMap");
+            }
+            
+            if (permissionSets == null) {
+                permissionSets = new LinkedHashMap<>();
+                initializeDefaultPermissionSets();
+                DebugUtil.debugLog("[TablistConfig] permissionSets was null, initialized defaults");
+            }
+            
+            // Check if we have the required layouts, if not, create them
+            String[] requiredLayouts = {"default_layout", "vip_layout", "owner_layout", "admin_layout", 
+                                      "moderator_layout", "helper_layout", "member_layout", "verified_layout"};
+            
+            int createdCount = 0;
+            for (String layoutId : requiredLayouts) {
+                if (!layouts.containsKey(layoutId)) {
+                    switch (layoutId) {
+                        case "default_layout": layouts.put(layoutId, createDefaultLayout()); break;
+                        case "vip_layout": layouts.put(layoutId, createVipLayout()); break;
+                        case "owner_layout": layouts.put(layoutId, createOwnerLayout()); break;
+                        case "admin_layout": layouts.put(layoutId, createAdminLayout()); break;
+                        case "moderator_layout": layouts.put(layoutId, createModeratorLayout()); break;
+                        case "helper_layout": layouts.put(layoutId, createHelperLayout()); break;
+                        case "member_layout": layouts.put(layoutId, createMemberLayout()); break;
+                        case "verified_layout": layouts.put(layoutId, createVerifiedLayout()); break;
+                    }
+                    createdCount++;
+                }
+            }
+            
+            DebugUtil.debugLog("[TablistConfig] ensureDefaultLayouts() completed - created " + createdCount + 
+                               " missing layouts, total layouts: " + layouts.size());
         }
         
         private void initializeDefaultPermissionSets() {
@@ -78,8 +136,16 @@ public class TablistConfig {
         }
         
         private void initializeDefaultLayouts() {
+            DebugUtil.debugLog("[TablistConfig] initializeDefaultLayouts() called");
             layouts.put("default_layout", createDefaultLayout());
             layouts.put("vip_layout", createVipLayout());
+            layouts.put("owner_layout", createOwnerLayout());
+            layouts.put("admin_layout", createAdminLayout());
+            layouts.put("moderator_layout", createModeratorLayout());
+            layouts.put("helper_layout", createHelperLayout());
+            layouts.put("member_layout", createMemberLayout());
+            layouts.put("verified_layout", createVerifiedLayout());
+            DebugUtil.debugLog("[TablistConfig] initializeDefaultLayouts() completed - created " + layouts.size() + " layouts");
         }
         
         private Layout createDefaultLayout() {
@@ -133,6 +199,212 @@ public class TablistConfig {
                 "",
                 "&f⏰ &7Current Time: &f{datetime}",
                 "&d&l════════════════════════════════════════════════"
+            );
+            return layout;
+        }
+        
+        private Layout createOwnerLayout() {
+            Layout layout = new Layout();
+            layout.priority = 1000;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.owner";
+            layout.header = java.util.Arrays.asList(
+                "&4&l════════════════════════════════════════",
+                "&4&l║              &f&lOWNER PANEL              &4&l║",
+                "&4&l║            &e&lNEOESSENTIALS SERVER            &4&l║",
+                "&4&l════════════════════════════════════════",
+                "",
+                "&f👑 &7Owner: &4&l{player_name} &c[OWNER]",
+                "&f👑 &7Rank: &e{ftb_rank_display_name} &7| &bTeam: &3{ftb_team_display_name}",
+                "&f❤️ &7Health: &c{player_health}&7/&c{player_max_health} &7| &f🍖 Food: &6{player_food}",
+                "&f📍 &7Location: &a{player_x}&7, &a{player_y}&7, &a{player_z} &7in &e{player_world}",
+                "&f⚡ &7Ping: &{ping_colored}{player_ping}ms &7| &fLevel: &a{player_level}",
+                "",
+                "&f🔧 &7Server Management:",
+                "&f├─ &7Players Online: &a{server_players}&7/&a{server_max_players}",
+                "&f├─ &7Server TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}",
+                "&f└─ &7Memory Usage: &b{server_memory_percent}%"
+            );
+            layout.footer = java.util.Arrays.asList(
+                "&4&l════════════════════════════════════════",
+                "&f🎖️ &4&lOWNER PRIVILEGES &7&m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+                "&f├─ &7Full Server Access",
+                "&f├─ &7All Commands Available",
+                "&f└─ &7Server Management Tools",
+                "",
+                "&f⏰ &7Current Time: &f{datetime}",
+                "&4&l════════════════════════════════════════"
+            );
+            return layout;
+        }
+        
+        private Layout createAdminLayout() {
+            Layout layout = new Layout();
+            layout.priority = 900;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.admin";
+            layout.header = java.util.Arrays.asList(
+                "&c&l════════════════════════════════════════",
+                "&c&l║              &f&lADMIN PANEL              &c&l║",
+                "&c&l║            &e&lNEOESSENTIALS SERVER            &c&l║",
+                "&c&l════════════════════════════════════════",
+                "",
+                "&f⚔️ &7Admin: &c&l{player_name} &c[ADMIN]",
+                "&f⚔️ &7Rank: &e{ftb_rank_display_name} &7| &bTeam: &3{ftb_team_display_name}",
+                "&f❤️ &7Health: &c{player_health}&7/&c{player_max_health} &7| &f🍖 Food: &6{player_food}",
+                "&f📍 &7Location: &a{player_x}&7, &a{player_y}&7, &a{player_z} &7in &e{player_world}",
+                "&f⚡ &7Ping: &{ping_colored}{player_ping}ms &7| &fLevel: &a{player_level}",
+                "",
+                "&f🛡️ &7Admin Tools:",
+                "&f├─ &7Players Online: &a{server_players}&7/&a{server_max_players}",
+                "&f├─ &7Server TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}",
+                "&f└─ &7Uptime: &a{server_uptime}"
+            );
+            layout.footer = java.util.Arrays.asList(
+                "&c&l════════════════════════════════════════",
+                "&f🔧 &c&lADMIN TOOLS &7&m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+                "&f├─ &7Admin Commands: &c/admin",
+                "&f├─ &7Player Management: &c/kick /ban",
+                "&f└─ &7Server Control: &c/stop /restart",
+                "",
+                "&f⏰ &7Current Time: &f{datetime}",
+                "&c&l════════════════════════════════════════"
+            );
+            return layout;
+        }
+        
+        private Layout createModeratorLayout() {
+            Layout layout = new Layout();
+            layout.priority = 800;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.moderator";
+            layout.header = java.util.Arrays.asList(
+                "&6&l════════════════════════════════════════",
+                "&6&l║            &f&lMODERATOR PANEL            &6&l║",
+                "&6&l║            &e&lNEOESSENTIALS SERVER            &6&l║",
+                "&6&l════════════════════════════════════════",
+                "",
+                "&f🛡️ &7Moderator: &6&l{player_name} &6[MOD]",
+                "&f🛡️ &7Rank: &e{ftb_rank_display_name} &7| &bTeam: &3{ftb_team_display_name}",
+                "&f❤️ &7Health: &c{player_health}&7/&c{player_max_health} &7| &f🍖 Food: &6{player_food}",
+                "&f📍 &7Location: &a{player_x}&7, &a{player_y}&7, &a{player_z} &7in &e{player_world}",
+                "&f⚡ &7Ping: &{ping_colored}{player_ping}ms &7| &fLevel: &a{player_level}",
+                "",
+                "&f👮 &7Mod Powers:",
+                "&f├─ &7Players Online: &a{server_players}&7/&a{server_max_players}",
+                "&f└─ &7Server TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}"
+            );
+            layout.footer = java.util.Arrays.asList(
+                "&6&l════════════════════════════════════════",
+                "&f⚡ &6&lMODERATOR TOOLS &7&m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+                "&f├─ &7Player Moderation: &6/warn /mute",
+                "&f├─ &7Chat Management: &6/clearchat",
+                "&f└─ &7Player Help: &6/tp /heal",
+                "",
+                "&f⏰ &7Current Time: &f{datetime}",
+                "&6&l════════════════════════════════════════"
+            );
+            return layout;
+        }
+        
+        private Layout createHelperLayout() {
+            Layout layout = new Layout();
+            layout.priority = 700;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.helper";
+            layout.header = java.util.Arrays.asList(
+                "&b&l════════════════════════════════════════",
+                "&b&l║             &f&lHELPER PANEL             &b&l║",
+                "&b&l║            &e&lNEOESSENTIALS SERVER            &b&l║",
+                "&b&l════════════════════════════════════════",
+                "",
+                "&f🤝 &7Helper: &b&l{player_name} &b[HELPER]",
+                "&f🤝 &7Rank: &e{ftb_rank_display_name} &7| &bTeam: &3{ftb_team_display_name}",
+                "&f❤️ &7Health: &c{player_health}&7/&c{player_max_health} &7| &f🍖 Food: &6{player_food}",
+                "&f📍 &7Location: &a{player_x}&7, &a{player_y}&7, &a{player_z} &7in &e{player_world}",
+                "&f⚡ &7Ping: &{ping_colored}{player_ping}ms &7| &fLevel: &a{player_level}",
+                "",
+                "&f💡 &7Helper Status:",
+                "&f├─ &7Players Online: &a{server_players}&7/&a{server_max_players}",
+                "&f└─ &7Server TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}"
+            );
+            layout.footer = java.util.Arrays.asList(
+                "&b&l════════════════════════════════════════",
+                "&f🆘 &b&lHELPER TOOLS &7&m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+                "&f├─ &7Player Assistance: &b/help /guide",
+                "&f├─ &7Basic Commands: &b/tp /spawn",
+                "&f└─ &7Support Tools: &b/ticket",
+                "",
+                "&f⏰ &7Current Time: &f{datetime}",
+                "&b&l════════════════════════════════════════"
+            );
+            return layout;
+        }
+        
+        private Layout createMemberLayout() {
+            Layout layout = new Layout();
+            layout.priority = 500;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.member";
+            layout.header = java.util.Arrays.asList(
+                "&a&l════════════════════════════════════════",
+                "&a&l║             &f&lMEMBER PANEL             &a&l║",
+                "&a&l║            &e&lNEOESSENTIALS SERVER            &a&l║",
+                "&a&l════════════════════════════════════════",
+                "",
+                "&f🎖️ &7Member: &a&l{player_name} &a[MEMBER]",
+                "&f🎖️ &7Rank: &e{ftb_rank_display_name} &7| &bTeam: &3{ftb_team_display_name}",
+                "&f❤️ &7Health: &c{player_health}&7/&c{player_max_health} &7| &f🍖 Food: &6{player_food}",
+                "&f📍 &7Location: &a{player_x}&7, &a{player_y}&7, &a{player_z} &7in &e{player_world}",
+                "&f⚡ &7Ping: &{ping_colored}{player_ping}ms &7| &fLevel: &a{player_level}",
+                "",
+                "&f🌟 &7Member Benefits:",
+                "&f├─ &7Players Online: &a{server_players}&7/&a{server_max_players}",
+                "&f└─ &7Server TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}"
+            );
+            layout.footer = java.util.Arrays.asList(
+                "&a&l════════════════════════════════════════",
+                "&f🏡 &a&lMEMBER PERKS &7&m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+                "&f├─ &7Home Commands: &a/home /sethome",
+                "&f├─ &7Member Kit: &a/kit member",
+                "&f└─ &7Member Chat: &a/mc",
+                "",
+                "&f⏰ &7Current Time: &f{datetime}",
+                "&a&l════════════════════════════════════════"
+            );
+            return layout;
+        }
+        
+        private Layout createVerifiedLayout() {
+            Layout layout = new Layout();
+            layout.priority = 400;
+            layout.conditionType = "permission";
+            layout.condition = "neoessentials.tablist.verified";
+            layout.header = java.util.Arrays.asList(
+                "&7&l════════════════════════════════════════",
+                "&7&l║            &f&lVERIFIED PANEL            &7&l║",
+                "&7&l║            &e&lNEOESSENTIALS SERVER            &7&l║",
+                "&7&l════════════════════════════════════════",
+                "",
+                "&f✅ &7Verified: &7&l{player_name} &7[VERIFIED]",
+                "&f✅ &7Rank: &e{ftb_rank_display_name} &7| &bTeam: &3{ftb_team_display_name}",
+                "&f❤️ &7Health: &c{player_health}&7/&c{player_max_health} &7| &f🍖 Food: &6{player_food}",
+                "&f📍 &7Location: &a{player_x}&7, &a{player_y}&7, &a{player_z} &7in &e{player_world}",
+                "&f⚡ &7Ping: &{ping_colored}{player_ping}ms &7| &fLevel: &a{player_level}",
+                "",
+                "&f🔐 &7Verified Status:",
+                "&f├─ &7Players Online: &a{server_players}&7/&a{server_max_players}",
+                "&f└─ &7Server TPS: &{server_tps > 18 ? '&a' : server_tps > 15 ? '&e' : '&c'}{server_tps}"
+            );
+            layout.footer = java.util.Arrays.asList(
+                "&7&l════════════════════════════════════════",
+                "&f🔒 &7&lVERIFIED ACCESS &7&m▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+                "&f├─ &7Basic Commands: &7/spawn /warp",
+                "&f├─ &7Chat Access: &7Global Chat",
+                "&f└─ &7Build Permission: &7Protected Areas",
+                "",
+                "&f⏰ &7Current Time: &f{datetime}",
+                "&7&l════════════════════════════════════════"
             );
             return layout;
         }
@@ -199,12 +471,14 @@ public class TablistConfig {
      */
     public static class PermissionSetIntegration {
         public boolean enabled = true;
-        public int updateInterval = 20;
+        public int updateInterval = 300; // Much longer - only for cleanup/validation
         public boolean syncWithDiscord = true;
         public boolean syncWithFTB = true;
         public boolean priorityBasedSelection = true;
         public boolean fallbackToDefault = true;
         public boolean debugMode = false;
+        public boolean eventDrivenUpdates = true; // New: prefer event-based updates
+        public boolean animationUpdatesOnly = true; // New: only animate specific placeholders
     }
 
     /**

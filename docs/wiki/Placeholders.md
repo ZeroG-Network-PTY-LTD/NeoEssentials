@@ -180,6 +180,66 @@ broadcast: "%color_yellow%[%time%] %color_white%Server has %server_players% play
 status: "Health: %player_health% | Level: %player_level% | Time: %time%"
 ```
 
+## 🔀 Conditional Placeholders
+
+NeoEssentials supports conditional placeholders that allow you to display different content based on conditions. This is particularly useful for integrating with optional plugins like FTB Teams/Ranks.
+
+### Syntax
+```
+{condition: CONDITION, value: 'TRUE_VALUE', else: 'FALSE_VALUE'}
+```
+
+### Basic Conditions
+
+**is Condition:**
+Check if a placeholder has a value or if a feature is active:
+```json
+{condition: is FTB_Active, value: 'FTB is enabled!', else: 'FTB not available'}
+```
+
+**Comparison Conditions:**
+```json
+{condition: {server_players} > 10, value: 'Busy server!', else: 'Quiet server'}
+{condition: {player_health} == 20, value: 'Full health!', else: 'Injured'}
+```
+
+### Real-World Examples
+
+**Tablist Integration:**
+```json
+"header": [
+  "Welcome {player_name}!",
+  "Rank: {condition: is FTB_Active, value: '{ftb_rank_display_name} | Team: {ftb_team_display_name}', else: '{neoessentials_rank}'}",
+  "Health: {player_health}/20"
+]
+```
+
+**Chat Formats:**
+```json
+"{condition: is FTB_Active, value: '{ftb_combined_prefix}', else: '[{neoessentials_rank}]'} {player_name}: {message}"
+```
+
+**Status Display:**
+```json
+"{condition: {player_health} > 15, value: '💚 Healthy', else: {player_health} > 10 ? '💛 Hurt' : '❤️ Critical'}"
+```
+
+### Available Status Placeholders
+
+| Placeholder | Description | Values |
+|-------------|-------------|---------|
+| `FTB_Active` | FTB Teams/Ranks status | `true`/`false` |
+| `ftb_has_team` | Player has FTB team | `true`/`false` |
+| `ftb_has_rank` | Player has FTB rank | `true`/`false` |
+
+### Nesting Support
+
+Conditionals can contain regular placeholders, and the selected value will be processed for additional placeholders:
+
+```json
+{condition: is FTB_Active, value: 'Team {ftb_team_display_name} has {ftb_team_members} members', else: 'No team data available'}
+```
+
 ## 🔍 Troubleshooting
 
 ### Common Issues

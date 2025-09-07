@@ -190,14 +190,11 @@ public class FeatureManager {
         managers.put("shops", shopManager);
         
         // Tablist and UI features (using HeaderFooterManager for tablist functionality)
-        com.zerog.neoessentials.tablist.HeaderFooterManager headerFooterManager = 
-            new com.zerog.neoessentials.tablist.HeaderFooterManager();
+        com.zerog.neoessentials.features.TabListManager headerFooterManager = 
+            new com.zerog.neoessentials.features.TabListManager();
         managers.put("headerFooter", headerFooterManager);
         
-        // Bossbar system
-        com.zerog.neoessentials.features.CustomBossbarManager bossbarManager = 
-            com.zerog.neoessentials.features.CustomBossbarManager.getInstance();
-        managers.put("bossbar", bossbarManager);
+        // Bossbar system removed - keeping only tablist functionality
         
         // Web dashboard
         WebDashboardManager webDashboardManager = WebDashboardManager.getInstance();

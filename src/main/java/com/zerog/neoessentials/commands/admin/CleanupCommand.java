@@ -23,6 +23,7 @@ import java.text.DecimalFormat;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
@@ -56,6 +57,7 @@ public class CleanupCommand {
     
     // Background cleanup scheduler
     private static ScheduledExecutorService cleanupScheduler;
+    private static ScheduledFuture<?> cleanupTask;
     private static boolean autoCleanupEnabled = false;
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -104,7 +106,9 @@ public class CleanupCommand {
                 .then(Commands.literal("teams")
                     .executes(CleanupCommand::cleanupTeams))
                 .then(Commands.literal("objectives")
-                    .executes(CleanupCommand::cleanupObjectives)))
+                    .executes(CleanupCommand::cleanupObjectives))
+                .then(Commands.literal("placeholders")
+                    .executes(CleanupCommand::cleanupPlaceholderObjectives)))
             
             // Auto-cleanup and scheduling
             .then(Commands.literal("auto")
@@ -172,7 +176,7 @@ public class CleanupCommand {
                         result.combine(performPlayerDataCleanup(force ? 30 : 90));
                         
                         // Scoreboard cleanup
-                        result.combine(performScoreboardCleanup());
+                        result.combine(performScoreboardCleanup(source.getServer()));
                         
                         long duration = System.currentTimeMillis() - startTime;
                         totalCleanupsPerformed.incrementAndGet();
@@ -438,7 +442,7 @@ public class CleanupCommand {
             (source) -> {
                 ServerPlayer player = source.getPlayer();
                 
-                CleanupResult result = performScoreboardCleanup();
+                CleanupResult result = performScoreboardCleanup(source.getServer());
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
                     "neoessentials.cleanup.scoreboard.completed",
@@ -448,7 +452,7 @@ public class CleanupCommand {
             }
         );
     }
-    
+
     private static int cleanupTeams(CommandContext<CommandSourceStack> context) {
         return ErrorHandlingIntegration.executeWithPermission(
             context.getSource(),
@@ -457,7 +461,7 @@ public class CleanupCommand {
             (source) -> {
                 ServerPlayer player = source.getPlayer();
                 
-                CleanupResult result = performTeamsCleanup();
+                CleanupResult result = performTeamsCleanup(source.getServer());
                 
                 source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
                     "neoessentials.cleanup.teams.completed",
@@ -467,7 +471,7 @@ public class CleanupCommand {
             }
         );
     }
-    
+
     private static int cleanupObjectives(CommandContext<CommandSourceStack> context) {
         return ErrorHandlingIntegration.executeWithPermission(
             context.getSource(),
@@ -476,10 +480,29 @@ public class CleanupCommand {
             (source) -> {
                 ServerPlayer player = source.getPlayer();
                 
-                CleanupResult result = performObjectivesCleanup();
-                
-                source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
+                CleanupResult result = performObjectivesCleanup(source.getServer());                source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
                     "neoessentials.cleanup.objectives.completed",
+                    FORMAT.format(result.itemsCleaned))), false);
+                
+                return 1;
+            }
+        );
+    }
+    
+    /**
+     * Clean up placeholder-based scoreboard objectives
+     */
+    private static int cleanupPlaceholderObjectives(CommandContext<CommandSourceStack> context) {
+        return ErrorHandlingIntegration.executeWithPermission(
+            context.getSource(),
+            "cleanup placeholder objectives",
+            "neoessentials.admin.cleanup.scoreboard",
+            (source) -> {
+                ServerPlayer player = source.getPlayer();
+                
+                CleanupResult result = performPlaceholderObjectivesCleanup(source.getServer());
+                source.sendSuccess(() -> Component.literal(getLocalizedMessage(player, 
+                    "neoessentials.cleanup.placeholders.completed",
                     FORMAT.format(result.itemsCleaned))), false);
                 
                 return 1;
@@ -648,6 +671,7 @@ public class CleanupCommand {
                 source.sendSuccess(() -> Component.literal("§e/cleanup files§7 - Clean temporary files"), false);
                 source.sendSuccess(() -> Component.literal("§e/cleanup data [inactive <days>]§7 - Player data cleanup"), false);
                 source.sendSuccess(() -> Component.literal("§e/cleanup scoreboard§7 - Clean scoreboards/teams"), false);
+                source.sendSuccess(() -> Component.literal("§e/cleanup scoreboard placeholders§7 - Remove placeholder objectives"), false);
                 source.sendSuccess(() -> Component.literal("§e/cleanup auto enable [interval]§7 - Enable auto-cleanup"), false);
                 source.sendSuccess(() -> Component.literal("§e/cleanup stats§7 - View cleanup statistics"), false);
                 source.sendSuccess(() -> Component.literal("§e/cleanup analyze§7 - System health analysis"), false);
@@ -890,21 +914,45 @@ public class CleanupCommand {
         return result;
     }
     
-    private static CleanupResult performScoreboardCleanup() {
-        CleanupResult result = new CleanupResult();
-        
-        result.combine(performTeamsCleanup());
-        result.combine(performObjectivesCleanup());
-        
-        return result;
-    }
-    
-    private static CleanupResult performTeamsCleanup() {
+    private static CleanupResult performScoreboardCleanup(net.minecraft.server.MinecraftServer server) {
         CleanupResult result = new CleanupResult();
         
         try {
-            // Skip server-dependent cleanup for now - would need proper server access
-            LOGGER.info("Teams cleanup skipped - requires server context implementation");
+            // Use our comprehensive ScoreboardCleanupUtil
+            com.zerog.neoessentials.util.ScoreboardCleanupUtil.cleanupAll(server);
+            
+            // For tracking purposes, estimate cleanup items
+            result.itemsCleaned = 1; // We cleaned up scoreboard/bossbar systems
+            LOGGER.info("Scoreboard and bossbar cleanup completed successfully");
+            
+        } catch (Exception e) {
+            LOGGER.error("Error during scoreboard cleanup", e);
+        }
+        
+        return result;
+    }
+
+    private static CleanupResult performTeamsCleanup(net.minecraft.server.MinecraftServer server) {
+        CleanupResult result = new CleanupResult();
+        
+        try {
+            var scoreboard = server.getScoreboard();
+            int removedTeams = 0;
+            
+            // Remove teams with NeoEssentials prefixes
+            var teams = new java.util.ArrayList<>(scoreboard.getPlayerTeams());
+            for (var team : teams) {
+                String teamName = team.getName().toLowerCase();
+                if (teamName.startsWith("neoessentials") || teamName.startsWith("ne_") || 
+                    teamName.startsWith("neo_") || teamName.startsWith("essentials_")) {
+                    scoreboard.removePlayerTeam(team);
+                    removedTeams++;
+                    LOGGER.debug("Removed team: {}", team.getName());
+                }
+            }
+            
+            result.itemsCleaned = removedTeams;
+            LOGGER.info("Teams cleanup completed: {} teams removed", removedTeams);
             
         } catch (Exception e) {
             LOGGER.error("Error during teams cleanup", e);
@@ -912,16 +960,82 @@ public class CleanupCommand {
         
         return result;
     }
-    
-    private static CleanupResult performObjectivesCleanup() {
+
+    private static CleanupResult performObjectivesCleanup(net.minecraft.server.MinecraftServer server) {
         CleanupResult result = new CleanupResult();
         
         try {
-            // Skip server-dependent cleanup for now - would need proper server access
-            LOGGER.info("Objectives cleanup skipped - requires server context implementation");
+            var scoreboard = server.getScoreboard();
+            int removedObjectives = 0;
+            
+            // Remove objectives with NeoEssentials prefixes or conditional placeholders
+            var objectives = new java.util.ArrayList<>(scoreboard.getObjectives());
+            for (var objective : objectives) {
+                String objectiveName = objective.getName();
+                String lowerName = objectiveName.toLowerCase();
+                
+                // Check for NeoEssentials prefixes
+                boolean shouldRemove = lowerName.startsWith("neoessentials") || lowerName.startsWith("ne_") || 
+                    lowerName.startsWith("neo_") || lowerName.startsWith("essentials_") ||
+                    lowerName.startsWith("neoess_sidebar_");
+                
+                // Check for conditional placeholder patterns that might be from NeoEssentials
+                if (!shouldRemove && (objectiveName.contains("%if:") || objectiveName.contains("Admin Board") || 
+                    objectiveName.contains("Top Players") || objectiveName.startsWith("[%"))) {
+                    shouldRemove = true;
+                }
+                
+                if (shouldRemove) {
+                    scoreboard.removeObjective(objective);
+                    removedObjectives++;
+                    LOGGER.debug("Removed objective: {}", objective.getName());
+                }
+            }
+            
+            result.itemsCleaned = removedObjectives;
+            LOGGER.info("Objectives cleanup completed: {} objectives removed", removedObjectives);
             
         } catch (Exception e) {
             LOGGER.error("Error during objectives cleanup", e);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Remove only objectives that contain placeholder/conditional syntax
+     */
+    private static CleanupResult performPlaceholderObjectivesCleanup(net.minecraft.server.MinecraftServer server) {
+        CleanupResult result = new CleanupResult();
+        
+        try {
+            var scoreboard = server.getScoreboard();
+            int removedObjectives = 0;
+            
+            // Remove objectives that contain placeholder/conditional syntax
+            var objectives = new java.util.ArrayList<>(scoreboard.getObjectives());
+            for (var objective : objectives) {
+                String objectiveName = objective.getName();
+                
+                // Check specifically for conditional placeholder patterns
+                boolean isPlaceholderObjective = objectiveName.contains("%if:") || 
+                    objectiveName.contains("%") ||
+                    objectiveName.startsWith("[%") ||
+                    objectiveName.contains("Admin Board") || 
+                    objectiveName.contains("Top Players");
+                
+                if (isPlaceholderObjective) {
+                    scoreboard.removeObjective(objective);
+                    removedObjectives++;
+                    LOGGER.info("Removed placeholder objective: {}", objective.getName());
+                }
+            }
+            
+            result.itemsCleaned = removedObjectives;
+            LOGGER.info("Placeholder objectives cleanup completed: {} objectives removed", removedObjectives);
+            
+        } catch (Exception e) {
+            LOGGER.error("Error during placeholder objectives cleanup", e);
         }
         
         return result;
@@ -974,40 +1088,55 @@ public class CleanupCommand {
     }
     
     private static void enableAutoCleanup(int intervalMinutes) {
-        if (cleanupScheduler != null) {
-            disableAutoCleanup(); // Cancel existing task
-            
-            cleanupScheduler.scheduleAtFixedRate(() -> {
-                try {
-                    LOGGER.info("Running scheduled cleanup...");
-                    
-                    CleanupResult result = new CleanupResult();
-                    result.combine(performMemoryCleanup(false));
-                    result.combine(performCacheCleanup(true));
-                    result.combine(performTempFileCleanup());
-                    
-                    totalCleanupsPerformed.incrementAndGet();
-                    totalBytesFreed.add(result.bytesFreed);
-                    totalItemsCleaned.add(result.itemsCleaned);
-                    
-                    LOGGER.info("Scheduled cleanup completed: {} items cleaned, {:.2f} MB freed", 
-                        result.itemsCleaned, result.bytesFreed / 1024.0 / 1024.0);
-                        
-                } catch (Exception e) {
-                    LOGGER.error("Error during scheduled cleanup", e);
-                }
-            }, intervalMinutes, intervalMinutes, TimeUnit.MINUTES);
-            
-            autoCleanupEnabled = true;
-            LOGGER.info("Auto-cleanup enabled with {} minute interval", intervalMinutes);
+        // Always ensure we have a valid scheduler
+        if (cleanupScheduler == null || cleanupScheduler.isShutdown() || cleanupScheduler.isTerminated()) {
+            initializeCleanupScheduler();
         }
+        
+        // Cancel any existing task
+        if (cleanupTask != null && !cleanupTask.isCancelled()) {
+            cleanupTask.cancel(false);
+            LOGGER.info("Cancelled existing auto-cleanup schedule");
+        }
+        
+        // Schedule the new cleanup task and store the reference
+        cleanupTask = cleanupScheduler.scheduleAtFixedRate(() -> {
+            try {
+                LOGGER.info("Running scheduled cleanup...");
+                
+                CleanupResult result = new CleanupResult();
+                result.combine(performMemoryCleanup(false));
+                result.combine(performCacheCleanup(true));
+                result.combine(performTempFileCleanup());
+                
+                totalCleanupsPerformed.incrementAndGet();
+                totalBytesFreed.add(result.bytesFreed);
+                totalItemsCleaned.add(result.itemsCleaned);
+                
+                LOGGER.info("Scheduled cleanup completed: {} items cleaned, {:.2f} MB freed", 
+                    result.itemsCleaned, result.bytesFreed / 1024.0 / 1024.0);
+                    
+            } catch (Exception e) {
+                LOGGER.error("Error during scheduled cleanup", e);
+            }
+        }, intervalMinutes, intervalMinutes, TimeUnit.MINUTES);
+        
+        autoCleanupEnabled = true;
+        LOGGER.info("Auto-cleanup enabled with {} minute interval", intervalMinutes);
     }
     
     private static void disableAutoCleanup() {
-        if (cleanupScheduler != null && !cleanupScheduler.isShutdown()) {
-            cleanupScheduler.shutdownNow();
-            initializeCleanupScheduler(); // Reinitialize for future use
+        // Cancel the existing scheduled task if it exists
+        if (cleanupTask != null && !cleanupTask.isCancelled()) {
+            cleanupTask.cancel(false);
+            cleanupTask = null;
         }
+        
+        // Ensure we have a valid scheduler for future use
+        if (cleanupScheduler == null || cleanupScheduler.isShutdown()) {
+            initializeCleanupScheduler();
+        }
+        
         autoCleanupEnabled = false;
         LOGGER.info("Auto-cleanup disabled");
     }
@@ -1016,6 +1145,13 @@ public class CleanupCommand {
      * Shutdown cleanup scheduler
      */
     public static void shutdown() {
+        // Cancel any active cleanup task
+        if (cleanupTask != null && !cleanupTask.isCancelled()) {
+            cleanupTask.cancel(true);
+            cleanupTask = null;
+        }
+        
+        // Shutdown the scheduler
         if (cleanupScheduler != null && !cleanupScheduler.isShutdown()) {
             cleanupScheduler.shutdown();
             try {
@@ -1026,7 +1162,9 @@ public class CleanupCommand {
                 cleanupScheduler.shutdownNow();
                 Thread.currentThread().interrupt();
             }
+            cleanupScheduler = null;
         }
+        autoCleanupEnabled = false;
     }
     
     /**

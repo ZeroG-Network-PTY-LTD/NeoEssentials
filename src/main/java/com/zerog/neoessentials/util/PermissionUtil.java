@@ -164,8 +164,7 @@ public class PermissionUtil {
         
         // NeoEssentials permissions - basic user permissions
         if (permission.startsWith("neoessentials.")) {
-            if (permission.equals(PermissionNodes.BOSSBAR_SHOW) ||
-                permission.equals(PermissionNodes.PLACEHOLDER_TEST) ||
+            if (permission.equals(PermissionNodes.PLACEHOLDER_TEST) ||
                 permission.equals(PermissionNodes.GUI_OPEN) ||
                 permission.equals(PermissionNodes.PLAYTIME_VIEW) ||
                 permission.equals(PermissionNodes.ACHIEVEMENTS_VIEW) ||

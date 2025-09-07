@@ -217,7 +217,7 @@ public class MessagingManager {
             MessageUtil.sendTranslatedMessage(sender, "no.permission");
             return;
         }
-        broadcastToAll(Component.translatable("broadcast.received", message).getString());
+        broadcastToAll(LanguageManager.getInstance().getMessage("en_us", "broadcast.received", message));
         LOGGER.info("Broadcast by {}: {}", sender.getName().getString(), message);
     }
     

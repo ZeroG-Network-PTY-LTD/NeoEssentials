@@ -360,10 +360,6 @@
   "neoessentials.jail.cannot.break": "&cYou cannot break blocks while jailed!",
   "neoessentials.jail.cannot.place": "&cYou cannot place blocks while jailed!",
   
-  "neoessentials.moderation.jail.disabled": "&cJail system is disabled",
-  "neoessentials.moderation.jail.no_permission": "&cYou don't have permission to jail players",
-  "neoessentials.moderation.jail.already_jailed": "&c{0} is already jailed",
-  
   "neoessentials.pm.format.socialspy": "&7[Spy] {0} -> {1}: {2}",
   
   "neoessentials.teleport.no_pending_requests": "&cYou have no pending teleport requests",
@@ -395,5 +391,27 @@
   "neoessentials.compat.refresh.success": "&aCompatibility refresh completed",
   "neoessentials.compat.report.header": "&bCompatibility Report:",
   "neoessentials.compat.report.total": "&7Total plugins: {0}",
-  "neoessentials.compat.report.integrated": "&7Integrated plugins: {0}"
+  "neoessentials.compat.report.integrated": "&7Integrated plugins: {0}",
+  
+  "neoessentials.home.set": "&aHome '{0}' has been set!",
+  "neoessentials.home.updated": "&aHome '{0}' has been updated!",
+  "neoessentials.home.not_found": "&cHome '{0}' not found!",
+  "neoessentials.home.deleted": "&aHome '{0}' has been deleted!",
+  "neoessentials.home.disabled": "&cHome system is disabled!",
+  "neoessentials.home.invalid_name": "&cInvalid home name: {0}",
+  "neoessentials.home.max_homes_reached": "&cYou have reached the maximum number of homes ({0})!",
+  "neoessentials.home.warmup": "&aTeleporting in {0} seconds...",
+  "neoessentials.home.list_none": "&cYou have no homes set.",
+  "neoessentials.home.list_header": "&aYour homes ({0}/{1}):",
+  "neoessentials.home.list_entry": "&7- {0}",
+  "neoessentials.home.insufficient_funds": "&cYou don't have enough money! Required: {0}",
+  "neoessentials.home.restricted_world": "&cYou cannot set homes in this world!",
+  "neoessentials.home.unsafe_location": "&cThis location is not safe for teleportation!",
+  "neoessentials.home.cooldown_active": "&cYou must wait {0} before using home teleportation again!",
+  "neoessentials.home.teleporting_named": "&aTeleporting to home '{0}'...",
+  "neoessentials.home.teleport": "&aTeleported to your home '{0}'",
+  "neoessentials.home.limit_reached": "&cYou have reached the maximum number of homes ({0})",
+  "neoessentials.home.failed": "&cTeleportation failed! Please try again.",
+  "neoessentials.home.target_world_not_found": "&cTarget world not found!",
+  "neoessentials.home.delete_success": "&aHome '{0}' has been deleted!"
 }

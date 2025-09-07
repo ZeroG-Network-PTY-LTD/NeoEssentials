@@ -4,6 +4,7 @@ import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.config.MainConfig;
 // import removed: KitConfig is now centralized in MainConfig
 import com.zerog.neoessentials.storage.PlayerDataManager;
+import com.zerog.neoessentials.localization.LanguageManager;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.*;
@@ -44,13 +45,15 @@ public class KitManager {
     public boolean giveKit(ServerPlayer player, String kitName) {
         boolean kitModuleEnabled = configManager.getMainConfig().modules.kits;
         if (!kitModuleEnabled) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.kit.disabled"));
+            String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.disabled");
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
             return false;
         }
         // Since kits are no longer defined in config, this is a stub for kit logic.
         // You must implement kit lookup and definition elsewhere (e.g., KitRegistry, external file, etc.)
         // For now, just send a not found message.
-        player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.kit.not_found", kitName));
+        String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.not_found", kitName);
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
         return false;
     }
     
@@ -108,7 +111,8 @@ public class KitManager {
         }
         if (giveKit(player, kitSettings.firstJoinKit)) {
             playerDataManager.setSetting(player.getUUID(), "received_first_join_kit", true);
-            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.kit.first_join", kitSettings.firstJoinKit));
+            String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.first_join", kitSettings.firstJoinKit);
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
         }
     }
     

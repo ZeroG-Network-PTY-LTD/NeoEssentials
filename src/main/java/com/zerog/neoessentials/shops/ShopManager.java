@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.shops;
 
 import com.zerog.neoessentials.web.WebDashboardManager;
+import com.zerog.neoessentials.localization.LanguageManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -114,7 +115,12 @@ public class ShopManager {
         // Find a nearby chest for the shop
         BlockPos chestPos = findNearbyChest(player.level(), signPos);
         if (chestPos == null) {
-            player.sendSystemMessage(Component.translatable("neoessentials.shop.no_chest_near_sign"));
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                String message = LanguageManager.getInstance().getMessage(serverPlayer, "neoessentials.shop.no_chest_near_sign");
+                player.sendSystemMessage(Component.literal(message));
+            } else {
+                player.sendSystemMessage(Component.literal("No chest found near sign"));
+            }
             return false;
         }
         

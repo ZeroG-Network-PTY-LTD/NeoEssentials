@@ -2,8 +2,7 @@ package com.zerog.neoessentials.listeners;
 
 import com.zerog.neoessentials.permissions.CustomPermissionsManager;
 import com.zerog.neoessentials.placeholders.PlaceholderManager;
-import com.zerog.neoessentials.player.PlayerData;
-import com.zerog.neoessentials.player.PlayerDataManager;
+import com.zerog.neoessentials.storage.PlayerDataManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -29,11 +28,12 @@ public class PermissionEventListener {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         try {
             UUID playerUUID = player.getUUID();
-            com.zerog.neoessentials.util.DebugUtil.infoLog("Loading permission data for player " + player.getName().getString());
+            com.zerog.neoessentials.util.DebugUtil.infoLog("Loading player data for player " + player.getName().getString());
             
-            // Load player data
+            // Load player data from disk FIRST before getting it from cache
             PlayerDataManager playerDataManager = PlayerDataManager.getInstance();
-            PlayerData playerData = playerDataManager.getPlayerData(playerUUID);
+            playerDataManager.loadPlayerDataSync(playerUUID); // Load saved data synchronously
+            PlayerDataManager.PlayerData playerData = playerDataManager.getPlayerData(playerUUID); // Now get cached data
             
             // Load permission data into the permission system
             CustomPermissionsManager permManager = CustomPermissionsManager.getInstance();
@@ -66,17 +66,14 @@ public class PermissionEventListener {
             // --- New manager integration ---
             PlaceholderManager placeholderManager = PlaceholderManager.getInstance();
             com.zerog.neoessentials.features.TabListManager tabListManager = new com.zerog.neoessentials.features.TabListManager();
-            com.zerog.neoessentials.features.ScoreboardManager scoreboardManager = com.zerog.neoessentials.features.ScoreboardManager.getInstance();
-            com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
+            // Scoreboard and bossbar systems removed - keeping only tablist functionality
+            
             String rawDisplayName = com.zerog.neoessentials.features.NameFormatManager.getInstance().getDisplayName(player);
             String displayName = placeholderManager.processPlaceholders(rawDisplayName, player);
-            // Use parsed displayName in tablist and scoreboard updates
+            // Use parsed displayName in tablist updates only
             tabListManager.updateHeaderFooter(player, displayName);
             tabListManager.updatePlayerEntry(player);
-            if (player.getServer() != null) {
-                scoreboardManager.updateScoreboard(player);
-            }
-            bossBarManager.showBossBar(player, displayName, 1.0f, 0x00FF00);
+            // Scoreboard and bossbar functionality removed
 
                 // Update tablist for all online players to ensure correct layout and debug output
                 try {
@@ -111,7 +108,7 @@ public class PermissionEventListener {
             // Get current permission data
             CustomPermissionsManager permManager = CustomPermissionsManager.getInstance();
             PlayerDataManager playerDataManager = PlayerDataManager.getInstance();
-            PlayerData playerData = playerDataManager.getPlayerData(playerUUID);
+            PlayerDataManager.PlayerData playerData = playerDataManager.getPlayerData(playerUUID);
             
             // Save the player's current group
             String currentGroup = permManager.getPlayerGroup(playerUUID);
@@ -126,12 +123,10 @@ public class PermissionEventListener {
                 com.zerog.neoessentials.util.DebugUtil.debugLog("Saved " + currentPermissions.size() + " individual permissions for player " + player.getName().getString());
             }
             // Trigger save to persistent storage
-            playerDataManager.savePlayerData(player.getUUID(), playerData);
+            playerDataManager.savePlayerData(player.getUUID());
             
             com.zerog.neoessentials.util.DebugUtil.infoLog("Successfully saved permission data for player " + player.getName().getString());
-            // --- Remove bossbar on leave ---
-            com.zerog.neoessentials.features.BossBarManager bossBarManager = new com.zerog.neoessentials.features.BossBarManager();
-            bossBarManager.removeBossBar(player);
+            // Bossbar system removed - no cleanup needed on player leave
         } catch (Exception e) {
             com.zerog.neoessentials.util.DebugUtil.errorLog("Failed to save permission data for player " + event.getEntity().getName().getString() + ": " + e.getMessage());
         }

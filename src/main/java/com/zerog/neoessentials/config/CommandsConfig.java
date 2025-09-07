@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.config;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Commands Configuration for NeoEssentials
@@ -10,13 +10,15 @@ import java.util.HashMap;
 public class CommandsConfig {
     
     public Settings settings = new Settings();
-    public Map<String, Command> commands = new HashMap<>();
+    public Map<String, CommandConfig> commands = new HashMap<>();
     
     public CommandsConfig() {
-        // Initialize with default commands
-        commands.put("heal", new Command(true, 50.0, 30, 0, "neoessentials.heal", true));
-        commands.put("feed", new Command(true, 25.0, 30, 0, "neoessentials.feed", true));
-        commands.put("fly", new Command(true, 0.0, 5, 0, "neoessentials.fly", true));
+        // Initialize with some default commands
+        commands.put("feed", new CommandConfig(true, 25.0, 30, 0, "neoessentials.feed", true));
+        commands.put("fly", new CommandConfig(true, 0.0, 5, 0, "neoessentials.fly", true));
+        commands.put("heal", new CommandConfig(true, 50.0, 30, 0, "neoessentials.heal", true));
+        commands.put("home", new CommandConfig(true, 5.0, 10, 2, "neoessentials.home", false));
+        commands.put("spawn", new CommandConfig(true, 0.0, 5, 3, "neoessentials.spawn", false));
     }
     
     public static class Settings {
@@ -28,17 +30,18 @@ public class CommandsConfig {
         public int defaultWarmup = 0;
     }
     
-    public static class Command {
-        public boolean enabled;
-        public double cost;
-        public int cooldown;
-        public int warmup;
-        public String permission;
-        public boolean logToDiscord;
+    public static class CommandConfig {
+        public boolean enabled = true;
+        public double cost = 0.0;
+        public int cooldown = 0;
+        public int warmup = 0;
+        public String permission = "";
+        public boolean logToDiscord = false;
         
-        public Command() {}
+        // Default constructor for JSON deserialization
+        public CommandConfig() {}
         
-        public Command(boolean enabled, double cost, int cooldown, int warmup, String permission, boolean logToDiscord) {
+        public CommandConfig(boolean enabled, double cost, int cooldown, int warmup, String permission, boolean logToDiscord) {
             this.enabled = enabled;
             this.cost = cost;
             this.cooldown = cooldown;

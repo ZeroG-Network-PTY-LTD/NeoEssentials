@@ -289,5 +289,27 @@
   "neoessentials.compat.refresh.success": "&aActualización de compatibilidad completada",
   "neoessentials.compat.report.header": "&bReporte de Compatibilidad:",
   "neoessentials.compat.report.total": "&7Total de plugins: {0}",
-  "neoessentials.compat.report.integrated": "&7Plugins integrados: {0}"
+  "neoessentials.compat.report.integrated": "&7Plugins integrados: {0}",
+  
+  "neoessentials.home.set": "&aEl hogar '{0}' ha sido establecido!",
+  "neoessentials.home.updated": "&aEl hogar '{0}' ha sido actualizado!",
+  "neoessentials.home.not_found": "&cEl hogar '{0}' no fue encontrado!",
+  "neoessentials.home.deleted": "&aEl hogar '{0}' ha sido eliminado!",
+  "neoessentials.home.disabled": "&cEl sistema de hogares está desactivado!",
+  "neoessentials.home.invalid_name": "&cNombre de hogar inválido: {0}",
+  "neoessentials.home.max_homes_reached": "&cHas alcanzado el número máximo de hogares ({0})!",
+  "neoessentials.home.warmup": "&aTeletransportando en {0} segundos...",
+  "neoessentials.home.list_none": "&cNo tienes hogares configurados.",
+  "neoessentials.home.list_header": "&aTus hogares ({0}/{1}):",
+  "neoessentials.home.list_entry": "&7- {0}",
+  "neoessentials.home.insufficient_funds": "&cNo tienes suficiente dinero! Requerido: {0}",
+  "neoessentials.home.restricted_world": "&cNo puedes establecer hogares en este mundo!",
+  "neoessentials.home.unsafe_location": "&cEsta ubicación no es segura para teletransporte!",
+  "neoessentials.home.cooldown_active": "&cDebes esperar {0} antes de usar el teletransporte de hogar nuevamente!",
+  "neoessentials.home.teleporting_named": "&aTeletransportándote al hogar '{0}'...",
+  "neoessentials.home.teleport": "&aTe has teletransportado a tu hogar '{0}'",
+  "neoessentials.home.limit_reached": "&cHas alcanzado el número máximo de hogares ({0})",
+  "neoessentials.home.failed": "&cTeletransporte falló! Inténtalo de nuevo.",
+  "neoessentials.home.target_world_not_found": "&cMundo objetivo no encontrado!",
+  "neoessentials.home.delete_success": "&aEl hogar '{0}' ha sido eliminado!"
 }

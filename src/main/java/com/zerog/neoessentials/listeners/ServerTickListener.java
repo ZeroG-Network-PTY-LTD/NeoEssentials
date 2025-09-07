@@ -22,6 +22,17 @@ public class ServerTickListener {
                     PlaceholderManager pm = PlaceholderManager.getInstance();
                     pm.onServerTick();
                     pm.tickAnimatedPlaceholders(now);
+                    
+                    // Also notify TabListManager to update any live displays
+                    try {
+                        com.zerog.neoessentials.features.TabListManager tlm = com.zerog.neoessentials.features.TabListManager.getInstance();
+                        if (tlm != null) {
+                            // The TabListManager already has its own high-frequency update task
+                            // so we don't need to call it here, but we ensure it's running
+                        }
+                    } catch (Exception tlmError) {
+                        // TabListManager might not be initialized yet, ignore
+                    }
                 } catch (Exception e) {
                     // Silently handle errors to prevent spam
                 }

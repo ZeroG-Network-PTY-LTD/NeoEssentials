@@ -29,6 +29,8 @@
           "&c&l║ &7Online: &e{server_players}&7/&e{server_max_players}              &c&l║",
           "&c&l║ &7TPS: &a{server_tps}                   &c&l║",
           "&c&l║ &7Memory: &e{server_memory_percent}%            &c&l║",
+          "&c&l║ &7Status: ${server_status_animation}     &c&l║",
+          "&c&l║ &7Welcome: ${welcome_animation}          &c&l║",
           "&c&l║ &7Time: &f{time}                   &c&l║",
           "&c&l╚═══════════════════════════════════╝"
         ]
@@ -165,6 +167,8 @@
           "&7&l║ &8Use /team create <name>         &7&l║",
           "&7&l║ &8to create your own team!        &7&l║",
           "&7&l║ &8Online: &7{server_players}&8/&7{server_max_players}              &7&l║",
+          "&7&l║ &8Status: ${server_status_animation}      &7&l║",
+          "&7&l║ &8Test: ${test_animation}                &7&l║",
           "&7&l║ &8Time: &7{time}                   &7&l║",
           "&7&l╚═══════════════════════════════════╝"
         ]

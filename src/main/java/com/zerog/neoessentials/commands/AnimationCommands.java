@@ -4,18 +4,15 @@ import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
-import java.util.List;
-
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-// import com.zerog.neoessentials.features.CustomBossbarManager; // Removed as part of cleanup
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Commands for managing animations in tablist, scoreboard, and bossbar
+ * Commands for managing animations in tablist
+ * Scoreboard and bossbar systems have been completely removed
  */
 public class AnimationCommands {
     
@@ -26,11 +23,6 @@ public class AnimationCommands {
                 .executes(AnimationCommands::reloadAnimations))
             .then(Commands.literal("stats")
                 .executes(AnimationCommands::showStats))
-            .then(Commands.literal("list")
-                .executes(AnimationCommands::listAnimations))
-            .then(Commands.literal("test")
-                .then(Commands.argument("animation", StringArgumentType.string())
-                    .executes(AnimationCommands::testAnimation)))
             .then(Commands.literal("help")
                 .executes(AnimationCommands::showHelp))
         );
@@ -38,62 +30,31 @@ public class AnimationCommands {
     
     private static int reloadAnimations(CommandContext<CommandSourceStack> context) {
         try {
-            // CustomBossbarManager.getInstance().reloadAnimations(); // Removed as part of cleanup
-            context.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Animation reload disabled - bossbar system removed"), false);
+            // Scoreboard and bossbar systems have been removed
+            // Only tablist animations are supported now
+            context.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Animation systems have been simplified - only tablist animations remain"), false);
             ServerPlayer player = context.getSource().getPlayerOrException();
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.reload.success"));
+            MessageUtil.sendMessage(player, "§aAnimation system simplified - scoreboard and bossbar features removed");
         } catch (Exception e) {
             ServerPlayer player = null;
             try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.reload.failure", e.getMessage()));
+            MessageUtil.sendMessage(player, "§cError: " + e.getMessage());
         }
         return 1;
     }
     
     private static int showStats(CommandContext<CommandSourceStack> context) {
         try {
-            // String bossbarStats = CustomBossbarManager.getInstance().getAnimationStats(); // Removed as part of cleanup
-            String bossbarStats = "Bossbar system removed as part of cleanup";
             ServerPlayer player = context.getSource().getPlayerOrException();
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.stats.header"));
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.stats.bossbar", bossbarStats));
+            MessageUtil.sendMessage(player, "§6=== Animation System Status ===");
+            MessageUtil.sendMessage(player, "§eTablist Animations: §aActive");
+            MessageUtil.sendMessage(player, "§eScoreboard Animations: §cRemoved");
+            MessageUtil.sendMessage(player, "§eBossbar Animations: §cRemoved");
+            MessageUtil.sendMessage(player, "§7Scoreboard and bossbar systems have been completely removed for better performance");
         } catch (Exception e) {
             ServerPlayer player = null;
             try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.stats.failure", e.getMessage()));
-        }
-        return 1;
-    }
-    
-    private static int listAnimations(CommandContext<CommandSourceStack> context) {
-        try {
-            // List<String> bossbarAnimations = CustomBossbarManager.getInstance().getAvailableAnimations(); // Removed as part of cleanup
-            java.util.List<String> bossbarAnimations = java.util.Arrays.asList("Bossbar system removed");
-            ServerPlayer player = context.getSource().getPlayerOrException();
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.list.header"));
-            if (bossbarAnimations != null && !bossbarAnimations.isEmpty()) {
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.list.bossbar", String.join(", ", bossbarAnimations)));
-            }
-        } catch (Exception e) {
-            ServerPlayer player = null;
-            try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.list.failure", e.getMessage()));
-        }
-        return 1;
-    }
-    
-    private static int testAnimation(CommandContext<CommandSourceStack> context) {
-        String animationName = StringArgumentType.getString(context, "animation");
-        if (context.getSource().getEntity() instanceof ServerPlayer player) {
-            // Test animation by showing a bossbar with the animation
-            // CustomBossbarManager.getInstance().showBossbar(player, "test", 5); // Removed as part of cleanup
-            MessageUtil.sendMessage(player, "&c✗ Animation testing disabled - bossbar system removed");
-        } else {
-            try {
-                MessageUtil.sendMessage(context.getSource().getPlayerOrException(), "&c✗ This command can only be used by players");
-            } catch (com.mojang.brigadier.exceptions.CommandSyntaxException ex) {
-                // Optionally log or handle the error
-            }
+            MessageUtil.sendMessage(player, "§cError showing stats: " + e.getMessage());
         }
         return 1;
     }
@@ -101,11 +62,13 @@ public class AnimationCommands {
     private static int showHelp(CommandContext<CommandSourceStack> context) {
         try {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.help"));
+            MessageUtil.sendMessage(player, "§6=== NeoEssentials Animation Commands ===");
+            MessageUtil.sendMessage(player, "§e/neoanimations reload §7- Reload animation system (tablist only)");
+            MessageUtil.sendMessage(player, "§e/neoanimations stats §7- Show animation system status");
+            MessageUtil.sendMessage(player, "§e/neoanimations help §7- Show this help");
+            MessageUtil.sendMessage(player, "§7Note: Scoreboard and bossbar animations have been removed");
         } catch (Exception e) {
-            ServerPlayer player = null;
-            try { player = context.getSource().getPlayerOrException(); } catch (Exception ignored) {}
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.animation.help.failure", e.getMessage()));
+            context.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Error showing help: " + e.getMessage()));
         }
         return 1;
     }

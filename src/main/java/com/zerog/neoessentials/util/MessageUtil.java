@@ -3,6 +3,7 @@ package com.zerog.neoessentials.util;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import com.zerog.neoessentials.localization.LanguageManager;
 
 import java.util.concurrent.TimeUnit;
 import java.time.Instant;
@@ -66,7 +67,8 @@ public class MessageUtil {
         if (player == null || translationKey == null || translationKey.isEmpty()) {
             return;
         }
-        Component translatableMessage = Component.translatable(translationKey, args);
+        String message = LanguageManager.getInstance().getMessage(player, translationKey, args);
+        Component translatableMessage = Component.literal(message);
         player.sendSystemMessage(translatableMessage);
     }
     public static void sendMessage(Iterable<ServerPlayer> players, String message) {
