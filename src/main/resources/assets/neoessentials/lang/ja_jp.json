@@ -289,5 +289,17 @@
   "neoessentials.compat.refresh.success": "&a互換性更新が完了しました",
   "neoessentials.compat.report.header": "&b互換性レポート:",
   "neoessentials.compat.report.total": "&7総プラグイン数: {0}",
-  "neoessentials.compat.report.integrated": "&7統合プラグイン数: {0}"
+  "neoessentials.compat.report.integrated": "&7統合プラグイン数: {0}",
+  "neoessentials.shop.protection.admin_sign": "&4[ショップ保護] &cこの管理者ショップの看板は保護されています！",
+  "neoessentials.shop.protection.admin_permissions": "&7'&eneoessentials.shop.admin&7'または'&eneoessentials.shop.bypass.protection&7'の権限が必要です。",
+  "neoessentials.shop.protection.player_sign": "&4[ショップ保護] &cこのショップの看板は保護されています！",
+  "neoessentials.shop.protection.owner_only_sign": "&7この看板は他のプレイヤーのショップのものです。所有者のみが壊すことができます。",
+  "neoessentials.shop.protection.admin_bypass_sign": "&7管理者は'&eneoessentials.shop.bypass.protection&7'権限を使用できます。",
+  "neoessentials.shop.protection.admin_chest": "&4[ショップ保護] &cこの管理者ショップのチェストは保護されています！",
+  "neoessentials.shop.protection.player_chest": "&4[ショップ保護] &cこのショップのチェストは保護されています！",
+  "neoessentials.shop.protection.owner_only_chest_break": "&7このチェストは他のプレイヤーのショップのものです。所有者のみが壊すことができます。",
+  "neoessentials.shop.protection.owner_only_chest_access": "&7このチェストは他のプレイヤーのショップのものです。所有者のみがアクセスできます。",
+  "neoessentials.shop.protection.admin_bypass_chest": "&7管理者は'&eneoessentials.shop.bypass.protection&7'権限を使用できます。",
+  "neoessentials.shop.removed_successfully": "&a{0}が正常に削除されました！",
+  "neoessentials.shop.chest_break_warning": "&e警告：このチェストを壊すと接続されたショップに影響します！"
 }

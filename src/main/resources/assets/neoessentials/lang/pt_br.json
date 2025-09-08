@@ -289,5 +289,17 @@
   "neoessentials.compat.refresh.success": "&aAtualização de compatibilidade concluída",
   "neoessentials.compat.report.header": "&bRelatório de Compatibilidade:",
   "neoessentials.compat.report.total": "&7Total de plugins: {0}",
-  "neoessentials.compat.report.integrated": "&7Plugins integrados: {0}"
+  "neoessentials.compat.report.integrated": "&7Plugins integrados: {0}",
+  "neoessentials.shop.protection.admin_sign": "&4[PROTEÇÃO DA LOJA] &cEsta placa de loja admin está protegida!",
+  "neoessentials.shop.protection.admin_permissions": "&7Você precisa da permissão '&eneoessentials.shop.admin&7' ou '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.player_sign": "&4[PROTEÇÃO DA LOJA] &cEsta placa de loja está protegida!",
+  "neoessentials.shop.protection.owner_only_sign": "&7Esta placa pertence à loja de outro jogador. Apenas o dono pode quebrá-la.",
+  "neoessentials.shop.protection.admin_bypass_sign": "&7Administradores podem usar a permissão '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.admin_chest": "&4[PROTEÇÃO DA LOJA] &cEste baú de loja admin está protegido!",
+  "neoessentials.shop.protection.player_chest": "&4[PROTEÇÃO DA LOJA] &cEste baú de loja está protegido!",
+  "neoessentials.shop.protection.owner_only_chest_break": "&7Este baú pertence à loja de outro jogador. Apenas o dono pode quebrá-lo.",
+  "neoessentials.shop.protection.owner_only_chest_access": "&7Este baú pertence à loja de outro jogador. Apenas o dono pode acessá-lo.",
+  "neoessentials.shop.protection.admin_bypass_chest": "&7Administradores podem usar a permissão '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.removed_successfully": "&a{0} removida com sucesso!",
+  "neoessentials.shop.chest_break_warning": "&eAviso: Quebrar este baú afetará a loja conectada!"
 }

@@ -2,6 +2,7 @@ package com.zerog.neoessentials;
 
 import com.zerog.neoessentials.managers.*;
 import com.zerog.neoessentials.economy.shops.ShopManager;
+import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.core.BlockPos;
@@ -160,14 +161,14 @@ public class NeoEssentialsEventHandler {
         if (!canPlayerBreakShop(player, signShop)) {
             event.setCanceled(true);
             if ("SERVER".equals(signShop.getOwnerId())) {
-                MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis admin shop sign is protected!");
-                MessageUtil.sendMessage(player, "§7You need the '§eneoessentials.shop.admin§7' or '§eneoessentials.shop.bypass.protection§7' permission.");
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.admin_sign"));
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.admin_permissions"));
                 LOGGER.warn("GRIEFING ATTEMPT: Player {} tried to break admin shop sign at {} - BLOCKED", 
                            player.getName().getString(), signPos);
             } else {
-                MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis shop sign is protected!");
-                MessageUtil.sendMessage(player, "§7This sign belongs to another player's shop. Only the owner can break it.");
-                MessageUtil.sendMessage(player, "§7Admins can use '§eneoessentials.shop.bypass.protection§7' permission.");
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.player_sign"));
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.owner_only_sign"));
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.admin_bypass_sign"));
                 LOGGER.warn("GRIEFING ATTEMPT: Player {} tried to break shop sign at {} owned by {} - BLOCKED", 
                            player.getName().getString(), signPos, signShop.getOwnerId());
             }
@@ -177,7 +178,7 @@ public class NeoEssentialsEventHandler {
         // Player can break the shop - remove it from the system
         shopManager.removeSignShop(signPos);
         String shopType = "SERVER".equals(signShop.getOwnerId()) ? "Admin shop" : "Shop";
-        MessageUtil.sendMessage(player, "§a" + shopType + " removed successfully!");
+        MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.removed_successfully", shopType));
         LOGGER.info("Player {} successfully removed {} at {}", 
                    player.getName().getString(), shopType, signPos);
     }
@@ -204,15 +205,15 @@ public class NeoEssentialsEventHandler {
         // Check if player can break this shop chest
         if (!canPlayerBreakShop(player, signShop)) {
             event.setCanceled(true);
-            MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis shop chest is protected!");
-            MessageUtil.sendMessage(player, "§7This chest belongs to another player's shop. Only the owner can break it.");
-            MessageUtil.sendMessage(player, "§7Admins can use '§eneoessentials.shop.bypass.protection§7' permission.");
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.player_chest"));
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.owner_only_chest_break"));
+            MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.admin_bypass_chest"));
             LOGGER.warn("GRIEFING ATTEMPT: Player {} tried to break shop chest at {} owned by {} - BLOCKED", 
                        player.getName().getString(), chestPos, signShop.getOwnerId());
             return;
         }
         
-        MessageUtil.sendMessage(player, "§eWarning: Breaking this chest will affect the connected shop!");
+        MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.chest_break_warning"));
     }
     
     /**
@@ -264,14 +265,14 @@ public class NeoEssentialsEventHandler {
         if (!canPlayerBreakShop(player, signShop)) {
             event.setCanceled(true);
             if ("SERVER".equals(signShop.getOwnerId())) {
-                MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis admin shop chest is protected!");
-                MessageUtil.sendMessage(player, "§7You need the '§eneoessentials.shop.admin§7' or '§eneoessentials.shop.bypass.protection§7' permission.");
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.admin_chest"));
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.admin_permissions"));
                 LOGGER.warn("BLOCKED: Player {} tried to access admin shop chest at {} - PROTECTION ACTIVE", 
                            player.getName().getString(), chestPos);
             } else {
-                MessageUtil.sendMessage(player, "§4[SHOP PROTECTION] §cThis shop chest is protected!");
-                MessageUtil.sendMessage(player, "§7This chest belongs to another player's shop. Only the owner can access it.");
-                MessageUtil.sendMessage(player, "§7Admins can use '§eneoessentials.shop.bypass.protection§7' permission.");
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.player_chest"));
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.owner_only_chest_access"));
+                MessageUtil.sendMessage(player, LanguageManager.getInstance().getMessage(player, "neoessentials.shop.protection.admin_bypass_chest"));
                 LOGGER.warn("BLOCKED: Player {} tried to access shop chest at {} owned by {} - PROTECTION ACTIVE", 
                            player.getName().getString(), chestPos, signShop.getOwnerId());
             }

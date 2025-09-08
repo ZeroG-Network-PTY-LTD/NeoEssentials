@@ -455,7 +455,7 @@ public class PermissionsCommand {
             } catch (Exception ignored) {}
 
             context.getSource().sendSuccess(() ->
-                Component.literal("§aReset all NeoEssentials teams/scoreboards and set " + target.getGameProfile().getName() + "'s group to '" + groupName + "'"), false);
+                Component.literal("§aReset all NeoEssentials groups and set " + target.getGameProfile().getName() + "'s group to '" + groupName + "'"), false);
 
             return 1;
         } catch (Exception e) {

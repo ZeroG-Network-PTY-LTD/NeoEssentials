@@ -8,15 +8,15 @@ NeoEssentials includes comprehensive multi-language support, allowing server adm
 NeoEssentials comes with built-in JSON language files located in `src/main/resources/assets/neoessentials/lang/`:
 
 #### **Fully Supported Languages** ✅
-- **English (en_US)** - Default language, 100% complete ✅
-- **Spanish (es_ES)** - Complete translation ✅
-- **French (fr_FR)** - Complete translation ✅
-- **German (de_DE)** - Complete translation ✅
-- **Italian (it_IT)** - Complete translation ✅
-- **Portuguese (pt_BR)** - Brazilian Portuguese ✅
-- **Russian (ru_RU)** - Complete translation ✅
-- **Japanese (ja_JP)** - Complete translation ✅
-- **Chinese Simplified (zh_CN)** - Complete translation ✅
+- **English (en_us)** - Default language, 100% complete ✅
+- **Spanish (es_es)** - Complete translation ✅  
+- **French (fr_fr)** - Complete translation ✅
+- **German (de_de)** - Complete translation ✅
+- **Italian (it_it)** - Complete translation ✅
+- **Portuguese (pt_br)** - Brazilian Portuguese ✅
+- **Russian (ru_ru)** - Complete translation ✅
+- **Japanese (ja_jp)** - Complete translation ✅  
+- **Chinese Simplified (zh_cn)** - Complete translation ✅
 
 ### Language File Structure
 
@@ -25,7 +25,7 @@ NeoEssentials uses JSON format for language files with automatic conversion to P
 #### **JSON Format** (`.json`) - Primary Format
 ```json
 {
-  "neoessentials.main.header": "NeoEssentials - Main Header",
+  "neoessentials.language.info.header": "&6=== Language Information ===",
   "general.no_permission": "You don't have permission to use this command!",
   "command.language.changed": "Language changed to {0}!",
   "neoessentials.home.set": "Home '{0}' set at your current location!",
@@ -106,7 +106,7 @@ config/neoessentials/languages/     # Custom language overrides (optional)
 ├── es_ES.properties                # Spanish override example
 └── custom_lang.properties          # Custom language files
 
-src/main/resources/assets/neoessentials/lang/    # Built-in languages
+src/main/resources/assets/neoessentials/lang/    # Built-in languages (JSON format)
 ├── en_us.json                      # English (Default)
 ├── es_es.json                      # Spanish
 ├── fr_fr.json                      # French
@@ -127,14 +127,16 @@ Example from actual `en_us.json`:
 
 ```json
 {
-  "neoessentials.main.header": "NeoEssentials - Main Header",
+  "neoessentials.language.info.header": "&6=== Language Information ===",
   "general.no_permission": "You don't have permission to use this command!",
   "neoessentials.warp.no_permission_use": "You do not have permission to use this warp.",
   "neoessentials.playtime.session": "Session Playtime: {0}",
   "neoessentials.playtime.top_entry": "#{0}: {1} - {2}",
   "neoessentials.economy.balance": "Your balance: ${0}",
   "command.heal.self": "You have been healed!",
-  "command.feed.self": "You have been fed!"
+  "command.feed.self": "You have been fed!",
+  "neoessentials.language.set.success_fallback": "&aLanguage set to {0}.",
+  "neoessentials.language.list.header": "&6=== Available Languages ==="
 }
 ```
 
@@ -309,7 +311,7 @@ neoessentials.language.*           # All language system permissions
 ## 📚 Related Documentation
 
 - **[Configuration Guide](Configuration.md)** - Main configuration settings and JSON structure
-- **[Essential Commands](Essential-Commands.md)** - Complete command reference including language commands
+- **[Commands](Commands.md)** - Complete command reference including language commands
 - **[Placeholders System](Placeholders.md)** - Custom placeholder system integration  
 - **[Permissions System](Permissions.md)** - Permission node details and configuration
 - **[API Documentation](API_DOCUMENTATION.md)** - Developer integration and language system API

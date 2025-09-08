@@ -6,6 +6,7 @@ import com.zerog.neoessentials.economy.currency.CurrencyManager;
 import com.zerog.neoessentials.economy.transactions.TransactionManager;
 // import com.zerog.neoessentials.economy.shops.ShopManager; // Now uses managers.EconomyManager
 import com.zerog.neoessentials.storage.StorageManager;
+import com.zerog.neoessentials.integration.economy.ExternalEconomyManager;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ public class EconomyManager {
     // Core managers
     private final CurrencyManager currencyManager;
     private final TransactionManager transactionManager;
+    private final ExternalEconomyManager externalEconomyManager;
     // private final ShopManager shopManager; // Now uses managers.EconomyManager
     // Auction manager removed as per feature cleanup
     
@@ -54,6 +56,7 @@ public class EconomyManager {
         // Initialize managers
         this.currencyManager = new CurrencyManager(this);
         this.transactionManager = new TransactionManager(this);
+        this.externalEconomyManager = new ExternalEconomyManager();
         // ShopManager now uses managers.EconomyManager - removed initialization
         // Auction manager removed as per feature cleanup
         
@@ -358,12 +361,20 @@ public class EconomyManager {
     // Public getters for managers
     public CurrencyManager getCurrencyManager() { return currencyManager; }
     public TransactionManager getTransactionManager() { return transactionManager; }
+    public ExternalEconomyManager getExternalEconomyManager() { return externalEconomyManager; }
     // public ShopManager getShopManager() { return shopManager; } // Now uses managers.EconomyManager
     // Auction manager removed as per feature cleanup
     public EconomyAnalytics getAnalytics() { return analytics; }
     
     // Compatibility methods for GUI classes (using default currency)
     public BigDecimal getBalance(UUID playerId) {
+        // Try external economy first
+        net.minecraft.server.level.ServerPlayer player = getServerPlayerByUUID(playerId);
+        if (player != null && externalEconomyManager.isExternalEconomyActive()) {
+            return externalEconomyManager.getBalance(player);
+        }
+        
+        // Fallback to internal economy
         return getBalance(playerId, currencyManager.getPrimaryCurrency());
     }
     
@@ -377,6 +388,13 @@ public class EconomyManager {
     }
     
     public boolean withdrawBalance(UUID playerId, BigDecimal amount, String reason) {
+        // Try external economy first
+        net.minecraft.server.level.ServerPlayer player = getServerPlayerByUUID(playerId);
+        if (player != null && externalEconomyManager.isExternalEconomyActive()) {
+            return externalEconomyManager.withdrawBalance(player, amount, reason);
+        }
+        
+        // Fallback to internal economy
         return removeBalance(playerId, currencyManager.getPrimaryCurrency(), amount);
     }
     
@@ -384,7 +402,28 @@ public class EconomyManager {
         return withdrawBalance(playerId, BigDecimal.valueOf(amount), reason);
     }
     
+    public boolean depositBalance(UUID playerId, BigDecimal amount, String reason) {
+        // Try external economy first
+        net.minecraft.server.level.ServerPlayer player = getServerPlayerByUUID(playerId);
+        if (player != null && externalEconomyManager.isExternalEconomyActive()) {
+            return externalEconomyManager.depositBalance(player, amount, reason);
+        }
+        
+        // Fallback to internal economy
+        return addBalance(playerId, currencyManager.getPrimaryCurrency(), amount);
+    }
+    
+    public boolean depositBalance(UUID playerId, double amount, String reason) {
+        return depositBalance(playerId, BigDecimal.valueOf(amount), reason);
+    }
+    
     public String formatCurrency(BigDecimal amount) {
+        // Use external economy formatting if active
+        if (externalEconomyManager.isExternalEconomyActive()) {
+            return externalEconomyManager.formatCurrency(amount);
+        }
+        
+        // Fallback to internal currency formatting
         com.zerog.neoessentials.economy.currency.Currency primaryCurrency = 
             currencyManager.getCurrency(currencyManager.getPrimaryCurrency());
         return primaryCurrency != null ? primaryCurrency.formatAmount(amount) : amount.toString();
@@ -392,6 +431,24 @@ public class EconomyManager {
     
     public String formatCurrency(double amount) {
         return formatCurrency(BigDecimal.valueOf(amount));
+    }
+    
+    /**
+     * Helper method to get ServerPlayer by UUID
+     * @param playerId The player's UUID
+     * @return ServerPlayer instance or null if not found
+     */
+    private net.minecraft.server.level.ServerPlayer getServerPlayerByUUID(UUID playerId) {
+        try {
+            // Get the server instance - use NeoForge approach
+            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                return server.getPlayerList().getPlayer(playerId);
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not retrieve ServerPlayer for UUID {}: {}", playerId, e.getMessage());
+        }
+        return null;
     }
     
     public boolean isEnabled() { return economyEnabled; }

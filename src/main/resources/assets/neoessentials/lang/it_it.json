@@ -289,5 +289,17 @@
   "neoessentials.compat.refresh.success": "&aAggiornamento compatibilità completato",
   "neoessentials.compat.report.header": "&bRapporto Compatibilità:",
   "neoessentials.compat.report.total": "&7Plugin totali: {0}",
-  "neoessentials.compat.report.integrated": "&7Plugin integrati: {0}"
+  "neoessentials.compat.report.integrated": "&7Plugin integrati: {0}",
+  "neoessentials.shop.protection.admin_sign": "&4[PROTEZIONE NEGOZIO] &cQuesto cartello del negozio admin è protetto!",
+  "neoessentials.shop.protection.admin_permissions": "&7Hai bisogno del permesso '&eneoessentials.shop.admin&7' o '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.player_sign": "&4[PROTEZIONE NEGOZIO] &cQuesto cartello del negozio è protetto!",
+  "neoessentials.shop.protection.owner_only_sign": "&7Questo cartello appartiene al negozio di un altro giocatore. Solo il proprietario può romperlo.",
+  "neoessentials.shop.protection.admin_bypass_sign": "&7Gli amministratori possono usare il permesso '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.admin_chest": "&4[PROTEZIONE NEGOZIO] &cQuesta cassa del negozio admin è protetta!",
+  "neoessentials.shop.protection.player_chest": "&4[PROTEZIONE NEGOZIO] &cQuesta cassa del negozio è protetta!",
+  "neoessentials.shop.protection.owner_only_chest_break": "&7Questa cassa appartiene al negozio di un altro giocatore. Solo il proprietario può romperla.",
+  "neoessentials.shop.protection.owner_only_chest_access": "&7Questa cassa appartiene al negozio di un altro giocatore. Solo il proprietario può accedervi.",
+  "neoessentials.shop.protection.admin_bypass_chest": "&7Gli amministratori possono usare il permesso '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.removed_successfully": "&a{0} rimosso con successo!",
+  "neoessentials.shop.chest_break_warning": "&eAttenzione: Rompere questa cassa influenzerà il negozio collegato!"
 }

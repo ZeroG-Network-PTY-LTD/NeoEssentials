@@ -1,233 +1,754 @@
 # Events System
 
-NeoEssentials provides a notification-based event system that handles server events through the NotificationManager and dedicated event listeners. The system focuses on server monitoring, player tracking, and administrative notifications rather than complex event automation.
+NeoEssentials provides a custom event system built on NeoForge's event bus, offering integration points for other mods and server functionality. The system includes custom event classes for economy transactions, teleportation, moderation, and player activities.
 
 ## 🎯 Event Architecture
 
-### Event Implementation
-The event system is built on Java-based event listeners that integrate with Minecraft Forge's event bus:
+### Core Event Classes
+NeoEssentials implements a streamlined event hierarchy:
 
-#### Core Event Listeners
-- **NotificationEventListener** - Handles player join/leave and server events
-- **PermissionEventListener** - Manages permission system integration  
-- **NeoEssentialsEventHandler** - Handles block events and moderation (backup)
+#### Base Event Classes
+- **`NeoEssentialsEvent`** - Base class for all custom events, provides player context and UUID access
+- **`CancellableNeoEssentialsEvent`** - Base class for cancellable events implementing ICancellableEvent interface
+- **Event Categories**: Economy, Home, Warp, Kit, Messaging, Teleport, Moderation, Player, and Placeholder events
 
-#### Notification Events
-Events are processed through the NotificationManager with these types:
-- **PLAYER_JOIN** - Player connection events
-- **PLAYER_LEAVE** - Player disconnection events
-- **SERVER_START** - Server startup notifications
-- **SERVER_STOP** - Server shutdown notifications
-- **COMMAND_EXECUTION** - Command execution monitoring
-- **SECURITY_ALERT** - Security violation alerts
-- **PERFORMANCE_ALERT** - Server performance warnings
+#### Event Handlers
+- **`NeoEssentialsEventHandler`** - Main event handler containing all custom event definitions (events.NeoEssentialsEventHandler)
+- **`NeoEssentialsEventHandler`** (main package) - Core Minecraft event handling for block interactions, shop protection, and jail restrictions
+- **`UIEventHandler`** - UI events and player join handling for tablist integration
+- **`ShopEventHandler`** - Shop creation and transaction event handling
 
-## 📋 Event Configuration
+### Event Integration
+Events integrate with:
+- **NeoForge Event Bus** - Native Minecraft/NeoForge event system using @EventBusSubscriber annotation
+- **Custom Event Broadcasting** - Internal event system for mod integration points
+- **Shop System** - Block interaction events for shop sign and chest protection
+- **Moderation System** - Events for jail restrictions and player moderation
+- **Teleportation System** - Events for home, warp, and teleport requests
 
-### Configuration Location
-Events are configured through the NotificationManager in JSON format, not TOML.
+---
 
-### Available Commands
-Manage notifications through the `/notifications` command:
+## 💰 Economy Events
 
-```bash
-/notifications status                # Show notification system status
-/notifications channels              # List all notification channels
-/notifications test [channel]        # Send test notification
-/notifications send <type> <message> # Send custom notification
-```
+### Balance Events
+| Event Class | Description | Cancellable |
+|-------------|-------------|-------------|
+| `EconomyBalanceChangeEvent` | Fired when a player's balance changes | ❌ |
+| `EconomyTransactionEvent` | Fired before a transaction occurs | ✅ |
 
-### Event Types Configuration
-Notification events can be enabled/disabled through the NotificationManager API:
-
+#### EconomyBalanceChangeEvent
 ```java
-// Enable/disable specific event types
-notificationManager.setEventEnabled(NotificationEvent.Type.PLAYER_JOIN, true);
-notificationManager.setEventEnabled(NotificationEvent.Type.COMMAND_EXECUTION, false);
-
-// Get enabled events
-Set<NotificationEvent.Type> enabledEvents = notificationManager.getEnabledEvents();
-```
-
-## 🔧 Event Triggers
-
-### Automatic Event Triggers
-Events are automatically triggered by the event listeners:
-
-#### Player Events
-- **Player Join**: Triggered by `NotificationEventListener.onPlayerJoin()`
-- **Player Leave**: Triggered by `NotificationEventListener.onPlayerLeave()`
-
-#### Server Events  
-- **Server Stop**: Triggered by `NotificationEventListener.onServerStop()`
-- **Performance Alerts**: Triggered by `NotificationManager.notifyPerformanceAlert()`
-
-#### Administrative Events
-- **Command Execution**: Triggered by `NotificationManager.notifyCommandExecution()`
-- **Security Alerts**: Triggered by `NotificationManager.notifySecurityAlert()`
-
-### Manual Notification Testing
-Test notifications through commands:
-
-```bash
-/notifications test                  # Send test to all channels
-/notifications test log              # Send test to log channel only
-/notifications send PLAYER_JOIN "Test message"  # Send custom notification
-```
-
-## 🎬 Event Actions
-
-### Notification Actions
-When events are triggered, they create NotificationEvent objects that are sent through configured channels:
-
-#### Notification Channels
-- **Log Channel** - Server log output
-- **Console Channel** - Server console output
-- **Custom Channels** - Extensible through NotificationChannel interface
-
-#### Notification Data
-Each notification contains:
-- **Type** - Event classification (PLAYER_JOIN, COMMAND_EXECUTION, etc.)
-- **Title** - Brief event description
-- **Message** - Detailed event information
-- **Player Name** - Associated player (if applicable)
-- **Timestamp** - Event occurrence time
-- **Severity** - Event importance (INFO, WARNING, CRITICAL)
-- **Metadata** - Additional event data
-
-## 📊 Event Monitoring
-
-### Command-Based Monitoring
-Monitor the notification system through commands:
-
-```bash
-/notifications status    # Show system status and enabled events
-/notifications channels  # List available notification channels
-```
-
-### Event Logging
-Events are automatically logged through the configured notification channels. The log channel writes events to the server log files.
-
-## 🔌 Integration Features
-
-### Notification Channel Integration
-The system supports custom notification channels through the NotificationChannel interface:
-
-```java
-public interface NotificationChannel {
-    void sendNotification(NotificationEvent event) throws Exception;
-    boolean isEnabled();
-    boolean supportsEventType(NotificationEvent.Type eventType);
-    String getChannelName();
+public class EconomyBalanceChangeEvent extends NeoEssentialsEvent {
+    // Fields: oldBalance, newBalance, reason, transactionType
+    public BigDecimal getOldBalance();
+    public BigDecimal getNewBalance(); 
+    public BigDecimal getChange();        // Calculated: newBalance - oldBalance
+    public String getReason();
+    public TransactionType getType();
 }
 ```
 
-### API Integration
-External systems can integrate with the notification system:
+**Transaction Types:**
+- `DEPOSIT` - Money added to account
+- `WITHDRAW` - Money removed from account
+- `SET` - Balance set to specific amount
+- `TRANSFER_SEND` - Money sent to another player
+- `TRANSFER_RECEIVE` - Money received from another player
 
+#### EconomyTransactionEvent
 ```java
-// Get notification manager instance
-NotificationManager manager = NotificationManager.getInstance();
+public class EconomyTransactionEvent extends CancellableNeoEssentialsEvent {
+    // Fields: amount, reason, type, otherPlayer (for transfers)
+    public BigDecimal getAmount();
+    public String getReason();
+    public TransactionType getType();
+    public ServerPlayer getOtherPlayer(); // For transfers, otherwise null
+}
+```
 
-// Send custom notifications
-NotificationEvent event = NotificationEvent.builder()
-    .type(NotificationEvent.Type.CUSTOM)
-    .title("Custom Event")
-    .message("Your custom message")
-    .severity(NotificationEvent.Severity.INFO)
-    .build();
+### Usage Example
+```java
+@SubscribeEvent
+public void onBalanceChange(EconomyBalanceChangeEvent event) {
+    ServerPlayer player = event.getPlayer();
+    BigDecimal change = event.getChange();
+    String reason = event.getReason();
+    // Handle balance change logic
+}
+
+@SubscribeEvent  
+public void onTransaction(EconomyTransactionEvent event) {
+    if (event.getAmount().compareTo(BigDecimal.valueOf(1000)) > 0) {
+        event.setCanceled(true); // Cancel large transactions
+    }
+}
+```
+
+---
+
+## 🏠 Home & Warp Events
+
+### Home Events
+| Event Class | Description | Cancellable |
+|-------------|-------------|-------------|
+| `HomeSetEvent` | Fired when a player sets a home | ✅ |
+| `HomeTeleportEvent` | Fired when a player teleports to a home | ✅ |
+| `HomeDeleteEvent` | Fired when a player deletes a home | ✅ |
+
+#### HomeSetEvent
+```java
+public class HomeSetEvent extends CancellableNeoEssentialsEvent {
+    public String getHomeName();
+    public double getX();
+    public double getY(); 
+    public double getZ();
+    public String getWorld();
+}
+```
+
+#### HomeTeleportEvent
+```java
+public class HomeTeleportEvent extends CancellableNeoEssentialsEvent {
+    public String getHomeName();
+    public double getX();
+    public double getY();
+    public double getZ();
+    public String getWorld();
+}
+```
+
+#### HomeDeleteEvent
+```java
+public class HomeDeleteEvent extends CancellableNeoEssentialsEvent {
+    public String getHomeName();
+}
+```
+
+### Warp Events
+| Event Class | Description | Cancellable |
+|-------------|-------------|-------------|
+| `WarpTeleportEvent` | Fired when a player teleports to a warp | ✅ |
+
+#### WarpTeleportEvent
+```java
+public class WarpTeleportEvent extends CancellableNeoEssentialsEvent {
+    public String getWarpName();
+    public double getX();
+    public double getY();
+    public double getZ();
+    public String getWorld();
+}
+```
+
+### Usage Example
+```java
+@SubscribeEvent
+public void onHomeSet(HomeSetEvent event) {
+    ServerPlayer player = event.getPlayer();
+    String homeName = event.getHomeName();
     
-manager.sendNotification(event);
+    // Custom logic - e.g., limit homes in certain worlds
+    if (event.getWorld().equals("nether")) {
+        event.setCanceled(true);
+        player.sendSystemMessage(Component.literal("Cannot set homes in the Nether!"));
+    }
+}
+
+@SubscribeEvent
+public void onHomeTeleport(HomeTeleportEvent event) {
+    // Log home teleportation for analytics
+    logTeleportEvent(event.getPlayer(), "HOME", event.getHomeName());
+}
 ```
 
-## 🎮 Event-Driven Features
+---
 
-### Player Tracking
-The system automatically tracks:
-- Player join/leave events for connection monitoring
-- Permission changes through PermissionEventListener
-- Command execution for auditing purposes
+## � Teleportation Events
 
-### Server Monitoring
-Automatic monitoring includes:
-- Server startup and shutdown events
-- Performance alerts when thresholds are exceeded
-- Security alerts for violations
+### Teleport Request Events
+| Event Class | Description | Cancellable |
+|-------------|-------------|-------------|
+| `TeleportRequestEvent` | Fired when a teleport request is sent | ✅ |
+| `SpawnTeleportEvent` | Fired when a player teleports to spawn | ✅ |
 
-### Administrative Features
-- Command execution logging
-- Security violation tracking
-- System performance monitoring
+#### TeleportRequestEvent
+```java
+public class TeleportRequestEvent extends CancellableNeoEssentialsEvent {
+    public ServerPlayer getRequester();
+    public ServerPlayer getTarget();
+    public RequestType getType();
+    
+    public enum RequestType {
+        TPA,      // Teleport to target
+        TPAHERE   // Target teleports to requester  
+    }
+}
+```
 
-## 🔧 Advanced Event Features
+#### SpawnTeleportEvent
+```java
+public class SpawnTeleportEvent extends CancellableNeoEssentialsEvent {
+    public double getX();
+    public double getY();
+    public double getZ();
+    public String getWorld();
+}
+```
 
-### Notification Event Builder
-Create custom notifications using the builder pattern:
+### Usage Example
+```java
+@SubscribeEvent
+public void onTeleportRequest(TeleportRequestEvent event) {
+    ServerPlayer requester = event.getRequester();
+    ServerPlayer target = event.getTarget();
+    
+    // Custom logic - e.g., check if players are in same team
+    if (!sameTeam(requester, target)) {
+        event.setCanceled(true);
+        requester.sendSystemMessage(Component.literal("Cannot teleport to players outside your team!"));
+    }
+}
+
+@SubscribeEvent
+public void onSpawnTeleport(SpawnTeleportEvent event) {
+    // Log spawn teleportation
+    logTeleportEvent(event.getPlayer(), "SPAWN", "spawn");
+}
+```
+
+---
+
+## �️ Moderation Events
+
+### Player Moderation Events
+| Event Class | Description | Cancellable |
+|-------------|-------------|-------------|
+| `PlayerMuteEvent` | Fired when a player is muted | ✅ |
+| `PlayerUnmuteEvent` | Fired when a player is unmuted | ❌ |
+| `PlayerKickEvent` | Fired when a player is kicked | ✅ |
+
+#### PlayerMuteEvent
+```java
+public class PlayerMuteEvent extends CancellableNeoEssentialsEvent {
+    public ServerPlayer getModerator();
+    public String getReason();
+    public long getDuration();          // 0 for permanent
+    public boolean isPermanent();       // Helper method for duration == 0
+}
+```
+
+#### PlayerUnmuteEvent
+```java
+public class PlayerUnmuteEvent extends NeoEssentialsEvent {
+    public ServerPlayer getModerator();
+    public String getReason();
+}
+```
+
+#### PlayerKickEvent
+```java
+public class PlayerKickEvent extends CancellableNeoEssentialsEvent {
+    public ServerPlayer getModerator();
+    public String getReason();
+    public void setReason(String reason);   // Allows modifying kick reason
+}
+```
+
+### Usage Example
+```java
+@SubscribeEvent
+public void onPlayerMute(PlayerMuteEvent event) {
+    // Log moderation action
+    logModerationAction(event.getPlayer(), "MUTE", event.getReason(), event.getDuration());
+    
+    // Notify other staff members
+    notifyModerators(event.getPlayer(), event.getModerator(), "muted", event.getReason());
+}
+
+@SubscribeEvent
+public void onPlayerKick(PlayerKickEvent event) {
+    // Custom kick reason modification
+    if (event.getReason().contains("spam")) {
+        event.setReason("Spamming - Please read server rules");
+    }
+}
+```
+
+---
+
+## � Player Events
+
+### Player Status Events
+| Event Class | Description | Cancellable |
+|-------------|-------------|-------------|
+| `PlayerAFKEvent` | Fired when AFK status changes | ❌ |
+| `PlayerNicknameChangeEvent` | Fired when nickname changes | ✅ |
+
+#### PlayerAFKEvent
+```java
+public class PlayerAFKEvent extends NeoEssentialsEvent {
+    public boolean isAFK();
+    public long getTimestamp();
+}
+```
+
+#### PlayerNicknameChangeEvent
+```java
+public class PlayerNicknameChangeEvent extends CancellableNeoEssentialsEvent {
+    public String getOldNickname();
+    public String getNewNickname();
+    public void setNewNickname(String nickname);   // Allows modifying the new nickname
+}
+```
+
+### Usage Example
+```java
+@SubscribeEvent
+public void onAFKChange(PlayerAFKEvent event) {
+    ServerPlayer player = event.getPlayer();
+    if (event.isAFK()) {
+        // Player went AFK - update displays
+        updatePlayerStatus(player, "AFK");
+    } else {
+        // Player returned from AFK
+        updatePlayerStatus(player, "Active");
+    }
+}
+
+@SubscribeEvent
+public void onNicknameChange(PlayerNicknameChangeEvent event) {
+    // Filter inappropriate nicknames
+    String newNickname = event.getNewNickname();
+    if (containsInappropriateContent(newNickname)) {
+        event.setCanceled(true);
+        event.getPlayer().sendSystemMessage(Component.literal("Inappropriate nickname rejected"));
+    }
+}
+```
+
+---
+
+## �📦 Kit Events
+
+### Kit System Events
+| Event Class | Description | Cancellable |
+|-------------|-------------|-------------|
+| `KitGiveEvent` | Fired when a player receives a kit | ✅ |
+
+#### KitGiveEvent
+```java
+public class KitGiveEvent extends CancellableNeoEssentialsEvent {
+    public String getKitName();
+    public boolean hasCooldown();
+    public long getCooldownTime();
+}
+```
+
+### Usage Example
+```java
+@SubscribeEvent
+public void onKitGive(KitGiveEvent event) {
+    // Custom kit restrictions
+    if (event.getKitName().equals("admin") && !hasPermission(event.getPlayer(), "kit.admin")) {
+        event.setCanceled(true);
+        event.getPlayer().sendSystemMessage(Component.literal("You don't have permission for this kit"));
+        return;
+    }
+    
+    // Log kit usage
+    logKitUsage(event.getPlayer(), event.getKitName());
+}
+```
+
+---
+
+## 💬 Messaging Events
+
+### Communication Events
+| Event Class | Description | Cancellable |
+|-------------|-------------|-------------|
+| `PrivateMessageEvent` | Fired when a player sends a private message | ✅ |
+| `MailSendEvent` | Fired when a player sends mail | ✅ |
+
+#### PrivateMessageEvent
+```java
+public class PrivateMessageEvent extends CancellableNeoEssentialsEvent {
+    public ServerPlayer getSender();
+    public ServerPlayer getRecipient();
+    public String getMessage();
+    public void setMessage(String message);     // Allows modifying the message
+}
+```
+
+#### MailSendEvent
+```java
+public class MailSendEvent extends CancellableNeoEssentialsEvent {
+    public ServerPlayer getSender();
+    public String getRecipientName();
+    public String getMessage();
+    public void setMessage(String message);     // Allows modifying the message
+}
+```
+
+### Usage Example
+```java
+@SubscribeEvent
+public void onPrivateMessage(PrivateMessageEvent event) {
+    // Filter spam or inappropriate content
+    String message = event.getMessage();
+    if (isSpam(message) || containsInappropriateContent(message)) {
+        event.setCanceled(true);
+        event.getSender().sendSystemMessage(Component.literal("Message blocked"));
+        return;
+    }
+    
+    // Log private messages for moderation
+    logPrivateMessage(event.getSender(), event.getRecipient(), message);
+}
+
+@SubscribeEvent
+public void onMailSend(MailSendEvent event) {
+    // Rate limiting for mail
+    if (isPlayerSpamming(event.getSender())) {
+        event.setCanceled(true);
+        event.getSender().sendSystemMessage(Component.literal("You're sending mail too quickly"));
+    }
+}
+```
+
+---
+
+## 🏪 Shop Events
+
+### Minecraft Event Handling
+The shop system utilizes standard Minecraft events for interaction and protection:
+
+#### Block Interaction Events
+- **Right-Click on Signs** - `PlayerInteractEvent.RightClickBlock` for shop transactions
+- **Right-Click on Chests** - Shop chest access protection and validation
+- **Block Breaking** - `BlockEvent.BreakEvent` for shop sign and chest protection
+- **Block Placement** - `BlockEvent.EntityPlaceEvent` for jail restriction checks
+
+#### Shop Protection System
+```java
+@SubscribeEvent
+public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+    // Handle shop sign interaction
+    if (isShopSign(level, pos)) {
+        handleShopSignInteraction(player, level, pos, event);
+        return;
+    }
+    
+    // Handle shop chest protection
+    if (isChest(level, pos)) {
+        handleChestAccess(event);
+    }
+}
+```
+
+### Shop Transaction Flow
+1. **Player Interaction** - Right-click on shop sign triggers `PlayerInteractEvent.RightClickBlock`
+2. **Shop Validation** - Verify shop exists and is valid using ShopManager
+3. **Transaction Processing** - SignShopHandler processes buy/sell operations
+4. **Economy Integration** - Balance changes through EconomyManager
+5. **Transaction Logging** - All transactions recorded for analytics
+6. **Protection Enforcement** - Shop chest and sign protection prevents unauthorized access
+
+### Shop Creation Events
+Shop creation happens through sign placement and text detection:
+
+#### Sign-Based Shop Creation
+```java
+@SubscribeEvent
+public void onSignChanged(BlockEvent.EntityPlaceEvent event) {
+    // Detect shop creation patterns:
+    // [buy] / [sell] / [admin buy] / [admin sell]
+    // Amount on line 2, price on line 3
+    // Auto-link to adjacent chests
+}
+```
+
+**Shop Creation Requirements:**
+- **Valid Sign Text** - First line must be [buy], [sell], [admin buy], or [admin sell]
+- **Amount and Price** - Lines 2 and 3 must contain valid numbers
+- **Adjacent Chest** - Chest must be adjacent to sign for player shops
+- **Permissions** - Player must have appropriate shop creation permissions
+
+---
+
+## 🎯 Placeholder Events
+
+### Placeholder System Events
+| Event Class | Description | Cancellable |
+|-------------|-------------|-------------|
+| `PlaceholderRegisterEvent` | Fired when custom placeholders are registered | ❌ |
+| `PlaceholderProcessEvent` | Fired when placeholders are processed | ❌ |
+
+#### PlaceholderRegisterEvent
+```java
+public class PlaceholderRegisterEvent extends Event {
+    public String getIdentifier();      // Placeholder identifier (e.g., "custom_placeholder")
+    public String getProviderName();    // Name of the provider registering the placeholder
+}
+```
+
+#### PlaceholderProcessEvent
+```java
+public class PlaceholderProcessEvent extends Event {
+    public String getOriginalText();        // Text before placeholder processing
+    public String getProcessedText();       // Text after placeholder processing
+    public void setProcessedText(String processedText);   // Allows modifying the processed result
+    public ServerPlayer getPlayer();        // Player context for processing
+}
+```
+
+### Usage Example
+```java
+@SubscribeEvent
+public void onPlaceholderRegister(PlaceholderRegisterEvent event) {
+    // Log placeholder registration for debugging
+    LOGGER.info("Registered placeholder: {} by provider: {}", 
+               event.getIdentifier(), event.getProviderName());
+}
+
+@SubscribeEvent
+public void onPlaceholderProcess(PlaceholderProcessEvent event) {
+    // Post-process placeholder results
+    String processed = event.getProcessedText();
+    
+    // Apply custom formatting or modifications
+    if (processed.contains("admin")) {
+        processed = "§c" + processed + "§r"; // Add color codes
+        event.setProcessedText(processed);
+    }
+}
+```
+
+---
+
+## 🔧 Event System Integration
+
+### Core Minecraft Events
+The main `NeoEssentialsEventHandler` class handles core Minecraft events:
+
+#### Block Events
+```java
+@EventBusSubscriber(modid = "neoessentials")
+public class NeoEssentialsEventHandler {
+    
+    @SubscribeEvent
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        // Jail restriction checks
+        // Shop sign protection
+        // Shop chest protection
+    }
+    
+    @SubscribeEvent
+    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
+        // Jail restriction checks
+    }
+    
+    @SubscribeEvent
+    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        // Shop sign interactions
+        // Shop chest access protection
+    }
+}
+```
+
+#### UI Events
+```java
+@EventBusSubscriber
+public class UIEventHandler {
+    
+    @SubscribeEvent
+    private void onPlayerJoin(PlayerLoggedInEvent event) {
+        // TabList integration
+        // Player UI setup
+    }
+    
+    @SubscribeEvent
+    public void onPermissionUpdate(PermissionUpdateEvent event) {
+        // Permission-based UI updates
+    }
+}
+```
+
+### Custom Event Broadcasting
+Fire NeoEssentials custom events:
 
 ```java
-NotificationEvent event = NotificationEvent.builder()
-    .type(NotificationEvent.Type.SECURITY_ALERT)
-    .title("Security Alert")
-    .message("Unauthorized access attempt")
-    .playerName(playerName)
-    .timestamp(System.currentTimeMillis())
-    .severity(NotificationEvent.Severity.CRITICAL)
-    .metadata("ip", ipAddress)
-    .metadata("action", "login_attempt")
-    .build();
+// Fire an economy balance change event
+EconomyBalanceChangeEvent balanceEvent = new EconomyBalanceChangeEvent(
+    player, oldBalance, newBalance, "Shop purchase", TransactionType.WITHDRAW
+);
+NeoForge.EVENT_BUS.post(balanceEvent);
+
+// Fire a cancellable transaction event
+EconomyTransactionEvent transactionEvent = new EconomyTransactionEvent(
+    player, amount, reason, TransactionType.WITHDRAW
+);
+if (!NeoForge.EVENT_BUS.post(transactionEvent)) {
+    // Event was not cancelled, proceed with transaction
+    processTransaction(player, amount);
+}
 ```
 
-### Channel Management
-Manage notification channels programmatically:
+---
 
+## 🛠️ Developer Integration
+
+### Listening to Events
 ```java
-// Get all channels
-Map<String, NotificationChannel> channels = manager.getChannels();
-
-// Check channel status
-boolean enabled = channel.isEnabled();
-boolean supports = channel.supportsEventType(NotificationEvent.Type.PLAYER_JOIN);
+@EventBusSubscriber(modid = "your_mod_id")
+public class YourEventHandler {
+    
+    @SubscribeEvent
+    public static void onEconomyTransaction(EconomyTransactionEvent event) {
+        // Custom transaction logic
+        if (event.getAmount().compareTo(BigDecimal.valueOf(10000)) > 0) {
+            // Log large transactions
+            logLargeTransaction(event.getPlayer(), event.getAmount());
+        }
+    }
+    
+    @SubscribeEvent 
+    public static void onHomeTeleport(HomeTeleportEvent event) {
+        // Custom home teleportation handling
+        logTeleportUsage(event.getPlayer(), event.getHomeName());
+    }
+    
+    @SubscribeEvent
+    public static void onPlayerMute(PlayerMuteEvent event) {
+        // Custom moderation integration
+        notifyDiscord(event.getPlayer(), "muted", event.getReason());
+    }
+}
 ```
 
-## 🛠️ Debugging Events
+### Event Priority
+```java
+@SubscribeEvent(priority = EventPriority.HIGH)
+public void onHighPriorityEvent(EconomyTransactionEvent event) {
+    // Runs before normal priority handlers
+    // Use for critical checks or validation
+}
 
-### Command-Based Debugging
-Debug the notification system:
-
-```bash
-/notifications status        # Check system status
-/notifications test         # Test all channels
-/notifications test log     # Test specific channel
+@SubscribeEvent(priority = EventPriority.LOW) 
+public void onLowPriorityEvent(EconomyTransactionEvent event) {
+    // Runs after normal priority handlers
+    // Use for logging or cleanup tasks
+}
 ```
 
-### Log-Based Debugging
-Event processing is logged through the server logging system. Check server logs for:
-- Event listener registration messages
-- Notification delivery status
-- Channel availability issues
-- Event processing errors
+### Firing Custom Events
+```java
+// Fire a home set event
+HomeSetEvent homeEvent = new HomeSetEvent(player, homeName, x, y, z, worldName);
+if (!NeoForge.EVENT_BUS.post(homeEvent)) {
+    // Event was not cancelled, proceed with setting home
+    savePlayerHome(player, homeName, x, y, z, worldName);
+}
 
-## 🔒 Event Security
+// Fire a kit give event
+KitGiveEvent kitEvent = new KitGiveEvent(player, kitName, hasCooldown, cooldownTime);
+if (!NeoForge.EVENT_BUS.post(kitEvent)) {
+    // Event was not cancelled, give the kit
+    giveKitToPlayer(player, kitName);
+}
+```
 
-### Permission Requirements
-The `/notifications` command requires appropriate permissions:
-- `neoessentials.notifications.admin` - Full notification management
-- `neoessentials.notifications.test` - Testing capabilities
-- `neoessentials.notifications.send` - Send custom notifications
+---
 
-### Security Considerations
-- **Input Validation** - All notification data is validated
-- **Permission Checks** - Commands require proper permissions
-- **Rate Limiting** - Built into notification channels
-- **Audit Logging** - All events are logged for security tracking
+## 🔍 Event Usage Examples
+
+### Economy Event Integration
+```java
+@SubscribeEvent
+public static void onBalanceChange(EconomyBalanceChangeEvent event) {
+    BigDecimal change = event.getChange();
+    ServerPlayer player = event.getPlayer();
+    
+    // Log significant balance changes
+    if (change.abs().compareTo(BigDecimal.valueOf(1000)) >= 0) {
+        LOGGER.info("Large balance change for {}: {} ({})", 
+                   player.getName().getString(), change, event.getReason());
+    }
+    
+    // Update player displays
+    updatePlayerBalanceDisplay(player, event.getNewBalance());
+}
+
+@SubscribeEvent
+public static void onTransaction(EconomyTransactionEvent event) {
+    // Fraud prevention
+    if (event.getType() == TransactionType.TRANSFER_SEND) {
+        if (event.getAmount().compareTo(BigDecimal.valueOf(50000)) > 0) {
+            // Cancel extremely large transfers
+            event.setCanceled(true);
+            event.getPlayer().sendSystemMessage(Component.literal(
+                "§cTransfer amount too large! Contact an administrator for large transfers."));
+        }
+    }
+}
+```
+
+### Teleportation Event Integration
+```java
+@SubscribeEvent
+public static void onTeleportRequest(TeleportRequestEvent event) {
+    ServerPlayer requester = event.getRequester();
+    ServerPlayer target = event.getTarget();
+    
+    // Check if target allows teleport requests
+    if (!allowsTeleportRequests(target)) {
+        event.setCanceled(true);
+        requester.sendSystemMessage(Component.literal(
+            "§c" + target.getName().getString() + " is not accepting teleport requests."));
+        return;
+    }
+    
+    // Log teleport requests for moderation
+    logTeleportRequest(requester, target, event.getType());
+}
+
+@SubscribeEvent
+public static void onHomeSet(HomeSetEvent event) {
+    // Limit homes in certain dimensions
+    if (event.getWorld().equals("minecraft:the_end")) {
+        event.setCanceled(true);
+        event.getPlayer().sendSystemMessage(Component.literal(
+            "§cCannot set homes in The End!"));
+    }
+}
+```
+
+### Moderation Event Integration
+```java
+@SubscribeEvent
+public static void onPlayerMute(PlayerMuteEvent event) {
+    ServerPlayer player = event.getPlayer();
+    ServerPlayer moderator = event.getModerator();
+    
+    // Log to moderation system
+    logModerationAction("MUTE", player, moderator, event.getReason(), event.getDuration());
+    
+    // Notify other staff
+    notifyStaffMembers(moderator.getName().getString() + " muted " + 
+                      player.getName().getString() + " for: " + event.getReason());
+    
+    // Update player status displays
+    updatePlayerMuteStatus(player, true, event.getDuration());
+}
+```
 
 ---
 
 ## 📚 Related Documentation
 
-- **[Configuration](Configuration.md)** - System configuration
-- **[Essential Commands](Essential-Commands.md)** - Command reference
-- **[Notifications](Notifications.md)** - Notification system details
-- **[API Reference](API.md)** - API documentation
+- [Configuration Guide](Configuration.md) - System configuration options
+- [Commands Guide](Commands.md) - Complete command documentation
+- [API Documentation](API_DOCUMENTATION.md) - Developer integration guide
+- [Permissions Guide](Permissions.md) - Permission system setup
 
-*Last Updated: December 18, 2024*
+---

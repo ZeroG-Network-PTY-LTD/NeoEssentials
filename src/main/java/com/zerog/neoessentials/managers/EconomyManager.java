@@ -214,7 +214,7 @@ public class EconomyManager {
         LOGGER.info("Loading balance for player {}: {}", playerUUID, balance != null ? formatCurrency(balance) : "null");
         
         // Check if player needs starting balance initialization (only for truly new players)
-        if (balance == null && !hasBeenInitialized(playerUUID)) {
+        if ((balance == null || balance.equals(BigDecimal.ZERO)) && !hasBeenInitialized(playerUUID)) {
             // New player - set starting balance from config and mark as initialized
             initializePlayerBalance(playerUUID);
             balance = BigDecimal.valueOf(configManager.getMainConfig().economySettings.startingBalance);

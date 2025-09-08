@@ -311,5 +311,17 @@
   "neoessentials.home.limit_reached": "&cVous avez atteint la limite maximale de maisons ({0})",
   "neoessentials.home.failed": "&cÉchec de la téléportation! Veuillez réessayer.",
   "neoessentials.home.target_world_not_found": "&cMonde cible introuvable!",
-  "neoessentials.home.delete_success": "&aMaison '{0}' supprimée!"
+  "neoessentials.home.delete_success": "&aMaison '{0}' supprimée!",
+  "neoessentials.shop.protection.admin_sign": "&4[PROTECTION MAGASIN] &cCette panneau de magasin administrateur est protégé!",
+  "neoessentials.shop.protection.admin_permissions": "&7Vous avez besoin de la permission '&eneoessentials.shop.admin&7' ou '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.player_sign": "&4[PROTECTION MAGASIN] &cCe panneau de magasin est protégé!",
+  "neoessentials.shop.protection.owner_only_sign": "&7Ce panneau appartient au magasin d'un autre joueur. Seul le propriétaire peut le casser.",
+  "neoessentials.shop.protection.admin_bypass_sign": "&7Les administrateurs peuvent utiliser la permission '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.admin_chest": "&4[PROTECTION MAGASIN] &cCe coffre de magasin administrateur est protégé!",
+  "neoessentials.shop.protection.player_chest": "&4[PROTECTION MAGASIN] &cCe coffre de magasin est protégé!",
+  "neoessentials.shop.protection.owner_only_chest_break": "&7Ce coffre appartient au magasin d'un autre joueur. Seul le propriétaire peut le casser.",
+  "neoessentials.shop.protection.owner_only_chest_access": "&7Ce coffre appartient au magasin d'un autre joueur. Seul le propriétaire peut y accéder.",
+  "neoessentials.shop.protection.admin_bypass_chest": "&7Les administrateurs peuvent utiliser la permission '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.removed_successfully": "&a{0} supprimé avec succès!",
+  "neoessentials.shop.chest_break_warning": "&eAttention: Casser ce coffre affectera le magasin connecté!"
 }

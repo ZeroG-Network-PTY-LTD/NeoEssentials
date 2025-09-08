@@ -54,7 +54,7 @@ public class KitCommand {
     private static int listKits(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         KitManager kitManager = KitManager.getInstance();
-    MainConfig.KitSettings config = ConfigManager.getInstance().getMainConfig().kitSettings;
+        MainConfig.KitSettings config = ConfigManager.getInstance().getMainConfig().kitSettings;
         
         if (!config.enabled) {
             MessageUtil.sendTranslatedMessage(player, "neoessentials.kit.disabled");
@@ -71,17 +71,54 @@ public class KitCommand {
         // Send header
         MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.kit.list_header"));
 
-        // List each available kit (details should be fetched from a KitRegistry or KitManager, not config)
+        // List each available kit with details
         for (String kitName : availableKits) {
-            // Example: You would fetch kit details from a KitRegistry or KitManager here
-            // For now, just show the kit name
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.kit.list_entry", kitName));
+            com.zerog.neoessentials.data.Kit kit = kitManager.getKit(kitName);
+            if (kit != null) {
+                StringBuilder kitInfo = new StringBuilder();
+                kitInfo.append("§e").append(kit.getDisplayName());
+                
+                if (kit.hasCost()) {
+                    kitInfo.append(" §7(Cost: §c").append(kit.getCost()).append("§7)");
+                }
+                
+                if (kit.getCooldown() > 0) {
+                    long remainingCooldown = kitManager.getRemainingCooldown(player, kitName);
+                    if (remainingCooldown > 0) {
+                        kitInfo.append(" §7(Cooldown: §c").append(formatTime(remainingCooldown)).append("§7)");
+                    } else {
+                        kitInfo.append(" §7(Cooldown: §a").append(kit.getCooldown()).append("s§7)");
+                    }
+                }
+                
+                kitInfo.append(" §7- ").append(kit.getDescription());
+                
+                MessageUtil.sendMessage(player, kitInfo.toString());
+            } else {
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.kit.list_entry", kitName));
+            }
         }
 
         return 1;
     }
     
     /**
+     * Format time for display
+     */
+    private static String formatTime(long milliseconds) {
+        long seconds = milliseconds / 1000;
+        if (seconds < 60) {
+            return seconds + "s";
+        }
+        
+        long minutes = seconds / 60;
+        if (minutes < 60) {
+            return minutes + "m " + (seconds % 60) + "s";
+        }
+        
+        long hours = minutes / 60;
+        return hours + "h " + (minutes % 60) + "m";
+    }    /**
      * Execute /kit <name> command to give a specific kit
      */
     private static int giveKit(CommandContext<CommandSourceStack> context) {

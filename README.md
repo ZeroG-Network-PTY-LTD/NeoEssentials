@@ -3,282 +3,305 @@
 ![NeoEssentials Logo](docs/images/Logo.png)
 
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen.svg)](https://www.minecraft.net/)
-[![NeoForge](https://img.shields.io/badge/NeoForge-21.1.1+-blue.svg)](https://neoforged.net/)
+[![NeoForge](https://img.shields.io/badge/NeoForge-21.1.179+-blue.svg)](https://neoforged.net/)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Release](https://img.shields.io/github/v/release/ZeroG-Network-Org/NeoEssentials)](https://github.com/ZeroG-Network-Org/NeoEssentials/releases)
-[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-1.0.2.2--HOTFIX-brightgreen.svg)]()
 [![Discord](https://img.shields.io/discord/placeholder?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/dUGAQF2Mga)
 
-> A comprehensive server management and essentials mod for Minecraft NeoForge 1.21.1+
+> A comprehensive essentials mod for Minecraft NeoForge 1.21.1 servers featuring 50+ commands, GUI tools, and advanced administration features
 
 ## 🌟 Overview
 
-NeoEssentials is a powerful, feature-rich server-side mod that brings essential server management tools to Minecraft NeoForge servers. Designed with performance and flexibility in mind, it provides everything you need to run a professional Minecraft server.
+NeoEssentials is a feature-rich server-side mod that brings essential server management and player utility commands to Minecraft NeoForge servers. Built for performance and ease of use, it provides administrators and players with the tools they need for a smooth server experience.
 
-**🎯 Server-Side Only**: Players don't need to install anything - works with vanilla and modded clients!
+**🎯 Server-Side Only**: Players don't need to install anything - works with vanilla clients!
+**⚡ 50+ Commands**: Comprehensive command suite covering all essential server functions
+**🎨 Modern UI**: Enhanced GUI commands with proper color code support
 
 ## ✨ Core Features
 
-### 🏠 **Teleportation System**
-- **Homes**: Multiple homes per player with permission-based limits
-- **Warps**: Server-wide teleportation points with categories
-- **Teleport Requests**: Player-to-player teleportation with accept/deny system
-- **Back System**: Return to previous locations with smart history
-- **Spawn Management**: Configurable spawn points and first-join spawning
-- **Random Teleport**: Safe random location teleportation
+### ⚡ **Essential Commands** (50+ Commands)
+- **Player Utilities**: `/heal`, `/feed`, `/god`, `/vanish`, `/fly`, `/speed`, `/gamemode`
+- **Item Management**: `/give`, `/item`, `/repair`, `/enchant`, `/clear`
+- **Player Info**: `/list`, `/whois`, `/seen`, `/ping`, `/afk`
+- **Inventory Tools**: `/invsee`, `/enderchest`, nickname system with `/nick`
 
-### 💰 **Economy System**
-- **Multi-Currency Support**: Default currency plus custom currencies
-- **Banking System**: Advanced account management with interest
-- **Payment System**: Secure player-to-player transactions
-- **Shop Integration**: Complete shop system with admin and player shops
-- **Auction House**: Bidding system with buyout options
-- **Economic Analytics**: Track economy health and player wealth
-- **Loan System**: Credit-based lending with configurable terms
+### 🎮 **GUI Commands** (Working & Enhanced)
+- **Workbench**: `/wb` or `/workbench` - Portable crafting table
+- **Anvil**: `/anvil` - Portable anvil interface  
+- **Smithing Table**: `/smithing` - Portable smithing interface
+- **Stonecutter**: `/stonecutter` - Portable stonecutter interface
+- **Crafting**: `/craft` or `/crafting` - Alternative crafting interface
+- All GUI commands properly support color codes and stay open
 
-### 🎮 **User Interface**
-- **Enhanced Tablist**: Fully customizable with animations and hex colors
-- **Boss Bar System**: Dynamic boss bars with multiple display modes
-- **Animated Displays**: Rotation, scroll, fade, rainbow, typewriter effects
-- **Placeholder Support**: Extensive placeholder system with custom placeholders
-- **Permission-Based UI**: Different displays for different player groups
-- **Real-Time Updates**: Live updating of player information
+### � **Teleportation System**
+- **Homes**: `/home`, `/sethome`, `/delhome`, `/homes` - Player home system
+- **Warps**: `/warp`, `/setwarp`, `/delwarp`, `/warps` - Server warp points
+- **Teleport Requests**: `/tpa`, `/tpaccept`, `/tpdeny` - Player-to-player teleporting
+- **Back System**: `/back` - Return to previous locations
+- **Spawn Management**: `/spawn`, `/setspawn` - Server spawn system
 
-### 🔧 **Administration Tools**
-- **Moderation Commands**: Ban, kick, mute, jail, freeze players
-- **Admin Panel**: Comprehensive web-style admin interface
-- **Performance Monitoring**: TPS, memory, and entity tracking
-- **Maintenance Mode**: Server maintenance with custom messages
-- **Vanish System**: Advanced invisibility for staff
-- **PowerTools**: Bind commands to items for quick execution
-- **Chat Management**: Format and filter chat messages
-- **World Control**: Time, weather, and world management
+### � **Economy System**
+- **Balance Management**: `/balance`, `/bal`, `/eco` - Check and manage economy
+- **Payment System**: `/pay` - Transfer money between players
+- **Kit System**: `/kit`, `/kits` - Item kit rewards with cooldowns
+- **Shop System**: Sign-based shops for buying/selling items
 
-### 📦 **Player Utilities**
-- **Kit System**: Configurable item kits with cooldowns and permissions
-- **Mail System**: Offline messaging between players
-- **AFK Detection**: Automatic AFK detection with customizable timeouts
-- **Player Information**: Detailed player stats and information
-- **Inventory Management**: Backup, restore, and clear inventories
-- **Nickname System**: Custom player nicknames with formatting
+### � **Communication & Social**
+- **Messaging**: `/msg`, `/reply`, `/r` - Private messaging system
+- **Mail System**: `/mail` - Offline messaging between players
+- **Social Features**: Ignore system, social spy for staff
+- **AFK System**: Automatic AFK detection and management
 
-### 🌐 **Internationalization**
-- **Multi-Language Support**: English, German, Spanish, French, and more
-- **Dynamic Language Switching**: Players can change language in-game
-- **Localized Messages**: All mod messages support localization
-- **Custom Language Files**: Easy to add new languages
+### 🛡️ **Moderation Tools**
+- **Player Management**: `/ban`, `/unban`, `/kick`, `/mute`, `/unmute`
+- **Administrative**: `/sudo`, `/powertool`, `/time`, `/weather`
+- **Player Data**: Complete player data management and storage
+- **Last Seen**: Track player login/logout times
 
-### 🛡️ **Permissions & Security**
-- **Permission Integration**: Works with LuckPerms, FTB Ranks, and others
-- **Security Features**: Rate limiting, command cooldowns, and abuse prevention
-- **Group-Based Features**: Different features for different permission groups
-- **Secure Storage**: Encrypted player data storage options
+### � **Customization & Display**
+- **Language System**: Multi-language support with hot-swapping
+- **Color Support**: Full hex color code support with `&#RRGGBB` format
+- **Placeholder System**: Extensive placeholder support for dynamic text
+- **Animation Commands**: Basic animation system for displays
+
+### ⚙️ **Administration Features**
+- **Web Dashboard**: Real-time server monitoring and management interface
+- **Permission Integration**: LuckPerms and FTB Ranks support
+- **Configuration System**: JSON-based modular configuration
+- **Performance Monitoring**: Server performance tracking and optimization
 
 ## 📋 Requirements
 
-- **Minecraft**: 1.21.1+
-- **NeoForge**: 21.1.1 or higher
+- **Minecraft**: 1.21.1
+- **NeoForge**: 21.1.179 or higher
 - **Java**: 21 or higher
 - **Server Type**: Dedicated server (client installation not required)
 
 ## 🚀 Quick Start
 
 ### Installation
-1. Download the latest release from [GitHub Releases](https://github.com/ZeroG-Network-Org/NeoEssentials/releases)
+1. Download the latest release (neoessentials-1.0.2.2_HOTFIX.jar)
 2. Place the JAR file in your server's `mods` folder
-3. Start your server to generate configuration files
-4. Configure the mod in `config/neoessentials/` directory
+3. Start your server to generate configuration files in `config/neoessentials/`
+4. Configure permissions and features as needed
 5. Restart the server to apply changes
 
-### First Configuration
-```bash
-# Navigate to your server directory
-cd /path/to/your/server
-
-# Configuration files will be created in:
+### Essential Configuration Files
+```
 config/neoessentials/
-├── general.toml          # General mod settings
-├── economy.toml          # Economy system configuration
-├── homes.toml            # Home system settings
-├── warps.toml            # Warp system settings
-├── kits.toml             # Kit configuration
-├── tablist.toml          # Tablist customization
-├── moderation.toml       # Moderation tools settings
-├── messaging.toml        # Chat and messaging settings
-├── permissions.toml      # Permission system settings
-└── storage.toml          # Data storage configuration
+├── config.json           # Main configuration settings
+├── permissions.json      # Permission system setup
+├── language/            # Language files directory
+├── shops.json           # Shop system configuration
+└── settings.json        # Additional mod settings
 ```
 
-## 📚 Documentation
-
-### Quick Reference
-- 📖 [Installation Guide](docs/wiki/Installation.md) - Detailed installation instructions
-- ⚡ [Quick Start Guide](docs/wiki/Quick-Start.md) - Get up and running fast
-- ⚙️ [Configuration Guide](docs/wiki/Configuration.md) - Complete configuration reference
-- 🎮 [Commands Reference](docs/wiki/Essential-Commands.md) - All available commands
-- 🔐 [Permissions Guide](docs/wiki/Permissions.md) - Permission system integration
-
-### Advanced Features
-- 🎨 [Tablist Customization](docs/wiki/Tablist-Scoreboard.md) - Custom tablist and scoreboards
-- 🌈 [Hex Color Support](docs/wiki/Hex-Colors.md) - Using hex colors in messages
-- 🎬 [Animation System](docs/wiki/Animations.md) - Text and UI animations
-- 🏪 [Economy System](docs/wiki/Economy.md) - Economy and shop management
-- 🏠 [Home & Warp System](docs/wiki/Home.md) - Teleportation management
-- 👥 [Player Management](docs/wiki/Player-Management.md) - Player utilities and moderation
-
-### Development
-- 🔌 [API Documentation](docs/wiki/API.md) - Developer API reference
-- 🎯 [Custom Placeholders](docs/wiki/Placeholders.md) - Creating custom placeholders
-- 🔧 [Events System](docs/wiki/Events.md) - Custom event handling
-- 🎮 [GUI System](docs/wiki/GUI-System.md) - Custom GUI creation
-
-## 🎮 Key Commands
-
-### Player Commands
+### Quick Permission Setup
+For LuckPerms users:
 ```
-/home [name]              # Teleport to home
-/sethome [name]           # Set a home at current location
-/delhome <name>           # Delete a home
-/homes                    # List all your homes
-/warp <name>              # Teleport to a warp
-/warps                    # List available warps
-/spawn                    # Teleport to spawn
-/tpa <player>             # Request teleport to player
-/tpaccept                 # Accept teleport request
-/back                     # Return to previous location
-/kit <name>               # Claim a kit
-/kits                     # List available kits
-/balance                  # Check your balance
-/pay <player> <amount>    # Pay another player
-/mail send <player> <msg> # Send mail to player
-/language set <lang>      # Change your language
+/lp group admin permission set neoessentials.admin true
+/lp group moderator permission set neoessentials.moderator true
+/lp group default permission set neoessentials.player true
 ```
 
-### Admin Commands
+## 🎮 Command Reference
+
+### � **GUI Commands**
 ```
-/adminpanel              # Open admin interface
-/setwarp <name>          # Create a warp
-/delwarp <name>          # Delete a warp
-/setspawn                # Set server spawn
+/workbench (/wb)         # Open portable crafting table
+/anvil                   # Open portable anvil
+/smithing                # Open portable smithing table  
+/stonecutter             # Open portable stonecutter
+/craft (/crafting)       # Open crafting interface
+```
+
+### � **Teleportation Commands**
+```
+/home [name]             # Teleport to home
+/sethome [name]          # Set home at current location
+/delhome <name>          # Delete a home
+/homes                   # List your homes
+/warp <name>             # Teleport to warp
+/warps                   # List available warps
+/spawn                   # Teleport to spawn
+/tpa <player>            # Request teleport to player
+/tpaccept                # Accept teleport request
+/tpdeny                  # Deny teleport request
+/back                    # Return to previous location
+```
+
+### ⚡ **Essential Utilities**
+```
+/heal [player]           # Heal yourself or target player
+/feed [player]           # Feed yourself or target player
+/god [player]            # Toggle god mode
+/vanish                  # Toggle invisibility
+/fly [player]            # Toggle flight mode
+/speed <speed> [player]  # Set movement speed
+/gamemode <mode> [player] # Change gamemode
+/repair [all]            # Repair held item or all items
+/give <player> <item>    # Give items to players
+/item <item>             # Give yourself items
+```
+
+### 👥 **Player Management**
+```
+/list                    # Show online players
+/whois <player>          # Show player information
+/seen <player>           # Check when player was last online
+/nick <nickname>         # Set your nickname
+/invsee <player>         # View player's inventory
+/afk                     # Toggle AFK status
+/ping [player]           # Check connection ping
+```
+
+### 💰 **Economy Commands**
+```
+/balance (/bal)          # Check your balance
+/pay <player> <amount>   # Pay another player
+/eco <subcommand>        # Economy administration
+/kit <name>              # Claim a kit
+/kits                    # List available kits
+```
+
+### 💬 **Communication**
+```
+/msg <player> <message>  # Send private message
+/reply <message> (/r)    # Reply to last message
+/mail send <player> <msg> # Send offline mail
+/mail read               # Read your mail
+/ignore <player>         # Ignore a player
+```
+
+### 🛡️ **Moderation Commands**
+```
 /ban <player> [reason]   # Ban a player
+/unban <player>          # Unban a player
 /kick <player> [reason]  # Kick a player
 /mute <player> [time]    # Mute a player
-/jail <player>           # Jail a player
-/heal [player]           # Heal player
-/feed [player]           # Feed player
-/god [player]            # Toggle god mode
-/vanish                  # Toggle vanish mode
-/maintenance             # Toggle maintenance mode
-/economy <subcommand>    # Economy management
-/tablist reload          # Reload tablist config
+/unmute <player>         # Unmute a player
+/sudo <player> <command> # Force player to run command
+/time <set|add> <value>  # Control server time
+/weather <clear|rain>    # Control weather
+```
+
+### ⚙️ **Administration**
+```
+/setwarp <name>          # Create a warp point
+/delwarp <name>          # Delete a warp point
+/setspawn                # Set server spawn point
+/language <set|reload>   # Language management
+/config reload           # Reload configuration
+/permissions <subcommand> # Permission management
 ```
 
 ## 🔧 Configuration Examples
 
-### Basic Economy Setup
-```toml
-# config/neoessentials/economy.toml
-[economy]
-enabled = true
-starting_balance = 1000.0
-currency_name = "Coins"
-currency_symbol = "$"
+### Basic Configuration Structure
+The mod uses JSON-based configuration files for flexibility:
 
-[banking]
-enabled = true
-interest_rate = 0.05
-compound_frequency = "daily"
-
-[shops]
-enabled = true
-max_shops_per_player = 3
-shop_creation_cost = 500.0
-```
-
-### Tablist Configuration
-```toml
-# config/neoessentials/tablist.toml
-[tablist]
-enabled = true
-update_interval = 1000
-
-[header]
-enabled = true
-lines = [
-    "&#FF6B6B&l&lNeoEssentials Server",
-    "&#4ECDC4&lWelcome %player%!",
-    "&#45B7D1Online: %online_players%/%max_players%"
-]
-
-[footer]
-enabled = true
-lines = [
-    "&#95E1D3TPS: %tps%",
-    "&#F9CA24Ping: %ping%ms",
-    "&#6C5CE7discord.gg/yourserver"
-]
-
-[animations]
-type = "rotation"
-speed = 2000
+```json
+// config/neoessentials/config.json
+{
+  "general": {
+    "debug": false,
+    "language": "en"
+  },
+  "features": {
+    "economy": true,
+    "homes": true,
+    "warps": true,
+    "kits": true,
+    "shops": true
+  },
+  "limits": {
+    "max_homes": 5,
+    "max_warps": 10
+  }
+}
 ```
 
 ### Permission Integration
-```toml
-# config/neoessentials/permissions.toml
-[permissions]
-system = "luckperms"  # or "ftb_ranks", "default"
-prefix = "neoessentials"
-
-[groups]
-admin = "neoessentials.admin.*"
-moderator = "neoessentials.moderator.*"
-vip = "neoessentials.vip.*"
-default = "neoessentials.player.*"
+```json
+// config/neoessentials/permissions.json
+{
+  "system": "luckperms",
+  "groups": {
+    "admin": "neoessentials.admin",
+    "moderator": "neoessentials.moderator", 
+    "player": "neoessentials.player"
+  }
+}
 ```
 
-## 🔗 Integration
+### Shop System Setup
+```json
+// config/neoessentials/shops.json
+{
+  "enabled": true,
+  "sign_shops": true,
+  "max_shops_per_player": 3,
+  "creation_cost": 100.0
+}
+```
 
-### Permission Plugins
-- **LuckPerms** ✅ Full support with context integration
-- **FTB Ranks** ✅ Complete permission integration
-- **Default System** ✅ Built-in fallback permissions
+## 🔗 Integration & Compatibility
 
-### Placeholder Plugins
-- **PlaceholderAPI** ✅ Full placeholder support
-- **Custom Placeholders** ✅ Built-in placeholder system
+### ✅ Supported Permission Systems
+- **LuckPerms** - Full integration with permission nodes and contexts
+- **FTB Ranks** - Complete compatibility with FTB server systems
+- **Built-in System** - Fallback permission system when no plugin is available
 
-### Economy Plugins
-- **Built-in Economy** ✅ Complete economy system
-- **External Economy** ✅ Vault-compatible integration
+### ✅ Server Compatibility
+- **Server-Side Only** - No client modifications required
+- **Vanilla Client Support** - Works with unmodded Minecraft clients
+- **Mod Compatibility** - Compatible with most other NeoForge server mods
+- **Performance Optimized** - Designed for minimal server impact
 
-## 🏆 Performance & Compatibility
+## 🚀 Key Highlights
 
-### Performance Features
-- **Asynchronous Operations**: Heavy operations run on separate threads
-- **Smart Caching**: Intelligent caching system reduces database calls
-- **Memory Optimization**: Efficient memory usage with automatic cleanup
-- **Configurable Intervals**: Adjust update frequencies for optimal performance
-
-### Compatibility
-- **Server-Side Only**: No client modifications required
-- **Vanilla Client Compatible**: Works with unmodded clients
-- **Mod Compatibility**: Compatible with most other server mods
-- **Version Support**: Supports multiple NeoForge versions
+### What Makes NeoEssentials Special
+- **🎯 50+ Essential Commands** - Complete command suite for server administration and player utilities
+- **🎮 Working GUI Commands** - Portable crafting, anvil, smithing, and stonecutter interfaces that actually work
+- **🎨 Modern Color Support** - Full hex color code support with `&#RRGGBB` format
+- **🔧 Easy Configuration** - JSON-based config files for maximum flexibility
+- **⚡ Performance Focused** - Optimized for minimal server impact
+- **🌐 Multi-Language** - Built-in language system with easy translation support
+- **🛡️ Permission Ready** - Seamless integration with popular permission plugins
 
 ## 🤝 Support & Community
 
 ### Getting Help
-- 📖 **Documentation**: Check the [Wiki](docs/wiki/) for comprehensive guides
-- 💬 **Discord**: Join our [Discord server](https://discord.gg/dUGAQF2Mga) for real-time support
-- 🐛 **Bug Reports**: Submit issues on [GitHub](https://github.com/ZeroG-Network-Org/NeoEssentials/issues)
-- 💡 **Feature Requests**: Suggest new features on GitHub discussions
+-  **Discord**: Join our [Discord server](https://discord.gg/dUGAQF2Mga) for support and community discussion
+- 🐛 **Bug Reports**: Report issues and bugs through GitHub or Discord
+- 💡 **Feature Requests**: Suggest new features and improvements
+- 📖 **Documentation**: Check the `docs/` folder for detailed guides and examples
 
 ### Contributing
-- 🔧 **Development**: Fork the repository and submit pull requests
-- 🌐 **Translations**: Help translate NeoEssentials to your language
-- 📝 **Documentation**: Improve documentation and guides
-- 🧪 **Testing**: Test new features and report issues
+We welcome contributions from the community! Whether you're fixing bugs, adding features, or improving documentation, your help is appreciated.
+
+## 🎯 Perfect For
+
+- **� Survival Servers** - Essential commands and utilities for survival gameplay
+- **🎮 Creative Servers** - Creative tools and administrative features
+- **👥 Community Servers** - Social features, messaging, and player management
+- **🏪 Economy Servers** - Built-in economy system with shop support
+- **⚙️ Admin-Focused** - Comprehensive administration and moderation tools
+
+## 📊 Statistics
+
+- **50+ Commands** across all essential categories
+- **5 GUI Interfaces** (Workbench, Anvil, Smithing, Stonecutter, Crafting)
+- **Multi-Language Support** with easy translation system
+- **Permission Integration** for LuckPerms and FTB Ranks
+- **JSON Configuration** for maximum flexibility and ease of use
+
+Need a server? Check out our recommended hosting partners for the best performance and support!
+# Bisect Hosting
+[![Bisect Hosting](docs/images/Bisect-Hosting-Logo.png)](https://www.bisecthosting.com/clients/aff.php?aff=6612)
+# Cloudnord
+[![Cloudnord ](https://cloudnord.net/templates/rosa/img/cn-light.png)](https://cloudnord.net/aff.php?code=nbnDkN9DlbLPxZg4)
 
 ## 📄 License
 
@@ -286,4 +309,6 @@ NeoEssentials is licensed under the MIT License. See the [LICENSE](LICENSE) file
 
 ---
 
-**Made with ❤️ by the ZeroG Network Team**
+**🌟 Ready to enhance your server? Download NeoEssentials and give your players the essential tools they need!**
+
+*Made with ❤️ for the Minecraft community*

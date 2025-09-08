@@ -97,6 +97,12 @@ public class CommandRegistry {
             AnvilCommand.register(dispatcher);
             LOGGER.info("Registered anvil command");
             
+            SmithingCommand.register(dispatcher);
+            LOGGER.info("Registered smithing command");
+            
+            StonecutterCommand.register(dispatcher);
+            LOGGER.info("Registered stonecutter command");
+            
             // Moderation commands
             BanCommand.register(dispatcher);
             LOGGER.info("Registered ban command");
@@ -173,6 +179,8 @@ public class CommandRegistry {
             // Temporarily disabled shop commands (user requested to ignore shop section)
             // com.zerog.neoessentials.commands.economy.ShopCommand.register(dispatcher);
             com.zerog.neoessentials.economy.SignShopCommand.register(dispatcher, context);
+            com.zerog.neoessentials.commands.economy.SaveShopsCommand.register(dispatcher);
+            com.zerog.neoessentials.commands.economy.CheckShopsCommand.register(dispatcher);
             LOGGER.info("Registered shop system commands");
             
             // Mail system

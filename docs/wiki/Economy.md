@@ -1,47 +1,45 @@
 
 # NeoEssentials Economy System
 
-The NeoEssentials Economy System provides a robust virtual economy for your Minecraft server, featuring a dual-manager architecture with advanced multi-currency support, comprehensive balance management, banking operations, transaction analytics, and extensive administrative tools.
+The NeoEssentials 2.1.0 Economy System provides a robust virtual economy for your Minecraft server, featuring a streamlined architecture with balance management, player transactions, and administrative tools.
 
 ---
 
 ## 💰 Economy Features
 
-NeoEssentials includes two economy managers that work together:
-
-### Dual Manager Architecture
-- **Advanced Economy Manager** (`economy.EconomyManager`) - Provides multi-currency support, banking, transaction history, analytics
-- **Memory-Optimized Manager** (`managers.EconomyManager`) - Handles basic Vault-compatible operations with performance optimization
+NeoEssentials includes a unified economy system that provides:
 
 ### Core Features
-- Player balances with BigDecimal precision for accurate calculations
-- Player-to-player payments with transaction logging
-- Economy leaderboard with rich formatting
-- Advanced administrative commands for balance management
-- Multi-currency support with exchange rates
-- Banking system with account management
-- Comprehensive transaction history and analytics
-- Background tasks for data cleanup and optimization
-- Vault integration for plugin compatibility
-- Cache optimization for high-performance servers
+- **Player Balances** - BigDecimal precision for accurate calculations
+- **Player-to-Player Payments** - Secure money transfers with validation
+- **Balance Management** - Administrative commands for balance control
+- **Economy Leaderboard** - Rich formatting for top player balances
+- **Transaction Logging** - Comprehensive tracking of all economic activities
+- **Vault Integration** - Compatibility with other economy-dependent plugins
+- **Cache Optimization** - High-performance for busy servers
+
+### System Architecture
+- **EconomyManager** (`managers.EconomyManager`) - Main economy system with Vault compatibility
+- **EconomyCommands** (`commands.EconomyCommands`) - Basic commands (/bal, /pay, /eco)
+- **EconomyCommand** (`economy.EconomyCommand`) - Advanced economy command system (documentation only)
 
 ---
 
 ## ⚙️ Configuration
 
-The economy system is configured through the main `config/config.json` file in the economy settings section. Here's the configuration structure:
+The economy system is configured through the main `config/neoessentials/config.json` file in the economy settings section:
 
 ```json
 {
-    "economy": {
-        "enabled": true,
-        "startingBalance": 500.0,
-        "currencySymbol": "$",
-        "maxBalance": 999999.0,
-        "maxTransferAmount": 50000.0,
-        "transactionFeePercent": 0.0,
-        "cleanupInactiveAccounts": false
-    }
+  "economySettings": {
+    "enabled": true,
+    "startingBalance": 100.0,
+    "currencySymbol": "$",
+    "maxBalance": 100000.0,
+    "cleanupInactiveAccounts": true,
+    "transactionFeePercent": 1.0,
+    "maxTransferAmount": 10000.0
+  }
 }
 ```
 
@@ -49,57 +47,191 @@ The economy system is configured through the main `config/config.json` file in t
 
 - `enabled` - Enable/disable the entire economy system
 - `startingBalance` - Default balance for new players (BigDecimal precision)
-- `currencySymbol` - Primary symbol displayed with currency amounts
+- `currencySymbol` - Symbol used for currency display (e.g., "$", "€", "¥")
 - `maxBalance` - Maximum balance a player can have
-- `maxTransferAmount` - Maximum amount for single transfers
-- `transactionFeePercent` - Fee percentage for player-to-player transactions
-- `cleanupInactiveAccounts` - Remove balances for inactive players
+- `cleanupInactiveAccounts` - Remove inactive player accounts automatically
+- `transactionFeePercent` - Percentage fee for transactions (1.0 = 1%)
+- `maxTransferAmount` - Maximum amount allowed in a single transfer
 
-**Note:** The economy configuration is part of the unified JSON configuration system, not a separate `economy.json` file.
+---
+
+## 💵 Basic Commands
+
+The economy system provides essential commands for players and administrators:
+
+### Player Commands
+
+**Check Balance:**
+```bash
+/balance           # Check your own balance
+/bal              # Short form
+/balance <player>  # Check another player's balance (requires permission)
+```
+
+**Send Money:**
+```bash
+/pay <player> <amount>    # Send money to another player
+```
+
+**Economy Leaderboard:**
+```bash
+/baltop           # Show top 10 richest players
+/baltop <number>  # Show top X players (max 50)
+```
+
+### Administrative Commands
+
+**Give Money:**
+```bash
+/eco give <player> <amount>    # Give money to a player
+```
+
+**Take Money:**
+```bash
+/eco take <player> <amount>    # Remove money from a player
+```
+
+**Set Balance:**
+```bash
+/eco set <player> <amount>     # Set a player's balance
 ```
 
 ---
 
-## 📝 Player Commands
+## � System Features
 
-### Balance Commands
+### Balance Management
+- **BigDecimal Precision** - Accurate financial calculations without rounding errors
+- **Automatic Validation** - Prevents negative balances and overflow
+- **Transaction Logging** - All balance changes are logged with reasons
+- **Balance Limits** - Configurable maximum balances per player
+
+### Payment System
+- **Secure Transfers** - Validates sender has sufficient funds
+- **Anti-Self-Payment** - Prevents players from paying themselves
+- **Transaction Fees** - Optional percentage-based fees
+- **Transfer Limits** - Maximum transfer amounts to prevent abuse
+
+### Leaderboard System
+- **Top Balances** - Shows richest players on the server
+- **Rich Formatting** - Color-coded rankings and formatted amounts
+- **Game Profile Integration** - Shows player names even when offline
+- **Configurable Limits** - Customizable leaderboard size
+
+---
+
+## 📊 Economy Management
+
+### Administrative Features
+- **Balance Control** - Set, add, or remove player balances
+- **Transaction Monitoring** - Track all economic activities
+- **Inactive Account Cleanup** - Automatic removal of dormant accounts
+- **Performance Optimization** - Efficient caching and data management
+
+### Integration Features
+- **Vault Compatibility** - Works with other economy-dependent plugins
+- **Permission Integration** - Respects server permission systems
+- **Localization Support** - Multi-language message support
+- **Command Cooldowns** - Configurable cooldowns to prevent spam
+
+---
+
+## 🎯 Usage Examples
+
+### Basic Player Usage
 ```bash
-/bal [player]         # Check your own or another player's balance
-/balance [player]     # Alias for /bal - Check balance
-/baltop [limit]       # View economy leaderboard (default limit: 10, max: 50)
-/balancetop [limit]   # Alias for /baltop - View top balances
+# Check your balance
+/balance
+# Output: Your balance: $1,000.00
+
+# Pay another player
+/pay Steve 250
+# Output: Sent $250.00 to Steve
+
+# Check the leaderboard
+/baltop 5
+# Shows top 5 richest players
 ```
 
-### Payment Commands
+### Administrative Usage
 ```bash
-/pay <player> <amount>  # Send money to another player
-                        # Minimum amount: 0.01, includes transaction logging
+# Give starting funds to a new player
+/eco give NewPlayer 500
+# Output: Gave $500.00 to NewPlayer
+
+# Remove money from a player (punishment)
+/eco take Griefer 1000
+# Output: Removed $1,000.00 from Griefer
+
+# Set exact balance for testing
+/eco set TestPlayer 5000
+# Output: Set TestPlayer's balance to $5,000.00
 ```
 
 ---
 
-## 🛠️ Admin Commands
+## 🔒 Permissions
 
-### Advanced Economy Management (`/economy`)
-```bash
-/economy balance check <player> <currency>    # Check player's balance in specific currency
-/economy balance set <player> <currency> <amount>    # Set player's balance
-/economy balance add <player> <currency> <amount>    # Add money to player's balance
-/economy balance remove <player> <currency> <amount> # Remove money from player's balance
-```
+### Player Permissions
+- `neoessentials.balance` - Check your own balance
+- `neoessentials.balance.others` - Check other players' balances
+- `neoessentials.pay` - Send money to other players
+- `neoessentials.baltop` - View economy leaderboard
 
-### Basic Admin Commands (`/eco`)
-```bash
-/eco give <player> <amount>  # Give money to a player
-/eco take <player> <amount>  # Remove money from a player
-/eco set <player> <amount>   # Set a player's balance to exact amount
-```
-
-**Permission Requirements:**
-- Advanced `/economy` commands require `neoessentials.moderation.basic`
-- Basic `/eco` commands require specific permissions (see below)
+### Administrative Permissions
+- `neoessentials.economy.admin.give` - Give money to players
+- `neoessentials.economy.admin.take` - Remove money from players
+- `neoessentials.economy.admin.set` - Set player balances
+- `neoessentials.economy.admin.bypass` - Bypass transfer limits and fees
 
 ---
+
+## ⚡ Performance Features
+
+### Optimization
+- **Efficient Caching** - Balance data cached for fast access
+- **Lazy Loading** - Player data loaded only when needed
+- **Background Processing** - Non-critical operations run asynchronously
+- **Memory Management** - Automatic cleanup of unused data
+
+### Scalability
+- **High Concurrency** - Thread-safe operations for busy servers
+- **Batch Operations** - Efficient bulk operations for administrative tasks
+- **Resource Monitoring** - Tracks memory and performance metrics
+
+---
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### Economy Not Working
+- Check that `economySettings.enabled` is `true` in config
+- Verify Vault is installed if using economy-dependent plugins
+- Check server logs for economy initialization errors
+
+#### Balance Issues
+- Ensure `startingBalance` is set appropriately
+- Check `maxBalance` limits aren't too restrictive
+- Verify player has necessary permissions
+
+#### Performance Problems
+- Reduce `maxTransferAmount` if needed
+- Enable `cleanupInactiveAccounts` for automatic cleanup
+- Monitor server logs for economy-related errors
+
+---
+
+## 📚 Related Documentation
+
+- [Commands Guide](Commands.md) - Complete command documentation
+- [Permissions Guide](Permissions.md) - Permission system setup
+- [Configuration Guide](Configuration.md) - Configuration management
+- [API Documentation](API_DOCUMENTATION.md) - Developer integration
+
+---
+
+*Last Updated: September 2025 - NeoEssentials 2.1.0*
 
 ## 🔒 Permission Nodes
 
@@ -259,6 +391,4 @@ NeoEssentials uses a sophisticated dual-manager architecture:
 - [Configuration Guide](Configuration.md) - Main configuration settings
 - [Permissions System](Permissions.md) - Permission node details  
 - [API Documentation](API_DOCUMENTATION.md) - Developer integration
-- [Custom Commands](Custom-Commands.md) - All available commands
-
-*Documentation updated to reflect actual NeoEssentials 1.0.2.1 implementation*
+- [Commands](Commands.md) - All available commands

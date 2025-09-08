@@ -3,6 +3,7 @@ package com.zerog.neoessentials.config;
 public class MainConfig {
     public final HomeSettings homeSettings = new HomeSettings();
     public final EconomySettings economySettings = new EconomySettings();
+    public final ExternalEconomySettings externalEconomySettings = new ExternalEconomySettings();
     public final WarpConfig warpConfig = new WarpConfig();
     public final SpawnConfig spawnConfig = new SpawnConfig();
     public final KitSettings kitSettings = new KitSettings();
@@ -47,6 +48,16 @@ public class MainConfig {
         public boolean cleanupInactiveAccounts = true;
         public double transactionFeePercent = 1.0;
         public double maxTransferAmount = 10000.0;
+    }
+    
+    public static class ExternalEconomySettings {
+        public boolean enabled = true;
+        public boolean ftbMoney = true;
+        public boolean magicCoins = true;
+        public boolean lightmansCurrency = true;
+        public boolean createdCoins = true;
+        public boolean preferExternal = true;
+        public String priorityOrder = "lightmans_currency,ftb_money,magic_coins,created_coins";
     }
     
     public static class WarpConfig {
@@ -112,9 +123,9 @@ public class MainConfig {
         public int spamThreshold = 3;
         public int spamTimeWindow = 5000;
         public java.util.List<String> blockedWords = new java.util.ArrayList<>();
-        public String chatFormat = "[{group}] {player_name}: {message}";
+        public String chatFormat = "{MESSAGE}";
         public boolean isEnabled = true;
-        public String chatname = "[{group}] {player_name}";
+        public String chatname = "&r<{PREFIX} {player_name}{SUFFIX}&r>";
         public AntiSpamSettings antiSpam = new AntiSpamSettings();
         public FilterSettings filter = new FilterSettings();
         public java.util.Map<String, String> groupFormats = new java.util.HashMap<>();
