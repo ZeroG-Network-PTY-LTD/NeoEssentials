@@ -7,7 +7,7 @@ The NeoEssentials API provides comprehensive access to mod features for integrat
 ## API Version
 
 Current API Version: **2.1.0**
-Mod Version: **1.0.2**
+Mod Version: **2.1.0**
 
 ## Core Components
 
@@ -50,9 +50,15 @@ Map<String, Object> status = NeoEssentialsAPIFactory.getAPIStatus();
 
 ## Interface System
 
-### IEconomyProvider
+The API provides interface definitions for future provider implementations, but currently uses direct manager access for most functionality.
 
-Economy management interface (simplified):
+### Provider Framework (Currently Limited Implementation)
+
+The provider interfaces exist as a framework for future development, but most providers return empty `Optional` values. Use direct manager access for current functionality.
+
+### IEconomyProvider (Interface Only)
+
+Economy provider interface exists but is not currently implemented. Use direct EconomyManager access instead:
 
 ```java
 public interface IEconomyProvider {
@@ -95,9 +101,9 @@ public interface IEconomyProvider {
 }
 ```
 
-### IPlayerDataProvider
+### IPlayerDataProvider (Interface Only)
 
-Player data management interface:
+Player data provider interface exists but is not currently implemented. Use direct manager access instead:
 
 ```java
 public interface IPlayerDataProvider {
@@ -162,9 +168,9 @@ public interface IPlayerDataProvider {
 }
 ```
 
-### IPlaceholderProvider
+### IPlaceholderProvider (Interface Only)
 
-Placeholder management interface:
+Placeholder provider interface exists but is not currently implemented. Use direct PlaceholderManager access instead:
 
 ```java
 public interface IPlaceholderProvider {
@@ -203,176 +209,146 @@ public interface IPlaceholderProvider {
 
 ## Event System
 
-### Current Event Structure
+### Current Event Implementation
 
-The API provides basic events for core operations through the NeoEssentialsEventHandler:
+The API provides a basic event system through NeoEssentialsEventHandler. Note that many events described in older documentation are not yet implemented.
 
-#### Economy Events
-```java
-// Listen for balance changes
-@SubscribeEvent
-public void onBalanceChange(NeoEssentialsEventHandler.EconomyBalanceChangeEvent event) {
-    ServerPlayer player = event.getPlayer();
-    BigDecimal oldBalance = event.getOldBalance();
-    BigDecimal newBalance = event.getNewBalance();
-    String reason = event.getReason();
-    NeoEssentialsEventHandler.EconomyBalanceChangeEvent.TransactionType type = event.getType();
-    // Handle balance change (not cancellable)
-}
+### Available Events (Limited)
 
-// Listen for transactions (before they occur)
-@SubscribeEvent
-public void onTransaction(NeoEssentialsEventHandler.EconomyTransactionEvent event) {
-    ServerPlayer player = event.getPlayer();
-    BigDecimal amount = event.getAmount();
-    String reason = event.getReason();
-    
-    // Event is cancellable
-    if (someCondition) {
-        event.setCanceled(true);
-    }
-}
-```
-
-#### Home and Location Events
-```java
-// Listen for home operations
-@SubscribeEvent
-public void onHomeSet(NeoEssentialsEventHandler.HomeSetEvent event) {
-    ServerPlayer player = event.getPlayer();
-    String homeName = event.getHomeName();
-    double x = event.getX();
-    double y = event.getY();
-    double z = event.getZ();
-    String world = event.getWorld();
-    
-    // Event is cancellable
-    if (!allowHomeHere) {
-        event.setCanceled(true);
-    }
-}
-```
-
-### Event Registration
-
-Register your event handlers with NeoForge:
+Currently implemented events include basic economy and home operations. The event system is more limited than described in some documentation.
 
 ```java
+// Basic event handler registration
 @Mod.EventBusSubscriber(modid = "yourmod")
 public class YourEventHandler {
     
     @SubscribeEvent
-    public static void onBalanceChange(NeoEssentialsEventHandler.EconomyBalanceChangeEvent event) {
+    public static void onSomeEvent(SomeNeoEssentialsEvent event) {
         // Handle event
-    }
-    
-    @SubscribeEvent
-    public static void onTransaction(NeoEssentialsEventHandler.EconomyTransactionEvent event) {
-        // Handle transaction - can be cancelled
     }
 }
 ```
 
 ## Usage Examples
 
-### Economy Integration
+### Direct Manager Access (Recommended)
+
+Since provider implementations are currently limited, use direct manager access for most functionality:
 
 ```java
-// Get economy provider (may not be available)
-Optional<IEconomyProvider> economyOpt = NeoEssentialsAPIFactory.getEconomyProvider();
-if (economyOpt.isPresent()) {
-    IEconomyProvider economy = economyOpt.get();
-    
-    // Check if provider is ready
-    if (economy.isEnabled()) {
-        // Check player balance
-        BigDecimal balance = economy.getBalance(playerId);
+// Get the main API instance
+NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
+
+// Check availability
+if (!NeoEssentialsAPI.isAvailable()) {
+    // NeoEssentials not loaded
+    return;
+}
+
+// Access managers directly
+EconomyManager economyManager = api.getEconomyManager();
+HomeManager homeManager = api.getHomeManager();
+PlaceholderManager placeholderManager = api.getPlaceholderManager();
+WarpManager warpManager = api.getWarpManager();
+KitManager kitManager = api.getKitManager();
+MessagingManager messagingManager = api.getMessagingManager();
+SpawnManager spawnManager = api.getSpawnManager();
+ModerationManager moderationManager = api.getModerationManager();
+PerformanceMonitor performanceMonitor = api.getPerformanceMonitor();
+
+// Use managers directly
+if (economyManager.hasAccount(playerId)) {
+    BigDecimal balance = economyManager.getBalance(playerId);
+    boolean success = economyManager.withdraw(playerId, new BigDecimal("100.00"), "Purchase");
+}
+```
+
+### Economy Integration (Direct Manager Access)
+
+```java
+// Get economy manager directly
+NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
+EconomyManager economyManager = api.getEconomyManager();
+
+if (economyManager != null) {
+    // Check if player has account
+    if (economyManager.hasAccount(playerId)) {
+        // Get balance
+        BigDecimal balance = economyManager.getBalance(playerId);
         
-        // Make a transaction
-        if (economy.hasBalance(playerId, new BigDecimal("100.00"))) {
-            boolean success = economy.withdraw(playerId, new BigDecimal("100.00"), "Item purchase");
-            
+        // Make transaction
+        if (economyManager.hasBalance(playerId, new BigDecimal("100.00"))) {
+            boolean success = economyManager.withdraw(playerId, new BigDecimal("100.00"), "Item purchase");
             if (success) {
                 // Transaction successful
             }
         }
-        
-        // Format currency for display
-        String formatted = economy.formatCurrency(balance);
     }
-} else {
-    // Economy provider not available - use alternative approach
-    // Access economy directly via API
-    NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
-    if (api.isFeatureAvailable("economy")) {
-        BigDecimal balance = api.getPlayerBalance(playerId);
-        // Use direct API methods
-    }
+}
+
+// Provider approach (returns empty Optional currently)
+Optional<IEconomyProvider> economyOpt = NeoEssentialsAPIFactory.getEconomyProvider();
+if (economyOpt.isPresent()) {
+    // Provider implementation would go here
+    // Currently returns empty - use direct manager access instead
 }
 ```
 
-### Player Data Integration
+### Player Data Integration (Direct Manager Access)
 
 ```java
-// Get player data provider (may not be available)
+// Access player data through various managers
+NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
+
+// Get player information through different managers
+HomeManager homeManager = api.getHomeManager();
+if (homeManager != null) {
+    List<String> homes = homeManager.getPlayerHomes(playerId);
+    boolean hasHome = homeManager.hasHome(playerId, "home");
+}
+
+ModerationManager moderationManager = api.getModerationManager();
+if (moderationManager != null) {
+    boolean isMuted = moderationManager.isMuted(playerId);
+    // Handle moderation data
+}
+
+// Provider approach (returns empty Optional currently)
 Optional<IPlayerDataProvider> playerDataOpt = NeoEssentialsAPIFactory.getPlayerDataProvider();
 if (playerDataOpt.isPresent()) {
-    IPlayerDataProvider playerData = playerDataOpt.get();
-    
-    // Get player information
-    Optional<IPlayerDataProvider.PlayerData> dataOpt = playerData.getPlayerData(playerId);
-    if (dataOpt.isPresent()) {
-        IPlayerDataProvider.PlayerData data = dataOpt.get();
-        String username = data.getName();
-        boolean isOnline = data.isOnline();
-        long playTime = data.getTotalPlaytime();
-        
-        // Set custom metadata
-        data.setCustomData("custom_score", 1000);
-        playerData.savePlayerData(data);
-    }
-} else {
-    // Player data provider not available - use direct API access
-    NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
-    // Use direct manager access for advanced features
-    // Note: This bypasses the provider interface
+    // Provider implementation would go here
+    // Currently returns empty - use direct manager access instead
 }
 ```
 
-### Placeholder Integration
+### Placeholder Integration (Direct Manager Access)
 
 ```java
-// Get placeholder provider (may not be available)
-Optional<IPlaceholderProvider> placeholderOpt = NeoEssentialsAPIFactory.getPlaceholderProvider();
-if (placeholderOpt.isPresent()) {
-    IPlaceholderProvider placeholders = placeholderOpt.get();
-    
+// Get placeholder manager directly (recommended)
+NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
+PlaceholderManager placeholderManager = api.getPlaceholderManager();
+
+if (placeholderManager != null) {
     // Register custom placeholder
-    placeholders.registerPlaceholder("mymod_custom", context -> {
+    placeholderManager.registerPlaceholder("mymod_custom", context -> {
         ServerPlayer player = context.getPlayer();
-        return "Custom value for " + player.getName().getString();
+        return "Custom value for " + (player != null ? player.getName().getString() : "Server");
     });
     
     // Process placeholders in text
-    String processed = placeholders.processPlaceholders(
+    String processed = placeholderManager.processPlaceholders(
         "Hello %mymod_custom%!", player);
     
     // Register animated placeholder
-    String[] frames = {"&cAnimated", "&eAnimated", "&aAnimated"};
-    placeholders.registerAnimatedPlaceholder("mymod_animated", frames, 1.0);
-    
-} else {
-    // Placeholder provider not available - use direct API access
-    NeoEssentialsAPI api = NeoEssentialsAPI.getInstance();
-    
-    // Register via direct API
-    api.registerPlaceholder("mymod_custom", context -> {
-        ServerPlayer player = context.getPlayer();
-        return "Custom value for " + player.getName().getString();
-    });
-    
-    // Process via direct API
-    String processed = api.processPlaceholders(player, "Hello %mymod_custom%!");
+    List<String> frames = Arrays.asList("&cAnimated", "&eAnimated", "&aAnimated");
+    placeholderManager.registerAnimatedPlaceholder("mymod_animated", frames, 1.0);
+}
+
+// Provider approach (returns empty Optional currently)
+Optional<IPlaceholderProvider> placeholderOpt = NeoEssentialsAPIFactory.getPlaceholderProvider();
+if (placeholderOpt.isPresent()) {
+    // Provider implementation would go here
+    // Currently returns empty - use direct manager access instead
 }
 ```
 
@@ -387,25 +363,31 @@ try {
     
     // Always check if NeoEssentials is available
     if (!NeoEssentialsAPI.isAvailable()) {
-        // NeoEssentials not loaded
+        logger.warn("NeoEssentials not loaded");
         return;
     }
     
     // Check if NeoEssentials is fully ready
     if (!NeoEssentialsAPIFactory.isNeoEssentialsReady()) {
-        // NeoEssentials not fully initialized
+        logger.warn("NeoEssentials not fully initialized");
         return;
     }
     
-    // Use providers with null checks
+    // Use direct manager access (recommended)
+    EconomyManager economyManager = api.getEconomyManager();
+    if (economyManager != null && economyManager.hasAccount(playerId)) {
+        BigDecimal balance = economyManager.getBalance(playerId);
+        // Use manager safely
+    }
+    
+    // Provider approach (currently returns empty)
     Optional<IEconomyProvider> economy = NeoEssentialsAPIFactory.getEconomyProvider();
-    if (economy.isPresent() && economy.get().isEnabled()) {
-        // Use provider safely
-        BigDecimal balance = economy.get().getBalance(playerId);
+    if (economy.isPresent()) {
+        // Provider implementation (currently empty)
     } else {
-        // Provider not available - use direct API or fallback
-        if (api.isFeatureAvailable("economy")) {
-            BigDecimal balance = api.getPlayerBalance(playerId);
+        // Use direct manager access as fallback (recommended approach)
+        if (economyManager != null) {
+            // Use direct manager methods
         }
     }
     
@@ -434,7 +416,7 @@ if (NeoEssentialsAPI.isAPIVersionAtLeast("2.1.0")) {
 
 // Get version information
 String apiVersion = NeoEssentialsAPI.getAPIVersion();  // "2.1.0"
-String modVersion = NeoEssentialsAPI.getModVersion();  // "1.0.2"
+String modVersion = NeoEssentialsAPI.getModVersion();  // "2.1.0"
 ```
 
 ## Direct API Access
@@ -457,40 +439,54 @@ boolean hasHome = homeManager.hasHome(playerId, "home");
 
 ## Best Practices
 
-1. **Always check availability**: Use `isAvailable()` and `isNeoEssentialsReady()` before API calls
-2. **Handle provider optionals**: Provider interfaces may not be implemented - use `Optional.isPresent()`
-3. **Use direct API as fallback**: If providers aren't available, use direct manager access
+1. **Use direct manager access**: Provider implementations are currently limited - use `api.getManagerName()` for functionality
+2. **Always check availability**: Use `isAvailable()` and `isNeoEssentialsReady()` before API calls
+3. **Handle null managers**: Manager instances may be null - include null checks
 4. **Initialize events early**: Call `initializeEventSystem()` during mod setup
 5. **Handle errors gracefully**: Include proper error handling and logging
 6. **Check versions**: Ensure API compatibility before using features
 7. **Prefer synchronous operations**: Most API operations are synchronous, not async
+8. **Provider interfaces are framework only**: Currently return empty Optionals - use as reference for future development
 
 ## Current Implementation Status
 
 ### ✅ Implemented
-- Main NeoEssentialsAPI class with version checking
-- Basic event system for economy and home operations
-- API factory with provider management framework
-- Interface definitions for economy, player data, and placeholders
-- Direct manager access for advanced features
+- Main NeoEssentialsAPI class with version checking and direct manager access
+- NeoEssentialsAPIFactory framework for provider management
+- Interface definitions for economy, player data, and placeholders (framework only)
+- Basic event system for some core operations
+- Direct manager access for all mod features
+- PlaceholderManager with comprehensive placeholder system and animations
+- All manager classes accessible through API
 
 ### ⚠️ Partially Implemented
-- Provider interfaces exist but may not have implementations
-- Event system covers basic operations but not all features
-- Some advanced features require direct manager access
+- Event system covers some basic operations but not all features mentioned in older docs
+- Provider interfaces exist as framework but return empty Optionals
+- Some API convenience methods may redirect to direct manager access
 
 ### ❌ Not Implemented
-- Full provider implementations (providers may be empty)
+- Full provider implementations (interfaces exist but are not populated)
 - Comprehensive async operations
-- All events mentioned in older documentation
+- All events described in some older documentation
+- Some convenience methods described in older API docs
+
+### 💡 Recommended Approach
+- **Use direct manager access** as the primary integration method
+- **Provider interfaces** serve as reference for future development
+- **Event system** should be used with awareness of current limitations
 
 ## Migration from v2.0.0
 
 The v2.1.0 API maintains backward compatibility with v2.0.0. Key differences:
 
-- **Provider pattern**: New provider interfaces (may be empty - use as fallback)
-- **Simplified events**: Focused on core operations rather than comprehensive coverage  
-- **Direct access maintained**: All features still accessible via direct API methods
-- **Version methods**: Enhanced version checking and compatibility methods
+- **Direct manager access**: Primary integration method - all managers accessible via `api.getManagerName()`
+- **Provider pattern**: New provider interfaces exist as framework (currently return empty Optionals)
+- **Simplified events**: Focused on core operations with limited implementation currently
+- **Version consistency**: Both API and mod version are now 2.1.0
+- **Enhanced placeholder system**: Comprehensive PlaceholderManager with animation support
 
-Existing code using direct API methods will continue to work. The provider interfaces offer a cleaner integration path when implemented.
+**Migration Strategy:**
+1. **Existing direct API code**: Continues to work without changes
+2. **New integrations**: Use direct manager access for immediate functionality
+3. **Provider interfaces**: Available as reference for future development
+4. **Events**: Use with awareness of current limitations

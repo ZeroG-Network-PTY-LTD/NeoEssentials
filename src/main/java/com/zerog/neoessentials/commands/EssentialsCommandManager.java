@@ -44,6 +44,9 @@ public class EssentialsCommandManager {
         // Register communication commands
         registerCommunication(manager);
         
+        // Register administration commands  
+        registerAdministration(manager);
+        
         // Print summary
         manager.printRegistrationSummary();
         
@@ -110,6 +113,15 @@ public class EssentialsCommandManager {
                                KitCommand::register);
         manager.registerCommand("Economy", "shop", "Manage server shops", 
                                ShopCommand::register);
+    }
+    
+    private void registerAdministration(CommandRegistryManager manager) {
+        // manager.registerCommand("Administration", "sudo", "Execute command as another player", 
+        //                        SudoCommand::register);
+        // manager.registerCommand("Administration", "powertool", "Bind commands to items", 
+        //                        PowertoolCommand::register);
+        manager.registerCommand("Administration", "kitadmin", "Advanced kit management", 
+                               com.zerog.neoessentials.commands.admin.KitAdminCommand::register);
     }
     
     private void registerCommunication(CommandRegistryManager manager) {

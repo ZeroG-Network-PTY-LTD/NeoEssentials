@@ -311,5 +311,17 @@
   "neoessentials.home.limit_reached": "&cDu hast die maximale Anzahl von Zuhause erreicht ({0})",
   "neoessentials.home.failed": "&cTeleportation fehlgeschlagen! Bitte versuche es erneut.",
   "neoessentials.home.target_world_not_found": "&cZielwelt nicht gefunden!",
-  "neoessentials.home.delete_success": "&aZuhause '{0}' gelöscht!"
+  "neoessentials.home.delete_success": "&aZuhause '{0}' gelöscht!",
+  "neoessentials.shop.protection.admin_sign": "&4[SHOP-SCHUTZ] &cDieses Admin-Shop-Schild ist geschützt!",
+  "neoessentials.shop.protection.admin_permissions": "&7Du benötigst die Berechtigung '&eneoessentials.shop.admin&7' oder '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.player_sign": "&4[SHOP-SCHUTZ] &cDieses Shop-Schild ist geschützt!",
+  "neoessentials.shop.protection.owner_only_sign": "&7Dieses Schild gehört zum Shop eines anderen Spielers. Nur der Besitzer kann es zerstören.",
+  "neoessentials.shop.protection.admin_bypass_sign": "&7Administratoren können die Berechtigung '&eneoessentials.shop.bypass.protection&7' verwenden.",
+  "neoessentials.shop.protection.admin_chest": "&4[SHOP-SCHUTZ] &cDiese Admin-Shop-Kiste ist geschützt!",
+  "neoessentials.shop.protection.player_chest": "&4[SHOP-SCHUTZ] &cDiese Shop-Kiste ist geschützt!",
+  "neoessentials.shop.protection.owner_only_chest_break": "&7Diese Kiste gehört zum Shop eines anderen Spielers. Nur der Besitzer kann sie zerstören.",
+  "neoessentials.shop.protection.owner_only_chest_access": "&7Diese Kiste gehört zum Shop eines anderen Spielers. Nur der Besitzer kann darauf zugreifen.",
+  "neoessentials.shop.protection.admin_bypass_chest": "&7Administratoren können die Berechtigung '&eneoessentials.shop.bypass.protection&7' verwenden.",
+  "neoessentials.shop.removed_successfully": "&a{0} erfolgreich entfernt!",
+  "neoessentials.shop.chest_break_warning": "&eWarnung: Das Zerstören dieser Kiste wird den verbundenen Shop beeinträchtigen!"
 }

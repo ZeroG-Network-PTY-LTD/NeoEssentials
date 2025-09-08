@@ -12,110 +12,123 @@ Welcome to the comprehensive documentation for **NeoEssentials** - a modern Mine
 - [Permissions](Permissions.md) - Permission system documentation
 
 ### 🎮 Commands & Features
-- [Essential Commands](Essential-Commands.md) - Core utility commands
-- [Teleportation System](Teleportation.md) - Home, warp, and teleport commands
-- [Player Management](Player-Management.md) - Moderation and player tools
-- [Server Administration](Server-Administration.md) - Admin utilities
-- [Economy System](Economy.md) - Currency and transaction management
+- [Commands](Commands.md) - Core utility commands and administrative tools
+- [Economy System](Economy.md) - Currency management and shop system
+- [Custom Placeholders](Custom_Placeholders.md) - Create custom dynamic placeholders
 
 ### 🛠️ Advanced Features
-- [Enhanced Bossbar System](Bossbar.md) - Multi-bossbar management with themes
-- [Enhanced Tablist & Scoreboard](Tablist-Scoreboard.md) - Dynamic player lists and scoreboards
-- [Enhanced Placeholder System](Placeholders.md) - 50+ placeholders with animations
-- [Notification System](Notifications.md) - Multi-channel notifications
+- [Tablist Display System](Tablist.md) - Permission-based automatic tablist layouts
+- [Placeholder System](Placeholders.md) - Dynamic placeholders and FTB integration
 - [Language System](Language.md) - Multi-language support
-- [Security Features](Security.md) - Server security and monitoring
+- [Performance Monitoring](Performance.md) - Real-time server performance tracking
 
 ### 🔧 Technical Documentation
-- [API Reference](API.md) - Developer API documentation
-- [Events System](Events.md) - Notification and event handling
-- [Data Storage](Storage.md) - Player data and configuration
-- [Performance](Performance.md) - Optimization and monitoring
-- [Animations](Animations.md) - Animation system documentation
-
-### 🎨 Customization
-- [Themes and Styling](Themes.md) - Visual customization
-- [Hex Color Support](Hex-Colors.md) - Modern RGB color support
-- [Animation System](Animations.md) - Dynamic content animations
-- [Custom Commands](Custom-Commands.md) - Command system documentation
+- [API Reference](API_DOCUMENTATION.md) - Developer API documentation
+- [Events System](Events.md) - Event handling and system integration
+- [Data Storage](Storage.md) - JSON-based storage with async operations
 
 ## 📊 Current Implementation Status
 
-**NeoEssentials** is actively developed with the following features currently implemented:
+**NeoEssentials 1.0.2** is actively developed with comprehensive functionality:
 
-### ✅ Fully Implemented Features
-- **Essential Commands** - 20+ core utility commands including heal, feed, fly, god, vanish, speed
-- **Player Management** - Comprehensive moderation tools including bans, kicks, mutes, teleportation
-- **Teleportation System** - Home, warp, and teleport functionality with TPA requests
-- **Economy System** - Advanced currency management with banking, loans, multi-currency, shop systems
-- **Advanced Bossbar System** - Multi-bossbar templates with theme support and animations
-- **Enhanced Tablist & Scoreboard** - Dynamic displays with multiple themes and placeholders
-- **Enhanced Placeholder System** - 50+ placeholders with comprehensive animation support
-- **Animation System** - Custom animated placeholders for dynamic content display
-- **Notification System** - Multi-channel notification support with event handling
-- **Security Framework** - Player and IP security monitoring with threat detection
-- **Shop System** - Sign shops, admin shops, and player shops with economy integration
-- **Banking System** - Complete banking with accounts, loans, interest calculation, transfers
-- **Kit System** - Comprehensive kit management with cooldowns, permissions, and GUI
+### ✅ Core Features
+- **Essential Commands** - 25+ utility commands including heal, feed, fly, god, vanish, speed, gamemode
+- **Permission System** - Sophisticated 4-group system (Default/VIP/Moderator/Admin) with inheritance
+- **Economy System** - Complete currency management with sign-based shops and transaction tracking
+- **Performance Monitoring** - Enterprise-grade performance tracking with concurrent analytics
+- **Language System** - Multi-language support with configurable message system
+- **Data Storage** - Advanced JSON-based storage with async operations and memory-efficient caching
 
-### 🚧 In Development
-- **GUI System** - Advanced config-based user interfaces (core functionality implemented)
-- **Language System** - Multi-language support framework
-- **Plugin Compatibility** - Integration with other mods and permission systems
+### ✅ Advanced Systems
+- **Tablist Display** - Permission-based automatic layouts with FTB integration
+- **Placeholder System** - 50+ built-in placeholders with custom placeholder support and FTB integration
+- **Configuration Management** - Unified JSON configuration system with hot-reload capability
+- **API Framework** - Comprehensive developer API for extensions and integrations
+
+### 🔧 System Components
+- **StorageManager** - Async file operations with soft-reference caching (500-entry limit)
+- **ConfigManager** - Manages 5 core JSON files (config, commands, customPlaceholders, tablist, shops)
+- **CustomPermissionsManager** - Role-based permission system with dynamic group management
+- **PlaceholderManager** - Advanced placeholder processing with FTB Teams integration
+- **TabListManager** - Permission-based tablist with automatic layout selection
+- **PerformanceManager** - Real-time server monitoring with memory and TPS tracking
 
 ## 🎯 Key Features
 
-### 🎮 Player Commands
-- `/heal` - Restore health and remove harmful effects
-- `/feed` - Restore hunger and saturation
-- `/fly` - Toggle flight mode
-- `/god` - Toggle invincibility
-- `/vanish` - Toggle invisibility
-- `/speed` - Adjust movement speed
-- `/home` - Teleport to set homes
-- `/warp` - Teleport to server warps
-- `/kit` - Access available kits
-- `/kits` - List all available kits
-- `/balance` - Check your balance (if economy enabled)
+### 🎮 Essential Commands
+- `/heal [player]` - Restore health and remove harmful effects
+- `/feed [player]` - Restore hunger and saturation
+- `/fly [player]` - Toggle flight mode
+- `/god [player]` - Toggle invincibility
+- `/vanish [player]` - Toggle invisibility
+- `/speed <walk|fly> <speed> [player]` - Adjust movement speed
+- `/gamemode <mode> [player]` - Change game modes
+- `/give <player> <item> [amount]` - Give items to players
+- `/repair [all|hand]` - Repair items and equipment
 
-### 🛠️ Admin Tools
-- `/heal <player>` - Heal other players
-- `/gamemode <mode>` - Change game modes
-- `/time <set/add>` - Control world time
-- `/weather <type>` - Control weather
-- `/give <player> <item>` - Give items to players
-- `/repair` - Repair items and equipment
-- `/economy` - Economy management commands (if enabled)
-- `/analytics` - Server analytics and statistics
+### 🏠 Teleportation & Homes
+- `/home [name]` - Teleport to set homes
+- `/sethome [name]` - Set home locations
+- `/delhome <name>` - Delete home locations
+- `/homes` - List your homes
+- `/warp <name>` - Teleport to server warps
+- `/warps` - List available warps
 
-### 🎨 Advanced Features
-- **Enhanced Multi-Bossbar Templates** - Welcome, server info, health monitoring, events
-- **Theme-Based Tablist & Scoreboard** - Multiple simultaneous themes per player
-- **Animated Placeholder System** - Player stats, server info, animated content with 50+ placeholders
-- **Shop System** - Admin and Player shops with economy integration
-- **Kit System** - Comprehensive kit management with cooldowns and permissions
-- **Animation System** - Custom animated placeholders for dynamic content display
+### 💰 Economy System
+- `/balance [player]` - Check balance
+- `/pay <player> <amount>` - Send money to players
+- `/shop` - Shop management commands
+- Sign-based shops with protection system
+
+### 🛠️ Administrative Tools
+- `/permissions` - Advanced permission management system
+- `/config reload|save|status|validate` - Configuration management
+- `/performance stats|memory|cache|clear` - Performance monitoring
+- `/language reload` - Reload language files
+- `/time <set|add> <value>` - Control world time
+- `/weather <clear|rain|thunder>` - Control weather
+
+### 🎨 Display Features
+- **Automatic Tablist** - Permission-based layouts with headers/footers
+- **Placeholder Integration** - 50+ dynamic placeholders
+- **FTB Integration** - Team names, colors, and FTB-specific placeholders
+- **Real-time Updates** - Live server statistics and player information
 
 ## 🚀 Getting Started
 
-1. **[Install NeoEssentials](Installation.md)** - Download and install the mod
-2. **[Configure Settings](Configuration.md)** - Set up your server preferences
-3. **[Set Permissions](Permissions.md)** - Configure player access levels
-4. **[Learn Commands](Essential-Commands.md)** - Master the essential commands
+1. **[Install NeoEssentials](Installation.md)** - Download and install the mod for NeoForge
+2. **[Quick Start Guide](Quick-Start.md)** - Get essential features running in minutes
+3. **[Configure Permissions](Permissions.md)** - Set up the 4-group permission system
+4. **[Learn Core Commands](Commands.md)** - Master the 25+ essential commands
+5. **[Customize Placeholders](Custom_Placeholders.md)** - Create dynamic custom content
+
+## 🔧 Configuration Overview
+
+NeoEssentials uses a sophisticated JSON-based configuration system:
+
+- **`config.json`** - Main settings, language, FTB integration, Discord settings
+- **`commands.json`** - Command costs, cooldowns, warmups, Discord logging
+- **`customPlaceholders.json`** - Custom placeholder definitions (conditional, static, animated)
+- **`tablist.json`** - Permission-based tablist layouts with headers/footers
+- **`shops.json`** - Shop system settings and Discord notifications
+
+All configurations support hot-reload via `/config reload` command.
 
 ## 🤝 Community & Support
 
 - **GitHub Repository**: [NeoEssentials](https://github.com/ZeroG-Network-Org/NeoEssentials)
-- **Issues & Bug Reports**: Use GitHub Issues
+- **Issues & Bug Reports**: Use GitHub Issues for technical problems
 - **Feature Requests**: Submit via GitHub Discussions
+- **Current Version**: 1.0.2 for NeoForge
 
 ## 📝 Contributing
 
 NeoEssentials is open-source and welcomes contributions:
-- **Bug Reports** - Help us identify and fix issues
-- **Feature Requests** - Suggest new functionality
-- **Code Contributions** - Submit pull requests
-- **Documentation** - Improve this wiki
+- **Bug Reports** - Help identify and fix issues
+- **Feature Development** - Contribute new functionality
+- **Code Review** - Review pull requests and suggest improvements
+- **Documentation** - Improve and expand this wiki
+- **Testing** - Test new features and provide feedback
 
 ## 📄 License
 
@@ -123,4 +136,5 @@ NeoEssentials is released under the MIT License. See the [LICENSE](../LICENSE) f
 
 ---
 
-*Last Updated: August 8, 2025*
+*Last Updated: September 7, 2025 - NeoEssentials 1.0.2*
+

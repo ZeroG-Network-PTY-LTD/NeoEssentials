@@ -31,6 +31,10 @@ public class ShopManager {
     private final Map<String, AdminShop> adminShops = new ConcurrentHashMap<>();
     private final Map<BlockPos, SignShop> signShops = new ConcurrentHashMap<>();
     
+    // Auto-save system to prevent data loss
+    private final java.util.concurrent.ScheduledExecutorService autoSaveExecutor;
+    private final java.util.concurrent.ScheduledFuture<?> autoSaveTask;
+    
     // Shop analytics
     private int dailyTransactions = 0;
     private double dailyRevenue = 0.0;
@@ -39,6 +43,27 @@ public class ShopManager {
     private ShopManager(com.zerog.neoessentials.managers.EconomyManager economyManager) {
         this.economyManager = economyManager;
         this.webDashboard = WebDashboardManager.getInstance();
+        
+        // Initialize auto-save system
+        this.autoSaveExecutor = java.util.concurrent.Executors.newScheduledThreadPool(1, r -> {
+            Thread t = new Thread(r, "ShopManager-AutoSave");
+            t.setDaemon(true);
+            return t;
+        });
+        
+        // Auto-save every 5 minutes to prevent data loss
+        this.autoSaveTask = autoSaveExecutor.scheduleWithFixedDelay(() -> {
+            try {
+                if (!signShops.isEmpty()) {
+                    saveShopsToStorage();
+                    LOGGER.debug("Auto-saved {} shops", signShops.size());
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error during auto-save", e);
+            }
+        }, 5, 5, java.util.concurrent.TimeUnit.MINUTES);
+        
+        LOGGER.info("Shop auto-save system initialized (5-minute intervals)");
     }
     
     public static ShopManager getInstance() {
@@ -70,8 +95,24 @@ public class ShopManager {
     public void shutdown() {
         LOGGER.info("Shutting down Shop Management System...");
         
-    // Save shops to storage
-    saveShopsToStorage();
+        // Stop auto-save system
+        if (autoSaveTask != null) {
+            autoSaveTask.cancel(false);
+        }
+        if (autoSaveExecutor != null) {
+            autoSaveExecutor.shutdown();
+            try {
+                if (!autoSaveExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                    autoSaveExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                autoSaveExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
+        
+        // Save shops to storage SYNCHRONOUSLY to ensure completion
+        saveShopsToStorageSync();
         
         // Clear caches
         playerShops.clear();
@@ -311,13 +352,23 @@ public class ShopManager {
                                         String json = gson.toJson(shopData);
                                         SignShopData signShopData = gson.fromJson(json, SignShopData.class);
                                         
+                                        // Validate shop data before converting
+                                        if (signShopData == null || signShopData.getSignPos() == null) {
+                                            LOGGER.warn("Skipping invalid shop data - missing position data");
+                                            continue;
+                                        }
+                                        
                                         // Convert to SignShop and add to collection
                                         ShopManager.SignShop signShop = signShopData.toSignShop();
-                                        signShops.put(signShop.getSignPos(), signShop);
-                                        
-                                        LOGGER.debug("Loaded sign shop at {} for item {}", 
-                                                    signShop.getSignPos(), 
-                                                    signShop.getItem().getDisplayName().getString());
+                                        if (signShop != null && signShop.getSignPos() != null) {
+                                            signShops.put(signShop.getSignPos(), signShop);
+                                            
+                                            LOGGER.debug("Loaded sign shop at {} for item {}", 
+                                                        signShop.getSignPos(), 
+                                                        signShop.getItem().getDisplayName().getString());
+                                        } else {
+                                            LOGGER.warn("Skipping shop with invalid data after conversion");
+                                        }
                                     } catch (Exception e) {
                                         LOGGER.error("Failed to deserialize sign shop data: {}", e.getMessage());
                                     }
@@ -385,6 +436,55 @@ public class ShopManager {
                 });
         } catch (Exception e) {
             LOGGER.error("Failed to initialize sign shop saving: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * SYNCHRONOUS save method for use during shutdown
+     * This ensures data is saved before the server stops
+     */
+    public void saveShopsToStorageSync() {
+        if (signShops.isEmpty()) {
+            LOGGER.debug("No shops to save - skipping storage operation");
+            return;
+        }
+        
+        LOGGER.info("Synchronously saving {} sign shops to storage...", signShops.size());
+        
+        try {
+            com.zerog.neoessentials.storage.StorageManager storageManager = 
+                com.zerog.neoessentials.storage.StorageManager.getInstance();
+            
+            // Convert SignShop objects to serializable data
+            java.util.Map<String, SignShopData> shopDataMap = new java.util.HashMap<>();
+            int successCount = 0;
+            int errorCount = 0;
+            
+            for (ShopManager.SignShop signShop : signShops.values()) {
+                try {
+                    String key = signShop.getSignPos().toShortString();
+                    SignShopData shopData = new SignShopData(signShop);
+                    shopDataMap.put(key, shopData);
+                    successCount++;
+                } catch (Exception e) {
+                    LOGGER.error("Failed to serialize shop at {}: {}", signShop.getSignPos(), e.getMessage(), e);
+                    errorCount++;
+                }
+            }
+            
+            LOGGER.info("Serialized {} shops successfully, {} failed", successCount, errorCount);
+            
+            // Use synchronous save with timeout
+            boolean saveResult = storageManager.saveDataAsync("shops", "signshops", shopDataMap)
+                .get(10, java.util.concurrent.TimeUnit.SECONDS); // 10 second timeout
+            
+            if (saveResult) {
+                LOGGER.info("Successfully saved {} sign shops to storage synchronously", shopDataMap.size());
+            } else {
+                LOGGER.error("Failed to save sign shops to storage - storage operation returned false");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to save sign shops synchronously: {}", e.getMessage(), e);
         }
     }
     

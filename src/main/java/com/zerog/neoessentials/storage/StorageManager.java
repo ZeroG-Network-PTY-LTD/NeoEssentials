@@ -89,14 +89,40 @@ public class StorageManager {
         return CompletableFuture.supplyAsync(() -> {
             String cacheKey = "player_" + playerUuid.toString();
             Path filePath = dataDirectory.resolve("players").resolve(playerUuid.toString() + ".json");
+            Path tempPath = dataDirectory.resolve("players").resolve(playerUuid.toString() + ".json.tmp");
             
             try {
+                // Ensure parent directory exists
                 createDirectoryIfNotExists(filePath.getParent());
                 
                 // Use streaming JSON writer for better memory efficiency
-                try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(filePath, 
+                try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempPath, 
                         StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
                     gson.toJson(playerData, Map.class, writer);
+                }
+                
+                // Verify temp file was created and has content
+                if (!Files.exists(tempPath) || Files.size(tempPath) == 0) {
+                    throw new IOException("Temporary player file was not created properly or is empty: " + tempPath);
+                }
+                
+                // Atomic move from temp to final location
+                try {
+                    Files.move(tempPath, filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING, 
+                              java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+                } catch (UnsupportedOperationException e) {
+                    // Fallback for filesystems that don't support atomic moves
+                    Files.move(tempPath, filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException moveEx) {
+                    // If move fails, try a copy + delete approach
+                    try {
+                        Files.copy(tempPath, filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        Files.deleteIfExists(tempPath);
+                    } catch (IOException copyEx) {
+                        // Log both exceptions for debugging
+                        handleError("savePlayerData - move failed, copy also failed", moveEx);
+                        throw copyEx;
+                    }
                 }
                 
                 // Cache with soft reference for memory efficiency
@@ -105,6 +131,13 @@ public class StorageManager {
                 
             } catch (IOException e) {
                 handleError("savePlayerData", e);
+                // Clean up temp file if it exists
+                try {
+                    Files.deleteIfExists(tempPath);
+                } catch (IOException cleanupError) {
+                    // Ignore cleanup errors but log them
+                    handleError("savePlayerData - cleanup temp file", cleanupError);
+                }
                 return false;
             }
         }, ASYNC_EXECUTOR);
@@ -156,12 +189,18 @@ public class StorageManager {
             Path tempPath = dataDirectory.resolve(category).resolve(filename + ".json.tmp");
             
             try {
+                // Ensure parent directory exists
                 createDirectoryIfNotExists(filePath.getParent());
                 
                 // Write to temporary file first for atomic saves
                 try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(tempPath, 
                         StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
                     gson.toJson(data, data.getClass(), writer);
+                }
+                
+                // Verify temp file was created and has content
+                if (!Files.exists(tempPath) || Files.size(tempPath) == 0) {
+                    throw new IOException("Temporary file was not created properly or is empty: " + tempPath);
                 }
                 
                 // Atomic move from temp to final location
@@ -171,6 +210,16 @@ public class StorageManager {
                 } catch (UnsupportedOperationException e) {
                     // Fallback for filesystems that don't support atomic moves
                     Files.move(tempPath, filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException moveEx) {
+                    // If move fails, try a copy + delete approach
+                    try {
+                        Files.copy(tempPath, filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        Files.deleteIfExists(tempPath);
+                    } catch (IOException copyEx) {
+                        // Log both exceptions for debugging
+                        handleError("saveDataAsync - move failed, copy also failed", moveEx);
+                        throw copyEx;
+                    }
                 }
                 
                 cachePut(cacheKey, data);
@@ -182,7 +231,8 @@ public class StorageManager {
                 try {
                     Files.deleteIfExists(tempPath);
                 } catch (IOException cleanupError) {
-                    // Ignore cleanup errors
+                    // Ignore cleanup errors but log them
+                    handleError("saveDataAsync - cleanup temp file", cleanupError);
                 }
                 return false;
             }
@@ -344,20 +394,28 @@ public class StorageManager {
     }
     
     /**
-     * Centralized error handling
+     * Centralized error handling with detailed logging
      */
     private void handleError(String operation, Exception e) {
         // Use StringBuilder for efficient error message building
         StringBuilder sb = stringBuilder.get();
         sb.setLength(0);
-        sb.append("StorageManager error in ").append(operation).append(": ").append(e.getMessage());
+        sb.append("[Data Storage][High] Error in ").append(operation);
+        
+        // Add file path information if it's a file operation error
+        if (e instanceof java.nio.file.NoSuchFileException) {
+            java.nio.file.NoSuchFileException nsfe = (java.nio.file.NoSuchFileException) e;
+            sb.append(": ").append(nsfe.getFile());
+        } else {
+            sb.append(": ").append(e.getMessage());
+        }
         
         // Handle error using existing error handler if available
         try {
             com.zerog.neoessentials.util.ErrorHandler.handleError(
                 com.zerog.neoessentials.util.ErrorHandler.ErrorCategory.DATA_STORAGE,
                 com.zerog.neoessentials.util.ErrorHandler.ErrorSeverity.HIGH,
-                operation, e);
+                sb.toString(), e);
         } catch (Exception ex) {
             // Fallback to system error if error handler is not available
             System.err.println(sb.toString());

@@ -114,6 +114,11 @@ public class FeatureManager {
             com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
         managers.put("placeholders", placeholderManager);
         
+        // Kit storage system
+        com.zerog.neoessentials.storage.KitStorageManager kitStorageManager = 
+            com.zerog.neoessentials.storage.KitStorageManager.getInstance();
+        managers.put("kitStorage", kitStorageManager);
+        
         // Performance monitoring
         com.zerog.neoessentials.performance.PerformanceManager performanceManager = 
             com.zerog.neoessentials.performance.PerformanceManager.getInstance();

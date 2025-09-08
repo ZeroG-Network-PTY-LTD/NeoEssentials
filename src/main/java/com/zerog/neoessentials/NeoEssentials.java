@@ -136,6 +136,9 @@ public class NeoEssentials {
             NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.PermissionEventListener());
             com.zerog.neoessentials.util.DebugUtil.debugLog("Permission Event Listener initialized");
             
+            NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.EconomyEventListener());
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Economy Event Listener initialized");
+            
             NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.shops.ShopEventHandler());
             com.zerog.neoessentials.util.DebugUtil.debugLog("Shop Event Handler initialized");
             
@@ -192,6 +195,23 @@ public class NeoEssentials {
     public void onServerStopping(ServerStoppingEvent event) {
         LOGGER.info("NeoEssentials shutting down...");
         try {
+            // Save shop data before shutdown - CRITICAL FIX
+            com.zerog.neoessentials.economy.shops.ShopManager shopManager = 
+                com.zerog.neoessentials.economy.shops.ShopManager.getInstance();
+            if (shopManager != null) {
+                LOGGER.info("Saving shop data before shutdown...");
+                shopManager.shutdown(); // This calls saveShopsToStorage()
+                LOGGER.info("Shop data saved successfully");
+            }
+            
+            // Save any other critical data
+            com.zerog.neoessentials.storage.StorageManager storageManager = 
+                com.zerog.neoessentials.storage.StorageManager.getInstance();
+            if (storageManager != null) {
+                storageManager.shutdown();
+                LOGGER.info("Storage manager shut down successfully");
+            }
+            
             // Shutdown cleanup command scheduler
             com.zerog.neoessentials.commands.admin.CleanupCommand.shutdown();
             LOGGER.info("NeoEssentials cleanup scheduler shut down successfully");

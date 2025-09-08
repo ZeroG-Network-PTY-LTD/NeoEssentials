@@ -289,5 +289,17 @@
   "neoessentials.compat.refresh.success": "&a兼容性更新已完成",
   "neoessentials.compat.report.header": "&b兼容性报告:",
   "neoessentials.compat.report.total": "&7插件总数: {0}",
-  "neoessentials.compat.report.integrated": "&7已集成插件: {0}"
+  "neoessentials.compat.report.integrated": "&7已集成插件: {0}",
+  "neoessentials.shop.protection.admin_sign": "&4[商店保护] &c此管理员商店标牌受保护！",
+  "neoessentials.shop.protection.admin_permissions": "&7您需要'&eneoessentials.shop.admin&7'或'&eneoessentials.shop.bypass.protection&7'权限。",
+  "neoessentials.shop.protection.player_sign": "&4[商店保护] &c此商店标牌受保护！",
+  "neoessentials.shop.protection.owner_only_sign": "&7此标牌属于其他玩家的商店。只有店主可以破坏它。",
+  "neoessentials.shop.protection.admin_bypass_sign": "&7管理员可以使用'&eneoessentials.shop.bypass.protection&7'权限。",
+  "neoessentials.shop.protection.admin_chest": "&4[商店保护] &c此管理员商店箱子受保护！",
+  "neoessentials.shop.protection.player_chest": "&4[商店保护] &c此商店箱子受保护！",
+  "neoessentials.shop.protection.owner_only_chest_break": "&7此箱子属于其他玩家的商店。只有店主可以破坏它。",
+  "neoessentials.shop.protection.owner_only_chest_access": "&7此箱子属于其他玩家的商店。只有店主可以访问它。",
+  "neoessentials.shop.protection.admin_bypass_chest": "&7管理员可以使用'&eneoessentials.shop.bypass.protection&7'权限。",
+  "neoessentials.shop.removed_successfully": "&a{0}成功移除！",
+  "neoessentials.shop.chest_break_warning": "&e警告：破坏此箱子将影响连接的商店！"
 }

@@ -289,5 +289,17 @@
   "neoessentials.compat.refresh.success": "&aОбновление совместимости завершено",
   "neoessentials.compat.report.header": "&bОтчёт о Совместимости:",
   "neoessentials.compat.report.total": "&7Всего плагинов: {0}",
-  "neoessentials.compat.report.integrated": "&7Интегрированных плагинов: {0}"
+  "neoessentials.compat.report.integrated": "&7Интегрированных плагинов: {0}",
+  "neoessentials.shop.protection.admin_sign": "&4[ЗАЩИТА МАГАЗИНА] &cЭта табличка админ-магазина защищена!",
+  "neoessentials.shop.protection.admin_permissions": "&7Вам нужно разрешение '&eneoessentials.shop.admin&7' или '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.player_sign": "&4[ЗАЩИТА МАГАЗИНА] &cЭта табличка магазина защищена!",
+  "neoessentials.shop.protection.owner_only_sign": "&7Эта табличка принадлежит магазину другого игрока. Только владелец может её сломать.",
+  "neoessentials.shop.protection.admin_bypass_sign": "&7Администраторы могут использовать разрешение '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.admin_chest": "&4[ЗАЩИТА МАГАЗИНА] &cЭтот сундук админ-магазина защищён!",
+  "neoessentials.shop.protection.player_chest": "&4[ЗАЩИТА МАГАЗИНА] &cЭтот сундук магазина защищён!",
+  "neoessentials.shop.protection.owner_only_chest_break": "&7Этот сундук принадлежит магазину другого игрока. Только владелец может его сломать.",
+  "neoessentials.shop.protection.owner_only_chest_access": "&7Этот сундук принадлежит магазину другого игрока. Только владелец может получить к нему доступ.",
+  "neoessentials.shop.protection.admin_bypass_chest": "&7Администраторы могут использовать разрешение '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.removed_successfully": "&a{0} успешно удалён!",
+  "neoessentials.shop.chest_break_warning": "&eВнимание: Сломать этот сундук повлияет на подключённый магазин!"
 }

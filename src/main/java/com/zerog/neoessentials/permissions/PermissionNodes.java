@@ -94,9 +94,11 @@ public final class PermissionNodes {
     public static final String ENDERCHEST = "neoessentials.enderchest";
     public static final String ENDERCHEST_OTHERS = "neoessentials.enderchest.others";
     
-    // Workbench & Anvil
+        // GUI Command permissions
     public static final String WORKBENCH = "neoessentials.workbench";
     public static final String ANVIL = "neoessentials.anvil";
+    public static final String SMITHING = "neoessentials.smithing";
+    public static final String STONECUTTER = "neoessentials.stonecutter";
     
     // ==============================
     // TELEPORTATION COMMANDS
@@ -257,10 +259,6 @@ public final class PermissionNodes {
     // Inventory See
     public static final String INVSEE = "neoessentials.invsee";
     public static final String INVSEE_MODIFY = "neoessentials.invsee.modify";
-
-    // Inventory-opening commands
-    public static final String SMITHING = "neoessentials.smithing";
-    public static final String STONECUTTER = "neoessentials.stonecutter";
     
     // AFK System
     public static final String AFK = "neoessentials.afk";
@@ -495,6 +493,7 @@ public final class PermissionNodes {
             WEATHER_SET, WEATHER_CLEAR, WEATHER_RAIN, WEATHER_THUNDER, WEATHER_ALL,
             GIVE_ITEM, GIVE_UNLIMITED, GIVE_ALL,
             GAMEMODE, GAMEMODE_OTHERS, GAMEMODE_ALL,
+            WORKBENCH, ANVIL, SMITHING, STONECUTTER,
             
             // Teleportation
             TP_SELF, TP_OTHERS, TP_COORDS, TP_HERE, TP_ALL,

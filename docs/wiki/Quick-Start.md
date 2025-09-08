@@ -68,23 +68,28 @@ Before installing NeoEssentials, ensure you have:
 
 ### Initial Setup
 
-When NeoEssentials first starts, it creates configuration files in the `config/` directory using NeoForge's standard TOML format:
+When NeoEssentials first starts, it creates configuration files in the `config/` directory:
 
 ```
 config/
-├── neoessentials-common.toml     # Server-wide settings
-├── neoessentials-general.toml    # General configuration  
-└── neoessentials/               # JSON-based configurations
-    ├── main.json                # Core mod settings
-    ├── economy.json             # Economy system
-    ├── homes.json               # Home system
-    ├── kits.json                # Kit definitions
-    ├── warps.json               # Warp locations
-    ├── moderation.json          # Moderation tools
-    ├── messaging.json           # Chat and messages
-    ├── tablist.json             # Tablist customization
-    ├── discord.json             # Discord integration
-    └── spawn.json               # Spawn configuration
+├── neoessentials/
+│   ├── animations.json          # Animation configurations
+│   ├── bossbar.json            # Boss bar settings
+│   ├── commands.json           # Command configurations
+│   ├── config.json             # Core mod settings
+│   ├── customPlaceholders.json # Custom placeholder definitions
+│   ├── discord.json            # Discord integration
+│   ├── permissions.json        # Permission system
+│   ├── placeholders.json       # Placeholder configurations
+│   ├── scoreboard.json         # Scoreboard settings
+│   ├── settings.json           # General settings
+│   ├── shops.json              # Shop system
+│   ├── tablist.json            # Tab list customization
+│   └── ...
+├── main.json                    # Main configuration
+├── permissions.json             # Permissions configuration
+├── permissions.toml             # TOML permissions format
+└── tablist.toml                 # TOML tablist format
 ```
 
 ### Essential Settings
@@ -95,35 +100,44 @@ Most basic settings are handled automatically, but you can customize key feature
 
 ### Quick Permission Setup
 
-NeoEssentials integrates with existing permission systems or provides basic built-in permissions:
+NeoEssentials includes a comprehensive built-in permission system:
 
 1. **View permission information**:
    ```bash
    /permissions info
+   /permissions group list
    ```
 
-2. **Set yourself as admin** (if using built-in permissions):
+2. **Set a player's group**:
    ```bash
-   /permissions user YourUsername group set admin
+   /permissions user PlayerName group set Admin
+   /permissions user PlayerName group set VIP
    ```
 
-3. **Grant essential permissions**:
+3. **Add specific permissions**:
    ```bash
-   /permissions user YourUsername permission add neoessentials.*
+   /permissions user PlayerName permission add neoessentials.economy.admin
+   /permissions group VIP permission add neoessentials.kit.vip
    ```
 
 ### Basic Permission Groups
 
-The system supports standard permission groups that work with most permission plugins:
+The system includes four default permission groups:
 
-- **default**: Basic player permissions
-- **vip**: Enhanced player permissions  
-- **moderator**: Staff moderation permissions
-- **admin**: Full administrative access
+- **Default**: Basic player permissions
+- **VIP**: Enhanced player permissions  
+- **Moderator**: Staff moderation permissions
+- **Admin**: Full administrative access
 
 **Promote a player to VIP**:
 ```bash
-/permissions user PlayerName group set vip
+/permissions user PlayerName group set VIP
+```
+
+**Set group properties**:
+```bash
+/permissions group VIP prefix set "§6[VIP]"
+/permissions group VIP suffix set " §6♦"
 ```
 
 ## 🎮 Essential Commands
@@ -486,7 +500,7 @@ For troubleshooting:
 
 Once you have the basics working:
 
-1. **[Essential Commands](Essential-Commands.md)** - Learn all available commands
+1. **[Commands](Commands.md)** - Learn all available commands
 2. **[Configuration](Configuration.md)** - Detailed configuration options
 3. **[Permissions](Permissions.md)** - Advanced permission management
 4. **[GUI System](GUI-System.md)** - Complete GUI customization
@@ -511,6 +525,6 @@ Once you have the basics working:
 
 **Congratulations!** 🎉 You now have NeoEssentials running on your server. Your players can enjoy essential commands, teleportation, GUI interfaces, and enhanced server features while you benefit from comprehensive administration tools.
 
-**Related Documentation**: [Installation](Installation.md) | [Essential Commands](Essential-Commands.md) | [Configuration](Configuration.md)
+**Related Documentation**: [Installation](Installation.md) | [Commands](Commands.md) | [Configuration](Configuration.md)
 
 *Last Updated: August 9, 2025*

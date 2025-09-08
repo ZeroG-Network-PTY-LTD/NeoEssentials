@@ -2,10 +2,11 @@ package com.zerog.neoessentials.commands.essentials;
 
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.localization.LanguageManager;
+import com.zerog.neoessentials.util.ColorUtil;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -27,18 +28,34 @@ public class StonecutterCommand {
     /**
      * Open stonecutter for command sender
      */
-    private static int openStonecutter(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        MenuProvider stonecutterProvider = new SimpleMenuProvider(
-            (windowId, playerInventory, playerEntity) -> new StonecutterMenu(
-                windowId,
-                playerInventory,
-                ContainerLevelAccess.create(player.level(), player.blockPosition())
-            ),
-            Component.translatable("container.stonecutter")
-        );
-        player.openMenu(stonecutterProvider);
-        context.getSource().sendSuccess(() -> Component.literal("Opened stonecutter"), false);
-        return 1;
+    private static int openStonecutter(CommandContext<CommandSourceStack> context) {
+        try {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            LanguageManager langManager = LanguageManager.getInstance();
+            
+            MenuProvider stonecutterProvider = new SimpleMenuProvider(
+                (windowId, playerInventory, playerEntity) -> new StonecutterMenu(
+                    windowId,
+                    playerInventory,
+                    ContainerLevelAccess.NULL
+                ),
+                Component.translatable("container.stonecutter")
+            );
+            player.openMenu(stonecutterProvider);
+            
+            String message = langManager.getMessage(player, "neoessentials.command.stonecutter.opened");
+            context.getSource().sendSuccess(() -> ColorUtil.colorize(message), false);
+            return 1;
+        } catch (Exception e) {
+            ServerPlayer player = context.getSource().getPlayer();
+            LanguageManager langManager = LanguageManager.getInstance();
+            
+            String errorMessage = player != null ? 
+                langManager.getMessage(player, "neoessentials.command.stonecutter.failed", e.getMessage()) :
+                "Failed to open stonecutter: " + e.getMessage();
+                
+            context.getSource().sendFailure(ColorUtil.colorize(errorMessage));
+            return 0;
+        }
     }
 }

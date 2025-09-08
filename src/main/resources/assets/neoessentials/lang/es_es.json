@@ -311,5 +311,17 @@
   "neoessentials.home.limit_reached": "&cHas alcanzado el número máximo de hogares ({0})",
   "neoessentials.home.failed": "&cTeletransporte falló! Inténtalo de nuevo.",
   "neoessentials.home.target_world_not_found": "&cMundo objetivo no encontrado!",
-  "neoessentials.home.delete_success": "&aEl hogar '{0}' ha sido eliminado!"
+  "neoessentials.home.delete_success": "&aEl hogar '{0}' ha sido eliminado!",
+  "neoessentials.shop.protection.admin_sign": "&4[PROTECCIÓN DE TIENDA] &c¡Este cartel de tienda de admin está protegido!",
+  "neoessentials.shop.protection.admin_permissions": "&7Necesitas el permiso '&eneoessentials.shop.admin&7' o '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.player_sign": "&4[PROTECCIÓN DE TIENDA] &c¡Este cartel de tienda está protegido!",
+  "neoessentials.shop.protection.owner_only_sign": "&7Este cartel pertenece a la tienda de otro jugador. Solo el propietario puede romperlo.",
+  "neoessentials.shop.protection.admin_bypass_sign": "&7Los administradores pueden usar el permiso '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.protection.admin_chest": "&4[PROTECCIÓN DE TIENDA] &c¡Este cofre de tienda de admin está protegido!",
+  "neoessentials.shop.protection.player_chest": "&4[PROTECCIÓN DE TIENDA] &c¡Este cofre de tienda está protegido!",
+  "neoessentials.shop.protection.owner_only_chest_break": "&7Este cofre pertenece a la tienda de otro jugador. Solo el propietario puede romperlo.",
+  "neoessentials.shop.protection.owner_only_chest_access": "&7Este cofre pertenece a la tienda de otro jugador. Solo el propietario puede acceder a él.",
+  "neoessentials.shop.protection.admin_bypass_chest": "&7Los administradores pueden usar el permiso '&eneoessentials.shop.bypass.protection&7'.",
+  "neoessentials.shop.removed_successfully": "&a{0} eliminada exitosamente!",
+  "neoessentials.shop.chest_break_warning": "&eAdvertencia: ¡Romper este cofre afectará la tienda conectada!"
 }

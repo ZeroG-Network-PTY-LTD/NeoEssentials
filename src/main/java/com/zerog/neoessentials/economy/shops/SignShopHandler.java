@@ -53,12 +53,8 @@ public class SignShopHandler {
                 return InteractionResult.PASS;
             }
             
-            // Enhanced permission check with better feedback
-            if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_SIGN_USE)) {
-                player.sendSystemMessage(Component.literal("§c✗ Access Denied!")
-                    .append(Component.literal("\n§7You don't have permission to use sign shops.")));
-                return InteractionResult.FAIL;
-            }
+            // NOTE: Removed permission check for shop usage - all players should be able to use shops
+            // Only shop creation requires permissions, not shop usage
             
             // Enhanced shop retrieval with error recovery
             ShopManager.SignShop signShop = shopManager.getSignShop(pos);
