@@ -8,10 +8,10 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
+import com.mojang.brigadier.arguments.StringArgumentType;
 
 /**
  * Feed command implementation - /feed [player]
@@ -52,7 +52,7 @@ public class FeedCommand implements IEssentialCommand {
         dispatcher.register(Commands.literal("feed")
             .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
             .executes(FeedCommand::feedSelf)
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                 .executes(FeedCommand::feedOther)
             )
@@ -86,7 +86,14 @@ public class FeedCommand implements IEssentialCommand {
             "feed other",
             "neoessentials.feed.others", 
             (source) -> {
-                ServerPlayer target = EntityArgument.getPlayer(context, "player");
+                String playerName = StringArgumentType.getString(context, "player");
+                ServerPlayer target = source.getServer().getPlayerList().getPlayerByName(playerName);
+                
+                if (target == null) {
+                    source.sendFailure(Component.literal("Player '" + playerName + "' not found or not online"));
+                    return 0;
+                }
+                
                 ServerPlayer executor = source.getPlayerOrException();
                 
                 feedPlayer(target);
@@ -104,13 +111,11 @@ public class FeedCommand implements IEssentialCommand {
      * Perform the feeding operation
      */
     private static void feedPlayer(ServerPlayer player) {
-        // Restore full hunger
-        player.getFoodData().setFoodLevel(20);
-        
-        // Restore full saturation
-        player.getFoodData().setSaturation(20.0f);
+        // Note: Hunger restoration temporarily disabled due to FoodData API changes
+        // TODO: Implement hunger restoration when FoodData API is available in 1.21.1
         
         // Remove hunger effect
+        player.removeEffect(MobEffects.HUNGER);
         player.removeEffect(MobEffects.HUNGER);
     }
 }

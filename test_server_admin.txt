@@ -1,7 +1,0 @@
-help
-config status
-config validate
-config reload
-list
-config save
-stop

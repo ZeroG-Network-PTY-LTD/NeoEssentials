@@ -9,9 +9,9 @@ import com.zerog.neoessentials.managers.EconomyManager;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import com.mojang.brigadier.arguments.StringArgumentType;
 
 import java.math.BigDecimal;
 
@@ -28,7 +28,7 @@ public class BalanceCommand {
         // /balance - Show your balance
         dispatcher.register(Commands.literal("balance")
             .executes(BalanceCommand::showBalance)
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                 .executes(BalanceCommand::showOtherBalance)
             )
@@ -37,7 +37,7 @@ public class BalanceCommand {
         // /bal - Alias for balance
         dispatcher.register(Commands.literal("bal")
             .executes(BalanceCommand::showBalance)
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                 .executes(BalanceCommand::showOtherBalance)
             )
@@ -73,7 +73,13 @@ public class BalanceCommand {
     
     private static int showOtherBalance(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer executor = context.getSource().getPlayerOrException();
-        ServerPlayer target = EntityArgument.getPlayer(context, "player");
+        String playerName = StringArgumentType.getString(context, "player");
+        ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+        
+        if (target == null) {
+            executor.sendSystemMessage(Component.literal("§cPlayer '" + playerName + "' not found or not online"));
+            return 0;
+        }
         
         EconomyManager economyManager = EconomyManager.getInstance();
         if (!economyManager.isEnabled()) {

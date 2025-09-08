@@ -6,13 +6,13 @@ import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.player.PlayerData;
 import com.zerog.neoessentials.player.PlayerDataManager;
 import com.zerog.neoessentials.player.PlaytimeTracker;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -31,7 +31,7 @@ public class PlaytimeCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("playtime")
             .executes(PlaytimeCommand::getOwnPlaytime)
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
                 .executes(PlaytimeCommand::getPlayerPlaytime))
             .then(Commands.literal("top")
@@ -48,7 +48,15 @@ public class PlaytimeCommand {
     }
     
     private static int getPlayerPlaytime(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
+        String playerName = StringArgumentType.getString(context, "player");
+        ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+        
+        if (targetPlayer == null) {
+            Component error = Component.literal("Player '" + playerName + "' not found or not online");
+            context.getSource().sendFailure(error);
+            return 0;
+        }
+        
         return showPlaytime(context.getSource(), targetPlayer);
     }
     

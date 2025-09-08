@@ -1,7 +1,8 @@
 package com.zerog.neoessentials.util;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.localization.LanguageManager;
 
@@ -39,10 +40,12 @@ public class MessageUtil {
      */
     public static void sendColorTest(ServerPlayer player) {
         if (player == null) return;
-        Component test = Component.literal("").append(Component.literal("&aGreen &cRed &eYellow &bAqua").withStyle(ChatFormatting.GREEN))
-            .append(Component.literal(" &cRed").withStyle(ChatFormatting.RED))
-            .append(Component.literal(" &eYellow").withStyle(ChatFormatting.YELLOW))
-            .append(Component.literal(" &bAqua").withStyle(ChatFormatting.AQUA));
+        // Simplified color test using TextColor
+        Component test = Component.literal("Color Test: ")
+            .append(Component.literal("Green").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FF55))))
+            .append(Component.literal(" Red").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555))))
+            .append(Component.literal(" Yellow").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFF55))))
+            .append(Component.literal(" Aqua").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))));
         player.displayClientMessage(test, false);
     }
     

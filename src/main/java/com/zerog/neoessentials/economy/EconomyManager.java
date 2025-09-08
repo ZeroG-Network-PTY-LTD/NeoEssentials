@@ -11,7 +11,6 @@ import com.zerog.neoessentials.integration.economy.ExternalEconomyManager;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.math.BigDecimal;
@@ -56,7 +55,7 @@ public class EconomyManager {
         // Initialize managers
         this.currencyManager = new CurrencyManager(this);
         this.transactionManager = new TransactionManager(this);
-        this.externalEconomyManager = new ExternalEconomyManager();
+        this.externalEconomyManager = ExternalEconomyManager.getInstance();
         // ShopManager now uses managers.EconomyManager - removed initialization
         // Auction manager removed as per feature cleanup
         
@@ -434,10 +433,9 @@ public class EconomyManager {
     }
     
     /**
-     * Helper method to get ServerPlayer by UUID
-     * @param playerId The player's UUID
-     * @return ServerPlayer instance or null if not found
+     * Helper method to get ServerPlayer by UUID (unused for now)
      */
+    @SuppressWarnings("unused")
     private net.minecraft.server.level.ServerPlayer getServerPlayerByUUID(UUID playerId) {
         try {
             // Get the server instance - use NeoForge approach

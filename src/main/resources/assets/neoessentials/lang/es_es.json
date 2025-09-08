@@ -323,5 +323,16 @@
   "neoessentials.shop.protection.owner_only_chest_access": "&7Este cofre pertenece a la tienda de otro jugador. Solo el propietario puede acceder a él.",
   "neoessentials.shop.protection.admin_bypass_chest": "&7Los administradores pueden usar el permiso '&eneoessentials.shop.bypass.protection&7'.",
   "neoessentials.shop.removed_successfully": "&a{0} eliminada exitosamente!",
-  "neoessentials.shop.chest_break_warning": "&eAdvertencia: ¡Romper este cofre afectará la tienda conectada!"
+  "neoessentials.shop.chest_break_warning": "&eAdvertencia: ¡Romper este cofre afectará la tienda conectada!",
+  "neoessentials.shop.created": "Tienda creada: {0} {1}x {2} por ${3}",
+  "neoessentials.shop.create.success": "§a✓ Tienda Creada Exitosamente! Objeto: {0}, Compra: ${1}, Venta: ${2}, Cantidad: {3}",
+  "neoessentials.shop.create.failed_generic": "§c✗ Error al Crear la Tienda!",
+  "neoessentials.shop.create.already_shop": "§c¡Ya hay una tienda en este cartel!",
+  "neoessentials.shop.create.manager_unavailable": "§c¡El sistema de tiendas no está disponible!",
+  "neoessentials.shop.create.permission_denied": "§c✗ Permiso Denegado! No tienes permiso para crear tiendas con carteles. Contacta a un administrador para acceso.",
+  "neoessentials.shop.create.admin_permission_denied": "§c✗ Permiso Denegado! No tienes permiso para crear tiendas de administrador. Contacta a un administrador para acceso.",
+  "neoessentials.shop.create.invalid_pricing": "§c✗ Precio Inválido! Al menos un precio (compra o venta) debe ser mayor que 0. Ejemplo: /signshop create diamond 1 10.0 5.0",
+  "neoessentials.shop.create.invalid_price_logic": "§c✗ Lógica de Precio Inválida! El precio de compra debe ser mayor que el precio de venta. Actual: Compra ${0}, Venta ${1}. Sugerencia: Aumenta el precio de compra o disminuye el precio de venta.",
+  "neoessentials.shop.create.invalid_quantity": "§c✗ Cantidad Inválida! La cantidad debe estar entre 1 y 64. Especificaste: {0}",
+  "neoessentials.shop.interaction.sign_error": "§c¡Error: No se pudieron cargar los datos del cartel!"
 }

@@ -4,11 +4,11 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.managers.EconomyManager;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -26,7 +26,7 @@ public class PayCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /pay <player> <amount> - Send money to another player
         dispatcher.register(Commands.literal("pay")
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
                     .executes(PayCommand::payPlayer)
                 )
@@ -36,7 +36,14 @@ public class PayCommand {
     
     private static int payPlayer(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer sender = context.getSource().getPlayerOrException();
-        ServerPlayer receiver = EntityArgument.getPlayer(context, "player");
+        String playerName = StringArgumentType.getString(context, "player");
+        ServerPlayer receiver = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+        
+        if (receiver == null) {
+            sender.sendSystemMessage(Component.literal("§cPlayer '" + playerName + "' not found or not online"));
+            return 0;
+        }
+        
         double amount = DoubleArgumentType.getDouble(context, "amount");
         
         EconomyManager economyManager = EconomyManager.getInstance();

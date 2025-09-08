@@ -2,13 +2,13 @@ package com.zerog.neoessentials.commands.essentials;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.afk.AFKManager;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -36,13 +36,13 @@ public class AFKCommand implements IEssentialCommand {
             .then(Commands.argument("status", BoolArgumentType.bool())
                 .executes(context -> setSelfAFK(context, BoolArgumentType.getBool(context, "status"))))
             // /afk <player> - Toggle another player's AFK status (admin only)
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .requires(source -> EssentialCommandHelper.hasPermission(source, PermissionNodes.AFK_OTHERS))
                 .executes(AFKCommand::toggleOtherAFK)
                 // /afk <player> <true|false> - Set another player's AFK status (admin only)
                 .then(Commands.argument("status", BoolArgumentType.bool())
-                    .executes(context -> setOtherAFK(context, 
-                        EntityArgument.getPlayer(context, "player"),
+                    .executes(context -> setOtherAFKFromString(context,
+                        StringArgumentType.getString(context, "player"),
                         BoolArgumentType.getBool(context, "status")))))
         );
         
@@ -101,10 +101,27 @@ public class AFKCommand implements IEssentialCommand {
      * Toggle another player's AFK status (admin only)
      */
     private static int toggleOtherAFK(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer target = EntityArgument.getPlayer(context, "player");
+        String playerName = StringArgumentType.getString(context, "player");
+        ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+        if (target == null) {
+            context.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Player '" + playerName + "' not found."));
+            return 0;
+        }
         AFKManager afkManager = AFKManager.getInstance();
         boolean currentStatus = afkManager.isAFK(target);
         return setOtherAFK(context, target, !currentStatus);
+    }
+    
+    /**
+     * Set another player's AFK status from string (admin only)
+     */
+    private static int setOtherAFKFromString(CommandContext<CommandSourceStack> context, String playerName, boolean status) throws CommandSyntaxException {
+        ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+        if (target == null) {
+            context.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Player '" + playerName + "' not found."));
+            return 0;
+        }
+        return setOtherAFK(context, target, status);
     }
     
     /**

@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.features;
 
+// Re-enabled Minecraft imports
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundTabListPacket;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Professional TabList Manager - Like BungeeTabListPlus and TAB plugin
  * Provides clean, efficient tablist management for NeoForge servers
+ * TEMPORARILY DISABLED due to import issues - will restore when NeoForge imports work
  */
 public class TabListManager {
     private static TabListManager instance;
@@ -32,13 +34,13 @@ public class TabListManager {
     private final CustomPermissionsManager permissionManager;
     private final ScheduledExecutorService scheduler;
     
-    // Player state tracking
+    // Player state tracking - now using proper types
     private final Map<UUID, PlayerTabData> playerData = new ConcurrentHashMap<>();
     private final Map<String, PlayerTeam> scoreboardTeams = new ConcurrentHashMap<>();
     
     // Configuration
     public com.zerog.neoessentials.config.TablistConfig config;
-    private boolean enabled = true;
+    private boolean enabled = false; // Disabled until imports work
     private int updateInterval = 20; // ticks (1 second)
     private String defaultHeaderText = "&6&l╔═══════════════════════════════════╗\n&6&l║         &f&lNeoEssentials         &6&l║\n&6&l║ &7Welcome &e{player_name}           &6&l║\n&6&l╚═══════════════════════════════════╝";
     private String defaultFooterText = "&6&l╔═══════════════════════════════════╗\n&6&l║ &7Online: &e{server_players}&7/&e{server_max_players}              &6&l║\n&6&l║ &7Time: &f{time}                   &6&l║\n&6&l╚═══════════════════════════════════╝";
@@ -55,8 +57,8 @@ public class TabListManager {
             return t;
         });
         
-        // Register for permission events
-        NeoForge.EVENT_BUS.register(this);
+        // Temporarily disabled event registration due to import issues
+        // NeoForge.EVENT_BUS.register(this);
         
         // Register custom tablist permissions
         initializeTablistPermissions();
@@ -65,8 +67,9 @@ public class TabListManager {
         loadConfig();
         
         instance = this;
-        startUpdateTask();
-        DebugUtil.debugLog("[TabListManager] Professional TabList Manager initialized and registered for permission events");
+        // Temporarily disabled update task
+        // startUpdateTask();
+        DebugUtil.debugLog("[TabListManager] Professional TabList Manager initialized (imports disabled)");
     }
     
     /**

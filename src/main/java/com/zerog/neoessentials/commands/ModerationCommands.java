@@ -12,9 +12,7 @@ import com.zerog.neoessentials.managers.ModerationManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
 
 /**
  * Moderation command implementation
@@ -26,11 +24,11 @@ public class ModerationCommands {
         // /kick <player> [reason] - Kick player
         dispatcher.register(Commands.literal("kick")
             .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(context -> kickPlayer(context, EntityArgument.getPlayer(context, "player"), "Kicked by admin"))
+            .then(Commands.argument("player", StringArgumentType.word())
+                .executes(context -> kickPlayer(context, StringArgumentType.getString(context, "player"), "Kicked by admin"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
                     .executes(context -> kickPlayer(context,
-                        EntityArgument.getPlayer(context, "player"),
+                        StringArgumentType.getString(context, "player"),
                         StringArgumentType.getString(context, "reason")))
                 )
             )
@@ -39,13 +37,13 @@ public class ModerationCommands {
         // /ban <player> [reason] - Ban player permanently (using vanilla ban)
         dispatcher.register(Commands.literal("ban")
             .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .executes(context -> banPlayer(context,
-                    EntityArgument.getPlayer(context, "player"),
+                    StringArgumentType.getString(context, "player"),
                     "Banned by admin"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
                     .executes(context -> banPlayer(context,
-                        EntityArgument.getPlayer(context, "player"),
+                        StringArgumentType.getString(context, "player"),
                         StringArgumentType.getString(context, "reason")))
                 )
             )
@@ -54,19 +52,19 @@ public class ModerationCommands {
         // /mute <player> [duration] [reason] - Mute player
         dispatcher.register(Commands.literal("mute")
             .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .executes(context -> mutePlayer(context,
-                    EntityArgument.getPlayer(context, "player"),
+                    StringArgumentType.getString(context, "player"),
                     "Muted by admin",
                     -1))
                 .then(Commands.argument("duration", IntegerArgumentType.integer(1))
                     .executes(context -> mutePlayer(context,
-                        EntityArgument.getPlayer(context, "player"),
+                        StringArgumentType.getString(context, "player"),
                         "Muted by admin",
                         IntegerArgumentType.getInteger(context, "duration")))
                     .then(Commands.argument("reason", StringArgumentType.greedyString())
                         .executes(context -> mutePlayer(context,
-                            EntityArgument.getPlayer(context, "player"),
+                            StringArgumentType.getString(context, "player"),
                             StringArgumentType.getString(context, "reason"),
                             IntegerArgumentType.getInteger(context, "duration")))
                     )
@@ -77,54 +75,54 @@ public class ModerationCommands {
         // /unmute <player> - Unmute player
         dispatcher.register(Commands.literal("unmute")
             .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(context -> unmutePlayer(context, EntityArgument.getPlayer(context, "player")))
+            .then(Commands.argument("player", StringArgumentType.word())
+                .executes(context -> unmutePlayer(context, StringArgumentType.getString(context, "player")))
             )
         );
-        
+
         // /jail <player> [duration] [reason] - Jail player
         dispatcher.register(Commands.literal("jail")
             .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .executes(context -> jailPlayer(context,
-                    EntityArgument.getPlayer(context, "player"),
+                    StringArgumentType.getString(context, "player"),
                     "Jailed by admin",
                     -1))
                 .then(Commands.argument("duration", IntegerArgumentType.integer(1))
                     .executes(context -> jailPlayer(context,
-                        EntityArgument.getPlayer(context, "player"),
+                        StringArgumentType.getString(context, "player"),
                         "Jailed by admin",
                         IntegerArgumentType.getInteger(context, "duration")))
                     .then(Commands.argument("reason", StringArgumentType.greedyString())
                         .executes(context -> jailPlayer(context,
-                            EntityArgument.getPlayer(context, "player"),
+                            StringArgumentType.getString(context, "player"),
                             StringArgumentType.getString(context, "reason"),
                             IntegerArgumentType.getInteger(context, "duration")))
                     )
                 )
             )
         );
-        
+
         // /unjail <player> - Unjail player
         dispatcher.register(Commands.literal("unjail")
             .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(context -> unjailPlayer(context, EntityArgument.getPlayer(context, "player")))
+            .then(Commands.argument("player", StringArgumentType.word())
+                .executes(context -> unjailPlayer(context, StringArgumentType.getString(context, "player")))
             )
         );
-        
+
         // /tempban <player> <duration> [reason] - Temporarily ban player
         dispatcher.register(Commands.literal("tempban")
             .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .then(Commands.argument("duration", IntegerArgumentType.integer(1))
                     .executes(context -> tempBanPlayer(context,
-                        EntityArgument.getPlayer(context, "player"),
+                        StringArgumentType.getString(context, "player"),
                         IntegerArgumentType.getInteger(context, "duration"),
                         "Temporarily banned by admin"))
                     .then(Commands.argument("reason", StringArgumentType.greedyString())
                         .executes(context -> tempBanPlayer(context,
-                            EntityArgument.getPlayer(context, "player"),
+                            StringArgumentType.getString(context, "player"),
                             IntegerArgumentType.getInteger(context, "duration"),
                             StringArgumentType.getString(context, "reason")))
                     )
@@ -133,20 +131,35 @@ public class ModerationCommands {
         );
     }
     
-    private static int kickPlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, String reason) throws CommandSyntaxException {
+    private static int kickPlayer(CommandContext<CommandSourceStack> context, String targetName, String reason) throws CommandSyntaxException {
         ServerPlayer admin = context.getSource().getPlayerOrException();
         ModerationManager moderationManager = ModerationManager.getInstance();
+        
+        // Find the target player by name
+        ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(targetName);
+        if (target == null) {
+            MessageUtil.sendMessage(admin, "§cPlayer '" + targetName + "' not found or not online.");
+            return 0;
+        }
         
         boolean success = moderationManager.kickPlayer(target, admin, reason);
         return success ? 1 : 0;
     }
     
-    private static int banPlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, String reason) throws CommandSyntaxException {
+    private static int banPlayer(CommandContext<CommandSourceStack> context, String targetName, String reason) throws CommandSyntaxException {
         ServerPlayer admin = context.getSource().getPlayerOrException();
+        
+        // Find the target player by name
+        ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(targetName);
+        if (target == null) {
+            MessageUtil.sendMessage(admin, "§cPlayer '" + targetName + "' not found or not online.");
+            return 0;
+        }
         
         try {
             // For now, use a simple kick - ban functionality can be enhanced later
-            target.connection.disconnect(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "moderation.ban.kick_message", reason)));
+            // Use server PlayerList to remove player instead of direct disconnect
+            context.getSource().getServer().getPlayerList().remove(target);
             
             // Send confirmation to admin
             MessageUtil.sendMessage(admin, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(admin, "moderation.ban.success", target.getName().getString(), reason));
@@ -159,26 +172,54 @@ public class ModerationCommands {
         }
     }
     
-    private static int mutePlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, String reason, int durationMinutes) throws CommandSyntaxException {
+    private static int mutePlayer(CommandContext<CommandSourceStack> context, String targetName, String reason, int durationMinutes) throws CommandSyntaxException {
         ServerPlayer admin = context.getSource().getPlayerOrException();
         ModerationManager moderationManager = ModerationManager.getInstance();
+        
+        // Find the target player by name
+        ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(targetName);
+        if (target == null) {
+            MessageUtil.sendMessage(admin, "§cPlayer '" + targetName + "' not found or not online.");
+            return 0;
+        }
         
         long duration = durationMinutes == -1 ? -1 : durationMinutes * 60L; // Convert to seconds
         boolean success = moderationManager.mutePlayer(target.getUUID(), target.getName().getString(), admin, reason, duration);
         return success ? 1 : 0;
     }
     
-    private static int unmutePlayer(CommandContext<CommandSourceStack> context, ServerPlayer target) throws CommandSyntaxException {
+    private static int unmutePlayer(CommandContext<CommandSourceStack> context, String targetName) throws CommandSyntaxException {
         ServerPlayer admin = context.getSource().getPlayerOrException();
         ModerationManager moderationManager = ModerationManager.getInstance();
         
-        boolean success = moderationManager.unmutePlayer(target.getUUID(), target.getName().getString(), admin);
+        // Find the target player by name (they don't need to be online for unmute)
+        ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(targetName);
+        java.util.UUID targetUUID = null;
+        String targetNameResolved = targetName;
+        
+        if (target != null) {
+            targetUUID = target.getUUID();
+            targetNameResolved = target.getName().getString();
+        } else {
+            // Try to find offline player - this requires additional logic
+            // For now, just use the provided name
+            MessageUtil.sendMessage(admin, "§eNote: Player '" + targetName + "' is not online. Attempting to unmute by name...");
+        }
+        
+        boolean success = moderationManager.unmutePlayer(targetUUID, targetNameResolved, admin);
         return success ? 1 : 0;
     }
     
-    private static int jailPlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, String reason, int durationMinutes) throws CommandSyntaxException {
+    private static int jailPlayer(CommandContext<CommandSourceStack> context, String targetName, String reason, int durationMinutes) throws CommandSyntaxException {
         ServerPlayer admin = context.getSource().getPlayerOrException();
         ModerationManager moderationManager = ModerationManager.getInstance();
+        
+        // Find the target player by name
+        ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(targetName);
+        if (target == null) {
+            MessageUtil.sendMessage(admin, "§cPlayer '" + targetName + "' not found or not online.");
+            return 0;
+        }
         
         long duration = durationMinutes == -1 ? -1 : durationMinutes * 60L; // Convert to seconds
         String jailName = "default"; // Use default jail
@@ -186,17 +227,36 @@ public class ModerationCommands {
         return success ? 1 : 0;
     }
     
-    private static int unjailPlayer(CommandContext<CommandSourceStack> context, ServerPlayer target) throws CommandSyntaxException {
+    private static int unjailPlayer(CommandContext<CommandSourceStack> context, String targetName) throws CommandSyntaxException {
         ServerPlayer admin = context.getSource().getPlayerOrException();
         ModerationManager moderationManager = ModerationManager.getInstance();
         
-        boolean success = moderationManager.unjailPlayer(target.getUUID(), target.getName().getString(), admin);
+        // Find the target player by name (they don't need to be online for unjail)
+        ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(targetName);
+        java.util.UUID targetUUID = null;
+        String targetNameResolved = targetName;
+        
+        if (target != null) {
+            targetUUID = target.getUUID();
+            targetNameResolved = target.getName().getString();
+        } else {
+            MessageUtil.sendMessage(admin, "§eNote: Player '" + targetName + "' is not online. Attempting to unjail by name...");
+        }
+        
+        boolean success = moderationManager.unjailPlayer(targetUUID, targetNameResolved, admin);
         return success ? 1 : 0;
     }
     
-    private static int tempBanPlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, int durationMinutes, String reason) throws CommandSyntaxException {
+    private static int tempBanPlayer(CommandContext<CommandSourceStack> context, String targetName, int durationMinutes, String reason) throws CommandSyntaxException {
         ServerPlayer admin = context.getSource().getPlayerOrException();
         ModerationManager moderationManager = ModerationManager.getInstance();
+        
+        // Find the target player by name
+        ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(targetName);
+        if (target == null) {
+            MessageUtil.sendMessage(admin, "§cPlayer '" + targetName + "' not found or not online.");
+            return 0;
+        }
         
         // Validate duration
         if (durationMinutes < 1) {
