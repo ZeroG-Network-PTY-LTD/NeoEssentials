@@ -299,7 +299,7 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
 
 Need a server? Check out our recommended hosting partners for the best performance and support!
 # Bisect Hosting
-[![Bisect Hosting](docs/images/bisecthosting.png)](https://www.bisecthosting.com/clients/aff.php?aff=6612)
+[![Bisect Hosting](docs/images/Bisect-Hosting-Logo.png)](https://www.bisecthosting.com/clients/aff.php?aff=6612)
 # Cloudnord
 [![Cloudnord ](https://cloudnord.net/templates/rosa/img/cn-light.png)](https://cloudnord.net/aff.php?code=nbnDkN9DlbLPxZg4)
 
