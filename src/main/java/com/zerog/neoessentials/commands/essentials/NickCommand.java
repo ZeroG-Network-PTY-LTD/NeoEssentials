@@ -10,7 +10,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -32,13 +31,13 @@ public class NickCommand {
             // Admin commands
             .then(Commands.literal("set")
                 .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
-                .then(Commands.argument("player", EntityArgument.player())
+                .then(Commands.argument("player", StringArgumentType.word())
                     .then(Commands.argument("nickname", StringArgumentType.string())
-                        .executes(context -> setNickname(context, EntityArgument.getPlayer(context, "player"))))))
+                        .executes(context -> setNicknameOther(context)))))
             .then(Commands.literal("clear")
                 .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
-                .then(Commands.argument("player", EntityArgument.player())
-                    .executes(context -> clearNickname(context, EntityArgument.getPlayer(context, "player")))))
+                .then(Commands.argument("player", StringArgumentType.word())
+                    .executes(context -> clearNicknameOther(context))))
             .then(Commands.literal("list")
                 .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
                 .executes(NickCommand::listNicknames)));
@@ -232,5 +231,35 @@ public class NickCommand {
         } else {
             return "Console";
         }
+    }
+    
+    /**
+     * Set nickname for another player (admin command)
+     */
+    private static int setNicknameOther(CommandContext<CommandSourceStack> context) {
+        String playerName = StringArgumentType.getString(context, "player");
+        ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+        
+        if (targetPlayer == null) {
+            context.getSource().sendFailure(Component.literal("§cPlayer '" + playerName + "' not found or not online"));
+            return 0;
+        }
+        
+        return setNickname(context, targetPlayer);
+    }
+    
+    /**
+     * Clear nickname for another player (admin command)
+     */
+    private static int clearNicknameOther(CommandContext<CommandSourceStack> context) {
+        String playerName = StringArgumentType.getString(context, "player");
+        ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+        
+        if (targetPlayer == null) {
+            context.getSource().sendFailure(Component.literal("§cPlayer '" + playerName + "' not found or not online"));
+            return 0;
+        }
+        
+        return clearNickname(context, targetPlayer);
     }
 }

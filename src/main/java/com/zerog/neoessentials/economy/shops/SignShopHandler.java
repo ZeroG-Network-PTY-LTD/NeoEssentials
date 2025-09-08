@@ -5,6 +5,7 @@ import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import net.minecraft.ChatFormatting;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -13,7 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SignBlock;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.TextColor;
 import java.math.BigDecimal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,13 @@ public class SignShopHandler {
             }
             
             if (!(level.getBlockEntity(pos) instanceof SignBlockEntity signEntity)) {
-                player.sendSystemMessage(Component.literal("§cError: Sign data could not be loaded!"));
+                if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                    player.sendSystemMessage(Component.literal(
+                        com.zerog.neoessentials.localization.LanguageManager.getInstance()
+                            .getMessage(serverPlayer, "neoessentials.shop.interaction.sign_error")));
+                } else {
+                    player.sendSystemMessage(Component.literal("§cError: Sign data could not be loaded!"));
+                }
                 return InteractionResult.FAIL;
             }
             
@@ -83,34 +90,35 @@ public class SignShopHandler {
      */
     public boolean createSignShop(Player player, BlockPos signPos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
         try {
-            if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, PermissionNodes.SHOP_SIGN_CREATE)) {
-                player.sendSystemMessage(Component.literal("§c✗ Permission Denied!")
-                    .append(Component.literal("\n§7You don't have permission to create sign shops."))
-                    .append(Component.literal("\n§7Contact an administrator for access.")));
+            net.minecraft.server.level.ServerPlayer serverPlayer = (net.minecraft.server.level.ServerPlayer) player;
+            
+            if (!PermissionUtil.hasPermission(serverPlayer, PermissionNodes.SHOP_SIGN_CREATE)) {
+                player.sendSystemMessage(Component.literal(
+                    com.zerog.neoessentials.localization.LanguageManager.getInstance()
+                        .getMessage(serverPlayer, "neoessentials.shop.create.permission_denied")));
                 return false;
             }
             
             // Enhanced price validation with specific guidance
             if (buyPrice <= 0 && sellPrice <= 0) {
-                player.sendSystemMessage(Component.literal("§c✗ Invalid Pricing!")
-                    .append(Component.literal("\n§7At least one price (buy or sell) must be greater than 0."))
-                    .append(Component.literal("\n§7Example: /signshop create diamond 1 10.0 5.0")));
+                player.sendSystemMessage(Component.literal(
+                    com.zerog.neoessentials.localization.LanguageManager.getInstance()
+                        .getMessage(serverPlayer, "neoessentials.shop.create.invalid_pricing")));
                 return false;
             }
             
             if (buyPrice > 0 && sellPrice > 0 && buyPrice <= sellPrice) {
-                player.sendSystemMessage(Component.literal("§c✗ Invalid Price Logic!")
-                    .append(Component.literal("\n§7Buy price must be higher than sell price."))
-                    .append(Component.literal("\n§7Current: Buy $" + formatPrice(buyPrice) + ", Sell $" + formatPrice(sellPrice)))
-                    .append(Component.literal("\n§7Suggestion: Increase buy price or decrease sell price.")));
+                player.sendSystemMessage(Component.literal(
+                    com.zerog.neoessentials.localization.LanguageManager.getInstance()
+                        .getMessage(serverPlayer, "neoessentials.shop.create.invalid_price_logic", buyPrice, sellPrice)));
                 return false;
             }
             
             // Enhanced quantity validation
             if (quantity <= 0 || quantity > 64) {
-                player.sendSystemMessage(Component.literal("§c✗ Invalid Quantity!")
-                    .append(Component.literal("\n§7Quantity must be between 1 and 64."))
-                    .append(Component.literal("\n§7You specified: " + quantity)));
+                player.sendSystemMessage(Component.literal(
+                    com.zerog.neoessentials.localization.LanguageManager.getInstance()
+                        .getMessage(serverPlayer, "neoessentials.shop.create.invalid_quantity", quantity)));
                 return false;
             }
             
@@ -123,24 +131,14 @@ public class SignShopHandler {
             if (success) {
                 try {
                     updateSignText(player.level(), signPos, item, buyPrice, sellPrice, quantity);
-                    player.sendSystemMessage(Component.literal("§a✓ Shop Created Successfully!")
-                        .append(Component.literal("\n§7├ Item: §f" + quantity + "x " + item.getDisplayName().getString()))
-                        .append(Component.literal("\n§7├ Buy Price: §a$" + (buyPrice > 0 ? formatPrice(buyPrice) : "N/A")))
-                        .append(Component.literal("\n§7├ Sell Price: §c$" + (sellPrice > 0 ? formatPrice(sellPrice) : "N/A")))
-                        .append(Component.literal("\n§7└ Location: §f" + signPos.toShortString())));
                     LOGGER.info("Player {} successfully created a sign shop at {} for item {}", 
                                player.getName().getString(), signPos, item.getDisplayName().getString());
                 } catch (Exception e) {
                     LOGGER.error("Error updating sign text after creating shop", e);
-                    player.sendSystemMessage(Component.literal("§a✓ Shop Created!")
-                        .append(Component.literal("\n§7Shop created successfully, but sign display may need refresh.")));
+                    // Note: Don't send message here as command handler will send success message
                 }
             } else {
-                player.sendSystemMessage(Component.literal("§c✗ Shop Creation Failed!")
-                    .append(Component.literal("\n§7Common causes:"))
-                    .append(Component.literal("\n§7• No chest found within 3 blocks"))
-                    .append(Component.literal("\n§7• Shop already exists at this location"))
-                    .append(Component.literal("\n§7• Insufficient permissions")));
+                // Don't send error message here as command handler will send failure message
                 LOGGER.warn("Failed to create sign shop for player {} at {}", player.getName().getString(), signPos);
             }
             
@@ -168,28 +166,38 @@ public class SignShopHandler {
      * Create a new sign shop with admin shop option
      */
     public boolean createSignShop(Player player, BlockPos signPos, ItemStack item, double buyPrice, double sellPrice, int quantity, boolean isAdminShop) {
+        net.minecraft.server.level.ServerPlayer serverPlayer = (net.minecraft.server.level.ServerPlayer) player;
+        
         // Check permissions
         String requiredPermission = isAdminShop ? PermissionNodes.SHOP_ADMIN : PermissionNodes.SHOP_SIGN_CREATE;
-        if (!PermissionUtil.hasPermission((net.minecraft.server.level.ServerPlayer) player, requiredPermission)) {
-            String shopType = isAdminShop ? "admin shops" : "sign shops";
-            player.sendSystemMessage(Component.literal("§cYou don't have permission to create " + shopType + "!"));
+        if (!PermissionUtil.hasPermission(serverPlayer, requiredPermission)) {
+            String messageKey = isAdminShop ? "neoessentials.shop.create.admin_permission_denied" : "neoessentials.shop.create.permission_denied";
+            player.sendSystemMessage(Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance()
+                    .getMessage(serverPlayer, messageKey)));
             return false;
         }
         
         // Validate prices
         if (buyPrice <= 0 && sellPrice <= 0) {
-            player.sendSystemMessage(Component.literal("§cAt least one price (buy or sell) must be greater than 0!"));
+            player.sendSystemMessage(Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance()
+                    .getMessage(serverPlayer, "neoessentials.shop.create.invalid_pricing")));
             return false;
         }
         
         if (buyPrice > 0 && sellPrice > 0 && buyPrice <= sellPrice) {
-            player.sendSystemMessage(Component.literal("§cBuy price must be higher than sell price!"));
+            player.sendSystemMessage(Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance()
+                    .getMessage(serverPlayer, "neoessentials.shop.create.invalid_price_logic", buyPrice, sellPrice)));
             return false;
         }
         
         // Validate quantity
         if (quantity <= 0 || quantity > 64) {
-            player.sendSystemMessage(Component.literal("§cQuantity must be between 1 and 64!"));
+            player.sendSystemMessage(Component.literal(
+                com.zerog.neoessentials.localization.LanguageManager.getInstance()
+                    .getMessage(serverPlayer, "neoessentials.shop.create.invalid_quantity", quantity)));
             return false;
         }
         
@@ -208,15 +216,14 @@ public class SignShopHandler {
         if (success) {
             try {
                 updateSignText(player.level(), signPos, item, buyPrice, sellPrice, quantity, isAdminShop);
-                player.sendSystemMessage(Component.literal("§a" + Character.toUpperCase(shopType.charAt(0)) + shopType.substring(1) + " created successfully!"));
                 LOGGER.info("Player {} successfully created a {} at {} for item {}", 
                            player.getName().getString(), shopType, signPos, item.getDisplayName().getString());
             } catch (Exception e) {
                 LOGGER.error("Error updating sign text after creating " + shopType, e);
-                player.sendSystemMessage(Component.literal("§a" + Character.toUpperCase(shopType.charAt(0)) + shopType.substring(1) + " created, but there was an error updating the sign text."));
+                // Note: Don't send message here as command handler will send success message
             }
         } else {
-            player.sendSystemMessage(Component.literal("§cFailed to create " + shopType + "! Check that there's a chest nearby and no existing shop at this location."));
+            // Don't send error message here as command handler will send failure message
             LOGGER.warn("Failed to create {} for player {} at {}", shopType, player.getName().getString(), signPos);
         }
         

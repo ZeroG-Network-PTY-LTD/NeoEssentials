@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * - Magic Coins  
  * - Lightman's Currency
  * - Created Coins
- * - Automatic detection and fallback to built-in economy
+ * - Automatic detection and fallback support
  * - Configurable enable/disable per integration
  * 
  * @author ZeroG
@@ -35,14 +35,10 @@ public class ExternalEconomyManager {
     private final ConfigManager configManager;
     private boolean useExternalEconomy;
     
-    // Fallback handling (removed circular dependency)
-    private boolean fallbackToBuiltinEnabled;
-    
     private ExternalEconomyManager() {
         this.configManager = ConfigManager.getInstance();
         this.integrations = new ConcurrentHashMap<>();
         this.enabledIntegrations = new HashSet<>();
-        this.fallbackToBuiltinEnabled = true;
         this.useExternalEconomy = true;
         
         initializeIntegrations();
@@ -59,89 +55,89 @@ public class ExternalEconomyManager {
         return instance;
     }
     
-    /**
-     * Initialize all available economy integrations
-     */
     private void initializeIntegrations() {
-        LOGGER.info("Initializing external economy integrations...");
-        
-        // Register integrations
-        registerIntegration(new FTBMoneyIntegration());
-        registerIntegration(new MagicCoinsIntegration());
-        registerIntegration(new LightmansCurrencyIntegration());
-        registerIntegration(new CreatedCoinsIntegration());
-        
-        // Load configuration
-        loadConfiguration();
-        
-        // Detect and activate best available integration
-        detectAndActivateIntegration();
-        
-        LOGGER.info("External economy manager initialized - Active: {}", 
-                   activeIntegration != null ? activeIntegration.getName() : "Built-in");
-    }
-    
-    /**
-     * Register an economy integration
-     */
-    private void registerIntegration(EconomyIntegration integration) {
         try {
-            integrations.put(integration.getId(), integration);
-            LOGGER.debug("Registered economy integration: {}", integration.getName());
+            LOGGER.info("Initializing external economy integrations...");
+            
+            // Register all integrations
+            registerIntegration(new FTBMoneyIntegration());
+            registerIntegration(new MagicCoinsIntegration());
+            registerIntegration(new LightmansCurrencyIntegration());
+            registerIntegration(new CreatedCoinsIntegration());
+            
+            // Load configuration
+            loadConfiguration();
+            
+            // Detect and activate the best available integration
+            detectAndActivateIntegration();
+            
         } catch (Exception e) {
-            LOGGER.error("Failed to register integration {}: {}", integration.getName(), e.getMessage());
+            LOGGER.error("Failed to initialize external economy integrations: {}", e.getMessage());
+            useExternalEconomy = false;
         }
     }
     
-    /**
-     * Load configuration settings
-     */
-    private void loadConfiguration() {
-        var economyConfig = configManager.getMainConfig().externalEconomySettings;
-        
-        this.useExternalEconomy = economyConfig.enabled;
-        this.enabledIntegrations.clear();
-        
-        if (economyConfig.ftbMoney) enabledIntegrations.add("ftb_money");
-        if (economyConfig.magicCoins) enabledIntegrations.add("magic_coins");
-        if (economyConfig.lightmansCurrency) enabledIntegrations.add("lightmans_currency");
-        if (economyConfig.createdCoins) enabledIntegrations.add("created_coins");
-        
-        LOGGER.info("External economy enabled: {}, Active integrations: {}", 
-                   useExternalEconomy, enabledIntegrations);
+    private void registerIntegration(EconomyIntegration integration) {
+        integrations.put(integration.getId(), integration);
+        LOGGER.debug("Registered economy integration: {}", integration.getName());
     }
     
-    /**
-     * Detect and activate the best available integration
-     */
+    private void loadConfiguration() {
+        try {
+            com.zerog.neoessentials.config.MainConfig mainConfig = configManager.getMainConfig();
+            com.zerog.neoessentials.config.MainConfig.ExternalEconomySettings settings = 
+                mainConfig.externalEconomySettings;
+            
+            useExternalEconomy = settings.enabled;
+            
+            // Load individual integration settings
+            if (settings.ftbMoney) enabledIntegrations.add("ftb_money");
+            if (settings.magicCoins) enabledIntegrations.add("magic_coins");
+            if (settings.lightmansCurrency) enabledIntegrations.add("lightmans_currency");
+            if (settings.createdCoins) enabledIntegrations.add("created_coins");
+            
+            LOGGER.info("Loaded external economy configuration: {} integrations enabled", 
+                       enabledIntegrations.size());
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to load external economy configuration: {}", e.getMessage());
+            // Enable all integrations by default
+            enabledIntegrations.addAll(integrations.keySet());
+        }
+    }
+    
     private void detectAndActivateIntegration() {
         if (!useExternalEconomy) {
-            LOGGER.info("External economy disabled - using built-in economy system");
+            LOGGER.info("External economy disabled in configuration");
             return;
         }
         
-        // Priority order for integration selection
-        String[] priorityOrder = {"lightmans_currency", "ftb_money", "magic_coins", "created_coins"};
+        List<EconomyIntegration> availableIntegrations = new ArrayList<>();
         
-        for (String integrationId : priorityOrder) {
-            if (enabledIntegrations.contains(integrationId)) {
-                EconomyIntegration integration = integrations.get(integrationId);
-                if (integration != null && integration.isAvailable()) {
-                    try {
-                        if (integration.initialize()) {
-                            activeIntegration = integration;
-                            LOGGER.info("Successfully activated economy integration: {}", integration.getName());
-                            return;
-                        }
-                    } catch (Exception e) {
-                        LOGGER.error("Failed to initialize integration {}: {}", integration.getName(), e.getMessage());
-                    }
-                }
+        for (EconomyIntegration integration : integrations.values()) {
+            if (enabledIntegrations.contains(integration.getId()) && 
+                integration.isAvailable() && 
+                integration.initialize()) {
+                availableIntegrations.add(integration);
+                LOGGER.info("Available economy integration: {} (Priority: {})", 
+                           integration.getName(), integration.getPriority());
             }
         }
         
-        LOGGER.warn("No external economy integrations available - using built-in economy system");
+        if (availableIntegrations.isEmpty()) {
+            LOGGER.info("No external economy integrations available, using built-in economy");
+            return;
+        }
+        
+        // Sort by priority (lower number = higher priority)
+        availableIntegrations.sort(Comparator.comparingInt(EconomyIntegration::getPriority));
+        
+        // Activate the highest priority integration
+        activeIntegration = availableIntegrations.get(0);
+        LOGGER.info("Activated external economy integration: {}", activeIntegration.getName());
     }
+    
+    // Public API Methods
     
     /**
      * Get player's balance
@@ -169,12 +165,10 @@ public class ExternalEconomyManager {
             } catch (Exception e) {
                 LOGGER.error("Error setting balance in external economy for {}: {}", 
                             player.getName().getString(), e.getMessage());
-                fallbackToBuiltin().setBalance(player.getUUID(), amount);
                 return false;
             }
         }
-        fallbackToBuiltin().setBalance(player.getUUID(), amount);
-        return true;
+        return false;
     }
     
     /**
@@ -187,10 +181,10 @@ public class ExternalEconomyManager {
             } catch (Exception e) {
                 LOGGER.error("Error depositing to external economy for {}: {}", 
                             player.getName().getString(), e.getMessage());
-                return fallbackToBuiltin().depositBalance(player.getUUID(), amount, reason);
+                return false;
             }
         }
-        return fallbackToBuiltin().depositBalance(player.getUUID(), amount, reason);
+        return false;
     }
     
     /**
@@ -203,10 +197,10 @@ public class ExternalEconomyManager {
             } catch (Exception e) {
                 LOGGER.error("Error withdrawing from external economy for {}: {}", 
                             player.getName().getString(), e.getMessage());
-                return fallbackToBuiltin().withdrawBalance(player.getUUID(), amount, reason);
+                return false;
             }
         }
-        return fallbackToBuiltin().withdrawBalance(player.getUUID(), amount, reason);
+        return false;
     }
     
     /**
@@ -218,107 +212,118 @@ public class ExternalEconomyManager {
     }
     
     /**
-     * Format currency for display
+     * Format currency amount for display
      */
     public String formatCurrency(BigDecimal amount) {
         if (activeIntegration != null) {
             try {
                 return activeIntegration.formatCurrency(amount);
             } catch (Exception e) {
-                LOGGER.error("Error formatting currency from external economy: {}", e.getMessage());
+                LOGGER.error("Error formatting currency with external economy: {}", e.getMessage());
             }
         }
-        return fallbackToBuiltin().formatCurrency(amount);
+        // Fallback to simple formatting
+        return "$" + amount.toString();
     }
     
     /**
-     * Get the name of the active economy system
+     * Get the name of the currently active economy
      */
     public String getActiveEconomyName() {
         if (activeIntegration != null) {
             return activeIntegration.getName();
         }
-        return "NeoEssentials Built-in Economy";
+        return "Built-in Economy";
     }
     
     /**
-     * Check if external economy is active
+     * Check if external economy is currently active
      */
     public boolean isExternalEconomyActive() {
-        return activeIntegration != null;
+        return activeIntegration != null && useExternalEconomy;
     }
     
     /**
-     * Get available integrations for status display
+     * Get status of all integrations for admin commands
      */
     public Map<String, String> getIntegrationStatus() {
         Map<String, String> status = new LinkedHashMap<>();
-        for (Map.Entry<String, EconomyIntegration> entry : integrations.entrySet()) {
-            EconomyIntegration integration = entry.getValue();
-            String integrationStatus = "Disabled";
-            
-            if (enabledIntegrations.contains(entry.getKey())) {
-                if (integration.isAvailable()) {
-                    integrationStatus = integration == activeIntegration ? "Active" : "Available";
-                } else {
-                    integrationStatus = "Mod Not Found";
-                }
+        
+        for (EconomyIntegration integration : integrations.values()) {
+            String integrationStatus;
+            if (!enabledIntegrations.contains(integration.getId())) {
+                integrationStatus = "Disabled in config";
+            } else if (!integration.isAvailable()) {
+                integrationStatus = "Mod not available";
+            } else if (integration.equals(activeIntegration)) {
+                integrationStatus = "Active";
+            } else {
+                integrationStatus = "Available but not active";
             }
             
             status.put(integration.getName(), integrationStatus);
         }
+        
         return status;
     }
     
     /**
-     * Fallback to built-in economy system
-     */
-    private EconomyManager fallbackToBuiltin() {
-        return builtinEconomy;
-    }
-    
-    /**
-     * Reload configuration and reinitialize
+     * Reload configuration and redetect integrations
      */
     public void reload() {
-        LOGGER.info("Reloading external economy configuration...");
-        loadConfiguration();
-        
-        // Shutdown current integration
-        if (activeIntegration != null) {
-            try {
+        try {
+            LOGGER.info("Reloading external economy manager...");
+            
+            // Shutdown current integration
+            if (activeIntegration != null) {
                 activeIntegration.shutdown();
-            } catch (Exception e) {
-                LOGGER.error("Error shutting down current integration: {}", e.getMessage());
+                activeIntegration = null;
             }
-            activeIntegration = null;
+            
+            // Clear enabled integrations
+            enabledIntegrations.clear();
+            
+            // Reload configuration
+            loadConfiguration();
+            
+            // Redetect and activate integration
+            detectAndActivateIntegration();
+            
+            LOGGER.info("External economy manager reloaded successfully");
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to reload external economy manager: {}", e.getMessage());
         }
-        
-        // Redetect and activate
-        detectAndActivateIntegration();
-        LOGGER.info("External economy reloaded - Active: {}", 
-                   activeIntegration != null ? activeIntegration.getName() : "Built-in");
     }
     
     /**
      * Shutdown all integrations
      */
     public void shutdown() {
-        LOGGER.info("Shutting down external economy manager...");
-        
-        if (activeIntegration != null) {
-            try {
+        try {
+            LOGGER.info("Shutting down external economy manager...");
+            
+            if (activeIntegration != null) {
                 activeIntegration.shutdown();
-            } catch (Exception e) {
-                LOGGER.error("Error shutting down integration {}: {}", 
-                            activeIntegration.getName(), e.getMessage());
+                activeIntegration = null;
             }
+            
+            for (EconomyIntegration integration : integrations.values()) {
+                try {
+                    integration.shutdown();
+                } catch (Exception e) {
+                    LOGGER.warn("Error shutting down integration {}: {}", 
+                               integration.getName(), e.getMessage());
+                }
+            }
+            
+            integrations.clear();
+            enabledIntegrations.clear();
+            
+            LOGGER.info("External economy manager shutdown completed");
+            
+        } catch (Exception e) {
+            LOGGER.error("Error during external economy manager shutdown: {}", e.getMessage());
         }
-        
-        integrations.clear();
-        enabledIntegrations.clear();
-        activeIntegration = null;
-        
-        LOGGER.info("External economy manager shutdown completed");
     }
 }

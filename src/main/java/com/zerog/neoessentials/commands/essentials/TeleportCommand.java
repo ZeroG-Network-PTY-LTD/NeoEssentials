@@ -16,6 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
+import com.mojang.brigadier.arguments.StringArgumentType;
 
 /**
  * Teleport command implementation for NeoEssentials

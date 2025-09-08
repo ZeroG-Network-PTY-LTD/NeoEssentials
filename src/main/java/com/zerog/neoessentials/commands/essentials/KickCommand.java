@@ -9,7 +9,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -23,13 +22,25 @@ public class KickCommand {
         // /kick <player> [reason] - Kick a player from the server
         dispatcher.register(Commands.literal("kick")
             .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ADMIN_BASIC))
-            .then(Commands.argument("player", EntityArgument.player())
-                .executes(ctx -> kickPlayer(ctx, EntityArgument.getPlayer(ctx, "player"), "Kicked by an operator"))
+            .then(Commands.argument("player", StringArgumentType.word())
+                .executes(ctx -> kickPlayerWithReason(ctx, "Kicked by an operator"))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
-                    .executes(ctx -> kickPlayer(ctx, EntityArgument.getPlayer(ctx, "player"), StringArgumentType.getString(ctx, "reason")))
+                    .executes(ctx -> kickPlayerWithReason(ctx, StringArgumentType.getString(ctx, "reason")))
                 )
             )
         );
+    }
+    
+    private static int kickPlayerWithReason(CommandContext<CommandSourceStack> context, String reason) throws CommandSyntaxException {
+        String playerName = StringArgumentType.getString(context, "player");
+        ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
+        
+        if (targetPlayer == null) {
+            context.getSource().sendFailure(Component.literal("Player '" + playerName + "' not found or not online"));
+            return 0;
+        }
+        
+        return kickPlayer(context, targetPlayer, reason);
     }
     
     private static int kickPlayer(CommandContext<CommandSourceStack> context, ServerPlayer targetPlayer, String reason) throws CommandSyntaxException {
@@ -54,8 +65,8 @@ public class KickCommand {
         
         String playerName = targetPlayer.getName().getString();
         
-    // Kick the player
-    targetPlayer.connection.disconnect(Component.translatable("neoessentials.kick.kicked", reason));
+        // Kick the player - use kick method on playerlist
+        context.getSource().getServer().getPlayerList().remove(targetPlayer);
         
         // Broadcast to server
         context.getSource().getServer().getPlayerList().broadcastSystemMessage(

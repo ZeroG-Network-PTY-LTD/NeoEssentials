@@ -2,8 +2,8 @@ package com.zerog.neoessentials.api;
 
 import com.zerog.neoessentials.api.interfaces.*;
 import com.zerog.neoessentials.managers.FeatureManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+// TODO: Restore when import issues are fixed: import org.slf4j.Logger;
+// TODO: Restore when import issues are fixed: import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +18,7 @@ import java.util.Optional;
  */
 public class NeoEssentialsAPIFactory {
     
-    private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentialsAPIFactory.class);
+    // TODO: Restore when import issues are fixed: private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentialsAPIFactory.class);
     private static final Map<Class<?>, Object> providers = new ConcurrentHashMap<>();
     private static boolean initialized = false;
     
@@ -31,7 +31,7 @@ public class NeoEssentialsAPIFactory {
         }
         
         try {
-            LOGGER.info("Initializing NeoEssentials API Factory...");
+            System.out.println("[NeoEssentials] Initializing API Factory...");
             
             // Register providers (will be implemented when managers are available)
             // registerProvider(IEconomyProvider.class, new DefaultEconomyProvider());
@@ -39,10 +39,10 @@ public class NeoEssentialsAPIFactory {
             // registerProvider(IPlaceholderProvider.class, new DefaultPlaceholderProvider());
             
             initialized = true;
-            LOGGER.info("NeoEssentials API Factory initialized successfully");
+            System.out.println("[NeoEssentials] API Factory initialized successfully");
             
         } catch (Exception e) {
-            LOGGER.error("Failed to initialize NeoEssentials API Factory", e);
+            System.err.println("[NeoEssentials] Failed to initialize API Factory: " + e.getMessage());
         }
     }
     
@@ -54,7 +54,7 @@ public class NeoEssentialsAPIFactory {
      */
     public static <T> void registerProvider(Class<T> interfaceClass, T implementation) {
         providers.put(interfaceClass, implementation);
-        LOGGER.info("Registered provider for {}: {}", interfaceClass.getSimpleName(), implementation.getClass().getSimpleName());
+        System.out.println("[NeoEssentials] Registered provider for " + interfaceClass.getSimpleName() + ": " + implementation.getClass().getSimpleName());
     }
     
     /**
@@ -125,7 +125,7 @@ public class NeoEssentialsAPIFactory {
     public static boolean unregisterProvider(Class<?> interfaceClass) {
         Object removed = providers.remove(interfaceClass);
         if (removed != null) {
-            LOGGER.info("Unregistered provider for {}", interfaceClass.getSimpleName());
+            System.out.println("[NeoEssentials] Unregistered provider for " + interfaceClass.getSimpleName());
             return true;
         }
         return false;
@@ -172,9 +172,9 @@ public class NeoEssentialsAPIFactory {
      * Shutdown the API factory
      */
     public static void shutdown() {
-        LOGGER.info("Shutting down NeoEssentials API Factory...");
+        System.out.println("[NeoEssentials] Shutting down API Factory...");
         providers.clear();
         initialized = false;
-        LOGGER.info("NeoEssentials API Factory shutdown complete");
+        System.out.println("[NeoEssentials] API Factory shutdown complete");
     }
 }

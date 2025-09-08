@@ -4,6 +4,7 @@ import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.player.AchievementSystem;
@@ -11,7 +12,6 @@ import com.zerog.neoessentials.player.PlayerData;
 import com.zerog.neoessentials.player.PlayerDataManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -31,7 +31,7 @@ public class AchievementsCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("achievements")
             .executes(AchievementsCommand::showOwnAchievements)
-            .then(Commands.argument("player", EntityArgument.player())
+            .then(Commands.argument("player", StringArgumentType.word())
                 .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.ESSENTIALS_USE))
                 .executes(AchievementsCommand::showPlayerAchievements))
             .then(Commands.literal("categories")
@@ -49,7 +49,16 @@ public class AchievementsCommand {
     }
     
     private static int showPlayerAchievements(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "player");
+        String targetPlayerName = StringArgumentType.getString(context, "player");
+        
+        // Find the target player by name
+        ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(targetPlayerName);
+        if (targetPlayer == null) {
+            Component error = Component.literal("§cPlayer '" + targetPlayerName + "' not found or not online.");
+            context.getSource().sendFailure(error);
+            return 0;
+        }
+        
         return showAchievements(context.getSource(), targetPlayer);
     }
     

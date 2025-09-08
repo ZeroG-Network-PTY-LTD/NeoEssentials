@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.api.interfaces;
 
-import net.minecraft.server.level.ServerPlayer;
+// Temporarily disabled Minecraft imports due to classpath issues  
+// import net.minecraft.server.level.ServerPlayer;
 import java.util.UUID;
 import java.util.List;
 import java.util.Optional;
@@ -8,6 +9,7 @@ import java.util.Optional;
 /**
  * Player data provider interface for NeoEssentials API
  * Allows third-party plugins to access and modify player data
+ * TEMPORARILY SIMPLIFIED due to import issues - will restore when dependencies work
  * 
  * @author ZeroG
  * @since 2.1.0
@@ -16,7 +18,7 @@ public interface IPlayerDataProvider {
     
     /**
      * Get player data by UUID
-     * @param playerUuid Player's UUID
+     * @param playerUuid Player's UUIDN
      * @return Optional containing player data, or empty if not found
      */
     Optional<PlayerData> getPlayerData(UUID playerUuid);
@@ -43,11 +45,11 @@ public interface IPlayerDataProvider {
     boolean hasPlayerData(UUID playerUuid);
     
     /**
-     * Create new player data
-     * @param player ServerPlayer instance
+     * Create new player data - using Object instead of ServerPlayer temporarily
+     * @param player Player instance (Object type due to import issues)
      * @return Created player data
      */
-    PlayerData createPlayerData(ServerPlayer player);
+    PlayerData createPlayerData(Object player);
     
     /**
      * Delete player data

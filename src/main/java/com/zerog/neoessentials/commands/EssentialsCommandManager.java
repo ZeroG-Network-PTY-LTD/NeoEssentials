@@ -4,7 +4,7 @@ import com.zerog.neoessentials.commands.essentials.*;
 import com.zerog.neoessentials.commands.util.CommandRegistryManager;
 import com.zerog.neoessentials.economy.ShopCommand;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,37 +20,69 @@ public class EssentialsCommandManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(EssentialsCommandManager.class);
     
     @SubscribeEvent
-    public void onRegisterCommands(RegisterCommandsEvent event) {
-        var dispatcher = event.getDispatcher();
-        var context = event.getBuildContext();
-        
+    public void onCommonSetup(FMLCommonSetupEvent event) {
+        LOGGER.info("NeoEssentials command registration deferred to server startup...");
+        // Commands will be registered through the main mod class during server startup
+        // This approach is preferred to avoid early initialization issues
+    }
+    
+    /**
+     * Static method to register all commands - called from main mod class during server startup
+     */
+    public static void registerAllCommands(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> dispatcher, net.minecraft.commands.CommandBuildContext context) {
         LOGGER.info("Registering essentials commands...");
         
-        // Create command registry manager for organized registration
-        CommandRegistryManager manager = new CommandRegistryManager(dispatcher, context);
-        
-        // Register essential utility commands
-        registerEssentialUtilities(manager);
-        
-        // Register player management commands
-        registerPlayerManagement(manager);
-        
-        // Register teleportation commands
-        registerTeleportation(manager);
-        
-        // Register economy commands
-        registerEconomy(manager);
-        
-        // Register communication commands
-        registerCommunication(manager);
-        
-        // Register administration commands  
-        registerAdministration(manager);
-        
-        // Print summary
-        manager.printRegistrationSummary();
-        
-        LOGGER.info("All essentials commands registered successfully!");
+        try {
+            // Create command registry manager for organized registration
+            CommandRegistryManager manager = new CommandRegistryManager(dispatcher, context);
+            
+            // Create instance to access instance methods
+            EssentialsCommandManager instance = new EssentialsCommandManager();
+            
+            // Register essential utility commands
+            instance.registerEssentialUtilities(manager);
+            
+            // Register player management commands
+            instance.registerPlayerManagement(manager);
+            
+            // Register teleportation commands
+            instance.registerTeleportation(manager);
+            
+            // Register economy commands
+            instance.registerEconomy(manager);
+            
+            // Register communication commands
+            instance.registerCommunication(manager);
+            
+            // Register administration commands  
+            instance.registerAdministration(manager);
+            
+            // Print summary
+            manager.printRegistrationSummary();
+            
+            LOGGER.info("All essentials commands registered successfully!");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize CommandRegistryManager: " + e.getMessage());
+            LOGGER.info("Falling back to direct command registration...");
+            // Fall back to direct registration if CommandRegistryManager fails
+            EssentialsCommandManager instance = new EssentialsCommandManager();
+            instance.registerCommandsDirect(dispatcher);
+        }
+    }
+    
+    private void registerCommandsDirect(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> dispatcher) {
+        LOGGER.info("Registering commands directly due to CommandRegistryManager issues...");
+        try {
+            // Register essential commands directly (those that don't need context)
+            HealCommand.register(dispatcher);
+            FeedCommand.register(dispatcher);
+            GodCommand.register(dispatcher);
+            VanishCommand.register(dispatcher);
+            FlyCommand.register(dispatcher);
+            // Add more as needed...
+        } catch (Exception e) {
+            LOGGER.error("Failed to register commands directly: " + e.getMessage());
+        }
     }
     
     private void registerEssentialUtilities(CommandRegistryManager manager) {

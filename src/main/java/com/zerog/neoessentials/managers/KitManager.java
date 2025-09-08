@@ -13,6 +13,7 @@ import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -106,7 +107,7 @@ public class KitManager {
         // Check cost
         if (kit.hasCost()) {
             EconomyManager economyManager = EconomyManager.getInstance();
-            if (!economyManager.hasBalance(player.getUUID(), kit.getCost())) {
+            if (!economyManager.hasBalance(player.getUUID(), BigDecimal.valueOf(kit.getCost()))) {
                 String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.insufficient_funds", 
                     kitName, kit.getCost());
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
@@ -120,7 +121,7 @@ public class KitManager {
             // Deduct cost if applicable
             if (kit.hasCost()) {
                 EconomyManager economyManager = EconomyManager.getInstance();
-                economyManager.withdrawBalance(player.getUUID(), kit.getCost(), "Kit purchase: " + kitName);
+                economyManager.withdrawBalance(player.getUUID(), BigDecimal.valueOf(kit.getCost()), "Kit purchase: " + kitName);
             }
             
             // Execute kit commands if any
