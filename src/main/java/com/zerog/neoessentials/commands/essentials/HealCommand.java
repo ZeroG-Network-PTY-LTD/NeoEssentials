@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
 import com.zerog.neoessentials.performance.PerformanceCommandWrapper;
 import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.util.CommandConfigUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -69,6 +70,11 @@ public class HealCommand implements IEssentialCommand {
      * Heal the command executor
      */
     private static int healSelf(CommandContext<CommandSourceStack> context) {
+        // Check if heal command is enabled
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "heal", null, "Heal")) {
+            return 0;
+        }
+        
         return PerformanceCommandWrapper.executeWithTracking(
             context.getSource(),
             "heal_self",
@@ -90,6 +96,11 @@ public class HealCommand implements IEssentialCommand {
      * Heal another player
      */
     private static int healOther(CommandContext<CommandSourceStack> context) {
+        // Check if heal command is enabled
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "heal", null, "Heal")) {
+            return 0;
+        }
+        
         return ErrorHandlingIntegration.executeWithPermission(
             context.getSource(),
             "heal other",

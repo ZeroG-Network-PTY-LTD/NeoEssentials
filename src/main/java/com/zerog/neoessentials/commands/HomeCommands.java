@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.managers.HomeManager;
+import com.zerog.neoessentials.util.CommandConfigUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
@@ -53,6 +54,11 @@ public class HomeCommands {
     }
     
     private static int teleportHome(CommandContext<CommandSourceStack> context, String homeName) throws CommandSyntaxException {
+        // Double-check both command and module configuration
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "home", "homes", "Home System")) {
+            return 0;
+        }
+        
         ServerPlayer player = context.getSource().getPlayerOrException();
         
         // Double-check permission (defense in depth)
@@ -67,6 +73,11 @@ public class HomeCommands {
     }
     
     private static int setHome(CommandContext<CommandSourceStack> context, String homeName) throws CommandSyntaxException {
+        // Double-check both command and module configuration
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "home", "homes", "Home System")) {
+            return 0;
+        }
+        
         ServerPlayer player = context.getSource().getPlayerOrException();
         
         // Double-check permission (defense in depth)
