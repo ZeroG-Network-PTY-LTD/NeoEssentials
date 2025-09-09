@@ -59,13 +59,13 @@ public class HomeManager {
         
     boolean homeModuleEnabled = configManager.getMainConfig().modules.homes;
             if (!homeModuleEnabled) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.disabled"));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.disabled"));
                 return false;
             }
         
         // Validate home name
             if (!isValidHomeName(homeName)) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.invalid_name", homeName));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.invalid_name", homeName));
                 return false;
             }
         
@@ -75,14 +75,14 @@ public class HomeManager {
         
         boolean isNewHome = !playerDataManager.hasHome(player.getUUID(), homeName);
             if (isNewHome && currentHomes >= maxHomes) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.max_homes_reached", String.valueOf(maxHomes)));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.max_homes_reached", String.valueOf(maxHomes)));
                 return false;
             }
         
         // Check world restrictions
         String worldName = player.level().dimension().location().toString();
             if (config.restrictedWorlds.contains(worldName)) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.restricted_world"));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.restricted_world"));
                 return false;
             }
         
@@ -131,7 +131,7 @@ public class HomeManager {
         
     boolean homeModuleEnabled = configManager.getMainConfig().modules.homes;
             if (!homeModuleEnabled) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.disabled"));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.disabled"));
                 return false;
             }
         
@@ -141,7 +141,7 @@ public class HomeManager {
             }
         
         playerDataManager.deleteHome(player.getUUID(), homeName);
-            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.deleted", homeName));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.deleted", homeName));
         
         LOGGER.info("Player {} deleted home '{}'", player.getName().getString(), homeName);
         return true;
@@ -155,7 +155,7 @@ public class HomeManager {
         
     boolean homeModuleEnabled = configManager.getMainConfig().modules.homes;
             if (!homeModuleEnabled) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.disabled"));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.disabled"));
                 return false;
             }
         
@@ -169,7 +169,7 @@ public class HomeManager {
         // Check cooldown
         if (isOnCooldown(player)) {
             long remainingTime = getRemainingCooldown(player);
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.cooldown_active", MessageUtil.formatTime(remainingTime)));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.cooldown_active", MessageUtil.formatTime(remainingTime)));
             return false;
         }
         
@@ -184,7 +184,7 @@ public class HomeManager {
         
         // Validate home location safety if required
         if (config.requireSafeLocation && !isLocationSafe(home)) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.unsafe_location"));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.unsafe_location"));
             return false;
         }
         
@@ -213,14 +213,14 @@ public class HomeManager {
         
     List<String> homes = getPlayerHomes(player.getUUID());
             if (homes.isEmpty()) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.list_none"));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.list_none"));
                 return false;
             }
         
-            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.list_header", String.valueOf(homes.size()), String.valueOf(getMaxHomes(player))));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.list_header", String.valueOf(homes.size()), String.valueOf(getMaxHomes(player))));
         
         for (String homeName : homes) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("neoessentials.home.list_entry", homeName));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.home.list_entry", homeName));
         }
         
         return true;
