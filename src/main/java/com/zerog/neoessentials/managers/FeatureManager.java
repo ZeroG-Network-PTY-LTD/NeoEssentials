@@ -3,6 +3,7 @@ package com.zerog.neoessentials.managers;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.util.DebugUtil;
+import com.zerog.neoessentials.web.WebDashboardManager;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;

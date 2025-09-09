@@ -57,7 +57,7 @@ public class NeoEssentialsCommand {
         
         // Admin commands
         "config", "language", "lang", "permissions", "bossbar", "neoanimations",
-        "placeholder", "webdashboard", "status",
+        "placeholder", "dashboard", "webdashboard", "status",
         
         // Shop commands
         "signshop", "shop",
@@ -325,7 +325,7 @@ public class NeoEssentialsCommand {
                 MessageUtil.sendMessage(player, "§6=== Admin Commands ===§r");
                 MessageUtil.sendMessage(player, "§e/config, /language (/lang), /permissions§r");
                 MessageUtil.sendMessage(player, "§e/bossbar, /neoanimations, /placeholder§r");
-                MessageUtil.sendMessage(player, "§e/webdashboard, /status§r");
+                MessageUtil.sendMessage(player, "§e/dashboard, /webdashboard, /status§r");
                 MessageUtil.sendMessage(player, "");
                 
                 MessageUtil.sendMessage(player, "§7Use §e/neoessentials <command>§7 with tab completion to explore!§r");
