@@ -578,6 +578,12 @@
   
   "neoessentials.error.no_permission": "&cYou don't have permission to use this command.",
   "neoessentials.error.generic": "{0}",
+  "neoessentials.error.server_not_available": "&cServer instance not available.",
+  "neoessentials.error.player_not_found": "&cPlayer not found: {0}",
+  
+  "neoessentials.message.pm_sent": "&7[PM to &a{0}&7] {1}",
+  "neoessentials.message.pm_received": "&7[PM from &a{0}&7] {1}",
+  "neoessentials.message.pm_usage": "&cUsage: /msg <player> <message>",
   
   "neoessentials.shop.command.players_only": "This command can only be used by players!"
 }
