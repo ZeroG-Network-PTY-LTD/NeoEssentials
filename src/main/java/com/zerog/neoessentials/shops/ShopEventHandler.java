@@ -68,7 +68,7 @@ public class ShopEventHandler {
         level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
         // Send feedback to player
         if (event.getEntity() instanceof ServerPlayer player) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.shop.created", shop.type(), shop.amount(), shop.itemSpec().getHoverName().getString(), shop.price())));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.shop.created", shop.type(), shop.amount(), shop.itemSpec().getHoverName().getString(), shop.price()));
         }
     }
 
@@ -124,12 +124,12 @@ public class ShopEventHandler {
         var econ = com.zerog.neoessentials.managers.EconomyManager.getInstance();
         boolean hasFunds = econ.hasBalance(buyer.getUUID(), shop.price());
         if (!hasFunds) {
-            buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(buyer, "neoessentials.shop.insufficient_funds")));
+            buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.insufficient_funds"));
             return;
         }
         boolean withdrawn = econ.withdrawBalance(buyer.getUUID(), shop.price(), "Shop purchase");
         if (!withdrawn) {
-            buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(buyer, "neoessentials.shop.withdraw_failed")));
+            buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.withdraw_failed"));
             return;
         }
         // Chest check
@@ -147,7 +147,7 @@ public class ShopEventHandler {
         } else {
             // Not enough stock
             econ.depositBalance(buyer.getUUID(), shop.price(), "Shop refund");
-            buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(buyer, "neoessentials.shop.out_of_stock")));
+            buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.out_of_stock"));
             return;
         }
         // Remove items from chest unless admin shop
@@ -172,7 +172,7 @@ public class ShopEventHandler {
     // For tax, use a fixed UUID (server account)
     UUID taxAccount = new UUID(0, 0); // Replace with actual tax account if needed
     econ.depositBalance(taxAccount, tax, "Shop tax");
-    buyer.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(buyer, "neoessentials.shop.purchase_successful")));
+    buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.purchase_successful"));
     }
     private void sellFlow(ServerPlayer seller, Level level, Shop shop) {
         // EconomyService integration (stub)
@@ -181,7 +181,7 @@ public class ShopEventHandler {
         var econ = com.zerog.neoessentials.managers.EconomyManager.getInstance();
         boolean deposited = econ.depositBalance(seller.getUUID(), shop.price(), "Shop sale");
         if (!deposited) {
-            seller.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(seller, "neoessentials.shop.deposit_failed")));
+            seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.deposit_failed"));
             return;
         }
         // Remove items from seller
@@ -239,6 +239,10 @@ public class ShopEventHandler {
     UUID taxAccount = new UUID(0, 0); // Replace with actual tax account if needed
     econ.depositBalance(taxAccount, tax, "Shop tax");
     // Admin shop logic: infinite stock, no chest required (already handled above)
-    seller.sendSystemMessage(net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(seller, "neoessentials.shop.sale_successful")));
+    // Notify seller
+        String itemName = stack.getItem().getName(stack).getString();
+        seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.sale_successful", String.valueOf(shop.amount()), itemName, String.valueOf(shop.price())));
+        
+        return true;
     }
 }
