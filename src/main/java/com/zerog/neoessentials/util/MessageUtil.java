@@ -284,6 +284,29 @@ public class MessageUtil {
     }
     
     /**
+     * Get raw message text without formatting
+     * Used for event logs and other non-formatted contexts
+     */
+    public static String getRawMessage(String translationKey, Object... args) {
+        if (translationKey == null || translationKey.isEmpty()) {
+            return "";
+        }
+        
+        // Use LanguageManager for neoessentials keys
+        if (translationKey.startsWith("neoessentials.")) {
+            try {
+                return LanguageManager.getInstance().getMessage("en_US", translationKey, args);
+            } catch (Exception e) {
+                // Fallback to key if translation fails
+                return translationKey;
+            }
+        }
+        
+        // For non-neoessentials keys, just return the key with args
+        return replacePlaceholders(translationKey, args);
+    }
+    
+    /**
      * Format a message with color codes (enhanced from MessageUtils)
      * Uses ColorUtil for proper color processing
      */
