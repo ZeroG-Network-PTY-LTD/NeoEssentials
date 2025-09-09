@@ -239,10 +239,9 @@ public class ShopEventHandler {
     UUID taxAccount = new UUID(0, 0); // Replace with actual tax account if needed
     econ.depositBalance(taxAccount, tax, "Shop tax");
     // Admin shop logic: infinite stock, no chest required (already handled above)
-    // Notify seller
-        String itemName = stack.getItem().getName(stack).getString();
+        // Notify seller
+        String itemName = shop.itemSpec().getHoverName().getString();
         seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.sale_successful", String.valueOf(shop.amount()), itemName, String.valueOf(shop.price())));
-        
-        return true;
+    }
     }
 }
