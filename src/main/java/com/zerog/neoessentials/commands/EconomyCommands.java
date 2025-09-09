@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.managers.EconomyManager;
+import com.zerog.neoessentials.util.CommandConfigUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
@@ -109,6 +110,11 @@ public class EconomyCommands {
     }
     
     private static int checkBalance(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        // Check if economy system is enabled
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "balance", "economy", "Economy")) {
+            return 0;
+        }
+        
         ServerPlayer player = context.getSource().getPlayerOrException();
         EconomyManager economyManager = EconomyManager.getInstance();
         
@@ -120,6 +126,11 @@ public class EconomyCommands {
     }
     
     private static int checkOtherBalance(CommandContext<CommandSourceStack> context, ServerPlayer target) throws CommandSyntaxException {
+        // Check if economy system is enabled
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "balance", "economy", "Economy")) {
+            return 0;
+        }
+        
         ServerPlayer sender = context.getSource().getPlayerOrException();
         EconomyManager economyManager = EconomyManager.getInstance();
         
@@ -131,6 +142,11 @@ public class EconomyCommands {
     }
     
     private static int payPlayer(CommandContext<CommandSourceStack> context, ServerPlayer target, double amount) throws CommandSyntaxException {
+        // Check if economy system is enabled
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "pay", "economy", "Economy")) {
+            return 0;
+        }
+        
         ServerPlayer sender = context.getSource().getPlayerOrException();
         EconomyManager economyManager = EconomyManager.getInstance();
         
@@ -158,6 +174,11 @@ public class EconomyCommands {
     }
     
     private static int adminGiveMoney(CommandContext<CommandSourceStack> context, ServerPlayer target, double amount) throws CommandSyntaxException {
+        // Check if economy system is enabled
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "economy", "economy", "Economy")) {
+            return 0;
+        }
+        
         ServerPlayer admin = context.getSource().getPlayerOrException();
         EconomyManager economyManager = EconomyManager.getInstance();
         
@@ -172,6 +193,11 @@ public class EconomyCommands {
     }
     
     private static int adminTakeMoney(CommandContext<CommandSourceStack> context, ServerPlayer target, double amount) throws CommandSyntaxException {
+        // Check if economy system is enabled
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "economy", "economy", "Economy")) {
+            return 0;
+        }
+        
         ServerPlayer admin = context.getSource().getPlayerOrException();
         EconomyManager economyManager = EconomyManager.getInstance();
         
@@ -186,6 +212,11 @@ public class EconomyCommands {
     }
     
     private static int adminSetBalance(CommandContext<CommandSourceStack> context, ServerPlayer target, double amount) throws CommandSyntaxException {
+        // Check if economy system is enabled
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "economy", "economy", "Economy")) {
+            return 0;
+        }
+        
         ServerPlayer admin = context.getSource().getPlayerOrException();
         EconomyManager economyManager = EconomyManager.getInstance();
         
@@ -204,6 +235,11 @@ public class EconomyCommands {
     }
     
     private static int showLeaderboard(CommandContext<CommandSourceStack> context, int limit) throws CommandSyntaxException {
+        // Check if economy system is enabled
+        if (!CommandConfigUtil.validateCommandExecution(context.getSource(), "baltop", "economy", "Economy")) {
+            return 0;
+        }
+        
         ServerPlayer player = context.getSource().getPlayerOrException();
         EconomyManager economyManager = EconomyManager.getInstance();
         

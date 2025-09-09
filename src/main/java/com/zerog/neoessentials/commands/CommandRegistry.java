@@ -5,6 +5,7 @@ import com.zerog.neoessentials.commands.admin.AdminCommandManager;
 import com.zerog.neoessentials.commands.admin.NeoEssentialsCommand;
 import com.zerog.neoessentials.commands.admin.StatusCommand;
 import com.zerog.neoessentials.commands.permissions.PermissionsCommand;
+import com.zerog.neoessentials.util.CommandConfigUtil;
 // import com.zerog.neoessentials.commands.status.StatusCommand; // DISABLED - Missing dependencies
 // import com.zerog.neoessentials.commands.notifications.AlertCommand; // DISABLED - Missing dependencies
 // import com.zerog.neoessentials.commands.monitoring.PerformanceCommand; // DISABLED - Over-engineered
@@ -57,94 +58,202 @@ public class CommandRegistry {
         LOGGER.info("Registering NeoEssentials commands...");
         
         try {
-            // Essential utility commands
-            HealCommand.register(dispatcher);
-            LOGGER.info("Registered heal command");
+            // Essential utility commands - check configuration before registering
+            if (CommandConfigUtil.isCommandEnabled("heal")) {
+                HealCommand.register(dispatcher);
+                LOGGER.info("Registered heal command");
+            } else {
+                LOGGER.info("Heal command disabled in configuration");
+            }
             
-            FeedCommand.register(dispatcher);
-            LOGGER.info("Registered feed command");
+            if (CommandConfigUtil.isCommandEnabled("feed")) {
+                FeedCommand.register(dispatcher);
+                LOGGER.info("Registered feed command");
+            } else {
+                LOGGER.info("Feed command disabled in configuration");
+            }
             
-            GodCommand.register(dispatcher);
-            LOGGER.info("Registered god command");
+            if (CommandConfigUtil.isCommandEnabled("god")) {
+                GodCommand.register(dispatcher);
+                LOGGER.info("Registered god command");
+            } else {
+                LOGGER.info("God command disabled in configuration");
+            }
             
-            VanishCommand.register(dispatcher);
-            LOGGER.info("Registered vanish command");
+            if (CommandConfigUtil.isCommandEnabled("vanish")) {
+                VanishCommand.register(dispatcher);
+                LOGGER.info("Registered vanish command");
+            } else {
+                LOGGER.info("Vanish command disabled in configuration");
+            }
             
-            FlyCommand.register(dispatcher);
-            LOGGER.info("Registered fly command");
+            if (CommandConfigUtil.isCommandEnabled("fly")) {
+                FlyCommand.register(dispatcher);
+                LOGGER.info("Registered fly command");
+            } else {
+                LOGGER.info("Fly command disabled in configuration");
+            }
             
-            SpeedCommand.register(dispatcher);
-            LOGGER.info("Registered speed command");
+            if (CommandConfigUtil.isCommandEnabled("speed")) {
+                SpeedCommand.register(dispatcher);
+                LOGGER.info("Registered speed command");
+            } else {
+                LOGGER.info("Speed command disabled in configuration");
+            }
             
-            GameModeCommand.register(dispatcher);
-            LOGGER.info("Registered gamemode commands (/gamemode, /gm, /gmc, /gms, /gma, /gmsp)");
+            if (CommandConfigUtil.isCommandEnabled("gamemode")) {
+                GameModeCommand.register(dispatcher);
+                LOGGER.info("Registered gamemode commands (/gamemode, /gm, /gmc, /gms, /gma, /gmsp)");
+            } else {
+                LOGGER.info("Gamemode commands disabled in configuration");
+            }
             
-            RepairCommand.register(dispatcher, context);
-            LOGGER.info("Registered repair command");
+            if (CommandConfigUtil.isCommandEnabled("repair")) {
+                RepairCommand.register(dispatcher, context);
+                LOGGER.info("Registered repair command");
+            } else {
+                LOGGER.info("Repair command disabled in configuration");
+            }
             
-            TimeCommand.register(dispatcher);
-            LOGGER.info("Registered time command");
+            if (CommandConfigUtil.isCommandEnabled("time")) {
+                TimeCommand.register(dispatcher);
+                LOGGER.info("Registered time command");
+            } else {
+                LOGGER.info("Time command disabled in configuration");
+            }
             
-            WeatherCommand.register(dispatcher);
-            LOGGER.info("Registered weather command");
+            if (CommandConfigUtil.isCommandEnabled("weather")) {
+                WeatherCommand.register(dispatcher);
+                LOGGER.info("Registered weather command");
+            } else {
+                LOGGER.info("Weather command disabled in configuration");
+            }
             
-            GiveCommand.register(dispatcher, context);
-            LOGGER.info("Registered give command");
+            if (CommandConfigUtil.isCommandEnabled("give")) {
+                GiveCommand.register(dispatcher, context);
+                LOGGER.info("Registered give command");
+            } else {
+                LOGGER.info("Give command disabled in configuration");
+            }
             
-            WorkbenchCommand.register(dispatcher);
-            LOGGER.info("Registered workbench command");
+            if (CommandConfigUtil.isCommandEnabled("workbench")) {
+                WorkbenchCommand.register(dispatcher);
+                LOGGER.info("Registered workbench command");
+            } else {
+                LOGGER.info("Workbench command disabled in configuration");
+            }
             
-            AnvilCommand.register(dispatcher);
-            LOGGER.info("Registered anvil command");
+            if (CommandConfigUtil.isCommandEnabled("anvil")) {
+                AnvilCommand.register(dispatcher);
+                LOGGER.info("Registered anvil command");
+            } else {
+                LOGGER.info("Anvil command disabled in configuration");
+            }
             
-            SmithingCommand.register(dispatcher);
-            LOGGER.info("Registered smithing command");
+            if (CommandConfigUtil.isCommandEnabled("smithing")) {
+                SmithingCommand.register(dispatcher);
+                LOGGER.info("Registered smithing command");
+            } else {
+                LOGGER.info("Smithing command disabled in configuration");
+            }
             
-            StonecutterCommand.register(dispatcher);
-            LOGGER.info("Registered stonecutter command");
+            if (CommandConfigUtil.isCommandEnabled("stonecutter")) {
+                StonecutterCommand.register(dispatcher);
+                LOGGER.info("Registered stonecutter command");
+            } else {
+                LOGGER.info("Stonecutter command disabled in configuration");
+            }
             
-            // Moderation commands
-            BanCommand.register(dispatcher);
-            LOGGER.info("Registered ban command");
+            // Moderation commands - check both command and module status
+            if (CommandConfigUtil.isFeatureEnabled("ban", "moderation")) {
+                BanCommand.register(dispatcher);
+                LOGGER.info("Registered ban command");
+            } else {
+                LOGGER.info("Ban command disabled in configuration");
+            }
             
-            KickCommand.register(dispatcher);
-            LOGGER.info("Registered kick command");
+            if (CommandConfigUtil.isFeatureEnabled("kick", "moderation")) {
+                KickCommand.register(dispatcher);
+                LOGGER.info("Registered kick command");
+            } else {
+                LOGGER.info("Kick command disabled in configuration");
+            }
             
-            MuteCommand.register(dispatcher);
-            LOGGER.info("Registered mute command");
+            if (CommandConfigUtil.isFeatureEnabled("mute", "moderation")) {
+                MuteCommand.register(dispatcher);
+                LOGGER.info("Registered mute command");
+            } else {
+                LOGGER.info("Mute command disabled in configuration");
+            }
             
             // Player utility commands
-            ListCommand.register(dispatcher);
-            LOGGER.info("Registered list command");
+            if (CommandConfigUtil.isCommandEnabled("list")) {
+                ListCommand.register(dispatcher);
+                LOGGER.info("Registered list command");
+            } else {
+                LOGGER.info("List command disabled in configuration");
+            }
             
-            WhoisCommand.register(dispatcher);
-            LOGGER.info("Registered whois command");
+            if (CommandConfigUtil.isCommandEnabled("whois")) {
+                WhoisCommand.register(dispatcher);
+                LOGGER.info("Registered whois command");
+            } else {
+                LOGGER.info("Whois command disabled in configuration");
+            }
             
-            SeenCommand.register(dispatcher);
-            LOGGER.info("Registered seen command");
+            if (CommandConfigUtil.isCommandEnabled("seen")) {
+                SeenCommand.register(dispatcher);
+                LOGGER.info("Registered seen command");
+            } else {
+                LOGGER.info("Seen command disabled in configuration");
+            }
             
             // Help command
-            HelpCommand.register(dispatcher);
-            LOGGER.info("Registered help command");
+            if (CommandConfigUtil.isCommandEnabled("help")) {
+                HelpCommand.register(dispatcher);
+                LOGGER.info("Registered help command");
+            } else {
+                LOGGER.info("Help command disabled in configuration");
+            }
             
             // Info command
-            InfoCommand.register(dispatcher);
-            LOGGER.info("Registered info command");
+            if (CommandConfigUtil.isCommandEnabled("info")) {
+                InfoCommand.register(dispatcher);
+                LOGGER.info("Registered info command");
+            } else {
+                LOGGER.info("Info command disabled in configuration");
+            }
             
-            // Message commands
-            MessageCommand.register(dispatcher);
-            LOGGER.info("Registered message command");
+            // Message commands - check both command and chat module
+            if (CommandConfigUtil.isFeatureEnabled("message", "chat")) {
+                MessageCommand.register(dispatcher);
+                LOGGER.info("Registered message command");
+            } else {
+                LOGGER.info("Message command disabled in configuration");
+            }
             
-            ReplyCommand.register(dispatcher);
-            LOGGER.info("Registered reply command");
+            if (CommandConfigUtil.isFeatureEnabled("reply", "chat")) {
+                ReplyCommand.register(dispatcher);
+                LOGGER.info("Registered reply command");
+            } else {
+                LOGGER.info("Reply command disabled in configuration");
+            }
             
             // MOTD command
-            MotdCommand.register(dispatcher);
-            LOGGER.info("Registered motd command");
+            if (CommandConfigUtil.isCommandEnabled("motd")) {
+                MotdCommand.register(dispatcher);
+                LOGGER.info("Registered motd command");
+            } else {
+                LOGGER.info("MOTD command disabled in configuration");
+            }
             
-            // Nickname command
-            NickCommand.register(dispatcher);
-            LOGGER.info("Registered nick command");
+            // Nickname command - check chat module
+            if (CommandConfigUtil.isFeatureEnabled("nick", "chat")) {
+                NickCommand.register(dispatcher);
+                LOGGER.info("Registered nick command");
+            } else {
+                LOGGER.info("Nick command disabled in configuration");
+            }
             
             // Debug command for tablist testing
             com.zerog.neoessentials.commands.debug.TablistTestCommand.register(dispatcher);
@@ -156,84 +265,134 @@ public class CommandRegistry {
             LOGGER.info("Scoreboard-related commands removed");
             
             // AFK command
-            com.zerog.neoessentials.commands.essentials.AFKCommand.register(dispatcher);
-            LOGGER.info("Registered AFK command");
+            if (CommandConfigUtil.isCommandEnabled("afk")) {
+                com.zerog.neoessentials.commands.essentials.AFKCommand.register(dispatcher);
+                LOGGER.info("Registered AFK command");
+            } else {
+                LOGGER.info("AFK command disabled in configuration");
+            }
             
-            // Permission test command
+            // Permission test command (always enabled for debugging)
             com.zerog.neoessentials.commands.permissions.PermissionTestCommand.register(dispatcher);
             LOGGER.info("Registered permission test command");
             
-            // Economy admin commands
-            EconomyCommand.register(dispatcher);
-            LOGGER.info("Registered economy admin commands");
+            // Economy admin commands - check economy module
+            if (CommandConfigUtil.isFeatureEnabled("economy", "economy")) {
+                EconomyCommand.register(dispatcher);
+                LOGGER.info("Registered economy admin commands");
+            } else {
+                LOGGER.info("Economy admin commands disabled in configuration");
+            }
             
-            // Transaction history command - TEMPORARILY DISABLED (API compatibility issues)
-            // com.zerog.neoessentials.commands.economy.TransactionHistoryCommand.register(dispatcher);
-            // LOGGER.info("Registered transaction history command");
-            
-            // Economy analytics command - TEMPORARILY DISABLED (API compatibility issues)
-            // com.zerog.neoessentials.commands.economy.EconomyAnalyticsCommand.register(dispatcher);
-            // LOGGER.info("Registered economy analytics command");
-            
-            // Shop system commands
-            // Temporarily disabled shop commands (user requested to ignore shop section)
-            // com.zerog.neoessentials.commands.economy.ShopCommand.register(dispatcher);
-            com.zerog.neoessentials.economy.SignShopCommand.register(dispatcher, context);
-            com.zerog.neoessentials.commands.economy.SaveShopsCommand.register(dispatcher);
-            com.zerog.neoessentials.commands.economy.CheckShopsCommand.register(dispatcher);
-            LOGGER.info("Registered shop system commands");
+            // Shop system commands - check economy module
+            if (CommandConfigUtil.isFeatureEnabled("shop", "economy")) {
+                com.zerog.neoessentials.economy.SignShopCommand.register(dispatcher, context);
+                com.zerog.neoessentials.commands.economy.SaveShopsCommand.register(dispatcher);
+                com.zerog.neoessentials.commands.economy.CheckShopsCommand.register(dispatcher);
+                LOGGER.info("Registered shop system commands");
+            } else {
+                LOGGER.info("Shop system commands disabled in configuration");
+            }
             
             // Mail system
-            MailCommand.register(dispatcher);
-            LOGGER.info("Registered mail system");
+            if (CommandConfigUtil.isCommandEnabled("mail")) {
+                MailCommand.register(dispatcher);
+                LOGGER.info("Registered mail system");
+            } else {
+                LOGGER.info("Mail system disabled in configuration");
+            }
             
             // Teleport commands
-            TeleportCommand.register(dispatcher);
-            LOGGER.info("Registered teleport commands");
+            if (CommandConfigUtil.isCommandEnabled("teleport")) {
+                TeleportCommand.register(dispatcher);
+                LOGGER.info("Registered teleport commands");
+            } else {
+                LOGGER.info("Teleport commands disabled in configuration");
+            }
             
             // TPA (Teleport Request) commands
-            com.zerog.neoessentials.commands.essentials.TpaCommand.register(dispatcher);
-            LOGGER.info("Registered TPA teleport request commands");
+            if (CommandConfigUtil.isCommandEnabled("tpa")) {
+                com.zerog.neoessentials.commands.essentials.TpaCommand.register(dispatcher);
+                LOGGER.info("Registered TPA teleport request commands");
+            } else {
+                LOGGER.info("TPA commands disabled in configuration");
+            }
             
             // Server information commands
-            RulesCommand.register(dispatcher);
-            LOGGER.info("Registered rules command");
+            if (CommandConfigUtil.isCommandEnabled("rules")) {
+                RulesCommand.register(dispatcher);
+                LOGGER.info("Registered rules command");
+            } else {
+                LOGGER.info("Rules command disabled in configuration");
+            }
             
             // Back command (teleportation utility)
-            BackCommand.register(dispatcher);
-            LOGGER.info("Registered back command");
+            if (CommandConfigUtil.isCommandEnabled("back")) {
+                BackCommand.register(dispatcher);
+                LOGGER.info("Registered back command");
+            } else {
+                LOGGER.info("Back command disabled in configuration");
+            }
             
-            // Home commands
-            HomeCommands.register(dispatcher);
-            LOGGER.info("Registered home commands");
+            // Home commands - check homes module
+            if (CommandConfigUtil.isFeatureEnabled("home", "homes")) {
+                HomeCommands.register(dispatcher);
+                LOGGER.info("Registered home commands");
+            } else {
+                LOGGER.info("Home commands disabled in configuration");
+            }
             
-            // Warp commands
-            WarpCommands.register(dispatcher);
-            LOGGER.info("Registered warp commands");
+            // Warp commands - check warps module
+            if (CommandConfigUtil.isFeatureEnabled("warp", "warps")) {
+                WarpCommands.register(dispatcher);
+                LOGGER.info("Registered warp commands");
+            } else {
+                LOGGER.info("Warp commands disabled in configuration");
+            }
             
-            // Spawn commands
-            SpawnCommands.register(dispatcher);
-            LOGGER.info("Registered spawn commands");
+            // Spawn commands - check spawn module
+            if (CommandConfigUtil.isFeatureEnabled("spawn", "spawn")) {
+                SpawnCommands.register(dispatcher);
+                LOGGER.info("Registered spawn commands");
+            } else {
+                LOGGER.info("Spawn commands disabled in configuration");
+            }
             
-            // Permission debug command (for testing)
+            // Permission debug command (always enabled for debugging)
             PermissionDebugCommand.register(dispatcher);
             LOGGER.info("Registered permission debug command");
             
-            // Economy commands
-            EconomyCommands.register(dispatcher);
-            LOGGER.info("Registered economy commands");
+            // Economy commands - check economy module
+            if (CommandConfigUtil.isFeatureEnabled("balance", "economy")) {
+                EconomyCommands.register(dispatcher);
+                LOGGER.info("Registered economy commands");
+            } else {
+                LOGGER.info("Economy commands disabled in configuration");
+            }
             
-            // Kit commands
-            KitCommand.register(dispatcher);
-            LOGGER.info("Registered kit commands");
+            // Kit commands - check kits module
+            if (CommandConfigUtil.isFeatureEnabled("kit", "kits")) {
+                KitCommand.register(dispatcher);
+                LOGGER.info("Registered kit commands");
+            } else {
+                LOGGER.info("Kit commands disabled in configuration");
+            }
             
-            // Messaging commands
-            MessagingCommands.register(dispatcher);
-            LOGGER.info("Registered messaging commands");
+            // Messaging commands - check chat module
+            if (CommandConfigUtil.isFeatureEnabled("messaging", "chat")) {
+                MessagingCommands.register(dispatcher);
+                LOGGER.info("Registered messaging commands");
+            } else {
+                LOGGER.info("Messaging commands disabled in configuration");
+            }
             
-            // Moderation commands
-            ModerationCommands.register(dispatcher);
-            LOGGER.info("Registered moderation commands");
+            // Moderation commands - check moderation module
+            if (CommandConfigUtil.isFeatureEnabled("moderation", "moderation")) {
+                ModerationCommands.register(dispatcher);
+                LOGGER.info("Registered moderation commands");
+            } else {
+                LOGGER.info("Moderation commands disabled in configuration");
+            }
             
             // Plugin compatibility commands
             // CompatibilityCommand.register(dispatcher, PluginCompatibilityManager.getInstance()); // DISABLED - Compilation issues
