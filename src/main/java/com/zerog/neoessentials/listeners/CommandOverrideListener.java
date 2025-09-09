@@ -3,6 +3,7 @@ package com.zerog.neoessentials.listeners;
 import net.neoforged.neoforge.event.CommandEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.commands.CommandSourceStack;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.network.chat.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +25,12 @@ public class CommandOverrideListener {
                 // Find target player by name
                 var server = sender.getServer();
                 if (server == null) {
-                    source.sendSystemMessage(Component.literal("Server instance not available."));
+                    source.sendSystemMessage(MessageUtil.translatable((net.minecraft.server.level.ServerPlayer) source.getEntity(), "neoessentials.error.server_not_available"));
                     return;
                 }
                 ServerPlayer target = server.getPlayerList().getPlayerByName(targetName);
                 if (target == null) {
-                    source.sendSystemMessage(Component.literal("Player not found: " + targetName));
+                    source.sendSystemMessage(MessageUtil.translatable((net.minecraft.server.level.ServerPlayer) source.getEntity(), "neoessentials.error.player_not_found", targetName));
                     return;
                 }
                 // Use your custom message logic
@@ -37,12 +38,12 @@ public class CommandOverrideListener {
                 com.zerog.neoessentials.messaging.IMessageRecipient targetRecipient = new com.zerog.neoessentials.messaging.SimpleMessageRecipient(target);
                 String senderName = senderRecipient.getName();
                 String targetDisplay = targetRecipient.getName();
-                senderRecipient.sendMessage(Component.literal("[PM to " + targetDisplay + "] " + message));
-                targetRecipient.sendMessage(Component.literal("[PM from " + senderName + "] " + message));
+                senderRecipient.sendMessage(MessageUtil.translatable(sender, "neoessentials.message.pm_sent", targetDisplay, message));
+                targetRecipient.sendMessage(MessageUtil.translatable(target, "neoessentials.message.pm_received", senderName, message));
                 senderRecipient.setReplyRecipient(targetRecipient);
                 targetRecipient.setReplyRecipient(senderRecipient);
             } else {
-                source.sendSystemMessage(Component.literal("Usage: /msg <player> <message>"));
+                source.sendSystemMessage(MessageUtil.translatable((net.minecraft.server.level.ServerPlayer) source.getEntity(), "neoessentials.message.pm_usage"));
             }
             LOGGER.info("Vanilla whisper command '{}' was intercepted and replaced with NeoEssentials PM.", cmd);
         }
