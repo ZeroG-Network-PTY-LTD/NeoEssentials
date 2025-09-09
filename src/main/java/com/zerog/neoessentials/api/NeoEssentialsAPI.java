@@ -11,8 +11,8 @@ import com.zerog.neoessentials.managers.ModerationManager;
 import com.zerog.neoessentials.util.LocationUtil;
 import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import com.zerog.neoessentials.utils.PerformanceMonitor;
-// TODO: Restore when import issues are fixed: import net.minecraft.server.level.ServerPlayer;
-// TODO: Restore when import issues are fixed: import net.neoforged.neoforge.common.NeoForge;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +25,6 @@ import java.util.function.Function;
 /**
  * Main API interface for NeoEssentials
  * Provides comprehensive access to all mod features for integration with other mods
- * TODO: Restore full ServerPlayer functionality when import issues are resolved
  * 
  * @author ZeroG
  * @since 2.0.0
@@ -85,10 +84,9 @@ public class NeoEssentialsAPI {
      */
     public void initializeEventSystem() {
         if (!eventSystemInitialized) {
-            // TODO: Restore when import issues are fixed
-            // NeoForge.EVENT_BUS.register(eventHandler);
+            NeoForge.EVENT_BUS.register(eventHandler);
             eventSystemInitialized = true;
-            LOGGER.info("NeoEssentials event system initialized (simplified)");
+            LOGGER.info("NeoEssentials event system initialized");
         }
     }
     
@@ -158,12 +156,10 @@ public class NeoEssentialsAPI {
     
     /**
      * Set a home for a player
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public boolean setPlayerHome(Object player, String homeName) {
+    public boolean setPlayerHome(ServerPlayer player, String homeName) {
         try {
-            // TODO: Fix method signature when import issues are resolved
-            return false; // homeManager.setHome(player, homeName);
+            return homeManager.setHome(player, homeName);
         } catch (Exception e) {
             LOGGER.error("Error setting home for player: {}", e.getMessage());
             return false;
@@ -179,12 +175,10 @@ public class NeoEssentialsAPI {
     
     /**
      * Teleport player to home
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public boolean teleportToHome(Object player, String homeName) {
+    public boolean teleportToHome(ServerPlayer player, String homeName) {
         try {
-            // TODO: Fix method signature when import issues are resolved
-            return false; // homeManager.teleportToHome(player, homeName);
+            return homeManager.teleportToHome(player, homeName);
         } catch (Exception e) {
             LOGGER.error("Error teleporting player to home {}: {}", homeName, e.getMessage());
             return false;
@@ -193,11 +187,9 @@ public class NeoEssentialsAPI {
     
     /**
      * Delete a player's home
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public boolean deletePlayerHome(Object player, String homeName) {
-        // TODO: Fix method call when import issues are resolved
-        return false; // homeManager.deleteHome(player, homeName);
+    public boolean deletePlayerHome(ServerPlayer player, String homeName) {
+        return homeManager.deleteHome(player, homeName);
     }
     
     // ========================= ECONOMY API =========================
@@ -255,12 +247,10 @@ public class NeoEssentialsAPI {
     
     /**
      * Teleport player to warp
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public boolean teleportToWarp(Object player, String warpName) {
+    public boolean teleportToWarp(ServerPlayer player, String warpName) {
         try {
-            // TODO: Fix method call when import issues are resolved
-            return false; // warpManager.teleportToWarp(player, warpName);
+            return warpManager.teleportToWarp(player, warpName);
         } catch (Exception e) {
             LOGGER.error("Error teleporting player to warp {}: {}", warpName, e.getMessage());
             return false;
@@ -271,12 +261,10 @@ public class NeoEssentialsAPI {
     
     /**
      * Give kit to player
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public boolean giveKit(Object player, String kitName) {
+    public boolean giveKit(ServerPlayer player, String kitName) {
         try {
-            // TODO: Fix method call when import issues are resolved
-            return false; // kitManager.giveKit(player, kitName);
+            return kitManager.giveKit(player, kitName);
         } catch (Exception e) {
             LOGGER.error("Error giving kit {} to player: {}", kitName, e.getMessage());
             return false;
@@ -287,32 +275,26 @@ public class NeoEssentialsAPI {
     
     /**
      * Send private message to player
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public boolean sendPrivateMessage(Object sender, String recipientName, String message) {
-        // TODO: Fix method call when import issues are resolved
-        return false; // messagingManager.sendPrivateMessage(sender, recipientName, message);
+    public boolean sendPrivateMessage(ServerPlayer sender, String recipientName, String message) {
+        return messagingManager.sendPrivateMessage(sender, recipientName, message);
     }
     
     /**
      * Send mail to player
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public boolean sendMail(Object sender, String recipientName, String message) {
-        // TODO: Fix method call when import issues are resolved
-        return false; // messagingManager.sendMail(sender, recipientName, message);
+    public boolean sendMail(ServerPlayer sender, String recipientName, String message) {
+        return messagingManager.sendMail(sender, recipientName, message);
     }
     
     // ========================= SPAWN API =========================
     
     /**
      * Teleport player to spawn
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public boolean teleportToSpawn(Object player) {
+    public boolean teleportToSpawn(ServerPlayer player) {
         try {
-            // TODO: Fix method call when import issues are resolved
-            return false; // spawnManager.teleportToSpawn(player);
+            return spawnManager.teleportToSpawn(player);
         } catch (Exception e) {
             LOGGER.error("Error teleporting player to spawn: {}", e.getMessage());
             return false;
@@ -321,11 +303,9 @@ public class NeoEssentialsAPI {
     
     /**
      * Set spawn location
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public boolean setSpawn(Object player) {
-        // TODO: Fix method call when import issues are resolved
-        return false; // spawnManager.setSpawn(player);
+    public boolean setSpawn(ServerPlayer player) {
+        return spawnManager.setSpawn(player);
     }
     
     // ========================= PLACEHOLDER API =========================
@@ -340,11 +320,9 @@ public class NeoEssentialsAPI {
     
     /**
      * Process placeholders in text
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public String processPlaceholders(Object player, String text) {
-        // TODO: Fix method call when import issues are resolved
-        return text; // placeholderManager.processPlaceholders(text, player);
+    public String processPlaceholders(ServerPlayer player, String text) {
+        return placeholderManager.processPlaceholders(text, player);
     }
     
     /**
@@ -395,12 +373,8 @@ public class NeoEssentialsAPI {
     
     /**
      * Create location from player
-     * TODO: Restore ServerPlayer when import issues are fixed
      */
-    public LocationUtil.Location createLocationFromPlayer(Object player) {
-        // TODO: Fix method call when import issues are resolved
-        return new LocationUtil.Location("overworld", 0.0, 64.0, 0.0, 0.0f, 0.0f, System.currentTimeMillis());
-        /*
+    public LocationUtil.Location createLocationFromPlayer(ServerPlayer player) {
         return new LocationUtil.Location(
             player.level().dimension().location().toString(),
             player.getX(),
@@ -410,7 +384,6 @@ public class NeoEssentialsAPI {
             player.getXRot(),
             System.currentTimeMillis()
         );
-        */
     }
     
     // ========================= VERSION INFO =========================

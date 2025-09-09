@@ -7,17 +7,15 @@ import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.managers.FeatureManager;
 
-// Temporarily disabled NeoForge imports due to classpath issues
-// import net.neoforged.fml.common.Mod;
-// import net.neoforged.neoforge.common.NeoForge;
-// import net.neoforged.neoforge.event.RegisterCommandsEvent;
-// import net.neoforged.neoforge.event.server.ServerStartingEvent;
-// import net.neoforged.neoforge.event.server.ServerStoppingEvent;
-// import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /**
  * NeoEssentials Main Class - Provides server administration tools
- * TEMPORARILY SIMPLIFIED due to import issues - will restore when NeoForge imports work
  * 
  * This is the main mod class that initializes all NeoEssentials features
  * and provides server administration functionality.
@@ -25,7 +23,7 @@ import com.zerog.neoessentials.managers.FeatureManager;
  * @author ZeroG
  * @version 2.0.0
  */
-// @Mod("neoessentials") // Temporarily disabled
+@Mod("neoessentials")
 public class NeoEssentials {
     public static final Logger LOGGER = LogUtils.getLogger();
 
@@ -33,14 +31,12 @@ public class NeoEssentials {
      * Constructor for NeoEssentials
      */
     public NeoEssentials() {
-        LOGGER.info("NeoEssentials initializing (simplified mode due to import issues)...");
-        // Temporarily disabled event registration
-        // NeoForge.EVENT_BUS.register(this);
-        // NeoForge.EVENT_BUS.register(com.zerog.neoessentials.listeners.CommandOverrideListener.class);
-        // NeoForge.EVENT_BUS.register(com.zerog.neoessentials.listeners.ServerTickListener.class);
+        LOGGER.info("NeoEssentials initializing...");
+        
+        // Register event handlers
+        NeoForge.EVENT_BUS.register(this);
         
         // Initialize unified config system first
-        // Initialize configuration system directly
         ConfigManager.getInstance().initialize();
         
         LOGGER.info("NeoEssentials configuration system initialized");
@@ -49,13 +45,10 @@ public class NeoEssentials {
         // Initialize core managers early to avoid null pointer exceptions
         initializeEarlyManagers();
         
-        // Temporarily disabled listener registration
-        // NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.NameTagFormattingListener());
-        com.zerog.neoessentials.util.DebugUtil.debugLog("Chat formatting system initialized");
-        
         // Initialize server tick listener for animated placeholders
         com.zerog.neoessentials.listeners.ServerTickListener.initialize();
         com.zerog.neoessentials.util.DebugUtil.debugLog("Server tick listener initialized");
+        
         LOGGER.info("NeoEssentials initialized successfully!");
     }
     
@@ -81,62 +74,90 @@ public class NeoEssentials {
     }
     
     /**
-     * Server starting event handler - TEMPORARILY DISABLED
+     * Server starting event handler
      */
-    // @SubscribeEvent
-    public void onServerStarting(Object event) {
-        
-        LOGGER.info("NeoEssentials server starting setup... (simplified mode)");
+    @SubscribeEvent
+    public void onServerStarting(ServerStartingEvent event) {
+        LOGGER.info("NeoEssentials server starting setup...");
         try {
-            // Temporarily disabled server-specific setup
-            // com.zerog.neoessentials.util.ScoreboardCleanupUtil.cleanupAll(event.getServer());
-            
-            // Unified config system already initialized in constructor
             // Initialize all features using the new FeatureManager
             FeatureManager.getInstance().initializeFeatures();
+            LOGGER.info("FeatureManager initialized successfully");
+            
+            // Setup tablist system
+            setupTablistSystem();
+            LOGGER.info("Tablist system initialized successfully");
+            
         } catch (Exception e) {
             LOGGER.error("Error during NeoEssentials server starting setup", e);
         }
-        
-        // Temporarily disabled tablist system
-        // setupTablistSystem();
     }
     
     /**
-     * Setup the improved tablist system with coordinated managers - TEMPORARILY DISABLED
+     * Setup the improved tablist system with coordinated managers
      */
     private void setupTablistSystem() {
-        LOGGER.info("Tablist system setup disabled due to import issues");
+        LOGGER.info("Setting up tablist system...");
         try {
-            // Temporarily disabled tablist system initialization
-            com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist system initialization skipped");
+            // Initialize tablist components with correct constructors
+            com.zerog.neoessentials.tablist.HeaderFooterManager headerFooterManager = 
+                new com.zerog.neoessentials.tablist.HeaderFooterManager();
+            
+            com.zerog.neoessentials.tablist.AnimationScheduler animationScheduler = 
+                new com.zerog.neoessentials.tablist.AnimationScheduler(
+                    headerFooterManager,
+                    com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance());
+            
+            com.zerog.neoessentials.tablist.TabUpdateOrchestrator tabUpdateOrchestrator = 
+                new com.zerog.neoessentials.tablist.TabUpdateOrchestrator(
+                    headerFooterManager, 
+                    com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance(), 
+                    animationScheduler);
+            
+            // Register tablist event handlers
+            registerTablistEvents(tabUpdateOrchestrator);
+            
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist system components initialized successfully");
         } catch (Exception e) {
             LOGGER.error("Error setting up tablist system", e);
         }
     }
     
     /**
-     * Register tablist event handlers - TEMPORARILY DISABLED
+     * Register tablist event handlers
      */
-    private void registerTablistEvents(Object tabUpdateOrchestrator) {
-        LOGGER.info("Tablist event registration disabled due to import issues");
+    private void registerTablistEvents(com.zerog.neoessentials.tablist.TabUpdateOrchestrator tabUpdateOrchestrator) {
+        LOGGER.info("Registering tablist event handlers...");
+        try {
+            // Register tablist-related event listeners with NeoForge
+            NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.TablistEventListener(tabUpdateOrchestrator));
+            
+            com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist event handlers registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Error registering tablist event handlers", e);
+        }
     }
     
     /**
-     * Command registration event handler - TEMPORARILY DISABLED
+     * Command registration event handler
      */
-    // @SubscribeEvent
-    public void onRegisterCommands(Object event) {
-        LOGGER.info("Command registration disabled due to import issues");
-        // CommandRegistry.registerCommands(event.getDispatcher(), event.getBuildContext());
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event) {
+        LOGGER.info("Starting command registration...");
+        try {
+            CommandRegistry.registerCommands(event.getDispatcher(), event.getBuildContext());
+            LOGGER.info("All NeoEssentials commands registered successfully!");
+        } catch (Exception e) {
+            LOGGER.error("Error registering NeoEssentials commands", e);
+        }
     }
     
     /**
-     * Server stopping event handler - cleanup resources - TEMPORARILY DISABLED
+     * Server stopping event handler - cleanup resources
      */
-    // @SubscribeEvent
-    public void onServerStopping(Object event) {
-        LOGGER.info("NeoEssentials shutting down... (simplified mode)");
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent event) {
+        LOGGER.info("NeoEssentials shutting down...");
         try {
             // Save shop data before shutdown - CRITICAL FIX
             com.zerog.neoessentials.economy.shops.ShopManager shopManager = 
@@ -155,9 +176,7 @@ public class NeoEssentials {
                 LOGGER.info("Storage manager shut down successfully");
             }
             
-            // TODO: Restore cleanup command when implemented
-            // com.zerog.neoessentials.commands.admin.CleanupCommand.shutdown();
-            LOGGER.info("NeoEssentials cleanup scheduler shut down successfully");
+            LOGGER.info("NeoEssentials shutdown completed successfully");
         } catch (Exception e) {
             LOGGER.error("Error during NeoEssentials shutdown", e);
         }

@@ -88,7 +88,7 @@ public class CommandConfigUtil {
             if (source.getEntity() instanceof ServerPlayer player) {
                 MessageUtil.sendMessage(player, "&cThe " + featureName + " feature is currently disabled.");
             } else {
-                source.sendFailure(MessageUtil.component("&cThe " + featureName + " feature is currently disabled."));
+                source.sendFailure(net.minecraft.network.chat.Component.literal("§cThe " + featureName + " feature is currently disabled."));
             }
         } catch (Exception e) {
             LOGGER.error("Failed to send disabled message for feature: {}", featureName, e);

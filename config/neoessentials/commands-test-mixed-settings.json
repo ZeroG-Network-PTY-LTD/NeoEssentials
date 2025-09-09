@@ -1,0 +1,119 @@
+{
+  "commands": {
+    "heal": {
+      "enabled": false,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "feed": {
+      "enabled": true,
+      "cost": 10.0,
+      "cooldown": 30
+    },
+    "god": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "vanish": {
+      "enabled": false,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "fly": {
+      "enabled": true,
+      "cost": 100.0,
+      "cooldown": 0
+    },
+    "speed": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 10
+    },
+    "gamemode": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "repair": {
+      "enabled": false,
+      "cost": 500.0,
+      "cooldown": 60
+    },
+    "time": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "weather": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "home": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 5
+    },
+    "balance": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "pay": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 1
+    },
+    "baltop": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "warp": {
+      "enabled": true,
+      "cost": 25.0,
+      "cooldown": 3
+    },
+    "kit": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "spawn": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 10
+    },
+    "ban": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "kick": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "mute": {
+      "enabled": false,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "message": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "reply": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0
+    },
+    "nick": {
+      "enabled": true,
+      "cost": 10.0,
+      "cooldown": 300
+    }
+  }
+}

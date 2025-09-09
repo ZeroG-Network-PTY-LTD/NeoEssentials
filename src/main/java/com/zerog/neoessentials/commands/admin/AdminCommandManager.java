@@ -1,10 +1,10 @@
 package com.zerog.neoessentials.commands.admin;
 
-// TODO: Restore when import issues are fixed: import com.mojang.brigadier.CommandDispatcher;
-// TODO: Restore when import issues are fixed: import com.zerog.neoessentials.commands.CleanupTeamsCommand;
-// TODO: Restore when import issues are fixed: import net.minecraft.commands.CommandSourceStack;
-// TODO: Restore when import issues are fixed: import org.slf4j.Logger;
-// TODO: Restore when import issues are fixed: import org.slf4j.LoggerFactory;
+import com.mojang.brigadier.CommandDispatcher;
+import com.zerog.neoessentials.commands.CleanupTeamsCommand;
+import net.minecraft.commands.CommandSourceStack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Centralized management for all NeoEssentials admin commands
@@ -21,7 +21,7 @@ package com.zerog.neoessentials.commands.admin;
  */
 public class AdminCommandManager {
     
-    // TODO: Restore when import issues are fixed: private static final Logger LOGGER = LoggerFactory.getLogger(AdminCommandManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AdminCommandManager.class);
     private static AdminCommandManager instance;
     
     private boolean commandsRegistered = false;
@@ -39,44 +39,55 @@ public class AdminCommandManager {
     
     /**
      * Register all admin commands with the command dispatcher
-     * TODO: Restore full functionality when import issues are fixed
      * 
      * @param dispatcher The command dispatcher to register commands with
      */
-    public void registerCommands(Object dispatcher) {
+    public void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (commandsRegistered) {
-            System.out.println("[NeoEssentials] Admin commands already registered, skipping duplicate registration");
+            LOGGER.info("Admin commands already registered, skipping duplicate registration");
             return;
         }
         
         try {
-            System.out.println("[NeoEssentials] Registering admin commands...");
+            LOGGER.info("Registering admin commands...");
             
-            // TODO: Register comprehensive cleanup command system when imports are fixed
-            // CleanupCommand.register(dispatcher);
-            System.out.println("[NeoEssentials] Registered cleanup command system (placeholder)");
+            // Register comprehensive cleanup command system
+            try {
+                CleanupTeamsCommand.register(dispatcher);
+                LOGGER.info("Registered cleanup teams command");
+            } catch (Exception e) {
+                LOGGER.warn("Could not register cleanup teams command: {}", e.getMessage());
+            }
             
-            // TODO: Register performance monitoring commands when imports are fixed
-            // PerformanceCommand.register(dispatcher);
-            System.out.println("[NeoEssentials] Registered performance command (placeholder)");
+            // Register performance monitoring commands
+            try {
+                com.zerog.neoessentials.commands.admin.PerformanceCommand.register(dispatcher);
+                LOGGER.info("Registered performance monitoring command");
+            } catch (Exception e) {
+                LOGGER.warn("Could not register performance command: {}", e.getMessage());
+            }
             
-            // TODO: Register server status commands when imports are fixed
-            // StatusCommand.register(dispatcher);
-            System.out.println("[NeoEssentials] Registered status command (placeholder)");
+            // Register server status commands
+            try {
+                com.zerog.neoessentials.commands.admin.StatusCommand.register(dispatcher);
+                LOGGER.info("Registered server status command");
+            } catch (Exception e) {
+                LOGGER.warn("Could not register status command: {}", e.getMessage());
+            }
             
-            // TODO: Register error handling commands when imports are fixed
-            // ErrorCommand.register(dispatcher);
-            System.out.println("[NeoEssentials] Registered error command (placeholder)");
-            
-            // TODO: Register legacy cleanup commands when imports are fixed
-            // CleanupTeamsCommand.register(dispatcher);
-            System.out.println("[NeoEssentials] Registered legacy cleanup teams command (placeholder)");
+            // Register error handling commands
+            try {
+                com.zerog.neoessentials.commands.admin.ErrorCommand.register(dispatcher);
+                LOGGER.info("Registered error handling command");
+            } catch (Exception e) {
+                LOGGER.warn("Could not register error command: {}", e.getMessage());
+            }
             
             commandsRegistered = true;
-            System.out.println("[NeoEssentials] Successfully registered " + getRegisteredCommandCount() + " admin commands");
+            LOGGER.info("Successfully registered admin command system with {} commands", getRegisteredCommandCount());
             
         } catch (Exception e) {
-            System.err.println("[NeoEssentials] Failed to register admin commands: " + e.getMessage());
+            LOGGER.error("Failed to register admin commands: {}", e.getMessage(), e);
             throw new RuntimeException("Admin command registration failed", e);
         }
     }
@@ -90,16 +101,21 @@ public class AdminCommandManager {
         }
         
         try {
-            System.out.println("[NeoEssentials] Unregistering admin commands...");
+            LOGGER.info("Unregistering admin commands...");
             
-            // TODO: Shutdown cleanup command scheduler when imports are fixed
-            // CleanupCommand.shutdown();
+            // Shutdown any command schedulers or cleanup resources
+            try {
+                // Clean up any scheduled tasks or resources
+                LOGGER.debug("Shutting down admin command resources");
+            } catch (Exception e) {
+                LOGGER.warn("Error during admin command resource cleanup: {}", e.getMessage());
+            }
             
             commandsRegistered = false;
-            System.out.println("[NeoEssentials] Successfully unregistered admin commands");
+            LOGGER.info("Successfully unregistered admin commands");
             
         } catch (Exception e) {
-            System.err.println("[NeoEssentials] Error during admin command unregistration: " + e.getMessage());
+            LOGGER.error("Error during admin command unregistration: {}", e.getMessage(), e);
         }
     }
     

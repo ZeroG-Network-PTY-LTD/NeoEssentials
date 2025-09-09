@@ -1,11 +1,11 @@
 package com.zerog.neoessentials.afk;
 
+import net.neoforged.neoforge.common.NeoForge;
+
 public class AFKEventManager {
     
-    // Temporarily disabled event management due to import issues
-    // TODO: Restore event management when NeoForge imports are stable
-    
     private static AFKEventManager instance;
+    private AFKEventListener eventListener;
 
     public static AFKEventManager getInstance() {
         if (instance == null) {
@@ -15,11 +15,15 @@ public class AFKEventManager {
     }
 
     public void init() {
-        // Placeholder for initialization
-        // Will restore event bus registration when imports work
+        // Register AFK event listener to NeoForge event bus
+        eventListener = new AFKEventListener();
+        NeoForge.EVENT_BUS.register(eventListener);
     }
 
     public void shutdown() {
-        // Cleanup if needed
+        // Unregister events if needed
+        if (eventListener != null) {
+            NeoForge.EVENT_BUS.unregister(eventListener);
+        }
     }
 }

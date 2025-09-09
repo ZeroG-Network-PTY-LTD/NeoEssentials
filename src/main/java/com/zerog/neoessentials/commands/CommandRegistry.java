@@ -17,6 +17,18 @@ import com.zerog.neoessentials.commands.player.PreferencesCommand;
 import com.zerog.neoessentials.commands.language.LanguageCommand;
 import com.zerog.neoessentials.commands.essentials.*;
 import com.zerog.neoessentials.commands.essentials.ConfigCommand;
+// Additional essential command imports for missing commands
+import com.zerog.neoessentials.commands.essentials.AnvilCommand;
+import com.zerog.neoessentials.commands.essentials.BanCommand;
+import com.zerog.neoessentials.commands.essentials.CreateShopCommand;
+import com.zerog.neoessentials.commands.essentials.KickCommand;
+import com.zerog.neoessentials.commands.essentials.MuteCommand;
+import com.zerog.neoessentials.commands.essentials.PayCommand;
+import com.zerog.neoessentials.commands.essentials.SmithingCommand;
+import com.zerog.neoessentials.commands.essentials.StonecutterCommand;
+import com.zerog.neoessentials.commands.essentials.WorkbenchCommand;
+// Admin command imports for missing commands
+import com.zerog.neoessentials.commands.admin.PerformanceCommand;
 // import com.zerog.neoessentials.managers.PluginCompatibilityManager; // DISABLED - Compilation issues
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandBuildContext;
@@ -55,7 +67,7 @@ public class CommandRegistry {
      * Register all NeoEssentials commands
      */
     public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
-        LOGGER.info("Registering NeoEssentials commands...");
+        LOGGER.info("Starting NeoEssentials command registration...");
         
         try {
             // Essential utility commands - check configuration before registering
@@ -259,6 +271,113 @@ public class CommandRegistry {
             com.zerog.neoessentials.commands.debug.TablistTestCommand.register(dispatcher);
             LOGGER.info("Registered tablisttest command");
             
+            // Additional essential commands that were missing
+            if (CommandConfigUtil.isCommandEnabled("invsee")) {
+                com.zerog.neoessentials.commands.essentials.InvSeeCommand.register(dispatcher);
+                LOGGER.info("Registered inventory inspection command");
+            } else {
+                LOGGER.info("Inventory inspection command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isCommandEnabled("enderchest")) {
+                com.zerog.neoessentials.commands.essentials.EnderChestCommand.register(dispatcher);
+                LOGGER.info("Registered ender chest command");
+            } else {
+                LOGGER.info("Ender chest command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isFeatureEnabled("tempban", "moderation")) {
+                com.zerog.neoessentials.commands.essentials.TempBanCommand.register(dispatcher);
+                LOGGER.info("Registered temporary ban command");
+            } else {
+                LOGGER.info("Temporary ban command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isFeatureEnabled("socialspy", "chat")) {
+                com.zerog.neoessentials.commands.essentials.SocialSpyCommand.register(dispatcher);
+                LOGGER.info("Registered social spy command");
+            } else {
+                LOGGER.info("Social spy command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isCommandEnabled("spawner")) {
+                com.zerog.neoessentials.commands.essentials.SpawnerCommand.register(dispatcher);
+                LOGGER.info("Registered spawner management command");
+            } else {
+                LOGGER.info("Spawner management command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isCommandEnabled("item")) {
+                com.zerog.neoessentials.commands.essentials.ItemCommand.register(dispatcher, context);
+                LOGGER.info("Registered item management command");
+            } else {
+                LOGGER.info("Item management command disabled in configuration");
+            }
+
+            // MISSING ESSENTIAL COMMANDS - Adding all commands that exist but weren't registered
+            if (CommandConfigUtil.isCommandEnabled("anvil")) {
+                com.zerog.neoessentials.commands.essentials.AnvilCommand.register(dispatcher);
+                LOGGER.info("Registered anvil command");
+            } else {
+                LOGGER.info("Anvil command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isFeatureEnabled("ban", "moderation")) {
+                com.zerog.neoessentials.commands.essentials.BanCommand.register(dispatcher);
+                LOGGER.info("Registered ban command");
+            } else {
+                LOGGER.info("Ban command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isFeatureEnabled("createshop", "economy")) {
+                com.zerog.neoessentials.commands.essentials.CreateShopCommand.register(dispatcher);
+                LOGGER.info("Registered create shop command");
+            } else {
+                LOGGER.info("Create shop command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isFeatureEnabled("kick", "moderation")) {
+                com.zerog.neoessentials.commands.essentials.KickCommand.register(dispatcher);
+                LOGGER.info("Registered kick command");
+            } else {
+                LOGGER.info("Kick command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isFeatureEnabled("mute", "moderation")) {
+                com.zerog.neoessentials.commands.essentials.MuteCommand.register(dispatcher);
+                LOGGER.info("Registered mute command");
+            } else {
+                LOGGER.info("Mute command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isFeatureEnabled("pay", "economy")) {
+                com.zerog.neoessentials.commands.essentials.PayCommand.register(dispatcher);
+                LOGGER.info("Registered pay command");
+            } else {
+                LOGGER.info("Pay command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isCommandEnabled("smithing")) {
+                com.zerog.neoessentials.commands.essentials.SmithingCommand.register(dispatcher);
+                LOGGER.info("Registered smithing table command");
+            } else {
+                LOGGER.info("Smithing table command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isCommandEnabled("stonecutter")) {
+                com.zerog.neoessentials.commands.essentials.StonecutterCommand.register(dispatcher);
+                LOGGER.info("Registered stonecutter command");
+            } else {
+                LOGGER.info("Stonecutter command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isCommandEnabled("workbench")) {
+                com.zerog.neoessentials.commands.essentials.WorkbenchCommand.register(dispatcher);
+                LOGGER.info("Registered workbench command");
+            } else {
+                LOGGER.info("Workbench command disabled in configuration");
+            }
+            
             // Scoreboard test command removed - scoreboard system no longer used
             
             // Professional Scoreboard command - removed as part of cleanup
@@ -402,13 +521,74 @@ public class CommandRegistry {
             AdminCommandManager.getInstance().registerCommands(dispatcher);
             LOGGER.info("Registered centralized admin command system");
             
+            // Additional admin commands
+            if (CommandConfigUtil.isCommandEnabled("kitadmin")) {
+                com.zerog.neoessentials.commands.admin.KitAdminCommand.register(dispatcher);
+                LOGGER.info("Registered kit administration commands");
+            } else {
+                LOGGER.info("Kit administration commands disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isCommandEnabled("tablistdebug")) {
+                com.zerog.neoessentials.commands.admin.TabListDebugCommand.register(dispatcher);
+                LOGGER.info("Registered tablist debug commands");
+            } else {
+                LOGGER.info("Tablist debug commands disabled in configuration");
+            }
+
+            // MISSING ADMIN COMMANDS - Adding all admin commands that exist but weren't registered            
+            if (CommandConfigUtil.isCommandEnabled("error")) {
+                com.zerog.neoessentials.commands.admin.ErrorCommand.register(dispatcher);
+                LOGGER.info("Registered error command");
+            } else {
+                LOGGER.info("Error command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isCommandEnabled("performance")) {
+                com.zerog.neoessentials.commands.admin.PerformanceCommand.register(dispatcher);
+                LOGGER.info("Registered performance monitoring command");
+            } else {
+                LOGGER.info("Performance monitoring command disabled in configuration");
+            }
+            
+            // Utility commands
+            if (CommandConfigUtil.isCommandEnabled("cleanupteams")) {
+                CleanupTeamsCommand.register(dispatcher);
+                LOGGER.info("Registered team cleanup command");
+            } else {
+                LOGGER.info("Team cleanup command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isCommandEnabled("cleartags")) {
+                ClearAllTagsCommand.register(dispatcher);
+                LOGGER.info("Registered clear tags command");
+            } else {
+                LOGGER.info("Clear tags command disabled in configuration");
+            }
+            
+            if (CommandConfigUtil.isCommandEnabled("role")) {
+                // RoleCommand uses ICommand interface, register it dynamically
+                registerDynamic("role", new RoleCommand());
+                LOGGER.info("Registered role management command (dynamic)");
+            } else {
+                LOGGER.info("Role management command disabled in configuration");
+            }
+            
+            // FTB Integration commands
+            if (CommandConfigUtil.isCommandEnabled("ftb")) {
+                FTBIntegrationCommands.register(dispatcher);
+                LOGGER.info("Registered FTB integration commands");
+            } else {
+                LOGGER.info("FTB integration commands disabled in configuration");
+            }
+            
             // Legacy admin commands for backwards compatibility
             NeoEssentialsCommand.register(dispatcher);
             LOGGER.info("Registered legacy admin commands");
             
-            // Web Dashboard management commands
-            com.zerog.neoessentials.commands.WebDashboardCommand.register(dispatcher);
-            LOGGER.info("Registered web dashboard management commands");
+            // Web Dashboard management commands - TEMPORARILY DISABLED due to compilation errors
+            // com.zerog.neoessentials.commands.WebDashboardCommand.register(dispatcher);
+            LOGGER.info("Web dashboard management commands temporarily disabled (compilation issues)");
             
             // Discord Management commands (comprehensive)
             // System status monitoring commands (Phase 5)
