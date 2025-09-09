@@ -243,5 +243,4 @@ public class ShopEventHandler {
         String itemName = shop.itemSpec().getHoverName().getString();
         seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.sale_successful", String.valueOf(shop.amount()), itemName, String.valueOf(shop.price())));
     }
-    }
 }
