@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -54,7 +55,7 @@ public class BanCommand {
         var gameProfiles = GameProfileArgument.getGameProfiles(context, "player");
         
         if (gameProfiles.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("§cPlayer not found!"));
+            context.getSource().sendFailure(MessageUtil.translatable("neoessentials.player.not_found"));
             return 0;
         }
         
@@ -65,7 +66,7 @@ public class BanCommand {
         try {
             ServerPlayer executor = context.getSource().getPlayerOrException();
             if (executor.getGameProfile().getId().equals(gameProfile.getId())) {
-                context.getSource().sendFailure(Component.literal("§cYou cannot ban yourself!"));
+                context.getSource().sendFailure(MessageUtil.translatable("neoessentials.ban.cannot_self"));
                 return 0;
             }
         } catch (CommandSyntaxException e) {
@@ -74,7 +75,7 @@ public class BanCommand {
         
         // Check if player is already banned
         if (context.getSource().getServer().getPlayerList().getBans().isBanned(gameProfile)) {
-            context.getSource().sendFailure(Component.literal("§c" + playerName + " is already banned!"));
+            context.getSource().sendFailure(MessageUtil.translatable("neoessentials.ban.already_banned", playerName));
             return 0;
         }
         
@@ -93,18 +94,18 @@ public class BanCommand {
         // Kick player if online
         ServerPlayer onlinePlayer = context.getSource().getServer().getPlayerList().getPlayer(gameProfile.getId());
         if (onlinePlayer != null) {
-            onlinePlayer.connection.disconnect(Component.literal("§cYou have been banned from this server\n§7Reason: §f" + reason));
+            onlinePlayer.connection.disconnect(MessageUtil.translatable(onlinePlayer, "neoessentials.ban.disconnect_message", reason));
         }
         
         // Broadcast to server
         context.getSource().getServer().getPlayerList().broadcastSystemMessage(
-            Component.literal("§c" + playerName + " was banned from the server"), 
+            MessageUtil.translatable("neoessentials.ban.broadcast", playerName), 
             false
         );
         
         // Send confirmation to executor
-        context.getSource().sendSuccess(() -> Component.literal("§aBanned " + playerName + " from the server"), true);
-        context.getSource().sendSuccess(() -> Component.literal("§7Reason: §f" + reason), false);
+        context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.ban.success", playerName), true);
+        context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.ban.reason", reason), false);
         
         return 1;
     }
@@ -113,7 +114,7 @@ public class BanCommand {
         var gameProfiles = GameProfileArgument.getGameProfiles(context, "player");
         
         if (gameProfiles.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("§cPlayer not found!"));
+            context.getSource().sendFailure(MessageUtil.translatable("neoessentials.player.not_found"));
             return 0;
         }
         
@@ -122,7 +123,7 @@ public class BanCommand {
         
         // Check if player is banned
         if (!context.getSource().getServer().getPlayerList().getBans().isBanned(gameProfile)) {
-            context.getSource().sendFailure(Component.literal("§c" + playerName + " is not banned!"));
+            context.getSource().sendFailure(MessageUtil.translatable("neoessentials.ban.not_banned", playerName));
             return 0;
         }
         
@@ -130,7 +131,7 @@ public class BanCommand {
         context.getSource().getServer().getPlayerList().getBans().remove(gameProfile);
         
         // Send confirmation to executor
-        context.getSource().sendSuccess(() -> Component.literal("§aUnbanned " + playerName), true);
+        context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.ban.unban_success", playerName), true);
         
         return 1;
     }

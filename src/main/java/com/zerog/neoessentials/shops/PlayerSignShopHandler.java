@@ -194,7 +194,7 @@ public class PlayerSignShopHandler {
         
         // STEP 1: Remove items from player inventory first (payment-first security model)
         if (!removeItemFromInventory(player, signShop.getItem(), quantity)) {
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.remove.items.failed.inventory")));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.remove.items.failed.inventory"));
             return false;
         }
         
@@ -207,7 +207,7 @@ public class PlayerSignShopHandler {
             ItemStack returnItem = signShop.getItem().copy();
             returnItem.setCount(quantity);
             player.getInventory().add(returnItem);
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.owner.payment.failed.items.returned")));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.owner.payment.failed.items.returned"));
             return false;
         }
         
@@ -221,7 +221,7 @@ public class PlayerSignShopHandler {
             ItemStack returnItem = signShop.getItem().copy();
             returnItem.setCount(quantity);
             player.getInventory().add(returnItem);
-            player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.payment.failed.items.returned")));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.payment.failed.items.returned"));
             return false;
         }
         
@@ -230,7 +230,10 @@ public class PlayerSignShopHandler {
         itemsToAdd.setCount(quantity);
         addItemsToChest(chestEntity, itemsToAdd);
         
-    player.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((net.minecraft.server.level.ServerPlayer) player, "neoessentials.shop.sold", quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalEarnings))));
+        player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.sold", 
+            String.valueOf(quantity), 
+            signShop.getItem().getDisplayName().getString(), 
+            economyManager.formatCurrency(totalEarnings)));
         
         // Record transaction
         com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);

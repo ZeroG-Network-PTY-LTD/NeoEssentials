@@ -9,6 +9,7 @@ import com.zerog.neoessentials.storage.KitStorageManager;
 import com.zerog.neoessentials.storage.PlayerDataManager;
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.util.DebugUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -55,31 +56,27 @@ public class KitManager {
     public boolean giveKit(ServerPlayer player, String kitName) {
         boolean kitModuleEnabled = configManager.getMainConfig().modules.kits;
         if (!kitModuleEnabled) {
-            String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.disabled");
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.kit.disabled"));
             return false;
         }
         
         // Get the kit from storage
         Kit kit = kitStorageManager.getKit(kitName);
         if (kit == null) {
-            String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.not_found", kitName);
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.kit.not_found", kitName));
             return false;
         }
         
         // Check if kit is enabled
         if (!kit.isEnabled()) {
-            String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.disabled_kit", kitName);
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.kit.disabled_kit", kitName));
             return false;
         }
         
         // Check permission
         if (kit.requiresPermission()) {
             if (!PermissionUtil.hasPermission(player, kit.getPermission())) {
-                String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.no_permission", kitName);
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.kit.no_permission", kitName));
                 return false;
             }
         }
@@ -89,8 +86,7 @@ public class KitManager {
             String settingKey = "kit_claimed_" + kitName.toLowerCase();
             Object claimed = playerDataManager.getSetting(player.getUUID(), settingKey);
             if (Boolean.TRUE.equals(claimed) || "true".equals(String.valueOf(claimed))) {
-                String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.already_claimed", kitName);
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.kit.already_claimed", kitName));
                 return false;
             }
         }
@@ -98,9 +94,8 @@ public class KitManager {
         // Check cooldown
         if (isOnCooldown(player, kitName)) {
             long remainingTime = getRemainingCooldown(player, kitName);
-            String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.cooldown", 
-                kitName, formatTime(remainingTime));
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.kit.cooldown", 
+                kitName, formatTime(remainingTime)));
             return false;
         }
         
@@ -108,9 +103,8 @@ public class KitManager {
         if (kit.hasCost()) {
             EconomyManager economyManager = EconomyManager.getInstance();
             if (!economyManager.hasBalance(player.getUUID(), BigDecimal.valueOf(kit.getCost()))) {
-                String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.insufficient_funds", 
-                    kitName, kit.getCost());
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.kit.insufficient_funds", 
+                    kitName, kit.getCost()));
                 return false;
             }
         }
@@ -136,8 +130,7 @@ public class KitManager {
                 playerDataManager.setSetting(player.getUUID(), settingKey, true);
             }
             
-            String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.received", kit.getDisplayName());
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.kit.received", kit.getDisplayName()));
             
             DebugUtil.debugLog("Player " + player.getName().getString() + " received kit: " + kitName);
             return true;
@@ -312,8 +305,7 @@ public class KitManager {
         
         if (giveKit(player, kitSettings.firstJoinKit)) {
             playerDataManager.setSetting(player.getUUID(), "received_first_join_kit", true);
-            String message = LanguageManager.getInstance().getMessage(player, "neoessentials.kit.first_join", kitSettings.firstJoinKit);
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(message));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.kit.first_join", kitSettings.firstJoinKit));
         }
     }
     

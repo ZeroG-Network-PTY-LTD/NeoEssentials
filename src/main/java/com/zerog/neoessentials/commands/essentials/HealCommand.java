@@ -99,7 +99,7 @@ public class HealCommand implements IEssentialCommand {
                 ServerPlayer target = source.getServer().getPlayerList().getPlayerByName(playerName);
                 
                 if (target == null) {
-                    source.sendFailure(Component.literal("Player '" + playerName + "' not found or not online"));
+                    source.sendFailure(MessageUtil.translatable("neoessentials.player.not_found_online", playerName));
                     return 0;
                 }
                 

@@ -53,17 +53,17 @@ public class SpawnManager {
         MainConfig.SpawnConfig config = configManager.getMainConfig().spawnConfig;
         boolean spawnModuleEnabled = configManager.getMainConfig().modules.spawn;
         if (!spawnModuleEnabled) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.spawn.disabled")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.spawn.disabled"));
             return false;
         }
         // Check permission
         if (!PermissionUtil.hasPermission(player, PermissionNodes.SPAWN_SET)) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.spawn.no_permission")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.spawn.no_permission"));
             return false;
         }
         // Validate location
         if (!isValidSpawnLocation(location)) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.spawn.not_found")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.spawn.not_found"));
             return false;
         }
         // Update main spawn configuration
@@ -73,7 +73,7 @@ public class SpawnManager {
         config.mainSpawn.z = location.z;
         config.mainSpawn.yaw = location.yaw;
         config.mainSpawn.pitch = location.pitch;
-        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.spawn.set", location.world, String.valueOf((int) location.x), String.valueOf((int) location.y), String.valueOf((int) location.z))));
+        player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.spawn.set", location.world, String.valueOf((int) location.x), String.valueOf((int) location.y), String.valueOf((int) location.z)));
         LOGGER.info("Spawn location set by {} at {}", player.getName().getString(), formatLocation(location));
         return true;
     }
@@ -97,27 +97,27 @@ public class SpawnManager {
     public boolean teleportToSpawn(ServerPlayer player) {
         MainConfig.SpawnConfig config = configManager.getMainConfig().spawnConfig;
         if (!config.enabled) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.spawn.disabled")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.spawn.disabled"));
             return false;
         }
         // Check permission
         if (!PermissionUtil.hasPermission(player, PermissionNodes.SPAWN)) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.spawn.no_permission")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.spawn.no_permission"));
             return false;
         }
         // Get spawn location
         LocationUtil.Location spawnLocation = getSpawnLocation();
         if (spawnLocation == null) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.spawn.not_set")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.spawn.not_set"));
             return false;
         }
         // Perform teleport
         boolean success = teleportToLocation(player, spawnLocation);
         if (success) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.spawn.teleported")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.spawn.teleported"));
             LOGGER.info("Player {} teleported to spawn", player.getName().getString());
         } else {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.spawn.not_found")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.spawn.not_found"));
         }
         return success;
     }

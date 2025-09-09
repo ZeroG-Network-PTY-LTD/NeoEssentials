@@ -71,7 +71,7 @@ public class ModerationManager {
         String finalReason = reason != null && !reason.isEmpty() ? reason : "Kicked by administrator";
 
         // Kick the player
-        target.connection.disconnect(Component.literal(LanguageManager.getInstance().getMessage(target, "neoessentials.moderation.kick.player", finalReason)));
+        target.connection.disconnect(MessageUtil.translatable(target, "neoessentials.moderation.kick.player", finalReason));
 
         // Log action
         logModerationAction("KICK", moderator, target, finalReason, 0);
@@ -364,7 +364,7 @@ public class ModerationManager {
             server.getPlayerList().getBans().add(banEntry);
 
             // Disconnect the player
-            target.connection.disconnect(Component.literal(LanguageManager.getInstance().getMessage(target, "neoessentials.moderation.tempban.player", MessageUtil.formatTime(durationMs), finalReason)));
+            target.connection.disconnect(MessageUtil.translatable(target, "neoessentials.moderation.tempban.player", MessageUtil.formatTime(durationMs), finalReason));
 
             // Log action
             logModerationAction("TEMPBAN", moderator, target, finalReason, durationMinutes * 60);
