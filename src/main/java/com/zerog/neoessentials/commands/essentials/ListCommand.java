@@ -7,6 +7,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
+import com.zerog.neoessentials.util.MessageUtil;
 
 import java.util.List;
 
@@ -38,11 +39,11 @@ public class ListCommand {
         int maxPlayers = playerList.getMaxPlayers();
         
         // Send header with player count
-        Component header = Component.translatable("neoessentials.list.header", playerCount, maxPlayers);
+        Component header = MessageUtil.translatable("neoessentials.list.header", playerCount, maxPlayers);
         context.getSource().sendSuccess(() -> header, false);
 
         if (playerCount == 0) {
-            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.list.none_online"), false);
+            context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.list.none_online"), false);
             return 1;
         }
         
@@ -71,15 +72,15 @@ public class ListCommand {
         
         // Display players by group
         if (adminList.length() > 0) {
-            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.list.admins", adminList.toString()), false);
+            context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.list.admins", adminList.toString()), false);
         }
 
         if (modList.length() > 0) {
-            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.list.mods", modList.toString()), false);
+            context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.list.mods", modList.toString()), false);
         }
 
         if (playersList.length() > 0) {
-            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.list.players", playersList.toString()), false);
+            context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.list.players", playersList.toString()), false);
         }
         
         return 1;

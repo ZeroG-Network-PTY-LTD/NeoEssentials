@@ -54,13 +54,13 @@ public class MuteCommand {
 
     private static int mutePlayer(CommandContext<CommandSourceStack> context, ServerPlayer targetPlayer, long durationSeconds, String reason) throws CommandSyntaxException {
         if (targetPlayer == null) {
-            context.getSource().sendFailure(Component.translatable("neoessentials.mute.player_not_found"));
+            context.getSource().sendFailure(MessageUtil.translatable("neoessentials.mute.player_not_found"));
             return 0;
         }
         try {
             ServerPlayer executor = context.getSource().getPlayerOrException();
             if (executor.getUUID().equals(targetPlayer.getUUID())) {
-                context.getSource().sendFailure(Component.translatable("neoessentials.mute.cannot_self"));
+                context.getSource().sendFailure(MessageUtil.translatable("neoessentials.mute.cannot_self"));
                 return 0;
             }
         } catch (CommandSyntaxException e) {
@@ -69,7 +69,7 @@ public class MuteCommand {
         UUID playerId = targetPlayer.getUUID();
         String playerName = targetPlayer.getName().getString();
         if (mutedPlayers.containsKey(playerId) && !isExpired(mutedPlayers.get(playerId))) {
-            context.getSource().sendFailure(Component.translatable("neoessentials.mute.already_muted", playerName));
+            context.getSource().sendFailure(MessageUtil.translatable("neoessentials.mute.already_muted", playerName));
             return 0;
         }
         long expirationTime = durationSeconds > 0 ? System.currentTimeMillis() + (durationSeconds * 1000) : 0;
@@ -82,11 +82,11 @@ public class MuteCommand {
         mutedPlayers.put(playerId, muteData);
         String durationText = durationSeconds > 0 ? MessageUtil.formatTime(durationSeconds * 1000) : null;
         if (durationText != null) {
-            targetPlayer.sendSystemMessage(Component.translatable("neoessentials.mute.player.temp", durationText, reason));
-            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.mute.success.temp", playerName, durationText, reason), true);
+            targetPlayer.sendSystemMessage(MessageUtil.translatable("neoessentials.mute.player.temp", durationText, reason));
+            context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.mute.success.temp", playerName, durationText, reason), true);
         } else {
-            targetPlayer.sendSystemMessage(Component.translatable("neoessentials.mute.player", reason));
-            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.mute.success", playerName, reason), true);
+            targetPlayer.sendSystemMessage(MessageUtil.translatable("neoessentials.mute.player", reason));
+            context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.mute.success", playerName, reason), true);
         }
         return 1;
     }
@@ -94,11 +94,11 @@ public class MuteCommand {
     private static int mutePlayerWithDuration(CommandContext<CommandSourceStack> context, ServerPlayer targetPlayer, String durationStr, String reason) throws CommandSyntaxException {
         long seconds = parseDurationFlexible(durationStr);
         if (seconds < 0) {
-            context.getSource().sendFailure(Component.translatable("neoessentials.mute.invalid_duration"));
+            context.getSource().sendFailure(MessageUtil.translatable("neoessentials.mute.invalid_duration"));
             return 0;
         }
         if (seconds > MAX_SECONDS) {
-            context.getSource().sendFailure(Component.translatable("neoessentials.mute.too_long"));
+            context.getSource().sendFailure(MessageUtil.translatable("neoessentials.mute.too_long"));
             return 0;
         }
         return mutePlayer(context, targetPlayer, seconds, reason);
@@ -124,35 +124,35 @@ public class MuteCommand {
 
     private static int unmutePlayer(CommandContext<CommandSourceStack> context, ServerPlayer targetPlayer) throws CommandSyntaxException {
         if (targetPlayer == null) {
-            context.getSource().sendFailure(Component.translatable("neoessentials.mute.player_not_found"));
+            context.getSource().sendFailure(MessageUtil.translatable("neoessentials.mute.player_not_found"));
             return 0;
         }
         UUID playerId = targetPlayer.getUUID();
         String playerName = targetPlayer.getName().getString();
         if (!mutedPlayers.containsKey(playerId) || isExpired(mutedPlayers.get(playerId))) {
-            context.getSource().sendFailure(Component.translatable("neoessentials.mute.not_muted", playerName));
+            context.getSource().sendFailure(MessageUtil.translatable("neoessentials.mute.not_muted", playerName));
             return 0;
         }
         mutedPlayers.remove(playerId);
-        targetPlayer.sendSystemMessage(Component.translatable("neoessentials.mute.player.unmuted"));
-        context.getSource().sendSuccess(() -> Component.translatable("neoessentials.mute.success.unmuted", playerName), true);
+        targetPlayer.sendSystemMessage(MessageUtil.translatable("neoessentials.mute.player.unmuted"));
+        context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.mute.success.unmuted", playerName), true);
         return 1;
     }
 
     private static int listMutedPlayers(CommandContext<CommandSourceStack> context) {
         cleanupExpiredMutes();
         if (mutedPlayers.isEmpty()) {
-            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.mute.list.none"), false);
+            context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.mute.list.none"), false);
             return 1;
         }
-        context.getSource().sendSuccess(() -> Component.translatable("neoessentials.mute.list.header"), false);
+        context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.mute.list.header"), false);
         mutedPlayers.forEach((playerId, muteData) -> {
             ServerPlayer onlinePlayer = context.getSource().getServer().getPlayerList().getPlayer(playerId);
             String playerName = onlinePlayer != null ? onlinePlayer.getName().getString() : "Unknown Player";
             String timeInfo = muteData.expirationTime > 0 ?
                 MessageUtil.formatTime(muteData.expirationTime - System.currentTimeMillis()) :
                 "Permanent";
-            context.getSource().sendSuccess(() -> Component.translatable("neoessentials.mute.list.entry", playerName, timeInfo, muteData.reason), false);
+            context.getSource().sendSuccess(() -> MessageUtil.translatable("neoessentials.mute.list.entry", playerName, timeInfo, muteData.reason), false);
         });
         return 1;
     }

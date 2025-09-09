@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.commands.essentials;
 
 import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -66,7 +67,7 @@ public class InvSeeCommand {
 
             MenuProvider inventoryProvider = new SimpleMenuProvider(
                 (windowId, playerInventory, playerEntity) -> new com.zerog.neoessentials.menus.InvseeMenu(windowId, playerInventory, target.getInventory(), canModify),
-                Component.translatable("neoessentials.invsee.inventory_title", target.getDisplayName().getString())
+                MessageUtil.translatable("neoessentials.invsee.inventory_title", target.getDisplayName().getString())
             );
 
             opener.openMenu(inventoryProvider);

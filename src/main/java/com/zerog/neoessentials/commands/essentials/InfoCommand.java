@@ -90,7 +90,7 @@ public class InfoCommand {
         if (source.getEntity() instanceof ServerPlayer player) {
             MessageUtil.sendTranslatedMessage(player, key, args);
         } else {
-            source.sendSuccess(() -> Component.translatable(key, args), false);
+            source.sendSuccess(() -> MessageUtil.translatable(key, args), false);
         }
     }
     

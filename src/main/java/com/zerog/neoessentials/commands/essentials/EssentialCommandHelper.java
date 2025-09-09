@@ -76,7 +76,7 @@ public class EssentialCommandHelper {
      * @param args Optional message arguments
      */
     public static void sendSuccess(CommandSourceStack source, String messageKey, Object... args) {
-        source.sendSuccess(() -> Component.translatable(messageKey, args), false);
+        source.sendSuccess(() -> MessageUtil.translatable(messageKey, args), false);
     }
     
     /**
@@ -87,7 +87,7 @@ public class EssentialCommandHelper {
      * @param args Optional message arguments
      */
     public static void sendSuccessWithBroadcast(CommandSourceStack source, String messageKey, Object... args) {
-        source.sendSuccess(() -> Component.translatable(messageKey, args), true);
+        source.sendSuccess(() -> MessageUtil.translatable(messageKey, args), true);
     }
     
     /**
@@ -98,7 +98,7 @@ public class EssentialCommandHelper {
      * @param args Optional message arguments
      */
     public static void sendFailure(CommandSourceStack source, String messageKey, Object... args) {
-        source.sendFailure(Component.translatable(messageKey, args));
+        source.sendFailure(MessageUtil.translatable(messageKey, args));
     }
     
     /**

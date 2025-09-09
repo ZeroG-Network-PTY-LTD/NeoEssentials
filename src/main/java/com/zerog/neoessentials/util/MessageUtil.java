@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.util;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.level.ServerPlayer;
@@ -73,6 +74,53 @@ public class MessageUtil {
         String message = LanguageManager.getInstance().getMessage(player, translationKey, args);
         Component translatableMessage = Component.literal(message);
         player.sendSystemMessage(translatableMessage);
+    }
+    
+    /**
+     * Create a properly translated Component using our LanguageManager
+     * Use this instead of Component.translatable() for NeoEssentials keys
+     */
+    public static MutableComponent translatable(ServerPlayer player, String translationKey, Object... args) {
+        if (translationKey == null || translationKey.isEmpty()) {
+            return Component.empty();
+        }
+        
+        // Use LanguageManager for neoessentials keys
+        if (translationKey.startsWith("neoessentials.")) {
+            try {
+                String message = LanguageManager.getInstance().getMessage(player, translationKey, args);
+                return ColorUtil.colorize(message).copy();
+            } catch (Exception e) {
+                // Fallback to vanilla translation if something goes wrong
+                return Component.translatable(translationKey, args).copy();
+            }
+        }
+        
+        // Use vanilla translation for Minecraft keys (like "container.repair")
+        return Component.translatable(translationKey, args).copy();
+    }
+    
+    /**
+     * Create a translatable Component without requiring a player (uses default locale)
+     */
+    public static MutableComponent translatable(String translationKey, Object... args) {
+        if (translationKey == null || translationKey.isEmpty()) {
+            return Component.empty();
+        }
+        
+        // Use LanguageManager for neoessentials keys
+        if (translationKey.startsWith("neoessentials.")) {
+            try {
+                String message = LanguageManager.getInstance().getMessage("en_US", translationKey, args);
+                return ColorUtil.colorize(message).copy();
+            } catch (Exception e) {
+                // Fallback to vanilla translation if something goes wrong
+                return Component.translatable(translationKey, args).copy();
+            }
+        }
+        
+        // Use vanilla translation for Minecraft keys
+        return Component.translatable(translationKey, args).copy();
     }
     public static void sendMessage(Iterable<ServerPlayer> players, String message) {
         for (ServerPlayer player : players) {

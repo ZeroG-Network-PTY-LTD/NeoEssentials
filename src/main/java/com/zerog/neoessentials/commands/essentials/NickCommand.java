@@ -221,7 +221,7 @@ public class NickCommand {
         if (source.getEntity() instanceof ServerPlayer player) {
             MessageUtil.sendTranslatedMessage(player, key, placeholders);
         } else {
-            source.sendSuccess(() -> Component.translatable(key, placeholders), false);
+            source.sendSuccess(() -> MessageUtil.translatable(key, placeholders), false);
         }
     }
     

@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.commands.essentials;
 
 import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -31,9 +32,9 @@ public class MotdCommand {
     private static int showMotd(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         String motd = source.getServer().getMotd();
-    sendMessage(source, Component.translatable("neoessentials.motd.header"));
-    sendMessage(source, Component.translatable("neoessentials.motd.body", motd));
-    sendMessage(source, Component.translatable("neoessentials.motd.footer"));
+    sendMessage(source, MessageUtil.translatable("neoessentials.motd.header"));
+    sendMessage(source, MessageUtil.translatable("neoessentials.motd.body", motd));
+    sendMessage(source, MessageUtil.translatable("neoessentials.motd.footer"));
         return 1;
     }
     
@@ -47,16 +48,16 @@ public class MotdCommand {
         try {
             // This would require reflection or mod access to server properties
             // For now, just show what the new MOTD would be
-            sendMessage(source, Component.translatable("neoessentials.motd.admin_new"));
-            sendMessage(source, Component.translatable("neoessentials.motd.admin_new_value", newMotd));
-            sendMessage(source, Component.translatable("neoessentials.motd.set.note"));
+            sendMessage(source, MessageUtil.translatable("neoessentials.motd.admin_new"));
+            sendMessage(source, MessageUtil.translatable("neoessentials.motd.admin_new_value", newMotd));
+            sendMessage(source, MessageUtil.translatable("neoessentials.motd.set.note"));
 
             // Log the change
-            source.getServer().sendSystemMessage(Component.translatable(
+            source.getServer().sendSystemMessage(MessageUtil.translatable(
                 "neoessentials.motd.admin_log_set", getSourceName(source), newMotd));
             return 1;
         } catch (Exception e) {
-            sendMessage(source, Component.translatable("neoessentials.motd.set.failed", e.getMessage()));
+            sendMessage(source, MessageUtil.translatable("neoessentials.motd.set.failed", e.getMessage()));
             return 0;
         }
     }
@@ -69,15 +70,15 @@ public class MotdCommand {
         
         try {
             // This would reload from server.properties if we had access
-            sendMessage(source, Component.translatable("neoessentials.motd.reload.success"));
-            sendMessage(source, Component.translatable("neoessentials.motd.reload.current", source.getServer().getMotd()));
+            sendMessage(source, MessageUtil.translatable("neoessentials.motd.reload.success"));
+            sendMessage(source, MessageUtil.translatable("neoessentials.motd.reload.current", source.getServer().getMotd()));
 
             // Log the reload
-            source.getServer().sendSystemMessage(Component.translatable(
+            source.getServer().sendSystemMessage(MessageUtil.translatable(
                 "neoessentials.motd.admin_log_reload", getSourceName(source)));
             return 1;
         } catch (Exception e) {
-            sendMessage(source, Component.translatable("neoessentials.motd.reload.failed", e.getMessage()));
+            sendMessage(source, MessageUtil.translatable("neoessentials.motd.reload.failed", e.getMessage()));
             return 0;
         }
     }

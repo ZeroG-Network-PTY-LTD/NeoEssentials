@@ -8,6 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.config.MainConfig;
 import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -42,7 +43,7 @@ public class ItemCommand {
                             int amount = IntegerArgumentType.getInteger(ctx, "amount");
                             return giveItem(ctx.getSource(), itemName, amount, Optional.empty(), Optional.empty());
                         } catch (CommandSyntaxException e) {
-                            ctx.getSource().sendFailure(Component.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
+                            ctx.getSource().sendFailure(MessageUtil.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
                             return 0;
                         }
                     })
@@ -55,7 +56,7 @@ public class ItemCommand {
                                 String lore = StringArgumentType.getString(ctx, "lore");
                                 return giveItem(ctx.getSource(), itemName, amount, Optional.of(lore), Optional.empty());
                             } catch (CommandSyntaxException e) {
-                                ctx.getSource().sendFailure(Component.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
+                                ctx.getSource().sendFailure(MessageUtil.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
                                 return 0;
                             }
                         })
@@ -69,7 +70,7 @@ public class ItemCommand {
                                     String playerName = StringArgumentType.getString(ctx, "player");
                                     return giveItem(ctx.getSource(), itemName, amount, Optional.of(lore), Optional.of(playerName));
                                 } catch (CommandSyntaxException e) {
-                                    ctx.getSource().sendFailure(Component.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
+                                    ctx.getSource().sendFailure(MessageUtil.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
                                     return 0;
                                 }
                             })
@@ -83,7 +84,7 @@ public class ItemCommand {
                                 String playerName = StringArgumentType.getString(ctx, "player");
                                 return giveItem(ctx.getSource(), itemName, amount, Optional.empty(), Optional.of(playerName));
                             } catch (CommandSyntaxException e) {
-                                ctx.getSource().sendFailure(Component.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
+                                ctx.getSource().sendFailure(MessageUtil.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
                                 return 0;
                             }
                         })
@@ -103,7 +104,7 @@ public class ItemCommand {
                             int amount = IntegerArgumentType.getInteger(ctx, "amount");
                             return giveItem(ctx.getSource(), itemName, amount, Optional.empty(), Optional.empty());
                         } catch (CommandSyntaxException e) {
-                            ctx.getSource().sendFailure(Component.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
+                            ctx.getSource().sendFailure(MessageUtil.translatable("neoessentials.command.invalid_syntax", e.getMessage()));
                             return 0;
                         }
                     })
@@ -118,7 +119,7 @@ public class ItemCommand {
         if (targetPlayerName.isPresent()) {
             receiver = src.getServer().getPlayerList().getPlayerByName(targetPlayerName.get());
             if (receiver == null) {
-                src.sendFailure(Component.translatable("neoessentials.player.not_found", targetPlayerName.get()));
+                src.sendFailure(MessageUtil.translatable("neoessentials.player.not_found", targetPlayerName.get()));
                 return 0;
             }
         } else {
@@ -137,12 +138,12 @@ public class ItemCommand {
                     item = BuiltInRegistries.ITEM.get(itemLocation);
                 }
                 if (item == null || item == net.minecraft.world.item.Items.AIR) {
-                    src.sendFailure(Component.translatable("neoessentials.item.not_found", itemName));
+                    src.sendFailure(MessageUtil.translatable("neoessentials.item.not_found", itemName));
                     return 0;
                 }
             }
         } catch (Exception e) {
-            src.sendFailure(Component.translatable("neoessentials.item.invalid_name", itemName));
+            src.sendFailure(MessageUtil.translatable("neoessentials.item.invalid_name", itemName));
             return 0;
         }
 
@@ -164,10 +165,10 @@ public class ItemCommand {
 
         // Send success messages
         String itemDisplayName = stack.getHoverName().getString();
-        receiver.sendSystemMessage(Component.translatable("neoessentials.item.give", amount, itemDisplayName));
+        receiver.sendSystemMessage(MessageUtil.translatable(receiver, "neoessentials.item.give", amount, itemDisplayName));
         
         if (targetPlayerName.isPresent() && !targetPlayerName.get().equals(src.getTextName())) {
-            src.sendSuccess(() -> Component.translatable("neoessentials.item.give_other", receiver.getName(), amount, itemDisplayName), true);
+            src.sendSuccess(() -> MessageUtil.translatable("neoessentials.item.give_other", receiver.getName(), amount, itemDisplayName), true);
         }
         
         return 1;

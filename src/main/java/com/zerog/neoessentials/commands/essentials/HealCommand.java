@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.integration.ErrorHandlingIntegration;
 import com.zerog.neoessentials.performance.PerformanceCommandWrapper;
 import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -78,7 +79,7 @@ public class HealCommand implements IEssentialCommand {
                 (src) -> {
                     ServerPlayer player = src.getPlayerOrException();
                     healPlayer(player);
-                    src.sendSuccess(() -> Component.translatable("neoessentials.heal.self_success"), false);
+                    src.sendSuccess(() -> MessageUtil.translatable(player, "neoessentials.heal.self_success"), false);
                     return 1;
                 }
             )
@@ -107,8 +108,8 @@ public class HealCommand implements IEssentialCommand {
                 healPlayer(target);
                 
                 // Send confirmation to both players
-                source.sendSuccess(() -> Component.translatable("neoessentials.heal.other_success", target.getName().getString()), true);
-                target.sendSystemMessage(Component.translatable("neoessentials.heal.success", executor.getName().getString()));
+                source.sendSuccess(() -> MessageUtil.translatable(executor, "neoessentials.heal.other_success", target.getName().getString()), true);
+                target.sendSystemMessage(MessageUtil.translatable(target, "neoessentials.heal.success", executor.getName().getString()));
                 
                 return 1;
             }
