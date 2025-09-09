@@ -323,5 +323,37 @@
   "neoessentials.shop.protection.owner_only_chest_access": "&7Ce coffre appartient au magasin d'un autre joueur. Seul le propriétaire peut y accéder.",
   "neoessentials.shop.protection.admin_bypass_chest": "&7Les administrateurs peuvent utiliser la permission '&eneoessentials.shop.bypass.protection&7'.",
   "neoessentials.shop.removed_successfully": "&a{0} supprimé avec succès!",
-  "neoessentials.shop.chest_break_warning": "&eAttention: Casser ce coffre affectera le magasin connecté!"
+  "neoessentials.shop.chest_break_warning": "&eAttention: Casser ce coffre affectera le magasin connecté!",
+  
+  "_comment": "=== NOUVELLES TRADUCTIONS REQUISES ===",
+  "_note": "Les clés suivantes nécessitent une traduction de l'anglais",
+  
+  "neoessentials.warp.disabled": "§cWarp system is currently disabled. [TODO: Translate to French]",
+  "neoessentials.warp.set": "§aWarp '{0}' has been set at {1} ({2}, {3}, {4})! [TODO: Translate to French]",
+  "neoessentials.warp.updated": "§aWarp '{0}' has been updated! [TODO: Translate to French]",
+  "neoessentials.warp.delete_own_only": "§cYou can only delete your own warps. [TODO: Translate to French]",
+  "neoessentials.warp.deleted": "§aWarp '{0}' has been deleted! [TODO: Translate to French]",
+  "neoessentials.warp.private": "§cWarp '{0}' is private and you don't have permission to use it. [TODO: Translate to French]",
+  "neoessentials.warp.cooldown_active": "§cYou must wait {0} before using warp teleportation again! [TODO: Translate to French]",
+  "neoessentials.warp.insufficient_funds": "§cYou don't have enough money! Required: {0} [TODO: Translate to French]",
+  "neoessentials.warp.unsafe_location": "§cThis location is not safe for teleportation! [TODO: Translate to French]",
+  "neoessentials.warp.no_teleport_world": "§cYou cannot teleport to warps in this world! [TODO: Translate to French]",
+  "neoessentials.warp.teleporting": "§aTeleporting to warp '{0}'... [TODO: Translate to French]",
+  "neoessentials.warp.teleported": "§aYou have been teleported! [TODO: Translate to French]",
+  "neoessentials.warp.warmup": "§aTeleporting in {0} seconds... [TODO: Translate to French]",
+  "neoessentials.warp.list_none": "§cYou have no available warps. [TODO: Translate to French]",
+  "neoessentials.warp.list_header": "§6=== Available Warps === [TODO: Translate to French]",
+  "neoessentials.warp.list_entry": "§e{0} §7- Owner: {1}, Category: {2}, Location: {3} ({4}, {5}, {6}) [TODO: Translate to French]",
+  
+  "neoessentials.spawn.disabled": "§cSpawn system is currently disabled. [TODO: Translate to French]",
+  "neoessentials.spawn.no_permission": "§cYou don't have permission to use this command. [TODO: Translate to French]",
+  "neoessentials.spawn.not_found": "§cSpawn location not found or invalid. [TODO: Translate to French]",
+  "neoessentials.spawn.set": "§aSpawn location set at {0} ({1}, {2}, {3})! [TODO: Translate to French]",
+  "neoessentials.spawn.not_set": "§cSpawn location has not been set yet. [TODO: Translate to French]",
+  "neoessentials.spawn.teleported": "§aYou have been teleported to spawn! [TODO: Translate to French]",
+  
+  "neoessentials.teleport.cooldown_active": "§cYou must wait {0} seconds before sending another teleport request! [TODO: Translate to French]",
+  "neoessentials.teleport.cannot_request_self": "§cYou cannot send a teleport request to yourself! [TODO: Translate to French]",
+  "neoessentials.teleport.target_too_many_requests": "§c{0} has too many pending requests. Try again later. [TODO: Translate to French]",
+  "neoessentials.teleport.already_pending_request": "§cYou already have a pending teleport request to {0}! [TODO: Translate to French]"
 }

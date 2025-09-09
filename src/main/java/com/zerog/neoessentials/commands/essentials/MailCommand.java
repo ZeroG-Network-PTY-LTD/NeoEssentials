@@ -3,6 +3,7 @@ package com.zerog.neoessentials.commands.essentials;
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.storage.JsonStorage;
+import com.zerog.neoessentials.util.ColorUtil;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -24,28 +25,28 @@ public class MailCommand {
     private static int sendMail(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         if (!(source.getEntity() instanceof ServerPlayer sender)) {
-            source.sendFailure(Component.literal("§cOnly players can send mail"));
+            source.sendFailure(MessageUtil.translatable("neoessentials.mail.players_only.send"));
             return 0;
         }
         try {
             ServerPlayer target = EntityArgument.getPlayer(context, "player");
             String message = StringArgumentType.getString(context, "message");
             if (message.length() > 255) {
-                sender.sendSystemMessage(Component.literal("§cMail message is too long! Maximum 255 characters."));
+                sender.sendSystemMessage(MessageUtil.translatable((ServerPlayer) sender, "neoessentials.mail.too_long"));
                 return 0;
             }
             if (target.getUUID().equals(sender.getUUID())) {
-                sender.sendSystemMessage(Component.literal("§cYou cannot send mail to yourself!"));
+                sender.sendSystemMessage(MessageUtil.translatable((ServerPlayer) sender, "neoessentials.mail.self_mail"));
                 return 0;
             }
             JsonStorage.MailEntry entry = new JsonStorage.MailEntry(sender.getName().getString(), message, System.currentTimeMillis());
             mailData.computeIfAbsent(target.getUUID(), k -> new ArrayList<>()).add(entry);
             JsonStorage.saveMail(mailData);
-            target.sendSystemMessage(Component.literal("You have new mail from " + sender.getName().getString()));
-            sender.sendSystemMessage(Component.literal("Mail sent to " + target.getName().getString()));
+            target.sendSystemMessage(MessageUtil.translatable(target, "neoessentials.mail.notification", sender.getName().getString()));
+            sender.sendSystemMessage(MessageUtil.translatable((ServerPlayer) sender, "neoessentials.mail.sent", target.getName().getString()));
             return 1;
         } catch (Exception e) {
-            sender.sendSystemMessage(Component.literal("§cError sending mail: " + e.getMessage()));
+            sender.sendSystemMessage(MessageUtil.translatable((ServerPlayer) sender, "neoessentials.mail.error", e.getMessage()));
             return 0;
         }
     }
@@ -110,7 +111,7 @@ public class MailCommand {
         
         // Only players can read mail
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cOnly players can read mail"));
+            source.sendFailure(MessageUtil.translatable("neoessentials.mail.players_only.read"));
             return 0;
         }
         
@@ -161,7 +162,7 @@ public class MailCommand {
         
         // Only players can clear mail
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cOnly players can clear mail"));
+            source.sendFailure(MessageUtil.translatable("neoessentials.mail.players_only.clear"));
             return 0;
         }
         
@@ -187,7 +188,7 @@ public class MailCommand {
         
         // Only players can delete mail
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("§cOnly players can delete mail"));
+            source.sendFailure(MessageUtil.translatable("neoessentials.mail.players_only.delete"));
             return 0;
         }
         
@@ -240,8 +241,8 @@ public class MailCommand {
             MessageUtil.sendMessage(target, "§eYour mail was cleared by an admin.");
             
             // Log the action
-            source.getServer().sendSystemMessage(Component.literal(
-                "§7[Mail] " + getSourceName(source) + " cleared all mail for " + target.getName().getString()));
+            String logMessage = "§7[Mail] " + getSourceName(source) + " cleared all mail for " + target.getName().getString();
+            source.getServer().sendSystemMessage(ColorUtil.colorize(logMessage));
             
             return 1;
             
@@ -271,7 +272,7 @@ public class MailCommand {
         if (source.getEntity() instanceof ServerPlayer player) {
             MessageUtil.sendMessage(player, message);
         } else {
-            source.sendSuccess(() -> Component.literal(message), false);
+            source.sendSuccess(() -> ColorUtil.colorize(message), false);
         }
     }
     

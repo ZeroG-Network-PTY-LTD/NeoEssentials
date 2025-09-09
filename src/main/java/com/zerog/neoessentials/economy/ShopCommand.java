@@ -26,7 +26,7 @@ public class ShopCommand {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     showShopHelp(player);
                 } else {
-                    context.getSource().sendFailure(Component.literal("This command can only be used by players!"));
+                    context.getSource().sendFailure(MessageUtil.translatable("neoessentials.shop.command.players_only"));
                 }
                 return 1;
             })
@@ -47,7 +47,7 @@ public class ShopCommand {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
                         listPlayerShops(player);
                     } else {
-                        context.getSource().sendFailure(Component.literal("This command can only be used by players!"));
+                        context.getSource().sendFailure(MessageUtil.translatable("neoessentials.shop.command.players_only"));
                     }
                     return 1;
                 }))
@@ -59,7 +59,7 @@ public class ShopCommand {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
                         showRemoveHelp(player);
                     } else {
-                        context.getSource().sendFailure(Component.literal("This command can only be used by players!"));
+                        context.getSource().sendFailure(MessageUtil.translatable("neoessentials.shop.command.players_only"));
                     }
                     return 1;
                 }));

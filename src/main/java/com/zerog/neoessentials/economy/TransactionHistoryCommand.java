@@ -2,6 +2,7 @@ package com.zerog.neoessentials.economy;
 
 import com.zerog.neoessentials.util.PermissionUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
+import com.zerog.neoessentials.util.MessageUtil;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -70,7 +71,7 @@ public class TransactionHistoryCommand {
         } else {
             // Player viewing their own transactions
             if (!(source.getEntity() instanceof ServerPlayer player)) {
-                source.sendFailure(Component.literal("§cThis command can only be used by players!"));
+                source.sendFailure(MessageUtil.translatable("neoessentials.transaction.players_only"));
                 return 0;
             }
             playerId = player.getUUID();
@@ -84,7 +85,7 @@ public class TransactionHistoryCommand {
         List<EconomyManager.Transaction> transactions = economyManager.getTransactionHistory(playerId, 50);
         
         if (transactions.isEmpty()) {
-            source.sendFailure(Component.literal("§7No transaction history found for " + playerName));
+            source.sendFailure(MessageUtil.translatable("neoessentials.transaction.no_history", playerName));
             return 1;
         }
         
@@ -97,9 +98,9 @@ public class TransactionHistoryCommand {
         int endIndex = Math.min(startIndex + transactionsPerPage, transactions.size());
         
         // Display header
-        source.sendFailure(Component.literal("§6=== Transaction History: " + playerName + " ==="));
-        source.sendFailure(Component.literal("§7Page " + page + " of " + totalPages + " (" + transactions.size() + " transactions)"));
-        source.sendFailure(Component.literal(""));
+        source.sendFailure(MessageUtil.translatable("neoessentials.transaction.header", playerName));
+        source.sendFailure(MessageUtil.translatable("neoessentials.transaction.page_info", page, totalPages, transactions.size()));
+        source.sendFailure(MessageUtil.translatable("neoessentials.transaction.empty"));
         
         // Display transactions
         for (int i = startIndex; i < endIndex; i++) {
@@ -111,17 +112,17 @@ public class TransactionHistoryCommand {
             // Color code based on transaction type
             String color = transaction.amount.compareTo(java.math.BigDecimal.ZERO) >= 0 ? "§a+" : "§c-";
             
-            source.sendFailure(Component.literal(String.format("%s%s §7%s - %s", 
-                color, amount, type, reason)));
+            source.sendFailure(MessageUtil.translatable("neoessentials.transaction.entry", 
+                color, amount, type, reason));
         }
         
         // Navigation footer
-        source.sendFailure(Component.literal(""));
+        source.sendFailure(MessageUtil.translatable("neoessentials.transaction.empty"));
         if (page < totalPages) {
-            source.sendFailure(Component.literal("§7Use §a/transactions " + (page + 1) + " §7for next page"));
+            source.sendFailure(MessageUtil.translatable("neoessentials.transaction.next_page", page + 1));
         }
         if (page > 1) {
-            source.sendFailure(Component.literal("§7Use §a/transactions " + (page - 1) + " §7for previous page"));
+            source.sendFailure(MessageUtil.translatable("neoessentials.transaction.prev_page", page - 1));
         }
         
         return 1;

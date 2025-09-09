@@ -334,5 +334,58 @@
   "neoessentials.shop.create.invalid_pricing": "§c✗ Precio Inválido! Al menos un precio (compra o venta) debe ser mayor que 0. Ejemplo: /signshop create diamond 1 10.0 5.0",
   "neoessentials.shop.create.invalid_price_logic": "§c✗ Lógica de Precio Inválida! El precio de compra debe ser mayor que el precio de venta. Actual: Compra ${0}, Venta ${1}. Sugerencia: Aumenta el precio de compra o disminuye el precio de venta.",
   "neoessentials.shop.create.invalid_quantity": "§c✗ Cantidad Inválida! La cantidad debe estar entre 1 y 64. Especificaste: {0}",
-  "neoessentials.shop.interaction.sign_error": "§c¡Error: No se pudieron cargar los datos del cartel!"
+  "neoessentials.shop.interaction.sign_error": "§c¡Error: No se pudieron cargar los datos del cartel!",
+  
+  "_comment": "=== NUEVAS TRADUCCIONES REQUERIDAS ===",
+  "_note": "Las siguientes claves necesitan traducción del inglés",
+  
+  "neoessentials.warp.disabled": "§cWarp system is currently disabled. [TODO: Translate]",
+  "neoessentials.warp.set": "§aWarp '{0}' has been set at {1} ({2}, {3}, {4})! [TODO: Translate]",
+  "neoessentials.warp.updated": "§aWarp '{0}' has been updated! [TODO: Translate]",
+  "neoessentials.warp.delete_own_only": "§cYou can only delete your own warps. [TODO: Translate]",
+  "neoessentials.warp.deleted": "§aWarp '{0}' has been deleted! [TODO: Translate]",
+  "neoessentials.warp.private": "§cWarp '{0}' is private and you don't have permission to use it. [TODO: Translate]",
+  "neoessentials.warp.cooldown_active": "§cYou must wait {0} before using warp teleportation again! [TODO: Translate]",
+  "neoessentials.warp.insufficient_funds": "§cYou don't have enough money! Required: {0} [TODO: Translate]",
+  "neoessentials.warp.unsafe_location": "§cThis location is not safe for teleportation! [TODO: Translate]",
+  "neoessentials.warp.no_teleport_world": "§cYou cannot teleport to warps in this world! [TODO: Translate]",
+  "neoessentials.warp.teleporting": "§aTeleporting to warp '{0}'... [TODO: Translate]",
+  "neoessentials.warp.teleported": "§aYou have been teleported! [TODO: Translate]",
+  "neoessentials.warp.warmup": "§aTeleporting in {0} seconds... [TODO: Translate]",
+  "neoessentials.warp.list_none": "§cYou have no available warps. [TODO: Translate]",
+  "neoessentials.warp.list_header": "§6=== Available Warps === [TODO: Translate]",
+  "neoessentials.warp.list_entry": "§e{0} §7- Owner: {1}, Category: {2}, Location: {3} ({4}, {5}, {6}) [TODO: Translate]",
+  
+  "neoessentials.spawn.disabled": "§cSpawn system is currently disabled. [TODO: Translate]",
+  "neoessentials.spawn.no_permission": "§cYou don't have permission to use this command. [TODO: Translate]",
+  "neoessentials.spawn.not_found": "§cSpawn location not found or invalid. [TODO: Translate]",
+  "neoessentials.spawn.set": "§aSpawn location set at {0} ({1}, {2}, {3})! [TODO: Translate]",
+  "neoessentials.spawn.not_set": "§cSpawn location has not been set yet. [TODO: Translate]",
+  "neoessentials.spawn.teleported": "§aYou have been teleported to spawn! [TODO: Translate]",
+  
+  "neoessentials.teleport.cooldown_active": "§cYou must wait {0} seconds before sending another teleport request! [TODO: Translate]",
+  "neoessentials.teleport.cannot_request_self": "§cYou cannot send a teleport request to yourself! [TODO: Translate]",
+  "neoessentials.teleport.target_too_many_requests": "§c{0} has too many pending requests. Try again later. [TODO: Translate]",
+  "neoessentials.teleport.already_pending_request": "§cYou already have a pending teleport request to {0}! [TODO: Translate]",
+  
+  "neoessentials.moderation.kick.player": "§cYou have been kicked from the server.\n§7Reason: §f{0} [TODO: Translate]",
+  "neoessentials.moderation.kick.broadcast": "§c{0} has been kicked from the server by {1}.\n§7Reason: §f{2} [TODO: Translate]",
+  "neoessentials.moderation.kick.success": "§aSuccessfully kicked {0}. Reason: {1} [TODO: Translate]",
+  "neoessentials.moderation.tempban.player": "§cYou have been temporarily banned from the server.\n§7Duration: §f{0}\n§7Reason: §f{1} [TODO: Translate]",
+  "neoessentials.moderation.tempban.broadcast": "§c{0} has been temporarily banned by {1} for {2}.\n§7Reason: §f{3} [TODO: Translate]",
+  "neoessentials.moderation.tempban.success": "§aSuccessfully banned {0} for {1}. Reason: {2} [TODO: Translate]",
+  
+  "neoessentials.economy.balance": "§aYour balance: §e{0} [TODO: Translate]",
+  "neoessentials.economy.balance_other": "§a{0}'s balance: §e{1} [TODO: Translate]",
+  "neoessentials.economy.balance_top": "§6=== Economy Leaderboard === [TODO: Translate]",
+  "neoessentials.economy.balance_entry": "§7#{0}: §a{1} §7- §e{2} [TODO: Translate]",
+  
+  "neoessentials.player.not_found_online": "§cPlayer '{0}' is not online! [TODO: Translate]",
+  "neoessentials.player.not_found": "§cPlayer '{0}' not found! [TODO: Translate]",
+  
+  "neoessentials.motd.set.note": "§7Note: MOTD has been updated in the server configuration. [TODO: Translate]",
+  "neoessentials.motd.set.failed": "§cFailed to set MOTD: {0} [TODO: Translate]",
+  "neoessentials.motd.reload.success": "§aMOTD reloaded successfully! [TODO: Translate]",
+  "neoessentials.motd.reload.current": "§7Current MOTD: §f{0} [TODO: Translate]",
+  "neoessentials.motd.reload.failed": "§cFailed to reload MOTD: {0} [TODO: Translate]"
 }

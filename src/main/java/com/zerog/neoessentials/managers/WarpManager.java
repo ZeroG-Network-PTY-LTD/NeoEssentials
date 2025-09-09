@@ -59,25 +59,25 @@ public class WarpManager {
     MainConfig.WarpConfig config = configManager.getMainConfig().warpConfig;
         boolean warpModuleEnabled = configManager.getMainConfig().modules.warps;
         if (!warpModuleEnabled) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.disabled")));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.warp.disabled"));
             return false;
         }
         // Check permission
         if (!PermissionUtil.hasPermission(player, PermissionNodes.WARP_SET)) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.no_permission")));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.warp.no_permission"));
             return false;
         }
         // Validate warp name
         if (warpName.length() > config.maxWarpNameLength) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.name_too_long", String.valueOf(config.maxWarpNameLength))));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.warp.name_too_long", String.valueOf(config.maxWarpNameLength)));
             return false;
         }
         if (!config.allowSpacesInNames && warpName.contains(" ")) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.no_spaces")));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.warp.no_spaces"));
             return false;
         }
         if (config.bannedWarpNames.contains(warpName.toLowerCase())) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.name_banned")));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.warp.name_banned"));
             return false;
         }
         // Check if warp already exists
@@ -85,13 +85,13 @@ public class WarpManager {
         // Check world restrictions
         String worldName = player.serverLevel().dimension().location().toString();
         if (config.restrictedWorlds.contains(worldName)) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.restricted_world")));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.warp.restricted_world"));
             return false;
         }
         // Check economy cost
         if (config.createWarpCost.doubleValue() > 0) {
             if (!economyManager.hasBalance(player.getUUID(), config.createWarpCost.doubleValue())) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.insufficient_funds", economyManager.formatCurrency(config.createWarpCost.doubleValue()))));
+                player.sendSystemMessage(MessageUtil.translatable("neoessentials.warp.insufficient_funds", economyManager.formatCurrency(config.createWarpCost.doubleValue())));
                 return false;
             }
             economyManager.withdrawBalance(player.getUUID(), config.createWarpCost.doubleValue(), "Warp creation: " + warpName);
@@ -119,9 +119,9 @@ public class WarpManager {
         saveWarpData();
         
     if (isNewWarp) {
-        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.set", warpName)));
+        player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.set", warpName));
     } else {
-        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.updated", warpName)));
+        player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.updated", warpName));
     }
         
         LOGGER.info("Warp '{}' {} by {}", warpName, isNewWarp ? "created" : "updated", player.getName().getString());
@@ -136,22 +136,22 @@ public class WarpManager {
     // ...existing code...
         boolean warpModuleEnabled = configManager.getMainConfig().modules.warps;
         if (!warpModuleEnabled) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.disabled")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.disabled"));
             return false;
         }
         WarpData warpData = warps.get(warpName.toLowerCase());
         if (warpData == null) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.not_found", warpName)));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.not_found", warpName));
             return false;
         }
         // Check permission - owner or admin
         if (!warpData.ownerId.equals(player.getUUID()) && !PermissionUtil.hasPermission(player, "neoessentials.delwarp.others")) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.delete_own_only")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.delete_own_only"));
             return false;
         }
         warps.remove(warpName.toLowerCase());
         saveWarpData();
-        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.deleted", warpName)));
+        player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.deleted", warpName));
         
         LOGGER.info("Warp '{}' deleted by {}", warpName, player.getName().getString());
         
@@ -165,30 +165,30 @@ public class WarpManager {
     MainConfig.WarpConfig config = configManager.getMainConfig().warpConfig;
         boolean warpModuleEnabled = configManager.getMainConfig().modules.warps;
         if (!warpModuleEnabled) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.disabled")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.disabled"));
             return false;
         }
         WarpData warpData = warps.get(warpName.toLowerCase());
         if (warpData == null) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.not_found", warpName)));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.not_found", warpName));
             return false;
         }
         // Check permission for private warps
         if (!warpData.isPublic && !warpData.ownerId.equals(player.getUUID()) && 
             !PermissionUtil.hasPermission(player, "neoessentials.warp." + warpName.toLowerCase())) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.private", warpName)));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.private", warpName));
             return false;
         }
         // Check cooldown
         if (hasWarpCooldown(player.getUUID())) {
             long remainingTime = getWarpCooldownRemaining(player.getUUID());
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.cooldown_active", MessageUtil.formatTime(remainingTime))));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.cooldown_active", MessageUtil.formatTime(remainingTime)));
             return false;
         }
         // Check teleport cost
         if (config.teleportWarpCost.doubleValue() > 0) {
             if (!economyManager.hasBalance(player.getUUID(), config.teleportWarpCost.doubleValue())) {
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.insufficient_funds", economyManager.formatCurrency(config.teleportWarpCost.doubleValue()))));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.insufficient_funds", economyManager.formatCurrency(config.teleportWarpCost.doubleValue())));
                 return false;
             }
             economyManager.withdrawBalance(player.getUUID(), config.teleportWarpCost.doubleValue(), "Warp teleport: " + warpName);
@@ -196,12 +196,12 @@ public class WarpManager {
         
         // Safety check
         if (config.requireSafeLocation && !isLocationSafe(warpData.location)) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.unsafe_location")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.unsafe_location"));
             return false;
         }
         // Check world restrictions
         if (config.noTeleportWorlds.contains(warpData.location.world)) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.no_teleport_world")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.no_teleport_world"));
             return false;
         }
         
@@ -215,7 +215,7 @@ public class WarpManager {
         // Set cooldown
         setWarpCooldown(player.getUUID());
         
-    player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.teleporting", warpName)));
+        player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.teleporting", warpName));
         
         LOGGER.info("Player {} teleporting to warp '{}'", player.getName().getString(), warpName);
         
@@ -235,15 +235,15 @@ public class WarpManager {
             .toList();
         
         if (availableWarps.isEmpty()) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.list_none")));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.list_none"));
             return false;
         }
-        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.list_header")));
+        player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.list_header"));
         for (WarpData warp : availableWarps) {
-            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player,
+            player.sendSystemMessage(MessageUtil.translatable(player,
                 "neoessentials.warp.list_entry",
                 warp.name, warp.ownerName, warp.category, warp.location.world,
-                (int) warp.location.x, (int) warp.location.y, (int) warp.location.z)));
+                (int) warp.location.x, (int) warp.location.y, (int) warp.location.z));
         }
         
         return true;
@@ -314,7 +314,7 @@ public class WarpManager {
      * Start warmup teleport
      */
     private void startWarpTeleport(ServerPlayer player, WarpData warpData, int warmupSeconds) {
-    player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.warmup", String.valueOf(warmupSeconds))));
+        player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.warmup", String.valueOf(warmupSeconds)));
         
         // This would need a proper warmup implementation with task scheduling
         // For now, just teleport immediately
@@ -326,8 +326,8 @@ public class WarpManager {
      */
     private void performTeleport(ServerPlayer player, LocationUtil.Location location) {
         // Basic teleportation - would need proper implementation with world switching
-    player.teleportTo(location.x, location.y, location.z);
-    player.sendSystemMessage(net.minecraft.network.chat.Component.literal(LanguageManager.getInstance().getMessage(player, "neoessentials.warp.teleported")));
+        player.teleportTo(location.x, location.y, location.z);
+        player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.warp.teleported"));
     }
     
     /**

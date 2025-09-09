@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.MessageUtil;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -132,7 +133,7 @@ public class ErrorHandler {
                 MessageUtil.sendMessage(player, message);
             } catch (Exception e) {
                 // Fallback message if language system fails
-                player.sendSystemMessage(Component.literal("§cValidation Error: " + details));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.error.validation", details));
             }
         }
     }
@@ -151,7 +152,7 @@ public class ErrorHandler {
                 MessageUtil.sendMessage(player, message);
             } catch (Exception e) {
                 // Fallback message
-                player.sendSystemMessage(Component.literal("§cYou don't have permission to use this command."));
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.error.no_permission"));
             }
         }
     }
@@ -218,7 +219,7 @@ public class ErrorHandler {
                 case CRITICAL -> "§4Critical Error: " + operation + " failed";
                 default -> "§cAn error occurred";
             };
-            player.sendSystemMessage(Component.literal(fallbackMessage));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.error.generic", fallbackMessage));
         }
     }
     

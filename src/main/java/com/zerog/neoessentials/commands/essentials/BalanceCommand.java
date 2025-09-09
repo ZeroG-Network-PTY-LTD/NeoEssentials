@@ -1,5 +1,6 @@
 package com.zerog.neoessentials.commands.essentials;
 import com.zerog.neoessentials.util.PermissionUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.permissions.PermissionNodes;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -59,14 +60,14 @@ public class BalanceCommand {
         
         EconomyManager economyManager = EconomyManager.getInstance();
         if (!economyManager.isEnabled()) {
-            player.sendSystemMessage(Component.literal("§cEconomy system is disabled."));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.economy.disabled"));
             return 0;
         }
         
         BigDecimal balance = economyManager.getBalance(player.getUUID());
         String formattedBalance = economyManager.formatCurrency(balance);
         
-        player.sendSystemMessage(Component.literal("§6[Economy] §eYour balance: §a" + formattedBalance));
+        player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.economy.balance", formattedBalance));
         
         return 1;
     }
@@ -77,20 +78,20 @@ public class BalanceCommand {
         ServerPlayer target = context.getSource().getServer().getPlayerList().getPlayerByName(playerName);
         
         if (target == null) {
-            executor.sendSystemMessage(Component.literal("§cPlayer '" + playerName + "' not found or not online"));
+            executor.sendSystemMessage(MessageUtil.translatable(executor, "neoessentials.player.not_found_online", playerName));
             return 0;
         }
         
         EconomyManager economyManager = EconomyManager.getInstance();
         if (!economyManager.isEnabled()) {
-            executor.sendSystemMessage(Component.literal("§cEconomy system is disabled."));
+            executor.sendSystemMessage(MessageUtil.translatable("neoessentials.economy.disabled"));
             return 0;
         }
         
         BigDecimal balance = economyManager.getBalance(target.getUUID());
         String formattedBalance = economyManager.formatCurrency(balance);
         
-        executor.sendSystemMessage(Component.literal("§6[Economy] §e" + target.getName().getString() + "'s balance: §a" + formattedBalance));
+        executor.sendSystemMessage(MessageUtil.translatable(executor, "neoessentials.economy.balance_other", target.getName().getString(), formattedBalance));
         
         return 1;
     }
@@ -100,14 +101,14 @@ public class BalanceCommand {
         
         EconomyManager economyManager = EconomyManager.getInstance();
         if (!economyManager.isEnabled()) {
-            player.sendSystemMessage(Component.literal("§cEconomy system is disabled."));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.economy.disabled"));
             return 0;
         }
         
         // Display top 10 balances
         var topBalances = economyManager.getTopBalances(10);
         
-        player.sendSystemMessage(Component.literal("§6[Economy] §eTop Balances:"));
+        player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.economy.balance_top"));
         
         for (int i = 0; i < topBalances.size(); i++) {
             var entry = topBalances.get(i);
@@ -121,7 +122,7 @@ public class BalanceCommand {
             }
             String formattedBalance = economyManager.formatCurrency(entry.getValue());
             
-            player.sendSystemMessage(Component.literal("§7" + (i + 1) + ". §e" + playerName + ": §a" + formattedBalance));
+            player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.economy.balance_entry", (i + 1), playerName, formattedBalance));
         }
         
         return 1;
