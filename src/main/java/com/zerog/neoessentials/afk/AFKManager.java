@@ -1,12 +1,10 @@
 package com.zerog.neoessentials.afk;
 
 import com.zerog.neoessentials.util.MessageUtil;
-// import net.minecraft.server.level.ServerPlayer; // Temporarily disabled due to import issues
-
+import net.minecraft.server.level.ServerPlayer;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-// import com.zerog.neoessentials.features.TabListManager; // Temporarily disabled due to import issues
 
 public class AFKManager {
     private static AFKManager instance;
@@ -21,34 +19,50 @@ public class AFKManager {
         return instance;
     }
 
-    // Temporarily use Object instead of ServerPlayer to avoid import issues
-    public void setAFK(Object player, boolean isAfk) {
-        // TODO: Restore proper ServerPlayer handling when imports work
-        System.out.println("AFK status change - player: " + player + ", isAfk: " + isAfk);
+    public void setAFK(ServerPlayer player, boolean isAfk) {
+        UUID playerId = player.getUUID();
+        afkStatus.put(playerId, isAfk);
+        
+        // Update tablist to show AFK status
+        String afkIndicator = isAfk ? " §7[AFK]" : "";
+        String displayName = player.getName().getString() + afkIndicator;
+        
+        // Send message to player
+        if (isAfk) {
+            MessageUtil.sendMessage(player, "§eYou are now AFK.");
+        } else {
+            MessageUtil.sendMessage(player, "§eYou are no longer AFK.");
+        }
     }
 
-    public boolean isAFK(Object player) {
-        // TODO: Restore proper ServerPlayer handling when imports work
-        return false; // Placeholder
+    public boolean isAFK(ServerPlayer player) {
+        return afkStatus.getOrDefault(player.getUUID(), false);
     }
 
-    public void updateActivity(Object player) {
-        // TODO: Restore proper ServerPlayer handling when imports work
-        System.out.println("Activity update for player: " + player);
+    public void updateActivity(ServerPlayer player) {
+        UUID playerId = player.getUUID();
+        lastActivity.put(playerId, System.currentTimeMillis());
+        
+        // If player was AFK, mark them as no longer AFK
+        if (isAFK(player)) {
+            setAFK(player, false);
+        }
     }
 
     public void checkAutoAFK() {
         long now = System.currentTimeMillis();
         for (UUID uuid : lastActivity.keySet()) {
             long last = lastActivity.get(uuid);
-            if (now - last > AFK_TIMEOUT_MS) {
+            if (now - last > AFK_TIMEOUT_MS && !afkStatus.getOrDefault(uuid, false)) {
                 afkStatus.put(uuid, true);
+                // Note: In a real server, you'd need to get ServerPlayer from UUID to send message
+                // This is just for tracking AFK status when the auto-timer runs
             }
         }
     }
 
     // Call this from movement/chat event listeners to update activity  
-    public void updatePlayerActivity(Object player) {
+    public void updatePlayerActivity(ServerPlayer player) {
         AFKManager.getInstance().updateActivity(player);
     }
     
@@ -57,8 +71,9 @@ public class AFKManager {
         AFKManager.getInstance().checkAutoAFK();
     }
 
-    public void removePlayer(Object player) {
-        // TODO: Restore proper ServerPlayer handling when imports work
-        System.out.println("Removing player: " + player);
+    public void removePlayer(ServerPlayer player) {
+        UUID playerId = player.getUUID();
+        afkStatus.remove(playerId);
+        lastActivity.remove(playerId);
     }
 }

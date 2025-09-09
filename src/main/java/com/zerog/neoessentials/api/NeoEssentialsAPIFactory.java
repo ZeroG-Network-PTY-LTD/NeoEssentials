@@ -2,8 +2,8 @@ package com.zerog.neoessentials.api;
 
 import com.zerog.neoessentials.api.interfaces.*;
 import com.zerog.neoessentials.managers.FeatureManager;
-// TODO: Restore when import issues are fixed: import org.slf4j.Logger;
-// TODO: Restore when import issues are fixed: import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +18,7 @@ import java.util.Optional;
  */
 public class NeoEssentialsAPIFactory {
     
-    // TODO: Restore when import issues are fixed: private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentialsAPIFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentialsAPIFactory.class);
     private static final Map<Class<?>, Object> providers = new ConcurrentHashMap<>();
     private static boolean initialized = false;
     

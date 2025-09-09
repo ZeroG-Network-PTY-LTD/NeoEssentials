@@ -139,6 +139,16 @@ public class KitItem {
     // Utility methods
     
     /**
+     * Add an enchantment to this item
+     */
+    public void addEnchantment(String enchantmentId, int level) {
+        if (enchantments == null) {
+            enchantments = new java.util.HashMap<>();
+        }
+        enchantments.put(enchantmentId, level);
+    }
+    
+    /**
      * Convert this KitItem to a Minecraft ItemStack
      */
     public ItemStack toItemStack() {
@@ -216,15 +226,9 @@ public class KitItem {
                             enchResource = ResourceLocation.fromNamespaceAndPath("minecraft", enchId);
                         }
                         
-                        // Try to get enchantment - registry access may vary by MC version
-                        try {
-                            // Skip enchantment application for now due to registry compatibility issues
-                            // TODO: Implement proper enchantment handling for this MC version
-                            System.out.println("Skipping enchantment application: " + enchResource.toString());
-                        } catch (Exception e2) {
-                            // Registry access failed for this enchantment
-                            System.err.println("Failed to apply enchantment: " + e2.getMessage());
-                        }
+                        // Skip enchantments for now - the registry access has changed in 1.21.1
+                        // TODO: Update when stable enchantment API is available for NeoForge 1.21.1
+                        System.out.println("Skipping enchantment " + enchResource.toString() + " (API changed in MC 1.21.1)");
                     } catch (Exception e) {
                         System.err.println("Failed to apply enchantment " + enchEntry.getKey() + ": " + e.getMessage());
                     }
@@ -280,11 +284,11 @@ public class KitItem {
             System.err.println("Failed to extract NBT from ItemStack: " + e.getMessage());
         }
         
-        // Enchantments - use try-catch for version compatibility
+        // Enchantments - extract from ItemStack (disabled for MC 1.21.1 API changes)
         try {
-            // Skip enchantment extraction for now due to compatibility issues
-            // TODO: Implement proper enchantment extraction for this MC version
-            System.out.println("Skipping enchantment extraction due to compatibility issues");
+            // Skip enchantment extraction for now - the API has changed in MC 1.21.1
+            // TODO: Update when stable enchantment API is available for NeoForge 1.21.1
+            System.out.println("Skipping enchantment extraction (API changed in MC 1.21.1)");
         } catch (Exception e) {
             // Enchantment extraction failed completely
             System.err.println("Failed to extract enchantments from ItemStack: " + e.getMessage());

@@ -1,0 +1,36 @@
+{
+  "modules": {
+    "homes": true,
+    "economy": false,
+    "warps": true,
+    "kits": true,
+    "chat": true,
+    "spawn": true,
+    "moderation": false
+  },
+  "homeSettings": {
+    "maxHomes": 5,
+    "useSetHomeCost": false,
+    "setHomeCost": 100.0,
+    "useTeleportCost": false,
+    "teleportCost": 50.0,
+    "teleportCooldown": 5,
+    "restrictedWorlds": []
+  },
+  "economySettings": {
+    "enabled": false,
+    "startingBalance": 1000.0,
+    "currency": "$",
+    "balanceTop": 10
+  },
+  "warpSettings": {
+    "useTeleportCost": false,
+    "teleportCost": 25.0,
+    "teleportCooldown": 3
+  },
+  "spawnSettings": {
+    "teleportCooldown": 10,
+    "useTeleportCost": false,
+    "teleportCost": 0.0
+  }
+}

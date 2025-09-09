@@ -50,6 +50,15 @@ public class ConfigManager {
             commandsConfig = loadConfig("commands.json", CommandsConfig.class);  
             customPlaceholderConfig = loadConfig("customPlaceholders.json", CustomPlaceholderConfig.class);
             tablistConfig = loadConfig("tablist.json", TablistConfig.class);
+            shopsConfig = loadConfig("shops.json", ShopsConfig.class);
+            
+            // Configuration loaded successfully
+            LOGGER.info("Configuration files loaded successfully");
+            LOGGER.info("MainConfig modules loaded: homes={}, economy={}, warps={}, kits={}, chat={}, spawn={}, moderation={}", 
+                mainConfig.modules.homes, mainConfig.modules.economy, mainConfig.modules.warps, 
+                mainConfig.modules.kits, mainConfig.modules.chat, mainConfig.modules.spawn, mainConfig.modules.moderation);
+            LOGGER.info("CommandsConfig loaded with {} commands configured", commandsConfig.commands.size());
+            tablistConfig = loadConfig("tablist.json", TablistConfig.class);
             // Ensure defaults exist after loading (fixes configs loaded from JSON that bypass constructor)
             if (tablistConfig != null) {
                 tablistConfig.ensureDefaults();

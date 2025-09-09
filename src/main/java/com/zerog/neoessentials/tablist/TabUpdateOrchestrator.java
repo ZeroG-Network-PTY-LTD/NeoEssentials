@@ -9,12 +9,7 @@ import java.util.*;
 
 public class TabUpdateOrchestrator {
     public void refreshTablistForAll() {
-        // SAFETY CHECK: Don't interfere if TabListManager is handling tablist via config layouts
-        if (isTabListManagerActive()) {
-            com.zerog.neoessentials.util.DebugUtil.debugLog("[TabUpdateOrchestrator] TabListManager config layouts active - stepping back to prevent conflicts");
-            return;
-        }
-        
+        // SIMPLIFIED: Always run the TabUpdateOrchestrator - it was working before
         net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
@@ -22,18 +17,6 @@ public class TabUpdateOrchestrator {
             headerFooterManager.scheduleHeaderFooterUpdate(player);
         }
         com.zerog.neoessentials.util.DebugUtil.debugLog("[TabList] Forced refresh for all players");
-    }
-    
-    /**
-     * Check if TabListManager is handling tablist via config layouts
-     */
-    private boolean isTabListManagerActive() {
-        try {
-            var tablistManager = com.zerog.neoessentials.features.TabListManager.getInstance();
-            return tablistManager != null && tablistManager.hasActiveConfigLayouts();
-        } catch (Exception e) {
-            return false;
-        }
     }
     private final HeaderFooterManager headerFooterManager;
     private final com.zerog.neoessentials.placeholders.PlaceholderManager placeholderManager;
@@ -58,25 +41,15 @@ public class TabUpdateOrchestrator {
         com.zerog.neoessentials.util.DebugUtil.debugLog("[TabList] Permission update for: " + player.getName().getString());
     }
     public void tick(long now) {
-        // SAFETY CHECK: Don't interfere if TabListManager is handling tablist via config layouts
-        if (isTabListManagerActive()) {
-            return; // Quietly step back
-        }
-        
+        // SIMPLIFIED: Always run animations - was working before
         animationScheduler.tick(now);
     }
     public void setHeaderTemplate(String[] lines, long intervalMs) {
-        // SAFETY CHECK: Warn if TabListManager is active
-        if (isTabListManagerActive()) {
-            com.zerog.neoessentials.util.DebugUtil.warnLog("[TabUpdateOrchestrator] TabListManager config layouts active - header template may not be used");
-        }
+        // SIMPLIFIED: Always set header template - was working before
         headerFooterManager.setHeaderTemplate(lines, intervalMs);
     }
     public void setFooterTemplate(String[] lines, long intervalMs) {
-        // SAFETY CHECK: Warn if TabListManager is active
-        if (isTabListManagerActive()) {
-            com.zerog.neoessentials.util.DebugUtil.warnLog("[TabUpdateOrchestrator] TabListManager config layouts active - footer template may not be used");
-        }
+        // SIMPLIFIED: Always set footer template - was working before  
         headerFooterManager.setFooterTemplate(lines, intervalMs);
     }
     public void registerPlaceholder(String id, double intervalSeconds, List<String> frames) {

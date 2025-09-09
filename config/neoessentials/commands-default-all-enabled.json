@@ -1,0 +1,388 @@
+{
+  "settings": {
+    "enableCosts": true,
+    "enableCooldowns": true,
+    "enableWarmups": true,
+    "enableDiscordLogging": true,
+    "defaultCooldown": 3,
+    "defaultWarmup": 0
+  },
+  "commands": {
+    "feed": {
+      "enabled": true,
+      "cost": 25.0,
+      "cooldown": 30,
+      "warmup": 0,
+      "permission": "neoessentials.feed",
+      "logToDiscord": true
+    },
+    "fly": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 5,
+      "warmup": 0,
+      "permission": "neoessentials.fly",
+      "logToDiscord": true
+    },
+    "spawn": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 5,
+      "warmup": 3,
+      "permission": "neoessentials.spawn",
+      "logToDiscord": false
+    },
+    "heal": {
+      "enabled": true,
+      "cost": 50.0,
+      "cooldown": 30,
+      "warmup": 0,
+      "permission": "neoessentials.heal",
+      "logToDiscord": true
+    },
+    "home": {
+      "enabled": true,
+      "cost": 5.0,
+      "cooldown": 10,
+      "warmup": 2,
+      "permission": "neoessentials.home",
+      "logToDiscord": false
+    },
+    "sethome": {
+      "enabled": true,
+      "cost": 10.0,
+      "cooldown": 5,
+      "warmup": 0,
+      "permission": "neoessentials.home.set",
+      "logToDiscord": false
+    },
+    "delhome": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.home.delete",
+      "logToDiscord": false
+    },
+    "homes": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.home.list",
+      "logToDiscord": false
+    },
+    "balance": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.economy.balance",
+      "logToDiscord": false
+    },
+    "pay": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 1,
+      "warmup": 0,
+      "permission": "neoessentials.economy.pay",
+      "logToDiscord": true
+    },
+    "baltop": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.economy.top",
+      "logToDiscord": false
+    },
+    "warp": {
+      "enabled": true,
+      "cost": 25.0,
+      "cooldown": 3,
+      "warmup": 0,
+      "permission": "neoessentials.warp",
+      "logToDiscord": false
+    },
+    "kit": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.kit",
+      "logToDiscord": false
+    },
+    "ban": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.ban",
+      "logToDiscord": true
+    },
+    "kick": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.kick",
+      "logToDiscord": true
+    },
+    "mute": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.mute",
+      "logToDiscord": true
+    },
+    "message": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.message",
+      "logToDiscord": false
+    },
+    "reply": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.reply",
+      "logToDiscord": false
+    },
+    "nick": {
+      "enabled": true,
+      "cost": 10.0,
+      "cooldown": 300,
+      "warmup": 0,
+      "permission": "neoessentials.nick",
+      "logToDiscord": true
+    },
+    "god": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.god",
+      "logToDiscord": true
+    },
+    "vanish": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.vanish",
+      "logToDiscord": true
+    },
+    "speed": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 10,
+      "warmup": 0,
+      "permission": "neoessentials.speed",
+      "logToDiscord": false
+    },
+    "gamemode": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.gamemode",
+      "logToDiscord": true
+    },
+    "repair": {
+      "enabled": true,
+      "cost": 500.0,
+      "cooldown": 60,
+      "warmup": 0,
+      "permission": "neoessentials.repair",
+      "logToDiscord": true
+    },
+    "time": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.time",
+      "logToDiscord": true
+    },
+    "weather": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.weather",
+      "logToDiscord": true
+    },
+    "give": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.give",
+      "logToDiscord": true
+    },
+    "workbench": {
+      "enabled": true,
+      "cost": 5.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.workbench",
+      "logToDiscord": false
+    },
+    "anvil": {
+      "enabled": true,
+      "cost": 10.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.anvil",
+      "logToDiscord": false
+    },
+    "smithing": {
+      "enabled": true,
+      "cost": 15.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.smithing",
+      "logToDiscord": false
+    },
+    "stonecutter": {
+      "enabled": true,
+      "cost": 5.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.stonecutter",
+      "logToDiscord": false
+    },
+    "invsee": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 5,
+      "warmup": 0,
+      "permission": "neoessentials.invsee",
+      "logToDiscord": true
+    },
+    "enderchest": {
+      "enabled": true,
+      "cost": 25.0,
+      "cooldown": 10,
+      "warmup": 0,
+      "permission": "neoessentials.enderchest",
+      "logToDiscord": false
+    },
+    "tempban": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.tempban",
+      "logToDiscord": true
+    },
+    "socialspy": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.socialspy",
+      "logToDiscord": true
+    },
+    "spawner": {
+      "enabled": true,
+      "cost": 100.0,
+      "cooldown": 30,
+      "warmup": 0,
+      "permission": "neoessentials.spawner",
+      "logToDiscord": true
+    },
+    "item": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.item",
+      "logToDiscord": false
+    },
+    "kitadmin": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.kit.admin",
+      "logToDiscord": true
+    },
+    "tablistdebug": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.admin.debug",
+      "logToDiscord": false
+    },
+    "cleanupteams": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.admin.cleanup",
+      "logToDiscord": true
+    },
+    "cleartags": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.admin.tags",
+      "logToDiscord": true
+    },
+    "role": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.role",
+      "logToDiscord": true
+    },
+    "ftb": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.ftb",
+      "logToDiscord": false
+    },
+    "cleanup": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.admin.cleanup",
+      "logToDiscord": true
+    },
+    "error": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.admin.error",
+      "logToDiscord": true
+    },
+    "performance": {
+      "enabled": true,
+      "cost": 0.0,
+      "cooldown": 0,
+      "warmup": 0,
+      "permission": "neoessentials.admin.performance",
+      "logToDiscord": true
+    },
+    "createshop": {
+      "enabled": true,
+      "cost": 50.0,
+      "cooldown": 60,
+      "warmup": 0,
+      "permission": "neoessentials.economy.createshop",
+      "logToDiscord": true
+    }
+  }
+}
