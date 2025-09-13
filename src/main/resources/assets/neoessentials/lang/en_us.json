@@ -435,5 +435,19 @@
   "neoessentials.tpa.accept": "§a[Accept]",
   "neoessentials.tpa.deny": "§c[Deny]",
   "neoessentials.tpa.expires": "§7This request will expire in {0} seconds.",
-  "neoessentials.tpa.sent": "§aTeleport request sent to {0}!"
+  "neoessentials.tpa.sent": "§aTeleport request sent to {0}!",
+  "neoessentials.info.tps_unavailable": "TPS/MSPT information is not available on this server.",
+  "neoessentials.feed.self_success": "§a🍖 Your hunger has been satisfied! You feel full and energized.",
+  "neoessentials.feed.other_success": "§a🍖 You have fed {0}! They are now fully satisfied.",
+  "neoessentials.feed.success": "§a🍖 You have been fed by {0}!",
+  "neoessentials.god.enabled_self": "§a⚡ God mode enabled! You are now invincible and untouchable.",
+  "neoessentials.god.disabled_self": "§c🛡️ God mode disabled! You are now mortal again.",
+  "neoessentials.god.enabled_other": "§a⚡ God mode enabled for {0}!",
+  "neoessentials.god.disabled_other": "§c🛡️ God mode disabled for {0}!",
+  "neoessentials.god.enabled_by_other": "§a⚡ God mode enabled by {0}!",
+  "neoessentials.god.disabled_by_other": "§c🛡️ God mode disabled by {0}!",
+  "neoessentials.speed.self_success": "§aYour {0} speed has been set to {1}!",
+  "neoessentials.speed.other_success": "§a{0}'s {1} speed has been set to {2}!",
+  "neoessentials.speed.success": "§aYour {0} speed has been set to {1} by {2}!",
+  "neoessentials.speed.invalid_type": "§cInvalid speed type! Use 'walking' or 'flying'."
 }

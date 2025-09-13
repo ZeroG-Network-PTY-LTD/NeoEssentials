@@ -64,6 +64,15 @@ public class HealCommand implements IEssentialCommand {
                 .executes(HealCommand::healOther)
             )
         );
+        // Alias: /h
+        dispatcher.register(Commands.literal("h")
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.HEAL_SELF))
+            .executes(HealCommand::healSelf)
+            .then(Commands.argument("player", StringArgumentType.word())
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.HEAL_OTHERS))
+                .executes(HealCommand::healOther)
+            )
+        );
     }
     
     /**

@@ -37,6 +37,18 @@ public class FlyCommand {
                 .executes(ctx -> toggleOther(ctx.getSource(), EntityArgument.getPlayer(ctx, "player")))
             )
         );
+        // Alias: /fl
+        dispatcher.register(Commands.literal("fl")
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.FLY_SELF))
+            .executes(ctx -> toggleSelf(ctx.getSource()))
+            .then(Commands.argument("mode", com.mojang.brigadier.arguments.StringArgumentType.word())
+                .suggests((c,b) -> { b.suggest("on"); b.suggest("off"); b.suggest("toggle"); return b.buildFuture(); })
+                .executes(ctx -> setSelf(ctx.getSource(), com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "mode"))))
+            .then(Commands.argument("player", EntityArgument.player())
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.FLY_OTHERS))
+                .executes(ctx -> toggleOther(ctx.getSource(), EntityArgument.getPlayer(ctx, "player")))
+            )
+        );
     }
     
     /**

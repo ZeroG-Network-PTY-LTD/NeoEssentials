@@ -55,7 +55,7 @@ public class HelpCommand {
 
         int totalPages = (int) Math.ceil((double) entries.size() / ENTRIES_PER_PAGE);
         if (page < 1 || page > totalPages) {
-            sendTranslatedMessage(source, "neoessentials.help.invalid_page", totalPages);
+            sendTranslatedMessage(source, "neoessentials.help.invalid_page", page); // Fix: show requested page
             return 0;
         }
 
@@ -86,26 +86,26 @@ public class HelpCommand {
         // Navigation (only for players)
         if (totalPages > 1 && source.getEntity() instanceof ServerPlayer) {
             MutableComponent navigation = Component.literal("");
-            
+            boolean hasPrev = false;
             if (page > 1) {
                 MutableComponent prevButton = MessageUtil.translatable("neoessentials.help.prev_button")
                     .withStyle(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/help " + category + " " + (page - 1)))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, MessageUtil.translatable("neoessentials.help.prev_hover"))));
                 navigation = navigation.append(prevButton);
+                hasPrev = true;
             }
-            
             MutableComponent pageInfo = MessageUtil.translatable("neoessentials.help.page_info", page, totalPages);
+            if (hasPrev) navigation = navigation.append(Component.literal(" | "));
             navigation = navigation.append(pageInfo);
-            
             if (page < totalPages) {
+                navigation = navigation.append(Component.literal(" | "));
                 MutableComponent nextButton = MessageUtil.translatable("neoessentials.help.next_button")
                     .withStyle(style -> style
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/help " + category + " " + (page + 1)))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, MessageUtil.translatable("neoessentials.help.next_hover"))));
                 navigation = navigation.append(nextButton);
             }
-            
             final MutableComponent finalNav = navigation;
             source.sendSuccess(() -> finalNav, false);
         } else if (totalPages > 1) {

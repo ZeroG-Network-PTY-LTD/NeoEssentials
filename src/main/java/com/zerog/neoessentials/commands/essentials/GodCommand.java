@@ -37,6 +37,15 @@ public class GodCommand {
                 .executes(GodCommand::toggleGodOther)
             )
         );
+        // Alias: /g
+        dispatcher.register(Commands.literal("g")
+            .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GOD_SELF))
+            .executes(GodCommand::toggleGodSelf)
+            .then(Commands.argument("player", EntityArgument.player())
+                .requires(source -> PermissionUtil.hasPermission(source, PermissionNodes.GOD_OTHERS))
+                .executes(GodCommand::toggleGodOther)
+            )
+        );
     }
     
     /**
@@ -50,13 +59,11 @@ public class GodCommand {
             (source) -> {
                 ServerPlayer player = source.getPlayerOrException();
                 boolean isGodMode = toggleGodMode(player);
-                
                 if (isGodMode) {
-                    source.sendSuccess(() -> Component.literal("§a⚡ God mode enabled! You are now invincible and untouchable."), false);
+                    source.sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(player, "neoessentials.god.enabled_self"), false);
                 } else {
-                    source.sendSuccess(() -> Component.literal("§c🛡️ God mode disabled! You are now mortal again."), false);
+                    source.sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(player, "neoessentials.god.disabled_self"), false);
                 }
-                
                 return 1;
             }
         );
@@ -73,18 +80,14 @@ public class GodCommand {
             (source) -> {
                 ServerPlayer target = EntityArgument.getPlayer(context, "player");
                 ServerPlayer executor = source.getPlayerOrException();
-                
                 boolean isGodMode = toggleGodMode(target);
-                
-                // Send confirmation to both players
                 if (isGodMode) {
-                    source.sendSuccess(() -> Component.literal("§a⚡ God mode enabled for " + target.getName().getString() + "!"), true);
-                    target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.god.enabled", executor.getName().getString())));
+                    source.sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(executor, "neoessentials.god.enabled_other", target.getName().getString()), true);
+                    target.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.translatable(target, "neoessentials.god.enabled_by_other", executor.getName().getString()));
                 } else {
-                    source.sendSuccess(() -> Component.literal("§c🛡️ God mode disabled for " + target.getName().getString() + "!"), true);
-                    target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.god.disabled", executor.getName().getString())));
+                    source.sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(executor, "neoessentials.god.disabled_other", target.getName().getString()), true);
+                    target.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.translatable(target, "neoessentials.god.disabled_by_other", executor.getName().getString()));
                 }
-                
                 return 1;
             }
         );

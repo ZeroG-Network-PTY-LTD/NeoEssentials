@@ -2,6 +2,7 @@ package com.zerog.neoessentials.commands.essentials;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
+import com.zerog.neoessentials.api.NeoEssentialsAPI;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -45,7 +46,8 @@ public class InfoCommand {
 
         // Server basics
         sendTranslatedMessage(source, "neoessentials.info.server_version", server.getServerVersion());
-        sendTranslatedMessage(source, "neoessentials.info.minecraft_version", server.getServerModName());
+        // Clarify that this is the modded server name, not the vanilla Minecraft version
+        sendTranslatedMessage(source, "neoessentials.info.minecraft_version", server.getServerModName() + " (modded server name)");
         sendTranslatedMessage(source, "neoessentials.info.motd", server.getMotd());
 
         // Player information
@@ -58,8 +60,8 @@ public class InfoCommand {
         double memoryPercent = (double) usedMemory / maxMemory * 100;
         sendTranslatedMessage(source, "neoessentials.info.memory_percent", df.format(memoryPercent));
 
-        // TPS information (simplified)
-        sendTranslatedMessage(source, "neoessentials.info.server_running");
+        // TPS information (not available)
+        sendTranslatedMessage(source, "neoessentials.info.tps_unavailable");
 
         // World information
         var overworld = server.getLevel(net.minecraft.world.level.Level.OVERWORLD);
@@ -78,8 +80,8 @@ public class InfoCommand {
         // Server tick count
         sendTranslatedMessage(source, "neoessentials.info.server_ticks", server.getTickCount());
 
-        // NeoEssentials version
-        sendTranslatedMessage(source, "neoessentials.info.mod_version", "1.0.2");
+        // NeoEssentials version (use API)
+        sendTranslatedMessage(source, "neoessentials.info.mod_version", NeoEssentialsAPI.getModVersion());
 
         sendTranslatedMessage(source, "neoessentials.info.footer");
         
