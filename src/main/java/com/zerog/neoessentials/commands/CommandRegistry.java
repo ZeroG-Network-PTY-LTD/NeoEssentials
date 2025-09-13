@@ -143,32 +143,49 @@ public class CommandRegistry {
                 LOGGER.info("Give command disabled in configuration");
             }
             
-            if (CommandConfigUtil.isCommandEnabled("workbench")) {
-                WorkbenchCommand.register(dispatcher);
-                LOGGER.info("Registered workbench command");
-            } else {
-                LOGGER.info("Workbench command disabled in configuration");
-            }
-            
+            // Remove duplicate registrations for anvil, ban, smithing, stonecutter, workbench, kick, mute
+            // Only register each command once, in the correct section
             if (CommandConfigUtil.isCommandEnabled("anvil")) {
                 AnvilCommand.register(dispatcher);
                 LOGGER.info("Registered anvil command");
             } else {
                 LOGGER.info("Anvil command disabled in configuration");
             }
-            
+            if (CommandConfigUtil.isFeatureEnabled("ban", "moderation")) {
+                BanCommand.register(dispatcher);
+                LOGGER.info("Registered ban command");
+            } else {
+                LOGGER.info("Ban command disabled in configuration");
+            }
             if (CommandConfigUtil.isCommandEnabled("smithing")) {
                 SmithingCommand.register(dispatcher);
                 LOGGER.info("Registered smithing command");
             } else {
                 LOGGER.info("Smithing command disabled in configuration");
             }
-            
             if (CommandConfigUtil.isCommandEnabled("stonecutter")) {
                 StonecutterCommand.register(dispatcher);
                 LOGGER.info("Registered stonecutter command");
             } else {
                 LOGGER.info("Stonecutter command disabled in configuration");
+            }
+            if (CommandConfigUtil.isCommandEnabled("workbench")) {
+                WorkbenchCommand.register(dispatcher);
+                LOGGER.info("Registered workbench command");
+            } else {
+                LOGGER.info("Workbench command disabled in configuration");
+            }
+            if (CommandConfigUtil.isFeatureEnabled("kick", "moderation")) {
+                KickCommand.register(dispatcher);
+                LOGGER.info("Registered kick command");
+            } else {
+                LOGGER.info("Kick command disabled in configuration");
+            }
+            if (CommandConfigUtil.isFeatureEnabled("mute", "moderation")) {
+                MuteCommand.register(dispatcher);
+                LOGGER.info("Registered mute command");
+            } else {
+                LOGGER.info("Mute command disabled in configuration");
             }
             
             // Moderation commands - check both command and module status

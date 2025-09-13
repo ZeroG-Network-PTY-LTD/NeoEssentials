@@ -57,6 +57,15 @@ public class FeedCommand implements IEssentialCommand {
                 .executes(FeedCommand::feedOther)
             )
         );
+        // Alias: /f
+        dispatcher.register(Commands.literal("f")
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+            .executes(FeedCommand::feedSelf)
+            .then(Commands.argument("player", StringArgumentType.word())
+                .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+                .executes(FeedCommand::feedOther)
+            )
+        );
     }
     
     /**
@@ -70,8 +79,7 @@ public class FeedCommand implements IEssentialCommand {
             (source) -> {
                 ServerPlayer player = source.getPlayerOrException();
                 feedPlayer(player);
-                
-                source.sendSuccess(() -> Component.literal("§a🍖 Your hunger has been satisfied! You feel full and energized."), false);
+                source.sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(player, "neoessentials.feed.self_success"), false);
                 return 1;
             }
         );
@@ -88,20 +96,14 @@ public class FeedCommand implements IEssentialCommand {
             (source) -> {
                 String playerName = StringArgumentType.getString(context, "player");
                 ServerPlayer target = source.getServer().getPlayerList().getPlayerByName(playerName);
-                
                 if (target == null) {
-                    source.sendFailure(Component.literal("Player '" + playerName + "' not found or not online"));
+                    source.sendFailure(com.zerog.neoessentials.util.MessageUtil.translatable("neoessentials.player.not_found_online", playerName));
                     return 0;
                 }
-                
                 ServerPlayer executor = source.getPlayerOrException();
-                
                 feedPlayer(target);
-                
-                // Send confirmation to both players
-                source.sendSuccess(() -> Component.literal("§a🍖 You have fed " + target.getName().getString() + "! They are now fully satisfied."), true);
-                target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.command.feed.success", executor.getName().getString())));
-                
+                source.sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(executor, "neoessentials.feed.other_success", target.getName().getString()), true);
+                target.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.translatable(target, "neoessentials.feed.success", executor.getName().getString()));
                 return 1;
             }
         );

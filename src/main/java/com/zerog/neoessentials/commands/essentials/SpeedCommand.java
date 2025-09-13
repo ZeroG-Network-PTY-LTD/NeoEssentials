@@ -44,6 +44,19 @@ public class SpeedCommand {
                 )
             )
         );
+        // Alias: /sp
+        dispatcher.register(Commands.literal("sp")
+            .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+            .then(Commands.argument("type", StringArgumentType.word())
+                .then(Commands.argument("speed", FloatArgumentType.floatArg(MIN_SPEED, MAX_SPEED))
+                    .executes(SpeedCommand::setSpeedSelf)
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .requires(source -> PermissionUtil.hasPermissionOrOp(source, PermissionNodes.MODERATION_BASIC))
+                        .executes(SpeedCommand::setSpeedOther)
+                    )
+                )
+            )
+        );
     }
     
     /**
@@ -53,14 +66,12 @@ public class SpeedCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String type = StringArgumentType.getString(context, "type");
         float speed = FloatArgumentType.getFloat(context, "speed");
-        
         boolean success = setPlayerSpeed(player, type, speed);
         if (success) {
-            context.getSource().sendSuccess(() -> Component.literal("§aYour " + type + " speed has been set to " + String.format("%.2f", speed) + "!"), false);
+            context.getSource().sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(player, "neoessentials.speed.self_success", type, String.format("%.2f", speed)), false);
         } else {
-            context.getSource().sendFailure(Component.literal("§cInvalid speed type! Use 'walking' or 'flying'."));
+            context.getSource().sendFailure(com.zerog.neoessentials.util.MessageUtil.translatable("neoessentials.speed.invalid_type"));
         }
-        
         return success ? 1 : 0;
     }
     
@@ -72,16 +83,13 @@ public class SpeedCommand {
         ServerPlayer executor = context.getSource().getPlayerOrException();
         String type = StringArgumentType.getString(context, "type");
         float speed = FloatArgumentType.getFloat(context, "speed");
-        
         boolean success = setPlayerSpeed(target, type, speed);
         if (success) {
-            // Send confirmation to both players
-            context.getSource().sendSuccess(() -> Component.literal("§a" + target.getName().getString() + "'s " + type + " speed has been set to " + String.format("%.2f", speed) + "!"), true);
-            target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.speed.set", type, String.format("%.2f", speed), executor.getName().getString())));
+            context.getSource().sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(executor, "neoessentials.speed.other_success", target.getName().getString(), type, String.format("%.2f", speed)), true);
+            target.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.translatable(target, "neoessentials.speed.success", type, String.format("%.2f", speed), executor.getName().getString()));
         } else {
-            context.getSource().sendFailure(Component.literal("§cInvalid speed type! Use 'walking' or 'flying'."));
+            context.getSource().sendFailure(com.zerog.neoessentials.util.MessageUtil.translatable("neoessentials.speed.invalid_type"));
         }
-        
         return success ? 1 : 0;
     }
     
