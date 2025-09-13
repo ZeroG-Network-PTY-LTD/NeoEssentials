@@ -193,8 +193,6 @@ public class SimpleDiscordLinkIntegration {
         switch (type) {
             case NOTIFICATION:
                 return "🔔 **Notification** | " + processedMessage;
-            case ACHIEVEMENT:
-                return "🏆 **Achievement** | " + processedMessage;
             case JOIN:
                 return "✅ **Player Joined** | " + processedMessage;
             case LEAVE:
@@ -464,7 +462,7 @@ public class SimpleDiscordLinkIntegration {
      * Message types for enhanced Discord formatting
      */
     public enum MessageType {
-        CHAT, NOTIFICATION, ACHIEVEMENT, JOIN, LEAVE, DEATH, ADMIN, SYSTEM
+        CHAT, NOTIFICATION, JOIN, LEAVE, DEATH, ADMIN, SYSTEM
     }
     
     /**

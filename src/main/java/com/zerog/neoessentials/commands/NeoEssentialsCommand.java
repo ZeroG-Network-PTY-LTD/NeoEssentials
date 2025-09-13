@@ -1,4 +1,3 @@
-
 package com.zerog.neoessentials.commands;
 import java.util.Arrays;
 import java.util.List;
@@ -222,40 +221,30 @@ public class NeoEssentialsCommand {
         try {
             var player = context.getSource().getPlayer();
             if (player != null) {
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.header"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.title"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.separator"));
+                var lang = com.zerog.neoessentials.localization.LanguageManager.getInstance();
+                MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.features.header"));
+                MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.features.title"));
+                MessageUtil.sendMessage(player, lang.getMessage(player, "neoessentials.features.separator"));
                 MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.essential"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.essential.player_management"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.essential.movement"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.essential.items"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.essential.world"));
-                MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.discord"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.discord.webhook"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.discord.account_linking"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.discord.broadcasts"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.discord.embeds"));
-                MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.gui"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.gui.shop"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.gui.stats"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.gui.info"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.gui.kit_warp"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.gui.economy"));
-                MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.tablist"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.tablist.header_footer"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.tablist.realtime_info"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.tablist.stats"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.tablist.session"));
-                MessageUtil.sendMessage(player, "");
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.additional"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.additional.home"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.additional.language"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.additional.config"));
-                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.features.additional.persistence"));
+                // List of all core features to display
+                String[] featureKeys = {
+                    "neoessentials.features.teleport",
+                    "neoessentials.features.tpa",
+                    "neoessentials.features.home",
+                    "neoessentials.features.warp",
+                    "neoessentials.features.spawn",
+                    "neoessentials.features.back",
+                    "neoessentials.features.kit",
+                    "neoessentials.features.shop",
+                    "neoessentials.features.mail",
+                    "neoessentials.features.msg",
+                    "neoessentials.features.economy",
+                    "neoessentials.features.tablist",
+                    "neoessentials.features.discord"
+                };
+                for (String key : featureKeys) {
+                    MessageUtil.sendMessage(player, lang.getMessage(player, key));
+                }
             }
             return 1;
         } catch (Exception e) {

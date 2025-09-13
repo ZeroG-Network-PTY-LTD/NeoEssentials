@@ -121,7 +121,7 @@ public class TeleportCommand {
         
         if (success) {
             context.getSource().sendSuccess(() -> Component.literal("§aTeleported to " + target.getName().getString()), true);
-                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "teleport.tp_to_you", player.getName().getString()));
+            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.to_you", player.getName().getString()));
         } else {
             context.getSource().sendFailure(Component.literal("§cTeleportation failed!"));
         }
@@ -144,8 +144,8 @@ public class TeleportCommand {
         
         if (success) {
             context.getSource().sendSuccess(() -> Component.literal("§aTeleported " + player.getName().getString() + " to " + target.getName().getString()), true);
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "teleport.tp_to_target", target.getName().getString()));
-            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "teleport.tp_target_to_you", player.getName().getString()));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.teleport.to_target", target.getName().getString()));
+            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.to_you", player.getName().getString()));
         } else {
             context.getSource().sendFailure(Component.literal("§cTeleportation failed!"));
         }
@@ -167,7 +167,7 @@ public class TeleportCommand {
         if (success) {
             context.getSource().sendSuccess(() -> Component.literal(String.format("§aTeleported to %.1f, %.1f, %.1f", 
                 position.x, position.y, position.z)), true);
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "teleport.tp_to_coords", String.format("%.1f, %.1f, %.1f", position.x, position.y, position.z)));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.teleport.to_coords", String.format("%.1f, %.1f, %.1f", position.x, position.y, position.z)));
         } else {
             context.getSource().sendFailure(Component.literal("§cTeleportation failed!"));
         }
@@ -188,7 +188,7 @@ public class TeleportCommand {
         if (success) {
             context.getSource().sendSuccess(() -> Component.literal(String.format("§aTeleported %s to %.1f, %.1f, %.1f", 
                 player.getName().getString(), position.x, position.y, position.z)), true);
-            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "teleport.tp_to_coords", String.format("%.1f, %.1f, %.1f", position.x, position.y, position.z)));
+            MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.teleport.to_coords", String.format("%.1f, %.1f, %.1f", position.x, position.y, position.z)));
         } else {
             context.getSource().sendFailure(Component.literal("§cTeleportation failed!"));
         }
@@ -213,7 +213,7 @@ public class TeleportCommand {
         
         if (success) {
             context.getSource().sendSuccess(() -> Component.literal("§aTeleported " + target.getName().getString() + " to you"), true);
-            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "teleport.tp_to_executor", player.getName().getString()));
+            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.to_executor", player.getName().getString()));
         } else {
             context.getSource().sendFailure(Component.literal("§cTeleportation failed!"));
         }

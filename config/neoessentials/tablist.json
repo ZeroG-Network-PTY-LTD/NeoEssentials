@@ -1,0 +1,21 @@
+{
+  "tablist": {
+    "enabled": true,
+    "updateInterval": 20,
+    "layouts": {
+      "default": {
+        "header": ["&6Welcome, {player_name}!"],
+        "footer": ["&7Online: {server_players}/{server_max_players}"],
+        "priority": 1,
+        "conditionType": "default"
+      }
+    },
+    "permissionSets": {
+      "default": {
+        "priority": 1,
+        "conditionType": "default",
+        "layoutId": "default"
+      }
+    }
+  }
+}

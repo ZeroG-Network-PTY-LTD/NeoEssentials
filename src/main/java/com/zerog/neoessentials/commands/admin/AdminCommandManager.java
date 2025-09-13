@@ -59,21 +59,7 @@ public class AdminCommandManager {
                 LOGGER.warn("Could not register cleanup teams command: {}", e.getMessage());
             }
             
-            // Register performance monitoring commands
-            try {
-                com.zerog.neoessentials.commands.admin.PerformanceCommand.register(dispatcher);
-                LOGGER.info("Registered performance monitoring command");
-            } catch (Exception e) {
-                LOGGER.warn("Could not register performance command: {}", e.getMessage());
-            }
-            
-            // Register server status commands
-            try {
-                com.zerog.neoessentials.commands.admin.StatusCommand.register(dispatcher);
-                LOGGER.info("Registered server status command");
-            } catch (Exception e) {
-                LOGGER.warn("Could not register status command: {}", e.getMessage());
-            }
+            // Performance monitoring and status commands removed
             
             // Register error handling commands
             try {

@@ -337,15 +337,7 @@ public final class PermissionNodes {
     public static final String LANGUAGE_RELOAD = "neoessentials.language.reload";
     public static final String LANGUAGE_ALL = "neoessentials.language.*";
     
-    // Performance Monitoring
-    public static final String PERFORMANCE_VIEW = "neoessentials.performance.view";
-    public static final String PERFORMANCE_ADMIN = "neoessentials.performance.admin";
-    public static final String PERFORMANCE_ALL = "neoessentials.performance.*";
-    
-    // Status Monitoring
-    public static final String STATUS_VIEW = "neoessentials.status.view";
-    public static final String STATUS_ADMIN = "neoessentials.status.admin";
-    public static final String STATUS_ALL = "neoessentials.status.*";
+    // Performance and Status monitoring systems removed
     
     // Cleanup and Maintenance System
     public static final String ADMIN_CLEANUP = "neoessentials.admin.cleanup";
@@ -364,14 +356,6 @@ public final class PermissionNodes {
     public static final String ANALYTICS_ADMIN = "neoessentials.analytics.admin";
     public static final String ANALYTICS_ALL = "neoessentials.analytics.*";
     
-    // Professional Scoreboard System
-    public static final String ADMIN_SCOREBOARD = "neoessentials.admin.scoreboard";
-    public static final String ADMIN_SCOREBOARD_RELOAD = "neoessentials.admin.scoreboard.reload";
-    public static final String ADMIN_SCOREBOARD_TOGGLE = "neoessentials.admin.scoreboard.toggle";
-    public static final String ADMIN_SCOREBOARD_UPDATE = "neoessentials.admin.scoreboard.update";
-    public static final String ADMIN_SCOREBOARD_TEST = "neoessentials.admin.scoreboard.test";
-    public static final String ADMIN_SCOREBOARD_ALL = "neoessentials.admin.scoreboard.*";
-    
     // ==============================
     // PLAYER FEATURES
     // ==============================
@@ -381,12 +365,6 @@ public final class PermissionNodes {
     public static final String PLAYTIME_OTHERS = "neoessentials.playtime.others";
     public static final String PLAYTIME_TOP = "neoessentials.playtime.top";
     public static final String PLAYTIME_ALL = "neoessentials.playtime.*";
-    
-    // Achievement System
-    public static final String ACHIEVEMENTS_VIEW = "neoessentials.achievements.view";
-    public static final String ACHIEVEMENTS_OTHERS = "neoessentials.achievements.others";
-    public static final String ACHIEVEMENTS_ADMIN = "neoessentials.achievements.admin";
-    public static final String ACHIEVEMENTS_ALL = "neoessentials.achievements.*";
     
     // Player Preferences
     public static final String PREFERENCES_SET = "neoessentials.preferences.set";
@@ -548,8 +526,7 @@ public final class PermissionNodes {
             // Administration
             CONFIG_RELOAD, CONFIG_SAVE, CONFIG_RESET, CONFIG_ALL,
             LANGUAGE_SET, LANGUAGE_LIST, LANGUAGE_RELOAD, LANGUAGE_ALL,
-            PERFORMANCE_VIEW, PERFORMANCE_ADMIN, PERFORMANCE_ALL,
-            STATUS_VIEW, STATUS_ADMIN, STATUS_ALL,
+            // Performance and Status permissions removed
             
             // Cleanup and Maintenance
             ADMIN_CLEANUP, ADMIN_CLEANUP_ALL, ADMIN_CLEANUP_MEMORY, ADMIN_CLEANUP_CACHE,
@@ -558,13 +535,9 @@ public final class PermissionNodes {
             
             ANALYTICS_VIEW, ANALYTICS_ADMIN, ANALYTICS_ALL,
             
-            // Professional Scoreboard System
-            ADMIN_SCOREBOARD, ADMIN_SCOREBOARD_RELOAD, ADMIN_SCOREBOARD_TOGGLE,
-            ADMIN_SCOREBOARD_UPDATE, ADMIN_SCOREBOARD_TEST, ADMIN_SCOREBOARD_ALL,
-            
             // Player Features
             PLAYTIME_VIEW, PLAYTIME_OTHERS, PLAYTIME_TOP, PLAYTIME_ALL,
-            ACHIEVEMENTS_VIEW, ACHIEVEMENTS_OTHERS, ACHIEVEMENTS_ADMIN, ACHIEVEMENTS_ALL,
+            // Achievement system removed
             PREFERENCES_SET, PREFERENCES_VIEW, PREFERENCES_ALL,
             
             // Animation System

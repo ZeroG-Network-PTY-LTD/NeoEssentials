@@ -8,7 +8,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import com.zerog.neoessentials.player.PlayerData;
 import com.zerog.neoessentials.player.PlayerDataManager;
-import com.zerog.neoessentials.player.AchievementSystem;
 import com.zerog.neoessentials.util.DebugUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,11 +25,9 @@ public class StatisticsEventHandler {
     private static StatisticsEventHandler instance;
     
     private final PlayerDataManager playerDataManager;
-    private final AchievementSystem achievementSystem;
     
     private StatisticsEventHandler() {
         this.playerDataManager = PlayerDataManager.getInstance();
-        this.achievementSystem = AchievementSystem.getInstance();
         NeoForge.EVENT_BUS.register(this);
         DebugUtil.debugLog("[StatisticsEventHandler] Registered for event tracking");
     }
@@ -58,8 +55,7 @@ public class StatisticsEventHandler {
                 
                 playerDataManager.updatePlayerData(playerData);
                 
-                // Check achievements after death update
-                achievementSystem.checkAutomaticAchievements(player);
+                // Achievement system removed - keeping only statistics tracking
                 
                 DebugUtil.debugLog("[Statistics] Player " + player.getName().getString() + " died. Total deaths: " + 
                                   playerData.getStatistic("player_deaths"));
@@ -87,7 +83,7 @@ public class StatisticsEventHandler {
                 playerDataManager.updatePlayerData(killerData);
                 
                 // Check achievements after kill update
-                achievementSystem.checkAutomaticAchievements(killer);
+                // Achievement system removed
                 
                 DebugUtil.debugLog("[Statistics] Player " + killer.getName().getString() + " killed " + 
                                   event.getEntity().getType().toString() + ". Total kills: " + 
@@ -115,7 +111,7 @@ public class StatisticsEventHandler {
                 playerDataManager.updatePlayerData(playerData);
                 
                 // Check achievements after block break update
-                achievementSystem.checkAutomaticAchievements(player);
+                // Achievement system removed
                 
                 if (playerData.getStatistic("blocks_broken") instanceof Number blocks) {
                     if (blocks.intValue() % 100 == 0) { // Log every 100 blocks
@@ -146,7 +142,7 @@ public class StatisticsEventHandler {
                 playerDataManager.updatePlayerData(playerData);
                 
                 // Check achievements after block place update
-                achievementSystem.checkAutomaticAchievements(player);
+                // Achievement system removed
                 
                 if (playerData.getStatistic("blocks_placed") instanceof Number blocks) {
                     if (blocks.intValue() % 100 == 0) { // Log every 100 blocks
@@ -175,7 +171,7 @@ public class StatisticsEventHandler {
                 playerDataManager.updatePlayerData(playerData);
                 
                 // Check and award automatic achievements
-                achievementSystem.checkAutomaticAchievements(player);
+                // Achievement system removed
                 
                 DebugUtil.debugLog("[Statistics] Initialized statistics for player: " + 
                                   player.getName().getString());

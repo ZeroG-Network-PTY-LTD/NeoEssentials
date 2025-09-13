@@ -72,7 +72,10 @@ public class MessageUtil {
             return;
         }
         String message = LanguageManager.getInstance().getMessage(player, translationKey, args);
-        Component translatableMessage = Component.literal(message);
+        if (message.startsWith("[MISSING:")) {
+            System.err.println("[NeoEssentials] Missing translation key: " + translationKey);
+        }
+        Component translatableMessage = ColorUtil.colorize(message);
         player.sendSystemMessage(translatableMessage);
     }
     
@@ -84,18 +87,19 @@ public class MessageUtil {
         if (translationKey == null || translationKey.isEmpty()) {
             return Component.empty();
         }
-        
         // Use LanguageManager for neoessentials keys
         if (translationKey.startsWith("neoessentials.")) {
             try {
                 String message = LanguageManager.getInstance().getMessage(player, translationKey, args);
+                if (message.startsWith("[MISSING:")) {
+                    System.err.println("[NeoEssentials] Missing translation key: " + translationKey);
+                }
                 return ColorUtil.colorize(message).copy();
             } catch (Exception e) {
                 // Fallback to vanilla translation if something goes wrong
                 return Component.translatable(translationKey, args).copy();
             }
         }
-        
         // Use vanilla translation for Minecraft keys (like "container.repair")
         return Component.translatable(translationKey, args).copy();
     }

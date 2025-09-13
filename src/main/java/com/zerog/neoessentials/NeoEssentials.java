@@ -26,6 +26,22 @@ import net.neoforged.bus.api.SubscribeEvent;
 @Mod("neoessentials")
 public class NeoEssentials {
     public static final Logger LOGGER = LogUtils.getLogger();
+    private static com.zerog.neoessentials.tablist.TabUpdateOrchestrator tabUpdateOrchestrator;
+    private static com.zerog.neoessentials.features.TabListManager tabListManager;
+
+    /**
+     * Get the TabUpdateOrchestrator instance
+     */
+    public static com.zerog.neoessentials.tablist.TabUpdateOrchestrator getTabUpdateOrchestrator() {
+        return tabUpdateOrchestrator;
+    }
+    
+    /**
+     * Get the mod logger
+     */
+    public static Logger getLogger() {
+        return LOGGER;
+    }
 
     /**
      * Constructor for NeoEssentials
@@ -58,8 +74,8 @@ public class NeoEssentials {
     private void initializeEarlyManagers() {
         try {
             // Initialize TabListManager early to prevent null pointer exceptions
-            new com.zerog.neoessentials.features.TabListManager();
-            com.zerog.neoessentials.util.DebugUtil.debugLog("TabListManager initialized early");
+            tabListManager = new com.zerog.neoessentials.features.TabListManager();
+            com.zerog.neoessentials.util.DebugUtil.debugLog("TabListManager initialized and set as active tablist system");
             
             // Initialize other critical managers
             com.zerog.neoessentials.features.NameFormatManager.getInstance();
@@ -97,45 +113,7 @@ public class NeoEssentials {
      * Setup the improved tablist system with coordinated managers
      */
     private void setupTablistSystem() {
-        LOGGER.info("Setting up tablist system...");
-        try {
-            // Initialize tablist components with correct constructors
-            com.zerog.neoessentials.tablist.HeaderFooterManager headerFooterManager = 
-                new com.zerog.neoessentials.tablist.HeaderFooterManager();
-            
-            com.zerog.neoessentials.tablist.AnimationScheduler animationScheduler = 
-                new com.zerog.neoessentials.tablist.AnimationScheduler(
-                    headerFooterManager,
-                    com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance());
-            
-            com.zerog.neoessentials.tablist.TabUpdateOrchestrator tabUpdateOrchestrator = 
-                new com.zerog.neoessentials.tablist.TabUpdateOrchestrator(
-                    headerFooterManager, 
-                    com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance(), 
-                    animationScheduler);
-            
-            // Register tablist event handlers
-            registerTablistEvents(tabUpdateOrchestrator);
-            
-            com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist system components initialized successfully");
-        } catch (Exception e) {
-            LOGGER.error("Error setting up tablist system", e);
-        }
-    }
-    
-    /**
-     * Register tablist event handlers
-     */
-    private void registerTablistEvents(com.zerog.neoessentials.tablist.TabUpdateOrchestrator tabUpdateOrchestrator) {
-        LOGGER.info("Registering tablist event handlers...");
-        try {
-            // Register tablist-related event listeners with NeoForge
-            NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.listeners.TablistEventListener(tabUpdateOrchestrator));
-            
-            com.zerog.neoessentials.util.DebugUtil.debugLog("Tablist event handlers registered successfully");
-        } catch (Exception e) {
-            LOGGER.error("Error registering tablist event handlers", e);
-        }
+        LOGGER.info("TabListManager is the active tablist system. No custom header/footer system will be set up.");
     }
     
     /**
@@ -180,12 +158,5 @@ public class NeoEssentials {
         } catch (Exception e) {
             LOGGER.error("Error during NeoEssentials shutdown", e);
         }
-    }
-    
-    /**
-     * Get the mod logger
-     */
-    public static Logger getLogger() {
-        return LOGGER;
     }
 }

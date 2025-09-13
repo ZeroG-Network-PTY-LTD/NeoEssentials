@@ -56,6 +56,11 @@ public class CommandRegistryManager {
      */
     public void registerCommand(String category, String commandName, String description, 
                                BiConsumer<CommandDispatcher<CommandSourceStack>, CommandBuildContext> registrationMethod) {
+        String key = commandName.toLowerCase();
+        if (allCommands.containsKey(key)) {
+            LOGGER.warn("Duplicate command registration attempted: {}. Skipping.", commandName);
+            return;
+        }
         try {
             LOGGER.debug("Registering command: {} in category: {}", commandName, category);
             
@@ -63,7 +68,7 @@ public class CommandRegistryManager {
             
             RegisteredCommand command = new RegisteredCommand(commandName, description, category);
             commandCategories.computeIfAbsent(category, k -> new ArrayList<>()).add(command);
-            allCommands.put(commandName.toLowerCase(), command);
+            allCommands.put(key, command);
             
             LOGGER.debug("Successfully registered command: {}", commandName);
             
@@ -77,6 +82,11 @@ public class CommandRegistryManager {
      */
     public void registerCommandBuilder(String category, String commandName, String description,
                                      LiteralArgumentBuilder<CommandSourceStack> commandBuilder) {
+        String key = commandName.toLowerCase();
+        if (allCommands.containsKey(key)) {
+            LOGGER.warn("Duplicate command builder registration attempted: {}. Skipping.", commandName);
+            return;
+        }
         try {
             LOGGER.debug("Registering command builder: {} in category: {}", commandName, category);
             
@@ -84,7 +94,7 @@ public class CommandRegistryManager {
             
             RegisteredCommand command = new RegisteredCommand(commandName, description, category);
             commandCategories.computeIfAbsent(category, k -> new ArrayList<>()).add(command);
-            allCommands.put(commandName.toLowerCase(), command);
+            allCommands.put(key, command);
             
             LOGGER.debug("Successfully registered command builder: {}", commandName);
             
@@ -126,6 +136,13 @@ public class CommandRegistryManager {
      */
     public int getCategoryCount() {
         return commandCategories.size();
+    }
+    
+    /**
+     * Get all category names
+     */
+    public Set<String> getAllCategories() {
+        return Collections.unmodifiableSet(commandCategories.keySet());
     }
     
     /**

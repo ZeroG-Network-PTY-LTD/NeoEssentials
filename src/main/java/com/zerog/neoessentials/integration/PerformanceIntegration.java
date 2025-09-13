@@ -2,7 +2,7 @@ package com.zerog.neoessentials.integration;
 
 import com.zerog.neoessentials.performance.PerformanceManager;
 import com.zerog.neoessentials.performance.AsyncOperationManager;
-import com.zerog.neoessentials.performance.PerformanceCommand;
+// PerformanceCommand removed
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,9 +39,7 @@ public class PerformanceIntegration {
             AsyncOperationManager.getInstance();
             LOGGER.info("Async operation manager initialized");
             
-            // Register performance commands
-            NeoForge.EVENT_BUS.register(PerformanceCommand.class);
-            LOGGER.info("Performance commands registered");
+            // Performance commands removed
             
             initialized = true;
             LOGGER.info("Performance integration initialization complete");

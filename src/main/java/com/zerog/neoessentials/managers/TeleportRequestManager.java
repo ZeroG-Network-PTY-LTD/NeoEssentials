@@ -85,62 +85,75 @@ public class TeleportRequestManager {
     public boolean sendRequest(ServerPlayer requester, ServerPlayer target, RequestType type) {
         UUID requesterId = requester.getUUID();
         UUID targetId = target.getUUID();
-        
-        // Check if requester is on cooldown
-        if (isOnCooldown(requesterId)) {
-            long remaining = getRemainingCooldown(requesterId);
-            requester.sendSystemMessage(MessageUtil.translatable(requester, "neoessentials.teleport.cooldown_active", String.valueOf(remaining)));
-            return false;
+        // Remove expired requests for target before any checks
+        List<TeleportRequest> targetRequests = pendingRequests.computeIfAbsent(targetId, k -> Collections.synchronizedList(new ArrayList<>()));
+        synchronized (targetRequests) {
+            targetRequests.removeIf(TeleportRequest::isExpired);
+            // Check if requester is on cooldown
+            if (isOnCooldown(requesterId)) {
+                long remaining = getRemainingCooldown(requesterId);
+                requester.sendSystemMessage(MessageUtil.translatable(requester, "neoessentials.teleport.cooldown_active", String.valueOf(remaining)));
+                return false;
+            }
+            // Check if requester is trying to request to themselves
+            if (requesterId.equals(targetId)) {
+                requester.sendSystemMessage(MessageUtil.translatable(requester, "neoessentials.teleport.cannot_request_self"));
+                return false;
+            }
+            // Check if target has too many pending requests
+            if (targetRequests.size() >= MAX_PENDING_REQUESTS) {
+                requester.sendSystemMessage(MessageUtil.translatable(requester, "neoessentials.teleport.target_too_many_requests", target.getName().getString()));
+                return false;
+            }
+            // Check if there's already a pending request from this requester to this target
+            boolean alreadyExists = targetRequests.stream()
+                .anyMatch(req -> req.requesterId.equals(requesterId) && !req.isExpired());
+            if (alreadyExists) {
+                requester.sendSystemMessage(MessageUtil.translatable(requester, "neoessentials.teleport.already_pending_request", target.getName().getString()));
+                return false;
+            }
+            // Create and add the request
+            TeleportRequest request = new TeleportRequest(
+                requesterId, 
+                requester.getName().getString(),
+                targetId, 
+                target.getName().getString(),
+                type
+            );
+            targetRequests.add(request);
+            // Set cooldown for requester only after successful add
+            requestCooldowns.put(requesterId, System.currentTimeMillis());
+            // Send localized messages
+            var lang = com.zerog.neoessentials.localization.LanguageManager.getInstance();
+            MessageUtil.sendMessage(target, lang.getMessage(target, "neoessentials.tpa.send", requester.getName().getString(), type.name()));
+            net.minecraft.network.chat.Component accept = net.minecraft.network.chat.Component.translatable(
+                lang.getMessage(target, "neoessentials.tpa.accept")
+            ).withStyle(style -> style.withColor(net.minecraft.ChatFormatting.GREEN)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent(
+                    net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/tpaccept " + requester.getName().getString()))
+            );
+            net.minecraft.network.chat.Component deny = net.minecraft.network.chat.Component.translatable(
+                lang.getMessage(target, "neoessentials.tpa.deny")
+            ).withStyle(style -> style.withColor(net.minecraft.ChatFormatting.RED)
+                .withClickEvent(new net.minecraft.network.chat.ClickEvent(
+                    net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/tpdeny " + requester.getName().getString()))
+            );
+            net.minecraft.network.chat.Component sep = net.minecraft.network.chat.Component.literal(" ");
+            // Build clickable accept/deny message using correct API
+            net.minecraft.network.chat.Component clickableMsg = net.minecraft.network.chat.Component.empty()
+                .append(accept)
+                .append(sep)
+                .append(deny);
+            target.sendSystemMessage(clickableMsg);
+            MessageUtil.sendMessage(target, lang.getMessage(target, "neoessentials.tpa.expires", String.valueOf(REQUEST_TIMEOUT_SECONDS)));
+            MessageUtil.sendMessage(requester, lang.getMessage(requester, "neoessentials.tpa.sent", target.getName().getString()));
+            scheduler.schedule(() -> {
+                removeRequest(targetId, requesterId);
+            }, REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            LOGGER.info("TPA request sent from {} to {} (type: {})", 
+                requester.getName().getString(), target.getName().getString(), type);
+            return true;
         }
-        // Check if requester is trying to request to themselves
-        if (requesterId.equals(targetId)) {
-            requester.sendSystemMessage(MessageUtil.translatable(requester, "neoessentials.teleport.cannot_request_self"));
-            return false;
-        }
-        // Check if target has too many pending requests
-        List<TeleportRequest> targetRequests = pendingRequests.computeIfAbsent(targetId, k -> new ArrayList<>());
-        if (targetRequests.size() >= MAX_PENDING_REQUESTS) {
-            requester.sendSystemMessage(MessageUtil.translatable(requester, "neoessentials.teleport.target_too_many_requests", target.getName().getString()));
-            return false;
-        }
-        // Check if there's already a pending request from this requester to this target
-        boolean alreadyExists = targetRequests.stream()
-            .anyMatch(req -> req.requesterId.equals(requesterId) && !req.isExpired());
-        if (alreadyExists) {
-            requester.sendSystemMessage(MessageUtil.translatable(requester, "neoessentials.teleport.already_pending_request", target.getName().getString()));
-            return false;
-        }
-        
-        // Create and add the request
-        TeleportRequest request = new TeleportRequest(
-            requesterId, 
-            requester.getName().getString(),
-            targetId, 
-            target.getName().getString(),
-            type
-        );
-        
-        targetRequests.add(request);
-        
-        // Set cooldown for requester
-        requestCooldowns.put(requesterId, System.currentTimeMillis());
-        
-        // Send localized messages
-    String typeText = type == RequestType.TPA ? com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.type_tpa") : com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.type_tpahere");
-    MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.requested", requester.getName().getString(), typeText));
-    MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.accept_deny"));
-    MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.request_expires", String.valueOf(REQUEST_TIMEOUT_SECONDS)));
-    MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.request_sent", target.getName().getString()));
-        
-        // Schedule auto-removal
-        scheduler.schedule(() -> {
-            removeRequest(targetId, requesterId);
-        }, REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        
-        LOGGER.info("TPA request sent from {} to {} (type: {})", 
-            requester.getName().getString(), target.getName().getString(), type);
-        
-        return true;
     }
 
     /**
@@ -149,60 +162,45 @@ public class TeleportRequestManager {
     public boolean acceptRequest(ServerPlayer target, String requesterName) {
         UUID targetId = target.getUUID();
         List<TeleportRequest> requests = pendingRequests.get(targetId);
-        
-        if (requests == null || requests.isEmpty()) {
+        if (requests == null) {
             MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_requests"));
             return false;
         }
-        
-        // Remove expired requests
-        requests.removeIf(TeleportRequest::isExpired);
-        
-        if (requests.isEmpty()) {
-            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_requests"));
-            return false;
-        }
-        
-        TeleportRequest request = null;
-        
-        // Find specific request if requester name provided
-        if (requesterName != null && !requesterName.isEmpty()) {
-            request = requests.stream()
-                .filter(req -> req.requesterName.equalsIgnoreCase(requesterName) && !req.isExpired())
-                .findFirst()
-                .orElse(null);
-                
-            if (request == null) {
-                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_from", requesterName));
+        synchronized (requests) {
+            requests.removeIf(TeleportRequest::isExpired);
+            if (requests.isEmpty()) {
+                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_requests"));
                 return false;
             }
-        } else {
-            // Accept the most recent request
-            request = requests.get(requests.size() - 1);
-        }
-        
-        // Find the requester player
-        var server = target.getServer();
-        if (server == null) {
-            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.server_error"));
+            TeleportRequest request = null;
+            if (requesterName != null && !requesterName.isEmpty()) {
+                request = requests.stream()
+                    .filter(req -> req.requesterName.equalsIgnoreCase(requesterName) && !req.isExpired())
+                    .findFirst()
+                    .orElse(null);
+                if (request == null) {
+                    MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_from", requesterName));
+                    return false;
+                }
+            } else {
+                request = requests.get(requests.size() - 1);
+            }
+            var server = target.getServer();
+            if (server == null) {
+                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.server_error"));
+                requests.remove(request);
+                return false;
+            }
+            ServerPlayer requester = server.getPlayerList().getPlayer(request.requesterId);
+            if (requester == null) {
+                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.requester_offline", request.requesterName));
+                requests.remove(request);
+                return false;
+            }
+            boolean success = performTeleport(request, requester, target);
             requests.remove(request);
-            return false;
+            return success;
         }
-        
-        ServerPlayer requester = server.getPlayerList().getPlayer(request.requesterId);
-        if (requester == null) {
-            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.requester_offline", request.requesterName));
-            requests.remove(request);
-            return false;
-        }
-        
-        // Perform the teleportation
-        boolean success = performTeleport(request, requester, target);
-        
-        // Remove the request
-        requests.remove(request);
-        
-        return success;
     }
 
     /**
@@ -211,55 +209,41 @@ public class TeleportRequestManager {
     public boolean denyRequest(ServerPlayer target, String requesterName) {
         UUID targetId = target.getUUID();
         List<TeleportRequest> requests = pendingRequests.get(targetId);
-        
-        if (requests == null || requests.isEmpty()) {
+        if (requests == null) {
             MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_requests"));
             return false;
         }
-        
-        // Remove expired requests
-        requests.removeIf(TeleportRequest::isExpired);
-        
-        if (requests.isEmpty()) {
-            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_requests"));
-            return false;
-        }
-        
-        TeleportRequest request = null;
-        
-        // Find specific request if requester name provided
-        if (requesterName != null && !requesterName.isEmpty()) {
-            request = requests.stream()
-                .filter(req -> req.requesterName.equalsIgnoreCase(requesterName) && !req.isExpired())
-                .findFirst()
-                .orElse(null);
-                
-            if (request == null) {
-                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_from", requesterName));
+        synchronized (requests) {
+            requests.removeIf(TeleportRequest::isExpired);
+            if (requests.isEmpty()) {
+                MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_requests"));
                 return false;
             }
-        } else {
-            // Deny the most recent request
-            request = requests.get(requests.size() - 1);
-        }
-        
-        // Find the requester player to notify them
-        var server = target.getServer();
-        if (server != null) {
-            ServerPlayer requester = server.getPlayerList().getPlayer(request.requesterId);
-            if (requester != null) {
-                MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.request_denied_by_target", target.getName().getString()));
+            TeleportRequest request = null;
+            if (requesterName != null && !requesterName.isEmpty()) {
+                request = requests.stream()
+                    .filter(req -> req.requesterName.equalsIgnoreCase(requesterName) && !req.isExpired())
+                    .findFirst()
+                    .orElse(null);
+                if (request == null) {
+                    MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.no_pending_from", requesterName));
+                    return false;
+                }
+            } else {
+                request = requests.get(requests.size() - 1);
             }
+            var server = target.getServer();
+            if (server != null) {
+                ServerPlayer requester = server.getPlayerList().getPlayer(request.requesterId);
+                if (requester != null) {
+                    MessageUtil.sendMessage(requester, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(requester, "neoessentials.teleport.request_denied_by_target", target.getName().getString()));
+                }
+            }
+            MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.denied", request.requesterName));
+            requests.remove(request);
+            LOGGER.info("TPA request from {} to {} denied", request.requesterName, target.getName().getString());
+            return true;
         }
-        
-    MessageUtil.sendMessage(target, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "neoessentials.teleport.denied", request.requesterName));
-        
-        // Remove the request
-        requests.remove(request);
-        
-        LOGGER.info("TPA request from {} to {} denied", request.requesterName, target.getName().getString());
-        
-        return true;
     }
 
     /**
@@ -270,10 +254,10 @@ public class TeleportRequestManager {
         if (requests == null) {
             return new ArrayList<>();
         }
-        
-        // Remove expired requests
-        requests.removeIf(TeleportRequest::isExpired);
-        return new ArrayList<>(requests);
+        synchronized (requests) {
+            requests.removeIf(TeleportRequest::isExpired);
+            return new ArrayList<>(requests);
+        }
     }
 
     /**
@@ -307,9 +291,11 @@ public class TeleportRequestManager {
     private void removeRequest(UUID targetId, UUID requesterId) {
         List<TeleportRequest> requests = pendingRequests.get(targetId);
         if (requests != null) {
-            requests.removeIf(req -> req.requesterId.equals(requesterId));
-            if (requests.isEmpty()) {
-                pendingRequests.remove(targetId);
+            synchronized (requests) {
+                requests.removeIf(req -> req.requesterId.equals(requesterId));
+                if (requests.isEmpty()) {
+                    pendingRequests.remove(targetId);
+                }
             }
         }
     }
@@ -348,9 +334,12 @@ public class TeleportRequestManager {
      * Clean up expired requests
      */
     private void cleanupExpiredRequests() {
-        pendingRequests.values().forEach(requests -> requests.removeIf(TeleportRequest::isExpired));
+        for (List<TeleportRequest> requests : pendingRequests.values()) {
+            synchronized (requests) {
+                requests.removeIf(TeleportRequest::isExpired);
+            }
+        }
         pendingRequests.entrySet().removeIf(entry -> entry.getValue().isEmpty());
-        
         // Clean up old cooldowns (older than 24 hours)
         long dayAgo = System.currentTimeMillis() - (24 * 60 * 60 * 1000);
         requestCooldowns.entrySet().removeIf(entry -> entry.getValue() < dayAgo);

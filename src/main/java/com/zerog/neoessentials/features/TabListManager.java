@@ -14,6 +14,7 @@ import com.zerog.neoessentials.permissions.CustomPermissionsManager;
 import com.zerog.neoessentials.placeholders.PlaceholderManager;
 import com.zerog.neoessentials.util.ColorUtil;
 import com.zerog.neoessentials.util.DebugUtil;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,8 +58,8 @@ public class TabListManager {
             return t;
         });
         
-        // Temporarily disabled event registration due to import issues
-        // NeoForge.EVENT_BUS.register(this);
+        // Enable event registration
+        NeoForge.EVENT_BUS.register(this);
         
         // Register custom tablist permissions
         initializeTablistPermissions();
@@ -67,9 +68,9 @@ public class TabListManager {
         loadConfig();
         
         instance = this;
-        // Temporarily disabled update task
-        // startUpdateTask();
-        DebugUtil.debugLog("[TabListManager] Professional TabList Manager initialized (imports disabled)");
+        // Enable update task
+        startUpdateTask();
+        DebugUtil.debugLog("[TabListManager] Professional TabList Manager initialized (imports enabled)");
     }
     
     /**
@@ -1207,6 +1208,26 @@ public class TabListManager {
             lastSuffix = "";
             lastHeader = "";
             lastFooter = "";
+        }
+    }
+    
+    @SubscribeEvent
+    public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!enabled) return;
+        if (event.getEntity() instanceof ServerPlayer player) {
+            DebugUtil.debugLog("[TabListManager] PlayerLoggedInEvent for: " + player.getName().getString());
+            onPlayerJoin(player);
+            updateAllPlayers();
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (!enabled) return;
+        if (event.getEntity() instanceof ServerPlayer player) {
+            DebugUtil.debugLog("[TabListManager] PlayerLoggedOutEvent for: " + player.getName().getString());
+            onPlayerLeave(player);
+            updateAllPlayers();
         }
     }
 }

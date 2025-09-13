@@ -268,13 +268,15 @@ public class ShopManager {
         LOGGER.info("Loading shops from storage...");
         try {
             com.zerog.neoessentials.storage.StorageManager storageManager = com.zerog.neoessentials.storage.StorageManager.getInstance();
-
+            String filePath = "neoessentials/shops/signshops.json";
+            LOGGER.info("Attempting to load sign shops from {}", filePath);
             // Load sign shops
             storageManager.loadDataAsync("shops", "signshops", java.util.Map.class)
                 .thenAccept(data -> {
                     if (data != null) {
                         try {
                             signShops.clear();
+                            int loaded = 0;
                             for (Object entry : data.values()) {
                                 if (entry instanceof java.util.Map<?, ?> shopData) {
                                     try {
@@ -282,23 +284,25 @@ public class ShopManager {
                                         String json = gson.toJson(shopData);
                                         SignShopData signShopData = gson.fromJson(json, SignShopData.class);
                                         ShopManager.SignShop signShop = signShopData.toSignShop();
+                                        // Use toShortString for key consistency
                                         signShops.put(signShop.getSignPos(), signShop);
+                                        loaded++;
                                         LOGGER.debug("Loaded sign shop at {} for item {}", signShop.getSignPos(), signShop.getItem().getDisplayName().getString());
                                     } catch (Exception e) {
                                         LOGGER.error("Failed to deserialize sign shop data: {}", e.getMessage());
                                     }
                                 }
                             }
-                            LOGGER.info("Successfully loaded {} sign shops from storage", signShops.size());
+                            LOGGER.info("Successfully loaded {} sign shops from storage (file: {})", loaded, filePath);
                         } catch (Exception e) {
                             LOGGER.error("Failed to process loaded sign shop data", e);
                         }
                     } else {
-                        LOGGER.info("No existing sign shop data found - starting with empty shop list");
+                        LOGGER.info("No existing sign shop data found - starting with empty shop list (file: {})", filePath);
                     }
                 })
                 .exceptionally(throwable -> {
-                    LOGGER.error("Failed to load sign shops from storage", throwable);
+                    LOGGER.error("Failed to load sign shops from storage (file: {})", filePath, throwable);
                     return null;
                 });
 
@@ -373,7 +377,8 @@ public class ShopManager {
     }
     
     public void saveShopsToStorage() {
-        LOGGER.debug("Saving shops to storage...");
+        String filePath = "neoessentials/shops/signshops.json";
+        LOGGER.debug("Saving shops to storage (file: {})...", filePath);
         try {
             com.zerog.neoessentials.storage.StorageManager storageManager = com.zerog.neoessentials.storage.StorageManager.getInstance();
 
@@ -387,13 +392,13 @@ public class ShopManager {
             storageManager.saveDataAsync("shops", "signshops", signShopDataMap)
                 .thenAccept(success -> {
                     if (success) {
-                        LOGGER.debug("Successfully saved {} sign shops to storage", signShopDataMap.size());
+                        LOGGER.debug("Successfully saved {} sign shops to storage (file: {})", signShopDataMap.size(), filePath);
                     } else {
-                        LOGGER.error("Failed to save sign shops to storage");
+                        LOGGER.error("Failed to save sign shops to storage (file: {})", filePath);
                     }
                 })
                 .exceptionally(throwable -> {
-                    LOGGER.error("Exception while saving sign shops to storage", throwable);
+                    LOGGER.error("Exception while saving sign shops to storage (file: {})", filePath, throwable);
                     return null;
                 });
 
