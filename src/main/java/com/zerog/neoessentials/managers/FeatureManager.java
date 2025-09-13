@@ -215,11 +215,6 @@ public class FeatureManager {
     private void initializeIntegrationFeatures() {
         DebugUtil.debugLog("Phase 5: Initializing integration features...");
         
-        // Plugin compatibility
-        PluginCompatibilityManager compatibilityManager = PluginCompatibilityManager.getInstance();
-        compatibilityManager.initialize();
-        managers.put("compatibility", compatibilityManager);
-        
         // Start animated placeholders
         com.zerog.neoessentials.placeholders.PlaceholderManager placeholderManager = 
             (com.zerog.neoessentials.placeholders.PlaceholderManager) managers.get("placeholders");

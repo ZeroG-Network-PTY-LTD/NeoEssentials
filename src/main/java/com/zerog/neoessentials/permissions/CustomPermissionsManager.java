@@ -182,7 +182,7 @@ public class CustomPermissionsManager {
         defaultGroup.addPermission(PermissionNodes.WHOIS);
         defaultGroup.addPermission(PermissionNodes.SEEN);
         defaultGroup.addPermission(PermissionNodes.PLAYTIME_VIEW);
-        defaultGroup.addPermission(PermissionNodes.ACHIEVEMENTS_VIEW);
+        // Achievement system removed
         defaultGroup.addPermission(PermissionNodes.PREFERENCES_SET);
         defaultGroup.addPermission(PermissionNodes.PREFERENCES_VIEW);
         defaultGroup.addPermission(PermissionNodes.SHOP_SIGN_CREATE);
@@ -228,10 +228,9 @@ public class CustomPermissionsManager {
         modGroup.addPermission(PermissionNodes.LIST_HIDDEN);
         // BOSSBAR_BROADCAST removed - bossbar system eliminated
         modGroup.addPermission(PermissionNodes.SECURITY_VIEW);
-        modGroup.addPermission(PermissionNodes.PERFORMANCE_VIEW);
-        modGroup.addPermission(PermissionNodes.STATUS_VIEW);
+        // Performance and Status permissions removed
         modGroup.addPermission(PermissionNodes.PLAYTIME_OTHERS);
-        modGroup.addPermission(PermissionNodes.ACHIEVEMENTS_OTHERS);
+        // Achievement system removed
         modGroup.addPermission(PermissionNodes.PERMISSIONS_INFO);
         modGroup.addPermission(PermissionNodes.PERMISSIONS_CHECK);
         groups.put(MODERATOR_GROUP, modGroup);

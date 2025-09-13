@@ -18,47 +18,48 @@ public class ShopEventHandler {
     // Example: handle sign change to create shop
     @SubscribeEvent
     public void onSignChanged(BlockEvent.EntityPlaceEvent event) {
+        // Only run on server
+        if (event.getLevel().isClientSide()) return;
         Level level = (Level) event.getLevel();
         BlockPos pos = event.getPos();
         // Check if block is a sign
         if (!(level.getBlockEntity(pos) instanceof SignBlockEntity signEntity)) return;
-        List<String> lines = new ArrayList<>();
-        for (var msg : signEntity.getFrontText().getMessages(false)) {
-            lines.add(msg.getString().trim());
+        // Parse and validate sign
+        ParsedSignShop parsed = parseSignShop(signEntity);
+        if (parsed == null) return;
+        // Prevent negative/zero values
+        if (parsed.amount <= 0 || parsed.price <= 0) return;
+        // Find chest unless admin shop
+        BlockPos chestPos = null;
+        if (!parsed.type.isAdmin()) {
+            chestPos = findLinkedChest(level, pos);
+            if (chestPos == null) return;
+            // Prevent duplicate chest linkage
+            if (ShopRegistry.getByChest(chestPos).isPresent()) return;
         }
-        if (lines.size() < 3) return; // Require at least header, amount, price
-        String header = lines.get(0).toLowerCase(Locale.ROOT);
-        ShopType type = switch (header) {
-            case "[buy]" -> ShopType.BUY;
-            case "[sell]" -> ShopType.SELL;
-            case "[admin buy]" -> ShopType.ADMIN_BUY;
-            case "[admin sell]" -> ShopType.ADMIN_SELL;
-            default -> null;
-        };
-        if (type == null) return;
-        int amount;
-        double price;
-        try {
-            amount = Integer.parseInt(lines.get(1));
-            price = Double.parseDouble(lines.get(2));
-        } catch (Exception e) {
-            return;
-        }
-        // Find chest behind/adjacent
-        BlockPos chestPos = findLinkedChest(level, pos);
-        if (chestPos == null) return;
         // Infer item from chest (stub)
-        net.minecraft.world.item.ItemStack itemSpec = inferFirstItemFromChest(level, chestPos);
-        if (itemSpec == null) return;
+        net.minecraft.world.item.ItemStack itemSpec = null;
+        if (!parsed.type.isAdmin()) {
+            itemSpec = inferFirstItemFromChest(level, chestPos);
+            if (itemSpec == null || itemSpec.isEmpty()) return;
+        } else {
+            // For admin shop, require item name in line 3 (or fallback to chest if present)
+            itemSpec = inferFirstItemFromChest(level, chestPos);
+            if (itemSpec == null || itemSpec.isEmpty()) return;
+        }
         // Create and register shop
-        Shop shop = new Shop(pos, chestPos, event.getEntity().getUUID(), type, itemSpec, amount, price);
+        Shop shop = new Shop(pos, chestPos, event.getEntity().getUUID(), parsed.type, itemSpec, parsed.amount, parsed.price);
         ShopRegistry.register(shop);
         // Render validated sign using updateText
         net.minecraft.network.chat.Component[] newLines = new net.minecraft.network.chat.Component[4];
         newLines[0] = net.minecraft.network.chat.Component.literal(shop.type().toString());
         newLines[1] = net.minecraft.network.chat.Component.literal(shop.amount() + "x " + shop.itemSpec().getHoverName().getString());
         newLines[2] = net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.shop.price_format", String.format("%.2f", shop.price())));
-        newLines[3] = net.minecraft.network.chat.Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.shop.chest_location", chestPos.getX(), chestPos.getY(), chestPos.getZ()));
+        newLines[3] = net.minecraft.network.chat.Component.literal(
+            shop.chestPos() != null ?
+                com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage("en_US", "neoessentials.shop.chest_location", shop.chestPos().getX(), shop.chestPos().getY(), shop.chestPos().getZ()) :
+                "ADMIN SHOP"
+        );
         signEntity.updateText(frontText -> frontText
             .setMessage(0, newLines[0])
             .setMessage(1, newLines[1])
@@ -72,7 +73,44 @@ public class ShopEventHandler {
         }
     }
 
-    private BlockPos findLinkedChest(Level level, BlockPos signPos) {
+    // Helper for parsing sign shop data
+    private static class ParsedSignShop {
+        public final ShopType type;
+        public final int amount;
+        public final double price;
+        public ParsedSignShop(ShopType type, int amount, double price) {
+            this.type = type;
+            this.amount = amount;
+            this.price = price;
+        }
+    }
+    private static ParsedSignShop parseSignShop(SignBlockEntity signEntity) {
+        List<String> lines = new ArrayList<>();
+        for (var msg : signEntity.getFrontText().getMessages(false)) {
+            lines.add(msg.getString().trim());
+        }
+        if (lines.size() < 3) return null;
+        String header = lines.get(0).toLowerCase(Locale.ROOT);
+        ShopType type = switch (header) {
+            case "[buy]" -> ShopType.BUY;
+            case "[sell]" -> ShopType.SELL;
+            case "[admin buy]" -> ShopType.ADMIN_BUY;
+            case "[admin sell]" -> ShopType.ADMIN_SELL;
+            default -> null;
+        };
+        if (type == null) return null;
+        int amount;
+        double price;
+        try {
+            amount = Integer.parseInt(lines.get(1));
+            price = Double.parseDouble(lines.get(2));
+        } catch (Exception e) {
+            return null;
+        }
+        return new ParsedSignShop(type, amount, price);
+    }
+
+    private static BlockPos findLinkedChest(Level level, BlockPos signPos) {
         // Check adjacent blocks for chest (stub)
         for (var dir : net.minecraft.core.Direction.values()) {
             BlockPos adj = signPos.relative(dir);
@@ -84,7 +122,7 @@ public class ShopEventHandler {
         return null;
     }
 
-    private net.minecraft.world.item.ItemStack inferFirstItemFromChest(Level level, BlockPos chestPos) {
+    private static net.minecraft.world.item.ItemStack inferFirstItemFromChest(Level level, BlockPos chestPos) {
         var be = level.getBlockEntity(chestPos);
         if (be instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chest) {
             for (int i = 0; i < chest.getContainerSize(); i++) {
@@ -93,12 +131,12 @@ public class ShopEventHandler {
             }
         }
         return null;
-    // ...existing code...
     }
 
     // Example: handle right-click on sign to transact
     @SubscribeEvent
     public void onRightClickSign(PlayerInteractEvent.RightClickBlock event) {
+        if (event.getLevel().isClientSide()) return;
         Level level = (Level) event.getLevel();
         BlockPos pos = event.getPos();
         ShopRegistry.getBySign(pos).ifPresent(shop -> {
@@ -109,6 +147,8 @@ public class ShopEventHandler {
 
     private void transact(ServerPlayer actor, Level level, Shop shop) {
         synchronized (shop.mutex()) {
+            // Double-check shop is still valid
+            if (!ShopRegistry.getBySign(shop.signPos()).isPresent()) return;
             if (shop.type().isBuy()) {
                 buyFlow(actor, level, shop);
             } else {
@@ -118,40 +158,42 @@ public class ShopEventHandler {
     }
 
     private void buyFlow(ServerPlayer buyer, Level level, Shop shop) {
-        // EconomyService integration (stub)
-    // double cost = shop.price(); // Will use when economy is integrated
-        // Economy check
         var econ = com.zerog.neoessentials.managers.EconomyManager.getInstance();
         boolean hasFunds = econ.hasBalance(buyer.getUUID(), shop.price());
         if (!hasFunds) {
             buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.insufficient_funds"));
             return;
         }
+        // Chest check (skip for admin shop)
+        int found = Integer.MAX_VALUE;
+        net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity = null;
+        if (!shop.type().isAdmin()) {
+            var chest = level.getBlockEntity(shop.chestPos());
+            if (!(chest instanceof net.minecraft.world.level.block.entity.ChestBlockEntity c)) {
+                buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.chest_missing"));
+                return;
+            }
+            chestEntity = c;
+            found = 0;
+            for (int i = 0; i < chestEntity.getContainerSize(); i++) {
+                var stack = chestEntity.getItem(i);
+                if (!stack.isEmpty() && stack.is(shop.itemSpec().getItem())) {
+                    found += stack.getCount();
+                }
+            }
+            if (found < shop.amount()) {
+                buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.out_of_stock"));
+                return;
+            }
+        }
+        // Withdraw funds
         boolean withdrawn = econ.withdrawBalance(buyer.getUUID(), shop.price(), "Shop purchase");
         if (!withdrawn) {
             buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.withdraw_failed"));
             return;
         }
-        // Chest check
-        var chest = level.getBlockEntity(shop.chestPos());
-        if (!(chest instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity)) return;
-        int found = 0;
-        for (int i = 0; i < chestEntity.getContainerSize(); i++) {
-            var stack = chestEntity.getItem(i);
-            if (!stack.isEmpty() && stack.is(shop.itemSpec().getItem())) {
-                found += stack.getCount();
-            }
-        }
-        if ((shop.type() == ShopType.ADMIN_BUY || shop.type() == ShopType.ADMIN_SELL) || found >= shop.amount()) {
-            // Admin shop: infinite stock, skip chest check
-        } else {
-            // Not enough stock
-            econ.depositBalance(buyer.getUUID(), shop.price(), "Shop refund");
-            buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.out_of_stock"));
-            return;
-        }
         // Remove items from chest unless admin shop
-        if (shop.type() != ShopType.ADMIN_BUY && shop.type() != ShopType.ADMIN_SELL) {
+        if (!shop.type().isAdmin()) {
             int toRemove = shop.amount();
             for (int i = 0; i < chestEntity.getContainerSize() && toRemove > 0; i++) {
                 var stack = chestEntity.getItem(i);
@@ -162,29 +204,37 @@ public class ShopEventHandler {
                 }
             }
         }
-        // Give items to buyer
-        buyer.getInventory().add(shop.itemSpec().copyWithCount(shop.amount()));
-    // Pay owner and handle tax (stub)
-    // Pay owner and handle tax
-    double tax = shop.price() * 0.05;
-    double payout = shop.price() - tax;
-    econ.depositBalance(shop.owner(), payout, "Shop sale");
-    // For tax, use a fixed UUID (server account)
-    UUID taxAccount = new UUID(0, 0); // Replace with actual tax account if needed
-    econ.depositBalance(taxAccount, tax, "Shop tax");
-    buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.purchase_successful"));
-    }
-    private void sellFlow(ServerPlayer seller, Level level, Shop shop) {
-        // EconomyService integration (stub)
-    // double payout = shop.price(); // Will use when economy is integrated
-        // Economy deposit
-        var econ = com.zerog.neoessentials.managers.EconomyManager.getInstance();
-        boolean deposited = econ.depositBalance(seller.getUUID(), shop.price(), "Shop sale");
-        if (!deposited) {
-            seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.deposit_failed"));
+        // Give items to buyer, check for inventory full
+        var toGive = shop.itemSpec().copyWithCount(shop.amount());
+        boolean added = buyer.getInventory().add(toGive);
+        if (!added) {
+            // Refund if inventory full
+            econ.depositBalance(buyer.getUUID(), shop.price(), "Shop refund");
+            buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.inventory_full"));
+            // If not admin, return items to chest
+            if (!shop.type().isAdmin() && chestEntity != null) {
+                for (int i = 0; i < chestEntity.getContainerSize(); i++) {
+                    var stack = chestEntity.getItem(i);
+                    if (stack.isEmpty()) {
+                        chestEntity.setItem(i, toGive);
+                        break;
+                    }
+                }
+            }
             return;
         }
-        // Remove items from seller
+        // Pay owner and handle tax
+        double tax = shop.price() * 0.05;
+        double payout = shop.price() - tax;
+        econ.depositBalance(shop.owner(), payout, "Shop sale");
+        UUID taxAccount = new UUID(0, 0); // Replace with actual tax account if needed
+        econ.depositBalance(taxAccount, tax, "Shop tax");
+        String itemName = shop.itemSpec().getHoverName().getString();
+        buyer.sendSystemMessage(MessageUtil.translatable(buyer, "neoessentials.shop.purchase_successful", String.valueOf(shop.amount()), itemName, String.format("%.2f", shop.price())));
+    }
+
+    private void sellFlow(ServerPlayer seller, Level level, Shop shop) {
+        var econ = com.zerog.neoessentials.managers.EconomyManager.getInstance();
         // Check if seller has enough items
         int sellerCount = 0;
         for (int i = 0; i < seller.getInventory().getContainerSize(); i++) {
@@ -193,7 +243,11 @@ public class ShopEventHandler {
                 sellerCount += stack.getCount();
             }
         }
-        if (sellerCount < shop.amount()) return;
+        String itemName = shop.itemSpec().getHoverName().getString();
+        if (sellerCount < shop.amount()) {
+            seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.not_enough_items", itemName));
+            return;
+        }
         // Remove items from seller
         int toRemove = shop.amount();
         for (int i = 0; i < seller.getInventory().getContainerSize() && toRemove > 0; i++) {
@@ -205,16 +259,23 @@ public class ShopEventHandler {
             }
         }
         // Add items to chest unless admin shop
-        if (shop.type() != ShopType.ADMIN_BUY && shop.type() != ShopType.ADMIN_SELL) {
+        if (!shop.type().isAdmin()) {
             var chest = level.getBlockEntity(shop.chestPos());
-            if (!(chest instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity)) return;
+            if (!(chest instanceof net.minecraft.world.level.block.entity.ChestBlockEntity chestEntity)) {
+                // Refund items to seller
+                seller.getInventory().add(shop.itemSpec().copyWithCount(shop.amount()));
+                seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.chest_missing"));
+                return;
+            }
             // Find first empty slot in chest
             ItemStack toAdd = shop.itemSpec().copyWithCount(shop.amount());
+            boolean added = false;
             for (int i = 0; i < chestEntity.getContainerSize(); i++) {
                 var stack = chestEntity.getItem(i);
                 if (stack.isEmpty()) {
                     chestEntity.setItem(i, toAdd);
                     toAdd = null;
+                    added = true;
                     break;
                 }
             }
@@ -228,19 +289,40 @@ public class ShopEventHandler {
                         if (add > 0) {
                             stack.grow(add);
                             toAdd.shrink(add);
-                            if (toAdd.getCount() <= 0) break;
+                            added = true;
+                            if (toAdd.getCount() <= 0) {
+                                toAdd = null;
+                                break;
+                            }
                         }
                     }
                 }
             }
+            if (toAdd != null && toAdd.getCount() > 0) {
+                // Chest is full, refund items to seller
+                seller.getInventory().add(toAdd);
+                seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.chest_full"));
+                return;
+            }
         }
-    // Handle tax
-    double tax = shop.price() * 0.05;
-    UUID taxAccount = new UUID(0, 0); // Replace with actual tax account if needed
-    econ.depositBalance(taxAccount, tax, "Shop tax");
-    // Admin shop logic: infinite stock, no chest required (already handled above)
-        // Notify seller
-        String itemName = shop.itemSpec().getHoverName().getString();
-        seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.sale_successful", String.valueOf(shop.amount()), itemName, String.valueOf(shop.price())));
+        // Economy deposit
+        boolean deposited = econ.depositBalance(seller.getUUID(), shop.price(), "Shop sale");
+        if (!deposited) {
+            seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.deposit_failed"));
+            // Refund items to seller
+            seller.getInventory().add(shop.itemSpec().copyWithCount(shop.amount()));
+            return;
+        }
+        // Handle tax
+        double tax = shop.price() * 0.05;
+        UUID taxAccount = new UUID(0, 0); // Replace with actual tax account if needed
+        econ.depositBalance(taxAccount, tax, "Shop tax");
+        seller.sendSystemMessage(MessageUtil.translatable(seller, "neoessentials.shop.sale_successful", String.valueOf(shop.amount()), itemName, String.format("%.2f", shop.price())));
+    }
+
+    // Scans all loaded chunks for sign shops and registers any missing ones
+    public static void scanWorldForSignShops(Level level) {
+        // Not supported: No public API for iterating loaded chunks/block entities in this environment
+        System.err.println("scanWorldForSignShops: Unable to scan for sign shops - no public chunk/block entity iterable available in this environment.");
     }
 }

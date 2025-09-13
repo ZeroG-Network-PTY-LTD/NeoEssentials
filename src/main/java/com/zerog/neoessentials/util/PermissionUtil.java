@@ -22,7 +22,6 @@ public class PermissionUtil {
         if (player == null || permission == null) {
             return false;
         }
-        
         // Use Custom Permissions Manager
         try {
             return CustomPermissionsManager.getInstance().hasPermission(player, permission);
@@ -30,8 +29,9 @@ public class PermissionUtil {
             ErrorHandler.handleError(
                 ErrorHandler.ErrorCategory.PERMISSIONS,
                 ErrorHandler.ErrorSeverity.MEDIUM,
-                "Permission Check", e);
+                "Permission Check", e, player);
             // Fallback to basic permission check if Custom Permissions Manager fails
+            MessageUtil.sendTranslatedMessage(player, "neoessentials.errors.no_permission");
             return fallbackPermissionCheck(player, permission);
         }
     }
@@ -44,12 +44,10 @@ public class PermissionUtil {
         if (source == null || permission == null) {
             return false;
         }
-        
         // Console always has all permissions
         if (!source.isPlayer()) {
             return true;
         }
-        
         try {
             ServerPlayer player = source.getPlayerOrException();
             return hasPermission(player, permission);
@@ -167,7 +165,6 @@ public class PermissionUtil {
             if (permission.equals(PermissionNodes.PLACEHOLDER_TEST) ||
                 permission.equals(PermissionNodes.GUI_OPEN) ||
                 permission.equals(PermissionNodes.PLAYTIME_VIEW) ||
-                permission.equals(PermissionNodes.ACHIEVEMENTS_VIEW) ||
                 permission.equals(PermissionNodes.PREFERENCES_SET) ||
                 permission.equals(PermissionNodes.PREFERENCES_VIEW)) {
                 return true;
@@ -177,9 +174,8 @@ public class PermissionUtil {
             if (permission.equals(PermissionNodes.PERMISSIONS_INFO) ||
                 permission.equals(PermissionNodes.PERMISSIONS_CHECK) ||
                 permission.equals(PermissionNodes.CONFIG_RELOAD) ||
-                permission.equals(PermissionNodes.SECURITY_VIEW) ||
-                permission.equals(PermissionNodes.PERFORMANCE_VIEW) ||
-                permission.equals(PermissionNodes.STATUS_VIEW)) {
+                permission.equals(PermissionNodes.SECURITY_VIEW)) {
+                // Performance and Status permissions removed
                 return player.hasPermissions(2);
             }
             

@@ -3,18 +3,15 @@ package com.zerog.neoessentials.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.zerog.neoessentials.commands.admin.AdminCommandManager;
 import com.zerog.neoessentials.commands.admin.NeoEssentialsCommand;
-import com.zerog.neoessentials.commands.admin.StatusCommand;
 import com.zerog.neoessentials.commands.permissions.PermissionsCommand;
 import com.zerog.neoessentials.util.CommandConfigUtil;
-// import com.zerog.neoessentials.commands.status.StatusCommand; // DISABLED - Missing dependencies
+// Backup, Status, Performance commands removed
 // import com.zerog.neoessentials.commands.notifications.AlertCommand; // DISABLED - Missing dependencies
-// import com.zerog.neoessentials.commands.monitoring.PerformanceCommand; // DISABLED - Over-engineered
-// import com.zerog.neoessentials.commands.enterprise.BackupCommand; // DISABLED - Over-engineered
 import com.zerog.neoessentials.commands.placeholders.PlaceholderCommand;
 import com.zerog.neoessentials.commands.player.PlaytimeCommand;
-import com.zerog.neoessentials.commands.player.AchievementsCommand;
 import com.zerog.neoessentials.commands.player.PreferencesCommand;
 import com.zerog.neoessentials.commands.language.LanguageCommand;
+import com.zerog.neoessentials.commands.WebDashboardCommand;
 import com.zerog.neoessentials.commands.essentials.*;
 import com.zerog.neoessentials.commands.essentials.ConfigCommand;
 // Additional essential command imports for missing commands
@@ -27,9 +24,7 @@ import com.zerog.neoessentials.commands.essentials.PayCommand;
 import com.zerog.neoessentials.commands.essentials.SmithingCommand;
 import com.zerog.neoessentials.commands.essentials.StonecutterCommand;
 import com.zerog.neoessentials.commands.essentials.WorkbenchCommand;
-// Admin command imports for missing commands
-import com.zerog.neoessentials.commands.admin.PerformanceCommand;
-// import com.zerog.neoessentials.managers.PluginCompatibilityManager; // DISABLED - Compilation issues
+// Performance and backup command imports removed
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandBuildContext;
 import org.slf4j.Logger;
@@ -513,10 +508,6 @@ public class CommandRegistry {
                 LOGGER.info("Moderation commands disabled in configuration");
             }
             
-            // Plugin compatibility commands
-            // CompatibilityCommand.register(dispatcher, PluginCompatibilityManager.getInstance()); // DISABLED - Compilation issues
-            // LOGGER.info("Registered plugin compatibility commands");
-            
             // Admin commands - Centralized admin command management
             AdminCommandManager.getInstance().registerCommands(dispatcher);
             LOGGER.info("Registered centralized admin command system");
@@ -544,12 +535,7 @@ public class CommandRegistry {
                 LOGGER.info("Error command disabled in configuration");
             }
             
-            if (CommandConfigUtil.isCommandEnabled("performance")) {
-                com.zerog.neoessentials.commands.admin.PerformanceCommand.register(dispatcher);
-                LOGGER.info("Registered performance monitoring command");
-            } else {
-                LOGGER.info("Performance monitoring command disabled in configuration");
-            }
+            // Performance monitoring command removed
             
             // Utility commands
             if (CommandConfigUtil.isCommandEnabled("cleanupteams")) {
@@ -586,18 +572,12 @@ public class CommandRegistry {
             NeoEssentialsCommand.register(dispatcher);
             LOGGER.info("Registered legacy admin commands");
             
-            // Web Dashboard management commands - TEMPORARILY DISABLED due to compilation errors
-            // com.zerog.neoessentials.commands.WebDashboardCommand.register(dispatcher);
-            LOGGER.info("Web dashboard management commands temporarily disabled (compilation issues)");
+            // Web Dashboard management commands
+            WebDashboardCommand.register(dispatcher);
+            LOGGER.info("Registered web dashboard management commands");
             
             // Discord Management commands (comprehensive)
-            // System status monitoring commands (Phase 5)
-            StatusCommand.register(dispatcher);
-            LOGGER.info("Registered system status monitoring commands");
-            
-            // Status monitoring commands - DISABLED (Missing enterprise dependencies)
-            // StatusCommand.register(dispatcher);
-            // LOGGER.info("Registered status monitoring commands");
+            // Status command removed
             
             // Alert and notification commands - DISABLED (Missing enterprise dependencies)
             // AlertCommand.register(dispatcher);
@@ -636,9 +616,6 @@ public class CommandRegistry {
             // Advanced Player Features Commands
             PlaytimeCommand.register(dispatcher);
             LOGGER.info("Registered playtime tracking commands");
-            
-            AchievementsCommand.register(dispatcher);
-            LOGGER.info("Registered achievement system commands");
             
             PreferencesCommand.register(dispatcher);
             LOGGER.info("Registered player preference commands");
