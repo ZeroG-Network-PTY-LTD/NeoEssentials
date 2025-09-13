@@ -26,26 +26,61 @@ public class ShopEventHandler {
         if (!(level.getBlockEntity(pos) instanceof SignBlockEntity signEntity)) return;
         // Parse and validate sign
         ParsedSignShop parsed = parseSignShop(signEntity);
-        if (parsed == null) return;
-        // Prevent negative/zero values
-        if (parsed.amount <= 0 || parsed.price <= 0) return;
-        // Find chest unless admin shop
+        if (parsed == null) {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.shop.invalid_sign_format"));
+            }
+            return;
+        }
+        if (parsed.amount <= 0 || parsed.price <= 0) {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.shop.invalid_amount_or_price"));
+            }
+            return;
+        }
         BlockPos chestPos = null;
         if (!parsed.type.isAdmin()) {
             chestPos = findLinkedChest(level, pos);
-            if (chestPos == null) return;
-            // Prevent duplicate chest linkage
-            if (ShopRegistry.getByChest(chestPos).isPresent()) return;
+            if (chestPos == null) {
+                if (event.getEntity() instanceof ServerPlayer player) {
+                    player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.shop.no_chest_found"));
+                }
+                return;
+            }
+            if (ShopRegistry.getByChest(chestPos).isPresent()) {
+                if (event.getEntity() instanceof ServerPlayer player) {
+                    player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.shop.chest_already_linked"));
+                }
+                return;
+            }
         }
-        // Infer item from chest (stub)
+        // Item logic: use item from sign if present, else infer from chest
         net.minecraft.world.item.ItemStack itemSpec = null;
-        if (!parsed.type.isAdmin()) {
+        if (parsed.itemName != null) {
+            itemSpec = ShopItemUtil.itemStackFromName(parsed.itemName, parsed.amount);
+            if (itemSpec == null || itemSpec.isEmpty()) {
+                if (event.getEntity() instanceof ServerPlayer player) {
+                    player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.shop.invalid_item", parsed.itemName));
+                }
+                return;
+            }
+        } else if (!parsed.type.isAdmin()) {
             itemSpec = inferFirstItemFromChest(level, chestPos);
-            if (itemSpec == null || itemSpec.isEmpty()) return;
+            if (itemSpec == null || itemSpec.isEmpty()) {
+                if (event.getEntity() instanceof ServerPlayer player) {
+                    player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.shop.no_item_in_chest"));
+                }
+                return;
+            }
         } else {
-            // For admin shop, require item name in line 3 (or fallback to chest if present)
+            // For admin shop, require item name or fallback to chest if present
             itemSpec = inferFirstItemFromChest(level, chestPos);
-            if (itemSpec == null || itemSpec.isEmpty()) return;
+            if (itemSpec == null || itemSpec.isEmpty()) {
+                if (event.getEntity() instanceof ServerPlayer player) {
+                    player.sendSystemMessage(MessageUtil.translatable(player, "neoessentials.shop.no_item_for_admin_shop"));
+                }
+                return;
+            }
         }
         // Create and register shop
         Shop shop = new Shop(pos, chestPos, event.getEntity().getUUID(), parsed.type, itemSpec, parsed.amount, parsed.price);
@@ -74,16 +109,6 @@ public class ShopEventHandler {
     }
 
     // Helper for parsing sign shop data
-    private static class ParsedSignShop {
-        public final ShopType type;
-        public final int amount;
-        public final double price;
-        public ParsedSignShop(ShopType type, int amount, double price) {
-            this.type = type;
-            this.amount = amount;
-            this.price = price;
-        }
-    }
     private static ParsedSignShop parseSignShop(SignBlockEntity signEntity) {
         List<String> lines = new ArrayList<>();
         for (var msg : signEntity.getFrontText().getMessages(false)) {
@@ -96,18 +121,38 @@ public class ShopEventHandler {
             case "[sell]" -> ShopType.SELL;
             case "[admin buy]" -> ShopType.ADMIN_BUY;
             case "[admin sell]" -> ShopType.ADMIN_SELL;
+            case "[shop]" -> ShopType.BUY; // treat [SHOP] as a player shop (buy/sell logic can be expanded)
+            case "[admin shop]" -> ShopType.ADMIN_BUY; // treat [ADMIN SHOP] as admin shop (expand as needed)
             default -> null;
         };
         if (type == null) return null;
         int amount;
         double price;
+        String itemName = null;
         try {
             amount = Integer.parseInt(lines.get(1));
             price = Double.parseDouble(lines.get(2));
+            if (lines.size() > 3) {
+                itemName = lines.get(3).isEmpty() ? null : lines.get(3);
+            }
         } catch (Exception e) {
             return null;
         }
-        return new ParsedSignShop(type, amount, price);
+        return new ParsedSignShop(type, amount, price, itemName);
+    }
+
+    // Update ParsedSignShop to include itemName
+    private static class ParsedSignShop {
+        public final ShopType type;
+        public final int amount;
+        public final double price;
+        public final String itemName;
+        public ParsedSignShop(ShopType type, int amount, double price, String itemName) {
+            this.type = type;
+            this.amount = amount;
+            this.price = price;
+            this.itemName = itemName;
+        }
     }
 
     private static BlockPos findLinkedChest(Level level, BlockPos signPos) {

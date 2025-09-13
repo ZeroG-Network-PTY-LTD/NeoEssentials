@@ -57,13 +57,11 @@ public class VanishCommand {
     private static int toggleVanishSelf(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         boolean isVanished = toggleVanish(player);
-        
         if (isVanished) {
-            context.getSource().sendSuccess(() -> Component.literal("§aVanish enabled! You are now invisible to other players."), false);
+            context.getSource().sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(player, "neoessentials.vanish.enabled_self"), false);
         } else {
-            context.getSource().sendSuccess(() -> Component.literal("§cVanish disabled! You are now visible to other players."), false);
+            context.getSource().sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(player, "neoessentials.vanish.disabled_self"), false);
         }
-        
         return 1;
     }
     
@@ -73,18 +71,14 @@ public class VanishCommand {
     private static int toggleVanishOther(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer target = EntityArgument.getPlayer(context, "player");
         ServerPlayer executor = context.getSource().getPlayerOrException();
-        
         boolean isVanished = toggleVanish(target);
-        
-        // Send confirmation to both players
         if (isVanished) {
-            context.getSource().sendSuccess(() -> Component.literal("§aVanish enabled for " + target.getName().getString() + "!"), true);
-            target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.vanish.enabled", executor.getName().getString())));
+            context.getSource().sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(executor, "neoessentials.vanish.enabled_other", target.getName().getString()), true);
+            target.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.translatable(target, "neoessentials.vanish.enabled_by_other", executor.getName().getString()));
         } else {
-            context.getSource().sendSuccess(() -> Component.literal("§cVanish disabled for " + target.getName().getString() + "!"), true);
-            target.sendSystemMessage(Component.literal(com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(target, "command.vanish.disabled", executor.getName().getString())));
+            context.getSource().sendSuccess(() -> com.zerog.neoessentials.util.MessageUtil.translatable(executor, "neoessentials.vanish.disabled_other", target.getName().getString()), true);
+            target.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.translatable(target, "neoessentials.vanish.disabled_by_other", executor.getName().getString()));
         }
-        
         return 1;
     }
     
