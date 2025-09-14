@@ -1,4 +1,3 @@
-
 package com.zerog.neoessentials.commands.essentials;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -21,6 +20,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Optional;
+import java.util.List;
+import java.util.ArrayList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 
 /**
  * Item command implementation - /item, /i
@@ -150,11 +154,23 @@ public class ItemCommand {
         // Create the ItemStack
         ItemStack stack = new ItemStack(item, amount);
         
-        // Apply lore if provided - using a simpler approach
+        // Apply lore if provided - using KitItem's approach and ItemStackNbtUtil
         if (loreOpt.isPresent()) {
-            // For now, skip lore implementation due to NBT API compatibility issues
-            // TODO: Implement lore support when NeoForge 1.21.1 NBT API is fully compatible
-            src.sendSystemMessage(Component.literal("§eNote: Lore support temporarily disabled due to API compatibility"));
+            String loreText = loreOpt.get();
+            String[] loreLines = loreText.split("\\|");
+            CompoundTag tag = new CompoundTag();
+            CompoundTag display = new CompoundTag();
+            if (loreLines.length > 0) {
+                StringBuilder loreJson = new StringBuilder("[");
+                for (int i = 0; i < loreLines.length; i++) {
+                    if (i > 0) loreJson.append(",");
+                    loreJson.append("{\"text\":\"").append(loreLines[i]).append("\"}");
+                }
+                loreJson.append("]");
+                display.putString("Lore", loreJson.toString());
+            }
+            tag.put("display", display);
+            com.zerog.neoessentials.util.ItemStackNbtUtil.mergeTag(stack, tag);
         }
 
         // Give item to player
@@ -174,7 +190,5 @@ public class ItemCommand {
         return 1;
     }
     
-    // ...existing code...
-    // parseAmount is unused, can be removed or left for future use
     // ...existing code...
 }

@@ -5,10 +5,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.economy.shops.ShopManager.SignShop;
+import com.zerog.neoessentials.shops.ShopManager.SignShop;
 import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import net.minecraft.tags.TagKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
 
 /**
  * Handles admin sign shop operations
@@ -59,7 +63,7 @@ public class AdminSignShopHandler {
         
         if (!withdrawSuccess) {
             // Remove the item we just gave since payment failed
-            removeItemFromInventory(player, signShop.getItem(), quantity);
+            removeItemFromInventory(player, signShop.getItem(), quantity, null);
             player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.payment.failed.cancelled"));
             return false;
         }
@@ -72,7 +76,7 @@ public class AdminSignShopHandler {
             economyManager.formatCurrency(totalPrice)));
         
         // Record transaction
-        com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
+        com.zerog.neoessentials.shops.ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
         
         LOGGER.info("Admin shop BUY transaction completed for player {}: {}x {} for {}", 
                    player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), totalPrice);
@@ -80,34 +84,79 @@ public class AdminSignShopHandler {
         return true;
     }
     
+    // Overload: support tag-based matching
+    private static boolean hasItemInInventory(Player player, ItemStack targetItem, int requiredQuantity, @javax.annotation.Nullable ResourceLocation tagId) {
+        int foundQuantity = 0;
+        if (tagId != null) {
+            TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), tagId);
+            for (ItemStack stack : player.getInventory().items) {
+                if (!stack.isEmpty() && stack.is(tag)) {
+                    foundQuantity += stack.getCount();
+                    if (foundQuantity >= requiredQuantity) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            for (ItemStack stack : player.getInventory().items) {
+                if (ItemStack.isSameItem(stack, targetItem)) {
+                    foundQuantity += stack.getCount();
+                    if (foundQuantity >= requiredQuantity) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // Overload: support tag-based matching
+    private static boolean removeItemFromInventory(Player player, ItemStack targetItem, int quantityToRemove, @javax.annotation.Nullable ResourceLocation tagId) {
+        int remaining = quantityToRemove;
+        if (tagId != null) {
+            TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), tagId);
+            for (int i = 0; i < player.getInventory().items.size() && remaining > 0; i++) {
+                ItemStack stack = player.getInventory().items.get(i);
+                if (!stack.isEmpty() && stack.is(tag)) {
+                    int toRemove = Math.min(remaining, stack.getCount());
+                    stack.shrink(toRemove);
+                    remaining -= toRemove;
+                }
+            }
+        } else {
+            for (int i = 0; i < player.getInventory().items.size() && remaining > 0; i++) {
+                ItemStack stack = player.getInventory().items.get(i);
+                if (ItemStack.isSameItem(stack, targetItem)) {
+                    int toRemove = Math.min(remaining, stack.getCount());
+                    stack.shrink(toRemove);
+                    remaining -= toRemove;
+                }
+            }
+        }
+        return remaining == 0;
+    }
+
+    // Update usages in handleSellTransaction to use tag-aware methods
     public static boolean handleSellTransaction(Player player, SignShop signShop, Level level, int quantity) {
-        // Check if player has items to sell
-        if (!hasItemInInventory(player, signShop.getItem(), quantity)) {
+        // Tag-based matching not used; tagId always null
+        ResourceLocation tagId = null;
+        if (!hasItemInInventory(player, signShop.getItem(), quantity, tagId)) {
             player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.not.enough.to.sell", 
                 signShop.getItem().getDisplayName().getString()));
             return false;
         }
-        
         double totalEarnings = signShop.getSellPrice() * quantity;
-        
-        // Get economy manager instance
         com.zerog.neoessentials.managers.EconomyManager economyManager = 
             com.zerog.neoessentials.managers.EconomyManager.getInstance();
-        
         if (economyManager == null || !economyManager.isEnabled()) {
             player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.economy.unavailable"));
             return false;
         }
-        
         LOGGER.info("Processing admin shop SELL transaction for player {}", player.getName().getString());
-        
-        // Remove items from player inventory first (payment-first security model)
-        if (!removeItemFromInventory(player, signShop.getItem(), quantity)) {
+        if (!removeItemFromInventory(player, signShop.getItem(), quantity, tagId)) {
             player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.remove.items.failed"));
             return false;
         }
-        
-        // Pay player - admin shops have infinite money
         boolean depositSuccess = economyManager.depositBalance(player.getUUID(), totalEarnings, 
             "Sold " + quantity + "x " + signShop.getItem().getDisplayName().getString() + " to admin shop");
         
@@ -125,38 +174,12 @@ public class AdminSignShopHandler {
             signShop.getItem().getDisplayName().getString(), 
             economyManager.formatCurrency(totalEarnings)));
         
-        // Record transaction
-        com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);
+        // Record transaction (singleton ShopManager)
+        com.zerog.neoessentials.shops.ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);
         
         LOGGER.info("Admin shop SELL transaction completed for player {}: {}x {} for {}", 
                    player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), totalEarnings);
         
         return true;
-    }
-    
-    private static boolean hasItemInInventory(Player player, ItemStack targetItem, int requiredQuantity) {
-        int foundQuantity = 0;
-        for (ItemStack stack : player.getInventory().items) {
-            if (ItemStack.isSameItem(stack, targetItem)) {
-                foundQuantity += stack.getCount();
-                if (foundQuantity >= requiredQuantity) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    
-    private static boolean removeItemFromInventory(Player player, ItemStack targetItem, int quantityToRemove) {
-        int remaining = quantityToRemove;
-        for (int i = 0; i < player.getInventory().items.size() && remaining > 0; i++) {
-            ItemStack stack = player.getInventory().items.get(i);
-            if (ItemStack.isSameItem(stack, targetItem)) {
-                int toRemove = Math.min(remaining, stack.getCount());
-                stack.shrink(toRemove);
-                remaining -= toRemove;
-            }
-        }
-        return remaining == 0; // Return true if all items were successfully removed
     }
 }

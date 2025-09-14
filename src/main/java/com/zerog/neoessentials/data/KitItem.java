@@ -2,7 +2,10 @@ package com.zerog.neoessentials.data;
 
 import com.google.gson.annotations.SerializedName;
 import com.zerog.neoessentials.util.ItemStackNbtUtil;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.ResourceLocation;
@@ -150,8 +153,9 @@ public class KitItem {
     
     /**
      * Convert this KitItem to a Minecraft ItemStack
+     * @param registryAccess The registry access for looking up items and enchantments
      */
-    public ItemStack toItemStack() {
+    public ItemStack toItemStack(RegistryAccess registryAccess) {
         try {
             // Get the item from registry
             ResourceLocation itemResource = ResourceLocation.fromNamespaceAndPath("minecraft", itemId.contains(":") ? itemId.split(":")[1] : itemId);
@@ -159,41 +163,33 @@ public class KitItem {
                 String[] parts = itemId.split(":");
                 itemResource = ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
             }
-            Item item = BuiltInRegistries.ITEM.get(itemResource);
-            
+            Item item = registryAccess.registryOrThrow(Registries.ITEM).get(itemResource);
             if (item == null) {
                 throw new IllegalArgumentException("Invalid item ID: " + itemId);
             }
-            
             // Create the ItemStack
             ItemStack itemStack = new ItemStack(item, count);
-            
             // Apply damage
             if (damage > 0 && itemStack.isDamageableItem()) {
                 itemStack.setDamageValue(damage);
             }
-            
             // Apply NBT data if present
             if (nbtData != null && !nbtData.trim().isEmpty()) {
                 try {
                     CompoundTag nbt = TagParser.parseTag(nbtData);
                     ItemStackNbtUtil.mergeTag(itemStack, nbt);
                 } catch (Exception e) {
-                    // Log error but continue - don't fail the entire kit
                     System.err.println("Failed to parse NBT data for item " + itemId + ": " + e.getMessage());
                 }
             }
-            
             // Apply custom display name and lore
             if (displayName != null || lore != null || unbreakable) {
                 CompoundTag tag = new CompoundTag();
-                ItemStackNbtUtil.mergeTag(itemStack, tag); // Initialize with empty tag if needed
+                ItemStackNbtUtil.mergeTag(itemStack, tag);
                 CompoundTag display = tag.getCompound("display");
-                
                 if (displayName != null) {
                     display.putString("Name", "{\"text\":\"" + displayName + "\"}");
                 }
-                
                 if (lore != null && lore.length > 0) {
                     StringBuilder loreJson = new StringBuilder("[");
                     for (int i = 0; i < lore.length; i++) {
@@ -201,23 +197,21 @@ public class KitItem {
                         loreJson.append("{\"text\":\"").append(lore[i]).append("\"}");
                     }
                     loreJson.append("]");
-                    // Note: In newer versions, you'd use ListTag, but this is simplified
                 }
-                
                 if (unbreakable) {
                     tag.putBoolean("Unbreakable", true);
                 }
-                
                 if (!display.isEmpty()) {
                     tag.put("display", display);
                 }
             }
-            
-            // Apply enchantments
+            // Apply enchantments using Holder<Enchantment>
             if (enchantments != null && !enchantments.isEmpty()) {
+                Registry<Enchantment> enchRegistry = registryAccess.registryOrThrow(Registries.ENCHANTMENT);
                 for (Map.Entry<String, Integer> enchEntry : enchantments.entrySet()) {
                     try {
                         String enchId = enchEntry.getKey();
+                        int level = enchEntry.getValue();
                         ResourceLocation enchResource;
                         if (enchId.contains(":")) {
                             String[] parts = enchId.split(":");
@@ -225,22 +219,21 @@ public class KitItem {
                         } else {
                             enchResource = ResourceLocation.fromNamespaceAndPath("minecraft", enchId);
                         }
-                        
-                        // Skip enchantments for now - the registry access has changed in 1.21.1
-                        // TODO: Update when stable enchantment API is available for NeoForge 1.21.1
-                        System.out.println("Skipping enchantment " + enchResource.toString() + " (API changed in MC 1.21.1)");
+                        Holder<Enchantment> enchHolder = enchRegistry.getHolder(enchResource).orElse(null);
+                        if (enchHolder != null) {
+                            itemStack.enchant(enchHolder, level);
+                        } else {
+                            System.err.println("Unknown enchantment: " + enchResource);
+                        }
                     } catch (Exception e) {
                         System.err.println("Failed to apply enchantment " + enchEntry.getKey() + ": " + e.getMessage());
                     }
                 }
             }
-            
             return itemStack;
-            
         } catch (Exception e) {
             System.err.println("Failed to create ItemStack for " + itemId + ": " + e.getMessage());
-            // Return a fallback item (stone) so the kit doesn't completely fail
-            return new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("minecraft", "stone")), 1);
+            return new ItemStack(registryAccess.registryOrThrow(Registries.ITEM).get(ResourceLocation.fromNamespaceAndPath("minecraft", "stone")), 1);
         }
     }
     
@@ -255,7 +248,7 @@ public class KitItem {
         KitItem kitItem = new KitItem();
         
         // Basic properties
-        ResourceLocation itemResource = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
+        ResourceLocation itemResource = itemStack.getItem().builtInRegistryHolder().key().location();
         kitItem.setItemId(itemResource.toString());
         kitItem.setCount(itemStack.getCount());
         

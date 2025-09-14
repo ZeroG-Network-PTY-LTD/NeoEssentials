@@ -39,7 +39,7 @@ public class SignShopData {
         ItemStack itemStack = item.toItemStack();
         
         ShopManager.SignShop shop = new ShopManager.SignShop(
-            ownerId, pos, chestPosition, itemStack, buyPrice, sellPrice, quantity
+            ownerId, pos, chestPosition, itemStack, null, buyPrice, sellPrice, quantity
         );
         shop.setStock(stock);
         return shop;

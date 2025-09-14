@@ -239,7 +239,7 @@ public class KitManager {
             // Convert kit items to ItemStacks
             for (KitItem kitItem : kit.getItems()) {
                 try {
-                    ItemStack itemStack = kitItem.toItemStack();
+                    ItemStack itemStack = kitItem.toItemStack(player.registryAccess());
                     if (!itemStack.isEmpty()) {
                         itemsToGive.add(itemStack);
                     }

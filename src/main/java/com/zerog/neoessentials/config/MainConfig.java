@@ -125,7 +125,7 @@ public class MainConfig {
         public java.util.List<String> blockedWords = new java.util.ArrayList<>();
         public String chatFormat = "{MESSAGE}";
         public boolean isEnabled = true;
-        public String chatname = "&r<{PREFIX} {player_name}{SUFFIX}&r>";
+        public String chatname = "[{PREFIX} {DISPLAYNAME} {SUFFIX}]";
         public AntiSpamSettings antiSpam = new AntiSpamSettings();
         public FilterSettings filter = new FilterSettings();
         public java.util.Map<String, String> groupFormats = new java.util.HashMap<>();

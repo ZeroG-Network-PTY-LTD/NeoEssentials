@@ -3,6 +3,7 @@ package com.zerog.neoessentials.economy.shops;
 import com.zerog.neoessentials.web.WebDashboardManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -167,7 +168,7 @@ public class ShopManager {
         String ownerId = isAdminShop ? "SERVER" : player.getStringUUID();
         
         try {
-            SignShop signShop = new SignShop(ownerId, signPos, chestPos, item, buyPrice, sellPrice, quantity);
+            SignShop signShop = new SignShop(ownerId, signPos, chestPos, item, null, buyPrice, sellPrice, quantity);
             signShops.put(signPos, signShop);
             
             LOGGER.info("SHOP STORAGE: Stored shop with key {} -> Owner: {}, Chest: {}, Item: {}", 
@@ -708,17 +709,20 @@ public class ShopManager {
         private final String ownerId;
         private final BlockPos signPos;
         private final BlockPos chestPos; // Connected chest for item storage
-        private final ItemStack item;
+        private final ItemStack item; // May be null if tag-based
+        private final ResourceLocation tagId; // Null if not tag-based
         private final double buyPrice;
         private final double sellPrice;
         private final int quantity;
         private int stock = 64; // Default stock
         
-        public SignShop(String ownerId, BlockPos signPos, BlockPos chestPos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
+        // Updated constructor: allow tagId and nullable item
+        public SignShop(String ownerId, BlockPos signPos, BlockPos chestPos, ItemStack item, ResourceLocation tagId, double buyPrice, double sellPrice, int quantity) {
             this.ownerId = ownerId;
             this.signPos = signPos;
             this.chestPos = chestPos;
             this.item = item;
+            this.tagId = tagId;
             this.buyPrice = buyPrice;
             this.sellPrice = sellPrice;
             this.quantity = quantity;
@@ -728,6 +732,7 @@ public class ShopManager {
         public BlockPos getSignPos() { return signPos; }
         public BlockPos getChestPos() { return chestPos; }
         public ItemStack getItem() { return item; }
+        public ResourceLocation getTagId() { return tagId; }
         public double getBuyPrice() { return buyPrice; }
         public double getSellPrice() { return sellPrice; }
         public int getQuantity() { return quantity; }

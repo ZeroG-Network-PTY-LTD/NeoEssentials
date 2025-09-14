@@ -113,11 +113,10 @@ public class FeedCommand implements IEssentialCommand {
      * Perform the feeding operation
      */
     private static void feedPlayer(ServerPlayer player) {
-        // Note: Hunger restoration temporarily disabled due to FoodData API changes
-        // TODO: Implement hunger restoration when FoodData API is available in 1.21.1
-        
+        // Restore hunger and saturation to full using FoodData API (1.21.1+)
+        player.getFoodData().setFoodLevel(20); // Max hunger
+        player.getFoodData().setSaturation(20.0F); // Max saturation
         // Remove hunger effect
-        player.removeEffect(MobEffects.HUNGER);
         player.removeEffect(MobEffects.HUNGER);
     }
 }
