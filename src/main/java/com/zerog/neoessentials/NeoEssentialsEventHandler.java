@@ -1,7 +1,8 @@
 package com.zerog.neoessentials;
 
 import com.zerog.neoessentials.managers.*;
-import com.zerog.neoessentials.economy.shops.ShopManager;
+import com.zerog.neoessentials.shops.ShopManager;
+import com.zerog.neoessentials.shops.SignShopHandler;
 import com.zerog.neoessentials.localization.LanguageManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionUtil;
@@ -380,9 +381,35 @@ public class NeoEssentialsEventHandler {
         LOGGER.info("SHOP INTERACTION: Player {} interacting with shop at {} owned by {} - ChestPos: {}", 
                    player.getName().getString(), pos, signShop.getOwnerId(), signShop.getChestPos());
         
-        // Create SignShopHandler to handle the transaction
-        com.zerog.neoessentials.economy.shops.SignShopHandler shopHandler = 
-            new com.zerog.neoessentials.economy.shops.SignShopHandler(shopManager);
+        // If chest is not linked or missing, search for a chest/storage in 2x2x2 range and link it
+        BlockPos chestPos = signShop.getChestPos();
+        boolean needsLink = chestPos == null || !(level.getBlockEntity(chestPos) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity);
+        if (needsLink) {
+            BlockPos foundChest = null;
+            outer: for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        BlockPos check = pos.offset(dx, dy, dz);
+                        if (level.getBlockEntity(check) instanceof net.minecraft.world.level.block.entity.ChestBlockEntity) {
+                            foundChest = check;
+                            break outer;
+                        }
+                    }
+                }
+            }
+            if (foundChest != null) {
+                signShop.setChestPos(foundChest);
+                shopManager.saveShopsToStorage();
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.shop.chest.linked", new Object[]{}));
+                LOGGER.info("Linked shop sign at {} to chest at {}", pos, foundChest);
+            } else {
+                MessageUtil.sendMessage(player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage(player, "neoessentials.shop.chest.not.found", new Object[]{}));
+                LOGGER.warn("No chest found in 2x2x2 range of sign at {}", pos);
+                return;
+            }
+        }
+        
+        SignShopHandler shopHandler = new SignShopHandler(shopManager);
         
         // Handle the shop interaction
         net.minecraft.world.InteractionResult result = shopHandler.handleSignInteraction(

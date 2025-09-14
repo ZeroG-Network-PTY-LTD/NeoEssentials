@@ -104,6 +104,10 @@ public class NeoEssentials {
             setupTablistSystem();
             LOGGER.info("Tablist system initialized successfully");
             
+            // Register ShopEventHandler for sign shop right-clicks
+            NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.shops.ShopEventHandler());
+            LOGGER.info("ShopEventHandler registered successfully");
+            
         } catch (Exception e) {
             LOGGER.error("Error during NeoEssentials server starting setup", e);
         }

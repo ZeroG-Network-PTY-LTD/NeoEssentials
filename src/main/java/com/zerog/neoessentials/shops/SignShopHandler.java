@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import com.zerog.neoessentials.permissions.PermissionNodes;
 import com.zerog.neoessentials.util.PermissionUtil;
-import com.zerog.neoessentials.economy.shops.ShopManager;
+import com.zerog.neoessentials.shops.ShopManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;

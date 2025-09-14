@@ -9,10 +9,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import com.zerog.neoessentials.economy.shops.ShopManager.SignShop;
+import com.zerog.neoessentials.shops.ShopManager.SignShop;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.UUID;
+import net.minecraft.tags.TagKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
 
 /**
  * Handles player sign shop operations
@@ -130,12 +134,13 @@ public class PlayerSignShopHandler {
         }
         
         // Update shop stock
-        com.zerog.neoessentials.economy.shops.ShopManager.getInstance().updateSignShopStock(signShop.getSignPos(), signShop.getStock() - quantity);
+        com.zerog.neoessentials.shops.ShopManager.getInstance().updateSignShopStock(signShop.getSignPos(), signShop.getStock() - quantity);
         
     MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.bought", new Object[]{quantity, signShop.getItem().getDisplayName().getString(), economyManager.formatCurrency(totalPrice)}));
         
         // Record transaction
-        com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
+        // Use the correct ShopManager for recordShopTransaction
+        com.zerog.neoessentials.shops.ShopManager.getInstance().recordShopTransaction(signShop, "BUY", totalPrice, quantity);
         
         LOGGER.info("Player shop BUY transaction completed for player {}: {}x {} for {}", 
                    player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), totalPrice);
@@ -144,8 +149,9 @@ public class PlayerSignShopHandler {
     }
     
     public static boolean handleSellTransaction(Player player, SignShop signShop, Level level, int quantity) {
-        // Check if player has items to sell
-        if (!hasItemInInventory(player, signShop.getItem(), quantity)) {
+        // Tag-based matching not used; tagId always null
+        ResourceLocation tagId = null;
+        if (!hasItemInInventory(player, signShop.getItem(), quantity, tagId)) {
             MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.not.enough.to.sell", new Object[]{signShop.getItem().getDisplayName().getString()}));
             return false;
         }
@@ -153,61 +159,15 @@ public class PlayerSignShopHandler {
         double totalEarnings = signShop.getSellPrice() * quantity;
         
         // Get economy manager instance
-        com.zerog.neoessentials.managers.EconomyManager economyManager = 
-            com.zerog.neoessentials.managers.EconomyManager.getInstance();
-        
+        com.zerog.neoessentials.managers.EconomyManager economyManager = com.zerog.neoessentials.managers.EconomyManager.getInstance();
         if (economyManager == null || !economyManager.isEnabled()) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.economy.unavailable", new Object[]{}));
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.economy.unavailable"));
             return false;
         }
         
-        // Check if shop owner has enough money
-        UUID shopOwnerUUID = UUID.fromString(signShop.getOwnerId());
-        if (!economyManager.hasBalance(shopOwnerUUID, totalEarnings)) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.owner.not.enough.money", new Object[]{}));
-            return false;
-        }
-        
-        // Check if chest has space for items
-        BlockPos chestPos = signShop.getChestPos();
-        if (chestPos == null) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.not.connected", new Object[]{}));
-            return false;
-        }
-        
-        if (!(level.getBlockEntity(chestPos) instanceof ChestBlockEntity chestEntity)) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.not.found", new Object[]{}));
-            return false;
-        }
-        
-        // Check if chest has space
-        ItemStack testItem = signShop.getItem().copy();
-        testItem.setCount(quantity);
-        if (!canChestFitItem(chestEntity, testItem)) {
-            MessageUtil.sendMessage((ServerPlayer) player, com.zerog.neoessentials.localization.LanguageManager.getInstance().getMessage((ServerPlayer) player, "neoessentials.shop.chest.full", new Object[]{}));
-            return false;
-        }
-        
-        LOGGER.info("Processing player shop SELL transaction for player {}: selling {}x {} for {} to shop owner {}", 
-                   player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), 
-                   totalEarnings, signShop.getOwnerId());
-        
-        // STEP 1: Remove items from player inventory first (payment-first security model)
-        if (!removeItemFromInventory(player, signShop.getItem(), quantity)) {
-            player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.remove.items.failed.inventory"));
-            return false;
-        }
-        
-        // STEP 2: Charge shop owner
-        boolean withdrawSuccess = economyManager.withdrawBalance(shopOwnerUUID, totalEarnings, 
-            "Shop purchase: " + quantity + "x " + signShop.getItem().getDisplayName().getString());
-        
-        if (!withdrawSuccess) {
-            // Return items to player since shop owner payment failed
-            ItemStack returnItem = signShop.getItem().copy();
-            returnItem.setCount(quantity);
-            player.getInventory().add(returnItem);
-            player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.owner.payment.failed.items.returned"));
+        // Remove items from player
+        if (!removeItemFromInventory(player, signShop.getItem(), quantity, tagId)) {
+            player.sendSystemMessage(MessageUtil.translatable("neoessentials.shop.remove.items.failed"));
             return false;
         }
         
@@ -217,6 +177,7 @@ public class PlayerSignShopHandler {
         
         if (!depositSuccess) {
             // Refund shop owner and return items to player
+            UUID shopOwnerUUID = UUID.fromString(signShop.getOwnerId());
             economyManager.depositBalance(shopOwnerUUID, totalEarnings, "Refund: Player payment failed");
             ItemStack returnItem = signShop.getItem().copy();
             returnItem.setCount(quantity);
@@ -235,8 +196,8 @@ public class PlayerSignShopHandler {
             signShop.getItem().getDisplayName().getString(), 
             economyManager.formatCurrency(totalEarnings)));
         
-        // Record transaction
-        com.zerog.neoessentials.economy.shops.ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);
+        // Record transaction (singleton ShopManager)
+        com.zerog.neoessentials.shops.ShopManager.getInstance().recordShopTransaction(signShop, "SELL", totalEarnings, quantity);
         
         LOGGER.info("Player shop SELL transaction completed for player {}: {}x {} for {}", 
                    player.getName().getString(), quantity, signShop.getItem().getDisplayName().getString(), totalEarnings);
@@ -257,6 +218,32 @@ public class PlayerSignShopHandler {
         return false;
     }
     
+    // Overload: support tag-based matching
+    private static boolean hasItemInInventory(Player player, ItemStack targetItem, int requiredQuantity, @javax.annotation.Nullable ResourceLocation tagId) {
+        int foundQuantity = 0;
+        if (tagId != null) {
+            TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), tagId);
+            for (ItemStack stack : player.getInventory().items) {
+                if (!stack.isEmpty() && stack.is(tag)) {
+                    foundQuantity += stack.getCount();
+                    if (foundQuantity >= requiredQuantity) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            for (ItemStack stack : player.getInventory().items) {
+                if (ItemStack.isSameItem(stack, targetItem)) {
+                    foundQuantity += stack.getCount();
+                    if (foundQuantity >= requiredQuantity) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private static boolean removeItemFromInventory(Player player, ItemStack targetItem, int quantityToRemove) {
         int remaining = quantityToRemove;
         for (int i = 0; i < player.getInventory().items.size() && remaining > 0; i++) {
@@ -265,6 +252,32 @@ public class PlayerSignShopHandler {
                 int toRemove = Math.min(remaining, stack.getCount());
                 stack.shrink(toRemove);
                 remaining -= toRemove;
+            }
+        }
+        return remaining == 0;
+    }
+    
+    // Overload: support tag-based matching
+    private static boolean removeItemFromInventory(Player player, ItemStack targetItem, int quantityToRemove, @javax.annotation.Nullable ResourceLocation tagId) {
+        int remaining = quantityToRemove;
+        if (tagId != null) {
+            TagKey<Item> tag = TagKey.create(BuiltInRegistries.ITEM.key(), tagId);
+            for (int i = 0; i < player.getInventory().items.size() && remaining > 0; i++) {
+                ItemStack stack = player.getInventory().items.get(i);
+                if (!stack.isEmpty() && stack.is(tag)) {
+                    int toRemove = Math.min(remaining, stack.getCount());
+                    stack.shrink(toRemove);
+                    remaining -= toRemove;
+                }
+            }
+        } else {
+            for (int i = 0; i < player.getInventory().items.size() && remaining > 0; i++) {
+                ItemStack stack = player.getInventory().items.get(i);
+                if (ItemStack.isSameItem(stack, targetItem)) {
+                    int toRemove = Math.min(remaining, stack.getCount());
+                    stack.shrink(toRemove);
+                    remaining -= toRemove;
+                }
             }
         }
         return remaining == 0;

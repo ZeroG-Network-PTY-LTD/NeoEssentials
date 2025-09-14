@@ -124,14 +124,23 @@ public class ChatFormattingListener {
             com.zerog.neoessentials.util.DebugUtil.debugLog("DEBUG group: " + group);
             // Use chatname for name brackets, chat.format for message section
             String chatNameFormat = config.chatname;
+            // Only support {PREFIX}, {DISPLAYNAME}, {SUFFIX}, and {MESSAGE} placeholders
+            // Optionally support {PLAYER_NAME} as alias for {DISPLAYNAME}
             if (chatNameFormat == null || chatNameFormat.isEmpty()) {
                 chatNameFormat = "<{PREFIX}{DISPLAYNAME}{SUFFIX}>";
+            }
+            // Warn if unsupported placeholders are used
+            if (chatNameFormat.matches(".*\\{.*\\}.*")) {
+                String unsupported = chatNameFormat.replaceAll("\\{(PREFIX|DISPLAYNAME|SUFFIX|PLAYER_NAME)\\}", "");
+                if (unsupported.matches(".*\\{.*\\}.*")) {
+                    LOGGER.warn("[NeoEssentials] Unsupported placeholders in chatname format: {}", unsupported);
+                }
             }
             String formattedName = chatNameFormat
                 .replace("{PREFIX}", prefix)
                 .replace("{DISPLAYNAME}", displayName)
-                .replace("{SUFFIX}", suffix)
-                .replace("{GROUP}", group);
+                .replace("{PLAYER_NAME}", displayName)
+                .replace("{SUFFIX}", suffix);
             String messageFormat = config.chatFormat;
             if (messageFormat == null || messageFormat.isEmpty()) {
                 messageFormat = "{MESSAGE}";

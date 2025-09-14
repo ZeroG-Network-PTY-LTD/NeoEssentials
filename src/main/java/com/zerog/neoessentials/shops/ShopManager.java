@@ -613,12 +613,13 @@ public class ShopManager {
     public static class SignShop {
         private final String ownerId;
         private final BlockPos signPos;
-        private final BlockPos chestPos; // Connected chest for item storage
+        private BlockPos chestPos; // Changed from final to allow dynamic linking
         private final ItemStack item;
         private final double buyPrice;
         private final double sellPrice;
         private final int quantity;
         private int stock = 64; // Default stock
+        private java.util.Set<java.util.UUID> trustedPlayers = new java.util.HashSet<>();
         
         public SignShop(String ownerId, BlockPos signPos, BlockPos chestPos, ItemStack item, double buyPrice, double sellPrice, int quantity) {
             this.ownerId = ownerId;
@@ -638,8 +639,13 @@ public class ShopManager {
         public double getSellPrice() { return sellPrice; }
         public int getQuantity() { return quantity; }
         public int getStock() { return stock; }
+        public java.util.Set<java.util.UUID> getTrustedPlayers() { return trustedPlayers; }
         
         public void setStock(int stock) { this.stock = stock; }
+        public void setChestPos(BlockPos chestPos) { this.chestPos = chestPos; }
+        public void addTrustedPlayer(java.util.UUID uuid) { trustedPlayers.add(uuid); }
+        public void removeTrustedPlayer(java.util.UUID uuid) { trustedPlayers.remove(uuid); }
+        public boolean isTrusted(java.util.UUID uuid) { return trustedPlayers.contains(uuid); }
         public boolean hasStock() { return stock > 0; }
         
         /**

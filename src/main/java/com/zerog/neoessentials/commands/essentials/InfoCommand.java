@@ -3,6 +3,7 @@ package com.zerog.neoessentials.commands.essentials;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.api.NeoEssentialsAPI;
+import com.zerog.neoessentials.permissions.PermissionManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -15,14 +16,25 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 public class InfoCommand {
+    private static final String PERMISSION = "neoessentials.admin.info";
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("info")
+            .requires(source -> source.hasPermission(2) && hasInfoPermission(source))
             .executes(InfoCommand::showServerInfo));
         
         // Also register /serverinfo as an alias
         dispatcher.register(Commands.literal("serverinfo")
+            .requires(source -> source.hasPermission(2) && hasInfoPermission(source))
             .executes(InfoCommand::showServerInfo));
+    }
+    
+    private static boolean hasInfoPermission(CommandSourceStack source) {
+        if (source.getEntity() instanceof ServerPlayer player) {
+            // Use correct PermissionManager API
+            return player.hasPermissions(2) || PermissionManager.hasPermission(player.getUUID(), PERMISSION);
+        }
+        return true; // Allow console/rcon
     }
     
     /**
@@ -30,6 +42,13 @@ public class InfoCommand {
      */
     private static int showServerInfo(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
+        if (source.getEntity() instanceof ServerPlayer player) {
+            if (!hasInfoPermission(source)) {
+                MessageUtil.sendMessage(player, "§cYou do not have permission to use this command.");
+                return 0;
+            }
+        }
+
         MinecraftServer server = source.getServer();
         
         // Get system information
