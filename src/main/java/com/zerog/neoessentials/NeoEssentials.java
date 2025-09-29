@@ -1,166 +1,170 @@
 package com.zerog.neoessentials;
 
-import org.slf4j.Logger;
-import com.mojang.logging.LogUtils;
-
-import com.zerog.neoessentials.commands.CommandRegistry;
-import com.zerog.neoessentials.config.ConfigManager;
-import com.zerog.neoessentials.managers.FeatureManager;
-
+import com.zerog.neoessentials.api.NeoEssentialsAPI;
+import com.zerog.neoessentials.economy.commands.EconomyCommands;
+import com.zerog.neoessentials.economy.EconomyManager;
+import com.zerog.neoessentials.permissions.PermissionManager;
+import com.zerog.neoessentials.permissions.PermissionStorage;
+import com.zerog.neoessentials.permissions.PermissionAPI;
+import com.zerog.neoessentials.permissions.command.PermissionsCommand;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.server.ServerStartingEvent;
-import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 
-/**
- * NeoEssentials Main Class - Provides server administration tools
- * 
- * This is the main mod class that initializes all NeoEssentials features
- * and provides server administration functionality.
- * 
- * @author ZeroG
- * @version 2.0.0
- */
+import java.io.File;
+import java.io.InputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
+
 @Mod("neoessentials")
 public class NeoEssentials {
-    public static final Logger LOGGER = LogUtils.getLogger();
-    private static com.zerog.neoessentials.tablist.TabUpdateOrchestrator tabUpdateOrchestrator;
-    private static com.zerog.neoessentials.features.TabListManager tabListManager;
-
-    /**
-     * Get the TabUpdateOrchestrator instance
-     */
-    public static com.zerog.neoessentials.tablist.TabUpdateOrchestrator getTabUpdateOrchestrator() {
-        return tabUpdateOrchestrator;
-    }
-    
-    /**
-     * Get the mod logger
-     */
-    public static Logger getLogger() {
-        return LOGGER;
-    }
-
-    /**
-     * Constructor for NeoEssentials
-     */
     public NeoEssentials() {
-        LOGGER.info("NeoEssentials initializing...");
-        
-        // Register event handlers
-        NeoForge.EVENT_BUS.register(this);
-        
-        // Initialize unified config system first
-        ConfigManager.getInstance().initialize();
-        
-        LOGGER.info("NeoEssentials configuration system initialized");
-        com.zerog.neoessentials.util.DebugUtil.debugLog("Unified Configuration System initialized");
-        
-        // Initialize core managers early to avoid null pointer exceptions
-        initializeEarlyManagers();
-        
-        // Initialize server tick listener for animated placeholders
-        com.zerog.neoessentials.listeners.ServerTickListener.initialize();
-        com.zerog.neoessentials.util.DebugUtil.debugLog("Server tick listener initialized");
-        
-        LOGGER.info("NeoEssentials initialized successfully!");
-    }
-    
-    /**
-     * Initialize early managers that other components depend on
-     */
-    private void initializeEarlyManagers() {
+        ensureGlobalConfig();
+        ensureEconomyConfig();
+        ensurePermissionsConfig();
+        ensureServerLangFile();
+        // Initialize the core manager
+        NeoEssentialsManager.getInstance();
+        // Initialize permissions system
         try {
-            // Initialize TabListManager early to prevent null pointer exceptions
-            tabListManager = new com.zerog.neoessentials.features.TabListManager();
-            com.zerog.neoessentials.util.DebugUtil.debugLog("TabListManager initialized and set as active tablist system");
-            
-            // Initialize other critical managers
-            com.zerog.neoessentials.features.NameFormatManager.getInstance();
-            com.zerog.neoessentials.util.DebugUtil.debugLog("NameFormatManager initialized early");
-            
-            com.zerog.neoessentials.placeholders.PlaceholderManager.getInstance();
-            com.zerog.neoessentials.util.DebugUtil.debugLog("PlaceholderManager initialized early");
-            
+            PermissionManager permManager = new PermissionManager();
+            PermissionStorage.load(permManager);
+            PermissionAPI.setManager(permManager);
         } catch (Exception e) {
-            LOGGER.error("Error initializing early managers", e);
+            e.printStackTrace();
+        }
+        // Register this mod class with the NeoForge event bus for non-static event handlers
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(this);
+        // Example usage of the API (for demonstration)
+        if (NeoEssentialsAPI.isAvailable()) {
+            // API is available, ready for mod interoperability
+        }
+        // No manual event bus registration needed for NeoForge
+    }
+
+    private void ensureGlobalConfig() {
+        File configFile = new File("config/neoessentials/config.json");
+        if (!configFile.exists()) {
+            try {
+                File parent = configFile.getParentFile();
+                if (parent != null && !parent.exists()) parent.mkdirs();
+                try (InputStream in = NeoEssentials.class.getClassLoader().getResourceAsStream("data/config.json")) {
+                    if (in != null) {
+                        try (FileOutputStream out = new FileOutputStream(configFile)) {
+                            byte[] buf = new byte[4096];
+                            int len;
+                            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
-    
-    /**
-     * Server starting event handler
-     */
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-        LOGGER.info("NeoEssentials server starting setup...");
-        try {
-            // Initialize all features using the new FeatureManager
-            FeatureManager.getInstance().initializeFeatures();
-            LOGGER.info("FeatureManager initialized successfully");
-            
-            // Setup tablist system
-            setupTablistSystem();
-            LOGGER.info("Tablist system initialized successfully");
-            
-            // Register ShopEventHandler for sign shop right-clicks
-            NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.shops.ShopEventHandler());
-            LOGGER.info("ShopEventHandler registered successfully");
-            
-        } catch (Exception e) {
-            LOGGER.error("Error during NeoEssentials server starting setup", e);
+
+    private void ensureEconomyConfig() {
+        File configFile = new File("config/neoessentials/economy.json");
+        if (!configFile.exists()) {
+            try {
+                File parent = configFile.getParentFile();
+                if (parent != null && !parent.exists()) parent.mkdirs();
+                try (InputStream in = NeoEssentials.class.getClassLoader().getResourceAsStream("data/economy.json")) {
+                    if (in != null) {
+                        try (FileOutputStream out = new FileOutputStream(configFile)) {
+                            byte[] buf = new byte[4096];
+                            int len;
+                            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
-    
-    /**
-     * Setup the improved tablist system with coordinated managers
-     */
-    private void setupTablistSystem() {
-        LOGGER.info("TabListManager is the active tablist system. No custom header/footer system will be set up.");
+
+    private void ensurePermissionsConfig() {
+        File configFile = new File("config/neoessentials/permissions.json");
+        if (!configFile.exists()) {
+            try {
+                File parent = configFile.getParentFile();
+                if (parent != null && !parent.exists()) parent.mkdirs();
+                try (InputStream in = NeoEssentials.class.getClassLoader().getResourceAsStream("data/permissions.json")) {
+                    if (in != null) {
+                        try (FileOutputStream out = new FileOutputStream(configFile)) {
+                            byte[] buf = new byte[4096];
+                            int len;
+                            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
-    
-    /**
-     * Command registration event handler
-     */
+
+    private void ensureServerLangFile() {
+        try {
+            File serverLangDir = new File("neoessentials/lang");
+            if (!serverLangDir.exists()) serverLangDir.mkdirs();
+            File serverLangFile = new File(serverLangDir, "en_us.json");
+            if (!serverLangFile.exists()) {
+                // Try to copy from mod resources
+                try (InputStream in = NeoEssentials.class.getClassLoader().getResourceAsStream("data/lang/en_us.json")) {
+                    if (in != null) {
+                        Files.copy(in, serverLangFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
-        LOGGER.info("Starting command registration...");
-        try {
-            CommandRegistry.registerCommands(event.getDispatcher(), event.getBuildContext());
-            LOGGER.info("All NeoEssentials commands registered successfully!");
-        } catch (Exception e) {
-            LOGGER.error("Error registering NeoEssentials commands", e);
+        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+        EconomyCommands.register(dispatcher);
+        PermissionsCommand.register(dispatcher);
+    }
+
+    @SubscribeEvent
+    public void onServerStarted(ServerStartedEvent event) {
+        MinecraftServer server = event.getServer();
+        // Removed demonstration of LangUtil usage. Add your own messages here if needed.
+        // Removed broken resource reload listener. Minecraft/NeoForge loads language files automatically if present in the JAR.
+    }
+
+    @SubscribeEvent
+    public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            UUID uuid = player.getUUID();
+            EconomyManager.getInstance().loadPlayerEconomy(uuid);
         }
     }
-    
-    /**
-     * Server stopping event handler - cleanup resources
-     */
+
+    @SubscribeEvent
+    public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            UUID uuid = player.getUUID();
+            EconomyManager.getInstance().savePlayerEconomy(uuid);
+        }
+    }
+
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
-        LOGGER.info("NeoEssentials shutting down...");
-        try {
-            // Save shop data before shutdown - CRITICAL FIX
-            com.zerog.neoessentials.economy.shops.ShopManager shopManager = 
-                com.zerog.neoessentials.economy.shops.ShopManager.getInstance();
-            if (shopManager != null) {
-                LOGGER.info("Saving shop data before shutdown...");
-                shopManager.shutdown(); // This calls saveShopsToStorage()
-                LOGGER.info("Shop data saved successfully");
-            }
-            
-            // Save any other critical data
-            com.zerog.neoessentials.storage.StorageManager storageManager = 
-                com.zerog.neoessentials.storage.StorageManager.getInstance();
-            if (storageManager != null) {
-                storageManager.shutdown();
-                LOGGER.info("Storage manager shut down successfully");
-            }
-            
-            LOGGER.info("NeoEssentials shutdown completed successfully");
-        } catch (Exception e) {
-            LOGGER.error("Error during NeoEssentials shutdown", e);
-        }
+        EconomyManager.getInstance().saveAllPlayerEconomy();
     }
 }

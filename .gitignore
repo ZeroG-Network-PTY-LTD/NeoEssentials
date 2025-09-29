@@ -1,105 +1,26 @@
-# IDE files
-.idea/
-.vscode/
-*.iml
-*.ipr
-*.iws
-.settings/
+# eclipse
+bin
+*.launch
+.settings
+.metadata
 .classpath
 .project
-.metadata/
-bin/
-*.launch
 
-# Gradle files
-.gradle/
-build/
-!gradle-wrapper.jar
-!gradle-wrapper.properties
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea
 
-# Minecraft/NeoForge generated files
-.run/
-run/
-run/logs/
-*.log
-*.gz
-*.log.gz
-runs/
-run-data/
-logs/
-eclipse/
-out/
+# gradle
+build
+.gradle
 
-# Compiled files
-*.class
-*.jar
-!libs/*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-hs_err_pid*
+# other
+eclipse
+run
+runs
+run-data
 
-# Development files
-*.log
-*~
-*.bak
-*.swp
-*.tmp
-*.launch
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Local repositories
-/repo/
-
-# Build files
-buildnumber.properties
-build_log*.txt
-build.gradle.*
-*.sh
-temp_*
-*_backup/
-*_copy/
-*_Copy/
-*-Copy/
-temp-extract/
-mdk-downloads/
-
-# Documentation files (development only)
-TEST_*.md
-*_SUMMARY.md
-*_TASKS.md
-*_COMPLETE_*.md
-docs/Example configs/ 
-
-# Plugin reference files
-Plugins\ commands.md
-run/server.properties
-run/logs/debug-1.log.gz
-run/logs/debug-2.log.gz
-run/logs/debug-3.log.gz
-run/logs/debug-4.log.gz
-run/logs/debug-5.log.gz
-run/logs/debug.log
-run/logs/latest.log
-run/world/level.dat
-run/world/level.dat_old
-run/world/data/raids.dat
-run/world/DIM-1/data/raids.dat
-run/world/DIM1/data/raids_end.dat
-run/world/entities/r.-1.-1.mca
-run/world/entities/r.-1.0.mca
-run/world/entities/r.0.-1.mca
-run/world/entities/r.0.0.mca
-run/world/region/r.-1.-1.mca
-run/world/region/r.-1.0.mca
-run/world/region/r.0.-1.mca
-run/world/region/r.0.0.mca
-docs/Issues I come to.txt
-docs/Issues I come to copy.txt
-docs/commands.txt
-docs/What Claude should fix.txt
+repo

@@ -1,0 +1,33 @@
+{
+  "groups": [
+    {
+      "name": "default",
+      "prefix": "&7[Player] ",
+      "suffix": "",
+      "permissions": [
+        "neoessentials.home.use",
+        "neoessentials.spawn.use"
+      ],
+      "inherits": []
+    },
+    {
+      "name": "moderator",
+      "prefix": "&2[Mod] ",
+      "suffix": "",
+      "permissions": [
+        "neoessentials.kick",
+        "neoessentials.mute"
+      ],
+      "inherits": ["default"]
+    },
+    {
+      "name": "admin",
+      "prefix": "&4[Admin] ",
+      "suffix": "",
+      "permissions": [
+        "*"
+      ],
+      "inherits": ["moderator"]
+    }
+  ]
+}

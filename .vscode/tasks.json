@@ -1,0 +1,30 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Build NeoEssentials Mod",
+			"command": "./gradlew build",
+			"group": "build",
+			"problemMatcher": [
+				"$javac"
+			]
+		},
+		{
+			"type": "shell",
+			"label": "Run Dev Server",
+			"command": "./gradlew runServer",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"type": "shell",
+			"label": "Run Dev Client",
+			"command": "./gradlew runClient",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}
