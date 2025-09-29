@@ -1,0 +1,11 @@
+{
+  "economySettings": {
+    "startingBalance": 100.0,
+    "currencySymbol": "$",
+    "maxBalance": 100000.0,
+    "cleanupInactiveAccounts": true,
+    "inactiveAccountCleanupDays": 30,
+    "taxPercentage": 1.5,
+    "maxTransferAmount": 10000.0
+  }
+}

@@ -1,0 +1,22 @@
+{
+	"modules": {
+	  "economyEnabled": false
+	},
+	
+	"items": {
+	  "item-spawn-blacklist": [],
+	  "permission-based-item-spawn": false,
+	  "drop-items-if-full": false,
+	  "use-nbt-serialization-in-createkit": false,
+	  "allow-old-id-signs": false,
+	  "disable-item-pickup-while-afk": false,
+	  "vanishing-items-policy": "keep",
+	  "binding-items-policy": "keep",
+	  "default-stack-size": -1,
+	  "oversized-stacksize": 64,
+	  "unsafe-enchantments": false,
+	  "allow-bulk-buy-sell": true,
+	  "allow-direct-hat": true,
+	  "max-itemlore-lines": 10
+	}
+}
