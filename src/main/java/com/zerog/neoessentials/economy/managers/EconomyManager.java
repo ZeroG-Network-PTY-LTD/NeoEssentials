@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.economy.managers;
 
 import com.zerog.neoessentials.economy.EconomyConfig;
+import com.zerog.neoessentials.economy.EconomyTransactionLogger;
 import com.zerog.neoessentials.config.GlobalConfig;
 import java.math.BigDecimal;
 import java.util.Map;
@@ -19,6 +20,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 public class EconomyManager {
     // Singleton instance
@@ -28,13 +31,8 @@ public class EconomyManager {
         return instance;
     }
 
-    // Replace balances map with Caffeine cache
-    // private final Cache<UUID, BigDecimal> balancesCache = Caffeine.newBuilder()
-    //     .maximumSize(10000) // TODO: make configurable
-    //     .expireAfterAccess(1, TimeUnit.HOURS) // TODO: make configurable
-    //     .build();
-    // Use a simple ConcurrentHashMap instead
-    private final ConcurrentHashMap<UUID, BigDecimal> balancesMap = new ConcurrentHashMap<>();
+    // Use Caffeine cache for balances
+    private Cache<UUID, BigDecimal> balancesCache;
     private EconomyConfig config;
     // Store balances in root/neoessentials/balances.json
     private final File balancesFile = new File("neoessentials/balances.json");
@@ -56,7 +54,7 @@ public class EconomyManager {
             Map<String, String> data = gson.fromJson(reader, type);
             if (data != null) {
                 for (Map.Entry<String, String> entry : data.entrySet()) {
-                    balancesMap.put(UUID.fromString(entry.getKey()), new BigDecimal(entry.getValue()));
+                    balancesCache.put(UUID.fromString(entry.getKey()), new BigDecimal(entry.getValue()));
                 }
             }
         } catch (Exception e) {
@@ -73,7 +71,7 @@ public class EconomyManager {
             File tempFile = new File(balancesFile.getAbsolutePath() + ".tmp");
             try (FileWriter writer = new FileWriter(tempFile)) {
                 Map<String, String> data = new ConcurrentHashMap<>();
-                for (Map.Entry<UUID, BigDecimal> entry : balancesMap.entrySet()) {
+                for (Map.Entry<UUID, BigDecimal> entry : balancesCache.asMap().entrySet()) {
                     data.put(entry.getKey().toString(), entry.getValue().toPlainString());
                 }
                 gson.toJson(data, writer);
@@ -101,10 +99,10 @@ public class EconomyManager {
         if (config == null || !config.cleanupInactiveAccounts) return;
         long now = System.currentTimeMillis();
         long thresholdMillis = config.inactiveAccountCleanupDays * 24L * 60L * 60L * 1000L;
-        for (UUID uuid : balancesMap.keySet()) {
+        for (UUID uuid : balancesCache.asMap().keySet()) {
             Long lastActive = lastActivityMap.get(uuid);
             if (lastActive == null || (now - lastActive) >= thresholdMillis) {
-                balancesMap.remove(uuid);
+                balancesCache.invalidate(uuid);
                 lastActivityMap.remove(uuid);
             }
         }
@@ -163,6 +161,11 @@ public class EconomyManager {
         // Load config on startup
         File configFile = new File("config/neoessentials/economy.json");
         this.config = EconomyConfig.load(configFile);
+        // Initialize Caffeine cache with config values
+        balancesCache = Caffeine.newBuilder()
+            .maximumSize(config.cacheMaximumSize)
+            .expireAfterAccess(config.cacheExpireAfterAccessMinutes, TimeUnit.MINUTES)
+            .build();
         loadBalances();
         loadLastActivity();
         // Schedule periodic batch save every 5 minutes
@@ -173,7 +176,7 @@ public class EconomyManager {
     }
 
     public BigDecimal getBalance(UUID player) {
-        BigDecimal cached = balancesMap.get(player);
+        BigDecimal cached = balancesCache.getIfPresent(player);
         if (cached != null) return cached;
         return config.startingBalance;
     }
@@ -181,10 +184,13 @@ public class EconomyManager {
     public void setBalance(UUID player, BigDecimal amount) {
         if (!config.allowNegativeBalances && amount.compareTo(BigDecimal.ZERO) < 0) amount = BigDecimal.ZERO;
         if (amount.compareTo(config.maxBalance) > 0) amount = config.maxBalance;
-        balancesMap.put(player, amount);
+        BigDecimal oldAmount = getBalance(player);
+        balancesCache.put(player, amount);
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
         queueAsyncSaveActivity();
+        // Log transaction
+        EconomyTransactionLogger.log("SET", player.toString(), "SERVER", amount.toPlainString(), "Set balance (was: " + oldAmount.toPlainString() + ")");
     }
 
     public boolean addBalance(UUID player, BigDecimal amount) {
@@ -192,10 +198,12 @@ public class EconomyManager {
         BigDecimal newAmount = current.add(amount);
         if (!config.allowNegativeBalances && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
         if (newAmount.compareTo(config.maxBalance) > 0) newAmount = config.maxBalance;
-        balancesMap.put(player, newAmount);
+        balancesCache.put(player, newAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
         queueAsyncSaveActivity();
+        // Log transaction
+        EconomyTransactionLogger.log("ADD", "SERVER", player.toString(), amount.toPlainString(), "Add to balance");
         return true;
     }
 
@@ -203,15 +211,17 @@ public class EconomyManager {
         BigDecimal current = getBalance(player);
         BigDecimal newAmount = current.subtract(amount);
         if (!config.allowNegativeBalances && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
-        balancesMap.put(player, newAmount);
+        balancesCache.put(player, newAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
         queueAsyncSaveActivity();
+        // Log transaction
+        EconomyTransactionLogger.log("SUBTRACT", player.toString(), "SERVER", amount.toPlainString(), "Subtract from balance");
         return true;
     }
 
     public Map<UUID, BigDecimal> getAllBalances() {
-        return new ConcurrentHashMap<>(balancesMap);
+        return new ConcurrentHashMap<>(balancesCache.asMap());
     }
 
     public EconomyConfig getConfig() {
@@ -230,5 +240,22 @@ public class EconomyManager {
         return "$"; // Default fallback
     }
 
-    // TODO: Implement transaction logging, cache optimization, Vault compatibility
+    // Vault compatibility stub removed; use EconomyService API instead
+
+    /**
+     * Manually optimize the balances cache by cleaning up expired or low-activity entries.
+     * This can be called after large batch operations or periodically for memory efficiency.
+     */
+    public void optimizeCache() {
+        // Remove entries that are expired according to Caffeine's policy
+        balancesCache.cleanUp();
+        // Optionally, remove accounts with no activity for a long time (already handled by cleanupInactiveAccounts)
+    }
+
+    /**
+     * Returns cache statistics for monitoring and tuning.
+     */
+    public String getCacheStats() {
+        return balancesCache.stats().toString();
+    }
 }

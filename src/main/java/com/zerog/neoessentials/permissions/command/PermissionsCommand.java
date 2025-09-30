@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import com.zerog.neoessentials.permissions.*;
+import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import java.util.UUID;
 
 public class PermissionsCommand {

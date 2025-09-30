@@ -32,10 +32,10 @@ public class PermissionUser {
     }
 
     public void addPermission(String permission) {
-        permissions.add(permission);
+        permissions.add(permission.toLowerCase());
     }
 
     public void removePermission(String permission) {
-        permissions.remove(permission);
+        permissions.remove(permission.toLowerCase());
     }
 }

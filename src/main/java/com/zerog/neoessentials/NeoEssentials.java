@@ -1,11 +1,14 @@
+
 package com.zerog.neoessentials;
+
+import com.zerog.neoessentials.items.commands.dispose;
 
 import com.zerog.neoessentials.api.NeoEssentialsAPI;
 import com.zerog.neoessentials.economy.commands.EconomyCommands;
 import com.zerog.neoessentials.economy.EconomyManager;
 import com.zerog.neoessentials.permissions.PermissionManager;
 import com.zerog.neoessentials.permissions.PermissionStorage;
-import com.zerog.neoessentials.permissions.PermissionAPI;
+import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.permissions.command.PermissionsCommand;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -160,6 +163,8 @@ public class NeoEssentials {
         if (event.getEntity() instanceof ServerPlayer player) {
             UUID uuid = player.getUUID();
             EconomyManager.getInstance().savePlayerEconomy(uuid);
+            // Auto-restore items if player disconnects with pending /dispose
+            dispose.restorePendingItems(player);
         }
     }
 

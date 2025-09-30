@@ -20,5 +20,14 @@
   "commands.neoessentials.history.header": "Recent transactions:",
   "commands.neoessentials.history.entry": "{0}",
   "commands.neoessentials.pay.cooldown": "You are sending payments too quickly. Please wait a few seconds.",
-  "commands.neoessentials.paytoggle.cooldown": "You are toggling too quickly. Please wait a moment."
+  "commands.neoessentials.paytoggle.cooldown": "You are toggling too quickly. Please wait a moment.",
+  "commands.neoessentials.no_permission": "You do not have permission to use this command.",
+  "commands.neoessentials.repair.success": "Item repaired!",
+  "commands.neoessentials.powertool.toggle.success": "Powertool toggled!",
+  "commands.neoessentials.powertool.assign.success": "Powertool command assigned!",
+  "commands.neoessentials.enchant.usage": "Usage: /enchant <enchantment> <level>",
+  "commands.neoessentials.enchanthand.usage": "Usage: /enchanthand <enchantment> <level>",
+  "commands.neoessentials.dispose.success": "Opened dispose chest!",
+  "commands.neoessentials.dispose.title": "Dispose Items",
+  "commands.neoessentials.clearinvintory.success": "Inventory cleared!"
 }

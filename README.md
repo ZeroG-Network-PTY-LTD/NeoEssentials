@@ -246,6 +246,36 @@ The mod uses JSON-based configuration files for flexibility:
 }
 ```
 
+
+## 🔗 API Integration for Modders
+
+### Exposing the Economy API
+
+Other mods can directly access the NeoEssentials economy system using the static API:
+
+```java
+import com.zerog.neoessentials.api.NeoEssentialsAPI;
+import com.zerog.neoessentials.api.EconomyService;
+
+// Get the global economy service instance
+EconomyService eco = NeoEssentialsAPI.getEconomyService();
+
+// Example: Deposit 100 to a player
+eco.deposit(playerUUID, 100.0);
+
+// Example: Get a player's balance
+double balance = eco.getBalance(playerUUID);
+```
+
+**API Version:** `1.0.0`
+
+#### JavaDoc
+All public API methods are documented with JavaDoc in the source code. See `NeoEssentialsAPI.java` and `EconomyService.java` for details.
+
+#### Event Hooks (Planned)
+Future versions will provide NeoForge event hooks for economy actions (deposits, withdrawals, etc.) so other mods can listen and react.
+
+---
 ## 🔗 Integration & Compatibility
 
 ### ✅ Supported Permission Systems
