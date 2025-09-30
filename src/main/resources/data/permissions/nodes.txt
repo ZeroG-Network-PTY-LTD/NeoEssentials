@@ -1,0 +1,21 @@
+# NeoEssentials Permission Nodes
+# This file is auto-generated and updated with every new permission node assigned to features.
+
+# Economy
+# Allows viewing your own balance (balance, bal)
+neoessentials.economy.view_balance
+# Allows paying another player (pay)
+neoessentials.economy.pay
+# Allows use of all /eco admin commands (give, take, set, view others' balance/history)
+neoessentials.economy.admin
+# Allows viewing the balance leaderboard (baltop)
+neoessentials.economy.leaderboard
+
+# Item Commands
+neoessentials.item.clearinvintory
+neoessentials.item.dispose
+neoessentials.item.enchant
+neoessentials.item.more
+neoessentials.item.powertool
+neoessentials.item.powertool.toggle
+neoessentials.item.repair

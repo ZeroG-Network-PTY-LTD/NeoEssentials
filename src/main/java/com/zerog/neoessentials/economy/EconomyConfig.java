@@ -19,6 +19,9 @@ public class EconomyConfig {
     public boolean paytoggleDefault = true;
     public boolean allowNegativeBalances = false;
     public int inactiveAccountCleanupDays = 30; // Number of days before an inactive account is cleaned up
+    // Cache configuration
+    public int cacheMaximumSize = 10000;
+    public int cacheExpireAfterAccessMinutes = 60;
 
     public static EconomyConfig load(File configFile) {
         // If the file does not exist, copy the default from resources
@@ -53,6 +56,8 @@ public class EconomyConfig {
                 if (econ.has("paytoggleDefault")) config.paytoggleDefault = econ.get("paytoggleDefault").getAsBoolean();
                 if (econ.has("allowNegativeBalances")) config.allowNegativeBalances = econ.get("allowNegativeBalances").getAsBoolean();
                 if (econ.has("inactiveAccountCleanupDays")) config.inactiveAccountCleanupDays = econ.get("inactiveAccountCleanupDays").getAsInt();
+                if (econ.has("cacheMaximumSize")) config.cacheMaximumSize = econ.get("cacheMaximumSize").getAsInt();
+                if (econ.has("cacheExpireAfterAccessMinutes")) config.cacheExpireAfterAccessMinutes = econ.get("cacheExpireAfterAccessMinutes").getAsInt();
             }
         } catch (Exception e) {
             // Log error and use defaults

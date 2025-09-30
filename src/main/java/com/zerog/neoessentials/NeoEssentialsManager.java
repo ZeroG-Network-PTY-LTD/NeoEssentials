@@ -1,8 +1,8 @@
 package com.zerog.neoessentials;
 
-import com.zerog.neoessentials.api.TeleportService;
-import com.zerog.neoessentials.api.EconomyService;
-import com.zerog.neoessentials.api.EconomyServiceImpl;
+// import com.zerog.neoessentials.api.TeleportService;
+import com.zerog.neoessentials.api.economy.EconomyService;
+import com.zerog.neoessentials.api.economy.EconomyServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.*;
@@ -22,7 +22,6 @@ public class NeoEssentialsManager {
     // Player data storage
     private final Map<UUID, PlayerData> playerDataMap = new HashMap<>();
     // Service APIs
-    private TeleportService teleportService;
     private EconomyService economyService;
 
     private static final String PLAYERDATA_DIR = "config/neoessentials/playerdata/";
@@ -66,21 +65,7 @@ public class NeoEssentialsManager {
         return playerDataMap.computeIfAbsent(playerId, k -> new PlayerData());
     }
 
-    /**
-     * Sets the teleport service.
-     * @param service TeleportService implementation
-     */
-    public void setTeleportService(TeleportService service) {
-        this.teleportService = service;
-    }
 
-    /**
-     * Gets the teleport service.
-     * @return TeleportService
-     */
-    public TeleportService getTeleportService() {
-        return teleportService;
-    }
 
     /**
      * Sets the economy service.
