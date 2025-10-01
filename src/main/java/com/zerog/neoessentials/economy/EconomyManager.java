@@ -1,10 +1,14 @@
+
 package com.zerog.neoessentials.economy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.config.EconomyConfig;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.*;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class EconomyManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EconomyManager.class);
     private static EconomyManager instance;
     private static final String PLAYER_ECONOMY_DIR = "neoessentials/economy/";
     private static final String GLOBAL_ECONOMY_CONFIG = "config/neoessentials/economy.json";
@@ -95,7 +100,7 @@ public class EconomyManager {
                 playerPayToggle.put(playerId, true);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+                LOGGER.error("Failed to load player economy for {}", playerId, e);
         }
     }
 
@@ -111,7 +116,7 @@ public class EconomyManager {
                 GSON.toJson(new PlayerEconomyData(balance.doubleValue(), accepting), writer);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+                LOGGER.error("Failed to save player economy for {}", playerId, e);
         }
     }
 
@@ -139,13 +144,19 @@ public class EconomyManager {
     private static class PlayerEconomyData {
         double balance;
         Boolean acceptingPayments;
-        PlayerEconomyData(double balance) {
-            this.balance = balance;
-            this.acceptingPayments = true;
-        }
         PlayerEconomyData(double balance, boolean acceptingPayments) {
             this.balance = balance;
             this.acceptingPayments = acceptingPayments;
         }
+    }
+    
+    /**
+     * Shutdown method to clean up resources.
+     */
+    public void shutdown() {
+        LOGGER.info("Shutting down main EconomyManager...");
+        // This manager doesn't have executor services, so just save all data
+        saveAllPlayerEconomy();
+        LOGGER.info("Main EconomyManager shutdown complete.");
     }
 }

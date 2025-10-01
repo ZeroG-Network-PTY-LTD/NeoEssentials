@@ -1,6 +1,7 @@
+
 package com.zerog.neoessentials.economy.managers;
 
-import com.zerog.neoessentials.economy.EconomyConfig;
+import com.zerog.neoessentials.config.EconomyConfig;
 import com.zerog.neoessentials.economy.EconomyTransactionLogger;
 import com.zerog.neoessentials.config.GlobalConfig;
 import java.math.BigDecimal;
@@ -15,20 +16,26 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
-import java.nio.file.Path;
+
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EconomyManager {
-    // Singleton instance
-    private static EconomyManager instance;
+    private static final Logger LOGGER = LoggerFactory.getLogger(EconomyManager.class);
+    
+    // Thread-safe singleton using Bill Pugh Singleton Pattern
+    private static class SingletonHolder {
+        private static final EconomyManager INSTANCE = new EconomyManager();
+    }
+    
     public static EconomyManager getInstance() {
-        if (instance == null) instance = new EconomyManager();
-        return instance;
+        return SingletonHolder.INSTANCE;
     }
 
     // Use Caffeine cache for balances
@@ -58,7 +65,7 @@ public class EconomyManager {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to load balances from file", e);
         }
     }
 
@@ -79,7 +86,7 @@ public class EconomyManager {
             // Atomically move temp file to balancesFile
             Files.move(tempFile.toPath(), balancesFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to save balances to file", e);
         }
     }
 
@@ -124,7 +131,7 @@ public class EconomyManager {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to load last activity data", e);
         }
     }
 
@@ -143,7 +150,7 @@ public class EconomyManager {
             }
             Files.move(tempFile.toPath(), lastActivityFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to save last activity data", e);
         }
     }
 
@@ -161,16 +168,22 @@ public class EconomyManager {
         // Load config on startup
         File configFile = new File("config/neoessentials/economy.json");
         this.config = EconomyConfig.load(configFile);
-        // Initialize Caffeine cache with config values
+        // Initialize Caffeine cache with config values and statistics
         balancesCache = Caffeine.newBuilder()
             .maximumSize(config.cacheMaximumSize)
             .expireAfterAccess(config.cacheExpireAfterAccessMinutes, TimeUnit.MINUTES)
+            .recordStats() // Enable statistics for monitoring
+            .removalListener((uuid, balance, cause) -> 
+                LOGGER.debug("Cache evicted: {} -> {} (cause: {})", uuid, balance, cause))
             .build();
         loadBalances();
         loadLastActivity();
         // Schedule periodic batch save every 5 minutes
         saveExecutor.scheduleAtFixedRate(this::saveBalancesAtomic, 5, 5, TimeUnit.MINUTES);
         saveExecutor.scheduleAtFixedRate(this::saveLastActivityAtomic, 5, 5, TimeUnit.MINUTES);
+        
+        // Schedule periodic cache statistics logging every 30 minutes
+        saveExecutor.scheduleAtFixedRate(this::logCacheMetrics, 30, 30, TimeUnit.MINUTES);
         // Schedule inactive account cleanup every hour (no time window)
         saveExecutor.scheduleAtFixedRate(this::cleanupInactiveAccounts, 1, 1, TimeUnit.HOURS);
     }
@@ -257,5 +270,42 @@ public class EconomyManager {
      */
     public String getCacheStats() {
         return balancesCache.stats().toString();
+    }
+    
+    /**
+     * Logs cache metrics for monitoring and debugging.
+     */
+    private void logCacheMetrics() {
+        var stats = balancesCache.stats();
+        LOGGER.info("EconomyManager Cache Metrics - Hit Rate: {:.2f}%, Evictions: {}, Size: {}", 
+                   stats.hitRate() * 100, 
+                   stats.evictionCount(), 
+                   balancesCache.estimatedSize());
+    }
+    
+    /**
+     * Shuts down the economy manager and its executor services properly.
+     */
+    public void shutdown() {
+        LOGGER.info("Shutting down EconomyManager...");
+        
+        // Save any pending data
+        saveBalancesAtomic();
+        saveLastActivityAtomic();
+        
+        // Shutdown executor service
+        saveExecutor.shutdown();
+        try {
+            if (!saveExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+                LOGGER.warn("EconomyManager executor did not terminate gracefully, forcing shutdown...");
+                saveExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            LOGGER.warn("Interrupted while waiting for EconomyManager executor shutdown");
+            saveExecutor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        
+        LOGGER.info("EconomyManager shutdown complete.");
     }
 }

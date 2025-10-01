@@ -1,4 +1,6 @@
+
 package com.zerog.neoessentials.economy;
+import com.zerog.neoessentials.util.DebugUtil;
 
 import java.io.File;
 import java.io.FileReader;
@@ -25,7 +27,7 @@ public class EconomyLocalization {
                 Map<String, String> map = gson.fromJson(reader, type);
                 if (map != null) translations.putAll(map);
             } catch (Exception e) {
-                e.printStackTrace();
+                DebugUtil.debugStackTrace(e);
             }
         }
     }

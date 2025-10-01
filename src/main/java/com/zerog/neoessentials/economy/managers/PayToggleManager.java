@@ -1,6 +1,9 @@
-package com.zerog.neoessentials.economy.managers;
 
-import com.zerog.neoessentials.economy.EconomyConfig;
+package com.zerog.neoessentials.economy.managers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.zerog.neoessentials.config.EconomyConfig;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.UUID;
@@ -20,15 +23,21 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 
 public class PayToggleManager {
-    private static PayToggleManager instance;
+    private static final Logger LOGGER = LoggerFactory.getLogger(PayToggleManager.class);
+    
+    // Thread-safe singleton using Bill Pugh Singleton Pattern
+    private static class SingletonHolder {
+        private static final PayToggleManager INSTANCE = new PayToggleManager();
+    }
+    
     public static PayToggleManager getInstance() {
-        if (instance == null) instance = new PayToggleManager();
-        return instance;
+        return SingletonHolder.INSTANCE;
     }
 
     private final Cache<UUID, Boolean> paytoggleCache = Caffeine.newBuilder()
         .maximumSize(10000)
         .expireAfterAccess(1, TimeUnit.HOURS)
+        .recordStats() // Enable statistics for monitoring
         .build();
     private final File togglesFile = new File("neoessentials/paytoggles.json");
     private final Gson gson = new Gson();
@@ -54,7 +63,7 @@ public class PayToggleManager {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to load pay toggles", e);
         }
     }
 
@@ -71,7 +80,7 @@ public class PayToggleManager {
             }
             Files.move(tempFile.toPath(), togglesFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to save pay toggles", e);
         }
     }
 

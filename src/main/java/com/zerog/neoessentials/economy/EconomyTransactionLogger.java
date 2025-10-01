@@ -1,4 +1,6 @@
+
 package com.zerog.neoessentials.economy;
+import com.zerog.neoessentials.util.DebugUtil;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -21,7 +23,7 @@ public class EconomyTransactionLogger {
                 writer.write(entry);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            DebugUtil.debugStackTrace(e);
         }
     }
 }

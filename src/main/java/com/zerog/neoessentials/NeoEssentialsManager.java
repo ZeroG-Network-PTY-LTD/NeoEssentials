@@ -1,3 +1,4 @@
+
 package com.zerog.neoessentials;
 
 // import com.zerog.neoessentials.api.TeleportService;
@@ -12,12 +13,14 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Singleton manager for NeoEssentials services and player data.
  */
 public class NeoEssentialsManager {
-    private static NeoEssentialsManager instance;
+    private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentialsManager.class);
 
     // Player data storage
     private final Map<UUID, PlayerData> playerDataMap = new HashMap<>();
@@ -37,15 +40,17 @@ public class NeoEssentialsManager {
         );
     }
 
+    // Thread-safe singleton using Bill Pugh Singleton Pattern
+    private static class SingletonHolder {
+        private static final NeoEssentialsManager INSTANCE = new NeoEssentialsManager();
+    }
+    
     /**
      * Gets the singleton instance of the manager.
      * @return NeoEssentialsManager instance
      */
-    public static synchronized NeoEssentialsManager getInstance() {
-        if (instance == null) {
-            instance = new NeoEssentialsManager();
-        }
-        return instance;
+    public static NeoEssentialsManager getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
     /**
@@ -112,7 +117,7 @@ public class NeoEssentialsManager {
                 GSON.toJson(data, writer);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to save player data for {}", playerId, e);
         }
     }
 
@@ -126,7 +131,7 @@ public class NeoEssentialsManager {
                 playerDataMap.put(playerId, data);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to load player data for {}", playerId, e);
         }
     }
 
@@ -148,11 +153,11 @@ public class NeoEssentialsManager {
                     UUID uuid = UUID.fromString(uuidStr);
                     playerDataMap.put(uuid, data);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LOGGER.error("Failed to load individual player data file", e);
                 }
             });
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to load all player data", e);
         }
     }
 }

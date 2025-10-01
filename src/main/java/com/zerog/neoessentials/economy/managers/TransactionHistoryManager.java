@@ -1,4 +1,6 @@
+
 package com.zerog.neoessentials.economy.managers;
+import com.zerog.neoessentials.util.DebugUtil;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +46,7 @@ public class TransactionHistoryManager {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            DebugUtil.debugStackTrace(e);
         }
     }
 
@@ -61,7 +63,7 @@ public class TransactionHistoryManager {
             }
             Files.move(tempFile.toPath(), historyFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
-            e.printStackTrace();
+            DebugUtil.debugStackTrace(e);
         }
     }
 
