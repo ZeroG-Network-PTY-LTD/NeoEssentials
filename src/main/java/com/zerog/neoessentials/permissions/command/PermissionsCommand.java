@@ -1,4 +1,7 @@
+
 package com.zerog.neoessentials.permissions.command;
+import com.zerog.neoessentials.util.DebugUtil;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -11,7 +14,13 @@ import java.util.UUID;
 
 public class PermissionsCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("pex")
+        // Register under both /pex and /permissions
+        dispatcher.register(createRoot("pex"));
+        dispatcher.register(createRoot("permissions"));
+    }
+
+    private static LiteralArgumentBuilder<CommandSourceStack> createRoot(String root) {
+        return Commands.literal(root)
             .then(Commands.literal("reload")
                 .executes(ctx -> reload(ctx)))
             .then(Commands.literal("group")
@@ -38,8 +47,7 @@ public class PermissionsCommand {
                             .executes(ctx -> addUserPermission(ctx))))
                     .then(Commands.literal("remove")
                         .then(Commands.argument("permission", StringArgumentType.word())
-                            .executes(ctx -> removeUserPermission(ctx))))))
-        );
+                            .executes(ctx -> removeUserPermission(ctx))))));
     }
 
     private static int reload(CommandContext<CommandSourceStack> ctx) {
@@ -47,10 +55,11 @@ public class PermissionsCommand {
             PermissionManager manager = new PermissionManager();
             PermissionStorage.load(manager);
             PermissionAPI.setManager(manager);
-            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Permissions reloaded."), false);
+            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.reloaded"), false);
             return 1;
         } catch (Exception e) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Failed to reload permissions: " + e.getMessage()));
+            DebugUtil.debugStackTrace(e);
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.reload_failed", e.getMessage()));
             return 0;
         }
     }
@@ -60,12 +69,12 @@ public class PermissionsCommand {
         String prefix = StringArgumentType.getString(ctx, "prefix");
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Group not found."));
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
-        group.setPrefix(prefix);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { e.printStackTrace(); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Prefix set."), false);
+    group.setPrefix(prefix);
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.prefix_set"), false);
         return 1;
     }
 
@@ -74,12 +83,12 @@ public class PermissionsCommand {
         String suffix = StringArgumentType.getString(ctx, "suffix");
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Group not found."));
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
-        group.setSuffix(suffix);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { e.printStackTrace(); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Suffix set."), false);
+    group.setSuffix(suffix);
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.suffix_set"), false);
         return 1;
     }
 
@@ -88,12 +97,12 @@ public class PermissionsCommand {
         String perm = StringArgumentType.getString(ctx, "permission");
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Group not found."));
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
-        group.addPermission(perm);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { e.printStackTrace(); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Permission added."), false);
+    group.addPermission(perm);
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_added"), false);
         return 1;
     }
 
@@ -102,12 +111,12 @@ public class PermissionsCommand {
         String perm = StringArgumentType.getString(ctx, "permission");
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Group not found."));
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
-        group.removePermission(perm);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { e.printStackTrace(); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Permission removed."), false);
+    group.removePermission(perm);
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_removed"), false);
         return 1;
     }
 
@@ -118,17 +127,17 @@ public class PermissionsCommand {
         try {
             uuid = UUID.fromString(uuidStr);
         } catch (IllegalArgumentException e) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Invalid UUID."));
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.invalid_uuid"));
             return 0;
         }
         PermissionUser user = PermissionAPI.getManager().getUser(uuid);
         if (user == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("User not found."));
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.user_not_found"));
             return 0;
         }
-        user.setGroup(groupName);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { e.printStackTrace(); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("User group set."), false);
+    user.setGroup(groupName);
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.user_group_set"), false);
         return 1;
     }
 
@@ -139,17 +148,17 @@ public class PermissionsCommand {
         try {
             uuid = UUID.fromString(uuidStr);
         } catch (IllegalArgumentException e) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Invalid UUID."));
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.invalid_uuid"));
             return 0;
         }
         PermissionUser user = PermissionAPI.getManager().getUser(uuid);
         if (user == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("User not found."));
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.user_not_found"));
             return 0;
         }
-        user.addPermission(perm);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { e.printStackTrace(); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Permission added to user."), false);
+    user.addPermission(perm);
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_added_to_user"), false);
         return 1;
     }
 
@@ -160,17 +169,17 @@ public class PermissionsCommand {
         try {
             uuid = UUID.fromString(uuidStr);
         } catch (IllegalArgumentException e) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("Invalid UUID."));
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.invalid_uuid"));
             return 0;
         }
         PermissionUser user = PermissionAPI.getManager().getUser(uuid);
         if (user == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.literal("User not found."));
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.user_not_found"));
             return 0;
         }
-        user.removePermission(perm);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { e.printStackTrace(); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("Permission removed from user."), false);
+    user.removePermission(perm);
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_removed_from_user"), false);
         return 1;
     }
 }

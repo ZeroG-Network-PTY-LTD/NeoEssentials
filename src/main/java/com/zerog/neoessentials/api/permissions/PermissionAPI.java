@@ -2,7 +2,8 @@
     package com.zerog.neoessentials.api.permissions;
 
 import java.util.UUID;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zerog.neoessentials.permissions.ExternalPermissionAdapter;
 import com.zerog.neoessentials.permissions.PermissionGroup;
@@ -12,7 +13,7 @@ import com.zerog.neoessentials.permissions.PermissionUser;
 public class PermissionAPI {
     private static PermissionManager manager;
     private static ExternalPermissionAdapter externalAdapter = null;
-    private static final Logger LOGGER = Logger.getLogger("NeoEssentials-Permissions");
+    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionAPI.class);
 
     /**
      * Set the built-in permission manager (default system).

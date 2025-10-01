@@ -1,18 +1,23 @@
+
 package com.zerog.neoessentials.items.commands;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.data.ModDataComponents;
-import com.zerog.neoessentials.config.CommandConfig;
+import com.zerog.neoessentials.config.CommandModuleConfig;
 
 public class powertooltoggl {
+    // Server-side powertool toggles: player UUID -> slot -> enabled
+    private static final Map<java.util.UUID, Map<Integer, Boolean>> TOGGLES = new HashMap<>();
     /**
      * Register the /powertooltoggle and /pttoggle commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!CommandConfig.isCommandEnabled("powertooltoggle")) return;
+        CommandModuleConfig config = CommandModuleConfig.load(new java.io.File("config/neoessentials/config.json"));
+        if (!config.isCommandEnabled("powertooltoggle")) return;
         dispatcher.register(
             Commands.literal("powertooltoggle")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
@@ -44,13 +49,12 @@ public class powertooltoggl {
     }
 
     /**
-     * Toggles powertool activation state for the item in the player's main hand using Data Components API.
+     * Toggles powertool activation state for the item in the player's main hand using vanilla NBT.
      */
     public static void toggle(ServerPlayer player) {
-        var stack = player.getMainHandItem();
-        if (!stack.isEmpty()) {
-            boolean enabled = Boolean.TRUE.equals(stack.get(ModDataComponents.POWERTOOL_TOGGLE));
-            stack.set(ModDataComponents.POWERTOOL_TOGGLE, !enabled);
-        }
+        int slot = player.getInventory().selected;
+        Map<Integer, Boolean> map = TOGGLES.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
+        boolean enabled = map.getOrDefault(slot, true);
+        map.put(slot, !enabled);
     }
 }

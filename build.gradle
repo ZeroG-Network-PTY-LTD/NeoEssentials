@@ -20,7 +20,18 @@ version = mod_version
 group = mod_group_id
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    // For local mod jars
+    flatDir {
+        dirs 'libs'
+    }
+    // CurseMaven for FTB, Architectury, and other mods
+    maven {
+        name = "CurseMaven"
+        url = "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
 }
 
 base {
@@ -136,6 +147,18 @@ dependencies {
 
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+    // LuckPerms API for permissions integration
+    compileOnly 'net.luckperms:api:5.4'
+
+    // FTB Library, Architectury API, and FTB Ranks (NeoForge 1.21.1 via CurseMaven)
+    compileOnly 'curse.maven:ftb-library-404465:7029003'
+    compileOnly 'curse.maven:architectury-api-419699:5786327'
+    compileOnly 'curse.maven:ftb-ranks-314905:6522073'
+
+    // Alternative: if you want them available during testing, use runtimeOnly
+    // runtimeOnly fg.deobf("dev.architectury:architectury-neoforge:VERSION")
+    // runtimeOnly fg.deobf("dev.ftb.mods:ftb-library-neoforge:VERSION")
+    // runtimeOnly fg.deobf("dev.ftb.mods:ftbranks-neoforge:VERSION")
 }
 
 shadowJar {

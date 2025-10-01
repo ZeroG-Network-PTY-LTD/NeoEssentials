@@ -1,4 +1,6 @@
+
 package com.zerog.neoessentials.config;
+import com.zerog.neoessentials.util.DebugUtil;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -36,7 +38,7 @@ public class CommandConfig {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            DebugUtil.debugStackTrace(e);
         }
         loaded = true;
     }

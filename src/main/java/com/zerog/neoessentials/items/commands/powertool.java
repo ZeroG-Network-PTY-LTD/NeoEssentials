@@ -1,19 +1,24 @@
+
 package com.zerog.neoessentials.items.commands;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import com.zerog.neoessentials.data.ModDataComponents;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.config.CommandConfig;
+import com.zerog.neoessentials.config.CommandModuleConfig;
 
 public class powertool {
+    // Server-side powertool assignments: player UUID -> slot -> command
+    private static final Map<java.util.UUID, Map<Integer, String>> POWERS = new HashMap<>();
     /**
      * Register the /powertool and /pt commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!CommandConfig.isCommandEnabled("powertool")) return;
+        CommandModuleConfig config = CommandModuleConfig.load(new java.io.File("config/neoessentials/config.json"));
+        if (!config.isCommandEnabled("powertool")) return;
         dispatcher.register(
             Commands.literal("powertool")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
@@ -51,12 +56,10 @@ public class powertool {
     }
 
     /**
-     * Assigns a command to the item in the player's main hand using Data Components API.
+     * Assigns a command to the item in the player's main hand using vanilla NBT.
      */
     public static void assign(ServerPlayer player, String command) {
-        var stack = player.getMainHandItem();
-        if (!stack.isEmpty()) {
-            stack.set(ModDataComponents.POWERTOOL_COMMAND, command);
-        }
+        int slot = player.getInventory().selected;
+        POWERS.computeIfAbsent(player.getUUID(), k -> new HashMap<>()).put(slot, command);
     }
 }

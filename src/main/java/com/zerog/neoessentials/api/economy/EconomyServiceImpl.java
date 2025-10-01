@@ -1,4 +1,5 @@
 package com.zerog.neoessentials.api.economy;
+import com.zerog.neoessentials.util.DebugUtil;
 
 import java.util.Map;
 import java.util.UUID;
@@ -107,8 +108,9 @@ public class EconomyServiceImpl implements EconomyService {
                 }
             }
         } catch (IOException e) {
-            System.err.println("[NeoEssentials] " + java.time.LocalDate.now() + " - " +
+            DebugUtil.debug("[NeoEssentials] " + java.time.LocalDate.now() + " - " +
                 "Error loading balances: " + e.getMessage());
+            DebugUtil.debugStackTrace(e);
         }
     }
 
@@ -123,8 +125,9 @@ public class EconomyServiceImpl implements EconomyService {
                 gson.toJson(raw, writer);
             }
         } catch (IOException e) {
-            System.err.println("[NeoEssentials] " + java.time.LocalDate.now() + " - " +
+            DebugUtil.debug("[NeoEssentials] " + java.time.LocalDate.now() + " - " +
                 "Error saving balances: " + e.getMessage());
+            DebugUtil.debugStackTrace(e);
         }
     }
 

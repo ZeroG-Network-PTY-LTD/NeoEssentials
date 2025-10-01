@@ -1,6 +1,11 @@
 {
+	"debug": {
+		"debugEnabled": false
+	},
 	"modules": {
-		"economyEnabled": false
+		"economyEnabled": true,
+		"commandsEnabled": true,
+		"permissionsEnabled": true
 	},
 	"items": {
 		"item-spawn-blacklist": [],
@@ -18,12 +23,50 @@
 		"allow-direct-hat": true,
 		"max-itemlore-lines": 10
 	},
-	"commands": {
-		"clearinvintory": true,
-		"dispose": true,
-		"repair": true,
-		"powertool": true,
-		"powertooltoggle": true,
-		"enchant": true
+		"commands": {
+			"clearinvintory": true,
+			"dispose": true,
+			"repair": true,
+			"powertool": true,
+			"powertooltoggle": true,
+			"enchant": true,
+			"balance": true,
+			"bal": true,
+			"pay": true,
+			"eco": true,
+			"baltop": true,
+			"paytoggle": true,
+			"afk": true,
+			"ignore": true,
+			"msg": true,
+			"msgtoggle": true,
+			"mute": true,
+			"mutelist": true,
+			"reply": true,
+			"socialspy": true,
+			"unignore": true,
+			"unmute": true
+		},
+		"chat": {
+			"muteCommands": ["f", "kittycannon"],
+			"playerChatPermissions": ["chat.color", "chat.format", "chat.shout", "chat.question"],
+			"sleepIgnoresAfkPlayers": true,
+			"sleepIgnoresVanishedPlayers": true,
+			"afkListName": "none",
+			"broadcastAfkMessage": true,
+			"deathMessages": true,
+			"vanishingItemsPolicy": "keep",
+			"bindingItemsPolicy": "keep",
+			"sendInfoAfterDeath": false,
+			"allowSilentJoinQuit": false,
+			"customJoinMessage": "none",
+			"customQuitMessage": "none",
+			"customNewUsernameMessage": "none",
+			"useCustomServerFullMessage": true,
+			"hideJoinQuitMessagesAbove": -1,
+			"chat-format": "{DISPLAYNAME}: {MESSAGE}"
+		},
+	"permissions": {
+		"integration": "auto"
 	}
 }

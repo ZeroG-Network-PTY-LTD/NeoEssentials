@@ -4,7 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.config.CommandConfig;
+import com.zerog.neoessentials.config.CommandModuleConfig;
 import net.minecraft.world.SimpleContainer;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,7 +37,8 @@ public class dispose {
      * Register the /dispose and /trash commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!CommandConfig.isCommandEnabled("dispose")) return;
+        CommandModuleConfig config = CommandModuleConfig.load(new java.io.File("config/neoessentials/config.json"));
+        if (!config.isCommandEnabled("dispose")) return;
         dispatcher.register(
             Commands.literal("dispose")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)

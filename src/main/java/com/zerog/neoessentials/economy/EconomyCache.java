@@ -26,7 +26,9 @@ public class EconomyCache {
                 cache.put(key, value);
             }
         }
-        return (T) value;
+        @SuppressWarnings("unchecked")
+        T result = (T) value;
+        return result;
     }
 
     /**
