@@ -63,17 +63,17 @@ public class PermissionAPI {
             if (prefix != null) return prefix;
         }
         if (manager == null) {
-            LOGGER.warning("PermissionAPI.getPrefix: PermissionManager is null");
+            LOGGER.warn("PermissionAPI.getPrefix: PermissionManager is null");
             return "";
         }
         PermissionUser user = manager.getUser(uuid);
         if (user == null) {
-            LOGGER.warning("PermissionAPI.getPrefix: No PermissionUser found for UUID " + uuid);
+            LOGGER.warn("PermissionAPI.getPrefix: No PermissionUser found for UUID " + uuid);
         }
         String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : manager.getDefaultGroup();
         PermissionGroup group = manager.getGroup(groupName);
         if (group == null) {
-            LOGGER.warning("PermissionAPI.getPrefix: No PermissionGroup found for group '" + groupName + "'");
+            LOGGER.warn("PermissionAPI.getPrefix: No PermissionGroup found for group '" + groupName + "'");
         }
         return group != null ? group.getPrefix() : "";
     }
@@ -84,17 +84,17 @@ public class PermissionAPI {
             if (suffix != null) return suffix;
         }
         if (manager == null) {
-            LOGGER.warning("PermissionAPI.getSuffix: PermissionManager is null");
+            LOGGER.warn("PermissionAPI.getSuffix: PermissionManager is null");
             return "";
         }
         PermissionUser user = manager.getUser(uuid);
         if (user == null) {
-            LOGGER.warning("PermissionAPI.getSuffix: No PermissionUser found for UUID " + uuid);
+            LOGGER.warn("PermissionAPI.getSuffix: No PermissionUser found for UUID " + uuid);
         }
         String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : manager.getDefaultGroup();
         PermissionGroup group = manager.getGroup(groupName);
         if (group == null) {
-            LOGGER.warning("PermissionAPI.getSuffix: No PermissionGroup found for group '" + groupName + "'");
+            LOGGER.warn("PermissionAPI.getSuffix: No PermissionGroup found for group '" + groupName + "'");
         }
         return group != null ? group.getSuffix() : "";
     }

@@ -3,11 +3,32 @@ package com.zerog.neoessentials.permissions;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PermissionManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionManager.class);
     private final Map<String, PermissionGroup> groups = new ConcurrentHashMap<>();
     private final Map<UUID, PermissionUser> users = new ConcurrentHashMap<>();
     private String defaultGroup = "default";
+    
+    // Permission caching
+    private final Map<String, CachedPermission> permissionCache = new ConcurrentHashMap<>();
+    private static final long CACHE_TTL = 300000; // 5 minutes in milliseconds
+    
+    private static class CachedPermission {
+        final boolean result;
+        final long timestamp;
+        
+        CachedPermission(boolean result) {
+            this.result = result;
+            this.timestamp = System.currentTimeMillis();
+        }
+        
+        boolean isExpired() {
+            return System.currentTimeMillis() - timestamp > CACHE_TTL;
+        }
+    }
 
     public PermissionManager() {
     }
@@ -18,7 +39,9 @@ public class PermissionManager {
     public void reload() throws Exception {
         this.groups.clear();
         this.users.clear();
+        this.permissionCache.clear();
         PermissionStorage.load(this);
+        LOGGER.info("Permissions reloaded, cache cleared");
     }
 
     /**
@@ -52,7 +75,21 @@ public class PermissionManager {
     }
 
     public PermissionUser getUser(UUID uuid) {
-        return users.get(uuid);
+        PermissionUser user = users.get(uuid);
+        if (user == null) {
+            // Auto-create user with default group
+            user = new PermissionUser(uuid, defaultGroup);
+            addUser(user);
+            LOGGER.info("Auto-created user {} with default group '{}'", uuid, defaultGroup);
+            
+            // Auto-save new user (async to avoid blocking)
+            try {
+                PermissionStorage.save(this);
+            } catch (Exception e) {
+                LOGGER.error("Failed to save auto-created user {}", uuid, e);
+            }
+        }
+        return user;
     }
 
     public Collection<PermissionUser> getUsers() {
@@ -61,6 +98,29 @@ public class PermissionManager {
 
     public boolean hasPermission(UUID uuid, String permission) {
         permission = permission.toLowerCase();
+        String cacheKey = uuid + ":" + permission;
+        
+        // Check cache first
+        CachedPermission cached = permissionCache.get(cacheKey);
+        if (cached != null && !cached.isExpired()) {
+            return cached.result;
+        }
+        
+        // Compute permission
+        boolean result = computePermission(uuid, permission);
+        
+        // Cache the result
+        permissionCache.put(cacheKey, new CachedPermission(result));
+        
+        // Clean expired entries periodically (every 100 checks)
+        if (permissionCache.size() % 100 == 0) {
+            cleanExpiredCache();
+        }
+        
+        return result;
+    }
+    
+    private boolean computePermission(UUID uuid, String permission) {
         PermissionUser user = getUser(uuid);
         String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : defaultGroup;
         // Check user negative permissions
@@ -71,6 +131,22 @@ public class PermissionManager {
         if (user != null && hasPermissionWithWildcards(user.getPermissions(), permission)) return true;
         // Check group permissions (with inheritance and wildcards)
         return hasGroupPermission(groupName, permission, new HashSet<>());
+    }
+    
+    /**
+     * Clears expired entries from the permission cache
+     */
+    private void cleanExpiredCache() {
+        permissionCache.entrySet().removeIf(entry -> entry.getValue().isExpired());
+        LOGGER.debug("Cleaned permission cache, {} entries remaining", permissionCache.size());
+    }
+    
+    /**
+     * Clears the entire permission cache (useful after permission changes)
+     */
+    public void clearCache() {
+        permissionCache.clear();
+        LOGGER.debug("Permission cache cleared");
     }
 
     private boolean hasNegativePermission(Set<String> perms, String permission) {

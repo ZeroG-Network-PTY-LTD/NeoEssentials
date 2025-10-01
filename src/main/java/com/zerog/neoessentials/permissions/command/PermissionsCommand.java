@@ -1,6 +1,7 @@
 
 package com.zerog.neoessentials.permissions.command;
-import com.zerog.neoessentials.util.DebugUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -13,6 +14,8 @@ import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import java.util.UUID;
 
 public class PermissionsCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PermissionsCommand.class);
+    
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Register under both /pex and /permissions
         dispatcher.register(createRoot("pex"));
