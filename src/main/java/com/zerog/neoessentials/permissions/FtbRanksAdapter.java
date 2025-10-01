@@ -3,7 +3,8 @@ package com.zerog.neoessentials.permissions;
 
 import java.util.UUID;
 import net.neoforged.fml.ModList;
-import com.zerog.neoessentials.util.DebugUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stub implementation for FTB Ranks integration.
@@ -13,6 +14,7 @@ import com.zerog.neoessentials.util.DebugUtil;
  * Adapter for FTB Ranks integration using reflection to avoid hard dependency.
  */
 public class FtbRanksAdapter implements ExternalPermissionAdapter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FtbRanksAdapter.class);
     private final boolean ftbRanksLoaded;
     private Object ftbRanksApi;
     private Class<?> ftbRanksAPIClass;
@@ -26,7 +28,7 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 // Get the INSTANCE field
                 ftbRanksApi = ftbRanksAPIClass.getField("INSTANCE").get(null);
             } catch (Exception e) {
-                DebugUtil.debugErr("Failed to load FTB Ranks API: " + e.getMessage());
+                LOGGER.error("Failed to load FTB Ranks API: {}", e.getMessage(), e);
             }
         }
     }
@@ -38,7 +40,7 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 var method = ftbRanksAPIClass.getMethod("hasPermission", UUID.class, String.class);
                 return (boolean) method.invoke(ftbRanksApi, uuid, permission);
             } catch (Exception e) {
-                DebugUtil.debugStackTrace(e);
+                LOGGER.error("Failed to check FTB Ranks permission", e);
             }
         }
         return ConfigPermissionUtil.hasPermission(uuid, permission);
@@ -51,7 +53,7 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 var method = ftbRanksAPIClass.getMethod("getPrefix", UUID.class);
                 return (String) method.invoke(ftbRanksApi, uuid);
             } catch (Exception e) {
-                DebugUtil.debugStackTrace(e);
+                LOGGER.error("Failed to get FTB Ranks prefix", e);
             }
         }
         return ConfigPermissionUtil.getPrefix(uuid);
@@ -64,7 +66,7 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 var method = ftbRanksAPIClass.getMethod("getSuffix", UUID.class);
                 return (String) method.invoke(ftbRanksApi, uuid);
             } catch (Exception e) {
-                DebugUtil.debugStackTrace(e);
+                LOGGER.error("Failed to get FTB Ranks suffix", e);
             }
         }
         return ConfigPermissionUtil.getSuffix(uuid);

@@ -1,6 +1,7 @@
 
 package com.zerog.neoessentials.permissions;
-import com.zerog.neoessentials.util.DebugUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class ConfigPermissionUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigPermissionUtil.class);
     private static Map<UUID, UserPermData> userPerms = new HashMap<>();
     private static boolean loaded = false;
 
@@ -69,7 +71,7 @@ public class ConfigPermissionUtil {
                 }
             }
         } catch (Exception e) {
-            DebugUtil.debugStackTrace(e);
+            LOGGER.error("Failed to load permission configuration", e);
         }
         loaded = true;
     }
