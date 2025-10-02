@@ -35,6 +35,7 @@ public class NeoEssentialsManager {
      */
     private NeoEssentialsManager() {
         // Initialize EconomyServiceImpl with persistent storage
+        // Note: This is for API compatibility - actual economy is handled by EconomyManager
         this.economyService = new EconomyServiceImpl(
             Paths.get("neoessentials/balances.json")
         );
@@ -89,21 +90,57 @@ public class NeoEssentialsManager {
     }
 
     /**
-     * Player data for homes, balances, warps, and economy toggles.
+     * Player data for homes, warps, teleportation, and non-economy settings.
+     * Note: Economy data (balance, pay toggles) is handled by EconomyManager separately.
      */
     public static class PlayerData {
         public Map<String, Object> homes = new HashMap<>();
-        public double balance = 0.0;
         public Map<String, Object> warps = new HashMap<>();
-        // Economy toggles
-        private boolean payConfirmEnabled = false;
-        private boolean payAcceptEnabled = true;
-        // Add more fields as needed
-
-        public boolean isPayConfirmEnabled() { return payConfirmEnabled; }
-        public void setPayConfirmEnabled(boolean enabled) { this.payConfirmEnabled = enabled; }
-        public boolean isPayAcceptEnabled() { return payAcceptEnabled; }
-        public void setPayAcceptEnabled(boolean enabled) { this.payAcceptEnabled = enabled; }
+        public Map<String, Object> mail = new HashMap<>();
+        
+        // Non-economy toggles and settings
+        private boolean afkStatus = false;
+        private boolean vanishMode = false;
+        private boolean godMode = false;
+        private boolean flyMode = false;
+        private long lastActivity = System.currentTimeMillis();
+        private String lastLocation = null;
+        
+        // Teleportation settings  
+        private boolean tpToggle = true;
+        private boolean msgToggle = true;
+        
+        // Social features
+        private java.util.List<String> ignoreList = new java.util.ArrayList<>();
+        
+        // Getters and setters
+        public boolean isAfkStatus() { return afkStatus; }
+        public void setAfkStatus(boolean afk) { this.afkStatus = afk; }
+        
+        public boolean isVanishMode() { return vanishMode; }
+        public void setVanishMode(boolean vanish) { this.vanishMode = vanish; }
+        
+        public boolean isGodMode() { return godMode; }
+        public void setGodMode(boolean god) { this.godMode = god; }
+        
+        public boolean isFlyMode() { return flyMode; }
+        public void setFlyMode(boolean fly) { this.flyMode = fly; }
+        
+        public long getLastActivity() { return lastActivity; }
+        public void setLastActivity(long time) { this.lastActivity = time; }
+        
+        public String getLastLocation() { return lastLocation; }
+        public void setLastLocation(String location) { this.lastLocation = location; }
+        
+        public boolean isTpToggle() { return tpToggle; }
+        public void setTpToggle(boolean enabled) { this.tpToggle = enabled; }
+        
+        public boolean isMsgToggle() { return msgToggle; }
+        public void setMsgToggle(boolean enabled) { this.msgToggle = enabled; }
+        
+        public java.util.List<String> getIgnoreList() { return ignoreList; }
+        public void addToIgnoreList(String player) { ignoreList.add(player); }
+        public void removeFromIgnoreList(String player) { ignoreList.remove(player); }
     }
 
     public void savePlayerData(UUID playerId) {
