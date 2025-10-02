@@ -1,0 +1,47 @@
+# NeoEssentials Commands List
+# This file contains all available commands in the NeoEssentials mod
+# Format: command_name (aliases) - description
+
+## Economy Commands
+balance (bal) - Display your or another player's balance
+pay - Send money to another player
+paytoggle - Toggle accepting payments
+eco - Admin economy commands (give, take, set, history)
+baltop - Display top player balances
+
+## Item Management Commands
+repair (fix) - Repair items in hand or inventory
+dispose (trash) - Safely dispose of items with confirmation
+clearinventory (ci, clearinv) - Clear player inventory
+enchant - Enchant items with specific enchantments
+enchanthand - Enchant item in hand
+powertool (pt) - Bind commands to items
+powertooltoggle (pttoggle) - Toggle powertool functionality
+
+## Chat Commands
+msg - Send private messages to players
+reply - Reply to last private message
+ignore - Ignore messages from a player
+unignore - Stop ignoring a player
+mute - Mute a player (admin command)
+unmute - Unmute a player (admin command)
+mutelist - List all muted players
+msgtoggle - Toggle receiving private messages
+socialspy - Toggle monitoring private messages (admin)
+
+## Permission Commands
+neoessentials (neoe) - Main mod command
+permissions (perms) - Permission management commands
+  - reload - Reload permissions
+  - list groups - List all permission groups
+  - list users - List all users
+  - group <name> setprefix <prefix> - Set group prefix
+  - group <name> setsuffix <suffix> - Set group suffix
+  - group <name> add <permission> - Add permission to group
+  - group <name> remove <permission> - Remove permission from group
+  - user <name> setgroup <group> - Set user group
+  - user <name> add <permission> - Add permission to user
+  - user <name> remove <permission> - Remove permission from user
+
+## Utility Commands
+afk - Toggle AFK status

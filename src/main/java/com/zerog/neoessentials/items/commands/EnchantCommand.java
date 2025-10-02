@@ -2,6 +2,7 @@
 package com.zerog.neoessentials.items.commands;
 
 import com.zerog.neoessentials.config.GlobalConfig;
+import com.zerog.neoessentials.config.ConfigUtil;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -22,15 +23,25 @@ public class EnchantCommand {
      * Register the /enchant and /enchanthand commands (alias).
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        if (!ConfigUtil.isCommandEnabled("enchant")) return;
         dispatcher.register(
             Commands.literal("enchant")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
+                .then(Commands.argument("enchantment", net.minecraft.commands.arguments.ResourceLocationArgument.id())
+                    .suggests((ctx, builder) -> {
+                        // Suggest all available enchantments
+                        return net.minecraft.commands.SharedSuggestionProvider.suggestResource(
+                            ctx.getSource().getServer().registryAccess()
+                                .registryOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                                .keySet(), builder
+                        );
+                    })
+                    .then(Commands.argument("level", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1))
+                        .executes(ctx -> executeEnchant(ctx, false))
+                    )
+                    .executes(ctx -> executeEnchant(ctx, false)) // Default level 1
+                )
                 .executes(ctx -> {
-                    ServerPlayer player = ctx.getSource().getPlayerOrException();
-                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.enchant")) {
-                        ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
-                        return 0;
-                    }
                     ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchant.usage"));
                     return 0;
                 })
@@ -38,16 +49,87 @@ public class EnchantCommand {
         dispatcher.register(
             Commands.literal("enchanthand")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
+                .then(Commands.argument("enchantment", net.minecraft.commands.arguments.ResourceLocationArgument.id())
+                    .suggests((ctx, builder) -> {
+                        // Suggest all available enchantments
+                        return net.minecraft.commands.SharedSuggestionProvider.suggestResource(
+                            ctx.getSource().getServer().registryAccess()
+                                .registryOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT)
+                                .keySet(), builder
+                        );
+                    })
+                    .then(Commands.argument("level", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1))
+                        .executes(ctx -> executeEnchant(ctx, true))
+                    )
+                    .executes(ctx -> executeEnchant(ctx, true)) // Default level 1
+                )
                 .executes(ctx -> {
-                    ServerPlayer player = ctx.getSource().getPlayerOrException();
-                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.enchant")) {
-                        ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
-                        return 0;
-                    }
                     ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchanthand.usage"));
                     return 0;
                 })
         );
+    }
+
+    /**
+     * Execute the enchant command.
+     */
+    private static int executeEnchant(com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx, boolean handOnly) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        
+        // Check permission
+        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.enchant")) {
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
+            return 0;
+        }
+        
+        // Get enchantment from argument
+        net.minecraft.resources.ResourceLocation enchantId = net.minecraft.commands.arguments.ResourceLocationArgument.getId(ctx, "enchantment");
+        
+        // Get level (default to 1 if not provided)
+        int levelTemp = 1;
+        try {
+            levelTemp = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "level");
+        } catch (IllegalArgumentException ignored) {
+            // Use default level 1
+        }
+        final int level = levelTemp;
+        
+        // Get the enchantment from registry
+        net.minecraft.core.Registry<Enchantment> enchantRegistry = player.getServer()
+            .registryAccess()
+            .registryOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
+        
+        if (!enchantRegistry.containsKey(enchantId)) {
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchant.unknown", enchantId.toString()));
+            return 0;
+        }
+        
+        Enchantment enchantment = enchantRegistry.get(enchantId);
+        if (enchantment == null) {
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchant.unknown", enchantId.toString()));
+            return 0;
+        }
+        
+        // Get item to enchant
+        ItemStack stack = player.getMainHandItem();
+        if (stack.isEmpty()) {
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchant.no_item"));
+            return 0;
+        }
+        
+        // Apply enchantment
+        if (applyEnchantment(player, stack, enchantment, level)) {
+            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable(
+                "commands.neoessentials.enchant.success", 
+                enchantId.toString(), 
+                level,
+                stack.getDisplayName()
+            ), false);
+            return 1;
+        } else {
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchant.failed"));
+            return 0;
+        }
     }
 
     /**

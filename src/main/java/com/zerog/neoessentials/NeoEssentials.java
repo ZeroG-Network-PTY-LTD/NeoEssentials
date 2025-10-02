@@ -124,6 +124,8 @@ public class NeoEssentials {
 
     // Register this mod class with the NeoForge event bus for non-static event handlers
     net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(this);
+    // Register item interaction handler for powertool functionality
+    net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.items.handlers.ItemInteractionHandler.class);
     // Removed DataComponentType registration for server-only compatibility
 
         // Load chat config and commands config for ChatManager
@@ -163,7 +165,7 @@ public class NeoEssentials {
             try {
                 File parent = configFile.getParentFile();
                 if (parent != null && !parent.exists()) parent.mkdirs();
-                try (InputStream in = NeoEssentials.class.getClassLoader().getResourceAsStream("data/config.json")) {
+                try (InputStream in = NeoEssentials.class.getClassLoader().getResourceAsStream("data/config/neoessentials/config.json")) {
                     if (in != null) {
                         try (FileOutputStream out = new FileOutputStream(configFile)) {
                             byte[] buf = new byte[4096];
@@ -247,14 +249,6 @@ public class NeoEssentials {
         
         LOGGER.info("Registering NeoEssentials commands...");
         
-        // Test commands first
-        try {
-            com.zerog.neoessentials.test.TestCommand.register(dispatcher);
-            LOGGER.info("Test commands registered successfully");
-        } catch (Exception e) {
-            LOGGER.error("Failed to register test commands", e);
-        }
-        
         // Economy commands
         try {
             EconomyCommands.register(dispatcher);
@@ -272,10 +266,10 @@ public class NeoEssentials {
         // Item commands
         com.zerog.neoessentials.items.commands.repair.register(dispatcher);
         com.zerog.neoessentials.items.commands.dispose.register(dispatcher);
-        com.zerog.neoessentials.items.commands.clearinvintory.register(dispatcher);
+        com.zerog.neoessentials.items.commands.clearinventory.register(dispatcher);
         com.zerog.neoessentials.items.commands.EnchantCommand.register(dispatcher);
         com.zerog.neoessentials.items.commands.powertool.register(dispatcher);
-        com.zerog.neoessentials.items.commands.powertooltoggl.register(dispatcher);
+        com.zerog.neoessentials.items.commands.powertooltoggle.register(dispatcher);
         
         // Chat commands
         com.zerog.neoessentials.chat.command.MsgCommand.register(dispatcher);
