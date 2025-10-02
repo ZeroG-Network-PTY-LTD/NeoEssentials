@@ -2,30 +2,40 @@
   "groups": [
     {
       "name": "default",
-      "prefix": "&7[Player] ",
+      "prefix": "",
       "suffix": "",
       "permissions": [
-        "neoessentials.home.use",
-        "neoessentials.spawn.use"
+        "neoessentials.economy.balance",
+        "neoessentials.economy.pay",
+        "neoessentials.economy.paytoggle",
+        "neoessentials.items.repair",
+        "neoessentials.items.dispose",
+        "neoessentials.items.powertool",
+        "neoessentials.chat.msg",
+        "neoessentials.chat.reply",
+        "neoessentials.utils.afk"
       ],
       "inherits": []
     },
     {
       "name": "moderator",
-      "prefix": "&2[Mod] ",
+      "prefix": "[Mod] ",
       "suffix": "",
       "permissions": [
-        "neoessentials.kick",
-        "neoessentials.mute"
+        "neoessentials.economy.*",
+        "neoessentials.items.*",
+        "neoessentials.chat.*",
+        "neoessentials.utils.*",
+        "neoessentials.permissions.reload"
       ],
       "inherits": ["default"]
     },
     {
       "name": "admin",
-      "prefix": "&4[Admin] ",
+      "prefix": "[Admin] ",
       "suffix": "",
       "permissions": [
-        "*"
+        "neoessentials.*"
       ],
       "inherits": ["moderator"]
     }

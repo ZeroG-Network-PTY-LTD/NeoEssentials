@@ -18,15 +18,15 @@ public class SocialSpyCommand {
                 // ServerPlayer sender = source.getPlayer(); // Unused variable removed
                 ChatManager chatManager = ChatAPI.getChatManager();
                 if (chatManager != null && !chatManager.isSocialSpyEnabled()) {
-                    source.sendFailure(Component.translatable("neoessentials.socialspy.disabled"));
+                    source.sendFailure(Component.translatable("commands.neoessentials.socialspy.disabled"));
                     return 0;
                 }
                 if (chatManager != null && !chatManager.hasChatPermission("neoessentials.command.socialspy")) {
-                    source.sendFailure(Component.translatable("neoessentials.no_permission"));
+                    source.sendFailure(Component.translatable("commands.neoessentials.no_permission"));
                     return 0;
                 }
                 com.zerog.neoessentials.chat.SocialSpyManager.toggleSocialSpy(source.getPlayer());
-                source.sendSuccess(() -> Component.translatable("neoessentials.socialspy.toggled"), false);
+                source.sendSuccess(() -> Component.translatable("commands.neoessentials.socialspy.toggled"), false);
                 return 1;
             })
         );

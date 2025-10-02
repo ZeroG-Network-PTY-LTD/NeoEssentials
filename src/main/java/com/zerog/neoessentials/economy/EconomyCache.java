@@ -1,16 +1,11 @@
 package com.zerog.neoessentials.economy;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public class EconomyCache {
-    private static final Cache<UUID, Object> cache = Caffeine.newBuilder()
-            .maximumSize(1000)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
-            .build();
+    private static final ConcurrentHashMap<UUID, Object> cache = new ConcurrentHashMap<>();
 
     /**
      * Get a value from the cache, loading it if necessary.
@@ -19,7 +14,7 @@ public class EconomyCache {
      * @return The cached or loaded value
      */
     public static <T> T getOrLoad(UUID key, Function<UUID, T> loader) {
-        Object value = cache.getIfPresent(key);
+        Object value = cache.get(key);
         if (value == null) {
             value = loader.apply(key);
             if (value != null) {
@@ -35,13 +30,13 @@ public class EconomyCache {
      * Invalidate a cache entry.
      */
     public static void invalidate(UUID key) {
-        cache.invalidate(key);
+        cache.remove(key);
     }
 
     /**
      * Clear the entire cache.
      */
     public static void clear() {
-        cache.invalidateAll();
+        cache.clear();
     }
 }

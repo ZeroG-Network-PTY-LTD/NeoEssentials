@@ -20,11 +20,11 @@ public class IgnoreCommand {
                     String targetName = StringArgumentType.getString(ctx, "target");
                     ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
                     if (chatManager != null && !chatManager.hasChatPermission("neoessentials.command.ignore")) {
-                        source.sendFailure(net.minecraft.network.chat.Component.translatable("neoessentials.no_permission"));
+                        source.sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     com.zerog.neoessentials.chat.IgnoreManager.ignore(source.getPlayer(), targetName);
-                    source.sendSuccess(() -> Component.translatable("neoessentials.ignore.success", targetName), false);
+                    source.sendSuccess(() -> Component.translatable("commands.neoessentials.ignore.success", targetName), false);
                     return 1;
                 })
             )

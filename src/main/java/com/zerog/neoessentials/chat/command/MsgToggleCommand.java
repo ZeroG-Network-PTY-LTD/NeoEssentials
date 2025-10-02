@@ -20,15 +20,15 @@ public class MsgToggleCommand {
                 ServerPlayer sender = source.getPlayer();
                 ChatManager chatManager = ChatAPI.getChatManager();
                 if (chatManager != null && !chatManager.isMsgToggleEnabled()) {
-                    source.sendFailure(Component.translatable("neoessentials.msgtoggle.disabled"));
+                    source.sendFailure(Component.translatable("commands.neoessentials.msgtoggle.disabled"));
                     return 0;
                 }
                 if (chatManager != null && !chatManager.hasChatPermission("neoessentials.command.msgtoggle")) {
-                    source.sendFailure(Component.translatable("neoessentials.no_permission"));
+                    source.sendFailure(Component.translatable("commands.neoessentials.no_permission"));
                     return 0;
                 }
                 MsgToggleManager.toggleMsg(sender);
-                source.sendSuccess(() -> Component.translatable("neoessentials.msgtoggle.toggled"), false);
+                source.sendSuccess(() -> Component.translatable("commands.neoessentials.msgtoggle.toggled"), false);
                 return 1;
             })
         );

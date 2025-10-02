@@ -3,10 +3,12 @@ package com.zerog.neoessentials.economy.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
-import com.zerog.neoessentials.economy.EconomyLocalization;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 public class BalanceCommand {
@@ -31,26 +33,25 @@ public class BalanceCommand {
     }
 
     private static int execute(com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx) {
-        if (!EconomyManager.getInstance().isEnabled()) return 0;
+        if (!EconomyManager.getInstance().isEnabled()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.disabled"));
+            return 0;
+        }
         ServerPlayer player;
         try {
             player = ctx.getSource().getPlayerOrException();
         } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.balance.player_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.balance.player_not_found"));
             return 0;
         }
         if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.economy.balance")) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.no_permission"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
             return 0;
         }
         UUID uuid = player.getUUID();
         BigDecimal balance = EconomyManager.getInstance().getBalance(uuid);
         String currency = EconomyManager.getInstance().getCurrencySymbol();
-        if (balance == null) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.balance.no_balance"));
-            return 0;
-        }
-        ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.balance", currency, balance), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.balance", balance, currency), false);
         return 1;
     }
 
@@ -60,26 +61,22 @@ public class BalanceCommand {
         try {
             sender = ctx.getSource().getPlayerOrException();
         } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.balance.player_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.balance.player_not_found"));
             return 0;
         }
         if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.economy.balance.others")) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.no_permission"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
             return 0;
         }
         String playerName = StringArgumentType.getString(ctx, "player");
         java.util.Optional<UUID> uuidOpt = com.zerog.neoessentials.economy.EconomyPlayerUtil.getUUIDByName(ctx.getSource().getServer(), playerName);
         if (uuidOpt.isEmpty()) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.balance.player_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.balance.player_not_found"));
             return 0;
         }
         BigDecimal balance = EconomyManager.getInstance().getBalance(uuidOpt.get());
         String currency = EconomyManager.getInstance().getCurrencySymbol();
-        if (balance == null) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.balance.no_balance"));
-            return 0;
-        }
-        ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.balance", currency, balance), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.balance", balance, currency), false);
         return 1;
     }
 }

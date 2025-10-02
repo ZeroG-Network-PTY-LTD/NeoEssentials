@@ -35,26 +35,26 @@ public class MsgCommand {
                         }
                         ServerPlayer target = server.getPlayerList().getPlayerByName(targetName);
                         if (target == null) {
-                            source.sendFailure(Component.translatable("neoessentials.msg.not_found", targetName));
+                            source.sendFailure(Component.translatable("commands.neoessentials.msg.not_found", targetName));
                             return 0;
                         }
                         ChatManager chatManager = ChatAPI.getChatManager();
                         if (chatManager != null && !chatManager.isMsgEnabled()) {
-                            source.sendFailure(Component.translatable("neoessentials.msg.disabled"));
+                            source.sendFailure(Component.translatable("commands.neoessentials.msg.disabled"));
                             return 0;
                         }
                         if (chatManager != null && !chatManager.hasChatPermission("neoessentials.msg")) {
-                            source.sendFailure(Component.translatable("neoessentials.msg.no_permission"));
+                            source.sendFailure(Component.translatable("commands.neoessentials.msg.no_permission"));
                             return 0;
                         }
                         // --- Mute/ignore check ---
                         if (ChatAPI.isMutedOrIgnored(sender, target)) {
-                            source.sendFailure(Component.translatable("neoessentials.msg.muted_or_ignored", target.getName()));
+                            source.sendFailure(Component.translatable("commands.neoessentials.msg.muted_or_ignored", target.getName()));
                             return 0;
                         }
                         // Send message
-                        Component msgToTarget = Component.translatable("neoessentials.msg.format.to", sender.getName(), message);
-                        Component msgToSender = Component.translatable("neoessentials.msg.format.from", target.getName(), message);
+                        Component msgToTarget = Component.translatable("commands.neoessentials.msg.format.to", sender.getName(), message);
+                        Component msgToSender = Component.translatable("commands.neoessentials.msg.format.from", target.getName(), message);
                         target.sendSystemMessage(msgToTarget);
                         sender.sendSystemMessage(msgToSender);
                         // --- SocialSpy integration ---

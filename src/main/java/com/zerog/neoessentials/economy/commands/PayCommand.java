@@ -6,7 +6,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 
-import com.zerog.neoessentials.economy.EconomyLocalization;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.economy.managers.PayToggleManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,7 +21,8 @@ public class PayCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             net.minecraft.commands.Commands.literal("pay")
-                .requires(src -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer() != null ? src.getPlayer().getUUID() : null, "neoessentials.economy.pay"))
+                .requires(src -> src.hasPermission(2) || // Allow ops
+                    (src.getPlayer() != null && com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.economy.pay")))
                 .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())
                     .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
                         ctx.getSource().getServer().getPlayerList().getPlayers().stream()
@@ -37,7 +38,7 @@ public class PayCommand {
         ServerPlayer sender = ctx.getSource().getPlayerOrException();
         long now = System.currentTimeMillis();
         if (payCooldowns.containsKey(sender.getUUID()) && now - payCooldowns.get(sender.getUUID()) < PAY_COOLDOWN_MS) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.pay.cooldown"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.cooldown"));
             return 0;
         }
         payCooldowns.put(sender.getUUID(), now);
@@ -45,7 +46,7 @@ public class PayCommand {
         String targetName = StringArgumentType.getString(ctx, "player");
         double amountRaw = DoubleArgumentType.getDouble(ctx, "amount");
         if (amountRaw <= 0.0) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.pay.invalid_amount"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.invalid_amount"));
             return 0;
         }
         net.minecraft.server.MinecraftServer server = ctx.getSource().getServer();
@@ -53,15 +54,15 @@ public class PayCommand {
             .filter(p -> p.getGameProfile().getName().equalsIgnoreCase(targetName))
             .findFirst().orElse(null);
         if (recipient == null) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.pay.player_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.player_not_found"));
             return 0;
         }
         if (recipient.getUUID().equals(sender.getUUID())) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.pay.cannot_pay_self"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.cannot_pay_self"));
             return 0;
         }
         if (!PayToggleManager.getInstance().getPayToggle(recipient.getUUID())) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.pay.toggled_off"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.toggled_off"));
             return 0;
         }
         java.math.BigDecimal amount = java.math.BigDecimal.valueOf(amountRaw);
@@ -70,15 +71,15 @@ public class PayCommand {
         java.math.BigDecimal netAmount = amount.subtract(fee);
         boolean success = com.zerog.neoessentials.api.EconomyAPI.payPlayer(sender.getUUID(), recipient.getUUID(), amount);
         if (!success) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.pay.insufficient_funds"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.insufficient_funds"));
             return 0;
         }
         String currency = EconomyManager.getInstance().getCurrencySymbol();
-        ctx.getSource().sendSuccess(() -> EconomyLocalization.component(
+        ctx.getSource().sendSuccess(() -> MessageUtil.success(
             "commands.neoessentials.pay.success_fee",
             targetName, amount, fee, netAmount, currency
         ), false);
-        recipient.sendSystemMessage(EconomyLocalization.component(
+        recipient.sendSystemMessage(MessageUtil.info(
             "commands.neoessentials.pay.received_fee",
             sender.getGameProfile().getName(), netAmount, fee, currency
         ));

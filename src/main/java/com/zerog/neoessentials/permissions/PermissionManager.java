@@ -148,6 +148,53 @@ public class PermissionManager {
         permissionCache.clear();
         LOGGER.debug("Permission cache cleared");
     }
+    
+    /**
+     * Validates if a permission node is well-formed
+     */
+    public static boolean isValidPermission(String permission) {
+        if (permission == null || permission.trim().isEmpty()) {
+            return false;
+        }
+        
+        // Check for valid characters (alphanumeric, dots, underscores, hyphens)
+        if (!permission.matches("^[a-z0-9._-]+$")) {
+            return false;
+        }
+        
+        // Cannot start or end with dot
+        if (permission.startsWith(".") || permission.endsWith(".")) {
+            return false;
+        }
+        
+        // Cannot have consecutive dots
+        if (permission.contains("..")) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Rate limiting for permission modifications
+     */
+    private final Map<UUID, Long> lastModification = new ConcurrentHashMap<>();
+    private static final long MODIFICATION_COOLDOWN = 1000; // 1 second
+    
+    /**
+     * Checks if a user can modify permissions (rate limiting)
+     */
+    public boolean canModifyPermissions(UUID executor) {
+        long currentTime = System.currentTimeMillis();
+        Long lastTime = lastModification.get(executor);
+        
+        if (lastTime != null && (currentTime - lastTime) < MODIFICATION_COOLDOWN) {
+            return false;
+        }
+        
+        lastModification.put(executor, currentTime);
+        return true;
+    }
 
     private boolean hasNegativePermission(Set<String> perms, String permission) {
         for (String perm : perms) {

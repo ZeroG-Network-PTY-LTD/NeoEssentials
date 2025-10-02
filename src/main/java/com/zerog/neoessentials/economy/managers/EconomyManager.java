@@ -21,8 +21,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +37,8 @@ public class EconomyManager {
         return SingletonHolder.INSTANCE;
     }
 
-    // Use Caffeine cache for balances
-    private Cache<UUID, BigDecimal> balancesCache;
+    // Use ConcurrentHashMap for balances
+    private ConcurrentHashMap<UUID, BigDecimal> balancesCache;
     private EconomyConfig config;
     // Store balances in root/neoessentials/balances.json
     private final File balancesFile = new File("neoessentials/balances.json");
@@ -78,7 +77,7 @@ public class EconomyManager {
             File tempFile = new File(balancesFile.getAbsolutePath() + ".tmp");
             try (FileWriter writer = new FileWriter(tempFile)) {
                 Map<String, String> data = new ConcurrentHashMap<>();
-                for (Map.Entry<UUID, BigDecimal> entry : balancesCache.asMap().entrySet()) {
+                for (Map.Entry<UUID, BigDecimal> entry : balancesCache.entrySet()) {
                     data.put(entry.getKey().toString(), entry.getValue().toPlainString());
                 }
                 gson.toJson(data, writer);
@@ -106,10 +105,10 @@ public class EconomyManager {
         if (config == null || !config.cleanupInactiveAccounts) return;
         long now = System.currentTimeMillis();
         long thresholdMillis = config.inactiveAccountCleanupDays * 24L * 60L * 60L * 1000L;
-        for (UUID uuid : balancesCache.asMap().keySet()) {
+        for (UUID uuid : balancesCache.keySet()) {
             Long lastActive = lastActivityMap.get(uuid);
             if (lastActive == null || (now - lastActive) >= thresholdMillis) {
-                balancesCache.invalidate(uuid);
+                balancesCache.remove(uuid);
                 lastActivityMap.remove(uuid);
             }
         }
@@ -168,14 +167,8 @@ public class EconomyManager {
         // Load config on startup
         File configFile = new File("config/neoessentials/economy.json");
         this.config = EconomyConfig.load(configFile);
-        // Initialize Caffeine cache with config values and statistics
-        balancesCache = Caffeine.newBuilder()
-            .maximumSize(config.cacheMaximumSize)
-            .expireAfterAccess(config.cacheExpireAfterAccessMinutes, TimeUnit.MINUTES)
-            .recordStats() // Enable statistics for monitoring
-            .removalListener((uuid, balance, cause) -> 
-                LOGGER.debug("Cache evicted: {} -> {} (cause: {})", uuid, balance, cause))
-            .build();
+        // Initialize ConcurrentHashMap for balances
+        balancesCache = new ConcurrentHashMap<>();
         loadBalances();
         loadLastActivity();
         // Schedule periodic batch save every 5 minutes
@@ -189,14 +182,19 @@ public class EconomyManager {
     }
 
     public BigDecimal getBalance(UUID player) {
-        BigDecimal cached = balancesCache.getIfPresent(player);
+        BigDecimal cached = balancesCache.get(player);
         if (cached != null) return cached;
-        return config.startingBalance;
+        if (config != null && config.startingBalance != null) {
+            return config.startingBalance;
+        }
+        return new BigDecimal("100.0"); // Fallback default
     }
 
     public void setBalance(UUID player, BigDecimal amount) {
-        if (!config.allowNegativeBalances && amount.compareTo(BigDecimal.ZERO) < 0) amount = BigDecimal.ZERO;
-        if (amount.compareTo(config.maxBalance) > 0) amount = config.maxBalance;
+        if (config != null) {
+            if (!config.allowNegativeBalances && amount.compareTo(BigDecimal.ZERO) < 0) amount = BigDecimal.ZERO;
+            if (config.maxBalance != null && amount.compareTo(config.maxBalance) > 0) amount = config.maxBalance;
+        }
         BigDecimal oldAmount = getBalance(player);
         balancesCache.put(player, amount);
         lastActivityMap.put(player, System.currentTimeMillis());
@@ -209,8 +207,10 @@ public class EconomyManager {
     public boolean addBalance(UUID player, BigDecimal amount) {
         BigDecimal current = getBalance(player);
         BigDecimal newAmount = current.add(amount);
-        if (!config.allowNegativeBalances && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
-        if (newAmount.compareTo(config.maxBalance) > 0) newAmount = config.maxBalance;
+        if (config != null) {
+            if (!config.allowNegativeBalances && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
+            if (config.maxBalance != null && newAmount.compareTo(config.maxBalance) > 0) newAmount = config.maxBalance;
+        }
         balancesCache.put(player, newAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
@@ -223,7 +223,7 @@ public class EconomyManager {
     public boolean subtractBalance(UUID player, BigDecimal amount) {
         BigDecimal current = getBalance(player);
         BigDecimal newAmount = current.subtract(amount);
-        if (!config.allowNegativeBalances && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
+        if (config != null && !config.allowNegativeBalances && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
         balancesCache.put(player, newAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
@@ -234,7 +234,7 @@ public class EconomyManager {
     }
 
     public Map<UUID, BigDecimal> getAllBalances() {
-        return new ConcurrentHashMap<>(balancesCache.asMap());
+        return new ConcurrentHashMap<>(balancesCache);
     }
 
     public EconomyConfig getConfig() {
@@ -260,27 +260,22 @@ public class EconomyManager {
      * This can be called after large batch operations or periodically for memory efficiency.
      */
     public void optimizeCache() {
-        // Remove entries that are expired according to Caffeine's policy
-        balancesCache.cleanUp();
-        // Optionally, remove accounts with no activity for a long time (already handled by cleanupInactiveAccounts)
+        // ConcurrentHashMap doesn't need explicit cleanup
+        // Account cleanup is handled by cleanupInactiveAccounts
     }
 
     /**
      * Returns cache statistics for monitoring and tuning.
      */
     public String getCacheStats() {
-        return balancesCache.stats().toString();
+        return "EconomyManager Cache Size: " + balancesCache.size();
     }
     
     /**
      * Logs cache metrics for monitoring and debugging.
      */
     private void logCacheMetrics() {
-        var stats = balancesCache.stats();
-        LOGGER.info("EconomyManager Cache Metrics - Hit Rate: {:.2f}%, Evictions: {}, Size: {}", 
-                   stats.hitRate() * 100, 
-                   stats.evictionCount(), 
-                   balancesCache.estimatedSize());
+        LOGGER.info("EconomyManager Cache Metrics - Size: {}", balancesCache.size());
     }
     
     /**

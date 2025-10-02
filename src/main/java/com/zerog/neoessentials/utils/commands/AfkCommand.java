@@ -20,16 +20,16 @@ public class AfkCommand {
                 ServerPlayer sender = source.getPlayer();
                 ChatManager chatManager = ChatAPI.getChatManager();
                 if (chatManager != null && !chatManager.isAfkEnabled()) {
-                    source.sendFailure(Component.translatable("neoessentials.afk.disabled"));
+                    source.sendFailure(Component.translatable("commands.neoessentials.afk.disabled"));
                     return 0;
                 }
                 if (chatManager != null && !chatManager.hasChatPermission("neoessentials.command.afk")) {
-                    source.sendFailure(Component.translatable("neoessentials.no_permission"));
+                    source.sendFailure(Component.translatable("commands.neoessentials.no_permission"));
                     return 0;
                 }
                 // Implement actual AFK toggle logic
                 AfkManager.toggleAfk(sender);
-                source.sendSuccess(() -> Component.translatable("neoessentials.afk.toggled"), false);
+                source.sendSuccess(() -> Component.translatable("commands.neoessentials.afk.toggled"), false);
                 return 1;
             })
         );
