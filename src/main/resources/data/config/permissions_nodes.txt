@@ -1,0 +1,64 @@
+# NeoEssentials Permission Nodes
+# This file contains all permission nodes used in the NeoEssentials mod
+# Format: permission.node - description
+
+## Economy Permissions
+neoessentials.economy.balance - View own balance
+neoessentials.economy.balance.others - View other players' balances
+neoessentials.economy.pay - Send money to other players
+neoessentials.economy.pay.exempt - Exempt from paytoggle restrictions
+neoessentials.economy.paytoggle - Toggle accepting payments
+neoessentials.economy.eco - Use eco admin commands
+neoessentials.economy.eco.give - Give money to players
+neoessentials.economy.eco.take - Take money from players
+neoessentials.economy.eco.set - Set player balances
+neoessentials.economy.eco.history - View transaction history
+neoessentials.economy.baltop - View top balances
+
+## Item Management Permissions
+neoessentials.item.repair - Repair own items
+neoessentials.item.repair.all - Repair all items at once
+neoessentials.item.repair.others - Repair other players' items
+neoessentials.item.dispose - Use dispose command
+neoessentials.item.clearinventory - Clear own inventory
+neoessentials.item.clearinventory.others - Clear other players' inventories
+neoessentials.item.enchant - Enchant items
+neoessentials.item.enchanthand - Quick enchant hand item
+neoessentials.item.powertool - Use powertool commands
+neoessentials.item.powertool.toggle - Toggle powertool functionality
+
+## Chat Permissions
+neoessentials.chat.msg - Send private messages
+neoessentials.chat.msgtoggle - Toggle receiving messages
+neoessentials.chat.socialspy - Monitor private messages (admin)
+neoessentials.chat.ignore - Ignore other players
+neoessentials.chat.ignore.exempt - Cannot be ignored by others
+neoessentials.chat.mute - Mute other players
+neoessentials.chat.mute.exempt - Cannot be muted
+neoessentials.chat.reply - Reply to messages
+
+## Permission System Permissions
+neoessentials.permissions.reload - Reload permission system
+neoessentials.permissions.group.list - List permission groups
+neoessentials.permissions.group.modify - Modify permission groups
+neoessentials.permissions.group.prefix - Set group prefixes
+neoessentials.permissions.group.suffix - Set group suffixes
+neoessentials.permissions.user.list - List users
+neoessentials.permissions.user.modify - Modify user permissions
+neoessentials.permissions.user.group - Change user groups
+
+## Utility Permissions
+neoessentials.afk - Use AFK command
+neoessentials.afk.others - Set AFK status for others
+neoessentials.afk.exempt - Exempt from AFK timeouts
+
+## Administrative Permissions
+neoessentials.admin - General admin permission
+neoessentials.reload - Reload mod configuration
+neoessentials.tablist.modify - Modify tablist settings
+neoessentials.bypass.cooldown - Bypass command cooldowns
+neoessentials.bypass.warmup - Bypass command warmups
+
+## Root Command Permissions
+neoessentials.use - Use main neoessentials command
+neoessentials.help - Access help information

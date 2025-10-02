@@ -4,15 +4,14 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.config.CommandModuleConfig;
+import com.zerog.neoessentials.config.ConfigUtil;
 
 public class repair {
     /**
      * Register the /repair and /fix commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        CommandModuleConfig config = CommandModuleConfig.load(new java.io.File("config/neoessentials/config.json"));
-        if (!config.isCommandEnabled("repair")) return;
+        if (!ConfigUtil.isCommandEnabled("repair")) return;
         dispatcher.register(
             Commands.literal("repair")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)

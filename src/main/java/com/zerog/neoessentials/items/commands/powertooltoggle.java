@@ -7,17 +7,16 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.config.CommandModuleConfig;
+import com.zerog.neoessentials.config.ConfigUtil;
 
-public class powertooltoggl {
+public class powertooltoggle {
     // Server-side powertool toggles: player UUID -> slot -> enabled
     private static final Map<java.util.UUID, Map<Integer, Boolean>> TOGGLES = new HashMap<>();
     /**
      * Register the /powertooltoggle and /pttoggle commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        CommandModuleConfig config = CommandModuleConfig.load(new java.io.File("config/neoessentials/config.json"));
-        if (!config.isCommandEnabled("powertooltoggle")) return;
+        if (!ConfigUtil.isCommandEnabled("powertooltoggle")) return;
         dispatcher.register(
             Commands.literal("powertooltoggle")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
@@ -56,5 +55,20 @@ public class powertooltoggl {
         Map<Integer, Boolean> map = TOGGLES.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
         boolean enabled = map.getOrDefault(slot, true);
         map.put(slot, !enabled);
+    }
+
+    /**
+     * Check if powertool is enabled for a specific slot.
+     */
+    public static boolean isPowertoolEnabled(java.util.UUID playerUUID, int slot) {
+        Map<Integer, Boolean> playerToggles = TOGGLES.get(playerUUID);
+        return playerToggles == null || playerToggles.getOrDefault(slot, true);
+    }
+
+    /**
+     * Set powertool enabled state for a specific slot.
+     */
+    public static void setPowertoolEnabled(java.util.UUID playerUUID, int slot, boolean enabled) {
+        TOGGLES.computeIfAbsent(playerUUID, k -> new HashMap<>()).put(slot, enabled);
     }
 }

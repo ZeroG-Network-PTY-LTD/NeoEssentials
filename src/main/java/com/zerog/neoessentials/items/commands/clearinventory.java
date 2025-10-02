@@ -4,15 +4,14 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.config.CommandModuleConfig;
+import com.zerog.neoessentials.config.ConfigUtil;
 
-public class clearinvintory {
+public class clearinventory {
     /**
      * Register the /clearinventory, /ci, and /clearinv commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        CommandModuleConfig config = CommandModuleConfig.load(new java.io.File("config/neoessentials/config.json"));
-        if (!config.isCommandEnabled("clearinventory")) return;
+        if (!ConfigUtil.isCommandEnabled("clearinventory")) return;
         dispatcher.register(
             Commands.literal("clearinventory")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
