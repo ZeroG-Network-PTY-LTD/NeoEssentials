@@ -3,6 +3,7 @@ package com.zerog.neoessentials.permissions.command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.zerog.neoessentials.util.DebugUtil;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -26,6 +27,11 @@ public class PermissionsCommand {
         return Commands.literal(root)
             .then(Commands.literal("reload")
                 .executes(ctx -> reload(ctx)))
+            .then(Commands.literal("list")
+                .then(Commands.literal("groups")
+                    .executes(ctx -> listGroups(ctx)))
+                .then(Commands.literal("users")
+                    .executes(ctx -> listUsers(ctx))))
             .then(Commands.literal("group")
                 .then(Commands.argument("group", StringArgumentType.word())
                     .then(Commands.literal("setprefix")
@@ -61,7 +67,7 @@ public class PermissionsCommand {
             ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.reloaded"), false);
             return 1;
         } catch (Exception e) {
-            DebugUtil.debugStackTrace(e);
+            LOGGER.error("Failed to reload permissions", e);
             ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.reload_failed", e.getMessage()));
             return 0;
         }
@@ -76,7 +82,7 @@ public class PermissionsCommand {
             return 0;
         }
     group.setPrefix(prefix);
-    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after setting prefix", e); }
         ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.prefix_set"), false);
         return 1;
     }
@@ -90,7 +96,7 @@ public class PermissionsCommand {
             return 0;
         }
     group.setSuffix(suffix);
-    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after setting suffix", e); }
         ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.suffix_set"), false);
         return 1;
     }
@@ -104,7 +110,7 @@ public class PermissionsCommand {
             return 0;
         }
     group.addPermission(perm);
-    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after adding group permission", e); }
         ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_added"), false);
         return 1;
     }
@@ -118,7 +124,7 @@ public class PermissionsCommand {
             return 0;
         }
     group.removePermission(perm);
-    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after removing group permission", e); }
         ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_removed"), false);
         return 1;
     }
@@ -139,7 +145,7 @@ public class PermissionsCommand {
             return 0;
         }
     user.setGroup(groupName);
-    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after setting user group", e); }
         ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.user_group_set"), false);
         return 1;
     }
@@ -160,7 +166,7 @@ public class PermissionsCommand {
             return 0;
         }
     user.addPermission(perm);
-    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after adding user permission", e); }
         ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_added_to_user"), false);
         return 1;
     }
@@ -181,8 +187,55 @@ public class PermissionsCommand {
             return 0;
         }
     user.removePermission(perm);
-    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { DebugUtil.debugStackTrace(e); }
+    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after removing user permission", e); }
         ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_removed_from_user"), false);
+        return 1;
+    }
+    
+    private static int listGroups(CommandContext<CommandSourceStack> ctx) {
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) {
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.manager_not_available"));
+            return 0;
+        }
+        
+        var groups = manager.getGroups();
+        if (groups.isEmpty()) {
+            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.no_groups"), false);
+            return 1;
+        }
+        
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§6Groups:"), false);
+        for (PermissionGroup group : groups) {
+            String message = String.format("§e- %s §7(prefix: §r%s§7, suffix: §r%s§7)", 
+                group.getName(), 
+                group.getPrefix() != null ? group.getPrefix() : "none",
+                group.getSuffix() != null ? group.getSuffix() : "none");
+            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(message), false);
+        }
+        return 1;
+    }
+    
+    private static int listUsers(CommandContext<CommandSourceStack> ctx) {
+        PermissionManager manager = PermissionAPI.getManager();
+        if (manager == null) {
+            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.manager_not_available"));
+            return 0;
+        }
+        
+        var users = manager.getUsers();
+        if (users.isEmpty()) {
+            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.no_users"), false);
+            return 1;
+        }
+        
+        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§6Users:"), false);
+        for (PermissionUser user : users) {
+            String message = String.format("§e- %s §7(group: §r%s§7)", 
+                user.getUuid().toString(), 
+                user.getGroup() != null ? user.getGroup() : "default");
+            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(message), false);
+        }
         return 1;
     }
 }

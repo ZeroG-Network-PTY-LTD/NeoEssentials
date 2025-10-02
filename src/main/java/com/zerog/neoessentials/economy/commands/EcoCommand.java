@@ -5,7 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
-import com.zerog.neoessentials.economy.EconomyLocalization;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.economy.EconomyPlayerUtil;
 import com.zerog.neoessentials.economy.EconomyTransactionLogger;
 import com.zerog.neoessentials.economy.managers.TransactionHistoryManager;
@@ -69,11 +69,11 @@ public class EcoCommand {
         try {
             sender = ctx.getSource().getPlayerOrException();
         } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.eco.no_permission"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.no_permission"));
             return 0;
         }
         if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.economy.eco")) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.no_permission"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
             return 0;
         }
         String playerName = StringArgumentType.getString(ctx, "player");
@@ -82,7 +82,7 @@ public class EcoCommand {
         MinecraftServer server = ctx.getSource().getServer();
         Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
         if (uuidOpt.isEmpty()) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.eco.player_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.player_not_found"));
             return 0;
         }
         UUID uuid = uuidOpt.get();
@@ -91,19 +91,19 @@ public class EcoCommand {
         switch (action) {
             case "give":
                 manager.addBalance(uuid, amount);
-                ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.eco.give", amount, playerName), false);
+                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.give", amount, playerName), false);
                 EconomyTransactionLogger.log("ADMIN_GIVE", adminName, playerName, amount.toPlainString(), "Admin give");
                 TransactionHistoryManager.getInstance().addTransaction(uuid, "Admin gave you " + amount);
                 break;
             case "take":
                 manager.subtractBalance(uuid, amount);
-                ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.eco.take", amount, playerName), false);
+                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.take", amount, playerName), false);
                 EconomyTransactionLogger.log("ADMIN_TAKE", adminName, playerName, amount.toPlainString(), "Admin take");
                 TransactionHistoryManager.getInstance().addTransaction(uuid, "Admin took " + amount);
                 break;
             case "set":
                 manager.setBalance(uuid, amount);
-                ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.eco.set", playerName, amount), false);
+                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.set", playerName, amount), false);
                 EconomyTransactionLogger.log("ADMIN_SET", adminName, playerName, amount.toPlainString(), "Admin set");
                 TransactionHistoryManager.getInstance().addTransaction(uuid, "Admin set your balance to " + amount);
                 break;
@@ -115,11 +115,11 @@ public class EcoCommand {
         UUID uuid = player.getUUID();
         java.util.List<String> history = TransactionHistoryManager.getInstance().getHistory(uuid);
         if (history.isEmpty()) {
-            ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.history.empty"), false);
+            ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.history.empty"), false);
         } else {
-            ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.history.header"), false);
+            ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.history.header"), false);
             for (String entry : history) {
-                ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.history.entry", entry), false);
+                ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.history.entry", entry), false);
             }
         }
         return 1;
@@ -129,16 +129,16 @@ public class EcoCommand {
         MinecraftServer server = ctx.getSource().getServer();
         Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
         if (uuidOpt.isEmpty()) {
-            ctx.getSource().sendFailure(EconomyLocalization.component("commands.neoessentials.eco.player_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.player_not_found"));
             return 0;
         }
         java.util.List<String> history = TransactionHistoryManager.getInstance().getHistory(uuidOpt.get());
         if (history.isEmpty()) {
-            ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.history.empty"), false);
+            ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.history.empty"), false);
         } else {
-            ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.history.header"), false);
+            ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.history.header"), false);
             for (String entry : history) {
-                ctx.getSource().sendSuccess(() -> EconomyLocalization.component("commands.neoessentials.history.entry", entry), false);
+                ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.history.entry", entry), false);
             }
         }
         return 1;

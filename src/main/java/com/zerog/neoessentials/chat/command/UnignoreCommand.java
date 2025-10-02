@@ -23,11 +23,11 @@ public class UnignoreCommand {
                     assert sender != null || true; // Suppress unused variable warning
                     ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
                     if (chatManager != null && !chatManager.hasChatPermission("neoessentials.command.unignore")) {
-                        source.sendFailure(net.minecraft.network.chat.Component.translatable("neoessentials.no_permission"));
+                        source.sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     com.zerog.neoessentials.chat.IgnoreManager.unignore(sender, targetName);
-                    source.sendSuccess(() -> Component.translatable("neoessentials.unignore.success", targetName), false);
+                    source.sendSuccess(() -> Component.translatable("commands.neoessentials.unignore.success", targetName), false);
                     return 1;
                 })
             )

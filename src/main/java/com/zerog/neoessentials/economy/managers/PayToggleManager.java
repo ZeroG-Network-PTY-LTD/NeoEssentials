@@ -4,8 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zerog.neoessentials.config.EconomyConfig;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -34,11 +32,7 @@ public class PayToggleManager {
         return SingletonHolder.INSTANCE;
     }
 
-    private final Cache<UUID, Boolean> paytoggleCache = Caffeine.newBuilder()
-        .maximumSize(10000)
-        .expireAfterAccess(1, TimeUnit.HOURS)
-        .recordStats() // Enable statistics for monitoring
-        .build();
+    private final ConcurrentHashMap<UUID, Boolean> paytoggleCache = new ConcurrentHashMap<>();
     private final File togglesFile = new File("neoessentials/paytoggles.json");
     private final Gson gson = new Gson();
     private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -46,9 +40,23 @@ public class PayToggleManager {
     private EconomyConfig config;
 
     private PayToggleManager() {
-        this.config = EconomyManager.getInstance().getConfig();
+        // Don't initialize config in constructor to avoid circular dependency
+        // Will be lazy-loaded when needed
         loadToggles();
         saveExecutor.scheduleAtFixedRate(this::saveTogglesAtomic, 5, 5, TimeUnit.MINUTES);
+    }
+    
+    private EconomyConfig getConfig() {
+        if (config == null) {
+            try {
+                config = EconomyManager.getInstance().getConfig();
+            } catch (Exception e) {
+                LOGGER.warn("Could not get EconomyConfig, using default paytoggle value of true", e);
+                // Return a minimal config object or use hardcoded default
+                return null;
+            }
+        }
+        return config;
     }
 
     private void loadToggles() {
@@ -73,7 +81,7 @@ public class PayToggleManager {
             File tempFile = new File(togglesFile.getAbsolutePath() + ".tmp");
             try (FileWriter writer = new FileWriter(tempFile)) {
                 Map<String, Boolean> data = new ConcurrentHashMap<>();
-                for (Map.Entry<UUID, Boolean> entry : paytoggleCache.asMap().entrySet()) {
+                for (Map.Entry<UUID, Boolean> entry : paytoggleCache.entrySet()) {
                     data.put(entry.getKey().toString(), entry.getValue());
                 }
                 gson.toJson(data, writer);
@@ -97,10 +105,11 @@ public class PayToggleManager {
     }
 
     public boolean getPayToggle(UUID player) {
-        Boolean cached = paytoggleCache.getIfPresent(player);
+        Boolean cached = paytoggleCache.get(player);
         if (cached != null) return cached;
-        // Default to config value for new players
-        return config.paytoggleDefault;
+        // Default to config value for new players, or true if config not available
+        EconomyConfig cfg = getConfig();
+        return cfg != null ? cfg.paytoggleDefault : true;
     }
 
     public void setPayToggle(UUID player, boolean enabled) {
@@ -109,6 +118,6 @@ public class PayToggleManager {
     }
 
     public Map<UUID, Boolean> getAllToggles() {
-        return new ConcurrentHashMap<>(paytoggleCache.asMap());
+        return new ConcurrentHashMap<>(paytoggleCache);
     }
 }

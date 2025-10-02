@@ -144,7 +144,7 @@ public class NeoEssentials {
         }
 
         // Register chat event handler for message formatting
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.handlers.ChatHandler.class);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.ChatHandler.class);
 
         // --- Chat event listeners ---
         // All chat event logic (join/quit, AFK, death, etc.) is handled via event handlers below.
@@ -225,10 +225,13 @@ public class NeoEssentials {
             if (!serverLangDir.exists()) serverLangDir.mkdirs();
             File serverLangFile = new File(serverLangDir, "en_us.json");
             if (!serverLangFile.exists()) {
-                // Try to copy from mod resources
-                try (InputStream in = NeoEssentials.class.getClassLoader().getResourceAsStream("data/lang/en_us.json")) {
+                // Try to copy from mod jar resources
+                try (InputStream in = NeoEssentials.class.getResourceAsStream("/data/lang/en_us.json")) {
                     if (in != null) {
                         Files.copy(in, serverLangFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        LOGGER.info("Copied default language file to server directory: {}", serverLangFile.getAbsolutePath());
+                    } else {
+                        LOGGER.warn("Could not find default language file in mod resources");
                     }
                 }
             }
@@ -241,8 +244,23 @@ public class NeoEssentials {
     public void onRegisterCommands(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
         
+        LOGGER.info("Registering NeoEssentials commands...");
+        
+        // Test commands first
+        try {
+            com.zerog.neoessentials.test.TestCommand.register(dispatcher);
+            LOGGER.info("Test commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register test commands", e);
+        }
+        
         // Economy commands
-        EconomyCommands.register(dispatcher);
+        try {
+            EconomyCommands.register(dispatcher);
+            LOGGER.info("Economy commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register economy commands", e);
+        }
         
         // Permission commands
         PermissionsCommand.register(dispatcher);

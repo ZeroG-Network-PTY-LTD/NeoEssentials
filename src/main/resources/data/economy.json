@@ -1,11 +1,24 @@
 {
-  "economySettings": {
-    "startingBalance": 100.0,
-    "currencySymbol": "$",
-    "maxBalance": 100000.0,
-    "cleanupInactiveAccounts": true,
-    "inactiveAccountCleanupDays": 30,
-    "taxPercentage": 1.5,
-    "maxTransferAmount": 10000.0
+  "enabled": true,
+  "startingBalance": 100.0,
+  "currencySymbol": "$",
+  "currencyName": "coins",
+  "currencyNamePlural": "coins",
+  "maxBalance": 999999999.99,
+  "taxPercentage": 0.0,
+  "allowNegativeBalances": false,
+  "balanceFormat": "%.2f",
+  "logTransactions": true,
+  "transactionHistoryLimit": 50,
+  "backupInterval": 300,
+  "autoSaveInterval": 60,
+  "useDatabase": false,
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "database": "neoessentials",
+    "username": "root",
+    "password": "",
+    "tablePrefix": "ne_"
   }
 }

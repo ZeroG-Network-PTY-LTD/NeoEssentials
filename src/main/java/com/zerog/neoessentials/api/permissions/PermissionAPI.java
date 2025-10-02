@@ -46,11 +46,41 @@ public class PermissionAPI {
     }
 
     public static boolean hasPermission(UUID uuid, String permission) {
+        // First check if player is opped (opped players have all permissions)
+        if (uuid != null && isPlayerOpped(uuid)) {
+            return true;
+        }
+        
         if (externalAdapter != null) {
             return externalAdapter.hasPermission(uuid, permission);
         }
         if (manager == null) return false;
         return manager.hasPermission(uuid, permission);
+    }
+    
+    /**
+     * Checks if a player is opped by their UUID.
+     */
+    private static boolean isPlayerOpped(UUID uuid) {
+        try {
+            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                // Try to get the player directly and check their permission level
+                net.minecraft.server.level.ServerPlayer player = server.getPlayerList().getPlayer(uuid);
+                if (player != null) {
+                    return player.hasPermissions(2); // Op level 2 or higher
+                }
+                
+                // If player is offline, check the ops file
+                com.mojang.authlib.GameProfile profile = server.getProfileCache().get(uuid).orElse(null);
+                if (profile != null) {
+                    return server.getPlayerList().isOp(profile);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not check op status for UUID {}: {}", uuid, e.getMessage());
+        }
+        return false;
     }
 
     public static PermissionManager getManager() {

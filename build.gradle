@@ -146,7 +146,6 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
     // LuckPerms API for permissions integration
     compileOnly 'net.luckperms:api:5.4'
 
@@ -161,10 +160,10 @@ dependencies {
     // runtimeOnly fg.deobf("dev.ftb.mods:ftbranks-neoforge:VERSION")
 }
 
-shadowJar {
-    archiveClassifier.set('all')
-    relocate 'com.github.benmanes.caffeine', 'com.zerog.neoessentials.shaded.caffeine'
-}
+// shadowJar {
+//     archiveClassifier.set('all') 
+//     relocate 'com.github.benmanes.caffeine', 'com.zerog.neoessentials.shaded.caffeine'
+// }
 
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.

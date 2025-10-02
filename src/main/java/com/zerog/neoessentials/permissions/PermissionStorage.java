@@ -11,7 +11,7 @@ public class PermissionStorage {
     private static final Path PLAYERDATA_PATH = Paths.get("config/neoessentials/permissions/playerdata.json");
 
     public static void save(PermissionManager manager) throws IOException {
-        // Save groups to permissions.json
+        // Save groups to permissions.json (atomic operation)
         Map<String, Object> groupData = new HashMap<>();
         List<Object> groups = new ArrayList<>();
         for (PermissionGroup group : manager.getGroups()) {
@@ -25,11 +25,15 @@ public class PermissionStorage {
         }
         groupData.put("groups", groups);
         Files.createDirectories(FILE_PATH.getParent());
-        try (Writer writer = Files.newBufferedWriter(FILE_PATH)) {
+        
+        // Write to temporary file first, then atomic move
+        Path tempFile = FILE_PATH.resolveSibling(FILE_PATH.getFileName() + ".tmp");
+        try (Writer writer = Files.newBufferedWriter(tempFile)) {
             GSON.toJson(groupData, writer);
         }
+        Files.move(tempFile, FILE_PATH, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
-        // Save users to playerdata.json
+        // Save users to playerdata.json (atomic operation)
         List<Object> users = new ArrayList<>();
         for (PermissionUser user : manager.getUsers()) {
             Map<String, Object> u = new HashMap<>();
@@ -41,9 +45,13 @@ public class PermissionStorage {
         Map<String, Object> userData = new HashMap<>();
         userData.put("users", users);
         Files.createDirectories(PLAYERDATA_PATH.getParent());
-        try (Writer writer = Files.newBufferedWriter(PLAYERDATA_PATH)) {
+        
+        // Write to temporary file first, then atomic move
+        Path tempUserFile = PLAYERDATA_PATH.resolveSibling(PLAYERDATA_PATH.getFileName() + ".tmp");
+        try (Writer writer = Files.newBufferedWriter(tempUserFile)) {
             GSON.toJson(userData, writer);
         }
+        Files.move(tempUserFile, PLAYERDATA_PATH, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
     }
 
     public static void load(PermissionManager manager) throws IOException {

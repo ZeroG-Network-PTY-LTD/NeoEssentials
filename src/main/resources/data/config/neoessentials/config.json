@@ -1,0 +1,57 @@
+{
+  "modules": {
+    "economyEnabled": true,
+    "commandsEnabled": true
+  },
+  "economySettings": {
+    "startingBalance": 100.0,
+    "currencySymbol": "$",
+    "maxBalance": 100000.0,
+    "cleanupInactiveAccounts": true,
+    "taxPercentage": 1.5,
+    "maxTransferAmount": 10000.0,
+    "paytoggleDefault": true,
+    "allowNegativeBalances": false,
+    "inactiveAccountCleanupDays": 30,
+    "cacheMaximumSize": 10000,
+    "cacheExpireAfterAccessMinutes": 60
+  },
+  "commands": {
+    "balance": true,
+    "pay": true,
+    "paytoggle": true,
+    "eco": true,
+    "baltop": true,
+    "repair": true,
+    "dispose": true,
+    "powertool": true,
+    "clearinventory": true,
+    "msg": true,
+    "reply": true,
+    "afk": true,
+    "ignore": true,
+    "unignore": true,
+    "mute": true,
+    "unmute": true,
+    "msgtoggle": true,
+    "socialspy": true
+  },
+  "items": {
+    "permission-based-item-spawn": true,
+    "drop-items-if-full": true,
+    "oversized-stacksize": 64,
+    "default-stack-size": -1,
+    "unsafe-enchantments": false,
+    "item-spawn-blacklist": [
+      "minecraft:bedrock",
+      "minecraft:barrier",
+      "minecraft:command_block",
+      "minecraft:chain_command_block",
+      "minecraft:repeating_command_block",
+      "minecraft:structure_block",
+      "minecraft:jigsaw",
+      "minecraft:debug_stick",
+      "minecraft:knowledge_book"
+    ]
+  }
+}

@@ -1,8 +1,5 @@
-package com.zerog.neoessentials.handlers;
+package com.zerog.neoessentials.chat;
 
-import com.zerog.neoessentials.chat.ChatFormatter;
-import com.zerog.neoessentials.chat.ChatManager;
-import com.zerog.neoessentials.chat.MuteManager;
 import com.zerog.neoessentials.api.ChatAPI;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,6 +19,8 @@ public class ChatHandler {
     
     /**
      * Handles server chat events and applies custom formatting.
+     * Only applies custom formatting when chat-format is configured,
+     * otherwise preserves vanilla <playername>: message format.
      * 
      * @param event The ServerChatEvent containing the chat message and player
      */
@@ -42,20 +41,28 @@ public class ChatHandler {
             ChatManager chatManager = ChatAPI.getChatManager();
             if (chatManager == null) {
                 LOGGER.warn("ChatManager not available, using default chat formatting");
-                return;
+                return; // Let vanilla handle the chat
             }
             
             // Get the configured chat format
             String chatFormat = chatManager.getChatFormat();
             
-            // Format the message using our custom formatter
-            Component formattedMessage = ChatFormatter.formatMessage(chatFormat, player, rawMessage);
-            
-            // Set the formatted message
-            event.setMessage(formattedMessage);
-            
-            LOGGER.debug("Applied chat formatting for player {}: {} -> {}", 
-                player.getName().getString(), rawMessage, formattedMessage.getString());
+            // Only apply custom formatting if a custom format is configured
+            // Default format is "{DISPLAYNAME}: {MESSAGE}" which is essentially vanilla
+            if (chatFormat != null && !chatFormat.equals("{DISPLAYNAME}: {MESSAGE}")) {
+                // Cancel the original event to apply custom formatting
+                event.setCanceled(true);
+                
+                // Format the message using our custom formatter
+                Component formattedMessage = ChatFormatter.formatMessage(chatFormat, player, rawMessage);
+                
+                // Manually broadcast the formatted message to all players
+                player.getServer().getPlayerList().broadcastSystemMessage(formattedMessage, false);
+                
+                LOGGER.debug("Applied custom chat formatting for player {}: {} -> {}", 
+                    player.getName().getString(), rawMessage, formattedMessage.getString());
+            }
+            // If using default format, let vanilla handle it (preserves <playername>: message)
             
         } catch (Exception e) {
             LOGGER.error("Error handling chat event for player {}: {}", 

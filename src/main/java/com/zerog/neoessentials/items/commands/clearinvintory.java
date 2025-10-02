@@ -8,23 +8,23 @@ import com.zerog.neoessentials.config.CommandModuleConfig;
 
 public class clearinvintory {
     /**
-     * Register the /clearinvintory, /ci, and /clearinv commands.
+     * Register the /clearinventory, /ci, and /clearinv commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         CommandModuleConfig config = CommandModuleConfig.load(new java.io.File("config/neoessentials/config.json"));
-        if (!config.isCommandEnabled("clearinvintory")) return;
+        if (!config.isCommandEnabled("clearinventory")) return;
         dispatcher.register(
-            Commands.literal("clearinvintory")
+            Commands.literal("clearinventory")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayer();
-                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.clearinvintory")) {
+                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.clearinventory")) {
                         ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     int[] cleared = clear(player);
                     ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable(
-                        "commands.neoessentials.clearinvintory.detailed_success",
+                        "commands.neoessentials.clearinventory.detailed_success",
                         cleared[0], cleared[1], cleared[2]
                     ), false);
                     return 1;
@@ -35,13 +35,13 @@ public class clearinvintory {
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayer();
-                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.clearinvintory")) {
+                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.clearinventory")) {
                         ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     int[] cleared = clear(player);
                     ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable(
-                        "commands.neoessentials.clearinvintory.detailed_success",
+                        "commands.neoessentials.clearinventory.detailed_success",
                         cleared[0], cleared[1], cleared[2]
                     ), false);
                     return 1;
@@ -52,13 +52,13 @@ public class clearinvintory {
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayer();
-                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.clearinvintory")) {
+                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.clearinventory")) {
                         ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     int[] cleared = clear(player);
                     ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable(
-                        "commands.neoessentials.clearinvintory.detailed_success",
+                        "commands.neoessentials.clearinventory.detailed_success",
                         cleared[0], cleared[1], cleared[2]
                     ), false);
                     return 1;
