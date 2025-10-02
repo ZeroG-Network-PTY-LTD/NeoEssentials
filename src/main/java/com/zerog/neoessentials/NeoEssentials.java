@@ -13,6 +13,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.permissions.LuckPermsAdapter;
 import com.zerog.neoessentials.permissions.FtbRanksAdapter;
@@ -297,10 +298,15 @@ public class NeoEssentials {
             UUID uuid = player.getUUID();
             LOGGER.debug("Player logged in: {} ({})", player.getName().getString(), uuid);
             try {
+                // Load economy data
                 EconomyManager.getInstance().loadPlayerEconomy(uuid);
                 LOGGER.debug("Economy loaded for: {}", uuid);
+                
+                // Load general player data (homes, warps, etc.)
+                NeoEssentialsManager.getInstance().loadPlayerData(uuid);
+                LOGGER.debug("Player data loaded for: {}", uuid);
             } catch (Exception e) {
-                LOGGER.error("Exception in loadPlayerEconomy for: {}: {}", uuid, e.getMessage(), e);
+                LOGGER.error("Exception loading player data for: {}: {}", uuid, e.getMessage(), e);
             }
         }
     }
@@ -309,9 +315,33 @@ public class NeoEssentials {
     public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             UUID uuid = player.getUUID();
-            EconomyManager.getInstance().savePlayerEconomy(uuid);
-            // Auto-restore items if player disconnects with pending /dispose
-            dispose.restorePendingItems(player);
+            LOGGER.debug("Player logged out: {} ({})", player.getName().getString(), uuid);
+            try {
+                // Save economy data
+                EconomyManager.getInstance().savePlayerEconomy(uuid);
+                LOGGER.debug("Economy saved for: {}", uuid);
+                
+                // Save general player data (homes, warps, etc.)
+                NeoEssentialsManager.getInstance().savePlayerData(uuid);
+                LOGGER.debug("Player data saved for: {}", uuid);
+                
+                // Auto-restore items if player disconnects with pending /dispose
+                dispose.restorePendingItems(player);
+            } catch (Exception e) {
+                LOGGER.error("Exception saving player data for: {}: {}", uuid, e.getMessage(), e);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onServerStarting(ServerStartingEvent event) {
+        LOGGER.info("NeoEssentials loading existing player data...");
+        try {
+            // Load all existing player data at server startup
+            NeoEssentialsManager.getInstance().loadAllPlayerData();
+            LOGGER.info("Existing player data loaded successfully.");
+        } catch (Exception e) {
+            LOGGER.error("Failed to load existing player data at startup", e);
         }
     }
 
