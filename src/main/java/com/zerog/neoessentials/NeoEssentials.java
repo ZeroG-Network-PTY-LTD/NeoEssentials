@@ -1,5 +1,6 @@
 package com.zerog.neoessentials;
 import com.zerog.neoessentials.commands.ModRootCommand;
+import com.zerog.neoessentials.commands.CommandRegistry;
 import com.zerog.neoessentials.items.commands.dispose;
 import com.zerog.neoessentials.economy.commands.EconomyCommands;
 import com.zerog.neoessentials.economy.EconomyManager;
@@ -246,44 +247,118 @@ public class NeoEssentials {
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+        CommandRegistry registry = CommandRegistry.getInstance();
         
         LOGGER.info("Registering NeoEssentials commands...");
+        
+        // Clear registry for fresh registration
+        registry.clear();
         
         // Economy commands
         try {
             EconomyCommands.register(dispatcher);
+            // Register economy commands in the registry
+            registry.registerCommand("balance", "Display your or another player's balance", "bal");
+            registry.registerCommand("pay", "Send money to another player");
+            registry.registerCommand("paytoggle", "Toggle accepting payments");
+            registry.registerCommand("eco", "Admin economy commands (give, take, set, history)");
+            registry.registerCommand("baltop", "Display top player balances");
             LOGGER.info("Economy commands registered successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to register economy commands", e);
         }
         
         // Permission commands
-        PermissionsCommand.register(dispatcher);
-        
-        // Root commands
-        ModRootCommand.register(dispatcher);
+        try {
+            PermissionsCommand.register(dispatcher);
+            registry.registerCommand("pex", "Permission management commands", "permissions");
+            registry.registerCommand("permissions", "Permission management commands", "pex");
+            LOGGER.info("Permission commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register permission commands", e);
+        }
         
         // Item commands
-        com.zerog.neoessentials.items.commands.repair.register(dispatcher);
-        com.zerog.neoessentials.items.commands.dispose.register(dispatcher);
-        com.zerog.neoessentials.items.commands.clearinventory.register(dispatcher);
-        com.zerog.neoessentials.items.commands.EnchantCommand.register(dispatcher);
-        com.zerog.neoessentials.items.commands.powertool.register(dispatcher);
-        com.zerog.neoessentials.items.commands.powertooltoggle.register(dispatcher);
+        try {
+            com.zerog.neoessentials.items.commands.repair.register(dispatcher);
+            registry.registerCommand("repair", "Repair items in hand or inventory", "fix");
+            
+            com.zerog.neoessentials.items.commands.dispose.register(dispatcher);
+            registry.registerCommand("dispose", "Safely dispose of items with confirmation", "trash");
+            
+            com.zerog.neoessentials.items.commands.clearinventory.register(dispatcher);
+            registry.registerCommand("clearinventory", "Clear player inventory", "ci", "clearinv");
+            
+            com.zerog.neoessentials.items.commands.EnchantCommand.register(dispatcher);
+            registry.registerCommand("enchant", "Enchant items with specific enchantments");
+            
+            com.zerog.neoessentials.items.commands.powertool.register(dispatcher);
+            registry.registerCommand("powertool", "Bind commands to items", "pt");
+            
+            com.zerog.neoessentials.items.commands.powertooltoggle.register(dispatcher);
+            registry.registerCommand("powertooltoggle", "Toggle powertool functionality", "pttoggle");
+            
+            LOGGER.info("Item commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register item commands", e);
+        }
         
         // Chat commands
-        com.zerog.neoessentials.chat.command.MsgCommand.register(dispatcher);
-        com.zerog.neoessentials.chat.command.IgnoreCommand.register(dispatcher);
-        com.zerog.neoessentials.chat.command.UnignoreCommand.register(dispatcher);
-        com.zerog.neoessentials.chat.command.MuteCommand.register(dispatcher);
-        com.zerog.neoessentials.chat.command.UnmuteCommand.register(dispatcher);
-        com.zerog.neoessentials.chat.command.MuteListCommand.register(dispatcher);
-        com.zerog.neoessentials.chat.command.MsgToggleCommand.register(dispatcher);
-        com.zerog.neoessentials.chat.command.SocialSpyCommand.register(dispatcher);
-        com.zerog.neoessentials.chat.command.ReplyCommand.register(dispatcher);
+        try {
+            com.zerog.neoessentials.chat.command.MsgCommand.register(dispatcher);
+            registry.registerCommand("msg", "Send private messages to players");
+            
+            com.zerog.neoessentials.chat.command.IgnoreCommand.register(dispatcher);
+            registry.registerCommand("ignore", "Ignore messages from a player");
+            
+            com.zerog.neoessentials.chat.command.UnignoreCommand.register(dispatcher);
+            registry.registerCommand("unignore", "Stop ignoring a player");
+            
+            com.zerog.neoessentials.chat.command.MuteCommand.register(dispatcher);
+            registry.registerCommand("mute", "Mute a player from chat");
+            
+            com.zerog.neoessentials.chat.command.UnmuteCommand.register(dispatcher);
+            registry.registerCommand("unmute", "Unmute a player");
+            
+            com.zerog.neoessentials.chat.command.MuteListCommand.register(dispatcher);
+            registry.registerCommand("mutelist", "List all muted players");
+            
+            com.zerog.neoessentials.chat.command.MsgToggleCommand.register(dispatcher);
+            registry.registerCommand("msgtoggle", "Toggle receiving private messages");
+            
+            com.zerog.neoessentials.chat.command.SocialSpyCommand.register(dispatcher);
+            registry.registerCommand("socialspy", "Toggle message spying for moderators");
+            
+            com.zerog.neoessentials.chat.command.ReplyCommand.register(dispatcher);
+            registry.registerCommand("reply", "Reply to last private message", "r");
+            
+            LOGGER.info("Chat commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register chat commands", e);
+        }
         
         // Utility commands
-        com.zerog.neoessentials.utils.commands.AfkCommand.register(dispatcher);
+        try {
+            com.zerog.neoessentials.utils.commands.AfkCommand.register(dispatcher);
+            registry.registerCommand("afk", "Toggle AFK status");
+            
+            LOGGER.info("Utility commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register utility commands", e);
+        }
+        
+        // Root commands (register last so they can see all available commands)
+        try {
+            ModRootCommand.register(dispatcher);
+            LOGGER.info("Root commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register root commands", e);
+        }
+        
+        // Log registration statistics
+        var stats = registry.getStats();
+        LOGGER.info("Command registration complete: {} commands, {} aliases, {} total available", 
+                   stats.get("commands"), stats.get("aliases"), stats.get("total"));
     }
 
     @SubscribeEvent

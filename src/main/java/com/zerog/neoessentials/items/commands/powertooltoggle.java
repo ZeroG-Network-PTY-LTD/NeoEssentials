@@ -8,6 +8,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 
 public class powertooltoggle {
     // Server-side powertool toggles: player UUID -> slot -> enabled
@@ -23,11 +24,11 @@ public class powertooltoggle {
                 .executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayer();
                     if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.powertool.toggle")) {
-                        ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
+                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     toggle(player);
-                    ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.powertool.toggle.success"), false);
+                    ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.powertool.toggle.success"), false);
                     return 1;
                 })
         );
@@ -37,11 +38,11 @@ public class powertooltoggle {
                 .executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayer();
                     if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.powertool.toggle")) {
-                        ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
+                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     toggle(player);
-                    ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.powertool.toggle.success"), false);
+                    ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.powertool.toggle.success"), false);
                     return 1;
                 })
         );

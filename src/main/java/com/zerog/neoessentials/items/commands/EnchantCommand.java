@@ -3,6 +3,7 @@ package com.zerog.neoessentials.items.commands;
 
 import com.zerog.neoessentials.config.GlobalConfig;
 import com.zerog.neoessentials.config.ConfigUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -42,7 +43,7 @@ public class EnchantCommand {
                     .executes(ctx -> executeEnchant(ctx, false)) // Default level 1
                 )
                 .executes(ctx -> {
-                    ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchant.usage"));
+                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.enchant.usage"));
                     return 0;
                 })
         );
@@ -64,7 +65,7 @@ public class EnchantCommand {
                     .executes(ctx -> executeEnchant(ctx, true)) // Default level 1
                 )
                 .executes(ctx -> {
-                    ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchanthand.usage"));
+                    ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.enchanthand.usage"));
                     return 0;
                 })
         );
@@ -78,7 +79,7 @@ public class EnchantCommand {
         
         // Check permission
         if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.enchant")) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
             return 0;
         }
         
@@ -100,34 +101,34 @@ public class EnchantCommand {
             .registryOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
         
         if (!enchantRegistry.containsKey(enchantId)) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchant.unknown", enchantId.toString()));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.enchant.unknown", enchantId.toString()));
             return 0;
         }
         
         Enchantment enchantment = enchantRegistry.get(enchantId);
         if (enchantment == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchant.unknown", enchantId.toString()));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.enchant.unknown", enchantId.toString()));
             return 0;
         }
         
         // Get item to enchant
         ItemStack stack = player.getMainHandItem();
         if (stack.isEmpty()) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchant.no_item"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.enchant.no_item"));
             return 0;
         }
         
         // Apply enchantment
         if (applyEnchantment(player, stack, enchantment, level)) {
-            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable(
+            ctx.getSource().sendSuccess(() -> MessageUtil.success(
                 "commands.neoessentials.enchant.success", 
                 enchantId.toString(), 
                 level,
-                stack.getDisplayName()
+                stack.getDisplayName().getString()
             ), false);
             return 1;
         } else {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.enchant.failed"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.enchant.failed"));
             return 0;
         }
     }
