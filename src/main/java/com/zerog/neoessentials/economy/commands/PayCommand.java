@@ -35,38 +35,78 @@ public class PayCommand {
     }
 
     private static int execute(CommandContext<CommandSourceStack> ctx) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-        ServerPlayer sender = ctx.getSource().getPlayerOrException();
+        // Validate permission first
+        com.zerog.neoessentials.util.PermissionValidator.PermissionResult permResult = 
+            com.zerog.neoessentials.util.PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.economy.pay");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+        
+        ServerPlayer sender = permResult.getPlayer();
+        
+        // Check cooldown
         long now = System.currentTimeMillis();
         if (payCooldowns.containsKey(sender.getUUID()) && now - payCooldowns.get(sender.getUUID()) < PAY_COOLDOWN_MS) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.cooldown"));
             return 0;
         }
         payCooldowns.put(sender.getUUID(), now);
-        if (!EconomyManager.getInstance().isEnabled()) return 0;
+        
+        // Check if economy is enabled
+        if (!EconomyManager.getInstance().isEnabled()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.economy.disabled"));
+            return 0;
+        }
+        
+        // Validate input parameters
         String targetName = StringArgumentType.getString(ctx, "player");
         double amountRaw = DoubleArgumentType.getDouble(ctx, "amount");
-        if (amountRaw <= 0.0) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.invalid_amount"));
+        
+        // Validate player name
+        com.zerog.neoessentials.util.InputValidator.ValidationResult nameValidation = 
+            com.zerog.neoessentials.util.InputValidator.validatePlayerName(targetName);
+        if (!nameValidation.isValid()) {
+            ctx.getSource().sendFailure(MessageUtil.error(nameValidation.getErrorMessage()));
             return 0;
         }
+        
+        // Validate amount
+        com.zerog.neoessentials.util.InputValidator.ValidationResult amountValidation = 
+            com.zerog.neoessentials.util.InputValidator.validateEconomyAmount(amountRaw);
+        if (!amountValidation.isValid()) {
+            ctx.getSource().sendFailure(MessageUtil.error(amountValidation.getErrorMessage()));
+            return 0;
+        }
+        
+        // Find recipient player
         net.minecraft.server.MinecraftServer server = ctx.getSource().getServer();
-        ServerPlayer recipient = server.getPlayerList().getPlayers().stream()
-            .filter(p -> p.getGameProfile().getName().equalsIgnoreCase(targetName))
-            .findFirst().orElse(null);
-        if (recipient == null) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.player_not_found"));
+        com.zerog.neoessentials.util.InputValidator.ValidationResult playerValidation = 
+            com.zerog.neoessentials.util.InputValidator.validateOnlinePlayer(targetName, server);
+        if (!playerValidation.isValid()) {
+            ctx.getSource().sendFailure(MessageUtil.error(playerValidation.getErrorMessage()));
             return 0;
         }
+        
+        ServerPlayer recipient = playerValidation.getValue(ServerPlayer.class);
+        
+        // Prevent self-payment
         if (recipient.getUUID().equals(sender.getUUID())) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.cannot_pay_self"));
             return 0;
         }
+        // Check if recipient allows payments
         if (!PayToggleManager.getInstance().getPayToggle(recipient.getUUID())) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.toggled_off"));
             return 0;
         }
-        java.math.BigDecimal amount = java.math.BigDecimal.valueOf(amountRaw);
-        double taxPercent = EconomyManager.getInstance().getConfig().taxPercentage;
+        
+        // Use validated amount
+        java.math.BigDecimal amount = amountValidation.getValue(java.math.BigDecimal.class);
+        
+        // Calculate tax using ConfigManager
+        com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        double taxPercent = configManager.getEconomyTaxPercentage();
         java.math.BigDecimal fee = amount.multiply(java.math.BigDecimal.valueOf(taxPercent / 100.0));
         java.math.BigDecimal netAmount = amount.subtract(fee);
         boolean success = com.zerog.neoessentials.api.EconomyAPI.payPlayer(sender.getUUID(), recipient.getUUID(), amount);

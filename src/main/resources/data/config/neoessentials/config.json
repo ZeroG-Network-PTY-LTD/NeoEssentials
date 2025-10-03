@@ -1,15 +1,17 @@
 {
   "modules": {
     "economyEnabled": true,
-    "commandsEnabled": true
+    "commandsEnabled": true,
+    "permissionsEnabled": true,
+    "debugMode": false
   },
   "economySettings": {
     "startingBalance": 100.0,
     "currencySymbol": "$",
-    "maxBalance": 100000.0,
+    "maxBalance": 999999999.99,
     "cleanupInactiveAccounts": true,
-    "taxPercentage": 1.5,
-    "maxTransferAmount": 10000.0,
+    "taxPercentage": 0.0,
+    "maxTransferAmount": 100000.0,
     "paytoggleDefault": true,
     "allowNegativeBalances": false,
     "inactiveAccountCleanupDays": 30,
@@ -25,7 +27,10 @@
     "repair": true,
     "dispose": true,
     "powertool": true,
+    "powertooltoggle": true,
     "clearinventory": true,
+    "enchant": true,
+    "enchanthand": true,
     "msg": true,
     "reply": true,
     "afk": true,
@@ -34,7 +39,16 @@
     "mute": true,
     "unmute": true,
     "msgtoggle": true,
-    "socialspy": true
+    "socialspy": true,
+    "permissions": true
+  },
+  "security": {
+    "enableInputValidation": true,
+    "maxCommandLength": 256,
+    "maxReasonLength": 500,
+    "allowUnsafeCommands": false,
+    "enablePathTraversalProtection": true,
+    "enableXSSProtection": true
   },
   "items": {
     "permission-based-item-spawn": true,
@@ -53,5 +67,18 @@
       "minecraft:debug_stick",
       "minecraft:knowledge_book"
     ]
+  },
+  "permissions": {
+    "useExternalPermissions": false,
+    "defaultGroup": "default",
+    "opsBypassPermissions": true,
+    "cachePermissions": true,
+    "permissionCacheExpiryMinutes": 30
+  },
+  "logging": {
+    "enableTransactionLogging": true,
+    "enablePermissionLogging": false,
+    "enableDebugLogging": false,
+    "logLevel": "INFO"
   }
 }

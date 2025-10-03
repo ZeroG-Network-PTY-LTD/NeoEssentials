@@ -24,13 +24,27 @@ public class PowertoolCommand {
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .then(Commands.argument("command", StringArgumentType.greedyString())
                     .executes(ctx -> {
-                        ServerPlayer player = ctx.getSource().getPlayer();
-                        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.powertool")) {
-                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                        // Validate permission
+                        com.zerog.neoessentials.util.PermissionValidator.PermissionResult permResult = 
+                            com.zerog.neoessentials.util.PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.powertool");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
+                        
+                        ServerPlayer player = permResult.getPlayer();
                         String cmd = StringArgumentType.getString(ctx, "command");
-                        assign(player, cmd);
+                        
+                        // Validate command
+                        com.zerog.neoessentials.util.InputValidator.ValidationResult cmdValidation = 
+                            com.zerog.neoessentials.util.InputValidator.validateCommand(cmd);
+                        if (!cmdValidation.isValid()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(cmdValidation.getErrorMessage()));
+                            return 0;
+                        }
+                        
+                        String validCommand = cmdValidation.getValue(String.class);
+                        assign(player, validCommand);
                         ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.powertool.assign.success"), false);
                         return 1;
                     })
@@ -41,13 +55,27 @@ public class PowertoolCommand {
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .then(Commands.argument("command", StringArgumentType.greedyString())
                     .executes(ctx -> {
-                        ServerPlayer player = ctx.getSource().getPlayer();
-                        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.powertool")) {
-                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                        // Validate permission
+                        com.zerog.neoessentials.util.PermissionValidator.PermissionResult permResult = 
+                            com.zerog.neoessentials.util.PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.powertool");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
+                        
+                        ServerPlayer player = permResult.getPlayer();
                         String cmd = StringArgumentType.getString(ctx, "command");
-                        assign(player, cmd);
+                        
+                        // Validate command
+                        com.zerog.neoessentials.util.InputValidator.ValidationResult cmdValidation = 
+                            com.zerog.neoessentials.util.InputValidator.validateCommand(cmd);
+                        if (!cmdValidation.isValid()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(cmdValidation.getErrorMessage()));
+                            return 0;
+                        }
+                        
+                        String validCommand = cmdValidation.getValue(String.class);
+                        assign(player, validCommand);
                         ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.powertool.assign.success"), false);
                         return 1;
                     })

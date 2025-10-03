@@ -12,7 +12,13 @@ import net.minecraft.network.chat.Component;
  */
 public class ReplyCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("reply")
+        // Register with vanilla aliases to override vanilla behavior
+        registerCommand(dispatcher, "reply");
+        registerCommand(dispatcher, "r");
+    }
+    
+    private static void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
+        dispatcher.register(Commands.literal(commandName)
             .then(Commands.argument("message", StringArgumentType.greedyString())
                 .executes(ctx -> {
                     CommandSourceStack source = ctx.getSource();
@@ -20,7 +26,7 @@ public class ReplyCommand {
                     ServerPlayer sender = source.getPlayer();
                     ServerPlayer target = com.zerog.neoessentials.chat.LastMessageManager.getLastMessager(sender);
                     if (target == null) {
-                        source.sendFailure(Component.translatable("neoessentials.reply.no_target"));
+                        source.sendFailure(Component.translatable("commands.message.no_target"));
                         return 0;
                     }
                     // Permissions and mute/ignore checks
@@ -37,9 +43,9 @@ public class ReplyCommand {
                         source.sendFailure(Component.translatable("neoessentials.reply.muted_or_ignored", target.getName()));
                         return 0;
                     }
-                    // Send reply messages
-                    Component msgToTarget = Component.translatable("neoessentials.reply.format.to", sender.getName(), message);
-                    Component msgToSender = Component.translatable("neoessentials.reply.format.from", target.getName(), message);
+                    // Send reply messages using vanilla formatting
+                    Component msgToTarget = Component.translatable("commands.message.display.incoming", sender.getDisplayName(), message);
+                    Component msgToSender = Component.translatable("commands.message.display.outgoing", target.getDisplayName(), message);
                     target.sendSystemMessage(msgToTarget);
                     sender.sendSystemMessage(msgToSender);
                     com.zerog.neoessentials.api.ChatAPI.broadcastSocialSpy(sender, target, message);

@@ -20,7 +20,14 @@ public class MsgCommand {
      * @param dispatcher The command dispatcher
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("msg")
+        // Register with vanilla aliases to override vanilla behavior
+        registerCommand(dispatcher, "msg");
+        registerCommand(dispatcher, "tell");
+        registerCommand(dispatcher, "w");
+    }
+    
+    private static void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
+        dispatcher.register(Commands.literal(commandName)
             .then(Commands.argument("target", StringArgumentType.word())
                 .then(Commands.argument("message", StringArgumentType.greedyString())
                     .executes(ctx -> {
@@ -35,7 +42,7 @@ public class MsgCommand {
                         }
                         ServerPlayer target = server.getPlayerList().getPlayerByName(targetName);
                         if (target == null) {
-                            source.sendFailure(Component.translatable("commands.neoessentials.msg.not_found", targetName));
+                            source.sendFailure(Component.translatable("argument.player.unknown", targetName));
                             return 0;
                         }
                         ChatManager chatManager = ChatAPI.getChatManager();
@@ -52,9 +59,9 @@ public class MsgCommand {
                             source.sendFailure(Component.translatable("commands.neoessentials.msg.muted_or_ignored", target.getName()));
                             return 0;
                         }
-                        // Send message
-                        Component msgToTarget = Component.translatable("commands.neoessentials.msg.format.to", sender.getName(), message);
-                        Component msgToSender = Component.translatable("commands.neoessentials.msg.format.from", target.getName(), message);
+                        // Send message using vanilla formatting
+                        Component msgToTarget = Component.translatable("commands.message.display.incoming", sender.getDisplayName(), message);
+                        Component msgToSender = Component.translatable("commands.message.display.outgoing", target.getDisplayName(), message);
                         target.sendSystemMessage(msgToTarget);
                         sender.sendSystemMessage(msgToSender);
                         // --- SocialSpy integration ---
