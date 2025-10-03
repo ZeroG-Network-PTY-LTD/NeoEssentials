@@ -5,6 +5,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.world.SimpleContainer;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +30,7 @@ public class dispose {
                     player.getInventory().placeItemBackInInventory(container.getItem(i));
                 }
             }
-            player.sendSystemMessage(Component.translatable("commands.neoessentials.dispose.restored"));
+            player.sendSystemMessage(MessageUtil.info("commands.neoessentials.dispose.restored"));
         }
     }
 
@@ -45,13 +46,13 @@ public class dispose {
                     .executes(ctx -> {
                         ServerPlayer player = ctx.getSource().getPlayer();
                         if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.dispose")) {
-                            ctx.getSource().sendFailure(Component.translatable("commands.neoessentials.no_permission"));
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                             return 0;
                         }
                         if (pendingDisposals.remove(player.getUUID()) != null) {
-                            ctx.getSource().sendSuccess(() -> Component.translatable("commands.neoessentials.dispose.confirmed"), false);
+                            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.dispose.confirmed"), false);
                         } else {
-                            ctx.getSource().sendFailure(Component.translatable("commands.neoessentials.dispose.nothing_pending"));
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.dispose.nothing_pending"));
                         }
                         return 1;
                     })
@@ -60,7 +61,7 @@ public class dispose {
                     .executes(ctx -> {
                         ServerPlayer player = ctx.getSource().getPlayer();
                         if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.dispose")) {
-                            ctx.getSource().sendFailure(Component.translatable("commands.neoessentials.no_permission"));
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                             return 0;
                         }
                         SimpleContainer container = pendingDisposals.remove(player.getUUID());
@@ -71,9 +72,9 @@ public class dispose {
                                     player.getInventory().placeItemBackInInventory(container.getItem(i));
                                 }
                             }
-                            ctx.getSource().sendSuccess(() -> Component.translatable("commands.neoessentials.dispose.restored"), false);
+                            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.dispose.restored"), false);
                         } else {
-                            ctx.getSource().sendFailure(Component.translatable("commands.neoessentials.dispose.nothing_pending"));
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.dispose.nothing_pending"));
                         }
                         return 1;
                     })
@@ -81,11 +82,11 @@ public class dispose {
                 .executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayer();
                     if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.dispose")) {
-                        ctx.getSource().sendFailure(Component.translatable("commands.neoessentials.no_permission"));
+                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     disposeItem(player);
-                    ctx.getSource().sendSuccess(() -> Component.translatable("commands.neoessentials.dispose.opened"), false);
+                    ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.dispose.opened"), false);
                     return 1;
                 })
         );
@@ -95,11 +96,11 @@ public class dispose {
                 .executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayer();
                     if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.dispose")) {
-                        ctx.getSource().sendFailure(Component.translatable("commands.neoessentials.no_permission"));
+                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     disposeItem(player);
-                    ctx.getSource().sendSuccess(() -> Component.translatable("commands.neoessentials.dispose.opened"), false);
+                    ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.dispose.opened"), false);
                     return 1;
                 })
         );
@@ -119,7 +120,7 @@ public class dispose {
 
             @Override
             public Component getDisplayName() {
-                return Component.translatable("commands.neoessentials.dispose.title");
+                return MessageUtil.component("commands.neoessentials.dispose.title");
             }
         };
         player.openMenu(provider);

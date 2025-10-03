@@ -9,6 +9,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 
 public class powertool {
     // Server-side powertool assignments: player UUID -> slot -> command
@@ -25,12 +26,12 @@ public class powertool {
                     .executes(ctx -> {
                         ServerPlayer player = ctx.getSource().getPlayer();
                         if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.powertool")) {
-                            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                             return 0;
                         }
                         String cmd = StringArgumentType.getString(ctx, "command");
                         assign(player, cmd);
-                        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.powertool.assign.success"), false);
+                        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.powertool.assign.success"), false);
                         return 1;
                     })
                 )
@@ -42,12 +43,12 @@ public class powertool {
                     .executes(ctx -> {
                         ServerPlayer player = ctx.getSource().getPlayer();
                         if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.powertool")) {
-                            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
+                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                             return 0;
                         }
                         String cmd = StringArgumentType.getString(ctx, "command");
                         assign(player, cmd);
-                        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.powertool.assign.success"), false);
+                        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.powertool.assign.success"), false);
                         return 1;
                     })
                 )

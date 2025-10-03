@@ -91,5 +91,15 @@
   "commands.neoessentials.msg.format.from": "[From {0}] {1}",
   "commands.neoessentials.mutelist.list": "Muted players: {0}",
   "commands.neoessentials.mutelist.disabled": "Mute list command is disabled.",
-  "commands.neoessentials.error": "An error occurred while executing the command."
+  "commands.neoessentials.error": "An error occurred while executing the command.",
+  "commands.neoessentials.root.unknown_command": "Unknown NeoEssentials command: {0}",
+  "commands.neoessentials.root.help_hint": "Use '/neoe' to see available commands.",
+  "commands.neoessentials.root.execution_failed": "Failed to execute command: {0}",
+  "commands.neoessentials.root.players_only": "Only players can use this root command.",
+  "commands.neoessentials.root.no_commands": "No NeoEssentials commands are currently registered.",
+  "commands.neoessentials.root.help_header": "=== NeoEssentials Commands ===",
+  "commands.neoessentials.root.help_count": "Available commands ({0}):",
+  "commands.neoessentials.root.command_with_aliases": "/{0} (aliases: /{1}) - {2}",
+  "commands.neoessentials.root.command_simple": "/{0} - {1}",
+  "commands.neoessentials.root.help_footer": "Use /neoe <command> or /neoessentials <command> to run any command."
 }

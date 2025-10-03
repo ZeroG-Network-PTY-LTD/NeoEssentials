@@ -10,9 +10,16 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.permissions.*;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
+import com.zerog.neoessentials.economy.EconomyPlayerUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 import java.util.UUID;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class PermissionsCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionsCommand.class);
@@ -34,6 +41,11 @@ public class PermissionsCommand {
                     .executes(ctx -> listUsers(ctx))))
             .then(Commands.literal("group")
                 .then(Commands.argument("group", StringArgumentType.word())
+                    .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                        PermissionAPI.getManager().getGroups().stream()
+                            .map(PermissionGroup::getName),
+                        builder
+                    ))
                     .then(Commands.literal("setprefix")
                         .then(Commands.argument("prefix", StringArgumentType.greedyString())
                             .executes(ctx -> setPrefix(ctx))))
@@ -42,20 +54,74 @@ public class PermissionsCommand {
                             .executes(ctx -> setSuffix(ctx))))
                     .then(Commands.literal("add")
                         .then(Commands.argument("permission", StringArgumentType.word())
+                            .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                java.util.Arrays.asList(
+                                    "neoessentials.*",
+                                    "neoessentials.item.*",
+                                    "neoessentials.economy.*",
+                                    "neoessentials.chat.*",
+                                    "neoessentials.admin.*",
+                                    "neoessentials.teleport.*"
+                                ),
+                                builder
+                            ))
                             .executes(ctx -> addGroupPermission(ctx))))
                     .then(Commands.literal("remove")
                         .then(Commands.argument("permission", StringArgumentType.word())
+                            .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                java.util.Arrays.asList(
+                                    "neoessentials.*",
+                                    "neoessentials.item.*",
+                                    "neoessentials.economy.*",
+                                    "neoessentials.chat.*",
+                                    "neoessentials.admin.*",
+                                    "neoessentials.teleport.*"
+                                ),
+                                builder
+                            ))
                             .executes(ctx -> removeGroupPermission(ctx))))))
             .then(Commands.literal("user")
-                .then(Commands.argument("uuid", StringArgumentType.word())
+                .then(Commands.argument("player", StringArgumentType.word())
+                    .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                        ctx.getSource().getServer().getPlayerList().getPlayers().stream()
+                            .map(p -> p.getGameProfile().getName()),
+                        builder
+                    ))
                     .then(Commands.literal("setgroup")
                         .then(Commands.argument("group", StringArgumentType.word())
+                            .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                PermissionAPI.getManager().getGroups().stream()
+                                    .map(PermissionGroup::getName),
+                                builder
+                            ))
                             .executes(ctx -> setUserGroup(ctx))))
                     .then(Commands.literal("add")
                         .then(Commands.argument("permission", StringArgumentType.word())
+                            .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                java.util.Arrays.asList(
+                                    "neoessentials.*",
+                                    "neoessentials.item.*",
+                                    "neoessentials.economy.*",
+                                    "neoessentials.chat.*",
+                                    "neoessentials.admin.*",
+                                    "neoessentials.teleport.*"
+                                ),
+                                builder
+                            ))
                             .executes(ctx -> addUserPermission(ctx))))
                     .then(Commands.literal("remove")
                         .then(Commands.argument("permission", StringArgumentType.word())
+                            .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
+                                java.util.Arrays.asList(
+                                    "neoessentials.*",
+                                    "neoessentials.item.*",
+                                    "neoessentials.economy.*",
+                                    "neoessentials.chat.*",
+                                    "neoessentials.admin.*",
+                                    "neoessentials.teleport.*"
+                                ),
+                                builder
+                            ))
                             .executes(ctx -> removeUserPermission(ctx))))));
     }
 
@@ -64,11 +130,11 @@ public class PermissionsCommand {
             PermissionManager manager = new PermissionManager();
             PermissionStorage.load(manager);
             PermissionAPI.setManager(manager);
-            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.reloaded"), false);
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.reloaded"), false);
             return 1;
         } catch (Exception e) {
             LOGGER.error("Failed to reload permissions", e);
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.reload_failed", e.getMessage()));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.reload_failed", e.getMessage()));
             return 0;
         }
     }
@@ -78,12 +144,12 @@ public class PermissionsCommand {
         String prefix = StringArgumentType.getString(ctx, "prefix");
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.group_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
     group.setPrefix(prefix);
     try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after setting prefix", e); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.prefix_set"), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.prefix_set", groupName, prefix), false);
         return 1;
     }
 
@@ -92,12 +158,12 @@ public class PermissionsCommand {
         String suffix = StringArgumentType.getString(ctx, "suffix");
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.group_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
     group.setSuffix(suffix);
     try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after setting suffix", e); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.suffix_set"), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.suffix_set", groupName, suffix), false);
         return 1;
     }
 
@@ -106,12 +172,12 @@ public class PermissionsCommand {
         String perm = StringArgumentType.getString(ctx, "permission");
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.group_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
     group.addPermission(perm);
     try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after adding group permission", e); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_added"), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_added", perm, groupName), false);
         return 1;
     }
 
@@ -120,98 +186,116 @@ public class PermissionsCommand {
         String perm = StringArgumentType.getString(ctx, "permission");
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.group_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
     group.removePermission(perm);
     try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after removing group permission", e); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_removed"), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_removed", perm, groupName), false);
         return 1;
     }
 
     private static int setUserGroup(CommandContext<CommandSourceStack> ctx) {
-        String uuidStr = StringArgumentType.getString(ctx, "uuid");
+        String playerName = StringArgumentType.getString(ctx, "player");
         String groupName = StringArgumentType.getString(ctx, "group");
-        UUID uuid;
-        try {
-            uuid = UUID.fromString(uuidStr);
-        } catch (IllegalArgumentException e) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.invalid_uuid"));
+        MinecraftServer server = ctx.getSource().getServer();
+        
+        // Try to get UUID by player name
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+        if (uuidOpt.isEmpty()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found"));
             return 0;
         }
+        
+        UUID uuid = uuidOpt.get();
         PermissionUser user = PermissionAPI.getManager().getUser(uuid);
         if (user == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.user_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.user_not_found"));
             return 0;
         }
-    user.setGroup(groupName);
-    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after setting user group", e); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.user_group_set"), false);
+        
+        // Check if group exists
+        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+        if (group == null) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
+            return 0;
+        }
+        
+        user.setGroup(groupName);
+        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after setting user group", e); }
+        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.user_group_set", playerName, groupName), false);
         return 1;
     }
 
     private static int addUserPermission(CommandContext<CommandSourceStack> ctx) {
-        String uuidStr = StringArgumentType.getString(ctx, "uuid");
+        String playerName = StringArgumentType.getString(ctx, "player");
         String perm = StringArgumentType.getString(ctx, "permission");
-        UUID uuid;
-        try {
-            uuid = UUID.fromString(uuidStr);
-        } catch (IllegalArgumentException e) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.invalid_uuid"));
+        MinecraftServer server = ctx.getSource().getServer();
+        
+        // Try to get UUID by player name
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+        if (uuidOpt.isEmpty()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found"));
             return 0;
         }
+        
+        UUID uuid = uuidOpt.get();
         PermissionUser user = PermissionAPI.getManager().getUser(uuid);
         if (user == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.user_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.user_not_found"));
             return 0;
         }
-    user.addPermission(perm);
-    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after adding user permission", e); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_added_to_user"), false);
+        
+        user.addPermission(perm);
+        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after adding user permission", e); }
+        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_added_to_user", perm, playerName), false);
         return 1;
     }
 
     private static int removeUserPermission(CommandContext<CommandSourceStack> ctx) {
-        String uuidStr = StringArgumentType.getString(ctx, "uuid");
+        String playerName = StringArgumentType.getString(ctx, "player");
         String perm = StringArgumentType.getString(ctx, "permission");
-        UUID uuid;
-        try {
-            uuid = UUID.fromString(uuidStr);
-        } catch (IllegalArgumentException e) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.invalid_uuid"));
+        MinecraftServer server = ctx.getSource().getServer();
+        
+        // Try to get UUID by player name
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+        if (uuidOpt.isEmpty()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found"));
             return 0;
         }
+        
+        UUID uuid = uuidOpt.get();
         PermissionUser user = PermissionAPI.getManager().getUser(uuid);
         if (user == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.user_not_found"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.user_not_found"));
             return 0;
         }
-    user.removePermission(perm);
-    try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after removing user permission", e); }
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.permission_removed_from_user"), false);
+        
+        user.removePermission(perm);
+        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after removing user permission", e); }
+        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_removed_from_user", perm, playerName), false);
         return 1;
     }
     
     private static int listGroups(CommandContext<CommandSourceStack> ctx) {
         PermissionManager manager = PermissionAPI.getManager();
         if (manager == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.manager_not_available"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.manager_not_available"));
             return 0;
         }
         
         var groups = manager.getGroups();
         if (groups.isEmpty()) {
-            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.no_groups"), false);
+            ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.permissions.no_groups"), false);
             return 1;
         }
         
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§6Groups:"), false);
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.permissions.groups_header"), false);
         for (PermissionGroup group : groups) {
-            String message = String.format("§e- %s §7(prefix: §r%s§7, suffix: §r%s§7)", 
-                group.getName(), 
-                group.getPrefix() != null ? group.getPrefix() : "none",
-                group.getSuffix() != null ? group.getSuffix() : "none");
-            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(message), false);
+            String prefix = group.getPrefix() != null ? group.getPrefix() : "none";
+            String suffix = group.getSuffix() != null ? group.getSuffix() : "none";
+            ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.group_entry", 
+                group.getName(), prefix, suffix), false);
         }
         return 1;
     }
@@ -219,22 +303,44 @@ public class PermissionsCommand {
     private static int listUsers(CommandContext<CommandSourceStack> ctx) {
         PermissionManager manager = PermissionAPI.getManager();
         if (manager == null) {
-            ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.manager_not_available"));
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.manager_not_available"));
             return 0;
         }
         
         var users = manager.getUsers();
         if (users.isEmpty()) {
-            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.permissions.no_users"), false);
+            ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.permissions.no_users"), false);
             return 1;
         }
         
-        ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal("§6Users:"), false);
+        MinecraftServer server = ctx.getSource().getServer();
+        ctx.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.permissions.users_header"), false);
+        
         for (PermissionUser user : users) {
-            String message = String.format("§e- %s §7(group: §r%s§7)", 
-                user.getUuid().toString(), 
-                user.getGroup() != null ? user.getGroup() : "default");
-            ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.literal(message), false);
+            UUID uuid = user.getUuid();
+            String displayName = uuid.toString();
+            
+            // Try to get player name from online players first
+            Optional<ServerPlayer> onlinePlayer = server.getPlayerList().getPlayers().stream()
+                .filter(p -> p.getUUID().equals(uuid))
+                .findFirst();
+                
+            if (onlinePlayer.isPresent()) {
+                displayName = onlinePlayer.get().getGameProfile().getName();
+            } else {
+                // Try to get from profile cache
+                var profile = server.getProfileCache().get(uuid);
+                if (profile.isPresent()) {
+                    displayName = profile.get().getName();
+                }
+            }
+            
+            // Show both name and UUID if we found a name, otherwise just UUID
+            String userDisplay = displayName.equals(uuid.toString()) ? 
+                displayName : displayName + " (" + uuid.toString().substring(0, 8) + "...)";
+            
+            String group = user.getGroup() != null ? user.getGroup() : "default";
+            ctx.getSource().sendSuccess(() -> MessageUtil.component("commands.neoessentials.permissions.user_entry", userDisplay, group), false);
         }
         return 1;
     }

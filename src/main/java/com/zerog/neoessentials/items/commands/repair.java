@@ -5,6 +5,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigUtil;
+import com.zerog.neoessentials.util.MessageUtil;
 
 public class repair {
     /**
@@ -18,11 +19,11 @@ public class repair {
                 .executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayer();
                     if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.repair")) {
-                        ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
+                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     repairItem(player);
-                    ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.repair.success"), false);
+                    ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.repair.success"), false);
                     return 1;
                 })
         );
@@ -32,11 +33,11 @@ public class repair {
                 .executes(ctx -> {
                     ServerPlayer player = ctx.getSource().getPlayer();
                     if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.repair")) {
-                        ctx.getSource().sendFailure(net.minecraft.network.chat.Component.translatable("commands.neoessentials.no_permission"));
+                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                         return 0;
                     }
                     repairItem(player);
-                    ctx.getSource().sendSuccess(() -> net.minecraft.network.chat.Component.translatable("commands.neoessentials.repair.success"), false);
+                    ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.repair.success"), false);
                     return 1;
                 })
         );
