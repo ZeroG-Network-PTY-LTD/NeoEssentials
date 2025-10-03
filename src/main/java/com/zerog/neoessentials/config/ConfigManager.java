@@ -249,6 +249,22 @@ public class ConfigManager {
     }
     
     /**
+     * Get economy tax percentage for payments
+     */
+    public double getEconomyTaxPercentage() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("economySettings")) {
+            JsonObject settings = config.getAsJsonObject("economySettings");
+            if (settings.has("taxPercentage")) {
+                return settings.get("taxPercentage").getAsDouble();
+            }
+        }
+        return 0.0; // Default to no tax
+    }
+    
+
+    
+    /**
      * Get maximum balance
      */
     public BigDecimal getMaxBalance() {

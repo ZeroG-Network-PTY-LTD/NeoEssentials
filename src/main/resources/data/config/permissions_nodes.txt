@@ -1,64 +1,126 @@
 # NeoEssentials Permission Nodes
 # This file contains all permission nodes used in the NeoEssentials mod
 # Format: permission.node - description
+#
+# 🛡️ All permissions include comprehensive validation and security checks
+# 🔄 Supports external permission systems (LuckPerms, FTB Ranks)
+# ⚡ Thread-safe permission caching with configurable expiry
+# 🎯 Granular permission control with exemption and override systems
 
 ## Economy Permissions
-neoessentials.economy.balance - View own balance
-neoessentials.economy.balance.others - View other players' balances
-neoessentials.economy.pay - Send money to other players
-neoessentials.economy.pay.exempt - Exempt from paytoggle restrictions
-neoessentials.economy.paytoggle - Toggle accepting payments
-neoessentials.economy.eco - Use eco admin commands
-neoessentials.economy.eco.give - Give money to players
-neoessentials.economy.eco.take - Take money from players
-neoessentials.economy.eco.set - Set player balances
-neoessentials.economy.eco.history - View transaction history
-neoessentials.economy.baltop - View top balances
+neoessentials.economy.balance - View own balance with formatted display
+neoessentials.economy.balance.others - View other players' balances (admin feature)
+neoessentials.economy.pay - Send money to other players (with input validation)
+neoessentials.economy.pay.exempt - Exempt from paytoggle restrictions and limits
+neoessentials.economy.pay.override - Override payment limits and restrictions
+neoessentials.economy.paytoggle - Toggle accepting payments from other players
+neoessentials.economy.eco - Use eco admin commands (requires validation)
+neoessentials.economy.eco.give - Give money to players with audit logging
+neoessentials.economy.eco.take - Take money from players with validation
+neoessentials.economy.eco.set - Set player balances with safety checks
+neoessentials.economy.eco.history - View transaction history with privacy controls
+neoessentials.economy.eco.override - Override all economy restrictions
+neoessentials.economy.baltop - View top balances with pagination
+neoessentials.economy.baltop.admin - Access extended baltop features
 
 ## Item Management Permissions
-neoessentials.item.repair - Repair own items
-neoessentials.item.repair.all - Repair all items at once
-neoessentials.item.repair.others - Repair other players' items
-neoessentials.item.dispose - Use dispose command
-neoessentials.item.clearinventory - Clear own inventory
-neoessentials.item.clearinventory.others - Clear other players' inventories
-neoessentials.item.enchant - Enchant items
-neoessentials.item.enchanthand - Quick enchant hand item
-neoessentials.item.powertool - Use powertool commands
-neoessentials.item.powertool.toggle - Toggle powertool functionality
+neoessentials.item.repair - Repair own items with durability validation
+neoessentials.item.repair.all - Repair all items in inventory at once
+neoessentials.item.repair.others - Repair other players' items (admin feature)
+neoessentials.item.repair.unlimited - Bypass repair cooldowns and limits
+neoessentials.item.dispose - Use dispose command with confirmation system
+neoessentials.item.dispose.bypass - Skip disposal confirmation prompts
+neoessentials.item.clearinventory - Clear own inventory with safety checks
+neoessentials.item.clearinventory.others - Clear other players' inventories (admin)
+neoessentials.item.clearinventory.force - Force clear without confirmations
+neoessentials.item.enchant - Enchant items with level validation
+neoessentials.item.enchant.unsafe - Allow unsafe enchantment levels
+neoessentials.item.enchant.any - Enchant any item regardless of compatibility
+neoessentials.item.enchanthand - Quick enchant item in main hand
+neoessentials.item.powertool - Use powertool commands with security filtering
+neoessentials.item.powertool.unsafe - Allow potentially unsafe commands in powertools
+neoessentials.item.powertool.toggle - Toggle powertool functionality per player
+neoessentials.item.powertool.admin - Manage powertools for other players
 
-## Chat Permissions
-neoessentials.chat.msg - Send private messages
-neoessentials.chat.msgtoggle - Toggle receiving messages
-neoessentials.chat.socialspy - Monitor private messages (admin)
-neoessentials.chat.ignore - Ignore other players
-neoessentials.chat.ignore.exempt - Cannot be ignored by others
-neoessentials.chat.mute - Mute other players
-neoessentials.chat.mute.exempt - Cannot be muted
-neoessentials.chat.reply - Reply to messages
+## Chat & Communication Permissions
+neoessentials.chat.msg - Send private messages with content filtering
+neoessentials.chat.msg.unlimited - Bypass message cooldowns and limits
+neoessentials.chat.msg.color - Use color codes in private messages
+neoessentials.chat.msgtoggle - Toggle receiving private messages
+neoessentials.chat.socialspy - Monitor private messages (admin feature)
+neoessentials.chat.socialspy.exempt - Exempt from social spy monitoring
+neoessentials.chat.ignore - Ignore messages from other players
+neoessentials.chat.ignore.exempt - Cannot be ignored by other players
+neoessentials.chat.ignore.override - Override ignore restrictions
+neoessentials.chat.mute - Mute other players with reason logging
+neoessentials.chat.mute.exempt - Cannot be muted by other players
+neoessentials.chat.mute.permanent - Apply permanent mutes
+neoessentials.chat.mute.override - Override mute restrictions and exemptions
+neoessentials.chat.reply - Reply to last received private message
+neoessentials.chat.broadcast - Send server-wide broadcast messages
 
 ## Permission System Permissions
-neoessentials.permissions.reload - Reload permission system
-neoessentials.permissions.group.list - List permission groups
-neoessentials.permissions.group.modify - Modify permission groups
-neoessentials.permissions.group.prefix - Set group prefixes
-neoessentials.permissions.group.suffix - Set group suffixes
-neoessentials.permissions.user.list - List users
-neoessentials.permissions.user.modify - Modify user permissions
-neoessentials.permissions.user.group - Change user groups
+neoessentials.permissions.reload - Hot-reload permission system without restart
+neoessentials.permissions.group.list - List all permission groups with details
+neoessentials.permissions.group.create - Create new permission groups
+neoessentials.permissions.group.delete - Delete existing permission groups
+neoessentials.permissions.group.modify - Modify permission group settings
+neoessentials.permissions.group.prefix - Set and modify group chat prefixes
+neoessentials.permissions.group.suffix - Set and modify group chat suffixes
+neoessentials.permissions.group.permissions - Manage group permission assignments
+neoessentials.permissions.group.inheritance - Configure group inheritance chains
+neoessentials.permissions.user.list - List users and their permission assignments
+neoessentials.permissions.user.modify - Modify individual user permissions
+neoessentials.permissions.user.group - Change user group memberships
+neoessentials.permissions.user.temp - Assign temporary permissions with expiry
+neoessentials.permissions.system.admin - Full permission system administration
 
-## Utility Permissions
-neoessentials.afk - Use AFK command
-neoessentials.afk.others - Set AFK status for others
-neoessentials.afk.exempt - Exempt from AFK timeouts
+## Utility & Status Permissions
+neoessentials.afk - Use AFK command with custom messages
+neoessentials.afk.others - Set AFK status for other players (admin)
+neoessentials.afk.exempt - Exempt from automatic AFK timeouts
+neoessentials.afk.kick.exempt - Exempt from AFK kick systems
+neoessentials.afk.unlimited - No time limits on AFK status
+
+## Security & Validation Permissions
+neoessentials.security.bypass.validation - Bypass input validation checks
+neoessentials.security.bypass.filter - Bypass content filtering systems
+neoessentials.security.bypass.limits - Bypass rate limits and restrictions
+neoessentials.security.admin - Full security system administration
 
 ## Administrative Permissions
-neoessentials.admin - General admin permission
-neoessentials.reload - Reload mod configuration
-neoessentials.tablist.modify - Modify tablist settings
-neoessentials.bypass.cooldown - Bypass command cooldowns
-neoessentials.bypass.warmup - Bypass command warmups
+neoessentials.admin - General administrative permission (grants most features)
+neoessentials.admin.override - Override all restrictions and exemptions
+neoessentials.reload - Reload mod configuration and systems
+neoessentials.reload.permissions - Reload only permission system
+neoessentials.reload.config - Reload only configuration files
+neoessentials.tablist.modify - Modify tablist settings and formatting
+neoessentials.tablist.admin - Full tablist administration control
+neoessentials.bypass.cooldown - Bypass all command cooldowns
+neoessentials.bypass.warmup - Bypass all command warmup periods
+neoessentials.bypass.cost - Bypass all command costs and fees
+neoessentials.debug - Access debug commands and information
+neoessentials.debug.verbose - Access verbose debug information
 
-## Root Command Permissions
-neoessentials.use - Use main neoessentials command
-neoessentials.help - Access help information
+## Root Command & System Permissions
+neoessentials.use - Use main neoessentials command interface
+neoessentials.help - Access help information and command documentation
+neoessentials.info - View mod information and system status
+neoessentials.config.view - View configuration settings
+neoessentials.config.modify - Modify configuration settings
+neoessentials.system.monitor - Monitor system performance and health
+neoessentials.system.maintenance - Perform system maintenance operations
+
+## Integration & External System Permissions
+neoessentials.integration.vault - Use Vault economy integration
+neoessentials.integration.placeholderapi - Access PlaceholderAPI features
+neoessentials.integration.luckperms - Use LuckPerms integration features
+neoessentials.integration.ftbranks - Use FTB Ranks integration features
+
+## Special Meta Permissions
+neoessentials.* - Grants all NeoEssentials permissions (super admin)
+neoessentials.admin.* - Grants all administrative permissions
+neoessentials.economy.* - Grants all economy-related permissions
+neoessentials.chat.* - Grants all chat and communication permissions
+neoessentials.item.* - Grants all item management permissions
+neoessentials.permissions.* - Grants all permission system permissions

@@ -1,47 +1,64 @@
 # NeoEssentials Commands List
 # This file contains all available commands in the NeoEssentials mod
 # Format: command_name (aliases) - description
+#
+# ✅ All commands feature comprehensive input validation and security checks
+# ✅ Permission-based access control with configurable exemptions
+# ✅ Thread-safe operations with proper resource management
+# ✅ Centralized configuration management with hot-reload support
 
 ## Economy Commands
-balance (bal) - Display your or another player's balance
-pay - Send money to another player
-paytoggle - Toggle accepting payments
-eco - Admin economy commands (give, take, set, history)
-baltop - Display top player balances
+balance (bal, money) - Display your or another player's balance with formatted currency
+pay <player> <amount> - Send money to another player with transaction fees and validation
+paytoggle - Toggle accepting payments from other players
+eco <give|take|set> <player> <amount> - Admin economy commands with audit logging
+eco history [player] - View transaction history for yourself or other players (admin)
+baltop [page] - Display top player balances with pagination
 
 ## Item Management Commands
-repair (fix) - Repair items in hand or inventory
-dispose (trash) - Safely dispose of items with confirmation
-clearinventory (ci, clearinv) - Clear player inventory
-enchant - Enchant items with specific enchantments
-enchanthand - Enchant item in hand
-powertool (pt) - Bind commands to items
-powertooltoggle (pttoggle) - Toggle powertool functionality
+repair (fix) - Repair items in hand or entire inventory with durability validation
+dispose (trash) - Safely dispose of items with confirmation system and restore option
+clearinventory (ci, clearinv) [player] - Clear player inventory with admin override
+enchant <enchantment> [level] - Enchant items with validation and safety checks
+enchanthand <enchantment> [level] - Quick enchant item in main hand
+powertool (pt) <command> - Bind validated commands to items with security filtering
+powertooltoggle (pttoggle) - Toggle powertool functionality per player
 
-## Chat Commands
-msg - Send private messages to players
-reply - Reply to last private message
-ignore - Ignore messages from a player
-unignore - Stop ignoring a player
-mute - Mute a player (admin command)
-unmute - Unmute a player (admin command)
-mutelist - List all muted players
-msgtoggle - Toggle receiving private messages
-socialspy - Toggle monitoring private messages (admin)
+## Chat & Communication Commands
+msg <player> <message> - Send private messages with content filtering and validation
+reply <message> - Reply to last private message with automatic target resolution
+ignore <player> - Ignore messages from a player with persistent storage
+unignore <player> - Stop ignoring a player and restore message visibility
+mute <player> [reason] - Mute a player with optional reason and audit logging (admin)
+unmute <player> - Unmute a player and restore chat privileges (admin)
+mutelist - List all currently muted players with timestamps and reasons
+msgtoggle - Toggle receiving private messages with granular control
+socialspy - Toggle monitoring private messages with permission-based filtering (admin)
 
-## Permission Commands
-neoessentials (neoe) - Main mod command
-permissions (perms) - Permission management commands
-  - reload - Reload permissions
-  - list groups - List all permission groups
-  - list users - List all users
-  - group <name> setprefix <prefix> - Set group prefix
-  - group <name> setsuffix <suffix> - Set group suffix
-  - group <name> add <permission> - Add permission to group
+## Permission Management Commands
+neoessentials (neoe) - Main mod command with sub-command help system
+permissions (perms) - Comprehensive permission management system
+  - reload - Hot-reload permissions without restart
+  - list groups - List all permission groups with member counts
+  - list users [group] - List all users or users in specific group
+  - group <name> create - Create new permission group
+  - group <name> delete - Delete permission group (with safety checks)
+  - group <name> setprefix <prefix> - Set group chat prefix with color support
+  - group <name> setsuffix <suffix> - Set group chat suffix with color support
+  - group <name> add <permission> - Add permission to group with inheritance
   - group <name> remove <permission> - Remove permission from group
-  - user <name> setgroup <group> - Set user group
-  - user <name> add <permission> - Add permission to user
-  - user <name> remove <permission> - Remove permission from user
+  - group <name> info - Display detailed group information
+  - user <name> setgroup <group> - Change user's primary group
+  - user <name> add <permission> - Grant specific permission to user
+  - user <name> remove <permission> - Revoke specific permission from user
+  - user <name> info - Display user's permissions and group membership
 
-## Utility Commands
-afk - Toggle AFK status
+## Utility & Status Commands
+afk [message] - Toggle AFK status with optional custom message
+afk <player> - Check or set AFK status for other players (admin)
+
+## Administrative Commands
+neoessentials reload - Reload all configuration files and systems
+neoessentials debug [on|off] - Toggle debug mode for troubleshooting
+neoessentials info - Display mod version, loaded features, and system status
+neoessentials config <section> - View or modify configuration sections

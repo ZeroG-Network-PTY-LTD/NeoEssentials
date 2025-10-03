@@ -64,23 +64,55 @@ public class EcoCommand {
     }
 
     private static int ecoAdminAction(CommandContext<CommandSourceStack> ctx, String action) {
-        if (!EconomyManager.getInstance().isEnabled()) return 0;
-        ServerPlayer sender = null;
-        try {
-            sender = ctx.getSource().getPlayerOrException();
-        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.no_permission"));
+        // Check if economy is enabled
+        if (!EconomyManager.getInstance().isEnabled()) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.economy.disabled"));
             return 0;
         }
-        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.economy.eco")) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+        
+        // Validate admin permission
+        com.zerog.neoessentials.util.PermissionValidator.PermissionResult permResult = 
+            com.zerog.neoessentials.util.PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.economy.eco");
+        if (!permResult.hasPermission()) {
+            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
             return 0;
         }
+        
+        // Get and validate input parameters
         String playerName = StringArgumentType.getString(ctx, "player");
         double amountRaw = DoubleArgumentType.getDouble(ctx, "amount");
-        BigDecimal amount = BigDecimal.valueOf(amountRaw);
+        
+        // Validate player name
+        com.zerog.neoessentials.util.InputValidator.ValidationResult nameValidation = 
+            com.zerog.neoessentials.util.InputValidator.validatePlayerName(playerName);
+        if (!nameValidation.isValid()) {
+            ctx.getSource().sendFailure(MessageUtil.error(nameValidation.getErrorMessage()));
+            return 0;
+        }
+        
+        // Validate amount (allow zero for 'set' command)
+        com.zerog.neoessentials.util.InputValidator.ValidationResult amountValidation;
+        if ("set".equals(action)) {
+            // For set command, allow zero amounts
+            if (amountRaw < 0 || Double.isNaN(amountRaw) || Double.isInfinite(amountRaw)) {
+                ctx.getSource().sendFailure(MessageUtil.error("Invalid amount: must be non-negative"));
+                return 0;
+            }
+            amountValidation = com.zerog.neoessentials.util.InputValidator.ValidationResult.success(BigDecimal.valueOf(amountRaw));
+        } else {
+            amountValidation = com.zerog.neoessentials.util.InputValidator.validateEconomyAmount(amountRaw);
+            if (!amountValidation.isValid()) {
+                ctx.getSource().sendFailure(MessageUtil.error(amountValidation.getErrorMessage()));
+                return 0;
+            }
+        }
+        // Use validated amount
+        BigDecimal amount = amountValidation.getValue(BigDecimal.class);
+        String validPlayerName = nameValidation.getValue(String.class);
+        
+        // Get player UUID
         MinecraftServer server = ctx.getSource().getServer();
-        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, validPlayerName);
         if (uuidOpt.isEmpty()) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.eco.player_not_found"));
             return 0;
@@ -91,20 +123,20 @@ public class EcoCommand {
         switch (action) {
             case "give":
                 manager.addBalance(uuid, amount);
-                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.give", amount, playerName), false);
-                EconomyTransactionLogger.log("ADMIN_GIVE", adminName, playerName, amount.toPlainString(), "Admin give");
+                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.give", amount, validPlayerName), false);
+                EconomyTransactionLogger.log("ADMIN_GIVE", adminName, validPlayerName, amount.toPlainString(), "Admin give");
                 TransactionHistoryManager.getInstance().addTransaction(uuid, "Admin gave you " + amount);
                 break;
             case "take":
                 manager.subtractBalance(uuid, amount);
-                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.take", amount, playerName), false);
-                EconomyTransactionLogger.log("ADMIN_TAKE", adminName, playerName, amount.toPlainString(), "Admin take");
+                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.take", amount, validPlayerName), false);
+                EconomyTransactionLogger.log("ADMIN_TAKE", adminName, validPlayerName, amount.toPlainString(), "Admin take");
                 TransactionHistoryManager.getInstance().addTransaction(uuid, "Admin took " + amount);
                 break;
             case "set":
                 manager.setBalance(uuid, amount);
-                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.set", playerName, amount), false);
-                EconomyTransactionLogger.log("ADMIN_SET", adminName, playerName, amount.toPlainString(), "Admin set");
+                ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.set", validPlayerName, amount), false);
+                EconomyTransactionLogger.log("ADMIN_SET", adminName, validPlayerName, amount.toPlainString(), "Admin set");
                 TransactionHistoryManager.getInstance().addTransaction(uuid, "Admin set your balance to " + amount);
                 break;
         }
