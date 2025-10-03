@@ -1,70 +1,56 @@
 
 package com.zerog.neoessentials.config;
-import com.zerog.neoessentials.util.DebugUtil;
 
-import java.io.FileReader;
-import java.math.BigDecimal;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.io.File;
-import java.io.InputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.math.BigDecimal;
 
+/**
+ * Economy configuration wrapper.
+ * Now delegates to the centralized ConfigManager but maintains the same interface.
+ * 
+ * @deprecated Use ConfigManager.getInstance() directly for new code
+ */
+@Deprecated
 public class EconomyConfig {
-    public BigDecimal startingBalance = new BigDecimal("100.0");
-    public String currencySymbol = "$";
-    public BigDecimal maxBalance = new BigDecimal("100000.0");
-    public boolean cleanupInactiveAccounts = true;
-    public double taxPercentage = 1.5;
-    public BigDecimal maxTransferAmount = new BigDecimal("10000.0");
-    public boolean paytoggleDefault = true;
-    public boolean allowNegativeBalances = false;
-    public int inactiveAccountCleanupDays = 30; // Number of days before an inactive account is cleaned up
+    public BigDecimal startingBalance;
+    public String currencySymbol;
+    public BigDecimal maxBalance;
+    public boolean cleanupInactiveAccounts;
+    public double taxPercentage;
+    public BigDecimal maxTransferAmount;
+    public boolean paytoggleDefault;
+    public boolean allowNegativeBalances;
+    public int inactiveAccountCleanupDays;
     // Cache configuration
-    public int cacheMaximumSize = 10000;
-    public int cacheExpireAfterAccessMinutes = 60;
+    public int cacheMaximumSize;
+    public int cacheExpireAfterAccessMinutes;
+
+    public EconomyConfig() {
+        // Load from ConfigManager
+        ConfigManager configManager = ConfigManager.getInstance();
+        JsonObject config = configManager.getConfig(ConfigManager.ECONOMY_CONFIG);
+        JsonObject econ = config.has("economySettings") ? config.getAsJsonObject("economySettings") : new JsonObject();
+        
+        // Set values with defaults
+        this.startingBalance = configManager.getEconomyStartingBalance();
+        this.currencySymbol = configManager.getCurrencySymbol();
+        this.maxBalance = configManager.getMaxBalance();
+        this.taxPercentage = configManager.getTaxPercentage();
+        
+        // Other settings with defaults
+        this.cleanupInactiveAccounts = econ.has("cleanupInactiveAccounts") ? econ.get("cleanupInactiveAccounts").getAsBoolean() : true;
+        this.maxTransferAmount = econ.has("maxTransferAmount") ? econ.get("maxTransferAmount").getAsBigDecimal() : new BigDecimal("10000.0");
+        this.paytoggleDefault = econ.has("paytoggleDefault") ? econ.get("paytoggleDefault").getAsBoolean() : true;
+        this.allowNegativeBalances = econ.has("allowNegativeBalances") ? econ.get("allowNegativeBalances").getAsBoolean() : false;
+        this.inactiveAccountCleanupDays = econ.has("inactiveAccountCleanupDays") ? econ.get("inactiveAccountCleanupDays").getAsInt() : 30;
+        this.cacheMaximumSize = econ.has("cacheMaximumSize") ? econ.get("cacheMaximumSize").getAsInt() : 10000;
+        this.cacheExpireAfterAccessMinutes = econ.has("cacheExpireAfterAccessMinutes") ? econ.get("cacheExpireAfterAccessMinutes").getAsInt() : 60;
+    }
 
     public static EconomyConfig load(File configFile) {
-        // If the file does not exist, copy the default from resources
-        if (!configFile.exists()) {
-            try {
-                File parent = configFile.getParentFile();
-                if (parent != null && !parent.exists()) parent.mkdirs();
-                try (InputStream in = EconomyConfig.class.getClassLoader().getResourceAsStream("assets/neoessentials/economy.json")) {
-                    if (in != null) {
-                        try (FileOutputStream out = new FileOutputStream(configFile)) {
-                            byte[] buf = new byte[4096];
-                            int len;
-                            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                DebugUtil.debugStackTrace(e);
-            }
-        }
-        EconomyConfig config = new EconomyConfig();
-        try (FileReader reader = new FileReader(configFile)) {
-            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-            JsonObject econ = root.getAsJsonObject("economySettings");
-            if (econ != null) {
-                if (econ.has("startingBalance")) config.startingBalance = econ.get("startingBalance").getAsBigDecimal();
-                if (econ.has("currencySymbol")) config.currencySymbol = econ.get("currencySymbol").getAsString();
-                if (econ.has("maxBalance")) config.maxBalance = econ.get("maxBalance").getAsBigDecimal();
-                if (econ.has("cleanupInactiveAccounts")) config.cleanupInactiveAccounts = econ.get("cleanupInactiveAccounts").getAsBoolean();
-                if (econ.has("taxPercentage")) config.taxPercentage = econ.get("taxPercentage").getAsDouble();
-                if (econ.has("maxTransferAmount")) config.maxTransferAmount = econ.get("maxTransferAmount").getAsBigDecimal();
-                if (econ.has("paytoggleDefault")) config.paytoggleDefault = econ.get("paytoggleDefault").getAsBoolean();
-                if (econ.has("allowNegativeBalances")) config.allowNegativeBalances = econ.get("allowNegativeBalances").getAsBoolean();
-                if (econ.has("inactiveAccountCleanupDays")) config.inactiveAccountCleanupDays = econ.get("inactiveAccountCleanupDays").getAsInt();
-                if (econ.has("cacheMaximumSize")) config.cacheMaximumSize = econ.get("cacheMaximumSize").getAsInt();
-                if (econ.has("cacheExpireAfterAccessMinutes")) config.cacheExpireAfterAccessMinutes = econ.get("cacheExpireAfterAccessMinutes").getAsInt();
-            }
-        } catch (Exception e) {
-            // Log error and use defaults
-            DebugUtil.debugStackTrace(e);
-        }
-        return config;
+        // Delegate to ConfigManager - it handles loading automatically
+        ConfigManager.getInstance().loadAll();
+        return new EconomyConfig();
     }
 }

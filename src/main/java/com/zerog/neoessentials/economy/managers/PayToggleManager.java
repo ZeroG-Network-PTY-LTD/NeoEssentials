@@ -33,7 +33,7 @@ public class PayToggleManager {
     }
 
     private final ConcurrentHashMap<UUID, Boolean> paytoggleCache = new ConcurrentHashMap<>();
-    private final File togglesFile = new File("neoessentials/paytoggles.json");
+    private final File togglesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("paytoggles.json");
     private final Gson gson = new Gson();
     private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
     private volatile boolean saveQueued = false;
@@ -119,5 +119,33 @@ public class PayToggleManager {
 
     public Map<UUID, Boolean> getAllToggles() {
         return new ConcurrentHashMap<>(paytoggleCache);
+    }
+
+    /**
+     * Shutdown the PayToggleManager and clean up resources.
+     * Saves any pending data and terminates the executor service.
+     */
+    public void shutdown() {
+        try {
+            // Save any pending data immediately
+            saveTogglesAtomic();
+            
+            // Shutdown executor service
+            saveExecutor.shutdown();
+            try {
+                if (!saveExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+                    LOGGER.warn("PayToggleManager executor did not terminate gracefully, forcing shutdown...");
+                    saveExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                LOGGER.warn("Interrupted while waiting for PayToggleManager executor shutdown");
+                saveExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+            
+            LOGGER.info("PayToggleManager shutdown complete.");
+        } catch (Exception e) {
+            LOGGER.error("Error during PayToggleManager shutdown", e);
+        }
     }
 }

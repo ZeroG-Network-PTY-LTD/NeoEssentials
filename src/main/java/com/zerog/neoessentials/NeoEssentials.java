@@ -1,9 +1,13 @@
 package com.zerog.neoessentials;
 import com.zerog.neoessentials.commands.ModRootCommand;
 import com.zerog.neoessentials.commands.CommandRegistry;
-import com.zerog.neoessentials.items.commands.dispose;
+
 import com.zerog.neoessentials.economy.commands.EconomyCommands;
-import com.zerog.neoessentials.economy.EconomyManager;
+import com.zerog.neoessentials.NeoEssentialsManager.PlayerData;
+import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.economy.managers.PayToggleManager;
+import com.zerog.neoessentials.economy.managers.TransactionHistoryManager;
+import com.zerog.neoessentials.items.commands.DisposeCommand;
 import com.zerog.neoessentials.permissions.PermissionManager;
 import com.zerog.neoessentials.permissions.PermissionStorage;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
@@ -49,9 +53,9 @@ public class NeoEssentials {
      * Main mod constructor. Loads configs, sets up permissions, registers event handlers, and initializes chat system.
      */
     public NeoEssentials() {
-        ensureGlobalConfig();
-        ensureEconomyConfig();
-        ensurePermissionsConfig();
+        // Initialize centralized configuration system
+        com.zerog.neoessentials.config.ConfigManager.getInstance().loadAll();
+        
         ensureServerLangFile();
         // Initialize the core manager
         NeoEssentialsManager.getInstance();
@@ -60,24 +64,27 @@ public class NeoEssentials {
     assert chatManager != null || true;
 
         // --- Permissions module config ---
+        com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        
+        // Read permissions config through ConfigManager
         boolean permissionsEnabled = true;
         String integration = "auto";
         try {
-            File configFile = new File("config/neoessentials/config.json");
-            if (configFile.exists()) {
-                String json = new String(java.nio.file.Files.readAllBytes(configFile.toPath()));
-                JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-                // Read modules.permissionsEnabled
-                if (obj.has("modules")) {
-                    JsonObject modulesObj = obj.getAsJsonObject("modules");
-                    if (modulesObj.has("permissionsEnabled")) {
-                        permissionsEnabled = modulesObj.get("permissionsEnabled").getAsBoolean();
-                    }
+            JsonObject config = configManager.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+            
+            // Read modules.permissionsEnabled
+            if (config.has("modules")) {
+                JsonObject modulesObj = config.getAsJsonObject("modules");
+                if (modulesObj.has("permissionsEnabled")) {
+                    permissionsEnabled = modulesObj.get("permissionsEnabled").getAsBoolean();
                 }
-                // Read permissions.integration
-                if (obj.has("permissions")) {
-                    JsonObject permObj = obj.getAsJsonObject("permissions");
-                    if (permObj.has("integration")) integration = permObj.get("integration").getAsString();
+            }
+            
+            // Read permissions.integration
+            if (config.has("permissions")) {
+                JsonObject permObj = config.getAsJsonObject("permissions");
+                if (permObj.has("integration")) {
+                    integration = permObj.get("integration").getAsString();
                 }
             }
         } catch (Exception e) {
@@ -129,20 +136,16 @@ public class NeoEssentials {
     net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.items.handlers.ItemInteractionHandler.class);
     // Removed DataComponentType registration for server-only compatibility
 
-        // Load chat config and commands config for ChatManager
+        // Load chat config and commands config for ChatManager using ConfigManager
         try {
-            File configFile = new File("config/neoessentials/config.json");
-            if (configFile.exists()) {
-                String json = new String(java.nio.file.Files.readAllBytes(configFile.toPath()));
-                JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
-                JsonObject chatObj = obj.has("chat") ? obj.getAsJsonObject("chat") : new JsonObject();
-                JsonObject commandsObj = obj.has("commands") ? obj.getAsJsonObject("commands") : new JsonObject();
-                chatManager = new ChatManager(chatObj, commandsObj);
+            JsonObject config = configManager.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+            JsonObject chatObj = config.has("chat") ? config.getAsJsonObject("chat") : new JsonObject();
+            JsonObject commandsObj = config.has("commands") ? config.getAsJsonObject("commands") : new JsonObject();
+            chatManager = new ChatManager(chatObj, commandsObj);
                 
-                // Set the ChatManager in ChatAPI for global access
-                ChatAPI.setChatManager(chatManager);
-                LOGGER.info("ChatManager initialized with chat-format: {}", chatManager.getChatFormat());
-            }
+            // Set the ChatManager in ChatAPI for global access
+            ChatAPI.setChatManager(chatManager);
+            LOGGER.info("ChatManager initialized with chat-format: {}", chatManager.getChatFormat());
         } catch (Exception e) {
             LOGGER.error("Failed to load chat config: {}", e.getMessage(), e);
         }
@@ -160,77 +163,16 @@ public class NeoEssentials {
         //   - Add more AFK and advanced chat event logic as needed
 }
 
-    private void ensureGlobalConfig() {
-        File configFile = new File("config/neoessentials/config.json");
-        if (!configFile.exists()) {
-            try {
-                File parent = configFile.getParentFile();
-                if (parent != null && !parent.exists()) parent.mkdirs();
-                try (InputStream in = NeoEssentials.class.getClassLoader().getResourceAsStream("data/config/neoessentials/config.json")) {
-                    if (in != null) {
-                        try (FileOutputStream out = new FileOutputStream(configFile)) {
-                            byte[] buf = new byte[4096];
-                            int len;
-                            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                LOGGER.error("Failed to extract global config", e);
-            }
-        }
-    }
 
-    private void ensureEconomyConfig() {
-        File configFile = new File("config/neoessentials/economy.json");
-        if (!configFile.exists()) {
-            try {
-                File parent = configFile.getParentFile();
-                if (parent != null && !parent.exists()) parent.mkdirs();
-                try (InputStream in = NeoEssentials.class.getClassLoader().getResourceAsStream("data/economy.json")) {
-                    if (in != null) {
-                        try (FileOutputStream out = new FileOutputStream(configFile)) {
-                            byte[] buf = new byte[4096];
-                            int len;
-                            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                LOGGER.error("Failed to extract permissions config", e);
-            }
-        }
-    }
-
-    private void ensurePermissionsConfig() {
-        File configFile = new File("config/neoessentials/permissions.json");
-        if (!configFile.exists()) {
-            try {
-                File parent = configFile.getParentFile();
-                if (parent != null && !parent.exists()) parent.mkdirs();
-                try (InputStream in = NeoEssentials.class.getClassLoader().getResourceAsStream("data/permissions.json")) {
-                    if (in != null) {
-                        try (FileOutputStream out = new FileOutputStream(configFile)) {
-                            byte[] buf = new byte[4096];
-                            int len;
-                            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                LOGGER.error("Failed to extract permissions config template", e);
-            }
-        }
-    }
 
     private void ensureServerLangFile() {
         try {
-            File serverLangDir = new File("neoessentials/lang");
+            File serverLangDir = new File(com.zerog.neoessentials.util.ResourceUtil.DATA_DIR + "lang");
             if (!serverLangDir.exists()) serverLangDir.mkdirs();
             File serverLangFile = new File(serverLangDir, "en_us.json");
             if (!serverLangFile.exists()) {
                 // Try to copy from mod jar resources
-                try (InputStream in = NeoEssentials.class.getResourceAsStream("/data/lang/en_us.json")) {
+                try (InputStream in = com.zerog.neoessentials.util.ResourceUtil.getJarLanguageResource("en_us")) {
                     if (in != null) {
                         Files.copy(in, serverLangFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         LOGGER.info("Copied default language file to server directory: {}", serverLangFile.getAbsolutePath());
@@ -280,25 +222,23 @@ public class NeoEssentials {
         
         // Item commands
         try {
-            com.zerog.neoessentials.items.commands.repair.register(dispatcher);
+            com.zerog.neoessentials.items.commands.RepairCommand.register(dispatcher);
             registry.registerCommand("repair", "Repair items in hand or inventory", "fix");
             
-            com.zerog.neoessentials.items.commands.dispose.register(dispatcher);
+            com.zerog.neoessentials.items.commands.DisposeCommand.register(dispatcher);
             registry.registerCommand("dispose", "Safely dispose of items with confirmation", "trash");
             
-            com.zerog.neoessentials.items.commands.clearinventory.register(dispatcher);
+            com.zerog.neoessentials.items.commands.ClearInventoryCommand.register(dispatcher);
             registry.registerCommand("clearinventory", "Clear player inventory", "ci", "clearinv");
             
             com.zerog.neoessentials.items.commands.EnchantCommand.register(dispatcher);
             registry.registerCommand("enchant", "Enchant items with specific enchantments");
             
-            com.zerog.neoessentials.items.commands.powertool.register(dispatcher);
+            com.zerog.neoessentials.items.commands.PowertoolCommand.register(dispatcher);
             registry.registerCommand("powertool", "Bind commands to items", "pt");
-            
-            com.zerog.neoessentials.items.commands.powertooltoggle.register(dispatcher);
-            registry.registerCommand("powertooltoggle", "Toggle powertool functionality", "pttoggle");
-            
-            LOGGER.info("Item commands registered successfully");
+
+            com.zerog.neoessentials.items.commands.PowertoolToggleCommand.register(dispatcher);
+            registry.registerCommand("powertooltoggle", "Toggle powertool functionality", "pttoggle");            LOGGER.info("Item commands registered successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to register item commands", e);
         }
@@ -367,9 +307,8 @@ public class NeoEssentials {
             UUID uuid = player.getUUID();
             LOGGER.debug("Player logged in: {} ({})", player.getName().getString(), uuid);
             try {
-                // Load economy data
-                EconomyManager.getInstance().loadPlayerEconomy(uuid);
-                LOGGER.debug("Economy loaded for: {}", uuid);
+                // Economy data is automatically managed by EconomyManager
+                LOGGER.debug("Economy auto-loaded for: {}", uuid);
                 
                 // Load general player data (homes, warps, etc.)
                 NeoEssentialsManager.getInstance().loadPlayerData(uuid);
@@ -386,16 +325,15 @@ public class NeoEssentials {
             UUID uuid = player.getUUID();
             LOGGER.debug("Player logged out: {} ({})", player.getName().getString(), uuid);
             try {
-                // Save economy data
-                EconomyManager.getInstance().savePlayerEconomy(uuid);
-                LOGGER.debug("Economy saved for: {}", uuid);
+                // Economy data is automatically saved by EconomyManager
+                LOGGER.debug("Economy auto-saved for: {}", uuid);
                 
                 // Save general player data (homes, warps, etc.)
                 NeoEssentialsManager.getInstance().savePlayerData(uuid);
                 LOGGER.debug("Player data saved for: {}", uuid);
                 
                 // Auto-restore items if player disconnects with pending /dispose
-                dispose.restorePendingItems(player);
+                DisposeCommand.restorePendingItems(player);
             } catch (Exception e) {
                 LOGGER.error("Exception saving player data for: {}: {}", uuid, e.getMessage(), e);
             }
@@ -419,11 +357,17 @@ public class NeoEssentials {
         LOGGER.info("NeoEssentials shutting down...");
         
         // Save all player data
-        EconomyManager.getInstance().saveAllPlayerEconomy();
         NeoEssentialsManager.getInstance().saveAllPlayerData();
         
-        // Shutdown executor services and clean up resources
-        EconomyManager.getInstance().shutdown();
+        // Shutdown all managers with executor services to prevent resource leaks
+        try {
+            EconomyManager.getInstance().shutdown();
+            PayToggleManager.getInstance().shutdown();
+            TransactionHistoryManager.getInstance().shutdown();
+        } catch (Exception e) {
+            LOGGER.error("Error during manager shutdown", e);
+        }
+        
         LOGGER.info("NeoEssentials shutdown complete.");
     }
 }

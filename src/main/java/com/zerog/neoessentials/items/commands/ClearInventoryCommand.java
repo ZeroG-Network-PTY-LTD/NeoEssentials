@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 
-public class clearinventory {
+public class ClearInventoryCommand {
     /**
      * Register the /clearinventory, /ci, and /clearinv commands.
      */

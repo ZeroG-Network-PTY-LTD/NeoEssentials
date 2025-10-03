@@ -15,7 +15,7 @@ import net.minecraft.world.MenuProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public class dispose {
+public class DisposeCommand {
     // Store pending disposals: UUID -> SimpleContainer
     private static final Map<java.util.UUID, SimpleContainer> pendingDisposals = new HashMap<>();
 

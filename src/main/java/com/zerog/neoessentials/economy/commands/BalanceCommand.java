@@ -5,10 +5,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import java.math.BigDecimal;
-import java.util.Optional;
 import java.util.UUID;
 
 public class BalanceCommand {

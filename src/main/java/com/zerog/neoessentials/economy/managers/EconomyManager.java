@@ -41,7 +41,7 @@ public class EconomyManager {
     private ConcurrentHashMap<UUID, BigDecimal> balancesCache;
     private EconomyConfig config;
     // Store balances in root/neoessentials/balances.json
-    private final File balancesFile = new File("neoessentials/balances.json");
+    private final File balancesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances.json");
     private final Gson gson = new Gson();
     private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
     private volatile boolean saveQueued = false;

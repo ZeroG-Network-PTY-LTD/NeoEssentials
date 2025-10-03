@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 
-public class powertool {
+public class PowertoolCommand {
     // Server-side powertool assignments: player UUID -> slot -> command
     private static final Map<java.util.UUID, Map<Integer, String>> POWERS = new HashMap<>();
     /**

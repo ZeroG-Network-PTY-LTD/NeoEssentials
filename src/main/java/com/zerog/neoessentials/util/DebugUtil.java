@@ -34,7 +34,7 @@ public class DebugUtil {
 
     public static void reload() {
         try {
-            File configFile = new File("config/neoessentials/config.json");
+            File configFile = com.zerog.neoessentials.util.ResourceUtil.getConfigFile("config.json");
             if (configFile.exists()) {
                 String json = new String(Files.readAllBytes(configFile.toPath()));
                 JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
