@@ -46,7 +46,7 @@ public class ConfigPermissionUtil {
     private static void ensureLoaded() {
         if (loaded) return;
         try {
-            File configFile = new File("config/neoessentials/config.json");
+            File configFile = com.zerog.neoessentials.util.ResourceUtil.getConfigFile("config.json");
             if (configFile.exists()) {
                 String json = new String(Files.readAllBytes(configFile.toPath()));
                 JsonObject obj = JsonParser.parseString(json).getAsJsonObject();

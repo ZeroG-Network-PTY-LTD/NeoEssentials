@@ -10,24 +10,33 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Singleton manager for NeoEssentials services and player data.
+ * Thread-safe singleton manager for NeoEssentials services and player data.
  */
 public class NeoEssentialsManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentialsManager.class);
 
-    // Player data storage
-    private final Map<UUID, PlayerData> playerDataMap = new HashMap<>();
+    // Thread-safe singleton using Bill Pugh pattern
+    private static class SingletonHolder {
+        private static final NeoEssentialsManager INSTANCE = new NeoEssentialsManager();
+    }
+
+    public static NeoEssentialsManager getInstance() {
+        return SingletonHolder.INSTANCE;
+    }
+
+    // Thread-safe player data storage
+    private final Map<UUID, PlayerData> playerDataMap = new ConcurrentHashMap<>();
     // Service APIs
     private EconomyService economyService;
 
-    private static final String PLAYERDATA_DIR = "config/neoessentials/playerdata/";
+    private static final String PLAYERDATA_DIR = com.zerog.neoessentials.util.ResourceUtil.CONFIG_DIR + "playerdata/";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     /**
@@ -37,21 +46,8 @@ public class NeoEssentialsManager {
         // Initialize EconomyServiceImpl with persistent storage
         // Note: This is for API compatibility - actual economy is handled by EconomyManager
         this.economyService = new EconomyServiceImpl(
-            Paths.get("neoessentials/balances.json")
+            com.zerog.neoessentials.util.ResourceUtil.getDataPath("balances.json")
         );
-    }
-
-    // Thread-safe singleton using Bill Pugh Singleton Pattern
-    private static class SingletonHolder {
-        private static final NeoEssentialsManager INSTANCE = new NeoEssentialsManager();
-    }
-    
-    /**
-     * Gets the singleton instance of the manager.
-     * @return NeoEssentialsManager instance
-     */
-    public static NeoEssentialsManager getInstance() {
-        return SingletonHolder.INSTANCE;
     }
 
     /**
@@ -94,9 +90,9 @@ public class NeoEssentialsManager {
      * Note: Economy data (balance, pay toggles) is handled by EconomyManager separately.
      */
     public static class PlayerData {
-        public Map<String, Object> homes = new HashMap<>();
-        public Map<String, Object> warps = new HashMap<>();
-        public Map<String, Object> mail = new HashMap<>();
+        public Map<String, Object> homes = new ConcurrentHashMap<>();
+        public Map<String, Object> warps = new ConcurrentHashMap<>();
+        public Map<String, Object> mail = new ConcurrentHashMap<>();
         
         // Non-economy toggles and settings
         private boolean afkStatus = false;

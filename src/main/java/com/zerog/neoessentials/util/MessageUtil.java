@@ -34,7 +34,7 @@ public class MessageUtil {
         LOGGER.info("Loading NeoEssentials translations...");
         
         // Try to load from server directory first
-        File serverLangFile = new File("neoessentials/lang/en_us.json");
+        File serverLangFile = ResourceUtil.getLanguageFile("en_us");
         if (serverLangFile.exists()) {
             try (FileReader reader = new FileReader(serverLangFile)) {
                 Gson gson = new Gson();
@@ -51,7 +51,7 @@ public class MessageUtil {
         }
         
         // Fallback to JAR resource
-        try (InputStream in = MessageUtil.class.getResourceAsStream("/data/lang/en_us.json")) {
+        try (InputStream in = ResourceUtil.getJarLanguageResource("en_us")) {
             if (in != null) {
                 try (java.util.Scanner scanner = new java.util.Scanner(in, "UTF-8").useDelimiter("\\A")) {
                     String json = scanner.hasNext() ? scanner.next() : "";

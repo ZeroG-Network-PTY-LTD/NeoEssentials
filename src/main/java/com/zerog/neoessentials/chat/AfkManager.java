@@ -1,14 +1,15 @@
 package com.zerog.neoessentials.chat;
 
 import net.minecraft.server.level.ServerPlayer;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manages AFK status for players.
+ * Thread-safe manager for AFK status of players.
  */
 public class AfkManager {
-    private static final Set<String> afkPlayers = new HashSet<>();
+    // Use newSetFromMap to create a thread-safe Set
+    private static final Set<String> afkPlayers = ConcurrentHashMap.newKeySet();
 
     public static void toggleAfk(ServerPlayer player) {
         String name = player.getName().getString().toLowerCase();

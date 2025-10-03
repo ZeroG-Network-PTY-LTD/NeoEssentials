@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.items.handlers;
 
-import com.zerog.neoessentials.items.commands.powertool;
-import com.zerog.neoessentials.items.commands.powertooltoggle;
+import com.zerog.neoessentials.items.commands.PowertoolCommand;
+import com.zerog.neoessentials.items.commands.PowertoolToggleCommand;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -33,18 +33,18 @@ public class ItemInteractionHandler {
             int slot = player.getInventory().selected;
 
             // Check if player has powertool data
-            if (!powertool.hasPowertoolData(playerUUID)) {
+            if (!PowertoolCommand.hasPowertoolData(playerUUID)) {
                 return;
             }
 
             // Check if this slot has a powertool command assigned
-            String command = powertool.getPowertoolCommand(playerUUID, slot);
+            String command = PowertoolCommand.getPowertoolCommand(playerUUID, slot);
             if (command == null || command.trim().isEmpty()) {
                 return;
             }
 
             // Check if powertool is enabled for this slot
-            if (!powertooltoggle.isPowertoolEnabled(playerUUID, slot)) {
+            if (!PowertoolToggleCommand.isPowertoolEnabled(playerUUID, slot)) {
                 return;
             }
 

@@ -23,7 +23,7 @@ public class TransactionHistoryManager {
 
     private static final int HISTORY_LIMIT = 20; // Configurable if needed
     private final Map<UUID, Deque<String>> historyMap = new ConcurrentHashMap<>();
-    private final File historyFile = new File("neoessentials/transaction_history.json");
+    private final File historyFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("transaction_history.json");
     private final Gson gson = new Gson();
     private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
     private volatile boolean saveQueued = false;
@@ -89,5 +89,33 @@ public class TransactionHistoryManager {
 
     public List<String> getHistory(UUID player) {
         return new ArrayList<>(historyMap.getOrDefault(player, new ArrayDeque<>()));
+    }
+
+    /**
+     * Shutdown the TransactionHistoryManager and clean up resources.
+     * Saves any pending data and terminates the executor service.
+     */
+    public void shutdown() {
+        try {
+            // Save any pending data immediately
+            saveHistoryAtomic();
+            
+            // Shutdown executor service
+            saveExecutor.shutdown();
+            try {
+                if (!saveExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+                    DebugUtil.debug("TransactionHistoryManager executor did not terminate gracefully, forcing shutdown...");
+                    saveExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                DebugUtil.debug("Interrupted while waiting for TransactionHistoryManager executor shutdown");
+                saveExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+            
+            DebugUtil.debug("TransactionHistoryManager shutdown complete.");
+        } catch (Exception e) {
+            DebugUtil.debugStackTrace(e);
+        }
     }
 }

@@ -7,8 +7,8 @@ import com.google.gson.*;
 
 public class PermissionStorage {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path FILE_PATH = Paths.get("config/neoessentials/permissions.json");
-    private static final Path PLAYERDATA_PATH = Paths.get("config/neoessentials/permissions/playerdata.json");
+    private static final Path FILE_PATH = com.zerog.neoessentials.util.ResourceUtil.getConfigPath("permissions.json");
+    private static final Path PLAYERDATA_PATH = com.zerog.neoessentials.util.ResourceUtil.getConfigPath("permissions/playerdata.json");
 
     public static void save(PermissionManager manager) throws IOException {
         // Save groups to permissions.json (atomic operation)

@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 
-public class powertooltoggle {
+public class PowertoolToggleCommand {
     // Server-side powertool toggles: player UUID -> slot -> enabled
     private static final Map<java.util.UUID, Map<Integer, Boolean>> TOGGLES = new HashMap<>();
     /**

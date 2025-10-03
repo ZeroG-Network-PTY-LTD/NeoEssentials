@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 
-public class repair {
+public class RepairCommand {
     /**
      * Register the /repair and /fix commands.
      */
