@@ -34,39 +34,65 @@ public class MsgCommand {
                         CommandSourceStack source = ctx.getSource();
                         String targetName = StringArgumentType.getString(ctx, "target");
                         String message = StringArgumentType.getString(ctx, "message");
+                        
+                        // Validate sender
                         ServerPlayer sender = source.getPlayer();
+                        if (sender == null) {
+                            source.sendFailure(Component.translatable("neoessentials.error.no_server"));
+                            return 0;
+                        }
+                        
                         MinecraftServer server = sender.getServer();
                         if (server == null) {
                             source.sendFailure(Component.translatable("neoessentials.error.no_server"));
                             return 0;
                         }
+                        
+                        // Find target player
                         ServerPlayer target = server.getPlayerList().getPlayerByName(targetName);
                         if (target == null) {
                             source.sendFailure(Component.translatable("argument.player.unknown", targetName));
                             return 0;
                         }
+                        
+                        // Check if messaging self
+                        if (sender.equals(target)) {
+                            source.sendFailure(Component.translatable("commands.neoessentials.msg.self"));
+                            return 0;
+                        }
+                        
+                        // Check permissions
                         ChatManager chatManager = ChatAPI.getChatManager();
                         if (chatManager != null && !chatManager.isMsgEnabled()) {
                             source.sendFailure(Component.translatable("commands.neoessentials.msg.disabled"));
                             return 0;
                         }
-                        if (chatManager != null && !chatManager.hasChatPermission("neoessentials.msg")) {
+                        
+                        // Proper permission validation using PermissionAPI
+                        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.msg")) {
                             source.sendFailure(Component.translatable("commands.neoessentials.msg.no_permission"));
                             return 0;
                         }
+                        
                         // --- Mute/ignore check ---
                         if (ChatAPI.isMutedOrIgnored(sender, target)) {
                             source.sendFailure(Component.translatable("commands.neoessentials.msg.muted_or_ignored", target.getName()));
                             return 0;
                         }
+                        
                         // Send message using vanilla formatting
                         Component msgToTarget = Component.translatable("commands.message.display.incoming", sender.getDisplayName(), message);
                         Component msgToSender = Component.translatable("commands.message.display.outgoing", target.getDisplayName(), message);
                         target.sendSystemMessage(msgToTarget);
                         sender.sendSystemMessage(msgToSender);
+                        
+                        // Update last message tracking for reply functionality
+                        com.zerog.neoessentials.chat.LastMessageManager.setLastMessager(target, sender);
+                        com.zerog.neoessentials.chat.LastMessageManager.setLastMessager(sender, target);
+                        
                         // --- SocialSpy integration ---
                         ChatAPI.broadcastSocialSpy(sender, target, message);
-                        // Advanced formatting, plugin hooks can be added here if needed
+                        
                         return 1;
                     })
                 )
