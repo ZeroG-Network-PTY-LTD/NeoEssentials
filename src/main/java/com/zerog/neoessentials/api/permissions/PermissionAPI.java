@@ -46,15 +46,28 @@ public class PermissionAPI {
     }
 
     public static boolean hasPermission(UUID uuid, String permission) {
+        // Validate input parameters
+        if (uuid == null) {
+            LOGGER.warn("PermissionAPI.hasPermission: UUID is null");
+            return false;
+        }
+        if (permission == null || permission.trim().isEmpty()) {
+            LOGGER.warn("PermissionAPI.hasPermission: Permission string is null or empty");
+            return false;
+        }
+        
         // First check if player is opped (opped players have all permissions)
-        if (uuid != null && isPlayerOpped(uuid)) {
+        if (isPlayerOpped(uuid)) {
             return true;
         }
         
         if (externalAdapter != null) {
             return externalAdapter.hasPermission(uuid, permission);
         }
-        if (manager == null) return false;
+        if (manager == null) {
+            LOGGER.warn("PermissionAPI.hasPermission: PermissionManager is null - returning false");
+            return false;
+        }
         return manager.hasPermission(uuid, permission);
     }
     
@@ -88,6 +101,12 @@ public class PermissionAPI {
     }
 
     public static String getPrefix(UUID uuid) {
+        // Validate input parameters
+        if (uuid == null) {
+            LOGGER.warn("PermissionAPI.getPrefix: UUID is null");
+            return "";
+        }
+        
         if (externalAdapter != null) {
             String prefix = externalAdapter.getPrefix(uuid);
             if (prefix != null) return prefix;
@@ -101,14 +120,26 @@ public class PermissionAPI {
             LOGGER.warn("PermissionAPI.getPrefix: No PermissionUser found for UUID " + uuid);
         }
         String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : manager.getDefaultGroup();
+        if (groupName == null) {
+            LOGGER.warn("PermissionAPI.getPrefix: Default group name is null");
+            return "";
+        }
         PermissionGroup group = manager.getGroup(groupName);
         if (group == null) {
             LOGGER.warn("PermissionAPI.getPrefix: No PermissionGroup found for group '" + groupName + "'");
+            return "";
         }
-        return group != null ? group.getPrefix() : "";
+        String prefix = group.getPrefix();
+        return prefix != null ? prefix : "";
     }
 
     public static String getSuffix(UUID uuid) {
+        // Validate input parameters
+        if (uuid == null) {
+            LOGGER.warn("PermissionAPI.getSuffix: UUID is null");
+            return "";
+        }
+        
         if (externalAdapter != null) {
             String suffix = externalAdapter.getSuffix(uuid);
             if (suffix != null) return suffix;
@@ -122,11 +153,17 @@ public class PermissionAPI {
             LOGGER.warn("PermissionAPI.getSuffix: No PermissionUser found for UUID " + uuid);
         }
         String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : manager.getDefaultGroup();
+        if (groupName == null) {
+            LOGGER.warn("PermissionAPI.getSuffix: Default group name is null");
+            return "";
+        }
         PermissionGroup group = manager.getGroup(groupName);
         if (group == null) {
             LOGGER.warn("PermissionAPI.getSuffix: No PermissionGroup found for group '" + groupName + "'");
+            return "";
         }
-        return group != null ? group.getSuffix() : "";
+        String suffix = group.getSuffix();
+        return suffix != null ? suffix : "";
     }
 
     /**
@@ -137,6 +174,9 @@ public class PermissionAPI {
             externalAdapter.reload();
         } else if (manager != null) {
             manager.reload();
+        } else {
+            LOGGER.warn("PermissionAPI.reload: Both externalAdapter and manager are null - nothing to reload");
+            throw new IllegalStateException("Permission system not initialized - cannot reload");
         }
     }
 }

@@ -1,0 +1,23 @@
+{
+    "kits": [
+        {
+            "name": "starter",
+            "cooldown": 86400,
+            "items": [
+                {
+                    "item": "minecraft:stone_sword",
+                    "count": 1,
+                    "nbt": "{}"
+                },
+                {
+                    "item": "minecraft:bread",
+                    "count": 16,
+                    "nbt": "{}"
+                }
+            ],
+            "commands": [
+                "say Welcome to the server, {player}!"
+            ]
+        }
+    ]
+}

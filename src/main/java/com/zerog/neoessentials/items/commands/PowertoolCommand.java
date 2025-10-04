@@ -8,7 +8,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.config.ConfigUtil;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 
 public class PowertoolCommand {
@@ -18,7 +18,7 @@ public class PowertoolCommand {
      * Register the /powertool and /pt commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigUtil.isCommandEnabled("powertool")) return;
+        if (!ConfigManager.getInstance().isCommandEnabled("powertool")) return;
         dispatcher.register(
             Commands.literal("powertool")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)

@@ -5,11 +5,9 @@ import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -24,11 +22,22 @@ public class InputValidator {
     private static final Pattern SAFE_COMMAND = Pattern.compile("^[a-zA-Z0-9_\\-/\\s]+$");
     private static final Pattern SAFE_FILENAME = Pattern.compile("^[a-zA-Z0-9_\\-\\.]+$");
     
-    // Limits
-    private static final int MAX_COMMAND_LENGTH = 256;
-    private static final int MAX_REASON_LENGTH = 500;
-    private static final BigDecimal MAX_ECONOMY_AMOUNT = new BigDecimal("999999999.99");
-    private static final BigDecimal MIN_ECONOMY_AMOUNT = new BigDecimal("0.01");
+    // Config-based limits - loaded from ConfigManager
+    private static int getMaxCommandLength() {
+        return com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxCommandLength();
+    }
+    
+    private static int getMaxReasonLength() {
+        return com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxReasonLength();
+    }
+    
+    private static BigDecimal getMaxEconomyAmount() {
+        return com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxEconomyAmount();
+    }
+    
+    private static BigDecimal getMinEconomyAmount() {
+        return com.zerog.neoessentials.config.ConfigManager.getInstance().getMinEconomyAmount();
+    }
     
     /**
      * Validates a player name for security and format compliance.
@@ -63,12 +72,15 @@ public class InputValidator {
         }
         
         BigDecimal bd = BigDecimal.valueOf(amount);
-        if (bd.compareTo(MAX_ECONOMY_AMOUNT) > 0) {
-            return ValidationResult.failure("Amount too large (max " + MAX_ECONOMY_AMOUNT + ")");
+        BigDecimal maxAmount = getMaxEconomyAmount();
+        BigDecimal minAmount = getMinEconomyAmount();
+        
+        if (bd.compareTo(maxAmount) > 0) {
+            return ValidationResult.failure("Amount too large (max " + maxAmount + ")");
         }
         
-        if (bd.compareTo(MIN_ECONOMY_AMOUNT) < 0) {
-            return ValidationResult.failure("Amount too small (min " + MIN_ECONOMY_AMOUNT + ")");
+        if (bd.compareTo(minAmount) < 0) {
+            return ValidationResult.failure("Amount too small (min " + minAmount + ")");
         }
         
         return ValidationResult.success(bd);
@@ -83,8 +95,9 @@ public class InputValidator {
         }
         
         String trimmed = command.trim();
-        if (trimmed.length() > MAX_COMMAND_LENGTH) {
-            return ValidationResult.failure("Command too long (max " + MAX_COMMAND_LENGTH + " characters)");
+        int maxLength = getMaxCommandLength();
+        if (trimmed.length() > maxLength) {
+            return ValidationResult.failure("Command too long (max " + maxLength + " characters)");
         }
         
         // Remove leading slash if present
@@ -147,8 +160,9 @@ public class InputValidator {
         }
         
         String trimmed = reason.trim();
-        if (trimmed.length() > MAX_REASON_LENGTH) {
-            return ValidationResult.failure("Reason too long (max " + MAX_REASON_LENGTH + " characters)");
+        int maxReasonLength = getMaxReasonLength();
+        if (trimmed.length() > maxReasonLength) {
+            return ValidationResult.failure("Reason too long (max " + maxReasonLength + " characters)");
         }
         
         // Basic safety - prevent potential injection attempts
@@ -183,18 +197,22 @@ public class InputValidator {
     /**
      * Validates an enchantment level.
      */
-    public static ValidationResult validateEnchantmentLevel(int level, boolean allowOverMax) {
+    public static ValidationResult validateEnchantmentLevel(int level, boolean allowUnsafeEnchants) {
         if (level < 1) {
             return ValidationResult.failure("Enchantment level must be at least 1");
         }
         
-        if (!allowOverMax && level > 255) {
-            return ValidationResult.failure("Enchantment level too high (max 255)");
+        // Normal enchantment level limits (when unsafe enchants are disabled)
+        if (!allowUnsafeEnchants && level > 255) {
+            return ValidationResult.failure("Enchantment level too high (max 255). Enable unsafe enchantments to use higher levels.");
         }
         
-        // Even with override, set absolute maximum for safety
-        if (level > 32767) {
-            return ValidationResult.failure("Enchantment level exceeds absolute maximum");
+        // Unsafe enchantment level limits (configurable maximum when enabled)
+        if (allowUnsafeEnchants) {
+            int maxUnsafeLevel = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxUnsafeEnchantmentLevel();
+            if (level > maxUnsafeLevel) {
+                return ValidationResult.failure("Enchantment level exceeds configured maximum (" + maxUnsafeLevel + ")");
+            }
         }
         
         return ValidationResult.success(level);

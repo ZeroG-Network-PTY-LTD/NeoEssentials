@@ -95,11 +95,9 @@ public class NeoEssentialsManager {
         public Map<String, Object> mail = new ConcurrentHashMap<>();
         
         // Non-economy toggles and settings
-        private boolean afkStatus = false;
         private boolean vanishMode = false;
         private boolean godMode = false;
         private boolean flyMode = false;
-        private long lastActivity = System.currentTimeMillis();
         private String lastLocation = null;
         
         // Teleportation settings  
@@ -110,9 +108,6 @@ public class NeoEssentialsManager {
         private java.util.List<String> ignoreList = new java.util.ArrayList<>();
         
         // Getters and setters
-        public boolean isAfkStatus() { return afkStatus; }
-        public void setAfkStatus(boolean afk) { this.afkStatus = afk; }
-        
         public boolean isVanishMode() { return vanishMode; }
         public void setVanishMode(boolean vanish) { this.vanishMode = vanish; }
         
@@ -121,9 +116,6 @@ public class NeoEssentialsManager {
         
         public boolean isFlyMode() { return flyMode; }
         public void setFlyMode(boolean fly) { this.flyMode = fly; }
-        
-        public long getLastActivity() { return lastActivity; }
-        public void setLastActivity(long time) { this.lastActivity = time; }
         
         public String getLastLocation() { return lastLocation; }
         public void setLastLocation(String location) { this.lastLocation = location; }

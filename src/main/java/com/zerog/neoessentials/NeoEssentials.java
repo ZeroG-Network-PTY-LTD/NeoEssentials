@@ -3,7 +3,7 @@ import com.zerog.neoessentials.commands.ModRootCommand;
 import com.zerog.neoessentials.commands.CommandRegistry;
 
 import com.zerog.neoessentials.economy.commands.EconomyCommands;
-import com.zerog.neoessentials.NeoEssentialsManager.PlayerData;
+
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 import com.zerog.neoessentials.economy.managers.PayToggleManager;
 import com.zerog.neoessentials.economy.managers.TransactionHistoryManager;
@@ -26,7 +26,7 @@ import net.neoforged.fml.ModList;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.gson.JsonParser;
+
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import com.zerog.neoessentials.chat.ChatManager;
 import com.zerog.neoessentials.api.ChatAPI;
@@ -34,8 +34,7 @@ import com.zerog.neoessentials.api.ChatAPI;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
@@ -152,6 +151,15 @@ public class NeoEssentials {
 
         // Register chat event handler for message formatting
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.ChatHandler.class);
+        
+        // Register AFK system event handlers for comprehensive activity tracking
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkActivityHandler.class);
+        // AfkMovementHandler disabled - no working tick events in this version
+        // net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkMovementHandler.class);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkCommandHandler.class);
+        // AfkSleepHandler disabled - no working sleep events in this version
+        // net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkSleepHandler.class);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkTablistHandler.class);
 
         // --- Chat event listeners ---
         // All chat event logic (join/quit, AFK, death, etc.) is handled via event handlers below.
@@ -334,6 +342,9 @@ public class NeoEssentials {
                 
                 // Auto-restore items if player disconnects with pending /dispose
                 DisposeCommand.restorePendingItems(player);
+                
+                // Clean up AFK movement tracking data
+                com.zerog.neoessentials.chat.handlers.AfkMovementHandler.onPlayerLogout(uuid);
             } catch (Exception e) {
                 LOGGER.error("Exception saving player data for: {}: {}", uuid, e.getMessage(), e);
             }

@@ -4,7 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.config.ConfigUtil;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 
 public class ClearInventoryCommand {
@@ -12,7 +12,7 @@ public class ClearInventoryCommand {
      * Register the /clearinventory, /ci, and /clearinv commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigUtil.isCommandEnabled("clearinventory")) return;
+        if (!ConfigManager.getInstance().isCommandEnabled("clearinventory")) return;
         dispatcher.register(
             Commands.literal("clearinventory")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)

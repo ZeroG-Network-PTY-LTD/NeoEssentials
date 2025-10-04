@@ -124,20 +124,20 @@ public class EcoCommand {
             case "give":
                 manager.addBalance(uuid, amount);
                 ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.give", amount, validPlayerName), false);
-                EconomyTransactionLogger.log("ADMIN_GIVE", adminName, validPlayerName, amount.toPlainString(), "Admin give");
-                TransactionHistoryManager.getInstance().addTransaction(uuid, "Admin gave you " + amount);
+                EconomyTransactionLogger.log("ADMIN_GIVE", adminName, validPlayerName, amount.toPlainString(), MessageUtil.localize("commands.neoessentials.transaction.admin_give_description"));
+                TransactionHistoryManager.getInstance().addTransaction(uuid, MessageUtil.localize("commands.neoessentials.transaction.admin_gave", amount));
                 break;
             case "take":
                 manager.subtractBalance(uuid, amount);
                 ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.take", amount, validPlayerName), false);
-                EconomyTransactionLogger.log("ADMIN_TAKE", adminName, validPlayerName, amount.toPlainString(), "Admin take");
-                TransactionHistoryManager.getInstance().addTransaction(uuid, "Admin took " + amount);
+                EconomyTransactionLogger.log("ADMIN_TAKE", adminName, validPlayerName, amount.toPlainString(), MessageUtil.localize("commands.neoessentials.transaction.admin_take_description"));
+                TransactionHistoryManager.getInstance().addTransaction(uuid, MessageUtil.localize("commands.neoessentials.transaction.admin_took", amount));
                 break;
             case "set":
                 manager.setBalance(uuid, amount);
                 ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.eco.set", validPlayerName, amount), false);
-                EconomyTransactionLogger.log("ADMIN_SET", adminName, validPlayerName, amount.toPlainString(), "Admin set");
-                TransactionHistoryManager.getInstance().addTransaction(uuid, "Admin set your balance to " + amount);
+                EconomyTransactionLogger.log("ADMIN_SET", adminName, validPlayerName, amount.toPlainString(), MessageUtil.localize("commands.neoessentials.transaction.admin_set_description"));
+                TransactionHistoryManager.getInstance().addTransaction(uuid, MessageUtil.localize("commands.neoessentials.transaction.admin_set", amount));
                 break;
         }
         return 1;

@@ -7,7 +7,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.config.ConfigUtil;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 
 public class PowertoolToggleCommand {
@@ -17,7 +17,7 @@ public class PowertoolToggleCommand {
      * Register the /powertooltoggle and /pttoggle commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigUtil.isCommandEnabled("powertooltoggle")) return;
+        if (!ConfigManager.getInstance().isCommandEnabled("powertooltoggle")) return;
         dispatcher.register(
             Commands.literal("powertooltoggle")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)

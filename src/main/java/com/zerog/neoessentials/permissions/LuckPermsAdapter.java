@@ -35,7 +35,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             }
             return false;
         }
-        return ConfigPermissionUtil.hasPermission(uuid, permission);
+        return false; // No fallback - requires LuckPerms for permission checking
     }
 
     @Override
@@ -47,7 +47,7 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             }
             return null;
         }
-        return ConfigPermissionUtil.getPrefix(uuid);
+        return null; // No fallback - requires LuckPerms for prefixes
     }
 
     @Override
@@ -59,14 +59,12 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
             }
             return null;
         }
-        return ConfigPermissionUtil.getSuffix(uuid);
+        return null; // No fallback - requires LuckPerms for suffixes
     }
 
     @Override
     public void reload() {
-        if (!luckPermsLoaded) {
-            ConfigPermissionUtil.reload();
-        }
+        // LuckPerms handles its own reloading - no fallback system needed
     }
 
     @Override
