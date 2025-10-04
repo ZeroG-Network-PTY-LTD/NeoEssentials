@@ -225,11 +225,8 @@ public class ConfigManager {
      */
     public BigDecimal getEconomyStartingBalance() {
         JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("economySettings")) {
-            JsonObject settings = config.getAsJsonObject("economySettings");
-            if (settings.has("startingBalance")) {
-                return settings.get("startingBalance").getAsBigDecimal();
-            }
+        if (config.has("startingBalance")) {
+            return config.get("startingBalance").getAsBigDecimal();
         }
         return new BigDecimal("100.0");
     }
@@ -239,11 +236,8 @@ public class ConfigManager {
      */
     public String getCurrencySymbol() {
         JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("economySettings")) {
-            JsonObject settings = config.getAsJsonObject("economySettings");
-            if (settings.has("currencySymbol")) {
-                return settings.get("currencySymbol").getAsString();
-            }
+        if (config.has("currencySymbol")) {
+            return config.get("currencySymbol").getAsString();
         }
         return "$";
     }
@@ -253,11 +247,8 @@ public class ConfigManager {
      */
     public double getEconomyTaxPercentage() {
         JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("economySettings")) {
-            JsonObject settings = config.getAsJsonObject("economySettings");
-            if (settings.has("taxPercentage")) {
-                return settings.get("taxPercentage").getAsDouble();
-            }
+        if (config.has("taxPercentage")) {
+            return config.get("taxPercentage").getAsDouble();
         }
         return 0.0; // Default to no tax
     }
@@ -269,11 +260,8 @@ public class ConfigManager {
      */
     public BigDecimal getMaxBalance() {
         JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("economySettings")) {
-            JsonObject settings = config.getAsJsonObject("economySettings");
-            if (settings.has("maxBalance")) {
-                return settings.get("maxBalance").getAsBigDecimal();
-            }
+        if (config.has("maxBalance")) {
+            return config.get("maxBalance").getAsBigDecimal();
         }
         return new BigDecimal("100000.0");
     }
@@ -283,11 +271,8 @@ public class ConfigManager {
      */
     public double getTaxPercentage() {
         JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("economySettings")) {
-            JsonObject settings = config.getAsJsonObject("economySettings");
-            if (settings.has("taxPercentage")) {
-                return settings.get("taxPercentage").getAsDouble();
-            }
+        if (config.has("taxPercentage")) {
+            return config.get("taxPercentage").getAsDouble();
         }
         return 1.5;
     }
@@ -307,6 +292,20 @@ public class ConfigManager {
     }
     
     /**
+     * Get the maximum level allowed for unsafe enchantments
+     */
+    public int getMaxUnsafeEnchantmentLevel() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("items")) {
+            JsonObject items = config.getAsJsonObject("items");
+            if (items.has("max-unsafe-enchantment-level")) {
+                return items.get("max-unsafe-enchantment-level").getAsInt();
+            }
+        }
+        return 32767; // Default maximum level for unsafe enchantments
+    }
+    
+    /**
      * Get item spawn blacklist
      */
     public List<String> getItemSpawnBlacklist() {
@@ -321,5 +320,165 @@ public class ConfigManager {
             }
         }
         return blacklist;
+    }
+
+    /**
+     * Get maximum command length from security settings
+     */
+    public int getMaxCommandLength() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("maxCommandLength")) {
+                return security.get("maxCommandLength").getAsInt();
+            }
+        }
+        return 256; // Default fallback
+    }
+
+    /**
+     * Get maximum reason length from security settings
+     */
+    public int getMaxReasonLength() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("maxReasonLength")) {
+                return security.get("maxReasonLength").getAsInt();
+            }
+        }
+        return 500; // Default fallback
+    }
+
+    /**
+     * Get maximum economy amount from security/economy settings
+     */
+    public BigDecimal getMaxEconomyAmount() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("economySettings")) {
+            JsonObject settings = config.getAsJsonObject("economySettings");
+            if (settings.has("maxBalance")) {
+                return new BigDecimal(settings.get("maxBalance").getAsString());
+            }
+        }
+        return new BigDecimal("999999999.99"); // Default fallback
+    }
+
+    /**
+     * Get minimum economy amount from economy settings
+     */
+    public BigDecimal getMinEconomyAmount() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("economySettings")) {
+            JsonObject settings = config.getAsJsonObject("economySettings");
+            if (settings.has("minTransferAmount")) {
+                return new BigDecimal(settings.get("minTransferAmount").getAsString());
+            }
+        }
+        return new BigDecimal("0.01"); // Default fallback
+    }
+
+    /**
+     * Get pay cooldown seconds from payment settings
+     */
+    public int getPayCooldownSeconds() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("payCooldownSeconds")) {
+            return config.get("payCooldownSeconds").getAsInt();
+        }
+        return 3; // Default fallback
+    }
+
+    /**
+     * Get default permission group from permissions settings
+     */
+    public String getDefaultGroup() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("permissions")) {
+            JsonObject permissions = config.getAsJsonObject("permissions");
+            if (permissions.has("defaultGroup")) {
+                return permissions.get("defaultGroup").getAsString();
+            }
+        }
+        return "default"; // Default fallback
+    }
+
+    // === ECONOMY CONFIGURATION METHODS ===
+
+    /**
+     * Check if negative balances are allowed
+     */
+    public boolean allowNegativeBalances() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("allowNegativeBalances")) {
+            return config.get("allowNegativeBalances").getAsBoolean();
+        }
+        return false; // Default to not allowing negative balances
+    }
+
+    /**
+     * Check if inactive account cleanup is enabled
+     */
+    public boolean isCleanupInactiveAccountsEnabled() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("cleanupInactiveAccounts")) {
+            return config.get("cleanupInactiveAccounts").getAsBoolean();
+        }
+        return true; // Default to enabled
+    }
+
+    /**
+     * Get inactive account cleanup days
+     */
+    public int getInactiveAccountCleanupDays() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("inactiveAccountCleanupDays")) {
+            return config.get("inactiveAccountCleanupDays").getAsInt();
+        }
+        return 30; // Default to 30 days
+    }
+
+    /**
+     * Get maximum transfer amount
+     */
+    public BigDecimal getMaxTransferAmount() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("maxTransferAmount")) {
+            return config.get("maxTransferAmount").getAsBigDecimal();
+        }
+        return new BigDecimal("10000.0"); // Default max transfer
+    }
+
+    /**
+     * Get default pay toggle setting
+     */
+    public boolean getPayToggleDefault() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("paytoggleDefault")) {
+            return config.get("paytoggleDefault").getAsBoolean();
+        }
+        return true; // Default to allowing payments
+    }
+
+    /**
+     * Get cache maximum size
+     */
+    public int getCacheMaximumSize() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("cacheMaximumSize")) {
+            return config.get("cacheMaximumSize").getAsInt();
+        }
+        return 10000; // Default cache size
+    }
+
+    /**
+     * Get cache expire after access minutes
+     */
+    public int getCacheExpireAfterAccessMinutes() {
+        JsonObject config = getConfig(ECONOMY_CONFIG);
+        if (config.has("cacheExpireAfterAccessMinutes")) {
+            return config.get("cacheExpireAfterAccessMinutes").getAsInt();
+        }
+        return 60; // Default to 60 minutes
     }
 }

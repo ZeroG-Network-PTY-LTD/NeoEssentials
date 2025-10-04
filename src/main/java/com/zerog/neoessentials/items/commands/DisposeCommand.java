@@ -4,8 +4,9 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.config.ConfigUtil;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionValidator;
 import net.minecraft.world.SimpleContainer;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,18 +39,19 @@ public class DisposeCommand {
      * Register the /dispose and /trash commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigUtil.isCommandEnabled("dispose")) return;
+        if (!ConfigManager.getInstance().isCommandEnabled("dispose")) return;
         dispatcher.register(
             Commands.literal("dispose")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .then(Commands.literal("confirm")
                     .executes(ctx -> {
-                        ServerPlayer player = ctx.getSource().getPlayer();
-                        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.dispose")) {
-                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                        PermissionValidator.PermissionResult permResult = 
+                            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.dispose");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
-                        if (pendingDisposals.remove(player.getUUID()) != null) {
+                        if (pendingDisposals.remove(permResult.getPlayer().getUUID()) != null) {
                             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.dispose.confirmed"), false);
                         } else {
                             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.dispose.nothing_pending"));
@@ -59,11 +61,13 @@ public class DisposeCommand {
                 )
                 .then(Commands.literal("cancel")
                     .executes(ctx -> {
-                        ServerPlayer player = ctx.getSource().getPlayer();
-                        if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.dispose")) {
-                            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                        PermissionValidator.PermissionResult permResult = 
+                            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.dispose");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
+                        ServerPlayer player = permResult.getPlayer();
                         SimpleContainer container = pendingDisposals.remove(player.getUUID());
                         if (container != null) {
                             // Return items to player
@@ -80,12 +84,13 @@ public class DisposeCommand {
                     })
                 )
                 .executes(ctx -> {
-                    ServerPlayer player = ctx.getSource().getPlayer();
-                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.dispose")) {
-                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                    PermissionValidator.PermissionResult permResult = 
+                        PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.dispose");
+                    if (!permResult.hasPermission()) {
+                        ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
-                    disposeItem(player);
+                    disposeItem(permResult.getPlayer());
                     ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.dispose.opened"), false);
                     return 1;
                 })
@@ -94,12 +99,13 @@ public class DisposeCommand {
             Commands.literal("trash")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
-                    ServerPlayer player = ctx.getSource().getPlayer();
-                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.dispose")) {
-                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                    PermissionValidator.PermissionResult permResult = 
+                        PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.dispose");
+                    if (!permResult.hasPermission()) {
+                        ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
-                    disposeItem(player);
+                    disposeItem(permResult.getPlayer());
                     ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.dispose.opened"), false);
                     return 1;
                 })

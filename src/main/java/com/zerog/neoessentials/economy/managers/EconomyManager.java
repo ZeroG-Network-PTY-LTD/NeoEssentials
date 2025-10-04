@@ -1,9 +1,9 @@
 
 package com.zerog.neoessentials.economy.managers;
 
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.config.EconomyConfig;
 import com.zerog.neoessentials.economy.EconomyTransactionLogger;
-import com.zerog.neoessentials.config.GlobalConfig;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
@@ -39,7 +39,7 @@ public class EconomyManager {
 
     // Use ConcurrentHashMap for balances
     private ConcurrentHashMap<UUID, BigDecimal> balancesCache;
-    private EconomyConfig config;
+    private final ConfigManager configManager = ConfigManager.getInstance();
     // Store balances in root/neoessentials/balances.json
     private final File balancesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances.json");
     private final Gson gson = new Gson();
@@ -102,9 +102,9 @@ public class EconomyManager {
     }
 
     private void cleanupInactiveAccounts() {
-        if (config == null || !config.cleanupInactiveAccounts) return;
+        if (!configManager.isCleanupInactiveAccountsEnabled()) return;
         long now = System.currentTimeMillis();
-        long thresholdMillis = config.inactiveAccountCleanupDays * 24L * 60L * 60L * 1000L;
+        long thresholdMillis = configManager.getInactiveAccountCleanupDays() * 24L * 60L * 60L * 1000L;
         for (UUID uuid : balancesCache.keySet()) {
             Long lastActive = lastActivityMap.get(uuid);
             if (lastActive == null || (now - lastActive) >= thresholdMillis) {
@@ -159,14 +159,11 @@ public class EconomyManager {
 
     private EconomyManager() {
         // Check global config for module enable
-        if (!GlobalConfig.isEconomyEnabled()) {
+        if (!configManager.isEconomyEnabled()) {
             // Economy is globally disabled, do not load balances or settings
-            this.config = new EconomyConfig(); // Only for defaults, not for enable/disable
             return;
         }
-        // Load config on startup
-        File configFile = new File("config/neoessentials/economy.json");
-        this.config = EconomyConfig.load(configFile);
+        // Configuration is loaded automatically by ConfigManager
         // Initialize ConcurrentHashMap for balances
         balancesCache = new ConcurrentHashMap<>();
         loadBalances();
@@ -184,17 +181,13 @@ public class EconomyManager {
     public BigDecimal getBalance(UUID player) {
         BigDecimal cached = balancesCache.get(player);
         if (cached != null) return cached;
-        if (config != null && config.startingBalance != null) {
-            return config.startingBalance;
-        }
-        return new BigDecimal("100.0"); // Fallback default
+        return configManager.getEconomyStartingBalance();
     }
 
     public void setBalance(UUID player, BigDecimal amount) {
-        if (config != null) {
-            if (!config.allowNegativeBalances && amount.compareTo(BigDecimal.ZERO) < 0) amount = BigDecimal.ZERO;
-            if (config.maxBalance != null && amount.compareTo(config.maxBalance) > 0) amount = config.maxBalance;
-        }
+        if (!configManager.allowNegativeBalances() && amount.compareTo(BigDecimal.ZERO) < 0) amount = BigDecimal.ZERO;
+        BigDecimal maxBalance = configManager.getMaxBalance();
+        if (maxBalance != null && amount.compareTo(maxBalance) > 0) amount = maxBalance;
         BigDecimal oldAmount = getBalance(player);
         balancesCache.put(player, amount);
         lastActivityMap.put(player, System.currentTimeMillis());
@@ -207,10 +200,9 @@ public class EconomyManager {
     public boolean addBalance(UUID player, BigDecimal amount) {
         BigDecimal current = getBalance(player);
         BigDecimal newAmount = current.add(amount);
-        if (config != null) {
-            if (!config.allowNegativeBalances && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
-            if (config.maxBalance != null && newAmount.compareTo(config.maxBalance) > 0) newAmount = config.maxBalance;
-        }
+        if (!configManager.allowNegativeBalances() && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
+        BigDecimal maxBalance = configManager.getMaxBalance();
+        if (maxBalance != null && newAmount.compareTo(maxBalance) > 0) newAmount = maxBalance;
         balancesCache.put(player, newAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
@@ -223,7 +215,7 @@ public class EconomyManager {
     public boolean subtractBalance(UUID player, BigDecimal amount) {
         BigDecimal current = getBalance(player);
         BigDecimal newAmount = current.subtract(amount);
-        if (config != null && !config.allowNegativeBalances && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
+        if (!configManager.allowNegativeBalances() && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
         balancesCache.put(player, newAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
@@ -237,20 +229,20 @@ public class EconomyManager {
         return new ConcurrentHashMap<>(balancesCache);
     }
 
+    /**
+     * @deprecated Use ConfigManager.getInstance() directly for config access
+     */
+    @Deprecated
     public EconomyConfig getConfig() {
-        return config;
+        return new EconomyConfig(); // Return a fresh instance that delegates to ConfigManager
     }
 
     public boolean isEnabled() {
-        // Only check the global config now
-        return GlobalConfig.isEconomyEnabled();
+        return configManager.isEconomyEnabled();
     }
 
     public String getCurrencySymbol() {
-        if (config != null && config.currencySymbol != null) {
-            return config.currencySymbol;
-        }
-        return "$"; // Default fallback
+        return configManager.getCurrencySymbol();
     }
 
     // Vault compatibility stub removed; use EconomyService API instead

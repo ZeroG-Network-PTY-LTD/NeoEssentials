@@ -43,7 +43,7 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 LOGGER.error("Failed to check FTB Ranks permission", e);
             }
         }
-        return ConfigPermissionUtil.hasPermission(uuid, permission);
+        return false; // No fallback - requires FTB Ranks for permission checking
     }
 
     @Override
@@ -56,7 +56,7 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 LOGGER.error("Failed to get FTB Ranks prefix", e);
             }
         }
-        return ConfigPermissionUtil.getPrefix(uuid);
+        return null; // No fallback - requires FTB Ranks for prefixes
     }
 
     @Override
@@ -69,14 +69,12 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
                 LOGGER.error("Failed to get FTB Ranks suffix", e);
             }
         }
-        return ConfigPermissionUtil.getSuffix(uuid);
+        return null; // No fallback - requires FTB Ranks for suffixes
     }
 
     @Override
     public void reload() {
-        if (!ftbRanksLoaded) {
-            ConfigPermissionUtil.reload();
-        }
+        // FTB Ranks handles its own reloading - no fallback system needed
     }
 
     @Override

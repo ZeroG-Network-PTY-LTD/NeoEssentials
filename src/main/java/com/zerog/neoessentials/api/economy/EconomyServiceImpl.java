@@ -94,7 +94,7 @@ public class EconomyServiceImpl implements EconomyService {
 
     @Override
     public String getCurrencySymbol() {
-        return "$";
+        return com.zerog.neoessentials.config.ConfigManager.getInstance().getCurrencySymbol();
     }
 
     private void loadBalances() {

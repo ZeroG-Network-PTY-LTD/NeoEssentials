@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.economy;
 
 import com.zerog.neoessentials.economy.managers.EconomyManager;
+import com.zerog.neoessentials.util.MessageUtil;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,7 +30,8 @@ public class EconomyLeaderboard {
         List<String> lines = new ArrayList<>();
         int rank = 1;
         for (Map.Entry<UUID, BigDecimal> entry : top) {
-            lines.add(String.format("#%d: %s - %s", rank++, entry.getKey(), entry.getValue().toPlainString()));
+            lines.add(MessageUtil.localize("commands.neoessentials.economy.leaderboard_entry", 
+                rank++, entry.getKey(), entry.getValue().toPlainString()));
         }
         return lines;
     }

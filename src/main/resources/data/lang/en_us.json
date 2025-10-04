@@ -113,5 +113,24 @@
   "commands.neoessentials.root.help_count": "Available commands ({0}):",
   "commands.neoessentials.root.command_with_aliases": "/{0} (aliases: /{1}) - {2}",
   "commands.neoessentials.root.command_simple": "/{0} - {1}",
-  "commands.neoessentials.root.help_footer": "Use /neoe <command> or /neoessentials <command> to run any command."
+  "commands.neoessentials.root.help_footer": "Use /neoe <command> or /neoessentials <command> to run any command.",
+  
+  "commands.neoessentials.chat.muted": "You are currently muted and cannot send chat messages.",
+  "commands.neoessentials.mutelist.none": "<none>",
+  "commands.neoessentials.permissions.none": "none",
+  "commands.neoessentials.permissions.default": "default",
+  
+  "commands.neoessentials.transaction.paid": "Paid {0} {1} (Fee: {2})",
+  "commands.neoessentials.transaction.received": "Received {0} from {1} (Fee: {2})",
+  "commands.neoessentials.transaction.admin_gave": "Admin gave you {0}",
+  "commands.neoessentials.transaction.admin_took": "Admin took {0}",
+  "commands.neoessentials.transaction.admin_set": "Admin set your balance to {0}",
+  "commands.neoessentials.transaction.admin_give_description": "Admin give",
+  "commands.neoessentials.transaction.admin_take_description": "Admin take",
+  "commands.neoessentials.transaction.admin_set_description": "Admin set",
+  "commands.neoessentials.transaction.pay_description": "Player pay command (Fee: {0})",
+  
+  "commands.neoessentials.economy.leaderboard_entry": "#{0}: {1} - {2}",
+  "commands.neoessentials.config.none": "none",
+  "commands.neoessentials.config.keep": "keep"
 }

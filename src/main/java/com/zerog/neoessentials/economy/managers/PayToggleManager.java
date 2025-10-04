@@ -3,7 +3,7 @@ package com.zerog.neoessentials.economy.managers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.zerog.neoessentials.config.EconomyConfig;
+import com.zerog.neoessentials.config.ConfigManager;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -37,7 +37,7 @@ public class PayToggleManager {
     private final Gson gson = new Gson();
     private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
     private volatile boolean saveQueued = false;
-    private EconomyConfig config;
+    private final ConfigManager configManager = ConfigManager.getInstance();
 
     private PayToggleManager() {
         // Don't initialize config in constructor to avoid circular dependency
@@ -46,18 +46,7 @@ public class PayToggleManager {
         saveExecutor.scheduleAtFixedRate(this::saveTogglesAtomic, 5, 5, TimeUnit.MINUTES);
     }
     
-    private EconomyConfig getConfig() {
-        if (config == null) {
-            try {
-                config = EconomyManager.getInstance().getConfig();
-            } catch (Exception e) {
-                LOGGER.warn("Could not get EconomyConfig, using default paytoggle value of true", e);
-                // Return a minimal config object or use hardcoded default
-                return null;
-            }
-        }
-        return config;
-    }
+
 
     private void loadToggles() {
         if (!togglesFile.getParentFile().exists()) togglesFile.getParentFile().mkdirs();
@@ -107,9 +96,8 @@ public class PayToggleManager {
     public boolean getPayToggle(UUID player) {
         Boolean cached = paytoggleCache.get(player);
         if (cached != null) return cached;
-        // Default to config value for new players, or true if config not available
-        EconomyConfig cfg = getConfig();
-        return cfg != null ? cfg.paytoggleDefault : true;
+        // Default to config value for new players
+        return configManager.getPayToggleDefault();
     }
 
     public void setPayToggle(UUID player, boolean enabled) {

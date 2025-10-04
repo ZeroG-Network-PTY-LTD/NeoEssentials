@@ -45,7 +45,7 @@ public class EnchantCommand {
                                 .keySet(), builder
                         );
                     })
-                    .then(Commands.argument("level", IntegerArgumentType.integer(1))
+                    .then(Commands.argument("level", IntegerArgumentType.integer(1, 32767))
                         .executes(ctx -> executeEnchant(ctx, EnchantMode.HAND_ONLY))
                     )
                     .executes(ctx -> executeEnchant(ctx, EnchantMode.HAND_ONLY)) // Default level 1
@@ -63,7 +63,7 @@ public class EnchantCommand {
                                     .keySet(), builder
                             );
                         })
-                        .then(Commands.argument("level", IntegerArgumentType.integer(1))
+                        .then(Commands.argument("level", IntegerArgumentType.integer(1, 32767))
                             .executes(ctx -> executeEnchant(ctx, EnchantMode.TARGET_HAND))
                         )
                         .executes(ctx -> executeEnchant(ctx, EnchantMode.TARGET_HAND)) // Default level 1
@@ -89,7 +89,7 @@ public class EnchantCommand {
                                 .keySet(), builder
                         );
                     })
-                    .then(Commands.argument("level", IntegerArgumentType.integer(1))
+                    .then(Commands.argument("level", IntegerArgumentType.integer(1, 32767))
                         .executes(ctx -> executeEnchant(ctx, EnchantMode.HAND_ONLY))
                     )
                     .executes(ctx -> executeEnchant(ctx, EnchantMode.HAND_ONLY)) // Default level 1
@@ -276,40 +276,40 @@ public class EnchantCommand {
             return false;
         }
 
-        // Copy existing enchantments or start new
-        ItemEnchantments ench = stack.get(DataComponents.ENCHANTMENTS);
-        Object2IntOpenHashMap<Holder<Enchantment>> enchMap = new Object2IntOpenHashMap<>();
-        if (ench != null) {
-            for (Object2IntMap.Entry<Holder<Enchantment>> entry : ench.entrySet()) {
-                enchMap.put(entry.getKey(), entry.getIntValue());
-            }
-        }
-
-        // Get the enchantment holder from registry
-        net.minecraft.core.Registry<Enchantment> registry = player.getServer()
-            .registryAccess()
-            .registryOrThrow(Registries.ENCHANTMENT);
-            
-        // Find the holder for this enchantment
-        Holder<Enchantment> holder = null;
-        for (var entry : registry.holders().toList()) {
-            if (entry.value().equals(enchantment)) {
-                holder = entry;
-                break;
-            }
-        }
-        
-        if (holder == null) return false;
-
-        // Apply / replace
-        enchMap.put(holder, level);
-
-        // Set updated enchantments using the most compatible constructor
         try {
-            ItemEnchantments updated = ItemEnchantments.class.getConstructor(Object2IntOpenHashMap.class, boolean.class)
-                .newInstance(enchMap, true);
-            stack.set(DataComponents.ENCHANTMENTS, updated);
+            // Get the enchantment holder from registry
+            net.minecraft.core.Registry<Enchantment> registry = player.getServer()
+                .registryAccess()
+                .registryOrThrow(Registries.ENCHANTMENT);
+                
+            // Find the holder for this enchantment
+            Holder<Enchantment> holder = null;
+            for (var entry : registry.holders().toList()) {
+                if (entry.value().equals(enchantment)) {
+                    holder = entry;
+                    break;
+                }
+            }
+            
+            if (holder == null) return false;
+
+            // Get existing enchantments and create a mutable copy
+            ItemEnchantments existing = stack.get(DataComponents.ENCHANTMENTS);
+            ItemEnchantments.Mutable builder;
+            
+            if (existing != null) {
+                builder = new ItemEnchantments.Mutable(existing);
+            } else {
+                builder = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+            }
+            
+            // Add/update the enchantment
+            builder.set(holder, level);
+            
+            // Apply to item
+            stack.set(DataComponents.ENCHANTMENTS, builder.toImmutable());
             return true;
+            
         } catch (Exception e) {
             e.printStackTrace();
             return false;

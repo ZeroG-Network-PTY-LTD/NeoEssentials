@@ -16,7 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PayCommand {
     private static final Map<UUID, Long> payCooldowns = new ConcurrentHashMap<>();
-    private static final long PAY_COOLDOWN_MS = 3000;
+    private static long getPayCooldownMs() {
+        return com.zerog.neoessentials.config.ConfigManager.getInstance().getPayCooldownSeconds() * 1000L;
+    }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
@@ -47,7 +49,8 @@ public class PayCommand {
         
         // Check cooldown
         long now = System.currentTimeMillis();
-        if (payCooldowns.containsKey(sender.getUUID()) && now - payCooldowns.get(sender.getUUID()) < PAY_COOLDOWN_MS) {
+        long cooldownMs = getPayCooldownMs();
+        if (payCooldowns.containsKey(sender.getUUID()) && now - payCooldowns.get(sender.getUUID()) < cooldownMs) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.cooldown"));
             return 0;
         }
@@ -123,14 +126,14 @@ public class PayCommand {
             "commands.neoessentials.pay.received_fee",
             sender.getGameProfile().getName(), netAmount, fee, currency
         ));
-        com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance().addTransaction(sender.getUUID(), "Paid " + targetName + " " + amount + " (Fee: " + fee + ")");
-        com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance().addTransaction(recipient.getUUID(), "Received " + netAmount + " from " + sender.getGameProfile().getName() + " (Fee: " + fee + ")");
+        com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance().addTransaction(sender.getUUID(), MessageUtil.localize("commands.neoessentials.transaction.paid", targetName, amount, fee));
+        com.zerog.neoessentials.economy.managers.TransactionHistoryManager.getInstance().addTransaction(recipient.getUUID(), MessageUtil.localize("commands.neoessentials.transaction.received", netAmount, sender.getGameProfile().getName(), fee));
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new com.zerog.neoessentials.economy.events.EconomyTransactionEvent(
             com.zerog.neoessentials.economy.events.EconomyTransactionEvent.Type.PAY,
             sender.getUUID(),
             recipient.getUUID(),
             netAmount,
-            "Player pay command (Fee: " + fee + ")"
+            MessageUtil.localize("commands.neoessentials.transaction.pay_description", fee)
         ));
         return 1;
     }

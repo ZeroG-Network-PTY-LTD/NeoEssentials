@@ -1,6 +1,7 @@
 
 package com.zerog.neoessentials.chat.command;
 import com.zerog.neoessentials.chat.ChatManager;
+import com.zerog.neoessentials.util.MessageUtil;
 
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
@@ -23,7 +24,7 @@ public class MuteListCommand {
                     return 0;
                 }
                 java.util.List<String> muted = new java.util.ArrayList<>(com.zerog.neoessentials.chat.MuteManager.getMutedPlayers());
-                String mutedList = muted.isEmpty() ? "<none>" : String.join(", ", muted);
+                String mutedList = muted.isEmpty() ? MessageUtil.localize("commands.neoessentials.mutelist.none") : String.join(", ", muted);
                 source.sendSuccess(() -> Component.translatable("neoessentials.mutelist.list", mutedList), false);
                 return 1;
             })

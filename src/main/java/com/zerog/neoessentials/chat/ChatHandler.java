@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.chat;
 
 import com.zerog.neoessentials.api.ChatAPI;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -33,7 +34,7 @@ public class ChatHandler {
             // Check if player is muted
             if (MuteManager.isMuted(player)) {
                 event.setCanceled(true);
-                player.sendSystemMessage(Component.literal("§cYou are currently muted and cannot send chat messages."));
+                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.chat.muted"));
                 return;
             }
             

@@ -4,25 +4,27 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import com.zerog.neoessentials.config.ConfigUtil;
+import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.PermissionValidator;
 
 public class RepairCommand {
     /**
      * Register the /repair and /fix commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigUtil.isCommandEnabled("repair")) return;
+        if (!ConfigManager.getInstance().isCommandEnabled("repair")) return;
         dispatcher.register(
             Commands.literal("repair")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
-                    ServerPlayer player = ctx.getSource().getPlayer();
-                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.repair")) {
-                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                    PermissionValidator.PermissionResult permResult = 
+                        PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.repair");
+                    if (!permResult.hasPermission()) {
+                        ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
-                    repairItem(player);
+                    repairItem(permResult.getPlayer());
                     ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.repair.success"), false);
                     return 1;
                 })
@@ -31,12 +33,13 @@ public class RepairCommand {
             Commands.literal("fix")
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
-                    ServerPlayer player = ctx.getSource().getPlayer();
-                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.repair")) {
-                        ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                    PermissionValidator.PermissionResult permResult = 
+                        PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.item.repair");
+                    if (!permResult.hasPermission()) {
+                        ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
-                    repairItem(player);
+                    repairItem(permResult.getPlayer());
                     ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.repair.success"), false);
                     return 1;
                 })

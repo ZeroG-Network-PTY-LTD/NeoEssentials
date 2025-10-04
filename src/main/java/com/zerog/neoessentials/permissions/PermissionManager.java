@@ -10,7 +10,7 @@ public class PermissionManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionManager.class);
     private final Map<String, PermissionGroup> groups = new ConcurrentHashMap<>();
     private final Map<UUID, PermissionUser> users = new ConcurrentHashMap<>();
-    private String defaultGroup = "default";
+    private String defaultGroup; // Will be loaded from config
     
     // Permission caching
     private final Map<String, CachedPermission> permissionCache = new ConcurrentHashMap<>();
@@ -31,6 +31,7 @@ public class PermissionManager {
     }
 
     public PermissionManager() {
+        this.defaultGroup = com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultGroup();
     }
 
     /**
