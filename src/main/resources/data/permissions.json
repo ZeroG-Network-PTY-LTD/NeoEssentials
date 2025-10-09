@@ -15,7 +15,8 @@
         "neoessentials.items.powertool",
         "neoessentials.chat.msg",
         "neoessentials.chat.reply",
-        "neoessentials.utils.afk"
+        "neoessentials.utils.afk",
+        "neoessentials.kits.use"
       ],
       "inherits": []
     },
@@ -28,7 +29,10 @@
         "neoessentials.items.*",
         "neoessentials.chat.*",
         "neoessentials.utils.*",
-        "neoessentials.permissions.reload"
+        "neoessentials.permissions.reload",
+        "neoessentials.kits.create",
+        "neoessentials.kits.delete",
+        "neoessentials.kits.list"
       ],
       "inherits": ["default"]
     },

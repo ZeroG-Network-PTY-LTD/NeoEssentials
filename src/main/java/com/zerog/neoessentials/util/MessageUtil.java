@@ -24,6 +24,10 @@ public class MessageUtil {
     private static final Map<String, String> translations = new HashMap<>();
     private static boolean loaded = false;
     private static boolean debugMode = true; // Enable for debugging
+    
+    // Language version tracking - increment when translations change
+    private static final String LANG_VERSION_KEY = "_langVersion";
+    private static final int CURRENT_LANG_VERSION = 1;
 
     /**
      * Load translations from server directory, updating from JAR if needed
@@ -54,12 +58,23 @@ public class MessageUtil {
         } else {
             // Load existing server file and compare
             Map<String, String> serverTranslations = loadServerTranslations(serverLangFile);
-            if (serverTranslations == null || serverTranslations.size() != jarTranslations.size()) {
-                LOGGER.info("Server file has {} keys, JAR has {} keys - updating server file", 
-                    serverTranslations != null ? serverTranslations.size() : 0, jarTranslations.size());
+            if (serverTranslations == null) {
+                LOGGER.info("Failed to load server language file, will recreate from JAR");
                 needsUpdate = true;
             } else {
-                LOGGER.info("Server language file is up to date ({} keys)", serverTranslations.size());
+                // Check version first
+                int serverVersion = getLanguageVersion(serverTranslations);
+                int jarVersion = getLanguageVersion(jarTranslations);
+                
+                if (serverVersion < jarVersion) {
+                    LOGGER.info("Language version outdated: server={}, JAR={} - updating", serverVersion, jarVersion);
+                    needsUpdate = true;
+                } else if (serverTranslations.size() != jarTranslations.size()) {
+                    LOGGER.info("Key count mismatch: server={}, JAR={} - updating", serverTranslations.size(), jarTranslations.size());
+                    needsUpdate = true;
+                } else {
+                    LOGGER.info("Server language file is up to date (version={}, {} keys)", serverVersion, serverTranslations.size());
+                }
             }
         }
         
@@ -123,11 +138,15 @@ public class MessageUtil {
             // Ensure parent directory exists
             serverFile.getParentFile().mkdirs();
             
-            // Write JAR translations to server file
+            // Create a copy with version key added
+            Map<String, String> translationsWithVersion = new HashMap<>(jarTranslations);
+            translationsWithVersion.put(LANG_VERSION_KEY, String.valueOf(CURRENT_LANG_VERSION));
+            
+            // Write translations to server file
             try (java.io.FileWriter writer = new java.io.FileWriter(serverFile)) {
                 Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
-                gson.toJson(jarTranslations, writer);
-                LOGGER.info("Updated server language file with {} keys", jarTranslations.size());
+                gson.toJson(translationsWithVersion, writer);
+                LOGGER.info("Updated server language file with {} keys (version {})", translationsWithVersion.size(), CURRENT_LANG_VERSION);
             }
         } catch (Exception e) {
             LOGGER.error("Failed to update server language file: {}", e.getMessage(), e);
@@ -146,9 +165,15 @@ public class MessageUtil {
         }
         
         try {
-            return MessageFormat.format(template.replace("%s", "{0}"), args);
+            String result = MessageFormat.format(template.replace("%s", "{0}"), args);
+            if (debugMode) {
+                LOGGER.info("MessageFormat success - Key: {}, Template: '{}', Args: {}, Result: '{}'", 
+                    key, template, java.util.Arrays.toString(args), result);
+            }
+            return result;
         } catch (Exception e) {
-            LOGGER.warn("Failed to format message '{}' with args: {}", template, java.util.Arrays.toString(args));
+            LOGGER.error("Failed to format message - Key: {}, Template: '{}', Args: {}, Error: {}", 
+                key, template, java.util.Arrays.toString(args), e.getMessage(), e);
             return template;
         }
     }
@@ -284,5 +309,20 @@ public class MessageUtil {
      */
     public static Component progressBar(double current, double max, int width) {
         return ChatComponentUtil.createProgressBar(current, max, width);
+    }
+    
+    /**
+     * Get the version of a language file from its translations map
+     */
+    private static int getLanguageVersion(Map<String, String> translations) {
+        if (translations == null || !translations.containsKey(LANG_VERSION_KEY)) {
+            return 0; // Default version for files without version key
+        }
+        try {
+            return Integer.parseInt(translations.get(LANG_VERSION_KEY));
+        } catch (NumberFormatException e) {
+            LOGGER.warn("Invalid language version format, defaulting to 0");
+            return 0;
+        }
     }
 }
