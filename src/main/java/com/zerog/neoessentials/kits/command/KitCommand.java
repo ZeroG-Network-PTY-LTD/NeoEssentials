@@ -127,7 +127,7 @@ public class KitCommand {
             var giveResult = kitManager.giveKit(player, kitName);
             if (giveResult.isAllowed()) {
                 source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.kit.given", 
-                    kit.getDisplayName(), giveResult.getMessage()), false);
+                    kit.getDisplayName()), false);
                 LOGGER.info("Player {} used kit '{}'", player.getName().getString(), kitName);
                 return 1;
             } else {
