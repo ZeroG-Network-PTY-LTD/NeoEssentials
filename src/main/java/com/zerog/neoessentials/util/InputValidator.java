@@ -105,15 +105,20 @@ public class InputValidator {
             trimmed = trimmed.substring(1);
         }
         
-        // Basic safety check - prevent dangerous commands
-        String lowerCommand = trimmed.toLowerCase();
-        if (containsDangerousCommand(lowerCommand)) {
-            return ValidationResult.failure("Command contains potentially dangerous operations");
-        }
+        // Check if unsafe commands are allowed via configuration
+        boolean allowUnsafeCommands = com.zerog.neoessentials.config.ConfigManager.getInstance().isUnsafeCommandsAllowed();
         
-        // Check for basic command structure
-        if (!SAFE_COMMAND.matcher(trimmed).matches()) {
-            return ValidationResult.failure("Command contains unsafe characters");
+        // Only perform dangerous command checks if unsafe commands are not allowed
+        if (!allowUnsafeCommands) {
+            String lowerCommand = trimmed.toLowerCase();
+            if (containsDangerousCommand(lowerCommand)) {
+                return ValidationResult.failure("Command contains potentially dangerous operations. Enable 'allowUnsafeCommands' in config to use this command.");
+            }
+            
+            // Check for basic command structure (only when safety is enforced)
+            if (!SAFE_COMMAND.matcher(trimmed).matches()) {
+                return ValidationResult.failure("Command contains unsafe characters. Enable 'allowUnsafeCommands' in config to use special characters.");
+            }
         }
         
         return ValidationResult.success(trimmed);

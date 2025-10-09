@@ -1,15 +1,17 @@
 package com.zerog.neoessentials.chat;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
-import java.util.HashSet;
+import com.zerog.neoessentials.util.MessageUtil;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages SocialSpy feature for moderators/admins.
+ * Thread-safe implementation with permission checking.
  */
 public class SocialSpyManager {
-    private static final Set<String> socialSpyPlayers = new HashSet<>();
+    // Thread-safe Set for concurrent access
+    private static final Set<String> socialSpyPlayers = ConcurrentHashMap.newKeySet();
 
     public static void toggleSocialSpy(ServerPlayer player) {
         String name = player.getName().getString().toLowerCase();
@@ -25,11 +27,22 @@ public class SocialSpyManager {
     }
 
     public static void broadcast(ServerPlayer sender, ServerPlayer target, String message) {
+        // Check if sender is exempt from socialspy monitoring
+        if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.socialspy.exempt")) {
+            return; // Don't broadcast messages from exempt players
+        }
+        
         // Broadcasts the private message to all players with SocialSpy enabled
-        for (ServerPlayer player : sender.server.getPlayerList().getPlayers()) {
+        for (ServerPlayer player : sender.getServer().getPlayerList().getPlayers()) {
             if (hasSocialSpy(player) && !player.equals(sender) && !player.equals(target)) {
-                player.sendSystemMessage(Component.translatable(
-                    "neoessentials.socialspy.format", sender.getName(), target.getName(), message));
+                // Verify the player still has socialspy permission
+                if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.chat.socialspy")) {
+                    player.sendSystemMessage(MessageUtil.component(
+                        "neoessentials.socialspy.format", sender.getName().getString(), target.getName().getString(), message));
+                } else {
+                    // Remove socialspy if they no longer have permission
+                    socialSpyPlayers.remove(player.getName().getString().toLowerCase());
+                }
             }
         }
     }

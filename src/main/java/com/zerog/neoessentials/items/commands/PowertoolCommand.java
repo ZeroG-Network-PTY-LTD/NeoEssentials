@@ -2,12 +2,15 @@
 package com.zerog.neoessentials.items.commands;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
+
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 
@@ -35,6 +38,12 @@ public class PowertoolCommand {
                         ServerPlayer player = permResult.getPlayer();
                         String cmd = StringArgumentType.getString(ctx, "command");
                         
+                        // Check if this is a @p targeting command
+                        if (cmd.startsWith("@p ")) {
+                            return executeTargetCommand(ctx.getSource(), player, cmd.substring(3));
+                        }
+                        
+                        // Original powertool functionality
                         // Validate command
                         com.zerog.neoessentials.util.InputValidator.ValidationResult cmdValidation = 
                             com.zerog.neoessentials.util.InputValidator.validateCommand(cmd);
@@ -66,6 +75,12 @@ public class PowertoolCommand {
                         ServerPlayer player = permResult.getPlayer();
                         String cmd = StringArgumentType.getString(ctx, "command");
                         
+                        // Check if this is a @p targeting command
+                        if (cmd.startsWith("@p ")) {
+                            return executeTargetCommand(ctx.getSource(), player, cmd.substring(3));
+                        }
+                        
+                        // Original powertool functionality
                         // Validate command
                         com.zerog.neoessentials.util.InputValidator.ValidationResult cmdValidation = 
                             com.zerog.neoessentials.util.InputValidator.validateCommand(cmd);
@@ -116,6 +131,71 @@ public class PowertoolCommand {
             if (playerPowers.isEmpty()) {
                 POWERS.remove(playerUUID);
             }
+        }
+    }
+
+    /**
+     * Execute a command targeting other players with @p selector (excluding the executor).
+     */
+    private static int executeTargetCommand(CommandSourceStack source, ServerPlayer executor, String command) {
+        // Validate permission for targeting
+        com.zerog.neoessentials.util.PermissionValidator.PermissionResult permResult = 
+            com.zerog.neoessentials.util.PermissionValidator.validatePermission(source, "neoessentials.command.target");
+        if (!permResult.hasPermission()) {
+            source.sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+            return 0;
+        }
+
+        // Validate command
+        com.zerog.neoessentials.util.InputValidator.ValidationResult cmdValidation = 
+            com.zerog.neoessentials.util.InputValidator.validateCommand(command);
+        if (!cmdValidation.isValid()) {
+            source.sendFailure(MessageUtil.error(cmdValidation.getErrorMessage()));
+            return 0;
+        }
+
+        String validCommand = cmdValidation.getValue(String.class);
+
+        // Get all online players excluding the executor
+        List<ServerPlayer> targets = new ArrayList<>();
+        for (ServerPlayer player : source.getServer().getPlayerList().getPlayers()) {
+            if (!player.getUUID().equals(executor.getUUID())) {
+                targets.add(player);
+            }
+        }
+
+        if (targets.isEmpty()) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.pt.target.no_targets"));
+            return 0;
+        }
+
+        // Execute command for each target
+        final int[] successCount = {0};
+        for (ServerPlayer target : targets) {
+            try {
+                // Create command with target's name substituted
+                String targetCommand = validCommand.replace("{player}", target.getName().getString());
+                
+                // Execute the command as the server
+                source.getServer().getCommands().performPrefixedCommand(
+                    source.getServer().createCommandSourceStack(),
+                    targetCommand
+                );
+                successCount[0]++;
+            } catch (Exception e) {
+                // Log error but continue with other targets
+                System.err.println("Failed to execute target command '" + validCommand + "' for player " + 
+                    target.getName().getString() + ": " + e.getMessage());
+            }
+        }
+
+        if (successCount[0] > 0) {
+            source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.pt.target.success", 
+                successCount[0], targets.size()), false);
+            return 1;
+        } else {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.pt.target.failed"));
+            return 0;
         }
     }
 }

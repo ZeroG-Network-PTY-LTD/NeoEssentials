@@ -1,4 +1,6 @@
 {
+  "_configVersion": 1,
+  "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "groups": [
     {
       "name": "default",

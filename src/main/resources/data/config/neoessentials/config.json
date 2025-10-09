@@ -1,4 +1,6 @@
 {
+  "_configVersion": 3,
+  "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
     "commandsEnabled": true,
@@ -102,6 +104,31 @@
     "autoSave": true,
     "saveInterval": 60,
     "persistData": true
+  },
+  "chat": {
+    "chat-format": "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
+    "chat-format-description": "Chat format template. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {MESSAGE}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, {neoessentials_x}, {neoessentials_y}, {neoessentials_z}, {neoessentials_health}, {neoessentials_level}, and more via PlaceholderAPI",
+    "enable-chat-formatting": true,
+    "enable-color-codes": true,
+    "muteCommands": [],
+    "playerChatPermissions": [],
+    "sleepIgnoresAfkPlayers": true,
+    "sleepIgnoresVanishedPlayers": true,
+    "afkListName": "none",
+    "broadcastAfkMessage": true,
+    "deathMessages": true,
+    "vanishingItemsPolicy": "keep",
+    "bindingItemsPolicy": "keep",
+    "sendInfoAfterDeath": true,
+    "allowSilentJoinQuit": false,
+    "customJoinMessage_comment": "Custom join message template. Use 'none' for default. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, and more via PlaceholderAPI. Example: '&a{neoessentials_prefix}&f{neoessentials_displayname} &ejoined the server!'",
+    "customJoinMessage": "none",
+    "customQuitMessage_comment": "Custom quit message template. Use 'none' for default. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, and more via PlaceholderAPI. Example: '&c{neoessentials_prefix}&f{neoessentials_displayname} &eleft the server!'",
+    "customQuitMessage": "none",
+    "customNewUsernameMessage_comment": "Custom message for player name changes. Use 'none' for default. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {neoessentials_prefix}, {neoessentials_suffix}, and more via PlaceholderAPI. Example: '&6{neoessentials_prefix}&f{neoessentials_displayname} &echanged their name!'",
+    "customNewUsernameMessage": "none",
+    "useCustomServerFullMessage": false,
+    "hideJoinQuitMessagesAbove": -1
   },
   "logging": {
     "enableTransactionLogging": true,

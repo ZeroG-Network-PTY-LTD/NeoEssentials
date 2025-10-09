@@ -2,6 +2,7 @@ package com.zerog.neoessentials.items.handlers;
 
 import com.zerog.neoessentials.items.commands.PowertoolCommand;
 import com.zerog.neoessentials.items.commands.PowertoolToggleCommand;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -66,7 +67,7 @@ public class ItemInteractionHandler {
                 LOGGER.debug("Executed powertool command '{}' for player {}", command, player.getName().getString());
             } catch (Exception e) {
                 LOGGER.error("Failed to execute powertool command '{}' for player {}", command, player.getName().getString(), e);
-                player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("commands.neoessentials.powertool.execution_failed"));
+                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.powertool.execution_failed"));
             }
 
         } catch (Exception e) {

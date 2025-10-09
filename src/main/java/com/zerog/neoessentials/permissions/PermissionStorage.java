@@ -13,6 +13,7 @@ public class PermissionStorage {
     public static void save(PermissionManager manager) throws IOException {
         // Save groups to permissions.json (atomic operation)
         Map<String, Object> groupData = new HashMap<>();
+        groupData.put("defaultGroup", manager.getDefaultGroup());
         List<Object> groups = new ArrayList<>();
         for (PermissionGroup group : manager.getGroups()) {
             Map<String, Object> g = new HashMap<>();
@@ -59,6 +60,12 @@ public class PermissionStorage {
         if (Files.exists(FILE_PATH)) {
             try (Reader reader = Files.newBufferedReader(FILE_PATH)) {
                 JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+                
+                // Load default group setting
+                if (root.has("defaultGroup")) {
+                    manager.setDefaultGroup(root.get("defaultGroup").getAsString());
+                }
+                
                 JsonArray groups = root.getAsJsonArray("groups");
                 for (JsonElement ge : groups) {
                     JsonObject g = ge.getAsJsonObject();

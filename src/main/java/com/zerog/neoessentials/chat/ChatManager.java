@@ -67,7 +67,7 @@ public class ChatManager {
         this.customNewUsernameMessage = chatConfig.has("customNewUsernameMessage") ? chatConfig.get("customNewUsernameMessage").getAsString() : "none";
         this.useCustomServerFullMessage = chatConfig.has("useCustomServerFullMessage") && chatConfig.get("useCustomServerFullMessage").getAsBoolean();
         this.hideJoinQuitMessagesAbove = chatConfig.has("hideJoinQuitMessagesAbove") ? chatConfig.get("hideJoinQuitMessagesAbove").getAsInt() : -1;
-        this.chatFormat = chatConfig.has("chat-format") ? chatConfig.get("chat-format").getAsString() : "{DISPLAYNAME}: {MESSAGE}";
+        this.chatFormat = chatConfig.has("chat-format") ? chatConfig.get("chat-format").getAsString() : "{neoessentials_displayname}: {MESSAGE}";
         this.commandsConfig = commandsConfig;
     }
 

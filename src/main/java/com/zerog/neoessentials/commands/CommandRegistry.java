@@ -1,5 +1,7 @@
 package com.zerog.neoessentials.commands;
 
+import com.mojang.brigadier.CommandDispatcher;
+import net.minecraft.commands.CommandSourceStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,6 +102,31 @@ public class CommandRegistry {
     public boolean isCommandRegistered(String name) {
         String key = name.toLowerCase();
         return commands.containsKey(key) || aliases.containsKey(key);
+    }
+    
+    /**
+     * Validate that a command actually exists in the server's command dispatcher.
+     * This ensures registry consistency with Brigadier.
+     * @param name Command name to validate
+     * @param dispatcher The server's command dispatcher
+     * @return true if command exists in both registry and dispatcher
+     */
+    public boolean isCommandActuallyRegistered(String name, CommandDispatcher<CommandSourceStack> dispatcher) {
+        String key = name.toLowerCase();
+        
+        // First check our registry
+        if (!isCommandRegistered(key)) {
+            return false;
+        }
+        
+        // Then verify it exists in the actual Brigadier dispatcher
+        try {
+            var parseResults = dispatcher.parse("/" + key, null);
+            return parseResults.getContext().getCommand() != null;
+        } catch (Exception e) {
+            LOGGER.debug("Command '{}' not found in dispatcher: {}", key, e.getMessage());
+            return false;
+        }
     }
     
     /**

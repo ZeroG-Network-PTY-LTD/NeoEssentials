@@ -2,6 +2,7 @@ package com.zerog.neoessentials.chat;
 
 import com.zerog.neoessentials.api.ChatAPI;
 import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.util.ChatDebugUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -32,7 +33,10 @@ public class ChatHandler {
             String rawMessage = event.getRawText();
             
             // Check if player is muted
-            if (MuteManager.isMuted(player)) {
+            String playerName = player.getName().getString();
+            boolean isMuted = MuteManager.isMuted(player);
+            ChatDebugUtil.debug("ChatHandler - Checking mute for %s, result: %s", playerName, isMuted);
+            if (isMuted) {
                 event.setCanceled(true);
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.chat.muted"));
                 return;
@@ -49,8 +53,8 @@ public class ChatHandler {
             String chatFormat = chatManager.getChatFormat();
             
             // Only apply custom formatting if a custom format is configured
-            // Default format is "{DISPLAYNAME}: {MESSAGE}" which is essentially vanilla
-            if (chatFormat != null && !chatFormat.equals("{DISPLAYNAME}: {MESSAGE}")) {
+            // Default format is "{neoessentials_displayname}: {MESSAGE}" which is essentially vanilla
+            if (chatFormat != null && !chatFormat.equals("{neoessentials_displayname}: {MESSAGE}")) {
                 // Cancel the original event to apply custom formatting
                 event.setCanceled(true);
                 

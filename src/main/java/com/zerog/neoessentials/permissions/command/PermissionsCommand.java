@@ -53,7 +53,7 @@ public class PermissionsCommand {
                         .then(Commands.argument("suffix", StringArgumentType.greedyString())
                             .executes(ctx -> setSuffix(ctx))))
                     .then(Commands.literal("add")
-                        .then(Commands.argument("permission", StringArgumentType.word())
+                        .then(Commands.argument("permission", StringArgumentType.greedyString())
                             .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                                 java.util.Arrays.asList(
                                     "neoessentials.*",
@@ -61,13 +61,19 @@ public class PermissionsCommand {
                                     "neoessentials.economy.*",
                                     "neoessentials.chat.*",
                                     "neoessentials.admin.*",
-                                    "neoessentials.teleport.*"
+                                    "neoessentials.teleport.*",
+                                    "neoessentials.admin.permissions",
+                                    "neoessentials.economy.balance",
+                                    "neoessentials.economy.pay", 
+                                    "neoessentials.chat.mute",
+                                    "neoessentials.item.repair",
+                                    "neoessentials.use"
                                 ),
                                 builder
                             ))
                             .executes(ctx -> addGroupPermission(ctx))))
                     .then(Commands.literal("remove")
-                        .then(Commands.argument("permission", StringArgumentType.word())
+                        .then(Commands.argument("permission", StringArgumentType.greedyString())
                             .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                                 java.util.Arrays.asList(
                                     "neoessentials.*",
@@ -75,7 +81,13 @@ public class PermissionsCommand {
                                     "neoessentials.economy.*",
                                     "neoessentials.chat.*",
                                     "neoessentials.admin.*",
-                                    "neoessentials.teleport.*"
+                                    "neoessentials.teleport.*",
+                                    "neoessentials.admin.permissions",
+                                    "neoessentials.economy.balance",
+                                    "neoessentials.economy.pay", 
+                                    "neoessentials.chat.mute",
+                                    "neoessentials.item.repair",
+                                    "neoessentials.use"
                                 ),
                                 builder
                             ))
@@ -96,7 +108,7 @@ public class PermissionsCommand {
                             ))
                             .executes(ctx -> setUserGroup(ctx))))
                     .then(Commands.literal("add")
-                        .then(Commands.argument("permission", StringArgumentType.word())
+                        .then(Commands.argument("permission", StringArgumentType.greedyString())
                             .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                                 java.util.Arrays.asList(
                                     "neoessentials.*",
@@ -104,13 +116,19 @@ public class PermissionsCommand {
                                     "neoessentials.economy.*",
                                     "neoessentials.chat.*",
                                     "neoessentials.admin.*",
-                                    "neoessentials.teleport.*"
+                                    "neoessentials.teleport.*",
+                                    "neoessentials.admin.permissions",
+                                    "neoessentials.economy.balance",
+                                    "neoessentials.economy.pay", 
+                                    "neoessentials.chat.mute",
+                                    "neoessentials.item.repair",
+                                    "neoessentials.use"
                                 ),
                                 builder
                             ))
                             .executes(ctx -> addUserPermission(ctx))))
                     .then(Commands.literal("remove")
-                        .then(Commands.argument("permission", StringArgumentType.word())
+                        .then(Commands.argument("permission", StringArgumentType.greedyString())
                             .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                                 java.util.Arrays.asList(
                                     "neoessentials.*",
@@ -118,7 +136,13 @@ public class PermissionsCommand {
                                     "neoessentials.economy.*",
                                     "neoessentials.chat.*",
                                     "neoessentials.admin.*",
-                                    "neoessentials.teleport.*"
+                                    "neoessentials.teleport.*",
+                                    "neoessentials.admin.permissions",
+                                    "neoessentials.economy.balance",
+                                    "neoessentials.economy.pay", 
+                                    "neoessentials.chat.mute",
+                                    "neoessentials.item.repair",
+                                    "neoessentials.use"
                                 ),
                                 builder
                             ))
@@ -202,13 +226,34 @@ public class PermissionsCommand {
         
         String groupName = StringArgumentType.getString(ctx, "group");
         String perm = StringArgumentType.getString(ctx, "permission");
+        
+        // Validate permission format
+        if (!PermissionManager.isValidPermission(perm)) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.invalid_permission", perm));
+            return 0;
+        }
+        
         PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
         if (group == null) {
             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
             return 0;
         }
+        
+        // Check if permission already exists
+        if (group.getPermissions().contains(perm)) {
+            ctx.getSource().sendFailure(MessageUtil.warning("commands.neoessentials.permissions.permission_already_exists", perm, groupName));
+            return 0;
+        }
+        
         group.addPermission(perm);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after adding group permission", e); }
+        try { 
+            PermissionStorage.save(PermissionAPI.getManager()); 
+            LOGGER.info("Added permission '{}' to group '{}'", perm, groupName);
+        } catch (Exception e) { 
+            LOGGER.error("Failed to save permissions after adding group permission", e);
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
+            return 0;
+        }
         ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_added", perm, groupName), false);
         return 1;
     }
@@ -288,6 +333,12 @@ public class PermissionsCommand {
         String perm = StringArgumentType.getString(ctx, "permission");
         MinecraftServer server = ctx.getSource().getServer();
         
+        // Validate permission format
+        if (!PermissionManager.isValidPermission(perm)) {
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.invalid_permission", perm));
+            return 0;
+        }
+        
         // Try to get UUID by player name
         Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
         if (uuidOpt.isEmpty()) {
@@ -298,12 +349,27 @@ public class PermissionsCommand {
         UUID uuid = uuidOpt.get();
         PermissionUser user = PermissionAPI.getManager().getUser(uuid);
         if (user == null) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.user_not_found"));
+            // Create user if doesn't exist with default group
+            String defaultGroup = PermissionAPI.getManager().getDefaultGroup();
+            user = new PermissionUser(uuid, defaultGroup);
+            PermissionAPI.getManager().addUser(user);
+        }
+        
+        // Check if permission already exists
+        if (user.getPermissions().contains(perm)) {
+            ctx.getSource().sendFailure(MessageUtil.warning("commands.neoessentials.permissions.permission_already_exists_for_user", perm, playerName));
             return 0;
         }
         
         user.addPermission(perm);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after adding user permission", e); }
+        try { 
+            PermissionStorage.save(PermissionAPI.getManager()); 
+            LOGGER.info("Added permission '{}' to user '{}'", perm, playerName);
+        } catch (Exception e) { 
+            LOGGER.error("Failed to save permissions after adding user permission", e);
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
+            return 0;
+        }
         ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_added_to_user", perm, playerName), false);
         return 1;
     }

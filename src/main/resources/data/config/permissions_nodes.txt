@@ -42,11 +42,15 @@ neoessentials.item.powertool.unsafe - Allow potentially unsafe commands in power
 neoessentials.item.powertool.toggle - Toggle powertool functionality per player
 neoessentials.item.powertool.admin - Manage powertools for other players
 
+## Command Targeting Permissions
+neoessentials.command.target - Use @p targeting to execute commands on other players
+
 ## Chat & Communication Permissions
 neoessentials.chat.msg - Send private messages with content filtering
 neoessentials.chat.msg.unlimited - Bypass message cooldowns and limits
 neoessentials.chat.msg.color - Use color codes in private messages
 neoessentials.chat.msgtoggle - Toggle receiving private messages
+neoessentials.chat.msgtoggle.bypass - Bypass msgtoggle restrictions to message players who have toggled off messages
 neoessentials.chat.socialspy - Monitor private messages (admin feature)
 neoessentials.chat.socialspy.exempt - Exempt from social spy monitoring
 neoessentials.chat.ignore - Ignore messages from other players
@@ -58,6 +62,15 @@ neoessentials.chat.mute.permanent - Apply permanent mutes
 neoessentials.chat.mute.override - Override mute restrictions and exemptions
 neoessentials.chat.reply - Reply to last received private message
 neoessentials.chat.broadcast - Send server-wide broadcast messages
+
+## Item Enchantment Extended Permissions
+neoessentials.item.enchant.others - Enchant items for other players
+neoessentials.item.enchant.unsafe - Allow unsafe enchantment levels beyond normal limits
+neoessentials.item.enchant.any - Enchant any item regardless of compatibility restrictions
+
+## Chat System Exemption Permissions  
+neoessentials.chat.socialspy.exempt - Exempt from social spy monitoring (messages won't be logged)
+neoessentials.chat.ignore.exempt - Cannot be ignored by other players (bypass ignore lists)
 
 ## Permission System Permissions
 neoessentials.permissions.reload - Hot-reload permission system without restart

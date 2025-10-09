@@ -1,4 +1,4 @@
-package com.zerog.neoessentials.utils;
+package com.zerog.neoessentials.util;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;

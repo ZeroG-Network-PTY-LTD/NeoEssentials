@@ -6,13 +6,13 @@ import java.util.UUID;
 public class EconomyPermissions {
     // Permission nodes (keep in sync with nodes.txt)
     /** Allows viewing your own balance (balance, bal) */
-    public static final String VIEW_BALANCE = "neoessentials.economy.view_balance";
+    public static final String VIEW_BALANCE = "neoessentials.economy.balance";
     /** Allows paying another player (pay) */
     public static final String PAY = "neoessentials.economy.pay";
     /** Allows use of all /eco admin commands (give, take, set, view others' balance/history) */
-    public static final String ADMIN = "neoessentials.economy.admin";
+    public static final String ADMIN = "neoessentials.economy.eco";
     /** Allows viewing the balance leaderboard (baltop) */
-    public static final String LEADERBOARD = "neoessentials.economy.leaderboard";
+    public static final String LEADERBOARD = "neoessentials.economy.baltop";
 
     // Check if a player can view their balance
     public static boolean canViewBalance(UUID uuid) {

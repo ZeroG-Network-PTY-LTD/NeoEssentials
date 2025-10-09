@@ -1,4 +1,4 @@
-package com.zerog.neoessentials.utils.commands;
+package com.zerog.neoessentials.util.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -42,13 +42,6 @@ public class AfkCommand {
                     
                     // Toggle AFK with custom message
                     AfkManager.getInstance().toggleAfk(player, message);
-                    
-                    boolean isNowAfk = AfkManager.getInstance().isAfk(player);
-                    if (isNowAfk) {
-                        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.afk.enabled"), false);
-                    } else {
-                        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.afk.disabled_self"), false);
-                    }
                     return 1;
                 })
             )
@@ -72,13 +65,6 @@ public class AfkCommand {
                 
                 // Toggle AFK without message
                 AfkManager.getInstance().toggleAfk(player, null);
-                
-                boolean isNowAfk = AfkManager.getInstance().isAfk(player);
-                if (isNowAfk) {
-                    ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.afk.enabled"), false);
-                } else {
-                    ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.afk.disabled_self"), false);
-                }
                 return 1;
             })
         );

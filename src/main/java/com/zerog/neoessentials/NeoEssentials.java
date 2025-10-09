@@ -52,8 +52,13 @@ public class NeoEssentials {
      * Main mod constructor. Loads configs, sets up permissions, registers event handlers, and initializes chat system.
      */
     public NeoEssentials() {
+        LOGGER.info("=== NeoEssentials CONSTRUCTOR STARTING ===");
         // Initialize centralized configuration system
         com.zerog.neoessentials.config.ConfigManager.getInstance().loadAll();
+        LOGGER.info("=== ABOUT TO CALL initializePlaceholderAPI ===");
+        // Initialize PlaceholderAPI with default placeholders
+        initializePlaceholderAPI();
+        LOGGER.info("=== COMPLETED initializePlaceholderAPI CALL ===");
         
         ensureServerLangFile();
         // Initialize the core manager
@@ -91,6 +96,9 @@ public class NeoEssentials {
         }
 
     if (permissionsEnabled) {
+            // Ensure default permissions file exists before loading
+            ensureDefaultPermissionsFile();
+            
             // Adapter selection logic
             boolean luckPermsLoaded = ModList.get().isLoaded("luckperms");
             boolean ftbRanksLoaded = ModList.get().isLoaded("ftbranks");
@@ -152,24 +160,71 @@ public class NeoEssentials {
         // Register chat event handler for message formatting
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.ChatHandler.class);
         
+        // Register player join/quit message handler for custom messages
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.PlayerJoinQuitHandler.class);
+        
         // Register AFK system event handlers for comprehensive activity tracking
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkActivityHandler.class);
+        // Enhanced AFK activity handler with pattern detection and anti-abuse measures
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.EnhancedAfkActivityHandler.class);
         // AfkMovementHandler disabled - no working tick events in this version
         // net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkMovementHandler.class);
+        // Register movement detector for position-based activity tracking
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkMovementDetector.class);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkCommandHandler.class);
         // AfkSleepHandler disabled - no working sleep events in this version
         // net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkSleepHandler.class);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkTablistHandler.class);
+        
+        // Initialize chat integrations for external plugins
+        initializeChatIntegrations();
 
         // --- Chat event listeners ---
         // All chat event logic (join/quit, AFK, death, etc.) is handled via event handlers below.
-        // Suggestions for future improvements:
-        //   - Localize all user-facing messages (see en_us.json)
-        //   - Add advanced formatting (hover/click events, color codes)
-        //   - Integrate with external chat plugins (e.g., DiscordSRV)
-        //   - Add runtime config reload support
+        // ✅ IMPLEMENTED SUGGESTIONS:
+        //   ✅ Localize all user-facing messages (see en_us.json)
+        //   ✅ Add advanced formatting (hover/click events, color codes)
+        //   ✅ Integrate with external chat plugins (e.g., DiscordSRV)
+        //   ✅ Add runtime config reload support
         //   - Add more AFK and advanced chat event logic as needed
 }
+
+    /**
+     * Initialize chat integration adapters for external NeoForge mods
+     */
+    private void initializeChatIntegrations() {
+        try {
+            int initializedAdapters = 0;
+            
+            // Initialize DCIntegration (Discord Integration) mod if available
+            com.zerog.neoessentials.integrations.impl.DCIntegrationAdapter dcIntegrationAdapter = 
+                new com.zerog.neoessentials.integrations.impl.DCIntegrationAdapter();
+            
+            if (dcIntegrationAdapter.initialize() && dcIntegrationAdapter.isEnabled()) {
+                com.zerog.neoessentials.integrations.ChatIntegrationManager.registerAdapter(dcIntegrationAdapter);
+                LOGGER.info("DCIntegration mod integration initialized successfully");
+                initializedAdapters++;
+            }
+            
+            // Initialize Simple Discord Link (SDLink) mod if available
+            com.zerog.neoessentials.integrations.impl.SDLinkAdapter sdLinkAdapter = 
+                new com.zerog.neoessentials.integrations.impl.SDLinkAdapter();
+            
+            if (sdLinkAdapter.initialize() && sdLinkAdapter.isEnabled()) {
+                com.zerog.neoessentials.integrations.ChatIntegrationManager.registerAdapter(sdLinkAdapter);
+                LOGGER.info("Simple Discord Link mod integration initialized successfully");
+                initializedAdapters++;
+            }
+            
+            // Add more NeoForge mod integrations here as needed
+            // e.g., other chat-related mods, webhook mods, etc.
+            
+            LOGGER.info("Chat mod integrations initialized: {} adapters active", initializedAdapters);
+                
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize chat mod integrations: {}", e.getMessage(), e);
+        }
+    }
 
 
 
@@ -191,6 +246,85 @@ public class NeoEssentials {
             }
         } catch (Exception e) {
             LOGGER.error("Failed to ensure server language file", e);
+        }
+    }
+
+    private void ensureDefaultPermissionsFile() {
+        try {
+            File permissionsFile = com.zerog.neoessentials.util.ResourceUtil.getConfigFile("permissions.json");
+            
+            // Check if file doesn't exist or is empty/has no groups
+            boolean needsDefault = false;
+            if (!permissionsFile.exists()) {
+                needsDefault = true;
+            } else {
+                // Check if file is empty or has no groups
+                try {
+                    String content = Files.readString(permissionsFile.toPath());
+                    if (content.trim().isEmpty() || content.contains("\"groups\": []") || !content.contains("\"groups\"")) {
+                        needsDefault = true;
+                    }
+                } catch (Exception e) {
+                    needsDefault = true;
+                }
+            }
+            
+            if (needsDefault) {
+                // Try to copy from mod jar resources
+                try (InputStream in = this.getClass().getResourceAsStream("/data/permissions.json")) {
+                    if (in != null) {
+                        permissionsFile.getParentFile().mkdirs();
+                        Files.copy(in, permissionsFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        LOGGER.info("Copied default permissions file to server config: {}", permissionsFile.getAbsolutePath());
+                    } else {
+                        LOGGER.warn("Could not find default permissions file in mod resources, creating minimal config");
+                        createMinimalPermissionsFile(permissionsFile);
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Failed to copy default permissions file, creating minimal config", e);
+                    createMinimalPermissionsFile(permissionsFile);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to ensure permissions file", e);
+        }
+    }
+
+    private void createMinimalPermissionsFile(File permissionsFile) {
+        try {
+            String defaultContent = """
+                {
+                  "groups": [
+                    {
+                      "name": "default",
+                      "prefix": "",
+                      "suffix": "",
+                      "permissions": [
+                        "neoessentials.economy.balance",
+                        "neoessentials.economy.pay",
+                        "neoessentials.item.repair",
+                        "neoessentials.chat.msg"
+                      ],
+                      "inherits": []
+                    },
+                    {
+                      "name": "admin",
+                      "prefix": "[Admin] ",
+                      "suffix": "",
+                      "permissions": [
+                        "neoessentials.*"
+                      ],
+                      "inherits": ["default"]
+                    }
+                  ]
+                }
+                """;
+            
+            permissionsFile.getParentFile().mkdirs();
+            Files.writeString(permissionsFile.toPath(), defaultContent);
+            LOGGER.info("Created minimal permissions file: {}", permissionsFile.getAbsolutePath());
+        } catch (Exception e) {
+            LOGGER.error("Failed to create minimal permissions file", e);
         }
     }
 
@@ -253,6 +387,9 @@ public class NeoEssentials {
         
         // Chat commands
         try {
+            // Register custom messaging commands  
+            System.out.println("DEBUG: Registering custom messaging commands");
+            
             com.zerog.neoessentials.chat.command.MsgCommand.register(dispatcher);
             registry.registerCommand("msg", "Send private messages to players");
             
@@ -287,7 +424,7 @@ public class NeoEssentials {
         
         // Utility commands
         try {
-            com.zerog.neoessentials.utils.commands.AfkCommand.register(dispatcher);
+            com.zerog.neoessentials.util.commands.AfkCommand.register(dispatcher);
             registry.registerCommand("afk", "Toggle AFK status");
             
             LOGGER.info("Utility commands registered successfully");
@@ -343,8 +480,11 @@ public class NeoEssentials {
                 // Auto-restore items if player disconnects with pending /dispose
                 DisposeCommand.restorePendingItems(player);
                 
-                // Clean up AFK movement tracking data
-                com.zerog.neoessentials.chat.handlers.AfkMovementHandler.onPlayerLogout(uuid);
+                // Clean up LastMessageManager data for /reply functionality
+                com.zerog.neoessentials.chat.LastMessageManager.cleanupPlayer(player);
+                LOGGER.debug("LastMessageManager cleanup completed for: {}", uuid);
+                
+                // Clean up AFK movement tracking data (handled by AfkMovementDetector events)
             } catch (Exception e) {
                 LOGGER.error("Exception saving player data for: {}: {}", uuid, e.getMessage(), e);
             }
@@ -360,6 +500,32 @@ public class NeoEssentials {
             LOGGER.info("Existing player data loaded successfully.");
         } catch (Exception e) {
             LOGGER.error("Failed to load existing player data at startup", e);
+        }
+        
+        // Override vanilla messaging commands after server starts
+        try {
+            System.out.println("DEBUG: Attempting to override vanilla messaging commands");
+            var server = event.getServer();
+            var dispatcher = server.getCommands().getDispatcher();
+            var rootNode = dispatcher.getRoot();
+            
+            // Remove vanilla commands that conflict with our custom ones
+            rootNode.getChildren().removeIf(node -> {
+                String name = node.getName();
+                if (name.equals("msg") || name.equals("tell") || name.equals("w")) {
+                    System.out.println("DEBUG: Removed vanilla command: " + name);
+                    return true;
+                }
+                return false;
+            });
+            
+            // Re-register our custom commands to ensure they're active
+            com.zerog.neoessentials.chat.command.MsgCommand.register(dispatcher);
+            System.out.println("DEBUG: Re-registered custom messaging commands after vanilla removal");
+            
+        } catch (Exception e) {
+            System.out.println("DEBUG: Failed to override vanilla commands: " + e.getMessage());
+            LOGGER.error("Failed to override vanilla messaging commands", e);
         }
     }
 
@@ -380,5 +546,37 @@ public class NeoEssentials {
         }
         
         LOGGER.info("NeoEssentials shutdown complete.");
+    }
+    
+    /**
+     * Initialize the PlaceholderAPI system with default NeoEssentials placeholders.
+     * This makes placeholders available to the chat system and other mods.
+     */
+    private void initializePlaceholderAPI() {
+        LOGGER.info("=== BEGINNING initializePlaceholderAPI METHOD ===");
+        try {
+            LOGGER.info("*** STARTING PLACEHOLDERAPI INITIALIZATION ***");
+            
+            // Register the default NeoEssentials placeholder expansion
+            com.zerog.neoessentials.api.DefaultPlaceholderExpansion defaultExpansion = 
+                new com.zerog.neoessentials.api.DefaultPlaceholderExpansion();
+            
+            LOGGER.info("Created DefaultPlaceholderExpansion with {} placeholders", 
+                defaultExpansion.getPlaceholders().size());
+            
+            boolean registered = com.zerog.neoessentials.api.PlaceholderAPI.registerExpansion(defaultExpansion);
+            
+            if (registered) {
+                LOGGER.info("*** PlaceholderAPI initialized successfully with {} default placeholders ***", 
+                    defaultExpansion.getPlaceholders().size());
+                LOGGER.info("Available placeholders: {}", 
+                    com.zerog.neoessentials.api.PlaceholderAPI.getRegisteredPlaceholders());
+            } else {
+                LOGGER.error("*** FAILED to register default placeholder expansion ***");
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("*** PlaceholderAPI INITIALIZATION FAILED ***: {}", e.getMessage(), e);
+        }
     }
 }

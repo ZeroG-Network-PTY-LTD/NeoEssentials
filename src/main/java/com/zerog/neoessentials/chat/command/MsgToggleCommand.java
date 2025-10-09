@@ -5,9 +5,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
+
 import com.zerog.neoessentials.api.ChatAPI;
 import com.zerog.neoessentials.chat.ChatManager;
+import com.zerog.neoessentials.util.MessageUtil;
 
 /**
  * Handles the /msgtoggle command for toggling private message reception.
@@ -20,15 +21,20 @@ public class MsgToggleCommand {
                 ServerPlayer sender = source.getPlayer();
                 ChatManager chatManager = ChatAPI.getChatManager();
                 if (chatManager != null && !chatManager.isMsgToggleEnabled()) {
-                    source.sendFailure(Component.translatable("commands.neoessentials.msgtoggle.disabled"));
+                    source.sendFailure(MessageUtil.error("commands.neoessentials.msgtoggle.disabled"));
                     return 0;
                 }
-                if (chatManager != null && !chatManager.hasChatPermission("neoessentials.command.msgtoggle")) {
-                    source.sendFailure(Component.translatable("commands.neoessentials.no_permission"));
+                // Check permissions with op bypass
+                if (!sender.hasPermissions(4) && !com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.msgtoggle")) {
+                    source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
                     return 0;
                 }
-                MsgToggleManager.toggleMsg(sender);
-                source.sendSuccess(() -> Component.translatable("commands.neoessentials.msgtoggle.toggled"), false);
+                boolean newState = MsgToggleManager.toggleMsg(sender);
+                if (newState) {
+                    source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.msgtoggle.enabled"), false);
+                } else {
+                    source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.msgtoggle.disabled_status"), false);
+                }
                 return 1;
             })
         );

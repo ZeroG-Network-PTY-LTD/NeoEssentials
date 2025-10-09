@@ -1,34 +1,29 @@
 package com.zerog.neoessentials.chat;
 
+import com.zerog.neoessentials.api.PlaceholderAPI;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 /**
  * ChatFormatter handles chat message formatting using configurable templates.
  * 
- * Supports placeholders:
- *   - {DISPLAYNAME} - Player's display name
- *   - {USERNAME} - Player's username
- *   - {MESSAGE} - The chat message
- *   - {PREFIX} - Player's permission prefix (if available)
- *   - {SUFFIX} - Player's permission suffix (if available)
- *   - {WORLD} - Player's current world name
- *   - {X}, {Y}, {Z} - Player's coordinates (rounded)
- *   - {HEALTH} - Player's current health (rounded)
- *   - {LEVEL} - Player's experience level
+ * Now uses PlaceholderAPI for comprehensive placeholder support including:
+ *   - All default NeoEssentials placeholders ({DISPLAYNAME}, {USERNAME}, {PREFIX}, {SUFFIX}, etc.)
+ *   - Custom placeholders registered by other mods
+ *   - Full color code support using & formatting (e.g., &c for red)
  * 
- * Color codes are supported using & formatting (e.g., &c for red)
+ * The PlaceholderAPI system provides:
+ *   - Consistent placeholder resolution across all chat systems
+ *   - Extensibility for other mods to add custom placeholders
+ *   - Proper PREFIX/SUFFIX integration with the permission system
+ *   - Thread-safe placeholder processing
  */
 public class ChatFormatter {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatFormatter.class);
-    
-    // Pattern to match placeholders in format strings
-    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{([A-Z_]+)\\}");
     
     // Pattern to match color codes (&1, &c, etc.)
     private static final Pattern COLOR_PATTERN = Pattern.compile("&([0-9a-fk-or])");
@@ -43,8 +38,14 @@ public class ChatFormatter {
      */
     public static Component formatMessage(String template, ServerPlayer player, String message) {
         try {
-            // First replace placeholders
-            String formatted = replacePlaceholders(template, player, message);
+            // Add the MESSAGE placeholder to the template context if it's not already there
+            String templateWithMessage = template.replace("{MESSAGE}", message);
+            
+            // Use PlaceholderAPI to resolve all placeholders
+            String formatted = PlaceholderAPI.setPlaceholders(player, templateWithMessage);
+            
+            // Clean up extra spaces caused by empty prefixes/suffixes
+            formatted = cleanupFormatting(formatted);
             
             // Then process color codes and convert to Component
             return parseColorCodes(formatted);
@@ -57,85 +58,16 @@ public class ChatFormatter {
     }
     
     /**
-     * Replaces all placeholders in the template with actual values from player context.
+     * Cleans up formatting by removing extra spaces and fixing empty placeholders.
      */
-    private static String replacePlaceholders(String template, ServerPlayer player, String message) {
-        Matcher matcher = PLACEHOLDER_PATTERN.matcher(template);
-        StringBuffer result = new StringBuffer();
+    private static String cleanupFormatting(String formatted) {
+        // Clean up extra spaces caused by empty prefixes/suffixes
+        formatted = formatted.replaceAll("\\s+", " "); // Replace multiple spaces with single space
+        formatted = formatted.replaceAll("< >", "<>"); // Fix empty brackets with just spaces
+        formatted = formatted.replaceAll("<\\s+", "<"); // Remove spaces after opening brackets
+        formatted = formatted.replaceAll("\\s+>", ">"); // Remove spaces before closing brackets
         
-        while (matcher.find()) {
-            String placeholder = matcher.group(1);
-            String replacement = getPlaceholderValue(placeholder, player, message);
-            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
-        }
-        matcher.appendTail(result);
-        
-        return result.toString();
-    }
-    
-    /**
-     * Gets the replacement value for a specific placeholder.
-     */
-    private static String getPlaceholderValue(String placeholder, ServerPlayer player, String message) {
-        switch (placeholder) {
-            case "DISPLAYNAME":
-                return player.getDisplayName().getString();
-            case "USERNAME":
-                return player.getName().getString();
-            case "MESSAGE":
-                return message;
-            case "PREFIX":
-                return getPlayerPrefix(player);
-            case "SUFFIX":
-                return getPlayerSuffix(player);
-            case "WORLD":
-                return player.level().dimension().location().getPath();
-            case "X":
-                return String.valueOf((int) player.getX());
-            case "Y":
-                return String.valueOf((int) player.getY());
-            case "Z":
-                return String.valueOf((int) player.getZ());
-            case "HEALTH":
-                return String.valueOf((int) player.getHealth());
-            case "LEVEL":
-                return String.valueOf(player.experienceLevel);
-            default:
-                LOGGER.warn("Unknown placeholder: {}", placeholder);
-                return "{" + placeholder + "}"; // Return as-is if unknown
-        }
-    }
-    
-    /**
-     * Gets the player's permission prefix (integrates with permission system).
-     */
-    private static String getPlayerPrefix(ServerPlayer player) {
-        try {
-            // Try to get prefix from permission system
-            if (com.zerog.neoessentials.api.permissions.PermissionAPI.getExternalAdapter() != null) {
-                String prefix = com.zerog.neoessentials.api.permissions.PermissionAPI.getExternalAdapter().getPrefix(player.getUUID());
-                return prefix != null ? prefix : "";
-            }
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get prefix for player {}: {}", player.getName().getString(), e.getMessage());
-        }
-        return "";
-    }
-    
-    /**
-     * Gets the player's permission suffix (integrates with permission system).
-     */
-    private static String getPlayerSuffix(ServerPlayer player) {
-        try {
-            // Try to get suffix from permission system
-            if (com.zerog.neoessentials.api.permissions.PermissionAPI.getExternalAdapter() != null) {
-                String suffix = com.zerog.neoessentials.api.permissions.PermissionAPI.getExternalAdapter().getSuffix(player.getUUID());
-                return suffix != null ? suffix : "";
-            }
-        } catch (Exception e) {
-            LOGGER.debug("Failed to get suffix for player {}: {}", player.getName().getString(), e.getMessage());
-        }
-        return "";
+        return formatted.trim();
     }
     
     /**
@@ -189,6 +121,6 @@ public class ChatFormatter {
      * Gets the default chat format template.
      */
     public static String getDefaultFormat() {
-        return "{DISPLAYNAME}: {MESSAGE}";
+        return "{neoessentials_displayname}: {MESSAGE}";
     }
 }
