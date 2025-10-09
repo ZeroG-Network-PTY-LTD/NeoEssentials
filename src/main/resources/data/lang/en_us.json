@@ -232,5 +232,39 @@
   "neoessentials.quit.default": "{0} left the game",
   "neoessentials.join.custom": "Custom join message for {0}",
   "neoessentials.quit.custom": "Custom quit message for {0}",
-  "neoessentials.username_change": "{0} changed their name to {1}"
+  "neoessentials.username_change": "{0} changed their name to {1}",
+  
+  "commands.neoessentials.kit.no_kits": "No kits are available.",
+  "commands.neoessentials.kit.not_found": "Kit '{0}' not found.",
+  "commands.neoessentials.kit.no_permission": "You do not have permission to use kit '{0}'.",
+  "commands.neoessentials.kit.on_cooldown": "Kit '{0}' is on cooldown. You can use it in {1}.",
+  "commands.neoessentials.kit.max_uses": "You have reached the maximum uses for kit '{0}'.",
+  "commands.neoessentials.kit.received": "You received kit '{0}'!",
+  "commands.neoessentials.kit.list_header": "Available kits:",
+  "commands.neoessentials.kit.list_entry": "- {0} ({1} items){2}",
+  "commands.neoessentials.kit.cooldown_info": " - Cooldown: {0}",
+  "commands.neoessentials.kit.no_cooldown": "",
+  
+  "commands.neoessentials.createkit.invalid_name": "Invalid kit name '{0}'. Use only letters, numbers, and underscores.",
+  "commands.neoessentials.createkit.empty_inventory": "Your inventory is empty. Cannot create kit.",
+  "commands.neoessentials.createkit.created": "Kit '{0}' created with {1} items (cooldown: {2})",
+  "commands.neoessentials.createkit.updated": "Kit '{0}' updated with {1} items (cooldown: {2})",
+  "commands.neoessentials.createkit.permission_hint": "Players need permission '{0}' to use this kit.",
+  "commands.neoessentials.createkit.failed": "Failed to create kit. Check server logs.",
+  "commands.neoessentials.createkit.error": "An error occurred while creating the kit.",
+  
+  "commands.neoessentials.delkit.not_found": "Kit '{0}' not found.",
+  "commands.neoessentials.delkit.confirm_prompt": "§cDelete kit '{0}' ({1}) with {2} items?",
+  "commands.neoessentials.delkit.confirm_instructions": "Use '/delkit {0} confirm' to confirm deletion.",
+  "commands.neoessentials.delkit.deleted": "Kit '{0}' has been deleted.",
+  "commands.neoessentials.delkit.failed": "Failed to delete kit. Check server logs.",
+  "commands.neoessentials.delkit.error": "An error occurred while deleting the kit.",
+  
+  "commands.neoessentials.listkits.empty": "No kits are configured.",
+  "commands.neoessentials.listkits.header": "Kit List (Page {0}/{1}) - Total: {2}",
+  "commands.neoessentials.listkits.kit_entry": "{0}. {1} ({2}) - {3} items",
+  "commands.neoessentials.listkits.next_page": "Use '/listkits {0}' for next page",
+  "commands.neoessentials.listkits.prev_page": "Use '/listkits {0}' for previous page",
+  "commands.neoessentials.listkits.invalid_page": "Invalid page {0}. Valid range: 1-{1}",
+  "commands.neoessentials.listkits.error": "An error occurred while listing kits."
 }

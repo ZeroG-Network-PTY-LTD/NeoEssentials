@@ -63,6 +63,14 @@ public class NeoEssentials {
         ensureServerLangFile();
         // Initialize the core manager
         NeoEssentialsManager.getInstance();
+        
+        // Initialize the kit manager
+        try {
+            com.zerog.neoessentials.kits.KitManager.getInstance().initialize();
+            LOGGER.info("Kit Manager initialized successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize Kit Manager: {}", e.getMessage(), e);
+        }
 
     // Suppress unused field warning for chatManager (placeholder for future integration)
     assert chatManager != null || true;
@@ -430,6 +438,19 @@ public class NeoEssentials {
             LOGGER.info("Utility commands registered successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to register utility commands", e);
+        }
+        
+        // Kit commands
+        try {
+            com.zerog.neoessentials.kits.command.KitCommands.register(dispatcher);
+            registry.registerCommand("kit", "Use or list available kits");
+            registry.registerCommand("createkit", "Create a kit from inventory");
+            registry.registerCommand("delkit", "Delete a kit with confirmation");
+            registry.registerCommand("listkits", "List all kits with details");
+            
+            LOGGER.info("Kit commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register kit commands", e);
         }
         
         // Root commands (register last so they can see all available commands)
