@@ -158,6 +158,29 @@ public class PermissionManager {
             return false;
         }
         
+        // Trim and convert to lowercase for consistency
+        permission = permission.trim().toLowerCase();
+        
+        // Handle wildcard permissions specially
+        if (permission.endsWith(".*")) {
+            String prefix = permission.substring(0, permission.length() - 2);
+            // Validate the prefix part
+            if (prefix.isEmpty() || !prefix.matches("^[a-z0-9._-]+$")) {
+                return false;
+            }
+            // Prefix cannot start or end with dot, or have consecutive dots
+            if (prefix.startsWith(".") || prefix.endsWith(".") || prefix.contains("..")) {
+                return false;
+            }
+            return true;
+        }
+        
+        // Handle negative permissions (starting with -)
+        if (permission.startsWith("-")) {
+            String actualPerm = permission.substring(1);
+            return isValidPermission(actualPerm);
+        }
+        
         // Check for valid characters (alphanumeric, dots, underscores, hyphens)
         if (!permission.matches("^[a-z0-9._-]+$")) {
             return false;

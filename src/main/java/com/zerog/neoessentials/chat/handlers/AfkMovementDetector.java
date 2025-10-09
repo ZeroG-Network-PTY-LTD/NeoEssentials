@@ -3,20 +3,23 @@ package com.zerog.neoessentials.chat.handlers;
 import com.zerog.neoessentials.chat.AfkManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
-// Server tick events not available - using alternative approach
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Tracks player movement to detect activity for AFK system.
- * Uses position comparison to determine if a player has moved significantly.
+ * Simple movement detection using periodic position checks.
+ * Uses a separate thread to periodically check player positions.
  */
-public class AfkMovementHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AfkMovementHandler.class);
+public class AfkMovementDetector {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AfkMovementDetector.class);
     
     // Minimum distance to consider as movement (in blocks)
     private static final double MOVEMENT_THRESHOLD = 0.1;
@@ -24,20 +27,33 @@ public class AfkMovementHandler {
     // Store last known positions
     private static final Map<UUID, PlayerPosition> lastPositions = new HashMap<>();
     
-    // Track movement checks per second (reduce frequency to avoid spam)
-    private static int tickCounter = 0;
-    private static final int CHECK_INTERVAL = 20; // Check every 20 ticks (1 second)
+    // Scheduled executor for position checks
+    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "AFK-MovementDetector");
+        t.setDaemon(true);
+        return t;
+    });
+    
+    // Start the movement detection task
+    static {
+        executor.scheduleAtFixedRate(AfkMovementDetector::checkAllPlayersMovement, 5, 5, TimeUnit.SECONDS);
+    }
     
     /**
-     * Movement tracking disabled - server tick events not available in this version
-     * Movement will be tracked through other player interaction events
+     * Check movement for all online players
      */
-    /*
-    @SubscribeEvent
-    public static void onServerTick(ServerTickEvent.Post event) {
-        // Movement tracking implementation when tick events become available
+    private static void checkAllPlayersMovement() {
+        try {
+            net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server == null) return;
+            
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                checkPlayerMovement(player);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error checking player movement", e);
+        }
     }
-    */
     
     /**
      * Check if a player has moved significantly
@@ -74,9 +90,41 @@ public class AfkMovementHandler {
     /**
      * Clean up position data when player logs out
      */
-    public static void onPlayerLogout(UUID playerId) {
-        lastPositions.remove(playerId);
-        LOGGER.debug("Cleaned up movement tracking for player: {}", playerId);
+    @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            lastPositions.remove(player.getUUID());
+            LOGGER.debug("Cleaned up movement tracking for player: {}", player.getName().getString());
+        }
+    }
+    
+    /**
+     * Initialize position tracking when player logs in
+     */
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            PlayerPosition currentPos = new PlayerPosition(
+                player.getX(), player.getY(), player.getZ(),
+                player.getYRot(), player.getXRot()
+            );
+            lastPositions.put(player.getUUID(), currentPos);
+            LOGGER.debug("Initialized movement tracking for player: {}", player.getName().getString());
+        }
+    }
+    
+    /**
+     * Shutdown the movement detector
+     */
+    public static void shutdown() {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+        }
     }
     
     /**

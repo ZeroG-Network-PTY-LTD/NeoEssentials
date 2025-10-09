@@ -9,12 +9,8 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 // Note: Some events not available in this NeoForge version
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.minecraft.commands.CommandSourceStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.UUID;
 
 /**
  * Comprehensive activity tracking for AFK detection.
@@ -143,6 +139,28 @@ public class AfkActivityHandler {
         if (event.getEntity() instanceof ServerPlayer player) {
             AfkManager.getInstance().updateActivity(player.getUUID());
             LOGGER.debug("Player login handled for AFK system: {}", player.getName().getString());
+        }
+    }
+    
+    /**
+     * Track player change dimension (moving between worlds is activity)
+     */
+    @SubscribeEvent
+    public static void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            AfkManager.getInstance().updateActivity(player.getUUID());
+            LOGGER.debug("Activity tracked for {}: dimension change", player.getName().getString());
+        }
+    }
+    
+    /**
+     * Track player respawn (clearly active)
+     */
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            AfkManager.getInstance().updateActivity(player.getUUID());
+            LOGGER.debug("Activity tracked for {}: respawn", player.getName().getString());
         }
     }
 }

@@ -25,12 +25,30 @@ public class ChatAPI {
 
 
     /**
-     * Check if sender is muted or ignored by target.
-     * Integrates with MuteManager (ignore logic can be added similarly).
+     * Check if sender is muted or ignored by target, or if target has messages toggled off.
+     * Includes op exemption for msgtoggle.
      */
     public static boolean isMutedOrIgnored(ServerPlayer sender, ServerPlayer target) {
-        return com.zerog.neoessentials.chat.MuteManager.isMuted(sender)
-            || com.zerog.neoessentials.chat.IgnoreManager.isIgnoring(target, sender);
+        // Check if sender is muted
+        if (com.zerog.neoessentials.chat.MuteManager.isMuted(sender)) {
+            return true;
+        }
+        
+        // Check if target is ignoring sender
+        if (com.zerog.neoessentials.chat.IgnoreManager.isIgnoring(target, sender)) {
+            return true;
+        }
+        
+        // Check if target has messages toggled off (with op exemption for sender)
+        if (com.zerog.neoessentials.chat.MsgToggleManager.isMsgToggled(target)) {
+            // Op players bypass msgtoggle
+            if (sender.hasPermissions(4) || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.msgtoggle.bypass")) {
+                return false; // Op/bypass permission = can still message
+            }
+            return true; // Normal player blocked by msgtoggle
+        }
+        
+        return false;
     }
 
     /**

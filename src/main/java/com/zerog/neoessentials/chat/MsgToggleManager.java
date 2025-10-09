@@ -10,12 +10,14 @@ import java.util.Set;
 public class MsgToggleManager {
     private static final Set<String> toggledPlayers = new HashSet<>();
 
-    public static void toggleMsg(ServerPlayer player) {
+    public static boolean toggleMsg(ServerPlayer player) {
         String name = player.getName().getString().toLowerCase();
         if (toggledPlayers.contains(name)) {
             toggledPlayers.remove(name);
+            return true; // Now receiving messages
         } else {
             toggledPlayers.add(name);
+            return false; // Now blocking messages
         }
     }
 

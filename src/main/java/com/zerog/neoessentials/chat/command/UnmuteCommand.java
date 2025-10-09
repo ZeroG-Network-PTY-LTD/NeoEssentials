@@ -3,11 +3,13 @@ package com.zerog.neoessentials.chat.command;
 import com.zerog.neoessentials.chat.ChatManager;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
+
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
+
+import com.zerog.neoessentials.util.MessageUtil;
 
 /**
  * Handles the /unmute command for unmuting a player.
@@ -15,19 +17,46 @@ import net.minecraft.network.chat.Component;
 public class UnmuteCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("unmute")
-            .then(Commands.argument("target", StringArgumentType.word())
+            .then(Commands.argument("target", EntityArgument.player())
                 .executes(ctx -> {
                     CommandSourceStack source = ctx.getSource();
-                    String targetName = StringArgumentType.getString(ctx, "target");
-                    ServerPlayer sender = source.getPlayer(); // Used in future implementation
-                    assert sender != null || true; // Suppress unused variable warning
-                    ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
-                    if (chatManager != null && !chatManager.hasChatPermission("neoessentials.command.unmute")) {
-                        source.sendFailure(net.minecraft.network.chat.Component.translatable("neoessentials.no_permission"));
+                    ServerPlayer targetPlayer;
+                    try {
+                        targetPlayer = EntityArgument.getPlayer(ctx, "target");
+                    } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.unmute.player_not_found"));
                         return 0;
                     }
+                    String targetName = targetPlayer.getName().getString();
+                    
+                    // Validate sender
+                    ServerPlayer sender = source.getPlayer();
+                    if (sender == null) {
+                        source.sendFailure(MessageUtil.error("neoessentials.error.no_server"));
+                        return 0;
+                    }
+                    
+                    // Check if command is enabled
+                    ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
+                    if (chatManager != null && !chatManager.isUnmuteEnabled()) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.unmute.disabled"));
+                        return 0;
+                    }
+                    
+                    // Check permissions
+                    if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.mute")) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                        return 0;
+                    }
+                    
+                    // Check if player is actually muted
+                    if (!com.zerog.neoessentials.chat.MuteManager.getMutedPlayers().contains(targetName.toLowerCase())) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.unmute.not_muted", targetName));
+                        return 0;
+                    }
+                    
                     com.zerog.neoessentials.chat.MuteManager.unmute(sender, targetName);
-                    source.sendSuccess(() -> Component.translatable("neoessentials.unmute.success", targetName), false);
+                    source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.unmute.success", targetName), false);
                     return 1;
                 })
             )

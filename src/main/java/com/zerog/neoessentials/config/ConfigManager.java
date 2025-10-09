@@ -2,6 +2,8 @@ package com.zerog.neoessentials.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.zerog.neoessentials.util.ResourceUtil;
@@ -13,12 +15,16 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -47,6 +53,11 @@ public class ConfigManager {
     public static final String MAIN_CONFIG = "config.json";
     public static final String ECONOMY_CONFIG = "economy.json";
     public static final String PERMISSIONS_CONFIG = "permissions.json";
+    public static final String KITS_CONFIG = "kits.json";
+    
+    // Config version tracking - increment when structure changes
+    private static final String CONFIG_VERSION_KEY = "_configVersion";
+    private static final int CURRENT_CONFIG_VERSION = 1;
     
     private ConfigManager() {
         // Private constructor for singleton
@@ -67,6 +78,7 @@ public class ConfigManager {
             loadConfig(MAIN_CONFIG);
             loadConfig(ECONOMY_CONFIG);
             loadConfig(PERMISSIONS_CONFIG);
+            loadConfig(KITS_CONFIG);
             
             loaded = true;
             LOGGER.info("Configuration loading completed");
@@ -76,7 +88,7 @@ public class ConfigManager {
     }
     
     /**
-     * Load a specific configuration file
+     * Load a specific configuration file with smart updating
      */
     private void loadConfig(String configName) {
         File configFile = ResourceUtil.getConfigFile(configName);
@@ -84,6 +96,12 @@ public class ConfigManager {
         // Extract default config if it doesn't exist
         if (!configFile.exists()) {
             extractDefaultConfig(configName, configFile);
+        } else {
+            // Check if config needs updating
+            if (shouldUpdateConfig(configName, configFile)) {
+                LOGGER.info("Config structure outdated for {}, updating...", configName);
+                updateConfigWithBackup(configName, configFile);
+            }
         }
         
         // Load the configuration
@@ -125,6 +143,11 @@ public class ConfigManager {
     private void createMinimalConfig(String configName, File configFile) {
         JsonObject minimalConfig = new JsonObject();
         
+        // Add version to all minimal configs
+        minimalConfig.addProperty(CONFIG_VERSION_KEY, CURRENT_CONFIG_VERSION);
+        minimalConfig.addProperty(CONFIG_VERSION_KEY + "_comment", 
+            "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.");
+        
         switch (configName) {
             case MAIN_CONFIG:
                 JsonObject modules = new JsonObject();
@@ -149,6 +172,10 @@ public class ConfigManager {
                 defaultGroup.addProperty("default", true);
                 minimalConfig.add("groups", defaultGroup);
                 break;
+                
+            case KITS_CONFIG:
+                minimalConfig.add("kits", new JsonArray());
+                break;
         }
         
         try (FileWriter writer = new FileWriter(configFile)) {
@@ -156,6 +183,236 @@ public class ConfigManager {
             LOGGER.info("Created minimal configuration: {}", configName);
         } catch (IOException e) {
             LOGGER.error("Failed to create minimal configuration {}: {}", configName, e.getMessage());
+        }
+    }
+    
+    /**
+     * Check if a config file needs updating by comparing structure with JAR template
+     */
+    private boolean shouldUpdateConfig(String configName, File configFile) {
+        try {
+            // Load existing config
+            JsonObject existingConfig;
+            try (FileReader reader = new FileReader(configFile)) {
+                existingConfig = JsonParser.parseReader(reader).getAsJsonObject();
+            }
+            
+            // Load template config from JAR
+            JsonObject templateConfig = loadJarConfig(configName);
+            if (templateConfig == null) {
+                return false; // No template to compare against
+            }
+            
+            // Check version first
+            int existingVersion = existingConfig.has(CONFIG_VERSION_KEY) ? 
+                existingConfig.get(CONFIG_VERSION_KEY).getAsInt() : 0;
+            int templateVersion = templateConfig.has(CONFIG_VERSION_KEY) ? 
+                templateConfig.get(CONFIG_VERSION_KEY).getAsInt() : CURRENT_CONFIG_VERSION;
+                
+            if (existingVersion < templateVersion) {
+                LOGGER.info("Config version outdated: existing={}, template={}", existingVersion, templateVersion);
+                return true;
+            }
+            
+            // Compare structure (keys/sections)
+            return !configStructuresMatch(existingConfig, templateConfig);
+            
+        } catch (Exception e) {
+            LOGGER.warn("Error checking config update status for {}: {}", configName, e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Load config template from JAR resources
+     */
+    private JsonObject loadJarConfig(String configName) {
+        InputStream in = null;
+        try {
+            // Handle special cases for files in /data/ not /data/config/neoessentials/
+            if (PERMISSIONS_CONFIG.equals(configName)) {
+                in = ResourceUtil.class.getResourceAsStream("/data/permissions.json");
+            } else if (ECONOMY_CONFIG.equals(configName)) {
+                in = ResourceUtil.class.getResourceAsStream("/data/economy.json");
+            } else {
+                in = ResourceUtil.getJarConfigResource(configName);
+            }
+            
+            if (in != null) {
+                String content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                return JsonParser.parseString(content).getAsJsonObject();
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load JAR config template {}: {}", configName, e.getMessage());
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    LOGGER.warn("Failed to close JAR config stream for {}", configName);
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Compare config structures to see if they have the same keys/sections
+     */
+    private boolean configStructuresMatch(JsonObject existing, JsonObject template) {
+        // Compare top-level keys (excluding version fields and comments)
+        Set<String> existingKeys = existing.keySet().stream()
+            .filter(key -> !key.equals(CONFIG_VERSION_KEY) && !key.endsWith("_comment"))
+            .collect(Collectors.toSet());
+        Set<String> templateKeys = template.keySet().stream()
+            .filter(key -> !key.equals(CONFIG_VERSION_KEY) && !key.endsWith("_comment"))
+            .collect(Collectors.toSet());
+            
+        if (!existingKeys.equals(templateKeys)) {
+            LOGGER.debug("Top-level keys differ: existing={}, template={}", existingKeys, templateKeys);
+            return false;
+        }
+        
+        // Compare nested object structures
+        for (String key : templateKeys) {
+            JsonElement existingElement = existing.get(key);
+            JsonElement templateElement = template.get(key);
+            
+            if (existingElement.isJsonObject() && templateElement.isJsonObject()) {
+                if (!nestedKeysMatch(existingElement.getAsJsonObject(), templateElement.getAsJsonObject())) {
+                    LOGGER.debug("Nested keys differ in section: {}", key);
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Compare nested object keys recursively
+     */
+    private boolean nestedKeysMatch(JsonObject existing, JsonObject template) {
+        Set<String> existingKeys = existing.keySet();
+        Set<String> templateKeys = template.keySet();
+        
+        if (!existingKeys.containsAll(templateKeys)) {
+            return false; // Template has new keys
+        }
+        
+        // Check nested objects
+        for (String key : templateKeys) {
+            JsonElement existingElement = existing.get(key);
+            JsonElement templateElement = template.get(key);
+            
+            if (existingElement != null && existingElement.isJsonObject() && templateElement.isJsonObject()) {
+                if (!nestedKeysMatch(existingElement.getAsJsonObject(), templateElement.getAsJsonObject())) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Update config file with backup of old version
+     */
+    private void updateConfigWithBackup(String configName, File configFile) {
+        try {
+            // Create backup with incremental numbering
+            File backupFile = createBackupFile(configFile);
+            Files.copy(configFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            LOGGER.info("Created backup: {}", backupFile.getName());
+            
+            // Load old config values
+            JsonObject oldConfig;
+            try (FileReader reader = new FileReader(configFile)) {
+                oldConfig = JsonParser.parseReader(reader).getAsJsonObject();
+            }
+            
+            // Load new template
+            JsonObject newTemplate = loadJarConfig(configName);
+            if (newTemplate == null) {
+                LOGGER.error("Could not load new template for {}", configName);
+                return;
+            }
+            
+            // Merge old values into new structure
+            JsonObject mergedConfig = mergeConfigs(oldConfig, newTemplate);
+            
+            // Add version marker and comment
+            mergedConfig.addProperty(CONFIG_VERSION_KEY, CURRENT_CONFIG_VERSION);
+            mergedConfig.addProperty(CONFIG_VERSION_KEY + "_comment", 
+                "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.");
+            
+            // Write updated config
+            try (FileWriter writer = new FileWriter(configFile)) {
+                GSON.toJson(mergedConfig, writer);
+                LOGGER.info("Updated configuration: {} (backup saved as {})", configName, backupFile.getName());
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to update config {}: {}", configName, e.getMessage());
+        }
+    }
+    
+    /**
+     * Create backup file with incremental numbering (.bak1, .bak2, etc.)
+     */
+    private File createBackupFile(File originalFile) {
+        File parent = originalFile.getParentFile();
+        String baseName = originalFile.getName();
+        
+        for (int i = 1; i <= 999; i++) {
+            File backupFile = new File(parent, baseName + ".bak" + i);
+            if (!backupFile.exists()) {
+                return backupFile;
+            }
+        }
+        
+        // Fallback if we somehow have 999 backups
+        return new File(parent, baseName + ".bak999");
+    }
+    
+    /**
+     * Merge old config values into new template structure
+     */
+    private JsonObject mergeConfigs(JsonObject oldConfig, JsonObject newTemplate) {
+        JsonObject merged = newTemplate.deepCopy();
+        
+        // Recursively merge old values
+        mergeJsonObjects(merged, oldConfig);
+        
+        return merged;
+    }
+    
+    /**
+     * Recursively merge old values into new structure, preserving user customizations
+     */
+    private void mergeJsonObjects(JsonObject target, JsonObject source) {
+        for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
+            String key = entry.getKey();
+            JsonElement sourceValue = entry.getValue();
+            
+            // Skip version keys and comment fields
+            if (key.equals(CONFIG_VERSION_KEY) || key.endsWith("_comment")) {
+                continue;
+            }
+            
+            // If target has this key, merge values
+            if (target.has(key)) {
+                JsonElement targetValue = target.get(key);
+                
+                if (sourceValue.isJsonObject() && targetValue.isJsonObject()) {
+                    // Recursively merge objects
+                    mergeJsonObjects(targetValue.getAsJsonObject(), sourceValue.getAsJsonObject());
+                } else if (!sourceValue.isJsonObject()) {
+                    // Use old value for primitives (preserve user settings)
+                    target.add(key, sourceValue);
+                }
+            }
+            // Don't add keys that don't exist in new template
         }
     }
     
@@ -349,6 +606,20 @@ public class ConfigManager {
         }
         return 500; // Default fallback
     }
+    
+    /**
+     * Check if unsafe commands are allowed from security settings
+     */
+    public boolean isUnsafeCommandsAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("allowUnsafeCommands")) {
+                return security.get("allowUnsafeCommands").getAsBoolean();
+            }
+        }
+        return false; // Default to safe mode
+    }
 
     /**
      * Get maximum economy amount from security/economy settings
@@ -480,5 +751,19 @@ public class ConfigManager {
             return config.get("cacheExpireAfterAccessMinutes").getAsInt();
         }
         return 60; // Default to 60 minutes
+    }
+    
+    /**
+     * Check if debug logging is enabled
+     */
+    public boolean isDebugLoggingEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("logging")) {
+            JsonObject logging = config.getAsJsonObject("logging");
+            if (logging.has("enableDebugLogging")) {
+                return logging.get("enableDebugLogging").getAsBoolean();
+            }
+        }
+        return false; // Default to disabled
     }
 }

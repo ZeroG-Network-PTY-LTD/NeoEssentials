@@ -10,7 +10,8 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.text.MessageFormat;
 import net.minecraft.network.chat.Component;
-import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class MessageUtil {
     private static boolean debugMode = true; // Enable for debugging
 
     /**
-     * Load translations from server directory or JAR fallback
+     * Load translations from server directory, updating from JAR if needed
      */
     private static void loadTranslations() {
         if (loaded) return;
@@ -33,43 +34,104 @@ public class MessageUtil {
         
         LOGGER.info("Loading NeoEssentials translations...");
         
-        // Try to load from server directory first
         File serverLangFile = ResourceUtil.getLanguageFile("en_us");
-        if (serverLangFile.exists()) {
-            try (FileReader reader = new FileReader(serverLangFile)) {
-                Gson gson = new Gson();
-                Type type = new TypeToken<Map<String, String>>(){}.getType();
-                Map<String, String> map = gson.fromJson(reader, type);
-                if (map != null) {
-                    translations.putAll(map);
-                    LOGGER.info("Loaded {} translations from server directory", translations.size());
-                    return;
-                }
-            } catch (Exception e) {
-                LOGGER.warn("Failed to load translations from server directory: {}", e.getMessage());
+        LOGGER.info("Server language file path: {}", serverLangFile.getAbsolutePath());
+        
+        // Load JAR translations first to compare/update
+        Map<String, String> jarTranslations = loadJarTranslations();
+        if (jarTranslations == null || jarTranslations.isEmpty()) {
+            LOGGER.error("Failed to load JAR translations - cannot proceed");
+            return;
+        }
+        
+        LOGGER.info("JAR contains {} translation keys", jarTranslations.size());
+        
+        // Check if server file needs updating
+        boolean needsUpdate = false;
+        if (!serverLangFile.exists()) {
+            LOGGER.info("Server language file doesn't exist, will create from JAR");
+            needsUpdate = true;
+        } else {
+            // Load existing server file and compare
+            Map<String, String> serverTranslations = loadServerTranslations(serverLangFile);
+            if (serverTranslations == null || serverTranslations.size() != jarTranslations.size()) {
+                LOGGER.info("Server file has {} keys, JAR has {} keys - updating server file", 
+                    serverTranslations != null ? serverTranslations.size() : 0, jarTranslations.size());
+                needsUpdate = true;
+            } else {
+                LOGGER.info("Server language file is up to date ({} keys)", serverTranslations.size());
             }
         }
         
-        // Fallback to JAR resource
+        // Update server file if needed
+        if (needsUpdate) {
+            updateServerLanguageFile(serverLangFile, jarTranslations);
+        }
+        
+        // Load from server file (now guaranteed to be up to date)
+        Map<String, String> finalTranslations = loadServerTranslations(serverLangFile);
+        if (finalTranslations != null) {
+            translations.putAll(finalTranslations);
+            LOGGER.info("Successfully loaded {} translations from server directory", translations.size());
+        } else {
+            // Final fallback - use JAR translations directly
+            translations.putAll(jarTranslations);
+            LOGGER.warn("Using JAR translations directly ({} keys)", translations.size());
+        }
+    }
+    
+    /**
+     * Load translations from JAR resource
+     */
+    private static Map<String, String> loadJarTranslations() {
         try (InputStream in = ResourceUtil.getJarLanguageResource("en_us")) {
             if (in != null) {
                 try (java.util.Scanner scanner = new java.util.Scanner(in, "UTF-8").useDelimiter("\\A")) {
                     String json = scanner.hasNext() ? scanner.next() : "";
                     Gson gson = new Gson();
                     Type type = new TypeToken<Map<String, String>>(){}.getType();
-                    Map<String, String> map = gson.fromJson(json, type);
-                    if (map != null) {
-                        translations.putAll(map);
-                        LOGGER.info("Loaded {} translations from JAR resource", translations.size());
-                        return;
-                    }
+                    return gson.fromJson(json, type);
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to load translations from JAR: {}", e.getMessage(), e);
+            LOGGER.error("Failed to load JAR translations: {}", e.getMessage(), e);
         }
+        return null;
+    }
+    
+    /**
+     * Load translations from server file
+     */
+    private static Map<String, String> loadServerTranslations(File serverFile) {
+        if (!serverFile.exists()) return null;
         
-        LOGGER.warn("No translations loaded! Messages will show as keys.");
+        try (FileReader reader = new FileReader(serverFile)) {
+            Gson gson = new Gson();
+            Type type = new TypeToken<Map<String, String>>(){}.getType();
+            return gson.fromJson(reader, type);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load server translations from {}: {}", serverFile.getAbsolutePath(), e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Update server language file with JAR translations
+     */
+    private static void updateServerLanguageFile(File serverFile, Map<String, String> jarTranslations) {
+        try {
+            // Ensure parent directory exists
+            serverFile.getParentFile().mkdirs();
+            
+            // Write JAR translations to server file
+            try (java.io.FileWriter writer = new java.io.FileWriter(serverFile)) {
+                Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
+                gson.toJson(jarTranslations, writer);
+                LOGGER.info("Updated server language file with {} keys", jarTranslations.size());
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to update server language file: {}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -80,7 +142,7 @@ public class MessageUtil {
         String template = translations.getOrDefault(key, key);
         
         if (debugMode && !translations.containsKey(key)) {
-            LOGGER.warn("Missing translation key: {}", key);
+            LOGGER.warn("Missing translation key: {} (total keys loaded: {})", key, translations.size());
         }
         
         try {
@@ -106,28 +168,28 @@ public class MessageUtil {
      * Create a success message component (green text)
      */
     public static Component success(String key, Object... args) {
-        return Component.literal(localize(key, args)).withStyle(ChatFormatting.GREEN);
+        return Component.literal(localize(key, args)).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x00FF00)));
     }
 
     /**
      * Create an error message component (red text)
      */
     public static Component error(String key, Object... args) {
-        return Component.literal(localize(key, args)).withStyle(ChatFormatting.RED);
+        return Component.literal(localize(key, args)).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF0000)));
     }
 
     /**
      * Create a warning message component (yellow text)
      */
     public static Component warning(String key, Object... args) {
-        return Component.literal(localize(key, args)).withStyle(ChatFormatting.YELLOW);
+        return Component.literal(localize(key, args)).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFF00)));
     }
 
     /**
      * Create an info message component (aqua text)
      */
     public static Component info(String key, Object... args) {
-        return Component.literal(localize(key, args)).withStyle(ChatFormatting.AQUA);
+        return Component.literal(localize(key, args)).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x00FFFF)));
     }
 
     /**
@@ -137,6 +199,16 @@ public class MessageUtil {
         loadTranslations();
         return String.format("Translations loaded: %d, Debug mode: %s", translations.size(), debugMode);
     }
+    
+    /**
+     * Debug method to check if a specific key exists
+     */
+    public static void debugKey(String key) {
+        loadTranslations();
+        LOGGER.info("Debug key '{}': exists={}, value='{}'", key, translations.containsKey(key), translations.get(key));
+        LOGGER.info("Total translations loaded: {}, Sample keys: {}", translations.size(), 
+            translations.keySet().stream().limit(3).toArray());
+    }
 
     /**
      * Check if a translation key exists
@@ -144,5 +216,73 @@ public class MessageUtil {
     public static boolean hasTranslation(String key) {
         loadTranslations();
         return translations.containsKey(key);
+    }
+    
+    /**
+     * Force reload translations (for debugging/testing)
+     */
+    public static void reloadTranslations() {
+        loaded = false;
+        translations.clear();
+        loadTranslations();
+        LOGGER.info("Forced translation reload completed, {} keys loaded", translations.size());
+    }
+    
+    // === Enhanced Chat Components ===
+    
+    /**
+     * Create a clickable command component with enhanced formatting
+     */
+    public static Component clickableCommand(String text, String command, String hoverText) {
+        return ChatComponentUtil.createClickableCommand(text, command, hoverText);
+    }
+    
+    /**
+     * Create a clickable suggestion component
+     */
+    public static Component clickableSuggestion(String text, String command, String hoverText) {
+        return ChatComponentUtil.createClickableSuggestion(text, command, hoverText);
+    }
+    
+    /**
+     * Create formatted balance display with interaction
+     */
+    public static Component balanceComponent(String playerName, double balance, String currency) {
+        return ChatComponentUtil.createBalanceComponent(playerName, balance, currency);
+    }
+    
+    /**
+     * Create formatted player name with interaction
+     */
+    public static Component playerComponent(String playerName) {
+        return ChatComponentUtil.createPlayerComponent(playerName);
+    }
+    
+    /**
+     * Create formatted permission with copy functionality
+     */
+    public static Component permissionComponent(String permission) {
+        return ChatComponentUtil.createPermissionComponent(permission);
+    }
+    
+    /**
+     * Parse color codes in text and return colored component
+     */
+    public static Component coloredText(String text) {
+        return ChatComponentUtil.parseColorCodes(text);
+    }
+    
+    /**
+     * Create a separator line
+     */
+    public static Component separator(int length, char character, net.minecraft.ChatFormatting color) {
+        return ChatComponentUtil.createSeparator(length, character, color);
+    }
+    
+    /**
+     * Create a progress bar
+     */
+    public static Component progressBar(double current, double max, int width) {
+        return ChatComponentUtil.createProgressBar(current, max, width);
     }
 }

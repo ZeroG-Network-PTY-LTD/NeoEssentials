@@ -18,6 +18,14 @@ public class PayToggleCommand {
                     (src.getPlayer() != null && com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.economy.paytoggle")))
                 .executes(ctx -> execute(ctx))
         );
+        
+        // Register "pt" alias for paytoggle
+        dispatcher.register(
+            net.minecraft.commands.Commands.literal("pt")
+                .requires(src -> src.hasPermission(2) || // Allow ops
+                    (src.getPlayer() != null && com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.economy.paytoggle")))
+                .executes(ctx -> execute(ctx))
+        );
     }
 
     private static int execute(com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx) throws com.mojang.brigadier.exceptions.CommandSyntaxException {

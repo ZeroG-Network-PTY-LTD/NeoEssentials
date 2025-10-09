@@ -3,9 +3,10 @@ package com.zerog.neoessentials.chat.command;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.api.ChatAPI;
 import com.zerog.neoessentials.chat.ChatManager;
+import com.zerog.neoessentials.util.MessageUtil;
 
 /**
  * Handles the /socialspy command for toggling message spying for moderators/admins.
@@ -15,18 +16,36 @@ public class SocialSpyCommand {
         dispatcher.register(Commands.literal("socialspy")
             .executes(ctx -> {
                 CommandSourceStack source = ctx.getSource();
-                // ServerPlayer sender = source.getPlayer(); // Unused variable removed
+                
+                // Validate sender
+                ServerPlayer sender = source.getPlayer();
+                if (sender == null) {
+                    source.sendFailure(MessageUtil.error("neoessentials.error.no_server"));
+                    return 0;
+                }
+                
                 ChatManager chatManager = ChatAPI.getChatManager();
                 if (chatManager != null && !chatManager.isSocialSpyEnabled()) {
-                    source.sendFailure(Component.translatable("commands.neoessentials.socialspy.disabled"));
+                    sender.sendSystemMessage(MessageUtil.error("commands.neoessentials.socialspy.disabled"));
                     return 0;
                 }
-                if (chatManager != null && !chatManager.hasChatPermission("neoessentials.command.socialspy")) {
-                    source.sendFailure(Component.translatable("commands.neoessentials.no_permission"));
+                
+                // Check if player has socialspy permission
+                if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.socialspy")) {
+                    // Debug: Check if the key exists
+                    MessageUtil.debugKey("commands.neoessentials.socialspy.no_permission");
+                    sender.sendSystemMessage(MessageUtil.error("commands.neoessentials.socialspy.no_permission"));
                     return 0;
                 }
-                com.zerog.neoessentials.chat.SocialSpyManager.toggleSocialSpy(source.getPlayer());
-                source.sendSuccess(() -> Component.translatable("commands.neoessentials.socialspy.toggled"), false);
+                
+                com.zerog.neoessentials.chat.SocialSpyManager.toggleSocialSpy(sender);
+                boolean isNowEnabled = com.zerog.neoessentials.chat.SocialSpyManager.hasSocialSpy(sender);
+                
+                if (isNowEnabled) {
+                    sender.sendSystemMessage(MessageUtil.success("commands.neoessentials.socialspy.enabled"));
+                } else {
+                    sender.sendSystemMessage(MessageUtil.success("commands.neoessentials.socialspy.disabled_status"));
+                }
                 return 1;
             })
         );

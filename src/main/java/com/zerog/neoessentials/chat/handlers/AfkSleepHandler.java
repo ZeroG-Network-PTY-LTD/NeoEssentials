@@ -1,8 +1,5 @@
 package com.zerog.neoessentials.chat.handlers;
 
-import com.zerog.neoessentials.chat.AfkManager;
-import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
 // Sleep events not available in this NeoForge version
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,9 +1,7 @@
 package com.zerog.neoessentials.chat.handlers;
 
 import com.zerog.neoessentials.chat.AfkManager;
-import com.zerog.neoessentials.api.ChatAPI;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.slf4j.Logger;

@@ -6,7 +6,6 @@ import com.zerog.neoessentials.util.MessageUtil;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.Component;
 
 /**
  * Handles the /mutelist command for listing all muted players.
@@ -16,16 +15,34 @@ public class MuteListCommand {
         dispatcher.register(Commands.literal("mutelist")
             .executes(ctx -> {
                 CommandSourceStack source = ctx.getSource();
-                // ServerPlayer sender = source.getPlayer(); // Unused variable removed
-                // Implement actual mute list retrieval
-                ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
-                if (chatManager != null && !chatManager.hasChatPermission("neoessentials.command.mutelist")) {
-                    source.sendFailure(net.minecraft.network.chat.Component.translatable("neoessentials.no_permission"));
+                
+                // Validate sender
+                net.minecraft.server.level.ServerPlayer sender = source.getPlayer();
+                if (sender == null) {
+                    source.sendFailure(MessageUtil.error("neoessentials.error.no_server"));
                     return 0;
                 }
+                
+                // Check if command is enabled
+                ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
+                if (chatManager != null && !chatManager.isMuteListEnabled()) {
+                    source.sendFailure(MessageUtil.error("commands.neoessentials.mutelist.disabled"));
+                    return 0;
+                }
+                
+                // Check permissions
+                if (!com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(sender.getUUID(), "neoessentials.chat.mute")) {
+                    source.sendFailure(MessageUtil.error("commands.neoessentials.no_permission"));
+                    return 0;
+                }
+                
                 java.util.List<String> muted = new java.util.ArrayList<>(com.zerog.neoessentials.chat.MuteManager.getMutedPlayers());
-                String mutedList = muted.isEmpty() ? MessageUtil.localize("commands.neoessentials.mutelist.none") : String.join(", ", muted);
-                source.sendSuccess(() -> Component.translatable("neoessentials.mutelist.list", mutedList), false);
+                if (muted.isEmpty()) {
+                    source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.mutelist.empty"), false);
+                } else {
+                    String mutedList = String.join(", ", muted);
+                    source.sendSuccess(() -> MessageUtil.component("commands.neoessentials.mutelist.list", mutedList), false);
+                }
                 return 1;
             })
         );
