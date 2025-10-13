@@ -1,5 +1,5 @@
 {
-  "_configVersion": 7,
+  "_configVersion": 8,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
@@ -9,6 +9,7 @@
     "teleportationEnabled": true,
     "moderationEnabled": true,
     "chatEnabled": true,
+    "webDashboardEnabled": true,
     "debugMode": false
   },
   "economySettings": {
@@ -90,7 +91,73 @@
     "vanish": true,
     "v": true,
     "freeze": true,
-    "unfreeze": true
+    "unfreeze": true,
+    "dashboard": true
+  },
+  "webDashboard": {
+    "webDashboard_comment": "Web Dashboard configuration - controls the built-in web interface for server monitoring and management",
+    "enabled": true,
+    "enabled_comment": "Enable or disable the web dashboard system entirely",
+    "autoStart": false,
+    "autoStart_comment": "Automatically start the web dashboard when server starts. If false, use /dashboard start command",
+    "port": 8080,
+    "port_comment": "Port number for the web dashboard HTTP server (1024-65535). Requires server restart to take effect",
+    "bindAddress": "127.0.0.1",
+    "bindAddress_comment": "IP address to bind to. Use '127.0.0.1' for localhost only (secure), or '0.0.0.0' for all interfaces (less secure)",
+    "enableCORS": true,
+    "enableCORS_comment": "Enable Cross-Origin Resource Sharing headers. Useful for development and external integrations",
+    "maxThreads": 4,
+    "maxThreads_comment": "Maximum number of concurrent HTTP request handler threads",
+    "apiSettings": {
+      "apiSettings_comment": "API endpoint configuration",
+      "enablePlayersEndpoint": true,
+      "enableServerEndpoint": true,
+      "enableLogsEndpoint": true,
+      "enableConfigEndpoint": true,
+      "maxLogLines": 1000,
+      "maxLogLines_comment": "Maximum number of log lines that can be requested at once",
+      "defaultLogLines": 100,
+      "defaultLogLines_comment": "Default number of log lines when not specified in request",
+      "enableSensitiveInfoFiltering": true,
+      "enableSensitiveInfoFiltering_comment": "Automatically filter IPs, UUIDs, and passwords from logs",
+      "cacheTimeout": 5,
+      "cacheTimeout_comment": "Cache API responses for this many seconds to reduce server load (0 to disable)"
+    },
+    "securitySettings": {
+      "securitySettings_comment": "Security configuration for the web dashboard",
+      "requireAuthentication": false,
+      "requireAuthentication_comment": "Require authentication to access dashboard (future feature)",
+      "allowConfigEditing": true,
+      "allowConfigEditing_comment": "Allow config file editing through the web interface",
+      "restrictedConfigPaths": [],
+      "restrictedConfigPaths_comment": "List of config file paths that cannot be edited via web dashboard",
+      "enableRateLimiting": false,
+      "enableRateLimiting_comment": "Enable rate limiting for API requests (future feature)",
+      "maxRequestsPerMinute": 60,
+      "maxRequestsPerMinute_comment": "Maximum API requests per minute per IP (when rate limiting enabled)"
+    },
+    "uiSettings": {
+      "uiSettings_comment": "User interface configuration",
+      "refreshInterval": 10,
+      "refreshInterval_comment": "Auto-refresh interval in seconds for dashboard data",
+      "enableCharts": true,
+      "enableCharts_comment": "Enable performance charts (TPS, memory graphs)",
+      "theme": "space",
+      "theme_comment": "Dashboard theme: 'space', 'dark', 'light' (only 'space' theme currently available)",
+      "showPlayerUUIDs": false,
+      "showPlayerUUIDs_comment": "Show player UUIDs in the player list",
+      "enableNotifications": true,
+      "enableNotifications_comment": "Enable browser notifications for important events"
+    },
+    "loggingSettings": {
+      "loggingSettings_comment": "Dashboard logging configuration",
+      "logDashboardAccess": true,
+      "logDashboardAccess_comment": "Log when the dashboard is accessed",
+      "logAPIRequests": false,
+      "logAPIRequests_comment": "Log all API requests (verbose, for debugging)",
+      "logConfigChanges": true,
+      "logConfigChanges_comment": "Log when config files are modified via dashboard"
+    }
   },
   "security": {
     "enableInputValidation": true,

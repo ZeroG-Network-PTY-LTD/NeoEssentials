@@ -39,6 +39,19 @@ public class DashboardCommand {
      */
     private static int startDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
+        
+        // Check if web dashboard is enabled in config
+        com.zerog.neoessentials.config.ConfigManager configManager = 
+            com.zerog.neoessentials.config.ConfigManager.getInstance();
+        
+        if (!configManager.isWebDashboardEnabled()) {
+            source.sendFailure(Component.literal("Web dashboard is disabled in config!")
+                .withStyle(ChatFormatting.RED)
+                .append(Component.literal("\nEnable it in config.json: modules.webDashboardEnabled = true")
+                    .withStyle(ChatFormatting.GRAY)));
+            return 0;
+        }
+        
         WebDashboardServer server = WebDashboardServer.getInstance();
         
         if (server.isRunning()) {

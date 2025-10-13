@@ -25,24 +25,31 @@ public class WebDashboardServer {
     
     private HttpServer server;
     private final int port;
+    private final String bindAddress;
     private final Path webRoot;
     private boolean running = false;
     
-    private WebDashboardServer(int port) {
+    private WebDashboardServer(int port, String bindAddress) {
         this.port = port;
+        this.bindAddress = bindAddress;
         this.webRoot = Paths.get("data", "webdashboard");
     }
     
     public static WebDashboardServer getInstance() {
         if (INSTANCE == null) {
-            INSTANCE = new WebDashboardServer(8080); // Default port
+            // Load settings from config
+            com.zerog.neoessentials.config.ConfigManager configManager = 
+                com.zerog.neoessentials.config.ConfigManager.getInstance();
+            int port = configManager.getWebDashboardPort();
+            String bindAddress = configManager.getWebDashboardBindAddress();
+            INSTANCE = new WebDashboardServer(port, bindAddress);
         }
         return INSTANCE;
     }
     
-    public static WebDashboardServer getInstance(int port) {
+    public static WebDashboardServer getInstance(int port, String bindAddress) {
         if (INSTANCE == null) {
-            INSTANCE = new WebDashboardServer(port);
+            INSTANCE = new WebDashboardServer(port, bindAddress);
         }
         return INSTANCE;
     }
@@ -63,9 +70,13 @@ public class WebDashboardServer {
                 LOGGER.info("Created web dashboard directory at: {}", webRoot.toAbsolutePath());
             }
             
-            // Create HTTP server
-            server = HttpServer.create(new InetSocketAddress(port), 0);
-            server.setExecutor(Executors.newFixedThreadPool(4));
+            // Create HTTP server with configured bind address
+            com.zerog.neoessentials.config.ConfigManager configManager = 
+                com.zerog.neoessentials.config.ConfigManager.getInstance();
+            int maxThreads = configManager.getWebDashboardMaxThreads();
+            
+            server = HttpServer.create(new InetSocketAddress(bindAddress, port), 0);
+            server.setExecutor(Executors.newFixedThreadPool(maxThreads));
             
             // Register API endpoints
             registerApiEndpoints();

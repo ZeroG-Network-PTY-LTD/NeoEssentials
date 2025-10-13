@@ -567,6 +567,15 @@ public class NeoEssentials {
         
 
         
+        // Web Dashboard commands
+        try {
+            com.zerog.neoessentials.webdashboard.commands.DashboardCommand.register(dispatcher);
+            registry.registerCommand("dashboard", "Control the web dashboard server");
+            LOGGER.info("Web Dashboard commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register web dashboard commands", e);
+        }
+        
         // Root commands (register last so they can see all available commands)
         try {
             ModRootCommand.register(dispatcher);
@@ -643,6 +652,25 @@ public class NeoEssentials {
             LOGGER.error("Failed to load existing player data at startup", e);
         }
         
+        // Start web dashboard server if enabled and auto-start is configured
+        try {
+            com.zerog.neoessentials.config.ConfigManager dashboardConfigManager = 
+                com.zerog.neoessentials.config.ConfigManager.getInstance();
+            
+            if (dashboardConfigManager.isWebDashboardEnabled()) {
+                if (dashboardConfigManager.isWebDashboardAutoStartEnabled()) {
+                    LOGGER.info("Web Dashboard auto-start enabled, starting server...");
+                    com.zerog.neoessentials.webdashboard.WebDashboardServer.getInstance().start();
+                } else {
+                    LOGGER.info("Web Dashboard is enabled but auto-start is disabled. Use /dashboard start to launch.");
+                }
+            } else {
+                LOGGER.info("Web Dashboard is disabled in config.");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to start web dashboard server", e);
+        }
+        
         // Initialize permission system for tab completion
         try {
             com.zerog.neoessentials.api.permissions.PermissionBridge.initialize();
@@ -710,6 +738,18 @@ public class NeoEssentials {
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
         LOGGER.info("NeoEssentials shutting down...");
+        
+        // Stop web dashboard server
+        try {
+            com.zerog.neoessentials.webdashboard.WebDashboardServer server = 
+                com.zerog.neoessentials.webdashboard.WebDashboardServer.getInstance();
+            if (server.isRunning()) {
+                server.stop();
+                LOGGER.info("Web dashboard server stopped");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error stopping web dashboard server", e);
+        }
         
         // Save all player data
         NeoEssentialsManager.getInstance().saveAllPlayerData();

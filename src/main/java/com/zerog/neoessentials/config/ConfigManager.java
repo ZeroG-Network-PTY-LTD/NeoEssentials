@@ -57,7 +57,7 @@ public class ConfigManager {
     
     // Config version tracking - increment when structure changes
     private static final String CONFIG_VERSION_KEY = "_configVersion";
-    private static final int CURRENT_CONFIG_VERSION = 1;
+    private static final int CURRENT_CONFIG_VERSION = 8;
     
     private ConfigManager() {
         // Private constructor for singleton
@@ -153,10 +153,17 @@ public class ConfigManager {
                 JsonObject modules = new JsonObject();
                 modules.addProperty("economyEnabled", true);
                 modules.addProperty("permissionsEnabled", true);
+                modules.addProperty("webDashboardEnabled", true);
                 minimalConfig.add("modules", modules);
                 
                 JsonObject commands = new JsonObject();
                 minimalConfig.add("commands", commands);
+                
+                JsonObject webDashboard = new JsonObject();
+                webDashboard.addProperty("enabled", true);
+                webDashboard.addProperty("autoStart", false);
+                webDashboard.addProperty("port", 8080);
+                minimalConfig.add("webDashboard", webDashboard);
                 break;
                 
             case ECONOMY_CONFIG:
@@ -517,6 +524,141 @@ public class ConfigManager {
             }
         }
         return true; // Default to enabled
+    }
+    
+    /**
+     * Check if web dashboard is enabled
+     */
+    public boolean isWebDashboardEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("webDashboardEnabled")) {
+                return modules.get("webDashboardEnabled").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+    
+    /**
+     * Check if web dashboard should auto-start on server launch
+     */
+    public boolean isWebDashboardAutoStartEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
+            if (webDashboard.has("autoStart")) {
+                return webDashboard.get("autoStart").getAsBoolean();
+            }
+        }
+        return false; // Default to manual start
+    }
+    
+    /**
+     * Get web dashboard port
+     */
+    public int getWebDashboardPort() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
+            if (webDashboard.has("port")) {
+                return webDashboard.get("port").getAsInt();
+            }
+        }
+        return 8080; // Default port
+    }
+    
+    /**
+     * Get web dashboard bind address
+     */
+    public String getWebDashboardBindAddress() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
+            if (webDashboard.has("bindAddress")) {
+                return webDashboard.get("bindAddress").getAsString();
+            }
+        }
+        return "127.0.0.1"; // Default to localhost only
+    }
+    
+    /**
+     * Check if CORS is enabled for web dashboard
+     */
+    public boolean isWebDashboardCORSEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
+            if (webDashboard.has("enableCORS")) {
+                return webDashboard.get("enableCORS").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+    
+    /**
+     * Get web dashboard max threads
+     */
+    public int getWebDashboardMaxThreads() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
+            if (webDashboard.has("maxThreads")) {
+                return webDashboard.get("maxThreads").getAsInt();
+            }
+        }
+        return 4; // Default thread count
+    }
+    
+    /**
+     * Check if config editing is allowed via web dashboard
+     */
+    public boolean isWebDashboardConfigEditingAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
+            if (webDashboard.has("securitySettings")) {
+                JsonObject security = webDashboard.getAsJsonObject("securitySettings");
+                if (security.has("allowConfigEditing")) {
+                    return security.get("allowConfigEditing").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to allowed
+    }
+    
+    /**
+     * Get max log lines for web dashboard
+     */
+    public int getWebDashboardMaxLogLines() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
+            if (webDashboard.has("apiSettings")) {
+                JsonObject apiSettings = webDashboard.getAsJsonObject("apiSettings");
+                if (apiSettings.has("maxLogLines")) {
+                    return apiSettings.get("maxLogLines").getAsInt();
+                }
+            }
+        }
+        return 1000; // Default max lines
+    }
+    
+    /**
+     * Get default log lines for web dashboard
+     */
+    public int getWebDashboardDefaultLogLines() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
+            if (webDashboard.has("apiSettings")) {
+                JsonObject apiSettings = webDashboard.getAsJsonObject("apiSettings");
+                if (apiSettings.has("defaultLogLines")) {
+                    return apiSettings.get("defaultLogLines").getAsInt();
+                }
+            }
+        }
+        return 100; // Default lines
     }
     
     /**
