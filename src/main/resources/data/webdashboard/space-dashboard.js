@@ -101,24 +101,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const configFilesList = document.getElementById('config-files-list');
   const saveConfigBtn = document.getElementById('save-config-btn');
 
-  // Mock config files and options (simulate Java backend)
-  const mockConfigFiles = [
-    {
-      name: 'server.properties',
-      options: [
-        { key: 'max-players', label: 'Max Players', type: 'number', value: 20 },
-        { key: 'motd', label: 'Message of the Day', type: 'text', value: 'Welcome to SpaceCraft!' },
-        { key: 'online-mode', label: 'Online Mode', type: 'checkbox', value: true }
-      ]
-    },
-    {
-      name: 'mods.cfg',
-      options: [
-        { key: 'enable-mod-x', label: 'Enable Mod X', type: 'checkbox', value: false },
-        { key: 'mod-x-difficulty', label: 'Mod X Difficulty', type: 'select', value: 'normal', choices: ['easy','normal','hard'] }
-      ]
-    }
-  ];
+  // Config files loaded from API
+  let mockConfigFiles = [];
 
   function renderConfigFiles(files) {
     configFilesList.innerHTML = '';
@@ -164,9 +148,22 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   if (openConfigBtn) {
-    openConfigBtn.addEventListener('click', function() {
+    openConfigBtn.addEventListener('click', async function() {
       configModal.style.display = 'flex';
-      renderConfigFiles(mockConfigFiles);
+      configFilesList.innerHTML = '<div class="loading-indicator">Loading config files...</div>';
+      
+      try {
+        const response = await fetch('http://localhost:8080/api/config');
+        if (response.ok) {
+          const data = await response.json();
+          mockConfigFiles = data.configs || [];
+          renderConfigFiles(mockConfigFiles);
+        } else {
+          configFilesList.innerHTML = '<div class="error-indicator">Failed to load config files</div>';
+        }
+      } catch (error) {
+        configFilesList.innerHTML = '<div class="error-indicator">Connection error: ' + error.message + '</div>';
+      }
     });
   }
   if (closeConfigBtn) {
@@ -175,24 +172,46 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   if (saveConfigBtn) {
-    saveConfigBtn.addEventListener('click', function() {
-      // Collect values and simulate save
+    saveConfigBtn.addEventListener('click', async function() {
+      // Collect values from inputs
       let updated = [];
       mockConfigFiles.forEach(file => {
-        let fileUpdate = { name: file.name, options: [] };
+        let configData = {};
         file.options.forEach(opt => {
           let input = document.getElementById(`${file.name}-${opt.key}`);
           let value;
-          if (opt.type === 'checkbox') {
+          if (opt.type === 'toggle' || opt.type === 'checkbox') {
             value = input.checked;
+          } else if (opt.type === 'number') {
+            value = parseFloat(input.value) || 0;
           } else {
             value = input.value;
           }
-          fileUpdate.options.push({ key: opt.key, value });
+          configData[opt.key] = value;
         });
-        updated.push(fileUpdate);
+        updated.push({ file: file.name, config: configData });
       });
-      alert('Config changes saved! (Demo)\n' + JSON.stringify(updated, null, 2));
+      
+      // Send update to API
+      for (const fileUpdate of updated) {
+        try {
+          const response = await fetch('http://localhost:8080/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(fileUpdate)
+          });
+          
+          if (response.ok) {
+            showNotification(`Config file ${fileUpdate.file} saved successfully!`, 'info');
+          } else {
+            const error = await response.json();
+            showNotification(`Failed to save ${fileUpdate.file}: ${error.error}`, 'error');
+          }
+        } catch (error) {
+          showNotification(`Connection error: ${error.message}`, 'error');
+        }
+      }
+      
       configModal.style.display = 'none';
     });
   }
@@ -269,36 +288,57 @@ function updateLogViewer(data) {
 }
 
 
-// Demo: Simulate backend fetch (replace with real API calls)
-function fetchDemoStats() {
-  setLoading(document.getElementById('player-stats-content'), 'Loading player stats...');
-  setLoading(document.getElementById('server-stats-content'), 'Loading server stats...');
-  setLoading(document.getElementById('log-viewer-content'), 'Loading logs...');
-  setTimeout(() => {
-    // Simulate player stats
-    updatePlayerStats({
-      players: [
-        { name: 'Steve', rank: 'Commander', xp: 42 },
-        { name: 'Alex', rank: 'Engineer', xp: 37 }
-      ]
-    });
-    // Simulate server stats
-    updateServerStats({
-      status: 'Online',
-      tps: 19.8,
-      online: 2,
-      maxPlayers: 20,
-      healthPercent: 90
-    });
-    // Simulate logs
-    updateLogViewer({
-      logs: [
-        '[12:00] Server started.',
-        '[12:01] Steve joined the game.',
-        '[12:02] Alex joined the game.'
-      ]
-    });
-  }, 800);
+// Fetch real stats from API
+async function fetchDemoStats() {
+  const API_BASE = 'http://localhost:8080/api';
+  
+  // Fetch player stats
+  try {
+    setLoading(document.getElementById('player-stats-content'), 'Loading player stats...');
+    const playerResponse = await fetch(`${API_BASE}/players`);
+    if (playerResponse.ok) {
+      const playerData = await playerResponse.json();
+      updatePlayerStats(playerData);
+    } else {
+      setError(document.getElementById('player-stats-content'), 'Failed to load player data');
+    }
+  } catch (error) {
+    setError(document.getElementById('player-stats-content'), 'Connection error: ' + error.message);
+  }
+  
+  // Fetch server stats
+  try {
+    setLoading(document.getElementById('server-stats-content'), 'Loading server stats...');
+    const serverResponse = await fetch(`${API_BASE}/server`);
+    if (serverResponse.ok) {
+      const serverData = await serverResponse.json();
+      updateServerStats(serverData);
+      
+      // Update TPS chart with real data
+      renderServerChart({
+        labels: ['Now'],
+        tps: [serverData.tps || 20]
+      });
+    } else {
+      setError(document.getElementById('server-stats-content'), 'Failed to load server data');
+    }
+  } catch (error) {
+    setError(document.getElementById('server-stats-content'), 'Connection error: ' + error.message);
+  }
+  
+  // Fetch logs
+  try {
+    setLoading(document.getElementById('log-viewer-content'), 'Loading logs...');
+    const logsResponse = await fetch(`${API_BASE}/logs?lines=50`);
+    if (logsResponse.ok) {
+      const logsData = await logsResponse.json();
+      updateLogViewer(logsData);
+    } else {
+      setError(document.getElementById('log-viewer-content'), 'Failed to load logs');
+    }
+  } catch (error) {
+    setError(document.getElementById('log-viewer-content'), 'Connection error: ' + error.message);
+  }
 }
 
 // Auto-refresh every 10 seconds (replace with backend polling)
