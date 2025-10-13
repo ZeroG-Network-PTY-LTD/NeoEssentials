@@ -22,8 +22,13 @@ public class PowertoolCommand {
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!ConfigManager.getInstance().isCommandEnabled("powertool")) return;
+        registerPowertoolCommand(dispatcher, "powertool");
+        registerPowertoolCommand(dispatcher, "ptool");
+    }
+    
+    private static void registerPowertoolCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
-            Commands.literal("powertool")
+            Commands.literal(commandName)
                 .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .then(Commands.argument("command", StringArgumentType.greedyString())
                     .executes(ctx -> {

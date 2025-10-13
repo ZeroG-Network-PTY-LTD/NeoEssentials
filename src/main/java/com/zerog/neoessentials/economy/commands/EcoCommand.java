@@ -18,8 +18,15 @@ import java.util.UUID;
 
 public class EcoCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Register main command
+        registerEcoCommand(dispatcher, "eco");
+        // Register alias
+        registerEcoCommand(dispatcher, "economy");
+    }
+    
+    private static void registerEcoCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
-            net.minecraft.commands.Commands.literal("eco")
+            net.minecraft.commands.Commands.literal(commandName)
                 .requires(src -> src.hasPermission(2) || com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer() != null ? src.getPlayer().getUUID() : null, "neoessentials.economy.eco"))
                 .then(net.minecraft.commands.Commands.literal("give")
                     .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())

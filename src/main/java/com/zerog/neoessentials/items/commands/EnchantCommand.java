@@ -28,9 +28,14 @@ public class EnchantCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("enchant")) return;
         
-        // Override vanilla enchant command with enhanced version
+        // Override vanilla enchant command with enhanced version and add aliases
+        registerEnchantCommand(dispatcher, "enchant");
+        registerEnchantCommand(dispatcher, "ench");
+    }
+    
+    private static void registerEnchantCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
-            Commands.literal("enchant")
+            Commands.literal(commandName)
                 .requires(cs -> cs.hasPermission(2) || // Allow ops
                     (cs.getEntity() instanceof ServerPlayer player && 
                      com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), "neoessentials.item.enchant")))

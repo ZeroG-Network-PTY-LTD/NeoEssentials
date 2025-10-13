@@ -2,10 +2,13 @@ package com.zerog.neoessentials.util;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Files;
 
 public class DebugUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DebugUtil.class);
     private static boolean debugEnabled = false;
     private static boolean loaded = false;
 
@@ -16,19 +19,19 @@ public class DebugUtil {
 
     public static void debug(String msg) {
         if (isDebugEnabled()) {
-            System.out.println("[NeoEssentials:DEBUG] " + msg);
+            LOGGER.info("[DEBUG] {}", msg);
         }
     }
 
     public static void debugErr(String msg) {
         if (isDebugEnabled()) {
-            System.err.println("[NeoEssentials:DEBUG] " + msg);
+            LOGGER.error("[DEBUG] {}", msg);
         }
     }
 
     public static void debugStackTrace(Throwable t) {
         if (isDebugEnabled()) {
-            t.printStackTrace();
+            LOGGER.error("[DEBUG] Exception occurred", t);
         }
     }
 

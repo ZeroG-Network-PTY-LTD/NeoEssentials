@@ -14,7 +14,14 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public class IgnoreCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("ignore")
+        // Register main command
+        registerIgnoreCommand(dispatcher, "ignore");
+        // Register alias
+        registerIgnoreCommand(dispatcher, "block");
+    }
+    
+    private static void registerIgnoreCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
+        dispatcher.register(Commands.literal(commandName)
             .then(Commands.argument("target", EntityArgument.player())
                 .executes(ctx -> {
                     CommandSourceStack source = ctx.getSource();
@@ -42,6 +49,19 @@ public class IgnoreCommand {
                     
                     // Check permissions
                     ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
+                    // Check if chat module is enabled
+                    if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.ignore.disabled"));
+                        return 0;
+                    }
+                    
+                    // Check if individual ignore command is enabled
+                    if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("ignore")) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.ignore.disabled"));
+                        return 0;
+                    }
+                    
+                    // Legacy check for backwards compatibility
                     if (chatManager != null && !chatManager.isIgnoreEnabled()) {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.ignore.disabled"));
                         return 0;

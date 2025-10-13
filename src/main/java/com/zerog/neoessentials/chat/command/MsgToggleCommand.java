@@ -15,7 +15,13 @@ import com.zerog.neoessentials.util.MessageUtil;
  */
 public class MsgToggleCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("msgtoggle")
+        registerMsgToggleCommand(dispatcher, "msgtoggle");
+        registerMsgToggleCommand(dispatcher, "togglemsg");
+        registerMsgToggleCommand(dispatcher, "mt");
+    }
+    
+    private static void registerMsgToggleCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
+        dispatcher.register(Commands.literal(commandName)
             .executes(ctx -> {
                 CommandSourceStack source = ctx.getSource();
                 ServerPlayer sender = source.getPlayer();

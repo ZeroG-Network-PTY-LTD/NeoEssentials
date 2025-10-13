@@ -28,6 +28,10 @@ public class BalanceCommand {
             net.minecraft.commands.Commands.literal("bal")
                 .executes(ctx -> execute(ctx))
         );
+        dispatcher.register(
+            net.minecraft.commands.Commands.literal("money")
+                .executes(ctx -> execute(ctx))
+        );
     }
 
     private static int execute(com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx) {

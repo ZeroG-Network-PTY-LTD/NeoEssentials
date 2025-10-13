@@ -1,5 +1,5 @@
 {
-  "_configVersion": 1,
+  "_configVersion": 2,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "enabled": true,
   "startingBalance": 100.0,
@@ -14,6 +14,10 @@
   "transactionHistoryLimit": 50,
   "backupInterval": 300,
   "autoSaveInterval": 60,
+  "maxTransferAmount": 10000.0,
+  "paytoggleDefault": true,
+  "cacheMaximumSize": 10000,
+  "cacheExpireAfterAccessMinutes": 60,
   "useDatabase": false,
   "database": {
     "host": "localhost",
@@ -22,5 +26,12 @@
     "username": "root",
     "password": "",
     "tablePrefix": "ne_"
+  },
+  "economySettings": {
+    "economySettings_comment": "Additional economy settings structure expected by ConfigManager methods",
+    "maxBalance": "999999999.99",
+    "minTransferAmount": "0.01",
+    "startingBalance": "100.0",
+    "currencySymbol": "$"
   }
 }

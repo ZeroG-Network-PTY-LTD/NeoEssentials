@@ -75,10 +75,24 @@ public class MsgCommand {
                             return 0;
                         }
                         
-                        // Check permissions
+                        // Check if chat module is enabled
+                        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+                            ChatDebugUtil.debug("MsgCommand - FAILED: Chat module is disabled");
+                            source.sendFailure(MessageUtil.error("commands.neoessentials.msg.disabled"));
+                            return 0;
+                        }
+                        
+                        // Check if individual msg command is enabled
+                        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("msg")) {
+                            ChatDebugUtil.debug("MsgCommand - FAILED: Msg command is disabled");
+                            source.sendFailure(MessageUtil.error("commands.neoessentials.msg.disabled"));
+                            return 0;
+                        }
+                        
+                        // Legacy check for backwards compatibility
                         ChatManager chatManager = ChatAPI.getChatManager();
                         if (chatManager != null && !chatManager.isMsgEnabled()) {
-                            ChatDebugUtil.debug("MsgCommand - FAILED: Messaging is disabled");
+                            ChatDebugUtil.debug("MsgCommand - FAILED: Messaging is disabled (legacy check)");
                             source.sendFailure(MessageUtil.error("commands.neoessentials.msg.disabled"));
                             return 0;
                         }

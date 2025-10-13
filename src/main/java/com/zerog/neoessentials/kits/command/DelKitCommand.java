@@ -30,7 +30,19 @@ public class DelKitCommand {
         (context, builder) -> suggestKits(context, builder);
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("delkit")
+        // Check if kit module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isKitSystemEnabled()) {
+            return; // Don't register kit commands if module is disabled
+        }
+        
+        registerDelKitCommand(dispatcher, "delkit");
+        registerDelKitCommand(dispatcher, "deletekit");
+        registerDelKitCommand(dispatcher, "removekit");
+        registerDelKitCommand(dispatcher, "rkit");
+    }
+    
+    private static void registerDelKitCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
+        dispatcher.register(Commands.literal(commandName)
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer player) {
                     return PermissionAPI.hasPermission(player.getUUID(), "neoessentials.kits.delete");

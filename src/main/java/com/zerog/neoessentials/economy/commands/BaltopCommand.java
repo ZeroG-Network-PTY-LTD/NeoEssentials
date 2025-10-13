@@ -9,8 +9,16 @@ import java.util.UUID;
 
 public class BaltopCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Register main command
+        registerBaltopCommand(dispatcher, "baltop");
+        // Register aliases
+        registerBaltopCommand(dispatcher, "balancetop");
+        registerBaltopCommand(dispatcher, "btop");
+    }
+    
+    private static void registerBaltopCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
-            net.minecraft.commands.Commands.literal("baltop")
+            net.minecraft.commands.Commands.literal(commandName)
                 .requires(src -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer() != null ? src.getPlayer().getUUID() : null, "neoessentials.economy.baltop"))
                 .executes(ctx -> execute(ctx))
         );

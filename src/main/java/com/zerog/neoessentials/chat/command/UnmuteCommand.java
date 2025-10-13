@@ -36,7 +36,19 @@ public class UnmuteCommand {
                         return 0;
                     }
                     
-                    // Check if command is enabled
+                    // Check if chat module is enabled
+                    if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.unmute.disabled"));
+                        return 0;
+                    }
+                    
+                    // Check if individual unmute command is enabled
+                    if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("unmute")) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.unmute.disabled"));
+                        return 0;
+                    }
+                    
+                    // Legacy check for backwards compatibility
                     ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
                     if (chatManager != null && !chatManager.isUnmuteEnabled()) {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.unmute.disabled"));

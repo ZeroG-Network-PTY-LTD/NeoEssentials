@@ -13,6 +13,7 @@ public class RepairCommand {
      * Register the /repair and /fix commands.
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Note: Item commands use general commandsEnabled module (if implemented) + individual command check
         if (!ConfigManager.getInstance().isCommandEnabled("repair")) return;
         dispatcher.register(
             Commands.literal("repair")
