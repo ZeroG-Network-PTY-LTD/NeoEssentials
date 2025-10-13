@@ -3,7 +3,6 @@ package com.zerog.neoessentials.kits.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.zerog.neoessentials.kits.Kit;
@@ -25,6 +24,11 @@ public class KitCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(KitCommand.class);
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Check if kit module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isKitSystemEnabled()) {
+            return; // Don't register kit commands if module is disabled
+        }
+        
         dispatcher.register(Commands.literal("kit")
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer player) {
@@ -39,9 +43,6 @@ public class KitCommand {
             )
         );
     }
-    
-    private static final SuggestionProvider<CommandSourceStack> suggestKits = 
-        (context, builder) -> suggestKits(context, builder);
     
     private static CompletableFuture<Suggestions> suggestKits(CommandContext<CommandSourceStack> context, 
                                                              SuggestionsBuilder builder) {

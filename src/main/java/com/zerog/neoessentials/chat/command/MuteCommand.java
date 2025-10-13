@@ -14,7 +14,12 @@ import com.zerog.neoessentials.util.MessageUtil;
  */
 public class MuteCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("mute")
+        registerMuteCommand(dispatcher, "mute");
+        registerMuteCommand(dispatcher, "silence");  
+    }
+    
+    private static void registerMuteCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
+        dispatcher.register(Commands.literal(commandName)
             .then(Commands.argument("target", EntityArgument.player())
                 .executes(ctx -> executeMute(ctx, ""))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
@@ -26,6 +31,19 @@ public class MuteCommand {
     
     private static int executeMute(com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx, String reason) {
         CommandSourceStack source = ctx.getSource();
+        
+        // Check if chat module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.mute.disabled"));
+            return 0;
+        }
+        
+        // Check if individual mute command is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("mute")) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.mute.disabled"));
+            return 0;
+        }
+        
         net.minecraft.server.level.ServerPlayer targetPlayer;
         try {
             targetPlayer = EntityArgument.getPlayer(ctx, "target");

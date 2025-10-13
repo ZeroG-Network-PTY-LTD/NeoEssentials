@@ -21,8 +21,24 @@ public class PayCommand {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Register main command
         dispatcher.register(
             net.minecraft.commands.Commands.literal("pay")
+                .requires(src -> src.hasPermission(2) || // Allow ops
+                    (src.getPlayer() != null && com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.economy.pay")))
+                .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())
+                    .suggests((ctx, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                        ctx.getSource().getServer().getPlayerList().getPlayers().stream()
+                            .map(p -> p.getGameProfile().getName()),
+                        builder
+                    ))
+                    .then(net.minecraft.commands.Commands.argument("amount", DoubleArgumentType.doubleArg(0.01))
+                        .executes(ctx -> execute(ctx))))
+        );
+        
+        // Register alias
+        dispatcher.register(
+            net.minecraft.commands.Commands.literal("p")
                 .requires(src -> src.hasPermission(2) || // Allow ops
                     (src.getPlayer() != null && com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(src.getPlayer().getUUID(), "neoessentials.economy.pay")))
                 .then(net.minecraft.commands.Commands.argument("player", StringArgumentType.word())

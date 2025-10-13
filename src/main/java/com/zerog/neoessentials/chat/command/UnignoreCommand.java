@@ -14,7 +14,12 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public class UnignoreCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("unignore")
+        registerUnignoreCommand(dispatcher, "unignore");
+        registerUnignoreCommand(dispatcher, "unblock");
+    }
+    
+    private static void registerUnignoreCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
+        dispatcher.register(Commands.literal(commandName)
             .then(Commands.argument("target", EntityArgument.player())
                 .executes(ctx -> {
                     CommandSourceStack source = ctx.getSource();

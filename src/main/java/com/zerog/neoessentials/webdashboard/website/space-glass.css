@@ -1,0 +1,161 @@
+/* Notification area */
+.dashboard-notifications {
+  position: relative;
+  width: 100%;
+  min-height: 32px;
+  margin: 0 0 18px 0;
+  padding: 8px 0;
+  text-align: center;
+  font-size: 1.08em;
+  color: #fff;
+  background: rgba(126,200,227,0.12);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px #7ec8e344;
+  font-family: 'Orbitron', Arial, sans-serif;
+  z-index: 10002;
+}
+
+/* Chart area */
+.server-chart-area {
+  margin-top: 18px;
+  background: rgba(20,30,60,0.18);
+  border-radius: 12px;
+  padding: 12px 0;
+  box-shadow: 0 2px 8px #7ec8e344;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* Live status indicator */
+.live-indicator {
+  color: #00ffae;
+  font-size: 1.1em;
+  margin-left: 8px;
+  animation: pulse 1.2s infinite;
+}
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+/* Server health bar */
+.server-health-bar {
+  width: 100%;
+  height: 18px;
+  background: rgba(30, 47, 90, 0.3);
+  border-radius: 9px;
+  margin: 12px 0 0 0;
+  box-shadow: 0 0 8px #00ffae44;
+  overflow: hidden;
+}
+.health-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ffae 0%, #7ec8e3 100%);
+  border-radius: 9px;
+  box-shadow: 0 0 12px #00ffae88;
+  transition: width 0.5s cubic-bezier(.4,2,.3,1);
+}
+
+/* Glass button */
+.glass-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid #7ec8e3;
+  color: #eaf6ff;
+  border-radius: 12px;
+  padding: 8px 18px;
+  margin-top: 10px;
+  font-family: 'Orbitron', Arial, sans-serif;
+  font-size: 1em;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #7ec8e344;
+  transition: background 0.2s, color 0.2s;
+}
+.glass-btn:hover {
+  background: rgba(126,200,227,0.18);
+  color: #00ffae;
+}
+
+/* Glass modal */
+.glass-modal {
+  background: rgba(20, 30, 60, 0.85);
+  border: 1px solid #7ec8e3;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px #1a1f3a99;
+  color: #eaf6ff;
+  padding: 28px 32px;
+  min-width: 320px;
+  max-width: 420px;
+  font-family: 'Orbitron', Arial, sans-serif;
+  z-index: 10001;
+}
+.glass-modal[open] {
+  display: block;
+}
+.glass-modal .modal-content {
+  margin: 18px 0;
+  font-size: 1.1em;
+}
+.glass-card {
+  background: rgba(30, 40, 80, 0.55);
+  box-shadow:
+    0 4px 24px 0 #1a1f3a55,
+    0 0 32px 0 #7ec8e344,
+    0 0 0 6px #7ec8e344 inset,
+    0 0 32px 0 #fff2 inset;
+  border-radius: 18px;
+  border: 1.5px solid #7ec8e3;
+  backdrop-filter: blur(14px) saturate(1.18);
+  position: relative;
+  margin-bottom: 24px;
+  padding: 24px 20px;
+  color: #eaf6ff;
+  overflow: hidden;
+}
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: url('https://assets.codepen.io/1462889/animated-stars.svg');
+  opacity: 0.13;
+  animation: glass-stars-move 60s linear infinite;
+  border-radius: inherit;
+}
+@keyframes glass-stars-move {
+  0% { background-position: 0 0; }
+  100% { background-position: 400px 0; }
+}
+.glass-card h2 {
+  text-shadow: 0 0 12px #7ec8e3, 0 0 2px #fff, 0 0 24px #1a1f3a88;
+  position: relative;
+  z-index: 1;
+  font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+  color: #7ec8e3;
+  margin-bottom: 16px;
+}
+.glass-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(120deg, #7ec8e3 0%, #1a1f3a 60%, #7ec8e3 100%) border-box;
+  opacity: 0.18;
+  animation: card-border-glow 4s linear infinite;
+}
+@keyframes card-border-glow {
+  0% { opacity: 0.18; }
+  50% { opacity: 0.32; }
+  100% { opacity: 0.18; }
+}
+.stats-content, .log-content {
+  font-size: 1.05rem;
+  color: #eaf6ff;
+}

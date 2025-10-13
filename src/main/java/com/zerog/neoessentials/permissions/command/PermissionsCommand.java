@@ -25,9 +25,28 @@ public class PermissionsCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionsCommand.class);
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // Register under both /pex and /permissions
-        dispatcher.register(createRoot("pex"));
-        dispatcher.register(createRoot("permissions"));
+        // Check if permissions module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isPermissionsEnabled()) {
+            LOGGER.debug("Permissions module is disabled, skipping permissions command registration");
+            return;
+        }
+        
+        // Check if individual permissions commands are enabled
+        boolean pexEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("pex");
+        boolean permissionsEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("permissions");
+        
+        if (!pexEnabled && !permissionsEnabled) {
+            LOGGER.debug("Both pex and permissions commands are disabled, skipping registration");
+            return;
+        }
+        
+        // Register under both /pex and /permissions if enabled
+        if (pexEnabled) {
+            dispatcher.register(createRoot("pex"));
+        }
+        if (permissionsEnabled) {
+            dispatcher.register(createRoot("permissions"));
+        }
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> createRoot(String root) {
@@ -41,11 +60,25 @@ public class PermissionsCommand {
                     .executes(ctx -> listUsers(ctx))))
             .then(Commands.literal("group")
                 .then(Commands.argument("group", StringArgumentType.word())
-                    .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
-                        PermissionAPI.getManager().getGroups().stream()
-                            .map(PermissionGroup::getName),
-                        builder
-                    ))
+                    .suggests((ctx, builder) -> {
+                        try {
+                            // First try to get actual groups from PermissionAPI
+                            var groups = PermissionAPI.getManager().getGroups().stream()
+                                .map(PermissionGroup::getName)
+                                .toList();
+                            
+                            if (!groups.isEmpty()) {
+                                return SharedSuggestionProvider.suggest(groups, builder);
+                            }
+                        } catch (Exception e) {
+                            // Fall through to default suggestions
+                        }
+                        
+                        // Fallback to common group names if no groups are loaded
+                        return SharedSuggestionProvider.suggest(
+                            java.util.Arrays.asList("admin", "moderator", "player", "vip", "default"), 
+                            builder);
+                    })
                     .then(Commands.literal("setprefix")
                         .then(Commands.argument("prefix", StringArgumentType.greedyString())
                             .executes(ctx -> setPrefix(ctx))))
@@ -54,43 +87,59 @@ public class PermissionsCommand {
                             .executes(ctx -> setSuffix(ctx))))
                     .then(Commands.literal("add")
                         .then(Commands.argument("permission", StringArgumentType.greedyString())
-                            .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
-                                java.util.Arrays.asList(
-                                    "neoessentials.*",
-                                    "neoessentials.item.*",
-                                    "neoessentials.economy.*",
-                                    "neoessentials.chat.*",
-                                    "neoessentials.admin.*",
-                                    "neoessentials.teleport.*",
-                                    "neoessentials.admin.permissions",
-                                    "neoessentials.economy.balance",
-                                    "neoessentials.economy.pay", 
-                                    "neoessentials.chat.mute",
-                                    "neoessentials.item.repair",
-                                    "neoessentials.use"
-                                ),
-                                builder
-                            ))
+                            .suggests((ctx, builder) -> {
+                                // Use dynamic permission provider instead of hardcoded list
+                                try {
+                                    java.util.List<String> permissions = 
+                                        com.zerog.neoessentials.api.permissions.external.ExternalPermissionProvider.getAllNeoEssentialsPermissions();
+                                    String input = builder.getRemaining().toLowerCase();
+                                    
+                                    java.util.List<String> filtered = permissions.stream()
+                                        .filter(perm -> perm.toLowerCase().startsWith(input))
+                                        .toList();
+                                        
+                                    return SharedSuggestionProvider.suggest(filtered, builder);
+                                } catch (Exception e) {
+                                    // Fallback to basic suggestions if dynamic loading fails
+                                    return SharedSuggestionProvider.suggest(
+                                        java.util.Arrays.asList(
+                                            "neoessentials.*",
+                                            "neoessentials.admin.*",
+                                            "neoessentials.economy.*",
+                                            "neoessentials.teleport.*"
+                                        ),
+                                        builder
+                                    );
+                                }
+                            })
                             .executes(ctx -> addGroupPermission(ctx))))
                     .then(Commands.literal("remove")
                         .then(Commands.argument("permission", StringArgumentType.greedyString())
-                            .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
-                                java.util.Arrays.asList(
-                                    "neoessentials.*",
-                                    "neoessentials.item.*",
-                                    "neoessentials.economy.*",
-                                    "neoessentials.chat.*",
-                                    "neoessentials.admin.*",
-                                    "neoessentials.teleport.*",
-                                    "neoessentials.admin.permissions",
-                                    "neoessentials.economy.balance",
-                                    "neoessentials.economy.pay", 
-                                    "neoessentials.chat.mute",
-                                    "neoessentials.item.repair",
-                                    "neoessentials.use"
-                                ),
-                                builder
-                            ))
+                            .suggests((ctx, builder) -> {
+                                // Use dynamic permission provider instead of hardcoded list
+                                try {
+                                    java.util.List<String> permissions = 
+                                        com.zerog.neoessentials.api.permissions.external.ExternalPermissionProvider.getAllNeoEssentialsPermissions();
+                                    String input = builder.getRemaining().toLowerCase();
+                                    
+                                    java.util.List<String> filtered = permissions.stream()
+                                        .filter(perm -> perm.toLowerCase().startsWith(input))
+                                        .toList();
+                                        
+                                    return SharedSuggestionProvider.suggest(filtered, builder);
+                                } catch (Exception e) {
+                                    // Fallback to basic suggestions if dynamic loading fails
+                                    return SharedSuggestionProvider.suggest(
+                                        java.util.Arrays.asList(
+                                            "neoessentials.*",
+                                            "neoessentials.admin.*",
+                                            "neoessentials.economy.*",
+                                            "neoessentials.teleport.*"
+                                        ),
+                                        builder
+                                    );
+                                }
+                            })
                             .executes(ctx -> removeGroupPermission(ctx))))))
             .then(Commands.literal("user")
                 .then(Commands.argument("player", StringArgumentType.word())
@@ -109,43 +158,59 @@ public class PermissionsCommand {
                             .executes(ctx -> setUserGroup(ctx))))
                     .then(Commands.literal("add")
                         .then(Commands.argument("permission", StringArgumentType.greedyString())
-                            .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
-                                java.util.Arrays.asList(
-                                    "neoessentials.*",
-                                    "neoessentials.item.*",
-                                    "neoessentials.economy.*",
-                                    "neoessentials.chat.*",
-                                    "neoessentials.admin.*",
-                                    "neoessentials.teleport.*",
-                                    "neoessentials.admin.permissions",
-                                    "neoessentials.economy.balance",
-                                    "neoessentials.economy.pay", 
-                                    "neoessentials.chat.mute",
-                                    "neoessentials.item.repair",
-                                    "neoessentials.use"
-                                ),
-                                builder
-                            ))
+                            .suggests((ctx, builder) -> {
+                                // Use dynamic permission provider instead of hardcoded list
+                                try {
+                                    java.util.List<String> permissions = 
+                                        com.zerog.neoessentials.api.permissions.external.ExternalPermissionProvider.getAllNeoEssentialsPermissions();
+                                    String input = builder.getRemaining().toLowerCase();
+                                    
+                                    java.util.List<String> filtered = permissions.stream()
+                                        .filter(perm -> perm.toLowerCase().startsWith(input))
+                                        .toList();
+                                        
+                                    return SharedSuggestionProvider.suggest(filtered, builder);
+                                } catch (Exception e) {
+                                    // Fallback to basic suggestions if dynamic loading fails
+                                    return SharedSuggestionProvider.suggest(
+                                        java.util.Arrays.asList(
+                                            "neoessentials.*",
+                                            "neoessentials.admin.*",
+                                            "neoessentials.economy.*",
+                                            "neoessentials.teleport.*"
+                                        ),
+                                        builder
+                                    );
+                                }
+                            })
                             .executes(ctx -> addUserPermission(ctx))))
                     .then(Commands.literal("remove")
                         .then(Commands.argument("permission", StringArgumentType.greedyString())
-                            .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
-                                java.util.Arrays.asList(
-                                    "neoessentials.*",
-                                    "neoessentials.item.*",
-                                    "neoessentials.economy.*",
-                                    "neoessentials.chat.*",
-                                    "neoessentials.admin.*",
-                                    "neoessentials.teleport.*",
-                                    "neoessentials.admin.permissions",
-                                    "neoessentials.economy.balance",
-                                    "neoessentials.economy.pay", 
-                                    "neoessentials.chat.mute",
-                                    "neoessentials.item.repair",
-                                    "neoessentials.use"
-                                ),
-                                builder
-                            ))
+                            .suggests((ctx, builder) -> {
+                                // Use dynamic permission provider instead of hardcoded list
+                                try {
+                                    java.util.List<String> permissions = 
+                                        com.zerog.neoessentials.api.permissions.external.ExternalPermissionProvider.getAllNeoEssentialsPermissions();
+                                    String input = builder.getRemaining().toLowerCase();
+                                    
+                                    java.util.List<String> filtered = permissions.stream()
+                                        .filter(perm -> perm.toLowerCase().startsWith(input))
+                                        .toList();
+                                        
+                                    return SharedSuggestionProvider.suggest(filtered, builder);
+                                } catch (Exception e) {
+                                    // Fallback to basic suggestions if dynamic loading fails
+                                    return SharedSuggestionProvider.suggest(
+                                        java.util.Arrays.asList(
+                                            "neoessentials.*",
+                                            "neoessentials.admin.*",
+                                            "neoessentials.economy.*",
+                                            "neoessentials.teleport.*"
+                                        ),
+                                        builder
+                                    );
+                                }
+                            })
                             .executes(ctx -> removeUserPermission(ctx))))));
     }
 

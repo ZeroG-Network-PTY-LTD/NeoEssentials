@@ -1,6 +1,7 @@
 {
-  "_configVersion": 1,
+  "_configVersion": 3,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
+  "defaultGroup": "default",
   "groups": [
     {
       "name": "default",
@@ -16,7 +17,12 @@
         "neoessentials.chat.msg",
         "neoessentials.chat.reply",
         "neoessentials.utils.afk",
-        "neoessentials.kits.use"
+        "neoessentials.kits.use",
+        "neoessentials.teleportation.home",
+        "neoessentials.teleportation.sethome",
+        "neoessentials.teleportation.spawn",
+        "neoessentials.teleportation.warp",
+        "neoessentials.teleportation.tpa"
       ],
       "inherits": []
     },
@@ -32,7 +38,12 @@
         "neoessentials.permissions.reload",
         "neoessentials.kits.create",
         "neoessentials.kits.delete",
-        "neoessentials.kits.list"
+        "neoessentials.kits.list",
+        "neoessentials.teleportation.*",
+        "neoessentials.moderation.kick",
+        "neoessentials.moderation.jail",
+        "neoessentials.moderation.vanish",
+        "neoessentials.moderation.freeze"
       ],
       "inherits": ["default"]
     },

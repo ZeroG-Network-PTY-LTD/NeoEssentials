@@ -3,7 +3,6 @@ package com.zerog.neoessentials.kits;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -75,6 +74,15 @@ public class KitManager {
                             try {
                                 Kit kit = Kit.fromJson(element.getAsJsonObject());
                                 kits.put(kit.getName(), kit);
+                                
+                                // Register kit permission with the permission registry for tab completion
+                                try {
+                                    com.zerog.neoessentials.api.permissions.PermissionRegistry.getInstance()
+                                        .registerKitPermission(kit.getName());
+                                } catch (Exception e) {
+                                    LOGGER.warn("Failed to register kit permission for '{}': {}", kit.getName(), e.getMessage());
+                                }
+                                
                                 loadedCount++;
                             } catch (Exception e) {
                                 LOGGER.warn("Failed to load kit from config: {}", e.getMessage());
@@ -243,6 +251,15 @@ public class KitManager {
             Kit kit = new Kit(name, displayName, description, items, cooldownMillis, permission, -1, true);
             kits.put(kit.getName(), kit);
             saveKits();
+            
+            // Register kit permission with the permission registry for tab completion
+            try {
+                com.zerog.neoessentials.api.permissions.PermissionRegistry.getInstance()
+                    .registerKitPermission(kit.getName());
+            } catch (Exception e) {
+                LOGGER.warn("Failed to register kit permission for '{}': {}", kit.getName(), e.getMessage());
+            }
+            
             LOGGER.info("Created/updated kit: {}", kit.getName());
             return true;
         } catch (Exception e) {
@@ -258,6 +275,15 @@ public class KitManager {
         String normalizedName = name.toLowerCase();
         if (kits.remove(normalizedName) != null) {
             saveKits();
+            
+            // Unregister kit permission from the permission registry
+            try {
+                com.zerog.neoessentials.api.permissions.PermissionRegistry.getInstance()
+                    .unregisterKitPermission(normalizedName);
+            } catch (Exception e) {
+                LOGGER.warn("Failed to unregister kit permission for '{}': {}", normalizedName, e.getMessage());
+            }
+            
             LOGGER.info("Deleted kit: {}", normalizedName);
             return true;
         }
@@ -323,10 +349,12 @@ public class KitManager {
             }
         }
         
-        // Check cooldown
-        long remainingCooldown = getRemainingCooldown(player.getUUID(), kitName);
-        if (remainingCooldown > 0) {
-            return new KitUsageResult(false, "Kit is still on cooldown for " + formatTime(remainingCooldown));
+        // Check cooldown (unless player has exemption)
+        if (!hasCooldownExemption(player, kitName)) {
+            long remainingCooldown = getRemainingCooldown(player.getUUID(), kitName);
+            if (remainingCooldown > 0) {
+                return new KitUsageResult(false, "Kit is still on cooldown for " + formatTime(remainingCooldown));
+            }
         }
         
         // Check usage limit
@@ -374,7 +402,10 @@ public class KitManager {
             }
             
             // Update cooldown and usage tracking
-            setCooldown(player.getUUID(), kitName, System.currentTimeMillis() + kit.getCooldownMillis());
+            // Only set cooldown if player doesn't have exemption
+            if (!hasCooldownExemption(player, kitName)) {
+                setCooldown(player.getUUID(), kitName, System.currentTimeMillis() + kit.getCooldownMillis());
+            }
             incrementUsage(player.getUUID(), kitName);
             
             savePlayerData();
@@ -421,6 +452,27 @@ public class KitManager {
     private void incrementUsage(UUID playerId, String kitName) {
         playerUsages.computeIfAbsent(playerId, k -> new ConcurrentHashMap<>())
                    .merge(kitName.toLowerCase(), 1, Integer::sum);
+    }
+    
+    /**
+     * Checks if a player has cooldown exemption for a kit.
+     * Checks both global cooldown exemption and per-kit exemption.
+     */
+    private boolean hasCooldownExemption(ServerPlayer player, String kitName) {
+        UUID playerId = player.getUUID();
+        
+        // Check global cooldown exemption
+        if (PermissionAPI.hasPermission(playerId, "neoessentials.kits.nocooldown")) {
+            return true;
+        }
+        
+        // Check per-kit cooldown exemption
+        String kitNocooldownPermission = "neoessentials.kits." + kitName.toLowerCase() + ".nocooldown";
+        if (PermissionAPI.hasPermission(playerId, kitNocooldownPermission)) {
+            return true;
+        }
+        
+        return false;
     }
     
     private String formatTime(long millis) {

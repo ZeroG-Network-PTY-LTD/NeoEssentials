@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Space Dashboard - Minecraft Server</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/5/5e/Grass_Block.png">
+  <link rel="stylesheet" href="space-theme.css">
+  <link rel="stylesheet" href="space-glass.css">
+  <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
+  <script defer src="space-dashboard.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+  <noscript>
+    <div class="noscript-warning" role="alert">
+      This dashboard requires JavaScript to function properly. Please enable JavaScript in your browser.
+    </div>
+  </noscript>
+  <div class="space-bg" aria-hidden="true"></div>
+  <div class="dashboard-glass" role="main">
+    <!-- Notification area -->
+    <div id="dashboard-notifications" class="dashboard-notifications" aria-live="polite"></div>
+    <header class="dashboard-header" role="banner">
+      <div class="logo" aria-label="NeoEssentials Dashboard Logo" role="img"><span class="planet-icon">🪐</span> <span>NeoEssentials</span></div>
+      <nav class="dashboard-nav" aria-label="Theme Controls">
+        <button class="theme-switcher" title="Switch Space Theme" aria-label="Switch Space Theme">🌌</button>
+      </nav>
+    </header>
+    <aside class="dashboard-sidebar" aria-label="Sidebar Navigation">
+      <ul role="menubar">
+        <li role="none"><button class="sidebar-btn" data-target="player-stats" data-tooltip="View player statistics"><span class="icon" aria-hidden="true">👨‍🚀</span> <span>Player Stats</span></button></li>
+        <li role="none"><button class="sidebar-btn" data-target="server-stats" data-tooltip="View server statistics"><span class="icon" aria-hidden="true">🛰️</span> <span>Server Stats</span></button></li>
+        <li role="none"><button class="sidebar-btn" data-target="log-viewer" data-tooltip="View server logs"><span class="icon" aria-hidden="true">🌠</span> <span>Log Viewer</span></button></li>
+        <li role="none"><button class="sidebar-btn" data-target="settings" data-tooltip="Dashboard settings"><span class="icon" aria-hidden="true">⚙️</span> <span>Settings</span></button></li>
+      </ul>
+    </aside>
+    <main class="dashboard-main" tabindex="-1">
+      <section id="player-stats" class="glass-card" aria-label="Player Stats">
+        <h2>Player Stats <span id="live-status" class="live-indicator" title="Live">●</span></h2>
+        <div class="stats-content" id="player-stats-content">
+          <div class="loading-indicator">Loading player stats...</div>
+        </div>
+        <button id="player-details-btn" class="glass-btn" aria-label="Show Player Details">Details</button>
+      </section>
+      <section id="server-stats" class="glass-card" aria-label="Server Stats">
+        <h2>Server Stats</h2>
+        <div class="stats-content" id="server-stats-content">
+          <div class="loading-indicator">Loading server stats...</div>
+        </div>
+        <div class="server-health-bar" aria-label="Server Health">
+          <div class="health-fill" id="server-health-fill" style="width:80%"></div>
+        </div>
+        <div class="server-chart-area">
+          <canvas id="serverChart" width="320" height="120" aria-label="Server Performance Chart"></canvas>
+        </div>
+      </section>
+      <section id="log-viewer" class="glass-card" aria-label="Log Viewer">
+        <h2>Log Viewer</h2>
+        <div class="log-content" id="log-viewer-content">
+          <div class="loading-indicator">Loading logs...</div>
+        </div>
+      </section>
+      <section id="settings" class="glass-card" aria-label="Settings">
+          <h2><span class="icon">⚙️</span> Settings</h2>
+          <div class="settings-summary">
+            <p>Edit server configuration files easily.</p>
+            <button id="open-config-modal" class="sidebar-btn" data-tooltip="Edit Config Files">Edit Config</button>
+          </div>
+          <!-- Config Edit Modal -->
+          <div id="config-modal" class="modal" style="display:none;">
+            <div class="modal-content glass-card">
+              <span class="close" id="close-config-modal">&times;</span>
+              <h3>Server Configuration Files</h3>
+              <div id="config-files-list">
+                <!-- Populated by JS: List of config files and editable options -->
+              </div>
+              <button id="save-config-btn" class="sidebar-btn">Save Changes</button>
+            </div>
+          </div>
+      </section>
+      <!-- Player Details Modal -->
+      <dialog id="player-details-modal" class="glass-modal" aria-modal="true" aria-labelledby="player-details-title">
+        <h3 id="player-details-title">Player Details</h3>
+        <div class="modal-content">Loading...</div>
+        <button id="close-modal-btn" class="glass-btn" aria-label="Close">Close</button>
+      </dialog>
+    </main>
+    <footer class="dashboard-footer glass-card" role="contentinfo">
+      <span>Made for Minecraft • NeoEssentials &copy; 2025</span>
+    </footer>
+  </div>
+</body>
+</html>

@@ -26,7 +26,18 @@ public class CreateKitCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateKitCommand.class);
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("createkit")
+        // Check if kit module is enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isKitSystemEnabled()) {
+            return; // Don't register kit commands if module is disabled
+        }
+        
+        registerCreateKitCommand(dispatcher, "createkit");
+        registerCreateKitCommand(dispatcher, "makekit");
+        registerCreateKitCommand(dispatcher, "addkit");
+    }
+    
+    private static void registerCreateKitCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
+        dispatcher.register(Commands.literal(commandName)
             .requires(source -> {
                 if (source.getEntity() instanceof ServerPlayer player) {
                     return PermissionAPI.hasPermission(player.getUUID(), "neoessentials.kits.create");

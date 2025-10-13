@@ -478,6 +478,48 @@ public class ConfigManager {
     }
     
     /**
+     * Check if moderation system is enabled
+     */
+    public boolean isModerationEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("moderationEnabled")) {
+                return modules.get("moderationEnabled").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+    
+    /**
+     * Check if chat system is enabled
+     */
+    public boolean isChatEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("chatEnabled")) {
+                return modules.get("chatEnabled").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+    
+    /**
+     * Check if permissions system is enabled
+     */
+    public boolean isPermissionsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("permissionsEnabled")) {
+                return modules.get("permissionsEnabled").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+    
+    /**
      * Get economy starting balance
      */
     public BigDecimal getEconomyStartingBalance() {
@@ -766,4 +808,987 @@ public class ConfigManager {
         }
         return false; // Default to disabled
     }
+
+    // === KIT MODULE CONFIGURATION METHODS ===
+    
+    /**
+     * Check if the kit module is enabled
+     */
+    public boolean isKitModuleEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("kitsEnabled")) {
+                return modules.get("kitsEnabled").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled for backwards compatibility
+    }
+    
+    /**
+     * Check if kit system is enabled (also checks module level)
+     */
+    public boolean isKitSystemEnabled() {
+        if (!isKitModuleEnabled()) return false;
+        
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("enabled")) {
+                return kits.get("enabled").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+    
+    /**
+     * Check if one-time kits should be skipped from kit list when used
+     */
+    public boolean shouldSkipUsedOneTimeKitsFromList() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("skipUsedOneTimeKitsFromKitList")) {
+                return kits.get("skipUsedOneTimeKitsFromKitList").getAsBoolean();
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Check if kit auto-equip is enabled
+     */
+    public boolean isKitAutoEquipEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("kitAutoEquip")) {
+                return kits.get("kitAutoEquip").getAsBoolean();
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Check if createkit should use pastebin instead of direct file creation
+     */
+    public boolean isPastebinCreatekitEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("pastebinCreatekit")) {
+                return kits.get("pastebinCreatekit").getAsBoolean();
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Check if NBT serialization should be used in createkit
+     */
+    public boolean isNbtSerializationInCreatekitEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("useNbtSerializationInCreatekit")) {
+                return kits.get("useNbtSerializationInCreatekit").getAsBoolean();
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Check if unsafe enchantments are allowed in kits
+     */
+    public boolean areUnsafeEnchantsAllowedInKits() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("unsafeEnchantments")) {
+                return kits.get("unsafeEnchantments").getAsBoolean();
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Get maximum kits per player
+     */
+    public int getMaxKitsPerPlayer() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("maxKitsPerPlayer")) {
+                return kits.get("maxKitsPerPlayer").getAsInt();
+            }
+        }
+        return 10; // Default to 10
+    }
+    
+    /**
+     * Get default kit cooldown in seconds
+     */
+    public long getDefaultKitCooldown() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("defaultCooldown")) {
+                return kits.get("defaultCooldown").getAsLong();
+            }
+        }
+        return 86400; // Default to 24 hours
+    }
+    
+    /**
+     * Check if kit override is allowed for privileged players
+     */
+    public boolean isKitOverrideAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("allowKitOverride")) {
+                return kits.get("allowKitOverride").getAsBoolean();
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if kit preview is enabled
+     */
+    public boolean isKitPreviewEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("enableKitPreview")) {
+                return kits.get("enableKitPreview").getAsBoolean();
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if kit usage should be broadcast
+     */
+    public boolean shouldBroadcastKitUsage() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("broadcastKitUsage")) {
+                return kits.get("broadcastKitUsage").getAsBoolean();
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Check if kit usage should be logged
+     */
+    public boolean shouldLogKitUsage() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("logKitUsage")) {
+                return kits.get("logKitUsage").getAsBoolean();
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Get cost for a specific kit command
+     */
+    public int getKitCommandCost(String command) {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("commandCosts")) {
+                JsonObject costs = kits.getAsJsonObject("commandCosts");
+                if (costs.has(command)) {
+                    return costs.get(command).getAsInt();
+                }
+            }
+        }
+        return 0; // Default to free
+    }
+    
+    /**
+     * Check if new player kit is enabled
+     */
+    public boolean isNewPlayerKitEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("newPlayerKit")) {
+                JsonObject newPlayerKit = kits.getAsJsonObject("newPlayerKit");
+                if (newPlayerKit.has("enabled")) {
+                    return newPlayerKit.get("enabled").getAsBoolean();
+                }
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Get new player kit name
+     */
+    public String getNewPlayerKitName() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("newPlayerKit")) {
+                JsonObject newPlayerKit = kits.getAsJsonObject("newPlayerKit");
+                if (newPlayerKit.has("kitName")) {
+                    String kitName = newPlayerKit.get("kitName").getAsString();
+                    return kitName.isEmpty() ? null : kitName;
+                }
+            }
+        }
+        return null; // Default to null (disabled)
+    }
+    
+    // ===============================
+    // TELEPORTATION CONFIGURATION METHODS
+    // ===============================
+    
+    /**
+     * Check if teleportation system is enabled
+     */
+    public boolean isTeleportationEnabled() {
+        return getBooleanConfig("modules", "teleportationEnabled", true);
+    }
+    
+    // --- Home Settings ---
+    
+
+    
+    /**
+     * Get maximum number of homes per player
+     */
+    public int getMaxHomes() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("homeSettings")) {
+                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
+                if (homeSettings.has("maxHomes")) {
+                    return homeSettings.get("maxHomes").getAsInt();
+                }
+            }
+        }
+        return 5; // Default to 5
+    }
+    
+    /**
+     * Check if cross-dimension homes are allowed
+     */
+    public boolean areCrossDimensionHomesAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("homeSettings")) {
+                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
+                if (homeSettings.has("allowCrossDimensionHomes")) {
+                    return homeSettings.get("allowCrossDimensionHomes").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Get home set cooldown in seconds
+     */
+    public int getHomeSetCooldown() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("homeSettings")) {
+                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
+                if (homeSettings.has("homeSetCooldown")) {
+                    return homeSettings.get("homeSetCooldown").getAsInt();
+                }
+            }
+        }
+        return 30; // Default to 30 seconds
+    }
+    
+    /**
+     * Get home teleport cooldown in seconds
+     */
+    public int getHomeTeleportCooldown() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("homeSettings")) {
+                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
+                if (homeSettings.has("homeTeleportCooldown")) {
+                    return homeSettings.get("homeTeleportCooldown").getAsInt();
+                }
+            }
+        }
+        return 5; // Default to 5 seconds
+    }
+    
+    /**
+     * Get home delete cooldown in seconds
+     */
+    public int getHomeDeleteCooldown() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("homeSettings")) {
+                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
+                if (homeSettings.has("homeDeleteCooldown")) {
+                    return homeSettings.get("homeDeleteCooldown").getAsInt();
+                }
+            }
+        }
+        return 10; // Default to 10 seconds
+    }
+    
+    /**
+     * Check if confirmation is required for home deletion
+     */
+    public boolean isHomeDeleteConfirmationRequired() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("homeSettings")) {
+                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
+                if (homeSettings.has("requireConfirmationForDelete")) {
+                    return homeSettings.get("requireConfirmationForDelete").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if home override is allowed
+     */
+    public boolean isHomeOverrideAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("homeSettings")) {
+                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
+                if (homeSettings.has("allowHomeOverride")) {
+                    return homeSettings.get("allowHomeOverride").getAsBoolean();
+                }
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Check if home teleport safety checks are enabled
+     */
+    public boolean isHomeTeleportSafetyEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("homeSettings")) {
+                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
+                if (homeSettings.has("enableHomeTeleportSafety")) {
+                    return homeSettings.get("enableHomeTeleportSafety").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if home actions should be logged
+     */
+    public boolean shouldLogHomeActions() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("homeSettings")) {
+                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
+                if (homeSettings.has("logHomeActions")) {
+                    return homeSettings.get("logHomeActions").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    // --- Warp Settings ---
+    
+
+    
+    /**
+     * Check if player warps are allowed
+     */
+    public boolean arePlayerWarpsAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("warpSettings")) {
+                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
+                if (warpSettings.has("allowPlayerWarps")) {
+                    return warpSettings.get("allowPlayerWarps").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Get maximum player warps
+     */
+    public int getMaxPlayerWarps() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("warpSettings")) {
+                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
+                if (warpSettings.has("maxPlayerWarps")) {
+                    return warpSettings.get("maxPlayerWarps").getAsInt();
+                }
+            }
+        }
+        return 3; // Default to 3
+    }
+    
+    /**
+     * Get warp cooldown in seconds
+     */
+    public int getWarpCooldown() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("warpSettings")) {
+                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
+                if (warpSettings.has("warpCooldown")) {
+                    return warpSettings.get("warpCooldown").getAsInt();
+                }
+            }
+        }
+        return 10; // Default to 10 seconds
+    }
+    
+    /**
+     * Get warp set cooldown in seconds
+     */
+    public int getWarpSetCooldown() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("warpSettings")) {
+                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
+                if (warpSettings.has("warpSetCooldown")) {
+                    return warpSettings.get("warpSetCooldown").getAsInt();
+                }
+            }
+        }
+        return 60; // Default to 60 seconds
+    }
+    
+    /**
+     * Check if cross-dimension warps are allowed
+     */
+    public boolean areCrossDimensionWarpsAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("warpSettings")) {
+                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
+                if (warpSettings.has("allowCrossDimensionWarps")) {
+                    return warpSettings.get("allowCrossDimensionWarps").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if warp safety checks are enabled
+     */
+    public boolean isWarpSafetyEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("warpSettings")) {
+                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
+                if (warpSettings.has("enableWarpSafety")) {
+                    return warpSettings.get("enableWarpSafety").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if warp creation should be broadcast
+     */
+    public boolean shouldBroadcastWarpCreation() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("warpSettings")) {
+                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
+                if (warpSettings.has("broadcastWarpCreation")) {
+                    return warpSettings.get("broadcastWarpCreation").getAsBoolean();
+                }
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Check if warp actions should be logged
+     */
+    public boolean shouldLogWarpActions() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("warpSettings")) {
+                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
+                if (warpSettings.has("logWarpActions")) {
+                    return warpSettings.get("logWarpActions").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    // --- Spawn Settings ---
+    
+
+    
+    /**
+     * Check if players should spawn on join
+     */
+    public boolean shouldSpawnOnJoin() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("spawnSettings")) {
+                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
+                if (spawnSettings.has("spawnOnJoin")) {
+                    return spawnSettings.get("spawnOnJoin").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if players should spawn on death
+     */
+    public boolean shouldSpawnOnDeath() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("spawnSettings")) {
+                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
+                if (spawnSettings.has("spawnOnDeath")) {
+                    return spawnSettings.get("spawnOnDeath").getAsBoolean();
+                }
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Get spawn cooldown in seconds
+     */
+    public int getSpawnCooldown() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("spawnSettings")) {
+                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
+                if (spawnSettings.has("spawnCooldown")) {
+                    return spawnSettings.get("spawnCooldown").getAsInt();
+                }
+            }
+        }
+        return 5; // Default to 5 seconds
+    }
+    
+    /**
+     * Check if spawn can be set by admins
+     */
+    public boolean isSpawnSetAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("spawnSettings")) {
+                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
+                if (spawnSettings.has("allowSpawnSet")) {
+                    return spawnSettings.get("allowSpawnSet").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if spawn safety checks are enabled
+     */
+    public boolean isSpawnSafetyEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("spawnSettings")) {
+                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
+                if (spawnSettings.has("enableSpawnSafety")) {
+                    return spawnSettings.get("enableSpawnSafety").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if spawn actions should be logged
+     */
+    public boolean shouldLogSpawnActions() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("spawnSettings")) {
+                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
+                if (spawnSettings.has("logSpawnActions")) {
+                    return spawnSettings.get("logSpawnActions").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    // --- Teleport Request Settings ---
+    
+
+    
+    /**
+     * Get teleport request timeout in seconds
+     */
+    public int getTeleportRequestTimeout() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("teleportRequestSettings")) {
+                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
+                if (requestSettings.has("requestTimeout")) {
+                    return requestSettings.get("requestTimeout").getAsInt();
+                }
+            }
+        }
+        return 60; // Default to 60 seconds
+    }
+    
+    /**
+     * Get maximum pending requests per player
+     */
+    public int getMaxPendingRequests() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("teleportRequestSettings")) {
+                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
+                if (requestSettings.has("maxPendingRequests")) {
+                    return requestSettings.get("maxPendingRequests").getAsInt();
+                }
+            }
+        }
+        return 5; // Default to 5
+    }
+    
+    /**
+     * Get cooldown between teleport requests in seconds
+     */
+    public int getTeleportRequestCooldown() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("teleportRequestSettings")) {
+                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
+                if (requestSettings.has("cooldownBetweenRequests")) {
+                    return requestSettings.get("cooldownBetweenRequests").getAsInt();
+                }
+            }
+        }
+        return 10; // Default to 10 seconds
+    }
+    
+    /**
+     * Check if multiple requests to same player are allowed
+     */
+    public boolean areMultipleTeleportRequestsAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("teleportRequestSettings")) {
+                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
+                if (requestSettings.has("allowMultipleRequests")) {
+                    return requestSettings.get("allowMultipleRequests").getAsBoolean();
+                }
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Check if teleport request notifications are enabled
+     */
+    public boolean areTeleportRequestNotificationsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("teleportRequestSettings")) {
+                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
+                if (requestSettings.has("enableRequestNotifications")) {
+                    return requestSettings.get("enableRequestNotifications").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if auto-accept from friends is enabled
+     */
+    public boolean isAutoAcceptFromFriendsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("teleportRequestSettings")) {
+                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
+                if (requestSettings.has("autoAcceptFromFriends")) {
+                    return requestSettings.get("autoAcceptFromFriends").getAsBoolean();
+                }
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Check if teleport safety checks are enabled for requests
+     */
+    public boolean isTeleportRequestSafetyEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("teleportRequestSettings")) {
+                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
+                if (requestSettings.has("enableTeleportSafety")) {
+                    return requestSettings.get("enableTeleportSafety").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if teleport request actions should be logged
+     */
+    public boolean shouldLogTeleportRequests() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("teleportRequestSettings")) {
+                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
+                if (requestSettings.has("logTeleportRequests")) {
+                    return requestSettings.get("logTeleportRequests").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    // --- General Teleportation Settings ---
+    
+    /**
+     * Get teleport delay in seconds
+     */
+    public int getTeleportDelay() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("generalSettings")) {
+                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
+                if (generalSettings.has("teleportDelay")) {
+                    return generalSettings.get("teleportDelay").getAsInt();
+                }
+            }
+        }
+        return 3; // Default to 3 seconds
+    }
+    
+    /**
+     * Check if teleportation should be canceled on movement
+     */
+    public boolean shouldCancelTeleportOnMovement() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("generalSettings")) {
+                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
+                if (generalSettings.has("cancelOnMovement")) {
+                    return generalSettings.get("cancelOnMovement").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if teleportation should be canceled on damage
+     */
+    public boolean shouldCancelTeleportOnDamage() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("generalSettings")) {
+                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
+                if (generalSettings.has("cancelOnDamage")) {
+                    return generalSettings.get("cancelOnDamage").getAsBoolean();
+                }
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Check if teleport warmup is enabled
+     */
+    public boolean isTeleportWarmupEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("generalSettings")) {
+                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
+                if (generalSettings.has("enableTeleportWarmup")) {
+                    return generalSettings.get("enableTeleportWarmup").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if teleportation is allowed in combat
+     */
+    public boolean isTeleportInCombatAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("generalSettings")) {
+                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
+                if (generalSettings.has("allowTeleportInCombat")) {
+                    return generalSettings.get("allowTeleportInCombat").getAsBoolean();
+                }
+            }
+        }
+        return false; // Default to false
+    }
+    
+    /**
+     * Get maximum teleportation distance in blocks
+     */
+    public int getMaxTeleportDistance() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("generalSettings")) {
+                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
+                if (generalSettings.has("maxTeleportDistance")) {
+                    return generalSettings.get("maxTeleportDistance").getAsInt();
+                }
+            }
+        }
+        return -1; // Default to unlimited
+    }
+    
+    /**
+     * Check if particle effects are enabled for teleportation
+     */
+    public boolean areTeleportParticleEffectsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("generalSettings")) {
+                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
+                if (generalSettings.has("enableParticleEffects")) {
+                    return generalSettings.get("enableParticleEffects").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Check if sound effects are enabled for teleportation
+     */
+    public boolean areTeleportSoundEffectsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("generalSettings")) {
+                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
+                if (generalSettings.has("enableSoundEffects")) {
+                    return generalSettings.get("enableSoundEffects").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to true
+    }
+    
+    /**
+     * Get list of protected areas where teleportation is restricted
+     */
+    public List<String> getTeleportProtectedAreas() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        List<String> areas = new ArrayList<>();
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("generalSettings")) {
+                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
+                if (generalSettings.has("protectedAreas")) {
+                    JsonArray protectedAreas = generalSettings.getAsJsonArray("protectedAreas");
+                    for (JsonElement area : protectedAreas) {
+                        areas.add(area.getAsString());
+                    }
+                }
+            }
+        }
+        return areas;
+    }
+    
+    /**
+     * Get cost for a specific teleportation command
+     */
+    public int getTeleportCommandCost(String command) {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("commandCosts")) {
+                JsonObject costs = teleportation.getAsJsonObject("commandCosts");
+                if (costs.has(command)) {
+                    return costs.get(command).getAsInt();
+                }
+            }
+        }
+        return 0; // Default to free
+    }
+    
+    /**
+     * Helper method to get boolean config values
+     */
+    private boolean getBooleanConfig(String section, String key, boolean defaultValue) {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has(section)) {
+            JsonObject sectionObj = config.getAsJsonObject(section);
+            if (sectionObj.has(key)) {
+                return sectionObj.get(key).getAsBoolean();
+            }
+        }
+        return defaultValue;
+    }
+    
 }

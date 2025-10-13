@@ -36,7 +36,7 @@ public class MessageUtil {
         if (loaded) return;
         loaded = true;
         
-        LOGGER.info("Loading NeoEssentials translations...");
+        LOGGER.info("=== LOADING NEOESSENTIALS TRANSLATIONS ===");
         
         File serverLangFile = ResourceUtil.getLanguageFile("en_us");
         LOGGER.info("Server language file path: {}", serverLangFile.getAbsolutePath());
@@ -92,6 +92,14 @@ public class MessageUtil {
             // Final fallback - use JAR translations directly
             translations.putAll(jarTranslations);
             LOGGER.warn("Using JAR translations directly ({} keys)", translations.size());
+        }
+        
+        LOGGER.info("=== TRANSLATION LOADING COMPLETE ===");
+        LOGGER.info("Total translations loaded: {}", translations.size());
+        LOGGER.info("Sample translation keys: {}", translations.keySet().stream().limit(5).toArray());
+        LOGGER.info("Home set message key exists: {}", translations.containsKey("commands.neoessentials.teleport.home.set"));
+        if (translations.containsKey("commands.neoessentials.teleport.home.set")) {
+            LOGGER.info("Home set message template: '{}'", translations.get("commands.neoessentials.teleport.home.set"));
         }
     }
     

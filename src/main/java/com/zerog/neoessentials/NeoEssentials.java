@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import com.zerog.neoessentials.chat.ChatManager;
+import com.zerog.neoessentials.teleportation.TeleportLocation;
 import com.zerog.neoessentials.api.ChatAPI;
 
 
@@ -183,6 +184,8 @@ public class NeoEssentials {
         // AfkSleepHandler disabled - no working sleep events in this version
         // net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkSleepHandler.class);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkTablistHandler.class);
+        
+
         
         // Initialize chat integrations for external plugins
         initializeChatIntegrations();
@@ -350,11 +353,11 @@ public class NeoEssentials {
         try {
             EconomyCommands.register(dispatcher);
             // Register economy commands in the registry
-            registry.registerCommand("balance", "Display your or another player's balance", "bal");
-            registry.registerCommand("pay", "Send money to another player");
-            registry.registerCommand("paytoggle", "Toggle accepting payments");
-            registry.registerCommand("eco", "Admin economy commands (give, take, set, history)");
-            registry.registerCommand("baltop", "Display top player balances");
+            registry.registerCommand("balance", "Display your or another player's balance", "bal", "money");
+            registry.registerCommand("pay", "Send money to another player", "p");
+            registry.registerCommand("paytoggle", "Toggle accepting payments", "pt");
+            registry.registerCommand("eco", "Admin economy commands (give, take, set, history)", "economy");
+            registry.registerCommand("baltop", "Display top player balances", "balancetop", "btop");
             LOGGER.info("Economy commands registered successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to register economy commands", e);
@@ -363,8 +366,16 @@ public class NeoEssentials {
         // Permission commands
         try {
             PermissionsCommand.register(dispatcher);
-            registry.registerCommand("pex", "Permission management commands", "permissions");
             registry.registerCommand("permissions", "Permission management commands", "pex");
+            
+            // Register permission bridge commands for tab completion support
+            com.zerog.neoessentials.api.permissions.PermissionBridge.registerCommands(dispatcher);
+            registry.registerCommand("neoessentials-permissions", "List and export NeoEssentials permissions");
+            registry.registerCommand("neoe-perms", "Quick access to NeoEssentials permissions");
+            
+            // Note: /pex and /permissions commands are already registered by PermissionsCommand.register()
+            // which now includes dynamic tab completion from ExternalPermissionProvider
+            
             LOGGER.info("Permission commands registered successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to register permission commands", e);
@@ -382,10 +393,10 @@ public class NeoEssentials {
             registry.registerCommand("clearinventory", "Clear player inventory", "ci", "clearinv");
             
             com.zerog.neoessentials.items.commands.EnchantCommand.register(dispatcher);
-            registry.registerCommand("enchant", "Enchant items with specific enchantments");
+            registry.registerCommand("enchant", "Enchant items with specific enchantments", "ench");
             
             com.zerog.neoessentials.items.commands.PowertoolCommand.register(dispatcher);
-            registry.registerCommand("powertool", "Bind commands to items", "pt");
+            registry.registerCommand("powertool", "Bind commands to items", "ptool");
 
             com.zerog.neoessentials.items.commands.PowertoolToggleCommand.register(dispatcher);
             registry.registerCommand("powertooltoggle", "Toggle powertool functionality", "pttoggle");            LOGGER.info("Item commands registered successfully");
@@ -396,31 +407,31 @@ public class NeoEssentials {
         // Chat commands
         try {
             // Register custom messaging commands  
-            System.out.println("DEBUG: Registering custom messaging commands");
+            LOGGER.debug("Registering custom messaging commands");
             
             com.zerog.neoessentials.chat.command.MsgCommand.register(dispatcher);
-            registry.registerCommand("msg", "Send private messages to players");
+            registry.registerCommand("msg", "Send private messages to players", "tell", "w", "message", "pm", "whisper");
             
             com.zerog.neoessentials.chat.command.IgnoreCommand.register(dispatcher);
-            registry.registerCommand("ignore", "Ignore messages from a player");
+            registry.registerCommand("ignore", "Ignore messages from a player", "block");
             
             com.zerog.neoessentials.chat.command.UnignoreCommand.register(dispatcher);
-            registry.registerCommand("unignore", "Stop ignoring a player");
+            registry.registerCommand("unignore", "Stop ignoring a player", "unblock");
             
             com.zerog.neoessentials.chat.command.MuteCommand.register(dispatcher);
-            registry.registerCommand("mute", "Mute a player from chat");
+            registry.registerCommand("mute", "Mute a player from chat", "silence");
             
             com.zerog.neoessentials.chat.command.UnmuteCommand.register(dispatcher);
-            registry.registerCommand("unmute", "Unmute a player");
+            registry.registerCommand("unmute", "Unmute a player", "unsilence");
             
             com.zerog.neoessentials.chat.command.MuteListCommand.register(dispatcher);
-            registry.registerCommand("mutelist", "List all muted players");
+            registry.registerCommand("mutelist", "List all muted players", "muted");
             
             com.zerog.neoessentials.chat.command.MsgToggleCommand.register(dispatcher);
-            registry.registerCommand("msgtoggle", "Toggle receiving private messages");
+            registry.registerCommand("msgtoggle", "Toggle receiving private messages", "togglemsg", "mt");
             
             com.zerog.neoessentials.chat.command.SocialSpyCommand.register(dispatcher);
-            registry.registerCommand("socialspy", "Toggle message spying for moderators");
+            registry.registerCommand("socialspy", "Toggle message spying for moderators", "ss", "spy");
             
             com.zerog.neoessentials.chat.command.ReplyCommand.register(dispatcher);
             registry.registerCommand("reply", "Reply to last private message", "r");
@@ -430,10 +441,78 @@ public class NeoEssentials {
             LOGGER.error("Failed to register chat commands", e);
         }
         
+        // Moderation commands
+        try {
+            com.zerog.neoessentials.moderation.commands.BanCommand.register(dispatcher);
+            registry.registerCommand("ban", "Ban a player permanently", "pban");
+            registry.registerCommand("tempban", "Temporarily ban a player", "tban");
+            registry.registerCommand("banip", "Ban an IP address", "ipban");
+            registry.registerCommand("unban", "Unban a player", "pardon");
+            registry.registerCommand("unbanip", "Unban an IP address", "unipban", "pardonip");
+            registry.registerCommand("banlist", "List all banned players and IPs", "banls");
+            
+            com.zerog.neoessentials.moderation.commands.KickCommand.register(dispatcher);
+            registry.registerCommand("kick", "Kick a player from the server");
+            registry.registerCommand("kickall", "Kick all players with a reason", "kicka");
+            
+            com.zerog.neoessentials.moderation.commands.JailCommand.register(dispatcher);
+            registry.registerCommand("jail", "Jail a player at the jail location");
+            registry.registerCommand("unjail", "Release a player from jail", "unjail");
+            registry.registerCommand("setjail", "Set the jail location", "createjail");
+            registry.registerCommand("jaillist", "List all jailed players", "jails");
+            registry.registerCommand("jailinfo", "Display jail information", "ji");
+            
+            com.zerog.neoessentials.moderation.commands.VanishCommand.register(dispatcher);
+            registry.registerCommand("vanish", "Toggle vanish mode for staff", "v");
+            registry.registerCommand("unvanish", "Disable vanish mode", "visible");
+            registry.registerCommand("vanishlist", "List all vanished players", "vlist");
+            
+            com.zerog.neoessentials.moderation.commands.FreezeCommand.register(dispatcher);
+            registry.registerCommand("freeze", "Freeze a player in place");
+            registry.registerCommand("unfreeze", "Unfreeze a player", "thaw");
+            registry.registerCommand("freezeall", "Freeze all players", "freezea");
+            registry.registerCommand("unfreezeall", "Unfreeze all players", "thawall");
+            registry.registerCommand("freezelist", "List all frozen players", "flist");
+            
+            LOGGER.info("Moderation commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register moderation commands", e);
+        }
+        
         // Utility commands
         try {
             com.zerog.neoessentials.util.commands.AfkCommand.register(dispatcher);
-            registry.registerCommand("afk", "Toggle AFK status");
+            registry.registerCommand("afk", "Toggle AFK status", "away");
+            
+            com.zerog.neoessentials.util.commands.BookCommand.register(dispatcher);
+            registry.registerCommand("book", "Create and edit books", "writebook");
+            
+            com.zerog.neoessentials.util.commands.MailCommand.register(dispatcher);
+            registry.registerCommand("mail", "Send messages to offline players", "message", "letter");
+            
+            com.zerog.neoessentials.util.commands.MotdCommand.register(dispatcher);
+            registry.registerCommand("motd", "Display or set message of the day", "messageoftheday");
+            
+            com.zerog.neoessentials.util.commands.NearCommand.register(dispatcher);
+            registry.registerCommand("near", "Show nearby players", "nearby");
+            
+            com.zerog.neoessentials.util.commands.NickCommand.register(dispatcher);
+            registry.registerCommand("nick", "Set your nickname", "nickname");
+            
+            com.zerog.neoessentials.util.commands.RealnameCommand.register(dispatcher);
+            registry.registerCommand("realname", "Show real name of nicknamed player", "whoami");
+            
+            com.zerog.neoessentials.util.commands.RulesCommand.register(dispatcher);
+            registry.registerCommand("rules", "Display server rules", "rule");
+            
+            com.zerog.neoessentials.util.commands.SeenCommand.register(dispatcher);
+            registry.registerCommand("seen", "Show when player was last online", "lastseen");
+            
+            com.zerog.neoessentials.util.commands.SignCommand.register(dispatcher);
+            registry.registerCommand("sign", "Edit sign text without breaking", "editsign");
+            
+            com.zerog.neoessentials.util.commands.WhoisCommand.register(dispatcher);
+            registry.registerCommand("whois", "Show detailed player information", "who");
             
             LOGGER.info("Utility commands registered successfully");
         } catch (Exception e) {
@@ -444,14 +523,49 @@ public class NeoEssentials {
         try {
             com.zerog.neoessentials.kits.command.KitCommands.register(dispatcher);
             registry.registerCommand("kit", "Use or list available kits");
-            registry.registerCommand("createkit", "Create a kit from inventory");
-            registry.registerCommand("delkit", "Delete a kit with confirmation");
-            registry.registerCommand("listkits", "List all kits with details");
+            registry.registerCommand("createkit", "Create a kit from inventory", "makekit", "addkit");
+            registry.registerCommand("delkit", "Delete a kit with confirmation", "deletekit", "removekit", "rkit");
+            registry.registerCommand("listkits", "List all kits with details", "kits");
             
             LOGGER.info("Kit commands registered successfully");
         } catch (Exception e) {
             LOGGER.error("Failed to register kit commands", e);
         }
+        
+        // Teleportation commands
+        try {
+            com.zerog.neoessentials.teleportation.TeleportationRegistry.registerCommands(dispatcher);
+            
+            // Register teleportation commands in the registry
+            registry.registerCommand("home", "Teleport to your home", "h");
+            registry.registerCommand("sethome", "Set a home location", "createhome");
+            registry.registerCommand("delhome", "Delete a home location", "deletehome", "removehome", "rhome");
+            registry.registerCommand("homes", "List your homes", "homelist");
+            registry.registerCommand("spawn", "Teleport to spawn");
+            registry.registerCommand("setspawn", "Set the server spawn location", "createspawn");
+            registry.registerCommand("spawninfo", "Display spawn information", "si");
+            registry.registerCommand("warp", "Teleport to a warp");
+            registry.registerCommand("setwarp", "Create a warp", "createwarp", "addwarp");
+            registry.registerCommand("delwarp", "Delete a warp", "deletewarp", "removewarp", "rwarp");
+            registry.registerCommand("warps", "List available warps", "warplist");
+            registry.registerCommand("tpa", "Request to teleport to a player");
+            registry.registerCommand("tpahere", "Request a player to teleport to you", "tphere-request");
+            registry.registerCommand("tpaccept", "Accept a teleport request", "tpyes", "tpy");
+            registry.registerCommand("tpdeny", "Deny a teleport request", "tpno", "tpn");
+            registry.registerCommand("tpcancel", "Cancel your teleport request", "tpcanc");
+            registry.registerCommand("tp", "Admin teleport command");
+            registry.registerCommand("tphere", "Teleport a player to you");
+            registry.registerCommand("tpall", "Teleport all players");
+            registry.registerCommand("tpo", "Teleport to offline or online player", "otp", "offlinetp", "tpoff", "tpoffline");
+            registry.registerCommand("tpohere", "Teleport player to you (override)", "etpohere");
+            registry.registerCommand("back", "Return to previous location", "return", "b");
+            
+            LOGGER.info("Teleportation commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register teleportation commands", e);
+        }
+        
+
         
         // Root commands (register last so they can see all available commands)
         try {
@@ -494,6 +608,12 @@ public class NeoEssentials {
                 // Economy data is automatically saved by EconomyManager
                 LOGGER.debug("Economy auto-saved for: {}", uuid);
                 
+                // Save player's last location for offline teleportation
+                TeleportLocation currentLocation = new TeleportLocation(player);
+                NeoEssentialsManager.PlayerData playerData = NeoEssentialsManager.getInstance().getPlayerData(uuid);
+                playerData.setLastLocation(currentLocation.toLocationString());
+                LOGGER.debug("Last location saved for: {} at {}", player.getName().getString(), currentLocation.getLocationString());
+                
                 // Save general player data (homes, warps, etc.)
                 NeoEssentialsManager.getInstance().savePlayerData(uuid);
                 LOGGER.debug("Player data saved for: {}", uuid);
@@ -523,9 +643,46 @@ public class NeoEssentials {
             LOGGER.error("Failed to load existing player data at startup", e);
         }
         
+        // Initialize permission system for tab completion
+        try {
+            com.zerog.neoessentials.api.permissions.PermissionBridge.initialize();
+            
+            // Initialize external permission provider for PermissionsEX integration
+            com.zerog.neoessentials.api.permissions.external.ExternalPermissionProvider.initialize();
+            
+            // Get permission count for information
+            int totalPermissions = com.zerog.neoessentials.api.permissions.PermissionRegistry.getInstance().getAllPermissions().size();
+            com.zerog.neoessentials.api.permissions.PermissionScanner.getInstance().scanForPermissions();
+            int discoveredPermissions = com.zerog.neoessentials.api.permissions.PermissionScanner.getInstance().getDiscoveredPermissions().size();
+            
+            LOGGER.info("Permission system initialized: {} registered + {} discovered = {} total permissions", 
+                totalPermissions, discoveredPermissions, totalPermissions + discoveredPermissions);
+            
+            // Inject permission commands for PermissionsEX integration
+            var server = event.getServer();
+            var dispatcher = server.getCommands().getDispatcher();
+            
+            com.zerog.neoessentials.api.permissions.external.PermissionCommandInjector.injectPermissionCommands(dispatcher);
+            com.zerog.neoessentials.api.permissions.external.PermissionCommandInjector.registerTestCommand(dispatcher);
+            
+            // Help message for PermissionsEX users
+            LOGGER.info("=== PermissionsEX Integration READY ===");
+            LOGGER.info("NeoEssentials provides a working /pex command with tab completion!");
+            LOGGER.info("Try: /pex group admin add neoessentials.<TAB> - should show all {} permissions", 
+                totalPermissions + discoveredPermissions);
+            LOGGER.info("Try: /pex user <name> add neoessentials.<TAB> - should show all permissions");
+            LOGGER.info("The fake /pex command was registered during command registration phase");
+            LOGGER.info("Use: /neoessentials-permissions group-examples (for group commands)");
+            LOGGER.info("Use: /neoessentials-permissions user-examples (for user commands)");
+            LOGGER.info("Tab completion works for both: /pex group <name> and /pex user <name>");
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize permission system", e);
+        }
+        
         // Override vanilla messaging commands after server starts
         try {
-            System.out.println("DEBUG: Attempting to override vanilla messaging commands");
+            LOGGER.debug("Attempting to override vanilla messaging commands");
             var server = event.getServer();
             var dispatcher = server.getCommands().getDispatcher();
             var rootNode = dispatcher.getRoot();
@@ -534,7 +691,7 @@ public class NeoEssentials {
             rootNode.getChildren().removeIf(node -> {
                 String name = node.getName();
                 if (name.equals("msg") || name.equals("tell") || name.equals("w")) {
-                    System.out.println("DEBUG: Removed vanilla command: " + name);
+                    LOGGER.debug("Removed vanilla command: {}", name);
                     return true;
                 }
                 return false;
@@ -542,10 +699,10 @@ public class NeoEssentials {
             
             // Re-register our custom commands to ensure they're active
             com.zerog.neoessentials.chat.command.MsgCommand.register(dispatcher);
-            System.out.println("DEBUG: Re-registered custom messaging commands after vanilla removal");
+            LOGGER.debug("Re-registered custom messaging commands after vanilla removal");
             
         } catch (Exception e) {
-            System.out.println("DEBUG: Failed to override vanilla commands: " + e.getMessage());
+            LOGGER.error("Failed to override vanilla commands: {}", e.getMessage());
             LOGGER.error("Failed to override vanilla messaging commands", e);
         }
     }

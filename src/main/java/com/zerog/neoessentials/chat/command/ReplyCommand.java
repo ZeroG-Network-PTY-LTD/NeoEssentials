@@ -55,7 +55,19 @@ public class ReplyCommand {
                         return 0;
                     }
                     
-                    // Permissions and mute/ignore checks
+                    // Check if chat module is enabled
+                    if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.reply.disabled"));
+                        return 0;
+                    }
+                    
+                    // Check if individual reply command is enabled
+                    if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isCommandEnabled("reply")) {
+                        source.sendFailure(MessageUtil.error("commands.neoessentials.reply.disabled"));
+                        return 0;
+                    }
+                    
+                    // Legacy check for backwards compatibility
                     com.zerog.neoessentials.chat.ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
                     if (chatManager != null && !chatManager.isReplyEnabled()) {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.reply.disabled"));
