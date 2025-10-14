@@ -500,7 +500,7 @@
   },
   "chat": {
     "chat-format": "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
-    "chat-format-description": "Chat format template. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {MESSAGE}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, {neoessentials_x}, {neoessentials_y}, {neoessentials_z}, {neoessentials_health}, {neoessentials_level}, and more via PlaceholderAPI",
+    "chat-format-description": "Chat format template. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {MESSAGE}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, {neoessentials_x}, {neoessentials_y}, {neoessentials_z}, {neoessentials_health}, {neoessentials_level}, and more via PlaceholderAPI. Legacy uppercase placeholders like {USERNAME}, {PREFIX}, {SUFFIX} are automatically converted for backwards compatibility. Use '&' for color codes (e.g., &c for red, &6 for gold).",
     "enable-chat-formatting": true,
     "enable-color-codes": true,
     "muteCommands": [],
@@ -514,11 +514,11 @@
     "bindingItemsPolicy": "keep",
     "sendInfoAfterDeath": true,
     "allowSilentJoinQuit": false,
-    "customJoinMessage_comment": "Custom join message template. Use 'none' for default. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, and more via PlaceholderAPI. Example: '&a{neoessentials_prefix}&f{neoessentials_displayname} &ejoined the server!'",
+    "customJoinMessage_comment": "Custom join message template. Use 'none' for default. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, and more via PlaceholderAPI. Legacy uppercase like {USERNAME}, {PREFIX} also work. Use '&' for colors. Example: '&a{neoessentials_prefix}&f{neoessentials_displayname} &ejoined the server!'",
     "customJoinMessage": "none",
-    "customQuitMessage_comment": "Custom quit message template. Use 'none' for default. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, and more via PlaceholderAPI. Example: '&c{neoessentials_prefix}&f{neoessentials_displayname} &eleft the server!'",
+    "customQuitMessage_comment": "Custom quit message template. Use 'none' for default. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, and more via PlaceholderAPI. Legacy uppercase like {USERNAME}, {PREFIX} also work. Use '&' for colors. Example: '&c{neoessentials_prefix}&f{neoessentials_displayname} &eleft the server!'",
     "customQuitMessage": "none",
-    "customNewUsernameMessage_comment": "Custom message for player name changes. Use 'none' for default. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {neoessentials_prefix}, {neoessentials_suffix}, and more via PlaceholderAPI. Example: '&6{neoessentials_prefix}&f{neoessentials_displayname} &echanged their name!'",
+    "customNewUsernameMessage_comment": "Custom message for player name changes. Use 'none' for default. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {neoessentials_prefix}, {neoessentials_suffix}, and more via PlaceholderAPI. Legacy uppercase like {USERNAME}, {PREFIX} also work. Use '&' for colors. Example: '&6{neoessentials_prefix}&f{neoessentials_displayname} &echanged their name!'",
     "customNewUsernameMessage": "none",
     "useCustomServerFullMessage": false,
     "hideJoinQuitMessagesAbove": -1

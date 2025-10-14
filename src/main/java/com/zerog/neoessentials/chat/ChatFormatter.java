@@ -38,8 +38,11 @@ public class ChatFormatter {
      */
     public static Component formatMessage(String template, ServerPlayer player, String message) {
         try {
+            // Convert legacy uppercase placeholders to neoessentials_ format for backwards compatibility
+            String normalizedTemplate = normalizePlaceholders(template);
+            
             // Add the MESSAGE placeholder to the template context if it's not already there
-            String templateWithMessage = template.replace("{MESSAGE}", message);
+            String templateWithMessage = normalizedTemplate.replace("{MESSAGE}", message);
             
             // Use PlaceholderAPI to resolve all placeholders
             String formatted = PlaceholderAPI.setPlaceholders(player, templateWithMessage);
@@ -55,6 +58,33 @@ public class ChatFormatter {
             // Fallback to simple format if formatting fails
             return Component.literal(player.getName().getString() + ": " + message);
         }
+    }
+    
+    /**
+     * Converts legacy uppercase placeholders to neoessentials_ format.
+     * This ensures backwards compatibility with old config files.
+     * 
+     * Examples:
+     *   {USERNAME} -> {neoessentials_username}
+     *   {PREFIX} -> {neoessentials_prefix}
+     *   {SUFFIX} -> {neoessentials_suffix}
+     */
+    private static String normalizePlaceholders(String template) {
+        // Map of legacy placeholders to new format
+        return template
+            .replace("{DISPLAYNAME}", "{neoessentials_displayname}")
+            .replace("{USERNAME}", "{neoessentials_username}")
+            .replace("{PREFIX}", "{neoessentials_prefix}")
+            .replace("{SUFFIX}", "{neoessentials_suffix}")
+            .replace("{WORLD}", "{neoessentials_world}")
+            .replace("{X}", "{neoessentials_x}")
+            .replace("{Y}", "{neoessentials_y}")
+            .replace("{Z}", "{neoessentials_z}")
+            .replace("{HEALTH}", "{neoessentials_health}")
+            .replace("{LEVEL}", "{neoessentials_level}")
+            .replace("{BALANCE}", "{neoessentials_balance}")
+            .replace("{GAMEMODE}", "{neoessentials_gamemode}")
+            .replace("{BIOME}", "{neoessentials_biome}");
     }
     
     /**

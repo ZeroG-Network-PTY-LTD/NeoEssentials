@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.util.MessageUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class LogsHandler implements HttpHandler {
         
         // Only allow GET
         if (!"GET".equals(exchange.getRequestMethod())) {
-            sendJsonResponse(exchange, 405, createErrorResponse("Method not allowed"));
+            sendJsonResponse(exchange, 405, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.method_not_allowed")));
             return;
         }
         
@@ -63,7 +64,7 @@ public class LogsHandler implements HttpHandler {
             JsonObject response = getLogData(lines);
             sendJsonResponse(exchange, 200, response);
         } catch (Exception e) {
-            sendJsonResponse(exchange, 500, createErrorResponse("Internal server error: " + e.getMessage()));
+            sendJsonResponse(exchange, 500, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.internal_error", e.getMessage())));
         }
     }
     
@@ -92,7 +93,7 @@ public class LogsHandler implements HttpHandler {
                 response.addProperty("success", true);
             } else {
                 response.addProperty("success", false);
-                response.addProperty("message", "Log file not found");
+                response.addProperty("message", MessageUtil.localize("neoessentials.dashboard.api.log_not_found"));
             }
         } catch (Exception e) {
             response.addProperty("success", false);

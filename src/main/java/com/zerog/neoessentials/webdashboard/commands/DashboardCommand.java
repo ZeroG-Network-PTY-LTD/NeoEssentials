@@ -3,6 +3,7 @@ package com.zerog.neoessentials.webdashboard.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.webdashboard.WebDashboardServer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -45,18 +46,16 @@ public class DashboardCommand {
             com.zerog.neoessentials.config.ConfigManager.getInstance();
         
         if (!configManager.isWebDashboardEnabled()) {
-            source.sendFailure(Component.literal("Web dashboard is disabled in config!")
-                .withStyle(ChatFormatting.RED)
-                .append(Component.literal("\nEnable it in config.json: modules.webDashboardEnabled = true")
-                    .withStyle(ChatFormatting.GRAY)));
+            source.sendFailure(MessageUtil.error("commands.neoessentials.dashboard.disabled"));
+            source.sendSystemMessage(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.disabled_hint"))
+                .withStyle(ChatFormatting.GRAY));
             return 0;
         }
         
         WebDashboardServer server = WebDashboardServer.getInstance();
         
         if (server.isRunning()) {
-            source.sendFailure(Component.literal("Web dashboard is already running!")
-                .withStyle(ChatFormatting.RED));
+            source.sendFailure(MessageUtil.error("commands.neoessentials.dashboard.already_running"));
             return 0;
         }
         
@@ -66,11 +65,11 @@ public class DashboardCommand {
             int port = server.getPort();
             String url = "http://localhost:" + port;
             
-            Component message = Component.literal("╔════════════════════════════════════════════╗\n")
+            Component message = Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.started_header") + "\n")
                 .withStyle(ChatFormatting.GREEN)
-                .append(Component.literal("║  Web Dashboard Started Successfully!       ║\n")
+                .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.started_title") + "\n")
                     .withStyle(ChatFormatting.GREEN))
-                .append(Component.literal("║  Access at: ")
+                .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.started_access"))
                     .withStyle(ChatFormatting.GREEN))
                 .append(Component.literal(url)
                     .withStyle(Style.EMPTY
@@ -78,18 +77,17 @@ public class DashboardCommand {
                         .withUnderlined(true)
                         .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
-                            Component.literal("Click to open dashboard")))))
+                            MessageUtil.component("commands.neoessentials.dashboard.click_to_open")))))
                 .append(Component.literal("       ║\n")
                     .withStyle(ChatFormatting.GREEN))
-                .append(Component.literal("╚════════════════════════════════════════════╝")
+                .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.started_footer"))
                     .withStyle(ChatFormatting.GREEN));
             
             source.sendSuccess(() -> message, true);
             return 1;
             
         } catch (Exception e) {
-            source.sendFailure(Component.literal("Failed to start web dashboard: " + e.getMessage())
-                .withStyle(ChatFormatting.RED));
+            source.sendFailure(MessageUtil.error("commands.neoessentials.dashboard.start_failed", e.getMessage()));
             return 0;
         }
     }
@@ -102,14 +100,12 @@ public class DashboardCommand {
         WebDashboardServer server = WebDashboardServer.getInstance();
         
         if (!server.isRunning()) {
-            source.sendFailure(Component.literal("Web dashboard is not running!")
-                .withStyle(ChatFormatting.RED));
+            source.sendFailure(MessageUtil.error("commands.neoessentials.dashboard.not_running"));
             return 0;
         }
         
         server.stop();
-        source.sendSuccess(() -> Component.literal("Web dashboard stopped successfully")
-            .withStyle(ChatFormatting.GREEN), true);
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.dashboard.stopped"), true);
         return 1;
     }
     
@@ -123,11 +119,11 @@ public class DashboardCommand {
         if (server.isRunning()) {
             String url = "http://localhost:" + server.getPort();
             
-            Component message = Component.literal("Web Dashboard Status: ")
+            Component message = Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.status_label"))
                 .withStyle(ChatFormatting.GOLD)
-                .append(Component.literal("Running")
+                .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.status_running"))
                     .withStyle(ChatFormatting.GREEN))
-                .append(Component.literal("\nAccess at: ")
+                .append(Component.literal("\n" + MessageUtil.localize("commands.neoessentials.dashboard.status_access"))
                     .withStyle(ChatFormatting.GOLD))
                 .append(Component.literal(url)
                     .withStyle(Style.EMPTY
@@ -135,13 +131,13 @@ public class DashboardCommand {
                         .withUnderlined(true)
                         .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
-                            Component.literal("Click to open dashboard")))));
+                            MessageUtil.component("commands.neoessentials.dashboard.click_to_open")))));
             
             source.sendSuccess(() -> message, false);
         } else {
-            source.sendSuccess(() -> Component.literal("Web Dashboard Status: ")
+            source.sendSuccess(() -> Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.status_label"))
                 .withStyle(ChatFormatting.GOLD)
-                .append(Component.literal("Stopped")
+                .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.status_stopped"))
                     .withStyle(ChatFormatting.RED)), false);
         }
         
@@ -155,10 +151,9 @@ public class DashboardCommand {
         CommandSourceStack source = context.getSource();
         int newPort = IntegerArgumentType.getInteger(context, "port");
         
-        source.sendSuccess(() -> Component.literal("Dashboard port configuration will be available in a future update.")
-            .withStyle(ChatFormatting.YELLOW)
-            .append(Component.literal("\nRequested port: " + newPort)
-                .withStyle(ChatFormatting.GOLD)), false);
+        source.sendSuccess(() -> MessageUtil.warning("commands.neoessentials.dashboard.port_future"), false);
+        source.sendSystemMessage(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.port_requested", newPort))
+            .withStyle(ChatFormatting.GOLD));
         
         return 1;
     }
@@ -169,29 +164,29 @@ public class DashboardCommand {
     private static int helpDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
-        Component help = Component.literal("╔════════════════════════════════════════════╗\n")
+        Component help = Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_header") + "\n")
             .withStyle(ChatFormatting.AQUA)
-            .append(Component.literal("║         Web Dashboard Commands             ║\n")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_title") + "\n")
                 .withStyle(ChatFormatting.AQUA))
-            .append(Component.literal("╠════════════════════════════════════════════╣\n")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_divider") + "\n")
                 .withStyle(ChatFormatting.AQUA))
-            .append(Component.literal("║ /dashboard start  ")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_start"))
                 .withStyle(ChatFormatting.YELLOW))
-            .append(Component.literal("- Start the web server    ║\n")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_start_desc") + "\n")
                 .withStyle(ChatFormatting.WHITE))
-            .append(Component.literal("║ /dashboard stop   ")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_stop"))
                 .withStyle(ChatFormatting.YELLOW))
-            .append(Component.literal("- Stop the web server     ║\n")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_stop_desc") + "\n")
                 .withStyle(ChatFormatting.WHITE))
-            .append(Component.literal("║ /dashboard status ")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_status"))
                 .withStyle(ChatFormatting.YELLOW))
-            .append(Component.literal("- Check server status     ║\n")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_status_desc") + "\n")
                 .withStyle(ChatFormatting.WHITE))
-            .append(Component.literal("║ /dashboard port <num> ")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_port"))
                 .withStyle(ChatFormatting.YELLOW))
-            .append(Component.literal("- Set port (future)  ║\n")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_port_desc") + "\n")
                 .withStyle(ChatFormatting.WHITE))
-            .append(Component.literal("╚════════════════════════════════════════════╝")
+            .append(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.help_footer"))
                 .withStyle(ChatFormatting.AQUA));
         
         source.sendSuccess(() -> help, false);

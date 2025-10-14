@@ -16,8 +16,27 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
-version = mod_version
+// Build number management
+def buildNumberFile = file('build_number.txt')
+def buildNumber = 0
+
+if (buildNumberFile.exists()) {
+    buildNumber = buildNumberFile.text.trim().toInteger()
+}
+
+// Increment build number for each build
+buildNumber++
+buildNumberFile.text = buildNumber.toString()
+
+// Set version with build number
+version = "${mod_version}+build.${buildNumber}"
 group = mod_group_id
+
+// Log build information
+println "=========================================="
+println "Building ${mod_name} v${version}"
+println "Build #${buildNumber}"
+println "=========================================="
 
 repositories {
     // For local mod jars

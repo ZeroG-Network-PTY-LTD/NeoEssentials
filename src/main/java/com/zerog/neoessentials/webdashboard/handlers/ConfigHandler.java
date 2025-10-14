@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.util.MessageUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,10 +48,10 @@ public class ConfigHandler implements HttpHandler {
             } else if ("POST".equals(exchange.getRequestMethod())) {
                 handlePostConfig(exchange);
             } else {
-                sendJsonResponse(exchange, 405, createErrorResponse("Method not allowed"));
+                sendJsonResponse(exchange, 405, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.method_not_allowed")));
             }
         } catch (Exception e) {
-            sendJsonResponse(exchange, 500, createErrorResponse("Internal server error: " + e.getMessage()));
+            sendJsonResponse(exchange, 500, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.internal_error", e.getMessage())));
         }
     }
     
@@ -110,7 +111,7 @@ public class ConfigHandler implements HttpHandler {
                         
                     } catch (Exception e) {
                         // If parsing fails, skip this file
-                        configObj.addProperty("error", "Failed to parse config file");
+                        configObj.addProperty("error", MessageUtil.localize("neoessentials.dashboard.api.config_parse_failed"));
                         configObj.add("options", new JsonArray());
                         configsArray.add(configObj);
                     }
@@ -119,7 +120,7 @@ public class ConfigHandler implements HttpHandler {
                 response.addProperty("success", true);
             } else {
                 response.addProperty("success", false);
-                response.addProperty("message", "Config directory not found");
+                response.addProperty("message", MessageUtil.localize("neoessentials.dashboard.api.config_dir_not_found"));
             }
         } catch (Exception e) {
             response.addProperty("success", false);
@@ -149,7 +150,7 @@ public class ConfigHandler implements HttpHandler {
             JsonObject requestData = JsonParser.parseString(requestBody).getAsJsonObject();
             
             if (!requestData.has("file") || !requestData.has("config")) {
-                sendJsonResponse(exchange, 400, createErrorResponse("Missing required fields: file, config"));
+                sendJsonResponse(exchange, 400, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.missing_fields")));
                 return;
             }
             
@@ -158,14 +159,14 @@ public class ConfigHandler implements HttpHandler {
             
             // Validate file name (security check)
             if (fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")) {
-                sendJsonResponse(exchange, 400, createErrorResponse("Invalid file name"));
+                sendJsonResponse(exchange, 400, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.invalid_file")));
                 return;
             }
             
             Path configFile = CONFIG_DIR.resolve(fileName);
             
             if (!Files.exists(configFile)) {
-                sendJsonResponse(exchange, 404, createErrorResponse("Config file not found"));
+                sendJsonResponse(exchange, 404, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.config_not_found")));
                 return;
             }
             
@@ -174,13 +175,13 @@ public class ConfigHandler implements HttpHandler {
             Files.writeString(configFile, jsonContent, StandardCharsets.UTF_8);
             
             response.addProperty("success", true);
-            response.addProperty("message", "Config updated successfully");
+            response.addProperty("message", MessageUtil.localize("neoessentials.dashboard.api.config_updated"));
             response.addProperty("file", fileName);
             
             sendJsonResponse(exchange, 200, response);
             
         } catch (Exception e) {
-            sendJsonResponse(exchange, 500, createErrorResponse("Failed to update config: " + e.getMessage()));
+            sendJsonResponse(exchange, 500, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.config_update_failed", e.getMessage())));
         }
     }
     

@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
@@ -37,7 +38,7 @@ public class PlayersHandler implements HttpHandler {
         
         // Only allow GET
         if (!"GET".equals(exchange.getRequestMethod())) {
-            sendJsonResponse(exchange, 405, createErrorResponse("Method not allowed"));
+            sendJsonResponse(exchange, 405, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.method_not_allowed")));
             return;
         }
         
@@ -45,7 +46,7 @@ public class PlayersHandler implements HttpHandler {
             JsonObject response = getPlayerData();
             sendJsonResponse(exchange, 200, response);
         } catch (Exception e) {
-            sendJsonResponse(exchange, 500, createErrorResponse("Internal server error: " + e.getMessage()));
+            sendJsonResponse(exchange, 500, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.internal_error", e.getMessage())));
         }
     }
     
@@ -96,15 +97,15 @@ public class PlayersHandler implements HttpHandler {
     private String getPlayerRank(ServerPlayer player) {
         // Check if player is operator
         if (player.hasPermissions(4)) {
-            return "Admin";
+            return MessageUtil.localize("neoessentials.dashboard.stats.rank_admin");
         } else if (player.hasPermissions(3)) {
-            return "Moderator";
+            return MessageUtil.localize("neoessentials.dashboard.stats.rank_moderator");
         } else if (player.hasPermissions(2)) {
-            return "Helper";
+            return MessageUtil.localize("neoessentials.dashboard.stats.rank_helper");
         }
         
         // Default rank
-        return "Player";
+        return MessageUtil.localize("neoessentials.dashboard.stats.rank_player");
     }
     
     /**

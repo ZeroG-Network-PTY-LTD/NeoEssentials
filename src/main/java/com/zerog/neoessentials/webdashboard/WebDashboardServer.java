@@ -3,6 +3,7 @@ package com.zerog.neoessentials.webdashboard;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
+import com.zerog.neoessentials.util.MessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.Executors;
 
 /**
@@ -22,6 +24,7 @@ import java.util.concurrent.Executors;
 public class WebDashboardServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebDashboardServer.class);
     private static WebDashboardServer INSTANCE;
+    private static final Path STATE_FILE = Paths.get("neoessentials", "dashboard_state.txt");
     
     private HttpServer server;
     private final int port;
@@ -32,7 +35,8 @@ public class WebDashboardServer {
     private WebDashboardServer(int port, String bindAddress) {
         this.port = port;
         this.bindAddress = bindAddress;
-        this.webRoot = Paths.get("data", "webdashboard");
+        // Extract to server root directory: rootserver/neoessentials/webdashboard
+        this.webRoot = Paths.get("neoessentials", "webdashboard");
     }
     
     public static WebDashboardServer getInstance() {
@@ -43,6 +47,12 @@ public class WebDashboardServer {
             int port = configManager.getWebDashboardPort();
             String bindAddress = configManager.getWebDashboardBindAddress();
             INSTANCE = new WebDashboardServer(port, bindAddress);
+            
+            // Auto-start if dashboard was running before shutdown
+            if (shouldAutoStart()) {
+                LOGGER.info("Dashboard was active before shutdown, automatically restarting...");
+                INSTANCE.start();
+            }
         }
         return INSTANCE;
     }
@@ -59,16 +69,19 @@ public class WebDashboardServer {
      */
     public void start() {
         if (running) {
-            LOGGER.warn("Web dashboard server is already running");
+            LOGGER.warn(MessageUtil.localize("neoessentials.dashboard.server.already_running"));
             return;
         }
         
         try {
-            // Ensure web root directory exists
+            // Ensure web root directory exists and extract dashboard files from JAR
             if (!Files.exists(webRoot)) {
                 Files.createDirectories(webRoot);
-                LOGGER.info("Created web dashboard directory at: {}", webRoot.toAbsolutePath());
+                LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.directory_created", webRoot.toAbsolutePath()));
             }
+            
+            // Extract dashboard files from resources if they don't exist
+            extractDashboardFiles();
             
             // Create HTTP server with configured bind address
             com.zerog.neoessentials.config.ConfigManager configManager = 
@@ -88,13 +101,53 @@ public class WebDashboardServer {
             server.start();
             running = true;
             
-            LOGGER.info("╔════════════════════════════════════════════════════════╗");
-            LOGGER.info("║   NeoEssentials Web Dashboard Started                 ║");
-            LOGGER.info("║   Access at: http://localhost:{}                    ║", port);
-            LOGGER.info("╚════════════════════════════════════════════════════════╝");
+            // Save state to persist across restarts
+            saveDashboardState(true);
+            
+            LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.started_header"));
+            LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.started_title"));
+            LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.started_access", port));
+            LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.started_footer"));
             
         } catch (IOException e) {
-            LOGGER.error("Failed to start web dashboard server", e);
+            LOGGER.error(MessageUtil.localize("neoessentials.dashboard.server.start_failed"), e);
+        }
+    }
+    
+    /**
+     * Extract dashboard files from JAR resources to the file system
+     * Extracts to server root: rootserver/neoessentials/webdashboard/
+     */
+    private void extractDashboardFiles() {
+        // All dashboard files from src/main/resources/data/webdashboard/
+        String[] dashboardFiles = {
+            "index.html",
+            "orbitron.css",
+            "space-dashboard.js",
+            "space-glass.css",
+            "space-theme.css"
+        };
+        
+        for (String fileName : dashboardFiles) {
+            try {
+                Path targetFile = webRoot.resolve(fileName);
+                
+                // Only extract if file doesn't exist (don't overwrite customizations)
+                if (!Files.exists(targetFile)) {
+                    // Load resource from JAR: /data/webdashboard/ in resources
+                    var resourceStream = getClass().getResourceAsStream("/data/webdashboard/" + fileName);
+                    
+                    if (resourceStream != null) {
+                        Files.copy(resourceStream, targetFile);
+                        LOGGER.info("Extracted dashboard file: {} -> {}", fileName, targetFile.toAbsolutePath());
+                        resourceStream.close();
+                    } else {
+                        LOGGER.warn("Dashboard resource not found in JAR: /data/webdashboard/{}", fileName);
+                    }
+                }
+            } catch (IOException e) {
+                LOGGER.error("Failed to extract dashboard file: {}", fileName, e);
+            }
         }
     }
     
@@ -109,8 +162,49 @@ public class WebDashboardServer {
         if (server != null) {
             server.stop(0);
             running = false;
-            LOGGER.info("Web dashboard server stopped");
+            
+            // Save state - dashboard manually stopped
+            saveDashboardState(false);
+            
+            LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.stopped"));
         }
+    }
+    
+    /**
+     * Save dashboard running state to persist across server restarts
+     */
+    private void saveDashboardState(boolean isRunning) {
+        try {
+            Path stateDir = STATE_FILE.getParent();
+            if (stateDir != null && !Files.exists(stateDir)) {
+                Files.createDirectories(stateDir);
+            }
+            
+            Files.writeString(STATE_FILE, 
+                isRunning ? "running" : "stopped", 
+                StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING);
+            
+            LOGGER.debug("Dashboard state saved: {}", isRunning ? "running" : "stopped");
+        } catch (IOException e) {
+            LOGGER.error("Failed to save dashboard state", e);
+        }
+    }
+    
+    /**
+     * Check if dashboard should auto-start based on saved state
+     */
+    private static boolean shouldAutoStart() {
+        try {
+            if (Files.exists(STATE_FILE)) {
+                String state = Files.readString(STATE_FILE, StandardCharsets.UTF_8).trim();
+                return "running".equalsIgnoreCase(state);
+            }
+        } catch (IOException e) {
+            LOGGER.debug("Could not read dashboard state file, assuming stopped", e);
+        }
+        return false;
     }
     
     /**
@@ -129,7 +223,7 @@ public class WebDashboardServer {
         // Config endpoints
         server.createContext("/api/config", new com.zerog.neoessentials.webdashboard.handlers.ConfigHandler());
         
-        LOGGER.info("Registered API endpoints: /api/players, /api/server, /api/logs, /api/config");
+        LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.endpoints_registered"));
     }
     
     public boolean isRunning() {
@@ -163,7 +257,7 @@ public class WebDashboardServer {
             
             // Security check - prevent directory traversal
             if (!filePath.normalize().startsWith(webRoot.normalize())) {
-                sendResponse(exchange, 403, "Forbidden");
+                sendResponse(exchange, 403, MessageUtil.localize("neoessentials.dashboard.server.forbidden"));
                 return;
             }
             
@@ -178,7 +272,7 @@ public class WebDashboardServer {
                     os.write(content);
                 }
             } else {
-                sendResponse(exchange, 404, "File not found: " + path);
+                sendResponse(exchange, 404, MessageUtil.localize("neoessentials.dashboard.server.file_not_found", path));
             }
         }
         
