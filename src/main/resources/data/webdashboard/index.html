@@ -9,6 +9,7 @@
   <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/5/5e/Grass_Block.png">
   <link rel="stylesheet" href="space-theme.css">
   <link rel="stylesheet" href="space-glass.css">
+  <link rel="stylesheet" href="space-enhancements.css">
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <script defer src="space-dashboard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -21,15 +22,38 @@
     </div>
   </noscript>
   <div class="space-bg" aria-hidden="true"></div>
+  <!-- Particle effects container -->
+  <div class="particle-container" aria-hidden="true">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
   <div class="dashboard-glass" role="main">
     <!-- Notification area -->
     <div id="dashboard-notifications" class="dashboard-notifications" aria-live="polite"></div>
     <header class="dashboard-header" role="banner">
+      <button class="mobile-menu-toggle" aria-label="Toggle Navigation Menu" aria-expanded="false">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
       <div class="logo" aria-label="NeoEssentials Dashboard Logo" role="img"><span class="planet-icon">🪐</span> <span>NeoEssentials</span></div>
       <nav class="dashboard-nav" aria-label="Theme Controls">
+        <div id="connection-status" class="connection-status" title="Connection Status" aria-live="polite">
+          <span class="status-dot"></span>
+          <span class="status-text">Connecting...</span>
+        </div>
         <button class="theme-switcher" title="Switch Space Theme" aria-label="Switch Space Theme">🌌</button>
       </nav>
     </header>
+    <div class="sidebar-overlay" aria-hidden="true"></div>
     <aside class="dashboard-sidebar" aria-label="Sidebar Navigation">
       <ul role="menubar">
         <li role="none"><button class="sidebar-btn" data-target="player-stats" data-tooltip="View player statistics"><span class="icon" aria-hidden="true">👨‍🚀</span> <span>Player Stats</span></button></li>
@@ -54,16 +78,1560 @@
         <div class="server-health-bar" aria-label="Server Health">
           <div class="health-fill" id="server-health-fill" style="width:80%"></div>
         </div>
+        <!-- Chart Controls -->
+        <div class="chart-controls">
+          <div class="chart-type-selector">
+            <button class="chart-btn active" data-chart="tps" title="TPS History">📊 TPS</button>
+            <button class="chart-btn" data-chart="memory" title="Memory Usage">💾 Memory</button>
+            <button class="chart-btn" data-chart="players" title="Player Count">👥 Players</button>
+            <button class="chart-btn" data-chart="entities" title="Entity Count">🎯 Entities</button>
+          </div>
+          <div class="time-range-selector">
+            <button class="time-btn" data-range="1h">1h</button>
+            <button class="time-btn active" data-range="6h">6h</button>
+            <button class="time-btn" data-range="24h">24h</button>
+            <button class="time-btn" data-range="7d">7d</button>
+          </div>
+        </div>
         <div class="server-chart-area">
-          <canvas id="serverChart" width="320" height="120" aria-label="Server Performance Chart"></canvas>
+          <canvas id="serverChart" width="400" height="180" aria-label="Server Performance Chart"></canvas>
         </div>
       </section>
-      <section id="log-viewer" class="glass-card" aria-label="Log Viewer">
-        <h2>Log Viewer</h2>
-        <div class="log-content" id="log-viewer-content">
-          <div class="loading-indicator">Loading logs...</div>
+
+      <!-- Performance Metrics Dashboard Section -->
+      <section id="performance-metrics" class="glass-card performance-metrics" aria-label="Performance Metrics Dashboard">
+        <div class="section-header">
+          <h2><span class="icon">📊</span> Performance Metrics</h2>
+          <div class="performance-actions">
+            <button id="refresh-metrics" class="action-btn" title="Refresh Metrics">
+              <span class="action-btn-icon">🔄</span>
+              <span class="action-btn-text">Refresh</span>
+            </button>
+            <button id="export-metrics" class="action-btn" title="Export Metrics">
+              <span class="action-btn-icon">📥</span>
+              <span class="action-btn-text">Export</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- TPS & Tick Performance -->
+        <div class="metrics-section">
+          <h3 class="metrics-subtitle"><span class="icon">⚡</span> TPS & Tick Performance</h3>
+          <div class="metrics-grid">
+            <div class="metric-card tps-card">
+              <div class="metric-header">
+                <span class="metric-label">Current TPS</span>
+                <span class="metric-status" id="tps-status">●</span>
+              </div>
+              <div class="metric-value" id="current-tps">20.0</div>
+              <div class="metric-footer">
+                <span class="metric-subtext">Target: 20.0</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Avg Tick Time</span>
+              </div>
+              <div class="metric-value" id="avg-tick-time">15.2<span class="metric-unit">ms</span></div>
+              <div class="metric-footer">
+                <span class="metric-subtext">Max: 50ms</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Peak Tick Time</span>
+              </div>
+              <div class="metric-value" id="peak-tick-time">42.8<span class="metric-unit">ms</span></div>
+              <div class="metric-footer">
+                <span class="metric-subtext">Last Hour</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Server Uptime</span>
+              </div>
+              <div class="metric-value" id="server-uptime">2h 34m</div>
+              <div class="metric-footer">
+                <span class="metric-subtext">Since restart</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- TPS History Chart -->
+          <div class="metric-chart-container">
+            <h4 class="chart-title">TPS History (Last Hour)</h4>
+            <canvas id="tps-history-chart" height="120" aria-label="TPS History Chart"></canvas>
+          </div>
+
+          <!-- Tick Time Breakdown -->
+          <div class="tick-breakdown">
+            <h4 class="chart-title">Tick Time Breakdown</h4>
+            <div class="breakdown-bars">
+              <div class="breakdown-item">
+                <div class="breakdown-header">
+                  <span class="breakdown-label">Entity Ticking</span>
+                  <span class="breakdown-value" id="entity-tick-time">6.2ms</span>
+                </div>
+                <div class="breakdown-bar">
+                  <div class="breakdown-fill" id="entity-tick-bar" style="width: 41%;" data-category="entities"></div>
+                </div>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-header">
+                  <span class="breakdown-label">Block Ticking</span>
+                  <span class="breakdown-value" id="block-tick-time">3.8ms</span>
+                </div>
+                <div class="breakdown-bar">
+                  <div class="breakdown-fill" id="block-tick-bar" style="width: 25%;" data-category="blocks"></div>
+                </div>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-header">
+                  <span class="breakdown-label">Chunk Loading</span>
+                  <span class="breakdown-value" id="chunk-tick-time">2.4ms</span>
+                </div>
+                <div class="breakdown-bar">
+                  <div class="breakdown-fill" id="chunk-tick-bar" style="width: 16%;" data-category="chunks"></div>
+                </div>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-header">
+                  <span class="breakdown-label">Scheduled Tasks</span>
+                  <span class="breakdown-value" id="task-tick-time">1.9ms</span>
+                </div>
+                <div class="breakdown-bar">
+                  <div class="breakdown-fill" id="task-tick-bar" style="width: 13%;" data-category="tasks"></div>
+                </div>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-header">
+                  <span class="breakdown-label">Other</span>
+                  <span class="breakdown-value" id="other-tick-time">0.9ms</span>
+                </div>
+                <div class="breakdown-bar">
+                  <div class="breakdown-fill" id="other-tick-bar" style="width: 6%;" data-category="other"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Memory & GC Performance -->
+        <div class="metrics-section">
+          <h3 class="metrics-subtitle"><span class="icon">💾</span> Memory & Garbage Collection</h3>
+          <div class="metrics-grid">
+            <div class="metric-card memory-card">
+              <div class="metric-header">
+                <span class="metric-label">Heap Memory</span>
+              </div>
+              <div class="metric-value" id="heap-used">2.4<span class="metric-unit">GB</span></div>
+              <div class="memory-bar">
+                <div class="memory-fill" id="heap-fill" style="width: 60%;"></div>
+              </div>
+              <div class="metric-footer">
+                <span class="metric-subtext" id="heap-max">of 4.0 GB</span>
+              </div>
+            </div>
+            <div class="metric-card memory-card">
+              <div class="metric-header">
+                <span class="metric-label">Non-Heap Memory</span>
+              </div>
+              <div class="metric-value" id="nonheap-used">256<span class="metric-unit">MB</span></div>
+              <div class="memory-bar">
+                <div class="memory-fill" id="nonheap-fill" style="width: 32%;"></div>
+              </div>
+              <div class="metric-footer">
+                <span class="metric-subtext" id="nonheap-max">of 512 MB</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">GC Collections</span>
+              </div>
+              <div class="metric-value" id="gc-count">142</div>
+              <div class="metric-footer">
+                <span class="metric-subtext">Since start</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">GC Time</span>
+              </div>
+              <div class="metric-value" id="gc-time">1.2<span class="metric-unit">s</span></div>
+              <div class="metric-footer">
+                <span class="metric-subtext">Total time</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Memory Usage Chart -->
+          <div class="metric-chart-container">
+            <h4 class="chart-title">Memory Usage (Last Hour)</h4>
+            <canvas id="memory-usage-chart" height="120" aria-label="Memory Usage Chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Entity & World Performance -->
+        <div class="metrics-section">
+          <h3 class="metrics-subtitle"><span class="icon">🎯</span> Entity & World Statistics</h3>
+          <div class="metrics-grid three-col">
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Total Entities</span>
+              </div>
+              <div class="metric-value" id="total-entities">1,247</div>
+              <div class="metric-footer">
+                <span class="metric-subtext">Loaded</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Loaded Chunks</span>
+              </div>
+              <div class="metric-value" id="loaded-chunks">3,842</div>
+              <div class="metric-footer">
+                <span class="metric-subtext">Across worlds</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Chunk Updates</span>
+              </div>
+              <div class="metric-value" id="chunk-updates">156</div>
+              <div class="metric-footer">
+                <span class="metric-subtext">Per second</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Entity Breakdown -->
+          <div class="entity-breakdown">
+            <h4 class="chart-title">Entity Breakdown by Type</h4>
+            <div class="entity-list">
+              <div class="entity-item">
+                <span class="entity-icon">🐑</span>
+                <span class="entity-name">Animals</span>
+                <span class="entity-count" id="entities-animals">423</span>
+                <div class="entity-bar">
+                  <div class="entity-fill" style="width: 34%;" data-type="animals"></div>
+                </div>
+              </div>
+              <div class="entity-item">
+                <span class="entity-icon">👤</span>
+                <span class="entity-name">Players</span>
+                <span class="entity-count" id="entities-players">12</span>
+                <div class="entity-bar">
+                  <div class="entity-fill" style="width: 1%;" data-type="players"></div>
+                </div>
+              </div>
+              <div class="entity-item">
+                <span class="entity-icon">🧟</span>
+                <span class="entity-name">Monsters</span>
+                <span class="entity-count" id="entities-monsters">287</span>
+                <div class="entity-bar">
+                  <div class="entity-fill" style="width: 23%;" data-type="monsters"></div>
+                </div>
+              </div>
+              <div class="entity-item">
+                <span class="entity-icon">📦</span>
+                <span class="entity-name">Items</span>
+                <span class="entity-count" id="entities-items">156</span>
+                <div class="entity-bar">
+                  <div class="entity-fill" style="width: 13%;" data-type="items"></div>
+                </div>
+              </div>
+              <div class="entity-item">
+                <span class="entity-icon">🚀</span>
+                <span class="entity-name">Projectiles</span>
+                <span class="entity-count" id="entities-projectiles">89</span>
+                <div class="entity-bar">
+                  <div class="entity-fill" style="width: 7%;" data-type="projectiles"></div>
+                </div>
+              </div>
+              <div class="entity-item">
+                <span class="entity-icon">⚙️</span>
+                <span class="entity-name">Other</span>
+                <span class="entity-count" id="entities-other">280</span>
+                <div class="entity-bar">
+                  <div class="entity-fill" style="width: 22%;" data-type="other"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thread Pool Information -->
+        <div class="metrics-section">
+          <h3 class="metrics-subtitle"><span class="icon">🧵</span> Thread Pool Status</h3>
+          <div class="thread-pool-container">
+            <div class="thread-pool-item">
+              <div class="thread-pool-header">
+                <span class="thread-pool-name">Main Thread</span>
+                <span class="thread-pool-status active">Active</span>
+              </div>
+              <div class="thread-pool-stats">
+                <div class="thread-stat">
+                  <span class="thread-stat-label">CPU Usage:</span>
+                  <span class="thread-stat-value" id="main-thread-cpu">45%</span>
+                </div>
+                <div class="thread-stat">
+                  <span class="thread-stat-label">State:</span>
+                  <span class="thread-stat-value">RUNNABLE</span>
+                </div>
+              </div>
+            </div>
+            <div class="thread-pool-item">
+              <div class="thread-pool-header">
+                <span class="thread-pool-name">Worker Pool</span>
+                <span class="thread-pool-count" id="worker-pool-count">8 threads</span>
+              </div>
+              <div class="thread-pool-stats">
+                <div class="thread-stat">
+                  <span class="thread-stat-label">Active:</span>
+                  <span class="thread-stat-value" id="worker-active">6</span>
+                </div>
+                <div class="thread-stat">
+                  <span class="thread-stat-label">Queued:</span>
+                  <span class="thread-stat-value" id="worker-queued">3</span>
+                </div>
+                <div class="thread-stat">
+                  <span class="thread-stat-label">Completed:</span>
+                  <span class="thread-stat-value" id="worker-completed">12,847</span>
+                </div>
+              </div>
+            </div>
+            <div class="thread-pool-item">
+              <div class="thread-pool-header">
+                <span class="thread-pool-name">Async Executor</span>
+                <span class="thread-pool-count" id="async-pool-count">4 threads</span>
+              </div>
+              <div class="thread-pool-stats">
+                <div class="thread-stat">
+                  <span class="thread-stat-label">Active:</span>
+                  <span class="thread-stat-value" id="async-active">2</span>
+                </div>
+                <div class="thread-stat">
+                  <span class="thread-stat-label">Queued:</span>
+                  <span class="thread-stat-value" id="async-queued">0</span>
+                </div>
+                <div class="thread-stat">
+                  <span class="thread-stat-label">Completed:</span>
+                  <span class="thread-stat-value" id="async-completed">4,521</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
+
+      <!-- Chat Log Viewer Section -->
+      <section id="log-viewer" class="glass-card chat-log-viewer" aria-label="Chat Log Viewer">
+        <div class="chat-header">
+          <h2><span class="icon">💬</span> Chat Log Viewer</h2>
+          <div class="chat-stats">
+            <span class="stat-badge">
+              <span class="stat-icon">📨</span>
+              <span id="total-messages">0</span> Messages
+            </span>
+            <span class="stat-badge">
+              <span class="stat-icon">👥</span>
+              <span id="active-chatters">0</span> Active
+            </span>
+            <span class="stat-badge live-indicator">
+              <span class="pulse-dot"></span>
+              Live
+            </span>
+          </div>
+        </div>
+        
+        <!-- Chat Controls -->
+        <div class="chat-controls">
+          <!-- Search Bar -->
+          <div class="chat-search-bar">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              id="chat-search" 
+              class="chat-search-input" 
+              placeholder="Search messages..."
+              autocomplete="off"
+            >
+            <button id="clear-search" class="clear-search-btn" title="Clear search" style="display: none;">
+              ×
+            </button>
+          </div>
+          
+          <!-- Filter Buttons -->
+          <div class="chat-filters">
+            <div class="filter-group">
+              <label class="filter-label">Channel:</label>
+              <button class="filter-btn active" data-filter="channel" data-value="all">All</button>
+              <button class="filter-btn" data-filter="channel" data-value="global">Global</button>
+              <button class="filter-btn" data-filter="channel" data-value="local">Local</button>
+              <button class="filter-btn" data-filter="channel" data-value="team">Team</button>
+              <button class="filter-btn" data-filter="channel" data-value="staff">Staff</button>
+            </div>
+            
+            <div class="filter-group">
+              <label class="filter-label">Type:</label>
+              <button class="filter-btn active" data-filter="type" data-value="all">All</button>
+              <button class="filter-btn" data-filter="type" data-value="chat">Chat</button>
+              <button class="filter-btn" data-filter="type" data-value="join">Join/Leave</button>
+              <button class="filter-btn" data-filter="type" data-value="death">Deaths</button>
+              <button class="filter-btn" data-filter="type" data-value="moderation">Moderation</button>
+            </div>
+            
+            <div class="filter-group">
+              <label class="filter-label">Time:</label>
+              <select id="time-range-filter" class="time-range-select">
+                <option value="all">All Time</option>
+                <option value="1h">Last Hour</option>
+                <option value="6h" selected>Last 6 Hours</option>
+                <option value="24h">Last 24 Hours</option>
+                <option value="7d">Last 7 Days</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="chat-actions">
+            <button id="export-chat" class="action-btn" title="Export chat logs">
+              <span class="action-btn-icon">📥</span>
+              <span class="action-btn-text">Export</span>
+            </button>
+            <button id="clear-chat" class="action-btn danger" title="Clear chat display">
+              <span class="action-btn-icon">🗑️</span>
+              <span class="action-btn-text">Clear</span>
+            </button>
+            <button id="pause-chat" class="action-btn" title="Pause live updates">
+              <span class="action-btn-icon">⏸️</span>
+              <span class="action-btn-text">Pause</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Chat Messages Display -->
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-empty-state">
+            <span class="empty-icon">💬</span>
+            <span class="empty-text">No messages to display</span>
+            <span class="empty-subtext">Messages will appear here when players chat</span>
+          </div>
+        </div>
+        
+        <!-- Player Filter Sidebar (toggleable) -->
+        <div class="player-filter-sidebar" id="player-filter-sidebar" style="display: none;">
+          <div class="sidebar-header">
+            <h4>Filter by Player</h4>
+            <button id="close-player-filter" class="close-sidebar-btn">×</button>
+          </div>
+          <div class="player-filter-search">
+            <input 
+              type="text" 
+              id="player-filter-search" 
+              placeholder="Search players..."
+              class="player-search-input"
+            >
+          </div>
+          <div class="player-filter-list" id="player-filter-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Economy Data Visualization Section -->
+      <section id="economy-dashboard" class="glass-card economy-dashboard" aria-label="Economy Dashboard">
+        <div class="section-header">
+          <h2><span class="icon">💰</span> Economy Overview</h2>
+          <div class="economy-actions">
+            <button id="refresh-economy" class="action-btn" title="Refresh Economy Data">
+              <span class="action-btn-icon">🔄</span>
+              <span class="action-btn-text">Refresh</span>
+            </button>
+            <button id="export-economy" class="action-btn" title="Export Economy Data">
+              <span class="action-btn-icon">📥</span>
+              <span class="action-btn-text">Export</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Economy Health Indicators -->
+        <div class="economy-health">
+          <div class="health-card">
+            <div class="health-icon">💵</div>
+            <div class="health-content">
+              <div class="health-label">Total Money Supply</div>
+              <div class="health-value" id="total-money-supply">$2,847,593</div>
+              <div class="health-change positive" id="supply-change">+2.4% this week</div>
+            </div>
+          </div>
+          <div class="health-card">
+            <div class="health-icon">💸</div>
+            <div class="health-content">
+              <div class="health-label">Transaction Volume</div>
+              <div class="health-value" id="transaction-volume">$482,156</div>
+              <div class="health-change positive" id="volume-change">+8.3% today</div>
+            </div>
+          </div>
+          <div class="health-card">
+            <div class="health-icon">📈</div>
+            <div class="health-content">
+              <div class="health-label">Active Accounts</div>
+              <div class="health-value" id="active-accounts">847</div>
+              <div class="health-change positive" id="accounts-change">+12 new today</div>
+            </div>
+          </div>
+          <div class="health-card">
+            <div class="health-icon">⚖️</div>
+            <div class="health-content">
+              <div class="health-label">Economy Health</div>
+              <div class="health-value health-status" id="economy-health">Healthy</div>
+              <div class="health-change neutral">Stable distribution</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction Volume Chart -->
+        <div class="economy-section">
+          <h3 class="economy-subtitle"><span class="icon">📊</span> Transaction Volume</h3>
+          <div class="chart-controls">
+            <div class="chart-type-selector">
+              <button class="chart-type-btn active" data-type="daily">Daily</button>
+              <button class="chart-type-btn" data-type="weekly">Weekly</button>
+              <button class="chart-type-btn" data-type="monthly">Monthly</button>
+            </div>
+          </div>
+          <div class="economy-chart-container">
+            <canvas id="transaction-volume-chart" height="180" aria-label="Transaction Volume Chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top Balance Holders -->
+        <div class="economy-section">
+          <h3 class="economy-subtitle"><span class="icon">👑</span> Top Balance Holders</h3>
+          <div class="balance-holders-list">
+            <div class="balance-holder-item rank-1">
+              <div class="holder-rank">#1</div>
+              <div class="holder-avatar">
+                <img src="https://crafatar.com/avatars/853c80ef3c3749fdaa49938b674adae6?overlay" alt="Player 1" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23444%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23fff%22 font-size=%2216%22%3E?%3C/text%3E%3C/svg%3E'">
+              </div>
+              <div class="holder-info">
+                <div class="holder-name">Steve</div>
+                <div class="holder-status online">Online</div>
+              </div>
+              <div class="holder-balance">$584,293</div>
+              <div class="holder-percentage">20.5%</div>
+            </div>
+            <div class="balance-holder-item rank-2">
+              <div class="holder-rank">#2</div>
+              <div class="holder-avatar">
+                <img src="https://crafatar.com/avatars/ec561538f3fd461daff5086b22154bce?overlay" alt="Player 2" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23444%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23fff%22 font-size=%2216%22%3E?%3C/text%3E%3C/svg%3E'">
+              </div>
+              <div class="holder-info">
+                <div class="holder-name">Alex</div>
+                <div class="holder-status online">Online</div>
+              </div>
+              <div class="holder-balance">$412,847</div>
+              <div class="holder-percentage">14.5%</div>
+            </div>
+            <div class="balance-holder-item rank-3">
+              <div class="holder-rank">#3</div>
+              <div class="holder-avatar">
+                <img src="https://crafatar.com/avatars/069a79f444e94726a5befca90e38aaf5?overlay" alt="Player 3" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23444%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23fff%22 font-size=%2216%22%3E?%3C/text%3E%3C/svg%3E'">
+              </div>
+              <div class="holder-info">
+                <div class="holder-name">Notch</div>
+                <div class="holder-status offline">Offline</div>
+              </div>
+              <div class="holder-balance">$327,156</div>
+              <div class="holder-percentage">11.5%</div>
+            </div>
+            <div class="balance-holder-item">
+              <div class="holder-rank">#4</div>
+              <div class="holder-avatar">
+                <img src="https://crafatar.com/avatars/f84c6a790a4e45e0879bcd49ebd4c4e2?overlay" alt="Player 4" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23444%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23fff%22 font-size=%2216%22%3E?%3C/text%3E%3C/svg%3E'">
+              </div>
+              <div class="holder-info">
+                <div class="holder-name">Herobrine</div>
+                <div class="holder-status offline">Offline</div>
+              </div>
+              <div class="holder-balance">$268,492</div>
+              <div class="holder-percentage">9.4%</div>
+            </div>
+            <div class="balance-holder-item">
+              <div class="holder-rank">#5</div>
+              <div class="holder-avatar">
+                <img src="https://crafatar.com/avatars/61699b2ed3274a019f1e0ea8c3f06bc6?overlay" alt="Player 5" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23444%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23fff%22 font-size=%2216%22%3E?%3C/text%3E%3C/svg%3E'">
+              </div>
+              <div class="holder-info">
+                <div class="holder-name">Jeb</div>
+                <div class="holder-status online">Online</div>
+              </div>
+              <div class="holder-balance">$194,738</div>
+              <div class="holder-percentage">6.8%</div>
+            </div>
+          </div>
+          <button class="view-all-btn" id="view-all-balances">
+            <span>View All Balances</span>
+            <span class="arrow">→</span>
+          </button>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="economy-section">
+          <h3 class="economy-subtitle"><span class="icon">💳</span> Recent Transactions</h3>
+          <div class="transaction-filters">
+            <button class="transaction-filter-btn active" data-filter="all">All</button>
+            <button class="transaction-filter-btn" data-filter="payment">Payments</button>
+            <button class="transaction-filter-btn" data-filter="purchase">Purchases</button>
+            <button class="transaction-filter-btn" data-filter="trade">Trades</button>
+          </div>
+          <div class="transactions-list" id="recent-transactions">
+            <div class="transaction-item type-payment">
+              <div class="transaction-icon payment">💸</div>
+              <div class="transaction-details">
+                <div class="transaction-header">
+                  <span class="transaction-type">Payment</span>
+                  <span class="transaction-time">2 minutes ago</span>
+                </div>
+                <div class="transaction-description">
+                  <span class="player-name">Steve</span> paid <span class="player-name">Alex</span>
+                </div>
+              </div>
+              <div class="transaction-amount positive">+$1,250</div>
+            </div>
+            <div class="transaction-item type-purchase">
+              <div class="transaction-icon purchase">🛒</div>
+              <div class="transaction-details">
+                <div class="transaction-header">
+                  <span class="transaction-type">Purchase</span>
+                  <span class="transaction-time">5 minutes ago</span>
+                </div>
+                <div class="transaction-description">
+                  <span class="player-name">Notch</span> bought <span class="item-name">Diamond Sword</span>
+                </div>
+              </div>
+              <div class="transaction-amount negative">-$450</div>
+            </div>
+            <div class="transaction-item type-trade">
+              <div class="transaction-icon trade">🤝</div>
+              <div class="transaction-details">
+                <div class="transaction-header">
+                  <span class="transaction-type">Trade</span>
+                  <span class="transaction-time">12 minutes ago</span>
+                </div>
+                <div class="transaction-description">
+                  <span class="player-name">Jeb</span> traded with <span class="player-name">Herobrine</span>
+                </div>
+              </div>
+              <div class="transaction-amount neutral">$0</div>
+            </div>
+            <div class="transaction-item type-payment">
+              <div class="transaction-icon payment">💸</div>
+              <div class="transaction-details">
+                <div class="transaction-header">
+                  <span class="transaction-type">Payment</span>
+                  <span class="transaction-time">18 minutes ago</span>
+                </div>
+                <div class="transaction-description">
+                  <span class="player-name">Alex</span> paid <span class="player-name">Jeb</span>
+                </div>
+              </div>
+              <div class="transaction-amount positive">+$3,400</div>
+            </div>
+            <div class="transaction-item type-purchase">
+              <div class="transaction-icon purchase">🛒</div>
+              <div class="transaction-details">
+                <div class="transaction-header">
+                  <span class="transaction-type">Purchase</span>
+                  <span class="transaction-time">25 minutes ago</span>
+                </div>
+                <div class="transaction-description">
+                  <span class="player-name">Steve</span> bought <span class="item-name">Enchanted Pickaxe</span>
+                </div>
+              </div>
+              <div class="transaction-amount negative">-$1,200</div>
+            </div>
+          </div>
+          <button class="view-all-btn" id="view-all-transactions">
+            <span>View Transaction History</span>
+            <span class="arrow">→</span>
+          </button>
+        </div>
+
+        <!-- Money Distribution Chart -->
+        <div class="economy-section">
+          <h3 class="economy-subtitle"><span class="icon">📊</span> Wealth Distribution</h3>
+          <div class="distribution-grid">
+            <div class="distribution-chart">
+              <canvas id="wealth-distribution-chart" height="200" aria-label="Wealth Distribution Chart"></canvas>
+            </div>
+            <div class="distribution-stats">
+              <div class="dist-stat-item">
+                <div class="dist-stat-label">Top 10%</div>
+                <div class="dist-stat-value">$1,847,293</div>
+                <div class="dist-stat-bar">
+                  <div class="dist-stat-fill" style="width: 65%;"></div>
+                </div>
+                <div class="dist-stat-percentage">64.9% of total</div>
+              </div>
+              <div class="dist-stat-item">
+                <div class="dist-stat-label">Middle 40%</div>
+                <div class="dist-stat-value">$742,180</div>
+                <div class="dist-stat-bar">
+                  <div class="dist-stat-fill" style="width: 26%;"></div>
+                </div>
+                <div class="dist-stat-percentage">26.1% of total</div>
+              </div>
+              <div class="dist-stat-item">
+                <div class="dist-stat-label">Bottom 50%</div>
+                <div class="dist-stat-value">$258,120</div>
+                <div class="dist-stat-bar">
+                  <div class="dist-stat-fill" style="width: 9%;"></div>
+                </div>
+                <div class="dist-stat-percentage">9.0% of total</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Command Console Section -->
+      <section id="command-console" class="glass-card" aria-label="Command Console">
+        <h2><span class="icon">💻</span> Server Console</h2>
+        <div class="console-shortcuts">
+          <button class="shortcut-btn" data-command="/list" title="List online players">👥 List Players</button>
+          <button class="shortcut-btn" data-command="/tps" title="Show TPS">📊 Check TPS</button>
+          <button class="shortcut-btn" data-command="/gc" title="Run garbage collection">🗑️ Run GC</button>
+          <button class="shortcut-btn" data-command="/save-all" title="Save all worlds">💾 Save All</button>
+          <button class="shortcut-btn" data-command="/whitelist list" title="Show whitelist">📋 Whitelist</button>
+          <button class="shortcut-btn" data-command="/plugins" title="List plugins">🔌 Plugins</button>
+        </div>
+        <div class="console-output" id="console-output">
+          <div class="console-line system">
+            <span class="console-timestamp">[00:00:00]</span>
+            <span class="console-text">Console ready. Type a command or use shortcuts above.</span>
+          </div>
+        </div>
+        <div class="console-input-area">
+          <div class="console-autocomplete" id="console-autocomplete" style="display: none;">
+            <!-- Autocomplete suggestions appear here -->
+          </div>
+          <div class="console-input-wrapper">
+            <span class="console-prompt">&gt;</span>
+            <input 
+              type="text" 
+              id="console-input" 
+              class="console-input" 
+              placeholder="Enter command (e.g., /list, /tps, /help)" 
+              autocomplete="off"
+              aria-label="Command Input"
+            >
+            <button id="console-send" class="console-send-btn" title="Execute Command" aria-label="Send Command">
+              <span>▶</span>
+            </button>
+          </div>
+          <div class="console-hints">
+            <span class="hint-item">💡 Press <kbd>↑</kbd>/<kbd>↓</kbd> for history</span>
+            <span class="hint-item">💡 Press <kbd>Tab</kbd> for autocomplete</span>
+            <span class="hint-item">💡 Press <kbd>Ctrl+L</kbd> to clear</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- File Browser & Editor Section -->
+      <section id="file-browser" class="glass-card file-browser" aria-label="File Browser & Editor">
+        <div class="section-header">
+          <h2><span class="icon">📁</span> Configuration Files</h2>
+          <div class="file-actions">
+            <button id="upload-file" class="action-btn" title="Upload File">
+              <span class="action-btn-icon">📤</span>
+              <span class="action-btn-text">Upload</span>
+            </button>
+            <button id="create-file" class="action-btn" title="Create New File">
+              <span class="action-btn-icon">➕</span>
+              <span class="action-btn-text">New File</span>
+            </button>
+            <button id="refresh-files" class="action-btn" title="Refresh File List">
+              <span class="action-btn-icon">🔄</span>
+              <span class="action-btn-text">Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="file-browser-layout">
+          <!-- File Tree Sidebar -->
+          <div class="file-tree-panel">
+            <div class="file-tree-header">
+              <h3>📂 File Explorer</h3>
+              <div class="file-tree-search">
+                <input type="text" id="file-search" placeholder="Search files..." class="file-search-input">
+              </div>
+            </div>
+            <div class="file-tree" id="file-tree">
+              <div class="file-folder expanded" data-path="config">
+                <div class="folder-header" data-folder="config">
+                  <span class="folder-icon">📂</span>
+                  <span class="folder-name">config/</span>
+                  <span class="folder-toggle">▼</span>
+                </div>
+                <div class="folder-contents">
+                  <div class="file-item" data-path="config/server.properties" data-type="properties">
+                    <span class="file-icon">⚙️</span>
+                    <span class="file-name">server.properties</span>
+                    <span class="file-size">2.4 KB</span>
+                  </div>
+                  <div class="file-folder" data-path="config/neoessentials">
+                    <div class="folder-header" data-folder="config/neoessentials">
+                      <span class="folder-icon">📁</span>
+                      <span class="folder-name">neoessentials/</span>
+                      <span class="folder-toggle">▶</span>
+                    </div>
+                    <div class="folder-contents" style="display: none;">
+                      <div class="file-item" data-path="config/neoessentials/main.json" data-type="json">
+                        <span class="file-icon">📄</span>
+                        <span class="file-name">main.json</span>
+                        <span class="file-size">4.8 KB</span>
+                      </div>
+                      <div class="file-item" data-path="config/neoessentials/tablist.json" data-type="json">
+                        <span class="file-icon">📄</span>
+                        <span class="file-name">tablist.json</span>
+                        <span class="file-size">1.2 KB</span>
+                      </div>
+                      <div class="file-item" data-path="config/neoessentials/commands.json" data-type="json">
+                        <span class="file-icon">📄</span>
+                        <span class="file-name">commands.json</span>
+                        <span class="file-size">3.5 KB</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="file-folder" data-path="plugins">
+                <div class="folder-header" data-folder="plugins">
+                  <span class="folder-icon">📁</span>
+                  <span class="folder-name">plugins/</span>
+                  <span class="folder-toggle">▶</span>
+                </div>
+                <div class="folder-contents" style="display: none;">
+                  <div class="file-item" data-path="plugins/example.yml" data-type="yaml">
+                    <span class="file-icon">📝</span>
+                    <span class="file-name">example.yml</span>
+                    <span class="file-size">1.8 KB</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- File Editor Panel -->
+          <div class="file-editor-panel">
+            <div class="editor-header">
+              <div class="editor-file-info">
+                <span class="editor-file-icon">📄</span>
+                <span class="editor-file-path" id="editor-file-path">No file selected</span>
+                <span class="editor-file-status" id="editor-file-status"></span>
+              </div>
+              <div class="editor-actions">
+                <button id="format-file" class="editor-btn" title="Format Document" disabled>
+                  <span>✨</span> Format
+                </button>
+                <button id="validate-file" class="editor-btn" title="Validate Syntax" disabled>
+                  <span>✓</span> Validate
+                </button>
+                <button id="download-file" class="editor-btn" title="Download File" disabled>
+                  <span>⬇️</span> Download
+                </button>
+                <button id="save-file" class="editor-btn primary" title="Save Changes" disabled>
+                  <span>💾</span> Save
+                </button>
+              </div>
+            </div>
+
+            <div class="editor-warning" id="editor-warning" style="display: none;">
+              <span class="warning-icon">⚠️</span>
+              <span class="warning-text">Backup will be created before saving changes</span>
+            </div>
+
+            <div class="editor-container" id="editor-container">
+              <div class="editor-placeholder">
+                <div class="placeholder-icon">📂</div>
+                <div class="placeholder-text">Select a file from the tree to edit</div>
+                <div class="placeholder-subtext">Supported formats: JSON, YAML, Properties, TXT</div>
+              </div>
+              <textarea 
+                id="file-editor" 
+                class="file-editor-textarea" 
+                placeholder="File content will appear here..."
+                spellcheck="false"
+                style="display: none;"
+              ></textarea>
+            </div>
+
+            <div class="editor-footer">
+              <div class="editor-stats">
+                <span class="stat-item">
+                  <span class="stat-label">Lines:</span>
+                  <span class="stat-value" id="editor-lines">0</span>
+                </span>
+                <span class="stat-item">
+                  <span class="stat-label">Characters:</span>
+                  <span class="stat-value" id="editor-chars">0</span>
+                </span>
+                <span class="stat-item">
+                  <span class="stat-label">File Type:</span>
+                  <span class="stat-value" id="editor-type">-</span>
+                </span>
+                <span class="stat-item">
+                  <span class="stat-label">Modified:</span>
+                  <span class="stat-value" id="editor-modified">No</span>
+                </span>
+              </div>
+              <div class="editor-shortcuts">
+                <span class="shortcut-hint">💡 <kbd>Ctrl+S</kbd> to save</span>
+                <span class="shortcut-hint">💡 <kbd>Ctrl+F</kbd> to format</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Upload Modal -->
+        <div id="file-upload-modal" class="modal" style="display: none;">
+          <div class="modal-content file-upload-modal">
+            <div class="modal-header">
+              <h3>📤 Upload File</h3>
+              <button class="modal-close" id="close-upload-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="upload-area" id="upload-area">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">
+                  <strong>Drag & drop files here</strong>
+                  <span>or click to browse</span>
+                </div>
+                <input type="file" id="file-input" accept=".json,.yml,.yaml,.properties,.txt,.conf" style="display: none;">
+              </div>
+              <div class="upload-info">
+                <p>Supported formats: JSON, YAML, Properties, TXT, CONF</p>
+                <p>Maximum file size: 5 MB</p>
+              </div>
+              <div class="upload-target">
+                <label for="upload-path">Target Path:</label>
+                <input type="text" id="upload-path" placeholder="config/filename.json" class="upload-path-input">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-upload">Cancel</button>
+              <button class="modal-btn primary" id="confirm-upload" disabled>Upload</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create File Modal -->
+        <div id="create-file-modal" class="modal" style="display: none;">
+          <div class="modal-content create-file-modal">
+            <div class="modal-header">
+              <h3>➕ Create New File</h3>
+              <button class="modal-close" id="close-create-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="new-file-path">File Path:</label>
+                <input type="text" id="new-file-path" placeholder="config/myfile.json" class="form-input">
+                <div class="form-hint">Include the directory path and file extension</div>
+              </div>
+              <div class="form-group">
+                <label for="new-file-type">File Type:</label>
+                <select id="new-file-type" class="form-select">
+                  <option value="json">JSON</option>
+                  <option value="yaml">YAML</option>
+                  <option value="properties">Properties</option>
+                  <option value="txt">Text</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="new-file-template">Template:</label>
+                <select id="new-file-template" class="form-select">
+                  <option value="empty">Empty File</option>
+                  <option value="basic-json">Basic JSON Object</option>
+                  <option value="basic-yaml">Basic YAML Config</option>
+                  <option value="basic-properties">Basic Properties</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-create">Cancel</button>
+              <button class="modal-btn primary" id="confirm-create">Create File</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Backup Management System -->
+      <section id="backup-management" class="glass-card backup-management" aria-label="Backup Management">
+        <div class="section-header">
+          <h2><span class="icon">💾</span> Backup Management</h2>
+          <div class="backup-actions">
+            <button id="create-backup" class="action-btn primary" title="Create Backup Now">
+              <span class="action-btn-icon">➕</span>
+              <span class="action-btn-text">Create Backup</span>
+            </button>
+            <button id="backup-settings" class="action-btn" title="Backup Settings">
+              <span class="action-btn-icon">⚙️</span>
+              <span class="action-btn-text">Settings</span>
+            </button>
+            <button id="refresh-backups" class="action-btn" title="Refresh Backup List">
+              <span class="action-btn-icon">🔄</span>
+              <span class="action-btn-text">Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Backup Overview -->
+        <div class="backup-overview">
+          <div class="backup-stat-card">
+            <div class="backup-stat-icon">📦</div>
+            <div class="backup-stat-content">
+              <span class="backup-stat-value" id="total-backups">0</span>
+              <span class="backup-stat-label">Total Backups</span>
+            </div>
+          </div>
+          <div class="backup-stat-card">
+            <div class="backup-stat-icon">💿</div>
+            <div class="backup-stat-content">
+              <span class="backup-stat-value" id="total-backup-size">0 GB</span>
+              <span class="backup-stat-label">Total Size</span>
+            </div>
+          </div>
+          <div class="backup-stat-card">
+            <div class="backup-stat-icon">⏰</div>
+            <div class="backup-stat-content">
+              <span class="backup-stat-value" id="last-backup-time">Never</span>
+              <span class="backup-stat-label">Last Backup</span>
+            </div>
+          </div>
+          <div class="backup-stat-card">
+            <div class="backup-stat-icon">📅</div>
+            <div class="backup-stat-content">
+              <span class="backup-stat-value" id="next-scheduled-backup">Not scheduled</span>
+              <span class="backup-stat-label">Next Scheduled</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Backup Schedule Configuration -->
+        <div class="backup-schedule-section">
+          <h3>🕐 Automatic Backup Schedule</h3>
+          <div class="schedule-controls">
+            <div class="schedule-toggle">
+              <label class="toggle-switch">
+                <input type="checkbox" id="auto-backup-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Enable Automatic Backups</span>
+            </div>
+            <div class="schedule-options">
+              <div class="schedule-option">
+                <label for="backup-frequency">Frequency:</label>
+                <select id="backup-frequency" class="schedule-select">
+                  <option value="hourly">Hourly</option>
+                  <option value="daily" selected>Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div class="schedule-option">
+                <label for="backup-time">Time:</label>
+                <input type="time" id="backup-time" class="schedule-input" value="03:00">
+              </div>
+              <div class="schedule-option">
+                <label for="backup-retention">Keep for:</label>
+                <select id="backup-retention" class="schedule-select">
+                  <option value="7">7 days</option>
+                  <option value="14">14 days</option>
+                  <option value="30" selected>30 days</option>
+                  <option value="60">60 days</option>
+                  <option value="90">90 days</option>
+                  <option value="0">Forever</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Backup Filter & Search -->
+        <div class="backup-filters">
+          <div class="backup-search">
+            <input type="text" id="backup-search" placeholder="Search backups..." class="backup-search-input">
+          </div>
+          <div class="backup-filter-buttons">
+            <button class="filter-btn active" data-filter="all">All Backups</button>
+            <button class="filter-btn" data-filter="manual">Manual</button>
+            <button class="filter-btn" data-filter="automatic">Automatic</button>
+            <button class="filter-btn" data-filter="world">World Only</button>
+            <button class="filter-btn" data-filter="config">Config Only</button>
+          </div>
+        </div>
+
+        <!-- Backup List -->
+        <div class="backup-list" id="backup-list">
+          <div class="backup-item" data-backup-id="1">
+            <div class="backup-item-header">
+              <div class="backup-item-icon">💾</div>
+              <div class="backup-item-info">
+                <div class="backup-item-name">Full Server Backup - 2025-10-14</div>
+                <div class="backup-item-meta">
+                  <span class="backup-type automatic">Automatic</span>
+                  <span class="backup-date">📅 Oct 14, 2025 03:00 AM</span>
+                  <span class="backup-size">💿 2.3 GB</span>
+                </div>
+              </div>
+              <div class="backup-item-actions">
+                <button class="backup-btn info" title="Backup Info">ℹ️</button>
+                <button class="backup-btn download" title="Download">⬇️</button>
+                <button class="backup-btn restore" title="Restore">↩️</button>
+                <button class="backup-btn delete" title="Delete">🗑️</button>
+              </div>
+            </div>
+            <div class="backup-item-details" style="display: none;">
+              <div class="backup-detail-grid">
+                <div class="backup-detail-item">
+                  <span class="detail-label">Includes:</span>
+                  <span class="detail-value">World, Plugins, Config</span>
+                </div>
+                <div class="backup-detail-item">
+                  <span class="detail-label">Compression:</span>
+                  <span class="detail-value">ZIP (80% ratio)</span>
+                </div>
+                <div class="backup-detail-item">
+                  <span class="detail-label">Players Online:</span>
+                  <span class="detail-value">12 players</span>
+                </div>
+                <div class="backup-detail-item">
+                  <span class="detail-label">Server Version:</span>
+                  <span class="detail-value">1.21.1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="backup-item" data-backup-id="2">
+            <div class="backup-item-header">
+              <div class="backup-item-icon">💾</div>
+              <div class="backup-item-info">
+                <div class="backup-item-name">Manual Backup - Pre-Update</div>
+                <div class="backup-item-meta">
+                  <span class="backup-type manual">Manual</span>
+                  <span class="backup-date">📅 Oct 13, 2025 08:30 PM</span>
+                  <span class="backup-size">💿 2.1 GB</span>
+                </div>
+              </div>
+              <div class="backup-item-actions">
+                <button class="backup-btn info" title="Backup Info">ℹ️</button>
+                <button class="backup-btn download" title="Download">⬇️</button>
+                <button class="backup-btn restore" title="Restore">↩️</button>
+                <button class="backup-btn delete" title="Delete">🗑️</button>
+              </div>
+            </div>
+            <div class="backup-item-details" style="display: none;">
+              <div class="backup-detail-grid">
+                <div class="backup-detail-item">
+                  <span class="detail-label">Includes:</span>
+                  <span class="detail-value">World, Plugins, Config</span>
+                </div>
+                <div class="backup-detail-item">
+                  <span class="detail-label">Compression:</span>
+                  <span class="detail-value">ZIP (82% ratio)</span>
+                </div>
+                <div class="backup-detail-item">
+                  <span class="detail-label">Players Online:</span>
+                  <span class="detail-value">8 players</span>
+                </div>
+                <div class="backup-detail-item">
+                  <span class="detail-label">Notes:</span>
+                  <span class="detail-value">Before plugin update</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="backup-item" data-backup-id="3">
+            <div class="backup-item-header">
+              <div class="backup-item-icon">🗺️</div>
+              <div class="backup-item-info">
+                <div class="backup-item-name">World Only Backup</div>
+                <div class="backup-item-meta">
+                  <span class="backup-type world">World Only</span>
+                  <span class="backup-date">📅 Oct 13, 2025 03:00 AM</span>
+                  <span class="backup-size">💿 1.8 GB</span>
+                </div>
+              </div>
+              <div class="backup-item-actions">
+                <button class="backup-btn info" title="Backup Info">ℹ️</button>
+                <button class="backup-btn download" title="Download">⬇️</button>
+                <button class="backup-btn restore" title="Restore">↩️</button>
+                <button class="backup-btn delete" title="Delete">🗑️</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create Backup Modal -->
+        <div id="create-backup-modal" class="modal" style="display: none;">
+          <div class="modal-content backup-create-modal">
+            <div class="modal-header">
+              <h3>➕ Create New Backup</h3>
+              <button class="modal-close" id="close-backup-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="backup-name">Backup Name:</label>
+                <input type="text" id="backup-name" placeholder="e.g., Pre-Update Backup" class="form-input">
+                <div class="form-hint">Optional: Leave blank for automatic naming</div>
+              </div>
+              <div class="form-group">
+                <label>What to backup:</label>
+                <div class="checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="backup-world" checked>
+                    <span>🗺️ World Files</span>
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="backup-plugins" checked>
+                    <span>🔌 Plugins</span>
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="backup-config" checked>
+                    <span>⚙️ Configuration</span>
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="backup-logs">
+                    <span>📋 Server Logs</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="backup-compression">Compression Level:</label>
+                <select id="backup-compression" class="form-select">
+                  <option value="none">None (Fastest)</option>
+                  <option value="fast">Fast</option>
+                  <option value="normal" selected>Normal</option>
+                  <option value="max">Maximum (Slowest)</option>
+                </select>
+              </div>
+              <div class="backup-estimate">
+                <div class="estimate-item">
+                  <span class="estimate-label">Estimated Size:</span>
+                  <span class="estimate-value" id="estimated-size">~2.3 GB</span>
+                </div>
+                <div class="estimate-item">
+                  <span class="estimate-label">Estimated Time:</span>
+                  <span class="estimate-value" id="estimated-time">~3-5 minutes</span>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-backup-create">Cancel</button>
+              <button class="modal-btn primary" id="confirm-backup-create">Create Backup</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Backup Settings Modal -->
+        <div id="backup-settings-modal" class="modal" style="display: none;">
+          <div class="modal-content backup-settings-modal">
+            <div class="modal-header">
+              <h3>⚙️ Backup Settings</h3>
+              <button class="modal-close" id="close-settings-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="settings-section">
+                <h4>Storage Settings</h4>
+                <div class="form-group">
+                  <label for="backup-location">Backup Directory:</label>
+                  <input type="text" id="backup-location" value="./backups" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label for="max-backup-size">Maximum Storage:</label>
+                  <select id="max-backup-size" class="form-select">
+                    <option value="10">10 GB</option>
+                    <option value="20" selected>20 GB</option>
+                    <option value="50">50 GB</option>
+                    <option value="100">100 GB</option>
+                    <option value="0">Unlimited</option>
+                  </select>
+                </div>
+              </div>
+              <div class="settings-section">
+                <h4>Retention Policy</h4>
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="auto-delete-old" checked>
+                    <span>Automatically delete old backups</span>
+                  </label>
+                </div>
+                <div class="form-group">
+                  <label for="keep-minimum">Keep minimum:</label>
+                  <input type="number" id="keep-minimum" value="3" min="1" class="form-input">
+                  <div class="form-hint">Always keep at least this many backups</div>
+                </div>
+              </div>
+              <div class="settings-section">
+                <h4>Notifications</h4>
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="notify-backup-complete" checked>
+                    <span>Notify when backup completes</span>
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="notify-backup-fail" checked>
+                    <span>Notify on backup failure</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-settings">Cancel</button>
+              <button class="modal-btn primary" id="save-settings">Save Settings</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Restore Confirmation Modal -->
+        <div id="restore-modal" class="modal" style="display: none;">
+          <div class="modal-content restore-modal">
+            <div class="modal-header warning">
+              <h3>⚠️ Restore Backup</h3>
+              <button class="modal-close" id="close-restore-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="warning-message">
+                <div class="warning-icon">⚠️</div>
+                <div class="warning-text">
+                  <strong>Warning: This action cannot be undone!</strong>
+                  <p>Restoring this backup will:</p>
+                  <ul>
+                    <li>Stop the server temporarily</li>
+                    <li>Replace current world, plugins, and config files</li>
+                    <li>Create a backup of current state before restoring</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="restore-info">
+                <div class="restore-detail">
+                  <span class="detail-label">Restoring:</span>
+                  <span class="detail-value" id="restore-backup-name">-</span>
+                </div>
+                <div class="restore-detail">
+                  <span class="detail-label">Backup Date:</span>
+                  <span class="detail-value" id="restore-backup-date">-</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="confirm-restore-checkbox">
+                  <span>I understand this will replace my current server data</span>
+                </label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-restore">Cancel</button>
+              <button class="modal-btn danger" id="confirm-restore" disabled>Restore Backup</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Player Management Controls Section -->
+      <section id="player-management" class="glass-card" aria-label="Player Management">
+        <h2><span class="icon">👮</span> Player Management</h2>
+        
+        <!-- Active Moderation Actions -->
+        <div class="moderation-summary">
+          <div class="mod-stat-card">
+            <div class="mod-stat-icon">🚫</div>
+            <div class="mod-stat-info">
+              <span class="mod-stat-value" id="active-bans-count">0</span>
+              <span class="mod-stat-label">Active Bans</span>
+            </div>
+          </div>
+          <div class="mod-stat-card">
+            <div class="mod-stat-icon">🔇</div>
+            <div class="mod-stat-info">
+              <span class="mod-stat-value" id="active-mutes-count">0</span>
+              <span class="mod-stat-label">Active Mutes</span>
+            </div>
+          </div>
+          <div class="mod-stat-card">
+            <div class="mod-stat-icon">🔒</div>
+            <div class="mod-stat-info">
+              <span class="mod-stat-value" id="active-jails-count">0</span>
+              <span class="mod-stat-label">Jailed Players</span>
+            </div>
+          </div>
+          <div class="mod-stat-card">
+            <div class="mod-stat-icon">❄️</div>
+            <div class="mod-stat-info">
+              <span class="mod-stat-value" id="frozen-players-count">0</span>
+              <span class="mod-stat-label">Frozen Players</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <button class="quick-action-btn" id="open-ban-modal" title="Ban a player">
+            <span class="action-icon">🚫</span>
+            <span class="action-text">Ban Player</span>
+          </button>
+          <button class="quick-action-btn" id="open-kick-modal" title="Kick a player">
+            <span class="action-icon">⚠️</span>
+            <span class="action-text">Kick Player</span>
+          </button>
+          <button class="quick-action-btn" id="open-mute-modal" title="Mute a player">
+            <span class="action-icon">🔇</span>
+            <span class="action-text">Mute Player</span>
+          </button>
+          <button class="quick-action-btn" id="open-freeze-modal" title="Freeze a player">
+            <span class="action-icon">❄️</span>
+            <span class="action-text">Freeze Player</span>
+          </button>
+          <button class="quick-action-btn" id="open-jail-modal" title="Jail a player">
+            <span class="action-icon">🔒</span>
+            <span class="action-text">Jail Player</span>
+          </button>
+          <button class="quick-action-btn secondary" id="view-mod-history" title="View moderation history">
+            <span class="action-icon">📋</span>
+            <span class="action-text">View History</span>
+          </button>
+        </div>
+        
+        <!-- Active Actions List -->
+        <div class="active-actions-list">
+          <h3>Active Moderation Actions</h3>
+          <div id="active-actions-container">
+            <div class="empty-state">
+              <span class="empty-icon">✓</span>
+              <span class="empty-text">No active moderation actions</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Moderation Action Modal -->
+      <dialog id="moderation-modal" class="glass-modal moderation-modal" aria-modal="true">
+        <button class="modal-close-btn" id="close-moderation-modal" aria-label="Close">&times;</button>
+        
+        <div class="moderation-modal-header">
+          <h3 id="moderation-modal-title">Moderate Player</h3>
+          <span class="moderation-type-badge" id="moderation-type-badge">Action</span>
+        </div>
+        
+        <div class="moderation-modal-content">
+          <form id="moderation-form">
+            <!-- Player Selection -->
+            <div class="form-group">
+              <label for="mod-player-name">
+                <span class="label-icon">👤</span>
+                Player Name
+              </label>
+              <input 
+                type="text" 
+                id="mod-player-name" 
+                class="form-input" 
+                placeholder="Enter player name"
+                required
+                autocomplete="off"
+              >
+              <div class="player-suggestions" id="player-suggestions" style="display: none;"></div>
+            </div>
+            
+            <!-- Reason Input -->
+            <div class="form-group">
+              <label for="mod-reason">
+                <span class="label-icon">📝</span>
+                Reason
+              </label>
+              <textarea 
+                id="mod-reason" 
+                class="form-textarea" 
+                placeholder="Enter reason for this action"
+                rows="3"
+                required
+              ></textarea>
+            </div>
+            
+            <!-- Duration Selection (for ban, mute, jail) -->
+            <div class="form-group" id="duration-group">
+              <label for="mod-duration">
+                <span class="label-icon">⏱️</span>
+                Duration
+              </label>
+              <div class="duration-selector">
+                <select id="mod-duration" class="form-select">
+                  <option value="permanent">Permanent</option>
+                  <option value="1h">1 Hour</option>
+                  <option value="6h">6 Hours</option>
+                  <option value="12h">12 Hours</option>
+                  <option value="1d">1 Day</option>
+                  <option value="3d">3 Days</option>
+                  <option value="7d">7 Days</option>
+                  <option value="14d">14 Days</option>
+                  <option value="30d">30 Days</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <input 
+                  type="text" 
+                  id="custom-duration" 
+                  class="form-input" 
+                  placeholder="e.g., 2h, 5d, 3w"
+                  style="display: none;"
+                >
+              </div>
+            </div>
+            
+            <!-- IP Ban Option (for ban only) -->
+            <div class="form-group" id="ip-ban-group" style="display: none;">
+              <label class="checkbox-label">
+                <input type="checkbox" id="mod-ip-ban" class="form-checkbox">
+                <span class="checkbox-text">
+                  <span class="label-icon">🌐</span>
+                  Ban IP Address (prevents alt accounts)
+                </span>
+              </label>
+            </div>
+            
+            <!-- Silent Option -->
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="mod-silent" class="form-checkbox">
+                <span class="checkbox-text">
+                  <span class="label-icon">🔕</span>
+                  Silent (don't broadcast to server)
+                </span>
+              </label>
+            </div>
+            
+            <!-- Confirmation Warning -->
+            <div class="warning-box">
+              <span class="warning-icon">⚠️</span>
+              <div class="warning-text">
+                <strong>Warning:</strong> This action will be immediately applied to the player.
+                Make sure all details are correct before proceeding.
+              </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" id="cancel-moderation">Cancel</button>
+              <button type="submit" class="btn-danger" id="confirm-moderation">
+                <span id="confirm-action-text">Apply Action</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </dialog>
+      
       <section id="settings" class="glass-card" aria-label="Settings">
           <h2><span class="icon">⚙️</span> Settings</h2>
           <div class="settings-summary">
@@ -83,10 +1651,193 @@
           </div>
       </section>
       <!-- Player Details Modal -->
-      <dialog id="player-details-modal" class="glass-modal" aria-modal="true" aria-labelledby="player-details-title">
-        <h3 id="player-details-title">Player Details</h3>
-        <div class="modal-content">Loading...</div>
-        <button id="close-modal-btn" class="glass-btn" aria-label="Close">Close</button>
+      <dialog id="player-details-modal" class="glass-modal player-modal" aria-modal="true" aria-labelledby="player-details-title">
+        <button class="modal-close-btn" id="close-player-modal" aria-label="Close">&times;</button>
+        
+        <div class="player-modal-header">
+          <img src="" alt="Player Head" class="player-head" id="player-head">
+          <div class="player-header-info">
+            <h3 id="player-details-title">Player Name</h3>
+            <span class="player-uuid" id="player-uuid">UUID</span>
+            <span class="player-status online" id="player-status">Online</span>
+          </div>
+        </div>
+        
+        <div class="player-modal-tabs">
+          <button class="tab-btn active" data-tab="overview">Overview</button>
+          <button class="tab-btn" data-tab="location">Location</button>
+          <button class="tab-btn" data-tab="inventory">Inventory</button>
+          <button class="tab-btn" data-tab="stats">Statistics</button>
+          <button class="tab-btn" data-tab="economy">Economy</button>
+          <button class="tab-btn" data-tab="permissions">Permissions</button>
+        </div>
+        
+        <div class="player-modal-content">
+          <!-- Overview Tab -->
+          <div class="tab-content active" id="tab-overview">
+            <div class="info-grid">
+              <div class="info-card">
+                <span class="info-label">⏱️ Playtime</span>
+                <span class="info-value" id="player-playtime">Loading...</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">🎮 Game Mode</span>
+                <span class="info-value" id="player-gamemode">Loading...</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">❤️ Health</span>
+                <span class="info-value" id="player-health">Loading...</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">🍖 Hunger</span>
+                <span class="info-value" id="player-hunger">Loading...</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">✨ Experience</span>
+                <span class="info-value" id="player-xp">Loading...</span>
+              </div>
+              <div class="info-card">
+                <span class="info-label">🌟 Level</span>
+                <span class="info-value" id="player-level">Loading...</span>
+              </div>
+            </div>
+            
+            <div class="player-homes" id="player-homes">
+              <h4>🏠 Homes</h4>
+              <div class="homes-list">Loading...</div>
+            </div>
+          </div>
+          
+          <!-- Location Tab -->
+          <div class="tab-content" id="tab-location">
+            <div class="location-info">
+              <div class="info-row">
+                <span class="info-label">🌍 World</span>
+                <span class="info-value" id="player-world">Loading...</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">📐 Dimension</span>
+                <span class="info-value" id="player-dimension">Loading...</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">📍 Coordinates</span>
+                <div class="coordinates">
+                  <span>X: <strong id="player-x">0</strong></span>
+                  <span>Y: <strong id="player-y">0</strong></span>
+                  <span>Z: <strong id="player-z">0</strong></span>
+                </div>
+              </div>
+              <div class="info-row">
+                <span class="info-label">🧭 Rotation</span>
+                <span class="info-value" id="player-rotation">Loading...</span>
+              </div>
+            </div>
+            <button class="glass-btn" id="teleport-to-player">🚀 Teleport to Player</button>
+          </div>
+          
+          <!-- Inventory Tab -->
+          <div class="tab-content" id="tab-inventory">
+            <div class="inventory-grid" id="player-inventory-grid">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+          
+          <!-- Statistics Tab -->
+          <div class="tab-content" id="tab-stats">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <span class="stat-icon">⚔️</span>
+                <span class="stat-label">Mob Kills</span>
+                <span class="stat-value" id="stat-mob-kills">0</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-icon">💀</span>
+                <span class="stat-label">Deaths</span>
+                <span class="stat-value" id="stat-deaths">0</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-icon">🏃</span>
+                <span class="stat-label">Distance Walked</span>
+                <span class="stat-value" id="stat-walked">0 km</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-icon">🎯</span>
+                <span class="stat-label">Player Kills</span>
+                <span class="stat-value" id="stat-player-kills">0</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-icon">⛏️</span>
+                <span class="stat-label">Blocks Mined</span>
+                <span class="stat-value" id="stat-blocks-mined">0</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-icon">🔧</span>
+                <span class="stat-label">Items Crafted</span>
+                <span class="stat-value" id="stat-crafted">0</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Economy Tab -->
+          <div class="tab-content" id="tab-economy">
+            <div class="economy-info">
+              <div class="balance-card">
+                <span class="balance-label">💰 Balance</span>
+                <span class="balance-value" id="player-balance">$0.00</span>
+              </div>
+              <div class="recent-transactions" id="recent-transactions">
+                <h4>Recent Transactions</h4>
+                <div class="transactions-list">Loading...</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Permissions Tab -->
+          <div class="tab-content" id="tab-permissions">
+            <div class="permissions-list" id="player-permissions">
+              Loading permissions...
+            </div>
+          </div>
+        </div>
+        
+        <div class="player-modal-actions">
+          <button class="glass-btn action-btn" id="action-message">💬 Message</button>
+          <button class="glass-btn action-btn warn" id="action-kick">⚠️ Kick</button>
+          <button class="glass-btn action-btn danger" id="action-ban">🚫 Ban</button>
+        </div>
+      </dialog>
+      
+      <!-- Theme Switcher Modal -->
+      <dialog id="theme-modal" class="glass-modal theme-modal" aria-modal="true" aria-labelledby="theme-modal-title">
+        <h3 id="theme-modal-title">🌌 Choose Your Space Theme</h3>
+        <div class="theme-options">
+          <button class="theme-option" data-theme="nebula">
+            <div class="theme-preview nebula-preview"></div>
+            <span class="theme-name">Nebula</span>
+            <span class="theme-desc">Classic blue & purple cosmos</span>
+          </button>
+          <button class="theme-option" data-theme="galaxy">
+            <div class="theme-preview galaxy-preview"></div>
+            <span class="theme-name">Galaxy</span>
+            <span class="theme-desc">Pink & purple supernova</span>
+          </button>
+          <button class="theme-option" data-theme="deep-space">
+            <div class="theme-preview deep-space-preview"></div>
+            <span class="theme-name">Deep Space</span>
+            <span class="theme-desc">Infinite darkness with cyan</span>
+          </button>
+          <button class="theme-option" data-theme="solar">
+            <div class="theme-preview solar-preview"></div>
+            <span class="theme-name">Solar</span>
+            <span class="theme-desc">Warm orange solar flares</span>
+          </button>
+          <button class="theme-option" data-theme="aurora">
+            <div class="theme-preview aurora-preview"></div>
+            <span class="theme-name">Aurora</span>
+            <span class="theme-desc">Northern lights cyan & green</span>
+          </button>
+        </div>
+        <button id="close-theme-modal-btn" class="glass-btn" aria-label="Close">Close</button>
       </dialog>
     </main>
     <footer class="dashboard-footer glass-card" role="contentinfo">
