@@ -10,7 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -336,10 +341,16 @@ public class HomeManager {
     }
     
     /**
-     * Save homes to file
+     * Save homes to file (atomic operation)
      */
     private void saveHomes() {
         try {
+            ResourceUtil.ensureConfigDirectory();
+            File file = ResourceUtil.getConfigFile(HOMES_FILE);
+            
+            // Write to temp file first
+            File tempFile = new File(file.getAbsolutePath() + ".tmp");
+            
             JsonObject root = new JsonObject();
             
             for (Map.Entry<UUID, Map<String, TeleportLocation>> playerEntry : playerHomes.entrySet()) {
@@ -352,9 +363,17 @@ public class HomeManager {
                 root.add(playerEntry.getKey().toString(), playerHomesJson);
             }
             
-            ResourceUtil.ensureConfigDirectory();
-            File file = ResourceUtil.getConfigFile(HOMES_FILE);
-            java.nio.file.Files.writeString(file.toPath(), gson.toJson(root));
+            // Write to temp file
+            try (java.io.FileWriter writer = new java.io.FileWriter(tempFile)) {
+                gson.toJson(root, writer);
+            }
+            
+            // Atomically move temp file to actual file
+            java.nio.file.Files.move(tempFile.toPath(), file.toPath(), 
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING, 
+                java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            
+            LOGGER.debug("Successfully saved homes for {} players", playerHomes.size());
             
         } catch (Exception e) {
             LOGGER.error("Failed to save homes to file", e);

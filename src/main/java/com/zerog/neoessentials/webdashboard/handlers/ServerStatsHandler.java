@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
@@ -37,7 +38,7 @@ public class ServerStatsHandler implements HttpHandler {
         
         // Only allow GET
         if (!"GET".equals(exchange.getRequestMethod())) {
-            sendJsonResponse(exchange, 405, createErrorResponse("Method not allowed"));
+            sendJsonResponse(exchange, 405, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.method_not_allowed")));
             return;
         }
         
@@ -45,7 +46,7 @@ public class ServerStatsHandler implements HttpHandler {
             JsonObject response = getServerStats();
             sendJsonResponse(exchange, 200, response);
         } catch (Exception e) {
-            sendJsonResponse(exchange, 500, createErrorResponse("Internal server error: " + e.getMessage()));
+            sendJsonResponse(exchange, 500, createErrorResponse(MessageUtil.localize("neoessentials.dashboard.api.internal_error", e.getMessage())));
         }
     }
     
@@ -59,7 +60,7 @@ public class ServerStatsHandler implements HttpHandler {
         
         if (server != null) {
             // Server status
-            stats.addProperty("status", "Online");
+            stats.addProperty("status", MessageUtil.localize("neoessentials.dashboard.stats.status_online"));
             
             // TPS calculation
             double currentTps = calculateTps(server);
@@ -103,7 +104,7 @@ public class ServerStatsHandler implements HttpHandler {
             stats.addProperty("version", server.getServerVersion());
             
         } else {
-            stats.addProperty("status", "Offline");
+            stats.addProperty("status", MessageUtil.localize("neoessentials.dashboard.stats.status_offline"));
             stats.addProperty("tps", 0);
             stats.addProperty("online", 0);
             stats.addProperty("maxPlayers", 0);

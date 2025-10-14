@@ -24,3 +24,6 @@ runs
 run-data
 
 repo
+
+# build number (local builds only, GitHub Actions uses its own)
+build_number.txt

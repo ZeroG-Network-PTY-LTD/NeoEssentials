@@ -18,9 +18,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Collection;
 
 public class EnchantCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EnchantCommand.class);
     /**
      * Register the enhanced /enchant command that overrides vanilla Minecraft enchant.
      * Registers with higher priority to override vanilla command.
@@ -314,7 +317,7 @@ public class EnchantCommand {
             return true;
             
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to apply enchantment to item", e);
             return false;
         }
     }
