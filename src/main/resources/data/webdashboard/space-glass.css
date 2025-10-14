@@ -1,18 +1,68 @@
-/* Notification area */
+/* Notification area - Enhanced */
 .dashboard-notifications {
   position: relative;
   width: 100%;
   min-height: 32px;
   margin: 0 0 18px 0;
-  padding: 8px 0;
+  padding: 12px 24px;
   text-align: center;
   font-size: 1.08em;
   color: #fff;
-  background: rgba(126,200,227,0.12);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px #7ec8e344;
+  background: rgba(126,200,227,0.15);
+  backdrop-filter: blur(12px) saturate(1.3);
+  border-radius: 14px;
+  border: 1px solid rgba(126, 200, 227, 0.3);
+  box-shadow: 
+    0 4px 16px rgba(126, 200, 227, 0.3),
+    0 0 32px rgba(0, 255, 174, 0.15),
+    inset 0 0 20px rgba(126, 200, 227, 0.1);
   font-family: 'Orbitron', Arial, sans-serif;
   z-index: 10002;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.dashboard-notifications::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.dashboard-notifications:not(:empty)::before {
+  animation: notification-shine 2s ease-in-out;
+}
+
+@keyframes notification-shine {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+.dashboard-notifications:not(:empty) {
+  animation: notification-bounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes notification-bounce {
+  0% {
+    transform: scale(0.8) translateY(-10px);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Chart area */
@@ -57,23 +107,79 @@
   transition: width 0.5s cubic-bezier(.4,2,.3,1);
 }
 
-/* Glass button */
+/* Glass button - Enhanced */
 .glass-btn {
   background: rgba(255,255,255,0.08);
-  border: 1px solid #7ec8e3;
+  backdrop-filter: blur(8px) saturate(1.2);
+  border: 1.5px solid #7ec8e3;
   color: #eaf6ff;
   border-radius: 12px;
-  padding: 8px 18px;
+  padding: 10px 24px;
   margin-top: 10px;
   font-family: 'Orbitron', Arial, sans-serif;
   font-size: 1em;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px #7ec8e344;
-  transition: background 0.2s, color 0.2s;
+  box-shadow: 
+    0 4px 12px rgba(126, 200, 227, 0.3),
+    0 0 20px rgba(0, 255, 174, 0.1),
+    inset 0 0 10px rgba(126, 200, 227, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
+
+.glass-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(126, 200, 227, 0.4),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.glass-btn:hover::before {
+  left: 100%;
+}
+
 .glass-btn:hover {
-  background: rgba(126,200,227,0.18);
+  background: rgba(126,200,227,0.22);
   color: #00ffae;
+  border-color: #00ffae;
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(126, 200, 227, 0.45),
+    0 0 30px rgba(0, 255, 174, 0.25),
+    inset 0 0 15px rgba(126, 200, 227, 0.1);
+  text-shadow: 0 0 10px rgba(0, 255, 174, 0.8);
+}
+
+.glass-btn:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 10px rgba(126, 200, 227, 0.3),
+    0 0 15px rgba(0, 255, 174, 0.15);
+}
+
+.glass-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.glass-btn:disabled:hover {
+  transform: none;
+  background: rgba(255,255,255,0.08);
+  color: #eaf6ff;
 }
 
 /* Glass modal */
@@ -97,20 +203,32 @@
   font-size: 1.1em;
 }
 .glass-card {
-  background: rgba(30, 40, 80, 0.55);
+  background: rgba(30, 40, 80, 0.6);
   box-shadow:
-    0 4px 24px 0 #1a1f3a55,
-    0 0 32px 0 #7ec8e344,
-    0 0 0 6px #7ec8e344 inset,
-    0 0 32px 0 #fff2 inset;
-  border-radius: 18px;
-  border: 1.5px solid #7ec8e3;
-  backdrop-filter: blur(14px) saturate(1.18);
+    0 8px 32px 0 rgba(26, 31, 58, 0.6),
+    0 0 40px 0 rgba(126, 200, 227, 0.3),
+    0 0 0 1px rgba(126, 200, 227, 0.5) inset,
+    0 0 40px 0 rgba(255, 255, 255, 0.1) inset;
+  border-radius: 20px;
+  border: 2px solid rgba(126, 200, 227, 0.4);
+  backdrop-filter: blur(16px) saturate(1.3);
   position: relative;
-  margin-bottom: 24px;
-  padding: 24px 20px;
+  margin-bottom: 28px;
+  padding: 28px 24px;
   color: #eaf6ff;
   overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
+}
+
+.glass-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow:
+    0 12px 48px 0 rgba(26, 31, 58, 0.7),
+    0 0 50px 0 rgba(126, 200, 227, 0.45),
+    0 0 0 2px rgba(0, 255, 174, 0.4) inset,
+    0 0 50px 0 rgba(255, 255, 255, 0.15) inset;
+  border-color: rgba(0, 255, 174, 0.6);
 }
 .glass-card::before {
   content: '';
