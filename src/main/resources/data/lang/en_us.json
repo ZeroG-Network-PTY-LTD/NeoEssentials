@@ -450,5 +450,31 @@
   "neoessentials.dashboard.stats.rank_helper": "Helper",
   "neoessentials.dashboard.stats.rank_player": "Player",
   "neoessentials.dashboard.stats.status_online": "Online",
-  "neoessentials.dashboard.stats.status_offline": "Offline"
+  "neoessentials.dashboard.stats.status_offline": "Offline",
+  
+  "_comment_dashboard_temppass": "Dashboard Temporary Password Keys",
+  "commands.neoessentials.dashboard.temppass.usage": "§cUsage: /dashboard temppass <username>",
+  "commands.neoessentials.dashboard.temppass.no_permission": "§cYou don't have permission to generate temporary passwords",
+  "commands.neoessentials.dashboard.temppass.discord_not_available": "§cDiscord integration is not available. Temporary passwords require Discord role verification.",
+  "commands.neoessentials.dashboard.temppass.user_not_found": "§cDashboard user '{0}' not found",
+  "commands.neoessentials.dashboard.temppass.player_not_verified": "§cPlayer '{0}' is not verified with Discord. Only verified players can receive temporary passwords.",
+  "commands.neoessentials.dashboard.temppass.no_roles": "§cPlayer '{0}' does not have any of the required Discord roles for dashboard access",
+  "commands.neoessentials.dashboard.temppass.success_header": "§a§l╔════════════════════════════════════════╗",
+  "commands.neoessentials.dashboard.temppass.success_title": "§a§l║  Temporary Password Generated!        ║",
+  "commands.neoessentials.dashboard.temppass.success_divider": "§a§l╠════════════════════════════════════════╣",
+  "commands.neoessentials.dashboard.temppass.username_line": "§a§l║ §eUsername: §f{0}",
+  "commands.neoessentials.dashboard.temppass.password_line": "§a§l║ §eTemporary Password: §f{0}",
+  "commands.neoessentials.dashboard.temppass.warning_line": "§a§l║ §c§lWARNING: §7Password must be changed on first login!",
+  "commands.neoessentials.dashboard.temppass.footer": "§a§l╚════════════════════════════════════════╝",
+  "commands.neoessentials.dashboard.temppass.failed": "§cFailed to generate temporary password: {0}",
+  
+  "_comment_discord_sync": "Discord Permission Sync Keys",
+  "commands.neoessentials.discord.sync.console_not_allowed": "§cConsole cannot sync its own permissions. Specify a player or use 'all'.",
+  "commands.neoessentials.discord.sync.player_not_found": "§cPlayer not found.",
+  "commands.neoessentials.discord.sync.disabled": "§cDiscord permission sync is disabled in the configuration.",
+  "commands.neoessentials.discord.sync.starting": "§eStarting Discord permission sync for {0}...",
+  "commands.neoessentials.discord.sync.starting_all": "§eStarting Discord permission sync for all online players...",
+  "commands.neoessentials.discord.sync.success": "§aSuccessfully synced {1} permissions for {0} from Discord roles.",
+  "commands.neoessentials.discord.sync.failed": "§cFailed to sync permissions for {0}: {1}",
+  "commands.neoessentials.discord.sync.error": "§cError during permission sync: {0}"
 }

@@ -4,7 +4,6 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.107'
     id 'idea'
     id 'eclipse'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -142,9 +141,6 @@ dependencies {
     // The group id is ignored when searching -- in this case, it is "blank"
     // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
 
-    // Example mod dependency using a file as dependency
-    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
-
     // Example project dependency using a sister or child project:
     // implementation project(":myproject")
 
@@ -153,6 +149,11 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
     implementation 'com.google.code.gson:gson:2.10.1'
+    
+    // Java-WebSocket for WebSocket server - will be shaded into the mod JAR
+    // Using implementation so it's available at compile time and runtime
+    implementation 'org.java-websocket:Java-WebSocket:1.5.7'
+    
     // LuckPerms API for permissions integration
     compileOnly 'net.luckperms:api:5.4'
 
@@ -167,10 +168,25 @@ dependencies {
     // runtimeOnly fg.deobf("dev.ftb.mods:ftbranks-neoforge:VERSION")
 }
 
-// shadowJar {
-//     archiveClassifier.set('all') 
-//     relocate 'com.github.benmanes.caffeine', 'com.zerog.neoessentials.shaded.caffeine'
-// }
+// Manually bundle Java-WebSocket library into the mod JAR
+// This is necessary because NeoForge's classloader requires dependencies to be present in the JAR
+afterEvaluate {
+    tasks.named('jar', Jar) {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        
+        // Add Java-WebSocket classes to the JAR
+        def websocketJar = configurations.runtimeClasspath.find { it.name.startsWith('Java-WebSocket') }
+        if (websocketJar != null) {
+            from(zipTree(websocketJar)) {
+                exclude 'META-INF/MANIFEST.MF'
+                exclude 'META-INF/*.SF'
+                exclude 'META-INF/*.DSA'
+                exclude 'META-INF/*.RSA'
+                exclude 'META-INF/maven/**'
+            }
+        }
+    }
+}
 
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.

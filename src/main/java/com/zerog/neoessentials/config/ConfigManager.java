@@ -54,6 +54,7 @@ public class ConfigManager {
     public static final String ECONOMY_CONFIG = "economy.json";
     public static final String PERMISSIONS_CONFIG = "permissions.json";
     public static final String KITS_CONFIG = "kits.json";
+    public static final String DISCORD_AUTH_CONFIG = "discord_auth.json";
     
     // Config version tracking - increment when structure changes
     private static final String CONFIG_VERSION_KEY = "_configVersion";
@@ -79,6 +80,7 @@ public class ConfigManager {
             loadConfig(ECONOMY_CONFIG);
             loadConfig(PERMISSIONS_CONFIG);
             loadConfig(KITS_CONFIG);
+            loadConfig(DISCORD_AUTH_CONFIG);
             
             loaded = true;
             LOGGER.info("Configuration loading completed");
@@ -163,15 +165,18 @@ public class ConfigManager {
                 webDashboard.addProperty("enabled", true);
                 webDashboard.addProperty("autoStart", false);
                 webDashboard.addProperty("port", 8080);
+                webDashboard.addProperty("websocketPort", 8081);
                 minimalConfig.add("webDashboard", webDashboard);
                 break;
                 
             case ECONOMY_CONFIG:
-                JsonObject economySettings = new JsonObject();
-                economySettings.addProperty("startingBalance", 100.0);
-                economySettings.addProperty("currencySymbol", "$");
-                economySettings.addProperty("maxBalance", 100000.0);
-                minimalConfig.add("economySettings", economySettings);
+                minimalConfig.addProperty("enabled", true);
+                minimalConfig.addProperty("startingBalance", 100.0);
+                minimalConfig.addProperty("currencySymbol", "$");
+                minimalConfig.addProperty("maxBalance", 999999999.99);
+                minimalConfig.addProperty("allowNegativeBalances", false);
+                minimalConfig.addProperty("cleanupInactiveAccounts", true);
+                minimalConfig.addProperty("inactiveAccountCleanupDays", 30);
                 break;
                 
             case PERMISSIONS_CONFIG:
@@ -182,6 +187,23 @@ public class ConfigManager {
                 
             case KITS_CONFIG:
                 minimalConfig.add("kits", new JsonArray());
+                break;
+                
+            case DISCORD_AUTH_CONFIG:
+                minimalConfig.addProperty("enabled", true);
+                minimalConfig.addProperty("requireLinkedAccount", true);
+                minimalConfig.addProperty("allowAutoRegistration", true);
+                minimalConfig.addProperty("defaultRole", "VIEWER");
+                
+                JsonObject roleMapping = new JsonObject();
+                roleMapping.addProperty("_comment", "Map Discord role IDs to Dashboard roles. Get role ID by right-clicking role in Discord > Copy ID (requires Developer Mode)");
+                roleMapping.addProperty("1234567890123456789", "ADMIN");
+                roleMapping.addProperty("9876543210987654321", "MODERATOR");
+                minimalConfig.add("roleMapping", roleMapping);
+                
+                minimalConfig.add("whitelistedRoles", new JsonArray());
+                minimalConfig.add("blacklistedUsers", new JsonArray());
+                minimalConfig.addProperty("sessionDuration", 86400000);
                 break;
         }
         
@@ -217,12 +239,19 @@ public class ConfigManager {
                 templateConfig.get(CONFIG_VERSION_KEY).getAsInt() : CURRENT_CONFIG_VERSION;
                 
             if (existingVersion < templateVersion) {
-                LOGGER.info("Config version outdated: existing={}, template={}", existingVersion, templateVersion);
+                LOGGER.info("Config '{}' version outdated: existing={}, template={} → Will update and create backup", 
+                    configName, existingVersion, templateVersion);
                 return true;
             }
             
             // Compare structure (keys/sections)
-            return !configStructuresMatch(existingConfig, templateConfig);
+            boolean structureMatches = configStructuresMatch(existingConfig, templateConfig);
+            if (!structureMatches) {
+                LOGGER.info("Config '{}' structure mismatch detected → Will update and create backup", configName);
+            } else {
+                LOGGER.debug("Config '{}' is up-to-date (version={}, structure matches)", configName, existingVersion);
+            }
+            return !structureMatches;
             
         } catch (Exception e) {
             LOGGER.warn("Error checking config update status for {}: {}", configName, e.getMessage());
@@ -242,6 +271,7 @@ public class ConfigManager {
             } else if (ECONOMY_CONFIG.equals(configName)) {
                 in = ResourceUtil.class.getResourceAsStream("/data/economy.json");
             } else {
+                // All other configs are in /data/config/neoessentials/
                 in = ResourceUtil.getJarConfigResource(configName);
             }
             
@@ -327,10 +357,12 @@ public class ConfigManager {
      */
     private void updateConfigWithBackup(String configName, File configFile) {
         try {
+            LOGGER.info("Updating config: {} (creating backup)", configName);
+            
             // Create backup with incremental numbering
             File backupFile = createBackupFile(configFile);
             Files.copy(configFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            LOGGER.info("Created backup: {}", backupFile.getName());
+            LOGGER.info("✓ Created backup: {} -> {}", configName, backupFile.getName());
             
             // Load old config values
             JsonObject oldConfig;
@@ -569,6 +601,21 @@ public class ConfigManager {
     }
     
     /**
+     * Get web dashboard WebSocket port
+     */
+    public int getWebDashboardWebSocketPort() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
+            if (webDashboard.has("websocketPort")) {
+                return webDashboard.get("websocketPort").getAsInt();
+            }
+        }
+        // Default: HTTP port + 1 for backwards compatibility
+        return getWebDashboardPort() + 1;
+    }
+    
+    /**
      * Get web dashboard bind address
      */
     public String getWebDashboardBindAddress() {
@@ -762,6 +809,62 @@ public class ConfigManager {
         }
         return blacklist;
     }
+    
+    /**
+     * Check if permission-based item spawning is enabled
+     */
+    public boolean isPermissionBasedItemSpawn() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("items")) {
+            JsonObject items = config.getAsJsonObject("items");
+            if (items.has("permission-based-item-spawn")) {
+                return items.get("permission-based-item-spawn").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+    
+    /**
+     * Check if items should be dropped if inventory is full
+     */
+    public boolean shouldDropItemsIfFull() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("items")) {
+            JsonObject items = config.getAsJsonObject("items");
+            if (items.has("drop-items-if-full")) {
+                return items.get("drop-items-if-full").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+    
+    /**
+     * Get oversized stack size limit
+     */
+    public int getOversizedStackSize() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("items")) {
+            JsonObject items = config.getAsJsonObject("items");
+            if (items.has("oversized-stacksize")) {
+                return items.get("oversized-stacksize").getAsInt();
+            }
+        }
+        return 64; // Default to vanilla max
+    }
+    
+    /**
+     * Get default stack size (-1 for vanilla behavior)
+     */
+    public int getDefaultStackSize() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("items")) {
+            JsonObject items = config.getAsJsonObject("items");
+            if (items.has("default-stack-size")) {
+                return items.get("default-stack-size").getAsInt();
+            }
+        }
+        return -1; // Default to vanilla behavior
+    }
 
     /**
      * Get maximum command length from security settings
@@ -806,15 +909,12 @@ public class ConfigManager {
     }
 
     /**
-     * Get maximum economy amount from security/economy settings
+     * Get maximum economy amount from economy settings
      */
     public BigDecimal getMaxEconomyAmount() {
         JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("economySettings")) {
-            JsonObject settings = config.getAsJsonObject("economySettings");
-            if (settings.has("maxBalance")) {
-                return new BigDecimal(settings.get("maxBalance").getAsString());
-            }
+        if (config.has("maxBalance")) {
+            return config.get("maxBalance").getAsBigDecimal();
         }
         return new BigDecimal("999999999.99"); // Default fallback
     }
@@ -823,14 +923,8 @@ public class ConfigManager {
      * Get minimum economy amount from economy settings
      */
     public BigDecimal getMinEconomyAmount() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("economySettings")) {
-            JsonObject settings = config.getAsJsonObject("economySettings");
-            if (settings.has("minTransferAmount")) {
-                return new BigDecimal(settings.get("minTransferAmount").getAsString());
-            }
-        }
-        return new BigDecimal("0.01"); // Default fallback
+        // Default minimum transfer amount
+        return new BigDecimal("0.01");
     }
 
     /**

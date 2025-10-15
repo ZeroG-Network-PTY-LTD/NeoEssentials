@@ -13,6 +13,7 @@ import com.zerog.neoessentials.permissions.PermissionStorage;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.permissions.command.PermissionsCommand;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
@@ -147,9 +148,11 @@ public class NeoEssentials {
         }
 
     // Register this mod class with the NeoForge event bus for non-static event handlers
-    net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(this);
+    NeoForge.EVENT_BUS.register(this);
     // Register item interaction handler for powertool functionality
-    net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.items.handlers.ItemInteractionHandler.class);
+    NeoForge.EVENT_BUS.register(com.zerog.neoessentials.items.handlers.ItemInteractionHandler.class);
+    // Register item event handler for pickup/drop behavior and stack size management
+    NeoForge.EVENT_BUS.register(com.zerog.neoessentials.items.handlers.ItemEventHandler.class);
     // Removed DataComponentType registration for server-only compatibility
 
         // Load chat config and commands config for ChatManager using ConfigManager
@@ -167,23 +170,32 @@ public class NeoEssentials {
         }
 
         // Register chat event handler for message formatting
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.ChatHandler.class);
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.ChatHandler.class);
         
         // Register player join/quit message handler for custom messages
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.PlayerJoinQuitHandler.class);
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.PlayerJoinQuitHandler.class);
         
         // Register AFK system event handlers for comprehensive activity tracking
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkActivityHandler.class);
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkActivityHandler.class);
         // Enhanced AFK activity handler with pattern detection and anti-abuse measures
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.EnhancedAfkActivityHandler.class);
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.EnhancedAfkActivityHandler.class);
         // AfkMovementHandler disabled - no working tick events in this version
-        // net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkMovementHandler.class);
+        // NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkMovementHandler.class);
         // Register movement detector for position-based activity tracking
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkMovementDetector.class);
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkCommandHandler.class);
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkMovementDetector.class);
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkCommandHandler.class);
         // AfkSleepHandler disabled - no working sleep events in this version
-        // net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkSleepHandler.class);
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkTablistHandler.class);
+        // NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkSleepHandler.class);
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.chat.handlers.AfkTablistHandler.class);
+        
+        // Register player analytics listener for session tracking
+        NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.webdashboard.analytics.PlayerAnalyticsListener());
+        
+        // Register map player tracker for real-time location updates
+        NeoForge.EVENT_BUS.register(new com.zerog.neoessentials.webdashboard.map.MapPlayerTracker());
+        
+        // Register task scheduler for automated tasks
+        NeoForge.EVENT_BUS.register(com.zerog.neoessentials.scheduler.TaskScheduler.getInstance());
         
 
         
@@ -225,6 +237,14 @@ public class NeoEssentials {
                 com.zerog.neoessentials.integrations.ChatIntegrationManager.registerAdapter(sdLinkAdapter);
                 LOGGER.info("Simple Discord Link mod integration initialized successfully");
                 initializedAdapters++;
+                
+                // Check SDLink bot status for dashboard integration
+                try {
+                    com.zerog.neoessentials.webdashboard.security.SDLinkEventListener.checkBotStatus();
+                    LOGGER.info("SDLink bot status monitor initialized for Discord authentication");
+                } catch (Exception e) {
+                    LOGGER.debug("Could not initialize SDLink bot status monitor: {}", e.getMessage());
+                }
             }
             
             // Add more NeoForge mod integrations here as needed
@@ -576,6 +596,15 @@ public class NeoEssentials {
             LOGGER.error("Failed to register web dashboard commands", e);
         }
         
+        // Discord sync commands
+        try {
+            com.zerog.neoessentials.webdashboard.commands.DiscordSyncCommand.register(dispatcher);
+            registry.registerCommand("discord", "Discord permission sync commands");
+            LOGGER.info("Discord sync commands registered successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to register Discord sync commands", e);
+        }
+        
         // Root commands (register last so they can see all available commands)
         try {
             ModRootCommand.register(dispatcher);
@@ -594,7 +623,55 @@ public class NeoEssentials {
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             UUID uuid = player.getUUID();
-            LOGGER.debug("Player logged in: {} ({})", player.getName().getString(), uuid);
+            String ipAddress = player.getIpAddress();
+            LOGGER.debug("Player logged in: {} ({}) from {}", player.getName().getString(), uuid, ipAddress);
+            
+            // Check ban status first
+            try {
+                com.zerog.neoessentials.moderation.BanEntry ban = 
+                    com.zerog.neoessentials.moderation.ModerationManager.getInstance()
+                        .checkBan(uuid.toString(), ipAddress);
+                        
+                if (ban != null) {
+                    String banReason = ban.getReason();
+                    String kickMessage;
+                    
+                    if (ban.isPermanent()) {
+                        kickMessage = "§cYou are permanently banned from this server.\n§7Reason: §f" + banReason;
+                    } else {
+                        java.time.Instant expiresAt = ban.getExpiresAt();
+                        kickMessage = "§cYou are temporarily banned from this server.\n§7Reason: §f" + banReason + 
+                                     "\n§7Expires: §f" + expiresAt.toString();
+                    }
+                    
+                    if (ban.hasAppeal() && ban.isAppealPending()) {
+                        kickMessage += "\n\n§eYour appeal is pending review.";
+                    } else if (!ban.hasAppeal()) {
+                        kickMessage += "\n\n§7You may appeal this ban via the dashboard.";
+                    }
+                    
+                    player.connection.disconnect(net.minecraft.network.chat.Component.literal(kickMessage));
+                    LOGGER.info("Kicked banned player: {} ({}) - Reason: {}", player.getName().getString(), uuid, banReason);
+                    return;
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error checking ban status for player {}: {}", uuid, e.getMessage(), e);
+            }
+            
+            // Check whitelist status
+            try {
+                if (com.zerog.neoessentials.moderation.ModerationManager.getInstance().isWhitelistEnabled()) {
+                    if (!com.zerog.neoessentials.moderation.ModerationManager.getInstance().isWhitelisted(uuid.toString(), ipAddress)) {
+                        String kickMessage = "§cYou are not whitelisted on this server.\n§7Please contact an administrator for access.";
+                        player.connection.disconnect(net.minecraft.network.chat.Component.literal(kickMessage));
+                        LOGGER.info("Kicked non-whitelisted player: {} ({})", player.getName().getString(), uuid);
+                        return;
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error checking whitelist status for player {}: {}", uuid, e.getMessage(), e);
+            }
+            
             try {
                 // Economy data is automatically managed by EconomyManager
                 LOGGER.debug("Economy auto-loaded for: {}", uuid);
@@ -602,6 +679,11 @@ public class NeoEssentials {
                 // Load general player data (homes, warps, etc.)
                 NeoEssentialsManager.getInstance().loadPlayerData(uuid);
                 LOGGER.debug("Player data loaded for: {}", uuid);
+                
+                // Apply resource packs for player
+                com.zerog.neoessentials.resourcepacks.ResourcePackManager.getInstance()
+                    .applyPacksForPlayer(player);
+                LOGGER.debug("Resource packs applied for: {}", uuid);
             } catch (Exception e) {
                 LOGGER.error("Exception loading player data for: {}: {}", uuid, e.getMessage(), e);
             }
@@ -652,17 +734,76 @@ public class NeoEssentials {
             LOGGER.error("Failed to load existing player data at startup", e);
         }
         
+        // Initialize WorldInfoCollector with server instance for map viewer
+        try {
+            com.zerog.neoessentials.webdashboard.map.WorldInfoCollector.getInstance()
+                .setServer(event.getServer());
+            LOGGER.info("Map viewer world info collector initialized");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize world info collector", e);
+        }
+        
+        // Initialize TaskScheduler with server instance for scheduled tasks
+        try {
+            com.zerog.neoessentials.scheduler.TaskScheduler.getInstance()
+                .setServer(event.getServer());
+            LOGGER.info("Task scheduler initialized");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize task scheduler", e);
+        }
+        
+        // Initialize ResourcePackManager with server instance for resource pack management
+        try {
+            com.zerog.neoessentials.resourcepacks.ResourcePackManager.getInstance()
+                .setServer(event.getServer());
+            LOGGER.info("Resource pack manager initialized");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize resource pack manager", e);
+        }
+        
+        // Initialize ModerationManager with server instance for ban/whitelist enforcement
+        try {
+            com.zerog.neoessentials.moderation.ModerationManager.getInstance()
+                .setServer(event.getServer());
+            LOGGER.info("Moderation manager initialized");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize moderation manager", e);
+        }
+        
+        // Initialize DocumentationManager for built-in help system
+        try {
+            com.zerog.neoessentials.docs.DocumentationManager.getInstance().initialize();
+            LOGGER.info("Documentation system initialized");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize documentation system", e);
+        }
+        
+        // Initialize LocalizationManager for multi-language dashboard support
+        try {
+            com.zerog.neoessentials.i18n.LocalizationManager.getInstance().initialize();
+            LOGGER.info("Localization system initialized");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize localization system", e);
+        }
+        
         // Start web dashboard server if enabled and auto-start is configured
         try {
             com.zerog.neoessentials.config.ConfigManager dashboardConfigManager = 
                 com.zerog.neoessentials.config.ConfigManager.getInstance();
             
             if (dashboardConfigManager.isWebDashboardEnabled()) {
-                if (dashboardConfigManager.isWebDashboardAutoStartEnabled()) {
+                // Initialize the dashboard instance (this checks saved state and auto-starts if needed)
+                com.zerog.neoessentials.webdashboard.WebDashboardServer dashboardInstance = 
+                    com.zerog.neoessentials.webdashboard.WebDashboardServer.getInstance();
+                
+                // If getInstance() didn't auto-start it, check config autoStart setting
+                if (!dashboardInstance.isRunning() && dashboardConfigManager.isWebDashboardAutoStartEnabled()) {
                     LOGGER.info("Web Dashboard auto-start enabled, starting server...");
-                    com.zerog.neoessentials.webdashboard.WebDashboardServer.getInstance().start();
-                } else {
+                    dashboardInstance.start();
+                } else if (!dashboardInstance.isRunning()) {
                     LOGGER.info("Web Dashboard is enabled but auto-start is disabled. Use /dashboard start to launch.");
+                } else {
+                    LOGGER.info("Web Dashboard auto-started from previous session state.");
                 }
             } else {
                 LOGGER.info("Web Dashboard is disabled in config.");

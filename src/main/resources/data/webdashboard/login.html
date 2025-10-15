@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoEssentials Dashboard - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1420 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated stars background */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Login container */
+        .login-container {
+            background: rgba(15, 20, 35, 0.9);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 50px 40px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.2), inset 0 0 30px rgba(0, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 10;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-title {
+            font-size: 32px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00ffff, #00ccff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .login-subtitle {
+            color: rgba(0, 255, 255, 0.6);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            color: rgba(0, 255, 255, 0.8);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: rgba(0, 255, 255, 0.6);
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: rgba(0, 255, 255, 0.3);
+        }
+
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            font-size: 13px;
+        }
+
+        .remember-label {
+            display: flex;
+            align-items: center;
+            color: rgba(0, 255, 255, 0.6);
+            cursor: pointer;
+        }
+
+        .remember-label input {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .forgot-link {
+            color: rgba(0, 255, 255, 0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-link:hover {
+            color: #00ffff;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #00ffff, #00ccff);
+            border: none;
+            border-radius: 10px;
+            color: #0a0e27;
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.4);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .login-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .login-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .login-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            animation: slideDown 0.3s ease-out;
+            display: none;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-error {
+            background: rgba(255, 50, 50, 0.2);
+            border: 2px solid rgba(255, 50, 50, 0.5);
+            color: #ff5555;
+        }
+
+        .alert-success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid rgba(0, 255, 0, 0.5);
+            color: #00ff00;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(10, 14, 39, 0.3);
+            border-top-color: #0a0e27;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: rgba(0, 255, 255, 0.5);
+            font-size: 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .login-container {
+                padding: 40px 30px;
+                margin: 20px;
+            }
+
+            .login-title {
+                font-size: 26px;
+            }
+        }
+
+        /* Glowing effect on container border */
+        @keyframes borderGlow {
+            0%, 100% {
+                box-shadow: 0 0 50px rgba(0, 255, 255, 0.2), inset 0 0 30px rgba(0, 255, 255, 0.05);
+            }
+            50% {
+                box-shadow: 0 0 70px rgba(0, 255, 255, 0.4), inset 0 0 40px rgba(0, 255, 255, 0.1);
+            }
+        }
+
+        .login-container {
+            animation: slideIn 0.6s ease-out, borderGlow 3s ease-in-out infinite;
+        }
+
+        .login-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 30px 0;
+            color: rgba(0, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        .login-divider::before,
+        .login-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .login-divider span {
+            padding: 0 15px;
+        }
+
+        .discord-login-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #5865F2, #7289DA);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3);
+        }
+
+        .discord-login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
+            background: linear-gradient(135deg, #7289DA, #5865F2);
+        }
+
+        .discord-login-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .discord-icon {
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: #5865F2;
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated stars -->
+    <div class="stars" id="stars"></div>
+
+    <div class="login-container">
+        <div class="login-header">
+            <h1 class="login-title">NeoEssentials</h1>
+            <p class="login-subtitle">Web Dashboard Login</p>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    class="form-input" 
+                    placeholder="Enter your username"
+                    required
+                    autocomplete="username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    class="form-input" 
+                    placeholder="Enter your password"
+                    required
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <div class="remember-forgot">
+                <label class="remember-label">
+                    <input type="checkbox" id="rememberMe">
+                    Remember me
+                </label>
+                <a href="#" class="forgot-link">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="login-button" id="loginButton">
+                <span id="buttonText">Access Dashboard</span>
+            </button>
+        </form>
+
+        <div class="login-divider">
+            <span>OR</span>
+        </div>
+
+        <button type="button" class="discord-login-button" id="discordLoginButton">
+            <span class="discord-icon">D</span>
+            <span id="discordButtonText">Login with Discord</span>
+        </button>
+
+        <div class="login-footer">
+            Default credentials: admin / admin<br>
+            Please change your password after first login<br>
+            <br>
+            <small>Discord login requires Simple Discord Link mod - link your account via Discord bot DM</small>
+        </div>
+    </div>
+
+    <script>
+        // Generate animated stars
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            starsContainer.appendChild(star);
+        }
+
+        // API endpoint
+        const API_BASE = window.location.origin;
+        const API_AUTH = `${API_BASE}/api/auth`;
+
+        // Form elements
+        const loginForm = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const rememberMeCheckbox = document.getElementById('rememberMe');
+        const loginButton = document.getElementById('loginButton');
+        const buttonText = document.getElementById('buttonText');
+        const alertBox = document.getElementById('alert');
+        const discordLoginButton = document.getElementById('discordLoginButton');
+        const discordButtonText = document.getElementById('discordButtonText');
+
+        // Check if already logged in
+        const sessionId = localStorage.getItem('sessionId');
+        if (sessionId) {
+            validateSession(sessionId);
+        }
+
+        // Form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleLogin();
+        });
+
+        // Discord login
+        discordLoginButton.addEventListener('click', async () => {
+            await handleDiscordLogin();
+        });
+
+        async function handleLogin() {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!username || !password) {
+                showAlert('Please enter both username and password', 'error');
+                return;
+            }
+
+            setLoading(true);
+            hideAlert();
+
+            try {
+                const response = await fetch(`${API_AUTH}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Store session
+                    const sessionId = data.sessionId;
+                    if (rememberMeCheckbox.checked) {
+                        localStorage.setItem('sessionId', sessionId);
+                        localStorage.setItem('username', data.user.username);
+                        localStorage.setItem('role', data.user.role);
+                    } else {
+                        sessionStorage.setItem('sessionId', sessionId);
+                        sessionStorage.setItem('username', data.user.username);
+                        sessionStorage.setItem('role', data.user.role);
+                    }
+
+                    // Check if password change is required
+                    if (data.session && data.session.requiresPasswordChange) {
+                        showAlert('Temporary password detected. Redirecting to password change...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/password_change.html';
+                        }, 1000);
+                    } else {
+                        showAlert('Login successful! Redirecting...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/index.html';
+                        }, 1000);
+                    }
+                } else {
+                    showAlert(data.error || 'Login failed. Please check your credentials.', 'error');
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert('Connection error. Please check if the server is running.', 'error');
+                setLoading(false);
+            }
+        }
+
+        async function handleDiscordLogin() {
+            const username = usernameInput.value.trim();
+
+            if (!username) {
+                showAlert('Please enter your Minecraft username', 'error');
+                usernameInput.focus();
+                return;
+            }
+
+            setDiscordLoading(true);
+            hideAlert();
+
+            try {
+                const response = await fetch(`${API_AUTH}/discord?username=${encodeURIComponent(username)}`, {
+                    method: 'GET'
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Store session
+                    const sessionId = data.sessionId;
+                    if (rememberMeCheckbox.checked) {
+                        localStorage.setItem('sessionId', sessionId);
+                        localStorage.setItem('username', data.user.username);
+                        localStorage.setItem('role', data.user.role);
+                        if (data.user.discordId) {
+                            localStorage.setItem('discordId', data.user.discordId);
+                            localStorage.setItem('discordUsername', data.user.discordUsername);
+                        }
+                    } else {
+                        sessionStorage.setItem('sessionId', sessionId);
+                        sessionStorage.setItem('username', data.user.username);
+                        sessionStorage.setItem('role', data.user.role);
+                        if (data.user.discordId) {
+                            sessionStorage.setItem('discordId', data.user.discordId);
+                            sessionStorage.setItem('discordUsername', data.user.discordUsername);
+                        }
+                    }
+
+                    // Check if password change is required
+                    if (data.session && data.session.requiresPasswordChange) {
+                        showAlert(`Welcome ${data.user.username}! Redirecting to password change...`, 'success');
+                        setTimeout(() => {
+                            window.location.href = '/password_change.html';
+                        }, 1000);
+                    } else {
+                        showAlert(`Welcome ${data.user.username}! Redirecting...`, 'success');
+                        setTimeout(() => {
+                            window.location.href = '/index.html';
+                        }, 1000);
+                    }
+                } else {
+                    const errorMsg = data.error || 'Discord login failed';
+                    
+                    if (errorMsg.includes('Discord authentication unavailable')) {
+                        showAlert('Discord authentication is not available. Simple Discord Link mod is required.', 'error');
+                    } else if (errorMsg.includes('No Discord account linked')) {
+                        showAlert('No Discord account linked. Link your account in Discord (check your DMs from the bot), then rejoin the server.', 'error');
+                    } else if (errorMsg.includes('required Discord role')) {
+                        showAlert('You do not have the required Discord role to access the dashboard.', 'error');
+                    } else {
+                        showAlert(errorMsg, 'error');
+                    }
+                    
+                    setDiscordLoading(false);
+                }
+            } catch (error) {
+                console.error('Discord login error:', error);
+                showAlert('Connection error. Please check if the server is running.', 'error');
+                setDiscordLoading(false);
+            }
+        }
+
+        async function validateSession(sessionId) {
+            try {
+                const response = await fetch(`${API_AUTH}/validate`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${sessionId}`
+                    }
+                });
+
+                if (response.ok) {
+                    // Already logged in, redirect
+                    window.location.href = '/index.html';
+                } else {
+                    // Invalid session, clear storage
+                    localStorage.removeItem('sessionId');
+                    sessionStorage.removeItem('sessionId');
+                }
+            } catch (error) {
+                console.error('Session validation error:', error);
+            }
+        }
+
+        function setLoading(loading) {
+            loginButton.disabled = loading;
+            if (loading) {
+                buttonText.innerHTML = 'Authenticating<span class="loading-spinner"></span>';
+            } else {
+                buttonText.textContent = 'Access Dashboard';
+            }
+        }
+
+        function setDiscordLoading(loading) {
+            discordLoginButton.disabled = loading;
+            if (loading) {
+                discordButtonText.innerHTML = 'Authenticating<span class="loading-spinner"></span>';
+            } else {
+                discordButtonText.innerHTML = '<span class="discord-icon">D</span> Login with Discord';
+            }
+        }
+
+        function showAlert(message, type) {
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+            alertBox.style.display = 'block';
+        }
+
+        function hideAlert() {
+            alertBox.style.display = 'none';
+        }
+
+        // Handle Enter key
+        usernameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                passwordInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -12,19 +12,6 @@
     "webDashboardEnabled": true,
     "debugMode": false
   },
-  "economySettings": {
-    "startingBalance": 100.0,
-    "currencySymbol": "$",
-    "maxBalance": 999999999.99,
-    "cleanupInactiveAccounts": true,
-    "taxPercentage": 0.0,
-    "maxTransferAmount": 100000.0,
-    "paytoggleDefault": true,
-    "allowNegativeBalances": false,
-    "inactiveAccountCleanupDays": 30,
-    "cacheMaximumSize": 10000,
-    "cacheExpireAfterAccessMinutes": 60
-  },
   "commands": {
     "balance": true,
     "pay": true,
@@ -47,7 +34,9 @@
     "unmute": true,
     "msgtoggle": true,
     "socialspy": true,
+    "mutelist": true,
     "permissions": true,
+    "pex": true,
     "kit": true,
     "createkit": true,
     "delkit": true,
@@ -92,7 +81,27 @@
     "v": true,
     "freeze": true,
     "unfreeze": true,
-    "dashboard": true
+    "dashboard": true,
+    "anvil": true,
+    "book": true,
+    "crafting": true,
+    "compass": true,
+    "getpos": true,
+    "fletching": true,
+    "depth": true,
+    "helpop": true,
+    "list": true,
+    "near": true,
+    "motd": true,
+    "nick": true,
+    "realname": true,
+    "rules": true,
+    "sign": true,
+    "seen": true,
+    "smithing": true,
+    "stonecutting": true,
+    "suicide": true,
+    "whois": true
   },
   "webDashboard": {
     "webDashboard_comment": "Web Dashboard configuration - controls the built-in web interface for server monitoring and management",
@@ -102,6 +111,8 @@
     "autoStart_comment": "Automatically start the web dashboard when server starts. If false, use /dashboard start command",
     "port": 8080,
     "port_comment": "Port number for the web dashboard HTTP server (1024-65535). Requires server restart to take effect",
+    "websocketPort": 8081,
+    "websocketPort_comment": "Port number for the WebSocket server used for real-time dashboard updates (1024-65535). Use a different port from HTTP server. Many hosting providers assign random ports - configure both ports based on your provider's requirements",
     "bindAddress": "127.0.0.1",
     "bindAddress_comment": "IP address to bind to. Use '127.0.0.1' for localhost only (secure), or '0.0.0.0' for all interfaces (less secure)",
     "enableCORS": true,
@@ -124,17 +135,17 @@
       "cacheTimeout_comment": "Cache API responses for this many seconds to reduce server load (0 to disable)"
     },
     "securitySettings": {
-      "securitySettings_comment": "Security configuration for the web dashboard",
-      "requireAuthentication": false,
-      "requireAuthentication_comment": "Require authentication to access dashboard (future feature)",
+  "securitySettings_comment": "Security configuration for the web dashboard",
+  "requireAuthentication": false,
+  "requireAuthentication_comment": "[PLACEHOLDER] Future feature: Require authentication to access dashboard. Currently not enforced.",
       "allowConfigEditing": true,
       "allowConfigEditing_comment": "Allow config file editing through the web interface",
       "restrictedConfigPaths": [],
       "restrictedConfigPaths_comment": "List of config file paths that cannot be edited via web dashboard",
-      "enableRateLimiting": false,
-      "enableRateLimiting_comment": "Enable rate limiting for API requests (future feature)",
-      "maxRequestsPerMinute": 60,
-      "maxRequestsPerMinute_comment": "Maximum API requests per minute per IP (when rate limiting enabled)"
+  "enableRateLimiting": false,
+  "enableRateLimiting_comment": "[PLACEHOLDER] Future feature: Enable rate limiting for API requests. Currently not enforced.",
+  "maxRequestsPerMinute": 60,
+  "maxRequestsPerMinute_comment": "[PLACEHOLDER] Future feature: Maximum API requests per minute per IP (when rate limiting enabled). Currently not enforced."
     },
     "uiSettings": {
       "uiSettings_comment": "User interface configuration",
@@ -168,12 +179,19 @@
     "enableXSSProtection": true
   },
   "items": {
+    "items_comment": "Item system configuration - controls item spawning, enchantments, and stack sizes",
     "permission-based-item-spawn": true,
+    "permission-based-item-spawn_comment": "Require permission to spawn items. Permissions: 'neoessentials.item.spawn' (general), 'neoessentials.item.spawn.<namespace>.<item>' (specific), 'neoessentials.item.spawn.<namespace>.*' (wildcard)",
     "drop-items-if-full": true,
+    "drop-items-if-full_comment": "[NeoForge API Limitation] Cannot currently be enforced - ItemEntityPickupEvent.Pre doesn't support cancellation. Config option exists for future implementation. Original intent: Allow items to be picked up when inventory is full (excess dropped). If false, items remain on ground until space is available",
     "oversized-stacksize": 64,
+    "oversized-stacksize_comment": "Maximum stack size for oversized stacks. Items can stack up to this limit when default-stack-size allows",
     "default-stack-size": -1,
+    "default-stack-size_comment": "Default stack size for all items. -1 = use vanilla behavior, otherwise overrides vanilla stack sizes (capped at oversized-stacksize)",
     "unsafe-enchantments": true,
+    "unsafe-enchantments_comment": "Allow enchantments beyond vanilla limits (e.g., Sharpness X)",
     "max-unsafe-enchantment-level": 32767,
+    "max-unsafe-enchantment-level_comment": "Maximum level allowed for unsafe enchantments when enabled",
     "item-spawn-blacklist": [
       "minecraft:bedrock",
       "minecraft:barrier",
@@ -184,7 +202,8 @@
       "minecraft:jigsaw",
       "minecraft:debug_stick",
       "minecraft:knowledge_book"
-    ]
+    ],
+    "item-spawn-blacklist_comment": "List of items that cannot be spawned via commands, even with permissions"
   },
   "permissions": {
     "useExternalPermissions": false,
@@ -369,13 +388,11 @@
       "spawn": 0,
       "setspawn": 0,
       "tpa": 0,
-      "tpask": 0,
       "tphere": 0,
       "tpaccept": 0,
       "tpdeny": 0,
       "tp": 0,
-      "tpall": 0,
-      "tpto": 0
+      "tpall": 0
     }
   },
   "moderation": {

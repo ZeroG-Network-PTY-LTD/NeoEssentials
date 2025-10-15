@@ -28,6 +28,10 @@ import org.slf4j.LoggerFactory;
 public class EconomyManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(EconomyManager.class);
     
+    // Data version tracking - increment when JSON structure changes
+    private static final String DATA_VERSION_KEY = "_dataVersion";
+    private static final int CURRENT_DATA_VERSION = 1;
+    
     // Thread-safe singleton using Bill Pugh Singleton Pattern
     private static class SingletonHolder {
         private static final EconomyManager INSTANCE = new EconomyManager();
@@ -49,6 +53,10 @@ public class EconomyManager {
     // Track last activity (epoch millis) for each account
     private final ConcurrentHashMap<UUID, Long> lastActivityMap = new ConcurrentHashMap<>();
     private final File lastActivityFile = new File("neoessentials/balances_activity.json");
+    
+    // Track current file versions to avoid unnecessary backups
+    private volatile int currentBalancesVersion = CURRENT_DATA_VERSION;
+    private volatile int currentActivityVersion = CURRENT_DATA_VERSION;
 
     private void loadBalances() {
         if (!balancesFile.getParentFile().exists()) {
@@ -56,11 +64,23 @@ public class EconomyManager {
         }
         if (!balancesFile.exists()) return;
         try (FileReader reader = new FileReader(balancesFile)) {
-            Type type = new TypeToken<Map<String, String>>(){}.getType();
-            Map<String, String> data = gson.fromJson(reader, type);
+            Type type = new TypeToken<Map<String, Object>>(){}.getType();
+            Map<String, Object> data = gson.fromJson(reader, type);
             if (data != null) {
-                for (Map.Entry<String, String> entry : data.entrySet()) {
-                    balancesCache.put(UUID.fromString(entry.getKey()), new BigDecimal(entry.getValue()));
+                // Read version if present
+                if (data.containsKey(DATA_VERSION_KEY)) {
+                    Object versionObj = data.get(DATA_VERSION_KEY);
+                    if (versionObj instanceof Number) {
+                        currentBalancesVersion = ((Number) versionObj).intValue();
+                    }
+                    data.remove(DATA_VERSION_KEY); // Don't process version as balance
+                }
+                
+                // Load balances
+                for (Map.Entry<String, Object> entry : data.entrySet()) {
+                    if (!entry.getKey().startsWith("_")) { // Skip metadata fields
+                        balancesCache.put(UUID.fromString(entry.getKey()), new BigDecimal(entry.getValue().toString()));
+                    }
                 }
             }
         } catch (Exception e) {
@@ -73,17 +93,32 @@ public class EconomyManager {
             balancesFile.getParentFile().mkdirs();
         }
         try {
+            // Check if version has changed - if so, create backup before overwriting
+            if (balancesFile.exists() && shouldCreateBackup(balancesFile, currentBalancesVersion)) {
+                LOGGER.info("Economy data version mismatch detected, creating backup...");
+                createBackupFile(balancesFile);
+            }
+            
             // Write to temp file first
             File tempFile = new File(balancesFile.getAbsolutePath() + ".tmp");
             try (FileWriter writer = new FileWriter(tempFile)) {
-                Map<String, String> data = new ConcurrentHashMap<>();
+                Map<String, Object> data = new ConcurrentHashMap<>();
+                
+                // Add version marker
+                data.put(DATA_VERSION_KEY, CURRENT_DATA_VERSION);
+                
+                // Add balances
                 for (Map.Entry<UUID, BigDecimal> entry : balancesCache.entrySet()) {
                     data.put(entry.getKey().toString(), entry.getValue().toPlainString());
                 }
                 gson.toJson(data, writer);
             }
+            
             // Atomically move temp file to balancesFile
             Files.move(tempFile.toPath(), balancesFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            
+            // Update current version tracker
+            currentBalancesVersion = CURRENT_DATA_VERSION;
         } catch (IOException e) {
             LOGGER.error("Failed to save balances to file", e);
         }
@@ -122,11 +157,23 @@ public class EconomyManager {
         }
         if (!lastActivityFile.exists()) return;
         try (FileReader reader = new FileReader(lastActivityFile)) {
-            Type type = new TypeToken<Map<String, Long>>(){}.getType();
-            Map<String, Long> data = gson.fromJson(reader, type);
+            Type type = new TypeToken<Map<String, Object>>(){}.getType();
+            Map<String, Object> data = gson.fromJson(reader, type);
             if (data != null) {
-                for (Map.Entry<String, Long> entry : data.entrySet()) {
-                    lastActivityMap.put(UUID.fromString(entry.getKey()), entry.getValue());
+                // Read version if present
+                if (data.containsKey(DATA_VERSION_KEY)) {
+                    Object versionObj = data.get(DATA_VERSION_KEY);
+                    if (versionObj instanceof Number) {
+                        currentActivityVersion = ((Number) versionObj).intValue();
+                    }
+                    data.remove(DATA_VERSION_KEY); // Don't process version as activity
+                }
+                
+                // Load activity data
+                for (Map.Entry<String, Object> entry : data.entrySet()) {
+                    if (!entry.getKey().startsWith("_")) { // Skip metadata fields
+                        lastActivityMap.put(UUID.fromString(entry.getKey()), ((Number) entry.getValue()).longValue());
+                    }
                 }
             }
         } catch (Exception e) {
@@ -139,15 +186,30 @@ public class EconomyManager {
             lastActivityFile.getParentFile().mkdirs();
         }
         try {
+            // Check if version has changed - if so, create backup before overwriting
+            if (lastActivityFile.exists() && shouldCreateBackup(lastActivityFile, currentActivityVersion)) {
+                LOGGER.info("Activity data version mismatch detected, creating backup...");
+                createBackupFile(lastActivityFile);
+            }
+            
             File tempFile = new File(lastActivityFile.getAbsolutePath() + ".tmp");
             try (FileWriter writer = new FileWriter(tempFile)) {
-                Map<String, Long> data = new ConcurrentHashMap<>();
+                Map<String, Object> data = new ConcurrentHashMap<>();
+                
+                // Add version marker
+                data.put(DATA_VERSION_KEY, CURRENT_DATA_VERSION);
+                
+                // Add activity data
                 for (Map.Entry<UUID, Long> entry : lastActivityMap.entrySet()) {
                     data.put(entry.getKey().toString(), entry.getValue());
                 }
                 gson.toJson(data, writer);
             }
+            
             Files.move(tempFile.toPath(), lastActivityFile.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            
+            // Update current version tracker
+            currentActivityVersion = CURRENT_DATA_VERSION;
         } catch (IOException e) {
             LOGGER.error("Failed to save last activity data", e);
         }
@@ -294,5 +356,70 @@ public class EconomyManager {
         }
         
         LOGGER.info("EconomyManager shutdown complete.");
+    }
+    
+    /**
+     * Check if a backup should be created by comparing file version with current version.
+     * Only creates backup if file exists and version differs (similar to ConfigManager behavior).
+     */
+    private boolean shouldCreateBackup(File file, int currentVersion) {
+        if (!file.exists()) {
+            return false; // No file to backup
+        }
+        
+        try (FileReader reader = new FileReader(file)) {
+            Type type = new TypeToken<Map<String, Object>>(){}.getType();
+            Map<String, Object> data = gson.fromJson(reader, type);
+            
+            if (data != null && data.containsKey(DATA_VERSION_KEY)) {
+                Object versionObj = data.get(DATA_VERSION_KEY);
+                if (versionObj instanceof Number) {
+                    int fileVersion = ((Number) versionObj).intValue();
+                    // Only backup if version differs
+                    return fileVersion != CURRENT_DATA_VERSION;
+                }
+            }
+            
+            // No version field means old format - create backup
+            return true;
+            
+        } catch (Exception e) {
+            LOGGER.warn("Error checking version for {}: {}", file.getName(), e.getMessage());
+            return false; // Don't backup on error
+        }
+    }
+    
+    /**
+     * Create backup file with incremental numbering (.bak1, .bak2, etc.)
+     * Same behavior as ConfigManager for consistency.
+     */
+    private void createBackupFile(File originalFile) {
+        try {
+            File parent = originalFile.getParentFile();
+            String baseName = originalFile.getName();
+            
+            // Find next available backup number
+            File backupFile = null;
+            for (int i = 1; i <= 999; i++) {
+                File candidate = new File(parent, baseName + ".bak" + i);
+                if (!candidate.exists()) {
+                    backupFile = candidate;
+                    break;
+                }
+            }
+            
+            // Fallback if we somehow have 999 backups
+            if (backupFile == null) {
+                backupFile = new File(parent, baseName + ".bak999");
+            }
+            
+            // Copy existing file to backup
+            Files.copy(originalFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            LOGGER.info("✓ Created backup: {} -> {} (version mismatch detected)", 
+                originalFile.getName(), backupFile.getName());
+            
+        } catch (IOException e) {
+            LOGGER.error("Failed to create backup for {}: {}", originalFile.getName(), e.getMessage());
+        }
     }
 }
