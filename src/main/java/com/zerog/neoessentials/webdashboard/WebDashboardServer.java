@@ -27,6 +27,8 @@ public class WebDashboardServer {
     private static final Path STATE_FILE = Paths.get("neoessentials", "dashboard_state.txt");
     
     private HttpServer server;
+    private com.zerog.neoessentials.webdashboard.websocket.DashboardWebSocketServer webSocketServer;
+    private com.zerog.neoessentials.webdashboard.websocket.DataStreamManager dataStreamManager;
     private final int port;
     private final String bindAddress;
     private final Path webRoot;
@@ -101,12 +103,29 @@ public class WebDashboardServer {
             server.start();
             running = true;
             
+            // Start WebSocket server for real-time updates
+            int wsPort = configManager.getWebDashboardWebSocketPort();
+            try {
+                webSocketServer = com.zerog.neoessentials.webdashboard.websocket.DashboardWebSocketServer.getInstance(wsPort);
+                webSocketServer.start();
+                LOGGER.info("WebSocket server started on port {}", wsPort);
+                
+                // Start data streaming
+                dataStreamManager = com.zerog.neoessentials.webdashboard.websocket.DataStreamManager.getInstance(webSocketServer);
+                dataStreamManager.startStreaming();
+                LOGGER.info("WebSocket data streaming started");
+            } catch (Exception e) {
+                LOGGER.error("Failed to start WebSocket server on port {}", wsPort, e);
+                LOGGER.error("Make sure the WebSocket port {} is available and not blocked by firewall", wsPort);
+            }
+            
             // Save state to persist across restarts
             saveDashboardState(true);
             
             LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.started_header"));
             LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.started_title"));
             LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.started_access", port));
+            LOGGER.info("WebSocket: ws://localhost:{} (Configure 'websocketPort' in config.json if using custom ports)", wsPort);
             LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.started_footer"));
             
         } catch (IOException e) {
@@ -122,6 +141,7 @@ public class WebDashboardServer {
         // All dashboard files from src/main/resources/data/webdashboard/
         String[] dashboardFiles = {
             "index.html",
+            "login.html",
             "orbitron.css",
             "space-dashboard.js",
             "space-glass.css",
@@ -157,6 +177,26 @@ public class WebDashboardServer {
     public void stop() {
         if (!running) {
             return;
+        }
+        
+        // Stop WebSocket data streaming
+        if (dataStreamManager != null) {
+            try {
+                dataStreamManager.stopStreaming();
+                LOGGER.info("WebSocket data streaming stopped");
+            } catch (Exception e) {
+                LOGGER.error("Error stopping data streaming", e);
+            }
+        }
+        
+        // Stop WebSocket server
+        if (webSocketServer != null) {
+            try {
+                webSocketServer.stop(1000);
+                LOGGER.info("WebSocket server stopped");
+            } catch (Exception e) {
+                LOGGER.error("Error stopping WebSocket server", e);
+            }
         }
         
         if (server != null) {
@@ -211,19 +251,128 @@ public class WebDashboardServer {
      * Register all API endpoints
      */
     private void registerApiEndpoints() {
-        // Player stats endpoint
-        server.createContext("/api/players", new com.zerog.neoessentials.webdashboard.handlers.PlayersHandler());
+        // Authentication endpoint (no filter - handles its own auth)
+        server.createContext("/api/auth", new com.zerog.neoessentials.webdashboard.handlers.AuthenticationHandler());
         
-        // Server stats endpoint
-        server.createContext("/api/server", new com.zerog.neoessentials.webdashboard.handlers.ServerStatsHandler());
+        // Password change endpoint (no filter - validates session internally)
+        server.createContext("/api/change-password", new com.zerog.neoessentials.webdashboard.handlers.PasswordChangeHandler());
         
-        // Logs endpoint
-        server.createContext("/api/logs", new com.zerog.neoessentials.webdashboard.handlers.LogsHandler());
+        // Create authentication filter for protected endpoints
+        com.zerog.neoessentials.webdashboard.filters.AuthenticationFilter authFilter = 
+            new com.zerog.neoessentials.webdashboard.filters.AuthenticationFilter();
         
-        // Config endpoints
-        server.createContext("/api/config", new com.zerog.neoessentials.webdashboard.handlers.ConfigHandler());
+        // Player stats endpoint (protected)
+        var playersContext = server.createContext("/api/players", 
+            new com.zerog.neoessentials.webdashboard.handlers.PlayersHandler());
+        playersContext.getFilters().add(authFilter);
+        
+        // Server stats endpoint (protected)
+        var serverContext = server.createContext("/api/server", 
+            new com.zerog.neoessentials.webdashboard.handlers.ServerStatsHandler());
+        serverContext.getFilters().add(authFilter);
+        
+        // Logs endpoint (protected)
+        var logsContext = server.createContext("/api/logs", 
+            new com.zerog.neoessentials.webdashboard.handlers.LogsHandler());
+        logsContext.getFilters().add(authFilter);
+        
+        // Config endpoints (protected)
+        var configContext = server.createContext("/api/config", 
+            new com.zerog.neoessentials.webdashboard.handlers.ConfigHandler());
+        configContext.getFilters().add(authFilter);
+        
+        // File management endpoints (protected)
+        var filesContext = server.createContext("/api/files", 
+            new com.zerog.neoessentials.webdashboard.handlers.FileManagementHandler());
+        filesContext.getFilters().add(authFilter);
+        
+        // Command execution endpoints (protected)
+        var commandsContext = server.createContext("/api/commands", 
+            new com.zerog.neoessentials.webdashboard.handlers.CommandExecutionHandler());
+        commandsContext.getFilters().add(authFilter);
+        
+        // Preferences endpoints (protected)
+        var preferencesContext = server.createContext("/api/preferences", 
+            new com.zerog.neoessentials.webdashboard.handlers.PreferencesHandler());
+        preferencesContext.getFilters().add(authFilter);
+        
+        // Analytics endpoints (protected)
+        var analyticsContext = server.createContext("/api/analytics", 
+            new com.zerog.neoessentials.webdashboard.analytics.AnalyticsHandler());
+        analyticsContext.getFilters().add(authFilter);
+        
+        // Map viewer endpoints (protected)
+        var mapContext = server.createContext("/api/map", 
+            new com.zerog.neoessentials.webdashboard.map.MapHandler());
+        mapContext.getFilters().add(authFilter);
+        
+        // Scheduled tasks endpoints (protected)
+        var tasksContext = server.createContext("/api/tasks", 
+            new com.zerog.neoessentials.scheduler.TaskHandler());
+        tasksContext.getFilters().add(authFilter);
+        
+        // Resource pack endpoints (protected)
+        var resourcePacksContext = server.createContext("/api/resourcepacks", 
+            new com.zerog.neoessentials.resourcepacks.ResourcePackHandler());
+        resourcePacksContext.getFilters().add(authFilter);
+        
+        // Moderation endpoints (protected)
+        var moderationContext = server.createContext("/api/moderation", 
+            new com.zerog.neoessentials.moderation.ModerationHandler());
+        moderationContext.getFilters().add(authFilter);
+        
+        // Log viewer endpoints (protected)
+        var logViewerDetailContext = server.createContext("/api/logs/", 
+            new com.zerog.neoessentials.logs.LogHandler());
+        logViewerDetailContext.getFilters().add(authFilter);
+        
+        // Database browser endpoints (protected)
+        var databaseContext = server.createContext("/api/database", 
+            new com.zerog.neoessentials.database.DatabaseHandler());
+        databaseContext.getFilters().add(authFilter);
+        
+        // Internationalization endpoints (protected)
+        var i18nContext = server.createContext("/api/i18n", 
+            new com.zerog.neoessentials.i18n.TranslationHandler());
+        i18nContext.getFilters().add(authFilter);
+        
+        // Documentation endpoints (all users - help system should be accessible)
+        // No authentication filter - documentation should be accessible to all users
+        server.createContext("/api/docs", 
+            new com.zerog.neoessentials.docs.DocumentationHandler());
+        
+        // WebSocket info endpoint (no auth - needed for initial connection setup)
+        server.createContext("/api/websocket/info", exchange -> {
+            try {
+                if ("GET".equals(exchange.getRequestMethod())) {
+                    com.zerog.neoessentials.config.ConfigManager configMgr = 
+                        com.zerog.neoessentials.config.ConfigManager.getInstance();
+                    int wsPort = configMgr.getWebDashboardWebSocketPort();
+                    String response = String.format("{\"port\":%d,\"protocol\":\"%s\"}", 
+                        wsPort, 
+                        "ws");
+                    
+                    exchange.getResponseHeaders().set("Content-Type", "application/json");
+                    exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                    exchange.sendResponseHeaders(200, response.getBytes(StandardCharsets.UTF_8).length);
+                    
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(response.getBytes(StandardCharsets.UTF_8));
+                    }
+                } else {
+                    exchange.sendResponseHeaders(405, -1);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error handling websocket info request", e);
+                exchange.sendResponseHeaders(500, -1);
+            } finally {
+                exchange.close();
+            }
+        });
         
         LOGGER.info(MessageUtil.localize("neoessentials.dashboard.server.endpoints_registered"));
+        LOGGER.info("Registered endpoints: /api/auth, /api/players, /api/server, /api/logs (console), /api/logs/ (viewer), /api/config, /api/files, /api/commands, /api/preferences, /api/analytics, /api/map, /api/tasks, /api/resourcepacks, /api/moderation, /api/database, /api/i18n, /api/docs, /api/websocket/info");
+        LOGGER.info("Authentication filter applied to all protected endpoints (documentation is public)");
     }
     
     public boolean isRunning() {
@@ -232,6 +381,14 @@ public class WebDashboardServer {
     
     public int getPort() {
         return port;
+    }
+    
+    public com.zerog.neoessentials.webdashboard.websocket.DashboardWebSocketServer getWebSocketServer() {
+        return webSocketServer;
+    }
+    
+    public com.zerog.neoessentials.webdashboard.websocket.DataStreamManager getDataStreamManager() {
+        return dataStreamManager;
     }
     
     /**
@@ -248,9 +405,9 @@ public class WebDashboardServer {
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
             
-            // Default to index.html
+            // Default to login page for root
             if (path.equals("/") || path.isEmpty()) {
-                path = "/index.html";
+                path = "/login.html";
             }
             
             Path filePath = webRoot.resolve(path.substring(1)); // Remove leading slash

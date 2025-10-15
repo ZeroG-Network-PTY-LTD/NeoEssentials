@@ -1,0 +1,97 @@
+{
+  "_configVersion": 5,
+  "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
+  "_comment": "Discord Authentication Configuration - Maps Discord roles to Dashboard permissions AND Minecraft permissions",
+  
+  "enabled": true,
+  "enabled_comment": "Enable/disable Discord authentication (requires Simple Discord Link mod)",
+  
+  "requireLinkedAccount": true,
+  "requireLinkedAccount_comment": "Require users to link their Minecraft account via Discord bot (bot sends DM with link instructions)",
+  
+  "allowAutoRegistration": true,
+  "allowAutoRegistration_comment": "Automatically create dashboard accounts for Discord users on first login",
+  
+  "defaultRole": "VIEWER",
+  "defaultRole_comment": "Default role for users with no Discord role mapping (ADMIN, MODERATOR, or VIEWER)",
+  
+  "roleMapping": {
+    "_comment": "Map Discord role IDs to Dashboard roles. Use role IDs (right-click role in Discord > Copy ID) NOT names. Requires Discord Developer Mode enabled.",
+    "_example": "Discord Role ID -> ADMIN, MODERATOR, or VIEWER",
+    "_how_to_get_id": "Enable Developer Mode in Discord Settings > Advanced > Developer Mode. Then right-click any role and select 'Copy ID'",
+    "709352979668533341": "ADMIN",
+    "709353103530655857": "MODERATOR",
+    "709353464475680788": "VIEWER"
+  },
+  
+  "roleHierarchy": {
+    "_comment": "Define which dashboard roles each Discord role ID grants (optional, for multi-role users). Use role IDs, not names.",
+    "709352979668533341": ["ADMIN", "MODERATOR", "VIEWER"],
+    "709353103530655857": ["MODERATOR", "VIEWER"],
+    "709353464475680788": ["VIEWER"]
+  },
+  
+  "whitelistedRoles": [],
+  "whitelistedRoles_comment": "Only allow Discord users with these role IDs (empty = allow all). Use role IDs, not names. Example: ['1234567890123456789', '9876543210987654321']",
+  
+  "blacklistedUsers": [],
+  "blacklistedUsers_comment": "Block specific Discord user IDs from logging in. Example: ['123456789012345678']",
+  
+  "sessionDuration": 86400000,
+  "sessionDuration_comment": "Session duration in milliseconds (86400000 = 24 hours)",
+  
+  "permissionSync": {
+    "_comment": "Automatically sync Minecraft permissions based on Discord roles (Build #124+, Fixed in #132)",
+    "_how_it_works": "When players join, their Discord roles are retrieved and mapped to Minecraft permissions. Works with LuckPerms or built-in permission system.",
+    
+    "enabled": true,
+    "enabled_comment": "Enable/disable Discord role -> Minecraft permission synchronization",
+    
+    "syncOnJoin": true,
+    "syncOnJoin_comment": "Automatically sync permissions when player joins server (recommended: true)",
+    
+    "syncMethod": "auto",
+    "syncMethod_comment": "Permission grant method: 'auto' (detect LuckPerms/built-in), 'luckperms', 'builtin'. Auto-detect recommended.",
+    
+    "permissionMappings": {
+      "_comment": "Map Discord Role IDs to Minecraft permission nodes. Players get ALL permissions from ALL their Discord roles (permissions are combined).",
+      "_important": "Use Discord Role IDs (numbers), NOT role names. Enable Developer Mode in Discord to copy role IDs.",
+      "_how_to_get_role_id": "Discord Settings > Advanced > Developer Mode ON, then Server Settings > Roles > Right-click role > Copy ID",
+      "_role_mod_plus_plus": "Mod++ (709352979668533341) - Full admin access",
+      "_role_mod_plus": "Mod+ (709353103530655857) - Moderator with temp password generation",
+      "_role_helper": "Helper (709353464475680788) - Basic viewer/helper access",
+      
+      "709352979668533341": [
+        "neoessentials.*",
+        "neoessentials.dashboard.admin",
+        "neoessentials.dashboard.temppass",
+        "neoessentials.dashboard.status",
+        "neoessentials.discord.syncperms.others"
+      ],
+      
+      "709353103530655857": [
+        "neoessentials.dashboard.temppass",
+        "neoessentials.dashboard.status",
+        "neoessentials.discord.syncperms",
+        "neoessentials.kick",
+        "neoessentials.mute",
+        "neoessentials.ban"
+      ],
+      
+      "709353464475680788": [
+        "neoessentials.dashboard.status",
+        "neoessentials.discord.syncperms",
+        "neoessentials.home",
+        "neoessentials.tpa",
+        "neoessentials.warp"
+      ]
+    },
+    
+    "permissionMappings_common_examples": {
+      "_admin_role": "['neoessentials.*'] - Full access to all NeoEssentials features",
+      "_moderator_role": "['neoessentials.dashboard.temppass', 'neoessentials.kick', 'neoessentials.mute'] - Moderation tools",
+      "_helper_role": "['neoessentials.dashboard.status', 'neoessentials.discord.syncperms'] - Basic staff access",
+      "_member_role": "['neoessentials.home', 'neoessentials.tpa', 'neoessentials.warp'] - Player utilities"
+    }
+  }
+}

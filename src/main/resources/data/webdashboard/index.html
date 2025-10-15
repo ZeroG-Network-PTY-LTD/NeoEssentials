@@ -55,11 +55,11 @@
     </header>
     <div class="sidebar-overlay" aria-hidden="true"></div>
     <aside class="dashboard-sidebar" aria-label="Sidebar Navigation">
-      <ul role="menubar">
-        <li role="none"><button class="sidebar-btn" data-target="player-stats" data-tooltip="View player statistics"><span class="icon" aria-hidden="true">👨‍🚀</span> <span>Player Stats</span></button></li>
-        <li role="none"><button class="sidebar-btn" data-target="server-stats" data-tooltip="View server statistics"><span class="icon" aria-hidden="true">🛰️</span> <span>Server Stats</span></button></li>
-        <li role="none"><button class="sidebar-btn" data-target="log-viewer" data-tooltip="View server logs"><span class="icon" aria-hidden="true">🌠</span> <span>Log Viewer</span></button></li>
-        <li role="none"><button class="sidebar-btn" data-target="settings" data-tooltip="Dashboard settings"><span class="icon" aria-hidden="true">⚙️</span> <span>Settings</span></button></li>
+      <ul class="sidebar-nav" role="menubar">
+        <li class="nav-item" role="none"><button class="sidebar-btn" data-target="player-stats" data-tooltip="View player statistics"><span class="icon" aria-hidden="true">👨‍🚀</span> <span>Player Stats</span></button></li>
+        <li class="nav-item" role="none"><button class="sidebar-btn" data-target="server-stats" data-tooltip="View server statistics"><span class="icon" aria-hidden="true">🛰️</span> <span>Server Stats</span></button></li>
+        <li class="nav-item" role="none"><button class="sidebar-btn" data-target="log-viewer" data-tooltip="View server logs"><span class="icon" aria-hidden="true">🌠</span> <span>Log Viewer</span></button></li>
+        <li class="nav-item" role="none"><button class="sidebar-btn" data-target="settings" data-tooltip="Dashboard settings"><span class="icon" aria-hidden="true">⚙️</span> <span>Settings</span></button></li>
       </ul>
     </aside>
     <main class="dashboard-main" tabindex="-1">
@@ -114,8 +114,90 @@
           </div>
         </div>
 
-        <!-- TPS & Tick Performance -->
-        <div class="metrics-section">
+        <!-- Compact Performance Cards -->
+        <div class="compact-metrics-grid">
+          
+          <!-- TPS Compact Card -->
+          <div class="compact-metric-card tps-compact-card">
+            <div class="compact-metric-icon">⚡</div>
+            <div class="compact-metric-content">
+              <div class="compact-metric-label">Server TPS</div>
+              <div class="compact-metric-main">
+                <span class="compact-metric-value" id="compact-tps">20.0</span>
+                <span class="compact-metric-status" id="compact-tps-status">●</span>
+              </div>
+              <div class="compact-metric-sub">Target: 20.0</div>
+            </div>
+            <button class="more-info-btn" data-modal="tps-modal" title="View detailed TPS metrics">
+              <span class="more-info-icon">📊</span>
+              <span class="more-info-text">More Info</span>
+            </button>
+          </div>
+
+          <!-- Memory Compact Card -->
+          <div class="compact-metric-card memory-compact-card">
+            <div class="compact-metric-icon">💾</div>
+            <div class="compact-metric-content">
+              <div class="compact-metric-label">Memory Usage</div>
+              <div class="compact-metric-main">
+                <span class="compact-metric-value" id="compact-memory">2.4<span class="compact-unit">GB</span></span>
+                <div class="compact-memory-bar">
+                  <div class="compact-memory-fill" id="compact-memory-fill" style="width: 60%;"></div>
+                </div>
+              </div>
+              <div class="compact-metric-sub" id="compact-memory-max">of 4.0 GB</div>
+            </div>
+            <button class="more-info-btn" data-modal="memory-modal" title="View detailed memory metrics">
+              <span class="more-info-icon">📊</span>
+              <span class="more-info-text">More Info</span>
+            </button>
+          </div>
+
+          <!-- Entities Compact Card -->
+          <div class="compact-metric-card entities-compact-card">
+            <div class="compact-metric-icon">🎯</div>
+            <div class="compact-metric-content">
+              <div class="compact-metric-label">World Load</div>
+              <div class="compact-metric-main">
+                <div class="compact-metric-split">
+                  <div>
+                    <span class="compact-metric-value" id="compact-entities">1,247</span>
+                    <span class="compact-metric-sub-inline">Entities</span>
+                  </div>
+                  <div>
+                    <span class="compact-metric-value" id="compact-chunks">3,842</span>
+                    <span class="compact-metric-sub-inline">Chunks</span>
+                  </div>
+                </div>
+              </div>
+              <div class="compact-metric-sub">Loaded and active</div>
+            </div>
+            <button class="more-info-btn" data-modal="entities-modal" title="View detailed entity and world metrics">
+              <span class="more-info-icon">📊</span>
+              <span class="more-info-text">More Info</span>
+            </button>
+          </div>
+
+          <!-- Server Uptime Compact Card -->
+          <div class="compact-metric-card uptime-compact-card">
+            <div class="compact-metric-icon">⏱️</div>
+            <div class="compact-metric-content">
+              <div class="compact-metric-label">Server Uptime</div>
+              <div class="compact-metric-main">
+                <span class="compact-metric-value" id="compact-uptime">2h 34m</span>
+              </div>
+              <div class="compact-metric-sub">Since last restart</div>
+            </div>
+            <button class="more-info-btn" data-modal="uptime-modal" title="View detailed uptime and health metrics">
+              <span class="more-info-icon">📊</span>
+              <span class="more-info-text">More Info</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Hidden detailed sections (kept for backwards compatibility) -->
+        <div class="metrics-section" style="display: none;">
           <h3 class="metrics-subtitle"><span class="icon">⚡</span> TPS & Tick Performance</h3>
           <div class="metrics-grid">
             <div class="metric-card tps-card">
@@ -217,7 +299,7 @@
         </div>
 
         <!-- Memory & GC Performance -->
-        <div class="metrics-section">
+        <div class="metrics-section" style="display: none;">
           <h3 class="metrics-subtitle"><span class="icon">💾</span> Memory & Garbage Collection</h3>
           <div class="metrics-grid">
             <div class="metric-card memory-card">
@@ -272,7 +354,7 @@
         </div>
 
         <!-- Entity & World Performance -->
-        <div class="metrics-section">
+        <div class="metrics-section" style="display: none;">
           <h3 class="metrics-subtitle"><span class="icon">🎯</span> Entity & World Statistics</h3>
           <div class="metrics-grid three-col">
             <div class="metric-card">
@@ -361,7 +443,7 @@
         </div>
 
         <!-- Thread Pool Information -->
-        <div class="metrics-section">
+        <div class="metrics-section" style="display: none;">
           <h3 class="metrics-subtitle"><span class="icon">🧵</span> Thread Pool Status</h3>
           <div class="thread-pool-container">
             <div class="thread-pool-item">
@@ -423,6 +505,383 @@
           </div>
         </div>
       </section>
+
+      <!-- Performance Metrics Modals -->
+      
+      <!-- TPS Detailed Modal -->
+      <dialog id="tps-modal" class="glass-modal performance-modal" aria-modal="true">
+        <button class="modal-close-btn" id="close-tps-modal" aria-label="Close">&times;</button>
+        
+        <div class="performance-modal-header">
+          <h3><span class="modal-icon">⚡</span> TPS & Tick Performance Details</h3>
+        </div>
+        
+        <div class="performance-modal-content">
+          <!-- TPS Overview -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">Current Performance</h4>
+            <div class="modal-metrics-grid">
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Current TPS</div>
+                <div class="modal-metric-value-large">
+                  <span id="modal-current-tps">20.0</span>
+                  <span class="modal-metric-status" id="modal-tps-status">●</span>
+                </div>
+                <div class="modal-metric-sub">Target: 20.0 (Perfect)</div>
+              </div>
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Average Tick Time</div>
+                <div class="modal-metric-value-large" id="modal-avg-tick-time">15.2<span class="modal-unit">ms</span></div>
+                <div class="modal-metric-sub">Maximum: 50ms</div>
+              </div>
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Peak Tick Time</div>
+                <div class="modal-metric-value-large" id="modal-peak-tick-time">42.8<span class="modal-unit">ms</span></div>
+                <div class="modal-metric-sub">Last Hour</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TPS History Chart -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">TPS History (Last Hour)</h4>
+            <div class="modal-chart-container">
+              <canvas id="modal-tps-history-chart" height="150" aria-label="TPS History Chart"></canvas>
+            </div>
+          </div>
+
+          <!-- Tick Time Breakdown -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">Tick Time Breakdown</h4>
+            <div class="modal-breakdown-list">
+              <div class="modal-breakdown-item">
+                <div class="modal-breakdown-header">
+                  <span class="modal-breakdown-icon">🎮</span>
+                  <span class="modal-breakdown-label">Entity Ticking</span>
+                  <span class="modal-breakdown-value" id="modal-entity-tick-time">6.2ms</span>
+                </div>
+                <div class="modal-breakdown-bar">
+                  <div class="modal-breakdown-fill" id="modal-entity-tick-bar" style="width: 41%;"></div>
+                </div>
+              </div>
+              <div class="modal-breakdown-item">
+                <div class="modal-breakdown-header">
+                  <span class="modal-breakdown-icon">🧱</span>
+                  <span class="modal-breakdown-label">Block Ticking</span>
+                  <span class="modal-breakdown-value" id="modal-block-tick-time">3.8ms</span>
+                </div>
+                <div class="modal-breakdown-bar">
+                  <div class="modal-breakdown-fill" id="modal-block-tick-bar" style="width: 25%;"></div>
+                </div>
+              </div>
+              <div class="modal-breakdown-item">
+                <div class="modal-breakdown-header">
+                  <span class="modal-breakdown-icon">🗺️</span>
+                  <span class="modal-breakdown-label">Chunk Loading</span>
+                  <span class="modal-breakdown-value" id="modal-chunk-tick-time">2.4ms</span>
+                </div>
+                <div class="modal-breakdown-bar">
+                  <div class="modal-breakdown-fill" id="modal-chunk-tick-bar" style="width: 16%;"></div>
+                </div>
+              </div>
+              <div class="modal-breakdown-item">
+                <div class="modal-breakdown-header">
+                  <span class="modal-breakdown-icon">⚙️</span>
+                  <span class="modal-breakdown-label">Scheduled Tasks</span>
+                  <span class="modal-breakdown-value" id="modal-task-tick-time">1.9ms</span>
+                </div>
+                <div class="modal-breakdown-bar">
+                  <div class="modal-breakdown-fill" id="modal-task-tick-bar" style="width: 13%;"></div>
+                </div>
+              </div>
+              <div class="modal-breakdown-item">
+                <div class="modal-breakdown-header">
+                  <span class="modal-breakdown-icon">📊</span>
+                  <span class="modal-breakdown-label">Other</span>
+                  <span class="modal-breakdown-value" id="modal-other-tick-time">0.9ms</span>
+                </div>
+                <div class="modal-breakdown-bar">
+                  <div class="modal-breakdown-fill" id="modal-other-tick-bar" style="width: 6%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </dialog>
+
+      <!-- Memory Detailed Modal -->
+      <dialog id="memory-modal" class="glass-modal performance-modal" aria-modal="true">
+        <button class="modal-close-btn" id="close-memory-modal" aria-label="Close">&times;</button>
+        
+        <div class="performance-modal-header">
+          <h3><span class="modal-icon">💾</span> Memory & Garbage Collection Details</h3>
+        </div>
+        
+        <div class="performance-modal-content">
+          <!-- Memory Overview -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">Memory Usage</h4>
+            <div class="modal-metrics-grid">
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Heap Memory</div>
+                <div class="modal-metric-value-large" id="modal-heap-used">2.4<span class="modal-unit">GB</span></div>
+                <div class="modal-memory-bar">
+                  <div class="modal-memory-fill" id="modal-heap-fill" style="width: 60%;"></div>
+                </div>
+                <div class="modal-metric-sub" id="modal-heap-max">of 4.0 GB allocated</div>
+              </div>
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Non-Heap Memory</div>
+                <div class="modal-metric-value-large" id="modal-nonheap-used">256<span class="modal-unit">MB</span></div>
+                <div class="modal-memory-bar">
+                  <div class="modal-memory-fill" id="modal-nonheap-fill" style="width: 32%;"></div>
+                </div>
+                <div class="modal-metric-sub" id="modal-nonheap-max">of 512 MB allocated</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- GC Statistics -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">Garbage Collection</h4>
+            <div class="modal-metrics-grid three-col">
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">GC Collections</div>
+                <div class="modal-metric-value" id="modal-gc-count">142</div>
+                <div class="modal-metric-sub">Since server start</div>
+              </div>
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">GC Time</div>
+                <div class="modal-metric-value" id="modal-gc-time">1.2<span class="modal-unit">s</span></div>
+                <div class="modal-metric-sub">Total collection time</div>
+              </div>
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Avg GC Duration</div>
+                <div class="modal-metric-value" id="modal-gc-avg">8.4<span class="modal-unit">ms</span></div>
+                <div class="modal-metric-sub">Per collection</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Memory Usage Chart -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">Memory Usage History (Last Hour)</h4>
+            <div class="modal-chart-container">
+              <canvas id="modal-memory-usage-chart" height="150" aria-label="Memory Usage Chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </dialog>
+
+      <!-- Entities & World Detailed Modal -->
+      <dialog id="entities-modal" class="glass-modal performance-modal" aria-modal="true">
+        <button class="modal-close-btn" id="close-entities-modal" aria-label="Close">&times;</button>
+        
+        <div class="performance-modal-header">
+          <h3><span class="modal-icon">🎯</span> Entity & World Statistics</h3>
+        </div>
+        
+        <div class="performance-modal-content">
+          <!-- World Overview -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">World Statistics</h4>
+            <div class="modal-metrics-grid three-col">
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Total Entities</div>
+                <div class="modal-metric-value-large" id="modal-total-entities">1,247</div>
+                <div class="modal-metric-sub">Currently loaded</div>
+              </div>
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Loaded Chunks</div>
+                <div class="modal-metric-value-large" id="modal-loaded-chunks">3,842</div>
+                <div class="modal-metric-sub">Across all worlds</div>
+              </div>
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Chunk Updates</div>
+                <div class="modal-metric-value-large" id="modal-chunk-updates">156</div>
+                <div class="modal-metric-sub">Per second</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Entity Breakdown -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">Entity Type Breakdown</h4>
+            <div class="modal-entity-list">
+              <div class="modal-entity-item">
+                <span class="modal-entity-icon">🐑</span>
+                <span class="modal-entity-name">Animals</span>
+                <span class="modal-entity-count" id="modal-entities-animals">423</span>
+                <div class="modal-entity-bar">
+                  <div class="modal-entity-fill" style="width: 34%;"></div>
+                </div>
+              </div>
+              <div class="modal-entity-item">
+                <span class="modal-entity-icon">👤</span>
+                <span class="modal-entity-name">Players</span>
+                <span class="modal-entity-count" id="modal-entities-players">12</span>
+                <div class="modal-entity-bar">
+                  <div class="modal-entity-fill" style="width: 1%;"></div>
+                </div>
+              </div>
+              <div class="modal-entity-item">
+                <span class="modal-entity-icon">🧟</span>
+                <span class="modal-entity-name">Monsters</span>
+                <span class="modal-entity-count" id="modal-entities-monsters">287</span>
+                <div class="modal-entity-bar">
+                  <div class="modal-entity-fill" style="width: 23%;"></div>
+                </div>
+              </div>
+              <div class="modal-entity-item">
+                <span class="modal-entity-icon">📦</span>
+                <span class="modal-entity-name">Items</span>
+                <span class="modal-entity-count" id="modal-entities-items">156</span>
+                <div class="modal-entity-bar">
+                  <div class="modal-entity-fill" style="width: 13%;"></div>
+                </div>
+              </div>
+              <div class="modal-entity-item">
+                <span class="modal-entity-icon">🚀</span>
+                <span class="modal-entity-name">Projectiles</span>
+                <span class="modal-entity-count" id="modal-entities-projectiles">89</span>
+                <div class="modal-entity-bar">
+                  <div class="modal-entity-fill" style="width: 7%;"></div>
+                </div>
+              </div>
+              <div class="modal-entity-item">
+                <span class="modal-entity-icon">⚙️</span>
+                <span class="modal-entity-name">Other</span>
+                <span class="modal-entity-count" id="modal-entities-other">280</span>
+                <div class="modal-entity-bar">
+                  <div class="modal-entity-fill" style="width: 22%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thread Pool Information -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">Thread Pool Status</h4>
+            <div class="modal-thread-list">
+              <div class="modal-thread-item">
+                <div class="modal-thread-header">
+                  <span class="modal-thread-name">Main Thread</span>
+                  <span class="modal-thread-status active">Active</span>
+                </div>
+                <div class="modal-thread-stats">
+                  <div class="modal-thread-stat">
+                    <span class="modal-thread-stat-label">CPU Usage:</span>
+                    <span class="modal-thread-stat-value" id="modal-main-thread-cpu">45%</span>
+                  </div>
+                  <div class="modal-thread-stat">
+                    <span class="modal-thread-stat-label">State:</span>
+                    <span class="modal-thread-stat-value">RUNNABLE</span>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-thread-item">
+                <div class="modal-thread-header">
+                  <span class="modal-thread-name">Worker Pool</span>
+                  <span class="modal-thread-count" id="modal-worker-pool-count">8 threads</span>
+                </div>
+                <div class="modal-thread-stats">
+                  <div class="modal-thread-stat">
+                    <span class="modal-thread-stat-label">Active:</span>
+                    <span class="modal-thread-stat-value" id="modal-worker-active">6</span>
+                  </div>
+                  <div class="modal-thread-stat">
+                    <span class="modal-thread-stat-label">Queued:</span>
+                    <span class="modal-thread-stat-value" id="modal-worker-queued">3</span>
+                  </div>
+                  <div class="modal-thread-stat">
+                    <span class="modal-thread-stat-label">Completed:</span>
+                    <span class="modal-thread-stat-value" id="modal-worker-completed">12,847</span>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-thread-item">
+                <div class="modal-thread-header">
+                  <span class="modal-thread-name">Async Executor</span>
+                  <span class="modal-thread-count" id="modal-async-pool-count">4 threads</span>
+                </div>
+                <div class="modal-thread-stats">
+                  <div class="modal-thread-stat">
+                    <span class="modal-thread-stat-label">Active:</span>
+                    <span class="modal-thread-stat-value" id="modal-async-active">2</span>
+                  </div>
+                  <div class="modal-thread-stat">
+                    <span class="modal-thread-stat-label">Queued:</span>
+                    <span class="modal-thread-stat-value" id="modal-async-queued">0</span>
+                  </div>
+                  <div class="modal-thread-stat">
+                    <span class="modal-thread-stat-label">Completed:</span>
+                    <span class="modal-thread-stat-value" id="modal-async-completed">8,923</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </dialog>
+
+      <!-- Uptime & Health Detailed Modal -->
+      <dialog id="uptime-modal" class="glass-modal performance-modal" aria-modal="true">
+        <button class="modal-close-btn" id="close-uptime-modal" aria-label="Close">&times;</button>
+        
+        <div class="performance-modal-header">
+          <h3><span class="modal-icon">⏱️</span> Server Uptime & Health</h3>
+        </div>
+        
+        <div class="performance-modal-content">
+          <!-- Uptime Overview -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">Server Status</h4>
+            <div class="modal-metrics-grid">
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Current Uptime</div>
+                <div class="modal-metric-value-large" id="modal-server-uptime">2h 34m</div>
+                <div class="modal-metric-sub">Since last restart</div>
+              </div>
+              <div class="modal-metric-card">
+                <div class="modal-metric-label">Server Health</div>
+                <div class="modal-metric-value-large" id="modal-server-health">95<span class="modal-unit">%</span></div>
+                <div class="modal-health-bar">
+                  <div class="modal-health-fill" id="modal-health-fill" style="width: 95%;"></div>
+                </div>
+                <div class="modal-metric-sub">Overall performance rating</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance Summary -->
+          <div class="modal-section">
+            <h4 class="modal-section-title">Performance Summary</h4>
+            <div class="modal-summary-grid">
+              <div class="modal-summary-item good">
+                <span class="modal-summary-icon">✓</span>
+                <div class="modal-summary-text">
+                  <div class="modal-summary-title">TPS: Excellent</div>
+                  <div class="modal-summary-desc">Server maintaining 20.0 TPS consistently</div>
+                </div>
+              </div>
+              <div class="modal-summary-item good">
+                <span class="modal-summary-icon">✓</span>
+                <div class="modal-summary-text">
+                  <div class="modal-summary-title">Memory: Healthy</div>
+                  <div class="modal-summary-desc">Memory usage at 60%, within normal range</div>
+                </div>
+              </div>
+              <div class="modal-summary-item good">
+                <span class="modal-summary-icon">✓</span>
+                <div class="modal-summary-text">
+                  <div class="modal-summary-title">Entities: Optimal</div>
+                  <div class="modal-summary-desc">Entity count within recommended limits</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </dialog>
 
       <!-- Chat Log Viewer Section -->
       <section id="log-viewer" class="glass-card chat-log-viewer" aria-label="Chat Log Viewer">
@@ -805,7 +1264,7 @@
           <button class="shortcut-btn" data-command="/gc" title="Run garbage collection">🗑️ Run GC</button>
           <button class="shortcut-btn" data-command="/save-all" title="Save all worlds">💾 Save All</button>
           <button class="shortcut-btn" data-command="/whitelist list" title="Show whitelist">📋 Whitelist</button>
-          <button class="shortcut-btn" data-command="/plugins" title="List plugins">🔌 Plugins</button>
+          <button class="shortcut-btn" data-command="/mods list" title="List mods">🧩 Mods</button>
         </div>
         <div class="console-output" id="console-output">
           <div class="console-line system">
@@ -907,17 +1366,17 @@
                   </div>
                 </div>
               </div>
-              <div class="file-folder" data-path="plugins">
-                <div class="folder-header" data-folder="plugins">
+              <div class="file-folder" data-path="mods">
+                <div class="folder-header" data-folder="mods">
                   <span class="folder-icon">📁</span>
-                  <span class="folder-name">plugins/</span>
+                  <span class="folder-name">mods/</span>
                   <span class="folder-toggle">▶</span>
                 </div>
                 <div class="folder-contents" style="display: none;">
-                  <div class="file-item" data-path="plugins/example.yml" data-type="yaml">
-                    <span class="file-icon">📝</span>
-                    <span class="file-name">example.yml</span>
-                    <span class="file-size">1.8 KB</span>
+                  <div class="file-item" data-path="mods/examplemod.jar" data-type="jar">
+                    <span class="file-icon">�</span>
+                    <span class="file-name">examplemod.jar</span>
+                    <span class="file-size">2.4 MB</span>
                   </div>
                 </div>
               </div>
@@ -1065,6 +1524,57 @@
             </div>
           </div>
         </div>
+
+        <!-- File Editor Modal -->
+        <div id="file-editor-modal" class="modal" style="display: none;">
+          <div class="modal-content">
+            <button class="modal-close" id="close-file-editor">&times;</button>
+            <div class="modal-header">
+              <h3>📄 <span id="modal-file-name">Edit File</span></h3>
+            </div>
+            <div class="modal-body">
+              <div class="editor-header">
+                <div class="editor-info">
+                  <span class="file-path" id="modal-file-path"></span>
+                </div>
+                <div class="editor-actions">
+                  <button id="modal-format-file" class="action-btn" title="Format File">
+                    <span class="action-btn-icon">✨</span>
+                    <span class="action-btn-text">Format</span>
+                  </button>
+                  <button id="modal-validate-file" class="action-btn" title="Validate Syntax">
+                    <span class="action-btn-icon">✓</span>
+                    <span class="action-btn-text">Validate</span>
+                  </button>
+                  <button id="modal-download-file" class="action-btn" title="Download File">
+                    <span class="action-btn-icon">⬇️</span>
+                    <span class="action-btn-text">Download</span>
+                  </button>
+                </div>
+              </div>
+              <textarea id="modal-file-editor" class="file-editor-textarea" placeholder="Select a file to edit..."></textarea>
+              <div class="editor-footer">
+                <div class="editor-stats">
+                  <span class="stat">Lines: <strong id="modal-editor-lines">0</strong></span>
+                  <span class="stat">Characters: <strong id="modal-editor-chars">0</strong></span>
+                  <span class="stat">Type: <strong id="modal-editor-type">-</strong></span>
+                  <span class="stat modified hidden" id="modal-editor-modified">● Modified</span>
+                </div>
+                <div class="editor-shortcuts">
+                  <span class="shortcut">Ctrl+S to Save</span>
+                  <span class="shortcut">Ctrl+F to Format</span>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="modal-cancel-edit">Close</button>
+              <button class="modal-btn primary" id="modal-save-file">
+                <span class="action-btn-icon">💾</span>
+                <span class="action-btn-text">Save Changes</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Backup Management System -->
@@ -1197,7 +1707,7 @@
               <div class="backup-detail-grid">
                 <div class="backup-detail-item">
                   <span class="detail-label">Includes:</span>
-                  <span class="detail-value">World, Plugins, Config</span>
+                  <span class="detail-value">World, Mods, Config</span>
                 </div>
                 <div class="backup-detail-item">
                   <span class="detail-label">Compression:</span>
@@ -1237,7 +1747,7 @@
               <div class="backup-detail-grid">
                 <div class="backup-detail-item">
                   <span class="detail-label">Includes:</span>
-                  <span class="detail-value">World, Plugins, Config</span>
+                  <span class="detail-value">World, Mods, Config</span>
                 </div>
                 <div class="backup-detail-item">
                   <span class="detail-label">Compression:</span>
@@ -1249,7 +1759,7 @@
                 </div>
                 <div class="backup-detail-item">
                   <span class="detail-label">Notes:</span>
-                  <span class="detail-value">Before plugin update</span>
+                  <span class="detail-value">Before mod update</span>
                 </div>
               </div>
             </div>
@@ -1297,8 +1807,8 @@
                     <span>🗺️ World Files</span>
                   </label>
                   <label class="checkbox-label">
-                    <input type="checkbox" id="backup-plugins" checked>
-                    <span>🔌 Plugins</span>
+                    <input type="checkbox" id="backup-mods" checked>
+                    <span>🧩 Mods</span>
                   </label>
                   <label class="checkbox-label">
                     <input type="checkbox" id="backup-config" checked>
@@ -1412,7 +1922,7 @@
                   <p>Restoring this backup will:</p>
                   <ul>
                     <li>Stop the server temporarily</li>
-                    <li>Replace current world, plugins, and config files</li>
+                    <li>Replace current world, mods, and config files</li>
                     <li>Create a backup of current state before restoring</li>
                   </ul>
                 </div>
@@ -1437,6 +1947,1556 @@
             <div class="modal-footer">
               <button class="modal-btn cancel" id="cancel-restore">Cancel</button>
               <button class="modal-btn danger" id="confirm-restore" disabled>Restore Backup</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- World Management Interface -->
+      <section id="world-management" class="glass-card world-management" aria-label="World Management">
+        <div class="section-header">
+          <h2><span class="icon">🗺️</span> World Management</h2>
+          <div class="world-actions">
+            <button id="save-worlds" class="action-btn primary" title="Save All Worlds">
+              <span class="action-btn-icon">💾</span>
+              <span class="action-btn-text">Save All</span>
+            </button>
+            <button id="refresh-worlds" class="action-btn" title="Refresh Worlds">
+              <span class="action-btn-icon">🔄</span>
+              <span class="action-btn-text">Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- World Tabs -->
+        <div class="world-tabs">
+          <button class="world-tab active" data-world="overworld">
+            <span class="tab-icon">🌍</span>
+            <span class="tab-name">Overworld</span>
+          </button>
+          <button class="world-tab" data-world="nether">
+            <span class="tab-icon">🔥</span>
+            <span class="tab-name">Nether</span>
+          </button>
+          <button class="world-tab" data-world="end">
+            <span class="tab-icon">🌌</span>
+            <span class="tab-name">The End</span>
+          </button>
+        </div>
+
+        <!-- World Overview -->
+        <div class="world-overview">
+          <div class="world-stat-card">
+            <div class="world-stat-icon">📦</div>
+            <div class="world-stat-content">
+              <span class="world-stat-value" id="loaded-chunks">245</span>
+              <span class="world-stat-label">Loaded Chunks</span>
+            </div>
+          </div>
+          <div class="world-stat-card">
+            <div class="world-stat-icon">👥</div>
+            <div class="world-stat-content">
+              <span class="world-stat-value" id="players-in-world">12</span>
+              <span class="world-stat-label">Players</span>
+            </div>
+          </div>
+          <div class="world-stat-card">
+            <div class="world-stat-icon">🐾</div>
+            <div class="world-stat-content">
+              <span class="world-stat-value" id="entities-in-world">1,234</span>
+              <span class="world-stat-label">Entities</span>
+            </div>
+          </div>
+          <div class="world-stat-card">
+            <div class="world-stat-icon">⏱️</div>
+            <div class="world-stat-content">
+              <span class="world-stat-value" id="world-time">Day 15, 12:30</span>
+              <span class="world-stat-label">World Time</span>
+            </div>
+          </div>
+          <div class="world-stat-card">
+            <div class="world-stat-icon">🌤️</div>
+            <div class="world-stat-content">
+              <span class="world-stat-value" id="world-weather">Clear</span>
+              <span class="world-stat-label">Weather</span>
+            </div>
+          </div>
+          <div class="world-stat-card">
+            <div class="world-stat-icon">💿</div>
+            <div class="world-stat-content">
+              <span class="world-stat-value" id="world-size">2.8 GB</span>
+              <span class="world-stat-label">World Size</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- World Controls -->
+        <div class="world-controls-grid">
+          <!-- Time Control -->
+          <div class="world-control-section">
+            <h3>⏰ Time Control</h3>
+            <div class="time-controls">
+              <div class="time-display">
+                <span class="time-label">Current Time:</span>
+                <span class="time-value" id="current-time-ticks">6000 ticks</span>
+              </div>
+              <div class="time-buttons">
+                <button class="control-btn" data-time="day">☀️ Day</button>
+                <button class="control-btn" data-time="noon">🌞 Noon</button>
+                <button class="control-btn" data-time="night">🌙 Night</button>
+                <button class="control-btn" data-time="midnight">🌑 Midnight</button>
+              </div>
+              <div class="time-slider">
+                <input type="range" id="time-slider" min="0" max="24000" value="6000" class="slider">
+                <div class="slider-labels">
+                  <span>Sunrise</span>
+                  <span>Noon</span>
+                  <span>Sunset</span>
+                  <span>Midnight</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weather Control -->
+          <div class="world-control-section">
+            <h3>🌤️ Weather Control</h3>
+            <div class="weather-controls">
+              <div class="weather-buttons">
+                <button class="control-btn weather-btn" data-weather="clear">
+                  <span class="weather-icon">☀️</span>
+                  <span>Clear</span>
+                </button>
+                <button class="control-btn weather-btn" data-weather="rain">
+                  <span class="weather-icon">🌧️</span>
+                  <span>Rain</span>
+                </button>
+                <button class="control-btn weather-btn" data-weather="thunder">
+                  <span class="weather-icon">⛈️</span>
+                  <span>Thunder</span>
+                </button>
+              </div>
+              <div class="weather-duration">
+                <label for="weather-duration">Duration (seconds):</label>
+                <input type="number" id="weather-duration" value="600" min="0" max="10000" class="duration-input">
+              </div>
+            </div>
+          </div>
+
+          <!-- World Border -->
+          <div class="world-control-section">
+            <h3>🔲 World Border</h3>
+            <div class="border-controls">
+              <div class="border-info">
+                <div class="border-stat">
+                  <span class="border-label">Center:</span>
+                  <span class="border-value" id="border-center">0, 0</span>
+                </div>
+                <div class="border-stat">
+                  <span class="border-label">Size:</span>
+                  <span class="border-value" id="border-size">30,000,000 blocks</span>
+                </div>
+                <div class="border-stat">
+                  <span class="border-label">Damage:</span>
+                  <span class="border-value" id="border-damage">0.2 per second</span>
+                </div>
+              </div>
+              <button class="control-btn full-width" id="edit-border">Edit World Border</button>
+            </div>
+          </div>
+
+          <!-- Difficulty -->
+          <div class="world-control-section">
+            <h3>⚔️ Difficulty</h3>
+            <div class="difficulty-controls">
+              <div class="difficulty-buttons">
+                <button class="control-btn difficulty-btn" data-difficulty="peaceful">
+                  <span>😊</span> Peaceful
+                </button>
+                <button class="control-btn difficulty-btn" data-difficulty="easy">
+                  <span>🙂</span> Easy
+                </button>
+                <button class="control-btn difficulty-btn active" data-difficulty="normal">
+                  <span>😐</span> Normal
+                </button>
+                <button class="control-btn difficulty-btn" data-difficulty="hard">
+                  <span>😈</span> Hard
+                </button>
+              </div>
+              <label class="checkbox-label">
+                <input type="checkbox" id="lock-difficulty">
+                <span>Lock Difficulty</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gamerules Editor -->
+        <div class="gamerules-section">
+          <div class="gamerules-header">
+            <h3>📜 Gamerules</h3>
+            <div class="gamerule-search">
+              <input type="text" id="gamerule-search" placeholder="Search gamerules..." class="search-input">
+            </div>
+            <div class="gamerule-filter">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="gameplay">Gameplay</button>
+              <button class="filter-btn" data-filter="spawning">Spawning</button>
+              <button class="filter-btn" data-filter="drops">Drops</button>
+            </div>
+          </div>
+
+          <div class="gamerules-grid" id="gamerules-grid">
+            <!-- Boolean Gamerules -->
+            <div class="gamerule-item" data-category="gameplay">
+              <div class="gamerule-info">
+                <span class="gamerule-name">doMobSpawning</span>
+                <span class="gamerule-desc">Allow mobs to spawn naturally</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" data-gamerule="doMobSpawning" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="gamerule-item" data-category="gameplay">
+              <div class="gamerule-info">
+                <span class="gamerule-name">keepInventory</span>
+                <span class="gamerule-desc">Keep inventory after death</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" data-gamerule="keepInventory">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="gamerule-item" data-category="gameplay">
+              <div class="gamerule-info">
+                <span class="gamerule-name">doDaylightCycle</span>
+                <span class="gamerule-desc">Enable day-night cycle</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" data-gamerule="doDaylightCycle" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="gamerule-item" data-category="gameplay">
+              <div class="gamerule-info">
+                <span class="gamerule-name">doFireTick</span>
+                <span class="gamerule-desc">Fire spreads and burns</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" data-gamerule="doFireTick" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="gamerule-item" data-category="spawning">
+              <div class="gamerule-info">
+                <span class="gamerule-name">doMobLoot</span>
+                <span class="gamerule-desc">Mobs drop items when killed</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" data-gamerule="doMobLoot" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="gamerule-item" data-category="drops">
+              <div class="gamerule-info">
+                <span class="gamerule-name">doTileDrops</span>
+                <span class="gamerule-desc">Blocks drop items when destroyed</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" data-gamerule="doTileDrops" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="gamerule-item" data-category="gameplay">
+              <div class="gamerule-info">
+                <span class="gamerule-name">announceAdvancements</span>
+                <span class="gamerule-desc">Announce player advancements</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" data-gamerule="announceAdvancements" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="gamerule-item" data-category="gameplay">
+              <div class="gamerule-info">
+                <span class="gamerule-name">showDeathMessages</span>
+                <span class="gamerule-desc">Display death messages in chat</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" data-gamerule="showDeathMessages" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Numeric Gamerules -->
+            <div class="gamerule-item numeric" data-category="spawning">
+              <div class="gamerule-info">
+                <span class="gamerule-name">randomTickSpeed</span>
+                <span class="gamerule-desc">Rate of random block updates (crops, etc.)</span>
+              </div>
+              <div class="numeric-control">
+                <input type="number" data-gamerule="randomTickSpeed" value="3" min="0" max="1000" class="numeric-input">
+              </div>
+            </div>
+
+            <div class="gamerule-item numeric" data-category="spawning">
+              <div class="gamerule-info">
+                <span class="gamerule-name">spawnRadius</span>
+                <span class="gamerule-desc">Spawn radius around world spawn point</span>
+              </div>
+              <div class="numeric-control">
+                <input type="number" data-gamerule="spawnRadius" value="10" min="0" max="100" class="numeric-input">
+              </div>
+            </div>
+
+            <div class="gamerule-item numeric" data-category="gameplay">
+              <div class="gamerule-info">
+                <span class="gamerule-name">maxCommandChainLength</span>
+                <span class="gamerule-desc">Max command blocks in a chain</span>
+              </div>
+              <div class="numeric-control">
+                <input type="number" data-gamerule="maxCommandChainLength" value="65536" min="0" class="numeric-input">
+              </div>
+            </div>
+          </div>
+
+          <div class="gamerules-footer">
+            <button class="action-btn" id="reset-gamerules">
+              <span>↺</span> Reset to Defaults
+            </button>
+            <button class="action-btn primary" id="save-gamerules">
+              <span>💾</span> Save Gamerules
+            </button>
+          </div>
+        </div>
+
+        <!-- World Border Editor Modal -->
+        <div id="world-border-modal" class="modal" style="display: none;">
+          <div class="modal-content world-border-modal">
+            <div class="modal-header">
+              <h3>🔲 Edit World Border</h3>
+              <button class="modal-close" id="close-border-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="border-center-x">Center X:</label>
+                <input type="number" id="border-center-x" value="0" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="border-center-z">Center Z:</label>
+                <input type="number" id="border-center-z" value="0" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="border-size-input">Size (blocks):</label>
+                <input type="number" id="border-size-input" value="30000000" min="1" max="60000000" class="form-input">
+                <div class="form-hint">Maximum: 60,000,000 blocks</div>
+              </div>
+              <div class="form-group">
+                <label for="border-transition">Transition Time (seconds):</label>
+                <input type="number" id="border-transition" value="0" min="0" class="form-input">
+                <div class="form-hint">Time for border to reach new size (0 = instant)</div>
+              </div>
+              <div class="form-group">
+                <label for="border-damage-amount">Damage Amount:</label>
+                <input type="number" id="border-damage-amount" value="0.2" step="0.1" min="0" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="border-damage-buffer">Damage Buffer (blocks):</label>
+                <input type="number" id="border-damage-buffer" value="5" min="0" class="form-input">
+                <div class="form-hint">Distance from border before damage starts</div>
+              </div>
+              <div class="form-group">
+                <label for="border-warning-distance">Warning Distance (blocks):</label>
+                <input type="number" id="border-warning-distance" value="5" min="0" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="border-warning-time">Warning Time (seconds):</label>
+                <input type="number" id="border-warning-time" value="15" min="0" class="form-input">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-border-edit">Cancel</button>
+              <button class="modal-btn primary" id="save-border">Save Border Settings</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Mod Manager Section -->
+      <section id="plugin-manager" class="glass-card plugin-manager" aria-label="Mod Manager">
+        <h2><span class="icon">🧩</span> Mod Manager</h2>
+        
+        <!-- Mod Overview Stats -->
+        <div class="plugin-stats">
+          <div class="plugin-stat-card">
+            <div class="plugin-stat-icon">📦</div>
+            <div class="plugin-stat-info">
+              <span class="plugin-stat-value" id="total-plugins-count">0</span>
+              <span class="plugin-stat-label">Total Mods</span>
+            </div>
+          </div>
+          <div class="plugin-stat-card enabled">
+            <div class="plugin-stat-icon">✅</div>
+            <div class="plugin-stat-info">
+              <span class="plugin-stat-value" id="enabled-plugins-count">0</span>
+              <span class="plugin-stat-label">Loaded</span>
+            </div>
+          </div>
+          <div class="plugin-stat-card disabled">
+            <div class="plugin-stat-icon">⏸️</div>
+            <div class="plugin-stat-info">
+              <span class="plugin-stat-value" id="disabled-plugins-count">0</span>
+              <span class="plugin-stat-label">Disabled</span>
+            </div>
+          </div>
+          <div class="plugin-stat-card outdated">
+            <div class="plugin-stat-icon">⚠️</div>
+            <div class="plugin-stat-info">
+              <span class="plugin-stat-value" id="outdated-plugins-count">0</span>
+              <span class="plugin-stat-label">Outdated</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Mod Controls -->
+        <div class="plugin-controls">
+          <div class="plugin-search-container">
+            <input type="text" id="plugin-search" class="plugin-search" placeholder="🔍 Search mods..." aria-label="Search mods">
+          </div>
+          <div class="plugin-filter-buttons">
+            <button class="plugin-filter-btn active" data-filter="all">All</button>
+            <button class="plugin-filter-btn" data-filter="enabled">Loaded</button>
+            <button class="plugin-filter-btn" data-filter="disabled">Disabled</button>
+            <button class="plugin-filter-btn" data-filter="outdated">Outdated</button>
+            <button class="plugin-filter-btn" data-filter="libraries">Libraries</button>
+          </div>
+          <div class="plugin-bulk-actions">
+            <button class="plugin-action-btn" id="reload-all-plugins">
+              <span class="icon">🔄</span> Reload All
+            </button>
+            <button class="plugin-action-btn" id="upload-plugin">
+              <span class="icon">📤</span> Upload Mod
+            </button>
+          </div>
+        </div>
+        
+        <!-- Mod List -->
+        <div class="plugin-list" id="plugin-list">
+          <!-- Mod items will be dynamically inserted here -->
+        </div>
+        
+        <!-- Mod Details Modal -->
+        <div class="modal" id="plugin-details-modal" style="display: none;">
+          <div class="modal-content plugin-modal-wide">
+            <div class="modal-header">
+              <h3 id="plugin-details-name">Mod Details</h3>
+              <button class="modal-close" id="close-plugin-details">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="plugin-details-tabs">
+                <button class="plugin-tab active" data-tab="info">📋 Info</button>
+                <button class="plugin-tab" data-tab="config">⚙️ Config</button>
+                <button class="plugin-tab" data-tab="dependencies">🔗 Dependencies</button>
+                <button class="plugin-tab" data-tab="commands">💬 Commands</button>
+              </div>
+              
+              <div class="plugin-details-content">
+                <!-- Info Tab -->
+                <div class="plugin-tab-content active" data-tab="info">
+                  <div class="plugin-info-grid">
+                    <div class="plugin-info-item">
+                      <span class="plugin-info-label">Name:</span>
+                      <span class="plugin-info-value" id="plugin-info-name">-</span>
+                    </div>
+                    <div class="plugin-info-item">
+                      <span class="plugin-info-label">Version:</span>
+                      <span class="plugin-info-value" id="plugin-info-version">-</span>
+                    </div>
+                    <div class="plugin-info-item">
+                      <span class="plugin-info-label">Author:</span>
+                      <span class="plugin-info-value" id="plugin-info-author">-</span>
+                    </div>
+                    <div class="plugin-info-item">
+                      <span class="plugin-info-label">Status:</span>
+                      <span class="plugin-info-value" id="plugin-info-status">-</span>
+                    </div>
+                    <div class="plugin-info-item">
+                      <span class="plugin-info-label">Load Time:</span>
+                      <span class="plugin-info-value" id="plugin-info-loadtime">-</span>
+                    </div>
+                    <div class="plugin-info-item">
+                      <span class="plugin-info-label">API Version:</span>
+                      <span class="plugin-info-value" id="plugin-info-api">-</span>
+                    </div>
+                    <div class="plugin-info-item full-width">
+                      <span class="plugin-info-label">Description:</span>
+                      <span class="plugin-info-value" id="plugin-info-description">-</span>
+                    </div>
+                    <div class="plugin-info-item full-width">
+                      <span class="plugin-info-label">Website:</span>
+                      <span class="plugin-info-value"><a href="#" id="plugin-info-website" target="_blank">-</a></span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Config Tab -->
+                <div class="plugin-tab-content" data-tab="config">
+                  <div class="plugin-config-editor">
+                    <div class="config-editor-toolbar">
+                      <span class="config-file-name" id="config-file-name">config.yml</span>
+                      <div class="config-editor-actions">
+                        <button class="config-btn" id="reset-config">↺ Reset</button>
+                        <button class="config-btn primary" id="save-config">💾 Save</button>
+                      </div>
+                    </div>
+                    <textarea id="plugin-config-editor" class="config-textarea" placeholder="Plugin configuration will appear here..." spellcheck="false"></textarea>
+                    <div class="config-editor-info">
+                      <span id="config-editor-lines">0 lines</span>
+                      <span id="config-editor-validation">✓ Valid YAML</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Dependencies Tab -->
+                <div class="plugin-tab-content" data-tab="dependencies">
+                  <div class="plugin-dependencies">
+                    <h4>Required Dependencies</h4>
+                    <div class="dependency-list" id="plugin-required-deps">
+                      <p class="no-data">No required dependencies</p>
+                    </div>
+                    <h4>Soft Dependencies</h4>
+                    <div class="dependency-list" id="plugin-soft-deps">
+                      <p class="no-data">No soft dependencies</p>
+                    </div>
+                    <h4>Loaded Before</h4>
+                    <div class="dependency-list" id="plugin-loadbefore">
+                      <p class="no-data">No load order specified</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Commands Tab -->
+                <div class="plugin-tab-content" data-tab="commands">
+                  <div class="plugin-commands">
+                    <div class="commands-header">
+                      <input type="text" id="command-search" class="command-search" placeholder="🔍 Search commands...">
+                    </div>
+                    <div class="command-list" id="plugin-command-list">
+                      <p class="no-data">No commands registered</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="close-plugin-modal">Close</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Upload Plugin Modal -->
+        <div class="modal" id="upload-plugin-modal" style="display: none;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>📤 Upload Plugin</h3>
+              <button class="modal-close" id="close-upload-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="upload-area" id="upload-drop-zone">
+                <div class="upload-icon">📦</div>
+                <h4>Drop plugin JAR file here</h4>
+                <p>or click to browse</p>
+                <input type="file" id="plugin-file-input" accept=".jar" style="display: none;">
+              </div>
+              <div class="upload-info" id="upload-info" style="display: none;">
+                <div class="upload-file-name" id="upload-file-name"></div>
+                <div class="upload-file-size" id="upload-file-size"></div>
+                <div class="upload-progress" id="upload-progress">
+                  <div class="upload-progress-bar" id="upload-progress-bar" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="upload-options">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="auto-enable-plugin" checked>
+                  <span>Automatically enable after upload</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="reload-after-upload" checked>
+                  <span>Reload server after upload</span>
+                </label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-upload">Cancel</button>
+              <button class="modal-btn primary" id="confirm-upload" disabled>Upload Plugin</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Permission Management Section -->
+      <section id="permission-manager" class="glass-card permission-manager" aria-label="Permission Management">
+        <h2><span class="icon">🔐</span> Permission Management</h2>
+        
+        <!-- Permission Stats -->
+        <div class="perm-stats">
+          <div class="perm-stat-card">
+            <div class="perm-stat-icon">👥</div>
+            <div class="perm-stat-info">
+              <span class="perm-stat-value" id="total-groups-count">0</span>
+              <span class="perm-stat-label">Groups</span>
+            </div>
+          </div>
+          <div class="perm-stat-card">
+            <div class="perm-stat-icon">🔑</div>
+            <div class="perm-stat-info">
+              <span class="perm-stat-value" id="total-permissions-count">0</span>
+              <span class="perm-stat-label">Permissions</span>
+            </div>
+          </div>
+          <div class="perm-stat-card">
+            <div class="perm-stat-icon">👤</div>
+            <div class="perm-stat-info">
+              <span class="perm-stat-value" id="assigned-players-count">0</span>
+              <span class="perm-stat-label">Assigned Players</span>
+            </div>
+          </div>
+          <div class="perm-stat-card">
+            <div class="perm-stat-icon">🔗</div>
+            <div class="perm-stat-info">
+              <span class="perm-stat-value" id="inheritance-chains-count">0</span>
+              <span class="perm-stat-label">Inheritance Chains</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Permission View Toggle -->
+        <div class="perm-view-toggle">
+          <button class="perm-view-btn active" data-view="groups">
+            <span class="icon">👥</span> Groups
+          </button>
+          <button class="perm-view-btn" data-view="players">
+            <span class="icon">👤</span> Players
+          </button>
+          <button class="perm-view-btn" data-view="tree">
+            <span class="icon">🌳</span> Inheritance Tree
+          </button>
+        </div>
+        
+        <!-- Groups View -->
+        <div class="perm-view active" data-view="groups">
+          <div class="perm-view-header">
+            <input type="text" id="group-search" class="perm-search" placeholder="🔍 Search groups..." aria-label="Search groups">
+            <button class="perm-action-btn primary" id="create-group-btn">
+              <span class="icon">➕</span> Create Group
+            </button>
+          </div>
+          
+          <div class="group-list" id="group-list">
+            <!-- Group items will be dynamically inserted here -->
+          </div>
+        </div>
+        
+        <!-- Players View -->
+        <div class="perm-view" data-view="players">
+          <div class="perm-view-header">
+            <input type="text" id="player-perm-search" class="perm-search" placeholder="🔍 Search players..." aria-label="Search players">
+            <button class="perm-action-btn primary" id="assign-player-btn">
+              <span class="icon">➕</span> Assign Player
+            </button>
+          </div>
+          
+          <div class="player-perm-list" id="player-perm-list">
+            <!-- Player permission items will be dynamically inserted here -->
+          </div>
+        </div>
+        
+        <!-- Inheritance Tree View -->
+        <div class="perm-view" data-view="tree">
+          <div class="perm-view-header">
+            <select id="tree-group-select" class="tree-select">
+              <option value="">Select a group to view inheritance...</option>
+            </select>
+            <button class="perm-action-btn" id="expand-all-tree">
+              <span class="icon">📂</span> Expand All
+            </button>
+            <button class="perm-action-btn" id="collapse-all-tree">
+              <span class="icon">📁</span> Collapse All
+            </button>
+          </div>
+          
+          <div class="inheritance-tree" id="inheritance-tree">
+            <p class="no-data">Select a group to view its inheritance tree</p>
+          </div>
+        </div>
+        
+        <!-- Edit Group Modal -->
+        <div class="modal" id="edit-group-modal" style="display: none;">
+          <div class="modal-content perm-modal-wide">
+            <div class="modal-header">
+              <h3 id="edit-group-title">Edit Group</h3>
+              <button class="modal-close" id="close-edit-group">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="perm-tabs">
+                <button class="perm-tab active" data-tab="group-info">📋 Info</button>
+                <button class="perm-tab" data-tab="group-permissions">🔑 Permissions</button>
+                <button class="perm-tab" data-tab="group-inheritance">🔗 Inheritance</button>
+                <button class="perm-tab" data-tab="group-members">👥 Members</button>
+              </div>
+              
+              <div class="perm-tab-content">
+                <!-- Info Tab -->
+                <div class="perm-tab-pane active" data-tab="group-info">
+                  <div class="form-group">
+                    <label for="group-name">Group Name:</label>
+                    <input type="text" id="group-name" class="form-input" placeholder="e.g., admin, moderator, vip">
+                  </div>
+                  <div class="form-group">
+                    <label for="group-display-name">Display Name:</label>
+                    <input type="text" id="group-display-name" class="form-input" placeholder="e.g., Administrator">
+                  </div>
+                  <div class="form-group">
+                    <label for="group-prefix">Chat Prefix:</label>
+                    <input type="text" id="group-prefix" class="form-input" placeholder="e.g., [Admin]">
+                  </div>
+                  <div class="form-group">
+                    <label for="group-suffix">Chat Suffix:</label>
+                    <input type="text" id="group-suffix" class="form-input" placeholder="e.g., ⭐">
+                  </div>
+                  <div class="form-group">
+                    <label for="group-priority">Priority (higher = more important):</label>
+                    <input type="number" id="group-priority" class="form-input" value="0" min="0">
+                  </div>
+                  <div class="form-group">
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="group-default">
+                      <span>Default group (assigned to new players)</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <!-- Permissions Tab -->
+                <div class="perm-tab-pane" data-tab="group-permissions">
+                  <div class="perm-editor-header">
+                    <input type="text" id="perm-search" class="perm-search" placeholder="🔍 Search permissions...">
+                    <button class="perm-btn primary" id="add-permission-btn">
+                      <span class="icon">➕</span> Add Permission
+                    </button>
+                  </div>
+                  
+                  <div class="perm-categories">
+                    <button class="perm-category-btn active" data-category="all">All</button>
+                    <button class="perm-category-btn" data-category="commands">Commands</button>
+                    <button class="perm-category-btn" data-category="gameplay">Gameplay</button>
+                    <button class="perm-category-btn" data-category="chat">Chat</button>
+                    <button class="perm-category-btn" data-category="admin">Admin</button>
+                  </div>
+                  
+                  <div class="perm-list" id="group-perm-list">
+                    <!-- Permission items will be dynamically inserted here -->
+                  </div>
+                </div>
+                
+                <!-- Inheritance Tab -->
+                <div class="perm-tab-pane" data-tab="group-inheritance">
+                  <div class="inheritance-section">
+                    <h4>Inherits From (Parent Groups)</h4>
+                    <p class="form-hint">This group will inherit all permissions from selected parent groups</p>
+                    <div class="inheritance-list" id="parent-groups-list">
+                      <!-- Parent groups will be dynamically inserted here -->
+                    </div>
+                    <button class="perm-btn" id="add-parent-group-btn">
+                      <span class="icon">➕</span> Add Parent Group
+                    </button>
+                  </div>
+                  
+                  <div class="inheritance-section">
+                    <h4>Inherited By (Child Groups)</h4>
+                    <p class="form-hint">These groups inherit permissions from this group</p>
+                    <div class="inheritance-list" id="child-groups-list">
+                      <p class="no-data">No child groups</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Members Tab -->
+                <div class="perm-tab-pane" data-tab="group-members">
+                  <div class="members-header">
+                    <input type="text" id="member-search" class="perm-search" placeholder="🔍 Search members...">
+                    <button class="perm-btn primary" id="add-member-btn">
+                      <span class="icon">➕</span> Add Member
+                    </button>
+                  </div>
+                  
+                  <div class="member-list" id="group-member-list">
+                    <!-- Members will be dynamically inserted here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-group-edit">Cancel</button>
+              <button class="modal-btn danger" id="delete-group">Delete Group</button>
+              <button class="modal-btn primary" id="save-group">Save Changes</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Add Permission Modal -->
+        <div class="modal" id="add-permission-modal" style="display: none;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Add Permission</h3>
+              <button class="modal-close" id="close-add-permission">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="new-permission-node">Permission Node:</label>
+                <input type="text" id="new-permission-node" class="form-input" placeholder="e.g., essentials.home">
+                <div class="form-hint">Enter the permission node (e.g., plugin.command.name)</div>
+              </div>
+              
+              <div class="form-group">
+                <label>Permission Type:</label>
+                <div class="perm-type-selector">
+                  <label class="radio-label">
+                    <input type="radio" name="perm-type" value="allow" checked>
+                    <span class="radio-custom allow">✓ Allow</span>
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" name="perm-type" value="deny">
+                    <span class="radio-custom deny">✗ Deny</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="permission-world">World (optional):</label>
+                <select id="permission-world" class="form-input">
+                  <option value="">All Worlds</option>
+                  <option value="world">Overworld</option>
+                  <option value="world_nether">Nether</option>
+                  <option value="world_the_end">The End</option>
+                </select>
+              </div>
+              
+              <div class="common-permissions">
+                <h4>Common Permissions</h4>
+                <div class="common-perm-grid">
+                  <button class="common-perm-btn" data-perm="essentials.home">essentials.home</button>
+                  <button class="common-perm-btn" data-perm="essentials.spawn">essentials.spawn</button>
+                  <button class="common-perm-btn" data-perm="essentials.warp">essentials.warp</button>
+                  <button class="common-perm-btn" data-perm="essentials.tpa">essentials.tpa</button>
+                  <button class="common-perm-btn" data-perm="minecraft.command.gamemode">gamemode</button>
+                  <button class="common-perm-btn" data-perm="minecraft.command.tp">teleport</button>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-add-permission">Cancel</button>
+              <button class="modal-btn primary" id="confirm-add-permission">Add Permission</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Assign Player Modal -->
+        <div class="modal" id="assign-player-modal" style="display: none;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Assign Player to Group</h3>
+              <button class="modal-close" id="close-assign-player">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="assign-player-name">Player Name:</label>
+                <input type="text" id="assign-player-name" class="form-input" placeholder="Enter player name...">
+              </div>
+              
+              <div class="form-group">
+                <label for="assign-player-group">Group:</label>
+                <select id="assign-player-group" class="form-input">
+                  <!-- Groups will be populated dynamically -->
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="assign-duration">Duration (optional):</label>
+                <select id="assign-duration" class="form-input">
+                  <option value="">Permanent</option>
+                  <option value="1h">1 Hour</option>
+                  <option value="24h">24 Hours</option>
+                  <option value="7d">7 Days</option>
+                  <option value="30d">30 Days</option>
+                  <option value="custom">Custom...</option>
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-assign-player">Cancel</button>
+              <button class="modal-btn primary" id="confirm-assign-player">Assign Player</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Alert & Notification System Section -->
+      <section id="alert-system" class="glass-card alert-system" aria-label="Alert & Notification System">
+        <h2><span class="icon">🔔</span> Alert & Notification System</h2>
+        
+        <!-- Alert Overview Stats -->
+        <div class="alert-stats">
+          <div class="alert-stat-card critical">
+            <div class="alert-stat-icon">⚠️</div>
+            <div class="alert-stat-info">
+              <span class="alert-stat-value" id="critical-alerts-count">0</span>
+              <span class="alert-stat-label">Critical Alerts</span>
+            </div>
+          </div>
+          <div class="alert-stat-card warning">
+            <div class="alert-stat-icon">⚡</div>
+            <div class="alert-stat-info">
+              <span class="alert-stat-value" id="warning-alerts-count">0</span>
+              <span class="alert-stat-label">Warnings</span>
+            </div>
+          </div>
+          <div class="alert-stat-card info">
+            <div class="alert-stat-icon">ℹ️</div>
+            <div class="alert-stat-info">
+              <span class="alert-stat-value" id="info-alerts-count">0</span>
+              <span class="alert-stat-label">Info Alerts</span>
+            </div>
+          </div>
+          <div class="alert-stat-card rules">
+            <div class="alert-stat-icon">📋</div>
+            <div class="alert-stat-info">
+              <span class="alert-stat-value" id="active-rules-count">0</span>
+              <span class="alert-stat-label">Active Rules</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Alert Controls -->
+        <div class="alert-controls">
+          <div class="alert-view-toggle">
+            <button class="alert-view-btn active" data-view="live">
+              <span class="icon">📡</span> Live Feed
+            </button>
+            <button class="alert-view-btn" data-view="history">
+              <span class="icon">📜</span> History
+            </button>
+            <button class="alert-view-btn" data-view="rules">
+              <span class="icon">⚙️</span> Rules
+            </button>
+          </div>
+          <div class="alert-actions">
+            <button class="action-btn" id="clear-all-alerts">
+              <span class="icon">🗑️</span> Clear All
+            </button>
+            <button class="action-btn primary" id="create-alert-rule">
+              <span class="icon">➕</span> New Rule
+            </button>
+          </div>
+        </div>
+        
+        <!-- Live Feed View -->
+        <div class="alert-view-content" id="alert-live-view">
+          <div class="alert-feed-controls">
+            <div class="alert-filters">
+              <button class="filter-btn active" data-severity="all">All</button>
+              <button class="filter-btn" data-severity="critical">Critical</button>
+              <button class="filter-btn" data-severity="warning">Warning</button>
+              <button class="filter-btn" data-severity="info">Info</button>
+            </div>
+            <div class="alert-category-filters">
+              <select id="alert-category-filter" class="form-input">
+                <option value="all">All Categories</option>
+                <option value="performance">Performance</option>
+                <option value="security">Security</option>
+                <option value="player">Player Reports</option>
+                <option value="system">System</option>
+                <option value="economy">Economy</option>
+                <option value="plugin">Plugin</option>
+              </select>
+            </div>
+            <div class="alert-sound-toggle">
+              <span class="toggle-text">Sound</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="alert-sound-enabled" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="alert-feed" id="alert-feed-list">
+            <!-- Alerts will be dynamically inserted here -->
+          </div>
+        </div>
+        
+        <!-- History View -->
+        <div class="alert-view-content hidden" id="alert-history-view">
+          <div class="alert-history-controls">
+            <input type="text" id="alert-history-search" class="search-input" placeholder="Search alerts...">
+            <div class="date-range-selector">
+              <label>From:</label>
+              <input type="date" id="alert-date-from" class="form-input">
+              <label>To:</label>
+              <input type="date" id="alert-date-to" class="form-input">
+              <button class="action-btn" id="filter-history">Filter</button>
+            </div>
+            <button class="action-btn" id="export-alert-history">
+              <span class="icon">💾</span> Export
+            </button>
+          </div>
+          
+          <div class="alert-history-list" id="alert-history-list">
+            <!-- Historical alerts will be dynamically inserted here -->
+          </div>
+          
+          <div class="alert-pagination">
+            <button class="pagination-btn" id="alert-prev-page">Previous</button>
+            <span class="pagination-info">
+              Page <span id="alert-current-page">1</span> of <span id="alert-total-pages">1</span>
+            </span>
+            <button class="pagination-btn" id="alert-next-page">Next</button>
+          </div>
+        </div>
+        
+        <!-- Rules View -->
+        <div class="alert-view-content hidden" id="alert-rules-view">
+          <div class="alert-rules-controls">
+            <input type="text" id="alert-rules-search" class="search-input" placeholder="Search rules...">
+            <div class="rule-filters">
+              <button class="filter-btn active" data-status="all">All</button>
+              <button class="filter-btn" data-status="enabled">Enabled</button>
+              <button class="filter-btn" data-status="disabled">Disabled</button>
+            </div>
+          </div>
+          
+          <div class="alert-rules-list" id="alert-rules-list">
+            <!-- Alert rules will be dynamically inserted here -->
+          </div>
+        </div>
+        
+        <!-- Create/Edit Alert Rule Modal -->
+        <div id="alert-rule-modal" class="modal" style="display: none;">
+          <div class="modal-content large">
+            <div class="modal-header">
+              <h3 id="alert-rule-modal-title">Create Alert Rule</h3>
+              <button class="modal-close" id="close-alert-rule-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="rule-form-tabs">
+                <button class="rule-tab-btn active" data-tab="basic">Basic</button>
+                <button class="rule-tab-btn" data-tab="conditions">Conditions</button>
+                <button class="rule-tab-btn" data-tab="actions">Actions</button>
+              </div>
+              
+              <!-- Basic Tab -->
+              <div class="rule-tab-content" id="rule-basic-tab">
+                <div class="form-group">
+                  <label for="rule-name">Rule Name:</label>
+                  <input type="text" id="rule-name" class="form-input" placeholder="Enter rule name">
+                </div>
+                
+                <div class="form-group">
+                  <label for="rule-category">Category:</label>
+                  <select id="rule-category" class="form-input">
+                    <option value="performance">Performance</option>
+                    <option value="security">Security</option>
+                    <option value="player">Player Reports</option>
+                    <option value="system">System</option>
+                    <option value="economy">Economy</option>
+                    <option value="plugin">Plugin</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="rule-severity">Severity:</label>
+                  <select id="rule-severity" class="form-input">
+                    <option value="info">Info</option>
+                    <option value="warning">Warning</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="rule-description">Description:</label>
+                  <textarea id="rule-description" class="form-input" rows="3" placeholder="Describe what this rule monitors..."></textarea>
+                </div>
+                
+                <div class="form-group checkbox-group">
+                  <label>
+                    <input type="checkbox" id="rule-enabled" checked>
+                    <span>Rule Enabled</span>
+                  </label>
+                </div>
+              </div>
+              
+              <!-- Conditions Tab -->
+              <div class="rule-tab-content hidden" id="rule-conditions-tab">
+                <div class="form-group">
+                  <label for="rule-metric">Metric to Monitor:</label>
+                  <select id="rule-metric" class="form-input">
+                    <option value="tps">TPS (Ticks Per Second)</option>
+                    <option value="memory">Memory Usage (%)</option>
+                    <option value="players">Player Count</option>
+                    <option value="entities">Entity Count</option>
+                    <option value="chunks">Loaded Chunks</option>
+                    <option value="cpu">CPU Usage (%)</option>
+                    <option value="disk">Disk Usage (%)</option>
+                    <option value="lag_spike">Lag Spike Detection</option>
+                    <option value="player_join">Player Join</option>
+                    <option value="player_leave">Player Leave</option>
+                    <option value="death">Player Death</option>
+                    <option value="crash">Server Crash</option>
+                  </select>
+                </div>
+                
+                <div class="form-group" id="threshold-group">
+                  <label for="rule-condition">Condition:</label>
+                  <select id="rule-condition" class="form-input">
+                    <option value="greater">Greater than</option>
+                    <option value="less">Less than</option>
+                    <option value="equals">Equals</option>
+                    <option value="between">Between</option>
+                  </select>
+                </div>
+                
+                <div class="form-group" id="threshold-value-group">
+                  <label for="rule-threshold">Threshold Value:</label>
+                  <input type="number" id="rule-threshold" class="form-input" placeholder="Enter threshold value">
+                </div>
+                
+                <div class="form-group hidden" id="threshold-max-group">
+                  <label for="rule-threshold-max">Maximum Value:</label>
+                  <input type="number" id="rule-threshold-max" class="form-input" placeholder="Enter maximum value">
+                </div>
+                
+                <div class="form-group">
+                  <label for="rule-duration">Duration (seconds):</label>
+                  <input type="number" id="rule-duration" class="form-input" value="30" placeholder="Alert after X seconds">
+                  <small>Alert will trigger if condition persists for this duration</small>
+                </div>
+                
+                <div class="form-group">
+                  <label for="rule-cooldown">Cooldown (minutes):</label>
+                  <input type="number" id="rule-cooldown" class="form-input" value="5" placeholder="Cooldown between alerts">
+                  <small>Minimum time between alerts for this rule</small>
+                </div>
+              </div>
+              
+              <!-- Actions Tab -->
+              <div class="rule-tab-content hidden" id="rule-actions-tab">
+                <div class="form-group">
+                  <label>Notification Methods:</label>
+                  <div class="checkbox-group">
+                    <label>
+                      <input type="checkbox" id="action-dashboard" checked>
+                      <span>Dashboard Alert</span>
+                    </label>
+                    <label>
+                      <input type="checkbox" id="action-sound" checked>
+                      <span>Sound Alert</span>
+                    </label>
+                    <label>
+                      <input type="checkbox" id="action-desktop">
+                      <span>Desktop Notification</span>
+                    </label>
+                    <label>
+                      <input type="checkbox" id="action-email">
+                      <span>Email Notification</span>
+                    </label>
+                    <label>
+                      <input type="checkbox" id="action-webhook">
+                      <span>Webhook (Discord/Slack)</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="form-group" id="email-group" style="display: none;">
+                  <label for="rule-email">Email Address:</label>
+                  <input type="email" id="rule-email" class="form-input" placeholder="admin@example.com">
+                </div>
+                
+                <div class="form-group" id="webhook-group" style="display: none;">
+                  <label for="rule-webhook-url">Webhook URL:</label>
+                  <input type="url" id="rule-webhook-url" class="form-input" placeholder="https://discord.com/api/webhooks/...">
+                </div>
+                
+                <div class="form-group">
+                  <label>Auto Actions:</label>
+                  <div class="checkbox-group">
+                    <label>
+                      <input type="checkbox" id="action-log">
+                      <span>Log to File</span>
+                    </label>
+                    <label>
+                      <input type="checkbox" id="action-command">
+                      <span>Execute Command</span>
+                    </label>
+                    <label>
+                      <input type="checkbox" id="action-restart">
+                      <span>Auto Restart Server (Critical Only)</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div class="form-group" id="command-group" style="display: none;">
+                  <label for="rule-command">Command to Execute:</label>
+                  <input type="text" id="rule-command" class="form-input" placeholder="/say Server performance warning!">
+                  <small>Command will be executed when alert triggers</small>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-alert-rule">Cancel</button>
+              <button class="modal-btn primary" id="save-alert-rule">Save Rule</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Alert Details Modal -->
+        <div id="alert-details-modal" class="modal" style="display: none;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Alert Details</h3>
+              <button class="modal-close" id="close-alert-details">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="alert-detail-content" id="alert-detail-content">
+                <!-- Alert details will be populated here -->
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn" id="dismiss-alert">Dismiss</button>
+              <button class="modal-btn primary" id="acknowledge-alert">Acknowledge</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Advanced Search & Filtering Section -->
+      <section id="global-search" class="glass-card global-search" aria-label="Advanced Search & Filtering">
+        <h2><span class="icon">🔍</span> Advanced Search & Filtering</h2>
+        
+        <!-- Global Search Bar -->
+        <div class="global-search-bar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="global-search-input" class="global-search-input" placeholder="Search players, logs, files, alerts, commands..." autocomplete="off">
+            <button class="clear-search-btn" id="clear-global-search" style="display: none;">✕</button>
+          </div>
+          <button class="advanced-filter-btn" id="open-advanced-filters">
+            <span class="icon">⚙️</span> Advanced Filters
+          </button>
+          <button class="saved-presets-btn" id="open-saved-presets">
+            <span class="icon">📋</span> Presets
+          </button>
+        </div>
+        
+        <!-- Search Scope Selector -->
+        <div class="search-scope-selector">
+          <label class="scope-label">Search in:</label>
+          <div class="scope-checkboxes">
+            <label class="scope-checkbox">
+              <input type="checkbox" class="search-scope" value="players" checked>
+              <span class="scope-icon">👤</span>
+              <span>Players</span>
+            </label>
+            <label class="scope-checkbox">
+              <input type="checkbox" class="search-scope" value="logs" checked>
+              <span class="scope-icon">📝</span>
+              <span>Logs</span>
+            </label>
+            <label class="scope-checkbox">
+              <input type="checkbox" class="search-scope" value="files" checked>
+              <span class="scope-icon">📁</span>
+              <span>Files</span>
+            </label>
+            <label class="scope-checkbox">
+              <input type="checkbox" class="search-scope" value="alerts" checked>
+              <span class="scope-icon">🔔</span>
+              <span>Alerts</span>
+            </label>
+            <label class="scope-checkbox">
+              <input type="checkbox" class="search-scope" value="commands" checked>
+              <span class="scope-icon">⌨️</span>
+              <span>Commands</span>
+            </label>
+            <label class="scope-checkbox">
+              <input type="checkbox" class="search-scope" value="chat" checked>
+              <span class="scope-icon">💬</span>
+              <span>Chat</span>
+            </label>
+            <label class="scope-checkbox">
+              <input type="checkbox" class="search-scope" value="economy" checked>
+              <span class="scope-icon">💰</span>
+              <span>Economy</span>
+            </label>
+          </div>
+        </div>
+        
+        <!-- Search Results Summary -->
+        <div class="search-results-summary" id="search-results-summary" style="display: none;">
+          <div class="results-count">
+            Found <strong id="total-results-count">0</strong> results in <span id="search-time">0</span>ms
+          </div>
+          <div class="results-breakdown">
+            <span class="result-category" id="players-result-count" style="display: none;">
+              <span class="category-icon">👤</span> <strong>0</strong> Players
+            </span>
+            <span class="result-category" id="logs-result-count" style="display: none;">
+              <span class="category-icon">📝</span> <strong>0</strong> Logs
+            </span>
+            <span class="result-category" id="files-result-count" style="display: none;">
+              <span class="category-icon">📁</span> <strong>0</strong> Files
+            </span>
+            <span class="result-category" id="alerts-result-count" style="display: none;">
+              <span class="category-icon">🔔</span> <strong>0</strong> Alerts
+            </span>
+            <span class="result-category" id="commands-result-count" style="display: none;">
+              <span class="category-icon">⌨️</span> <strong>0</strong> Commands
+            </span>
+            <span class="result-category" id="chat-result-count" style="display: none;">
+              <span class="category-icon">💬</span> <strong>0</strong> Chat
+            </span>
+            <span class="result-category" id="economy-result-count" style="display: none;">
+              <span class="category-icon">💰</span> <strong>0</strong> Economy
+            </span>
+          </div>
+        </div>
+        
+        <!-- Search Results -->
+        <div class="search-results-container" id="search-results-container" style="display: none;">
+          <div class="results-header">
+            <h3>Search Results</h3>
+            <div class="results-actions">
+              <select id="sort-results" class="form-input">
+                <option value="relevance">Sort by Relevance</option>
+                <option value="date-desc">Date (Newest First)</option>
+                <option value="date-asc">Date (Oldest First)</option>
+                <option value="name-asc">Name (A-Z)</option>
+                <option value="name-desc">Name (Z-A)</option>
+              </select>
+              <button class="action-btn" id="export-results">
+                <span class="icon">💾</span> Export
+              </button>
+            </div>
+          </div>
+          
+          <div class="search-results-list" id="search-results-list">
+            <!-- Results will be dynamically inserted here -->
+          </div>
+          
+          <div class="search-pagination" id="search-pagination" style="display: none;">
+            <button class="pagination-btn" id="search-prev-page">Previous</button>
+            <span class="pagination-info">
+              Page <span id="search-current-page">1</span> of <span id="search-total-pages">1</span>
+            </span>
+            <button class="pagination-btn" id="search-next-page">Next</button>
+          </div>
+        </div>
+        
+        <!-- Advanced Filters Modal -->
+        <div id="advanced-filters-modal" class="modal" style="display: none;">
+          <div class="modal-content large">
+            <div class="modal-header">
+              <h3>Advanced Filters</h3>
+              <button class="modal-close" id="close-advanced-filters">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="filter-section">
+                <h4>Date Range</h4>
+                <div class="filter-row">
+                  <div class="form-group">
+                    <label for="filter-date-from">From:</label>
+                    <input type="datetime-local" id="filter-date-from" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label for="filter-date-to">To:</label>
+                    <input type="datetime-local" id="filter-date-to" class="form-input">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="filter-section">
+                <h4>Player Filters</h4>
+                <div class="filter-row">
+                  <div class="form-group">
+                    <label for="filter-player-status">Status:</label>
+                    <select id="filter-player-status" class="form-input">
+                      <option value="">All</option>
+                      <option value="online">Online</option>
+                      <option value="offline">Offline</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="filter-player-rank">Rank:</label>
+                    <select id="filter-player-rank" class="form-input">
+                      <option value="">All</option>
+                      <option value="admin">Admin</option>
+                      <option value="moderator">Moderator</option>
+                      <option value="vip">VIP</option>
+                      <option value="member">Member</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="filter-section">
+                <h4>Log Filters</h4>
+                <div class="filter-row">
+                  <div class="form-group">
+                    <label for="filter-log-level">Log Level:</label>
+                    <select id="filter-log-level" class="form-input">
+                      <option value="">All</option>
+                      <option value="error">Error</option>
+                      <option value="warn">Warning</option>
+                      <option value="info">Info</option>
+                      <option value="debug">Debug</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="filter-log-source">Source:</label>
+                    <input type="text" id="filter-log-source" class="form-input" placeholder="e.g., Plugin name">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="filter-section">
+                <h4>File Filters</h4>
+                <div class="filter-row">
+                  <div class="form-group">
+                    <label for="filter-file-type">File Type:</label>
+                    <select id="filter-file-type" class="form-input">
+                      <option value="">All</option>
+                      <option value="config">Config (.json, .yml, .properties)</option>
+                      <option value="log">Log Files</option>
+                      <option value="data">Data Files</option>
+                      <option value="plugin">Plugin Files (.jar)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="filter-file-size">Size:</label>
+                    <select id="filter-file-size" class="form-input">
+                      <option value="">All</option>
+                      <option value="small">< 1 MB</option>
+                      <option value="medium">1-10 MB</option>
+                      <option value="large">> 10 MB</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="filter-section">
+                <h4>Alert Filters</h4>
+                <div class="filter-row">
+                  <div class="form-group">
+                    <label for="filter-alert-severity">Severity:</label>
+                    <select id="filter-alert-severity" class="form-input">
+                      <option value="">All</option>
+                      <option value="critical">Critical</option>
+                      <option value="warning">Warning</option>
+                      <option value="info">Info</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="filter-alert-category">Category:</label>
+                    <select id="filter-alert-category" class="form-input">
+                      <option value="">All</option>
+                      <option value="performance">Performance</option>
+                      <option value="security">Security</option>
+                      <option value="player">Player</option>
+                      <option value="system">System</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="filter-section">
+                <h4>Economy Filters</h4>
+                <div class="filter-row">
+                  <div class="form-group">
+                    <label for="filter-transaction-type">Transaction Type:</label>
+                    <select id="filter-transaction-type" class="form-input">
+                      <option value="">All</option>
+                      <option value="payment">Payment</option>
+                      <option value="purchase">Purchase</option>
+                      <option value="reward">Reward</option>
+                      <option value="penalty">Penalty</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="filter-amount-min">Min Amount:</label>
+                    <input type="number" id="filter-amount-min" class="form-input" placeholder="0">
+                  </div>
+                  <div class="form-group">
+                    <label for="filter-amount-max">Max Amount:</label>
+                    <input type="number" id="filter-amount-max" class="form-input" placeholder="999999">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn" id="reset-filters">Reset Filters</button>
+              <button class="modal-btn cancel" id="cancel-advanced-filters">Cancel</button>
+              <button class="modal-btn primary" id="apply-advanced-filters">Apply Filters</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Saved Presets Modal -->
+        <div id="saved-presets-modal" class="modal" style="display: none;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Saved Filter Presets</h3>
+              <button class="modal-close" id="close-saved-presets">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="presets-list" id="presets-list">
+                <!-- Presets will be dynamically inserted here -->
+              </div>
+              <div class="preset-actions">
+                <button class="action-btn primary" id="save-current-preset">
+                  <span class="icon">💾</span> Save Current Search
+                </button>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn" id="close-presets-modal">Close</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Save Preset Modal -->
+        <div id="save-preset-modal" class="modal" style="display: none;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Save Search Preset</h3>
+              <button class="modal-close" id="close-save-preset">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="preset-name">Preset Name:</label>
+                <input type="text" id="preset-name" class="form-input" placeholder="Enter preset name">
+              </div>
+              <div class="form-group">
+                <label for="preset-description">Description (optional):</label>
+                <textarea id="preset-description" class="form-input" rows="3" placeholder="Describe this search preset..."></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" id="cancel-save-preset">Cancel</button>
+              <button class="modal-btn primary" id="confirm-save-preset">Save Preset</button>
             </div>
           </div>
         </div>
@@ -1633,11 +3693,57 @@
       </dialog>
       
       <section id="settings" class="glass-card" aria-label="Settings">
-          <h2><span class="icon">⚙️</span> Settings</h2>
-          <div class="settings-summary">
-            <p>Edit server configuration files easily.</p>
-            <button id="open-config-modal" class="sidebar-btn" data-tooltip="Edit Config Files">Edit Config</button>
+          <h2><span class="icon">⚙️</span> Dashboard Settings</h2>
+          
+          <!-- Account Settings -->
+          <div class="settings-category">
+            <h3>👤 Account Settings</h3>
+            <div class="settings-card">
+              <div class="setting-item">
+                <label>Username:</label>
+                <span id="settings-username" class="setting-value">Loading...</span>
+              </div>
+              <div class="setting-item">
+                <label>Role:</label>
+                <span id="settings-role" class="setting-value">Loading...</span>
+              </div>
+              <button id="change-password-btn" class="sidebar-btn" style="margin-top: 1rem;">
+                <span class="icon">🔒</span> Change Password
+              </button>
+            </div>
           </div>
+          
+          <!-- Dashboard Preferences -->
+          <div class="settings-category">
+            <h3>🎨 Dashboard Preferences</h3>
+            <div class="settings-card">
+              <div class="setting-item">
+                <label for="refresh-rate">Data Refresh Rate:</label>
+                <select id="refresh-rate" class="setting-input">
+                  <option value="1000">1 second</option>
+                  <option value="2000" selected>2 seconds</option>
+                  <option value="5000">5 seconds</option>
+                  <option value="10000">10 seconds</option>
+                </select>
+              </div>
+              <div class="setting-item">
+                <label for="notifications-enabled">Enable Notifications:</label>
+                <input type="checkbox" id="notifications-enabled" class="setting-checkbox" checked>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Server Configuration -->
+          <div class="settings-category">
+            <h3>⚙️ Server Configuration</h3>
+            <div class="settings-card">
+              <p>Edit server configuration files easily.</p>
+              <button id="open-config-modal" class="sidebar-btn" data-tooltip="Edit Config Files">
+                <span class="icon">📝</span> Edit Config Files
+              </button>
+            </div>
+          </div>
+          
           <!-- Config Edit Modal -->
           <div id="config-modal" class="modal" style="display:none;">
             <div class="modal-content glass-card">
@@ -1647,6 +3753,33 @@
                 <!-- Populated by JS: List of config files and editable options -->
               </div>
               <button id="save-config-btn" class="sidebar-btn">Save Changes</button>
+            </div>
+          </div>
+          
+          <!-- Password Change Modal -->
+          <div id="password-change-modal" class="modal" style="display:none;">
+            <div class="modal-content glass-card">
+              <span class="close" id="close-password-modal">&times;</span>
+              <h3>🔒 Change Password</h3>
+              <form id="password-change-form">
+                <div class="form-group">
+                  <label for="new-password">New Password:</label>
+                  <input type="password" id="new-password" class="form-input" required minlength="8" 
+                         placeholder="At least 8 characters">
+                </div>
+                <div class="form-group">
+                  <label for="confirm-password">Confirm Password:</label>
+                  <input type="password" id="confirm-password" class="form-input" required 
+                         placeholder="Re-enter new password">
+                </div>
+                <div class="form-group">
+                  <small class="form-hint">Password must be at least 8 characters long.</small>
+                </div>
+                <div class="modal-actions">
+                  <button type="button" class="modal-btn cancel" id="cancel-password-change">Cancel</button>
+                  <button type="submit" class="modal-btn primary">Change Password</button>
+                </div>
+              </form>
             </div>
           </div>
       </section>
@@ -1660,6 +3793,12 @@
             <h3 id="player-details-title">Player Name</h3>
             <span class="player-uuid" id="player-uuid">UUID</span>
             <span class="player-status online" id="player-status">Online</span>
+          </div>
+          <div class="player-selector-wrapper">
+            <label for="player-selector" class="player-selector-label">👤 Select Player:</label>
+            <select id="player-selector" class="player-selector-dropdown">
+              <option value="">Loading players...</option>
+            </select>
           </div>
         </div>
         

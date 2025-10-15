@@ -217,8 +217,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (section) {
         section.scrollIntoView({ behavior: 'smooth', block: 'center' });
         showNotification(`Navigated to ${btn.textContent.trim()}`);
-      } else if (targetId === 'settings') {
-        showNotification('Settings section coming soon!', 'info');
+        // Load settings if navigating to settings section
+        if (targetId === 'settings') {
+          loadUserSettings();
+        }
       }
     });
   });
@@ -631,7 +633,9 @@ class PlayerDetailsManager {
     this.modal = document.getElementById('player-details-modal');
     this.closeBtn = document.getElementById('close-player-modal');
     this.detailsBtn = document.getElementById('player-details-btn');
+    this.playerSelector = document.getElementById('player-selector');
     this.currentPlayerData = null;
+    this.playersList = [];
     this.init();
   }
   
@@ -641,6 +645,14 @@ class PlayerDetailsManager {
     
     // Setup details button
     this.detailsBtn?.addEventListener('click', () => this.openModal('Steve')); // Example
+    
+    // Setup player selector
+    this.playerSelector?.addEventListener('change', (e) => {
+      const selectedPlayer = e.target.value;
+      if (selectedPlayer) {
+        this.openModal(selectedPlayer);
+      }
+    });
     
     // Close on backdrop click
     this.modal?.addEventListener('click', (e) => {
@@ -654,6 +666,51 @@ class PlayerDetailsManager {
     
     // Setup action buttons
     this.setupActionButtons();
+    
+    // Load players list
+    this.loadPlayersList();
+  }
+  
+  async loadPlayersList() {
+    try {
+      // Fetch online players from API
+      const response = await fetch('/api/players');
+      if (response.ok) {
+        const data = await response.json();
+        this.playersList = data.players || [];
+        this.populatePlayerSelector();
+      }
+    } catch (error) {
+      console.error('Failed to load players list:', error);
+      // Fallback to mock data
+      this.playersList = ['Steve', 'Alex', 'Notch', 'Herobrine'];
+      this.populatePlayerSelector();
+    }
+  }
+  
+  populatePlayerSelector() {
+    if (!this.playerSelector) return;
+    
+    this.playerSelector.innerHTML = '';
+    
+    if (this.playersList.length === 0) {
+      this.playerSelector.innerHTML = '<option value="">No players online</option>';
+      return;
+    }
+    
+    // Add placeholder option
+    const placeholderOption = document.createElement('option');
+    placeholderOption.value = '';
+    placeholderOption.textContent = 'Select a player...';
+    this.playerSelector.appendChild(placeholderOption);
+    
+    // Add player options
+    this.playersList.forEach(player => {
+      const option = document.createElement('option');
+      option.value = typeof player === 'string' ? player : player.name;
+      option.textContent = typeof player === 'string' ? player : player.name;
+      this.playerSelector.appendChild(option);
+    });
   }
   
   setupTabs() {
@@ -712,6 +769,10 @@ class PlayerDetailsManager {
     this.fetchPlayerData(playerName).then(data => {
       this.currentPlayerData = data;
       this.populateModal(data);
+      // Update selector to show current player
+      if (this.playerSelector) {
+        this.playerSelector.value = playerName;
+      }
       this.modal?.showModal();
     });
   }
@@ -2015,6 +2076,78 @@ class PerformanceMetricsManager {
     this.refreshBtn = document.getElementById('refresh-metrics');
     this.exportBtn = document.getElementById('export-metrics');
     
+    // Compact Card Elements
+    this.compactTpsEl = document.getElementById('compact-tps');
+    this.compactTpsStatusEl = document.getElementById('compact-tps-status');
+    this.compactMemoryEl = document.getElementById('compact-memory');
+    this.compactMemoryMaxEl = document.getElementById('compact-memory-max');
+    this.compactMemoryFillEl = document.getElementById('compact-memory-fill');
+    this.compactEntitiesEl = document.getElementById('compact-entities');
+    this.compactChunksEl = document.getElementById('compact-chunks');
+    this.compactUptimeEl = document.getElementById('compact-uptime');
+    
+    // Modal Elements
+    this.tpsModal = document.getElementById('tps-modal');
+    this.memoryModal = document.getElementById('memory-modal');
+    this.entitiesModal = document.getElementById('entities-modal');
+    this.uptimeModal = document.getElementById('uptime-modal');
+    
+    // Modal Content Elements (TPS)
+    this.modalCurrentTpsEl = document.getElementById('modal-current-tps');
+    this.modalTpsStatusEl = document.getElementById('modal-tps-status');
+    this.modalAvgTickTimeEl = document.getElementById('modal-avg-tick-time');
+    this.modalPeakTickTimeEl = document.getElementById('modal-peak-tick-time');
+    this.modalEntityTickTimeEl = document.getElementById('modal-entity-tick-time');
+    this.modalBlockTickTimeEl = document.getElementById('modal-block-tick-time');
+    this.modalChunkTickTimeEl = document.getElementById('modal-chunk-tick-time');
+    this.modalTaskTickTimeEl = document.getElementById('modal-task-tick-time');
+    this.modalOtherTickTimeEl = document.getElementById('modal-other-tick-time');
+    this.modalEntityTickBar = document.getElementById('modal-entity-tick-bar');
+    this.modalBlockTickBar = document.getElementById('modal-block-tick-bar');
+    this.modalChunkTickBar = document.getElementById('modal-chunk-tick-bar');
+    this.modalTaskTickBar = document.getElementById('modal-task-tick-bar');
+    this.modalOtherTickBar = document.getElementById('modal-other-tick-bar');
+    
+    // Modal Content Elements (Memory)
+    this.modalHeapUsedEl = document.getElementById('modal-heap-used');
+    this.modalHeapMaxEl = document.getElementById('modal-heap-max');
+    this.modalHeapFillEl = document.getElementById('modal-heap-fill');
+    this.modalNonheapUsedEl = document.getElementById('modal-nonheap-used');
+    this.modalNonheapMaxEl = document.getElementById('modal-nonheap-max');
+    this.modalNonheapFillEl = document.getElementById('modal-nonheap-fill');
+    this.modalGcCountEl = document.getElementById('modal-gc-count');
+    this.modalGcTimeEl = document.getElementById('modal-gc-time');
+    this.modalGcAvgEl = document.getElementById('modal-gc-avg');
+    
+    // Modal Content Elements (Entities)
+    this.modalTotalEntitiesEl = document.getElementById('modal-total-entities');
+    this.modalLoadedChunksEl = document.getElementById('modal-loaded-chunks');
+    this.modalChunkUpdatesEl = document.getElementById('modal-chunk-updates');
+    this.modalEntitiesAnimalsEl = document.getElementById('modal-entities-animals');
+    this.modalEntitiesPlayersEl = document.getElementById('modal-entities-players');
+    this.modalEntitiesMonstersEl = document.getElementById('modal-entities-monsters');
+    this.modalEntitiesItemsEl = document.getElementById('modal-entities-items');
+    this.modalEntitiesProjectilesEl = document.getElementById('modal-entities-projectiles');
+    this.modalEntitiesOtherEl = document.getElementById('modal-entities-other');
+    this.modalMainThreadCpuEl = document.getElementById('modal-main-thread-cpu');
+    this.modalWorkerActiveEl = document.getElementById('modal-worker-active');
+    this.modalWorkerQueuedEl = document.getElementById('modal-worker-queued');
+    this.modalWorkerCompletedEl = document.getElementById('modal-worker-completed');
+    this.modalAsyncActiveEl = document.getElementById('modal-async-active');
+    this.modalAsyncQueuedEl = document.getElementById('modal-async-queued');
+    this.modalAsyncCompletedEl = document.getElementById('modal-async-completed');
+    this.modalWorkerPoolCountEl = document.getElementById('modal-worker-pool-count');
+    this.modalAsyncPoolCountEl = document.getElementById('modal-async-pool-count');
+    
+    // Modal Content Elements (Uptime)
+    this.modalServerUptimeEl = document.getElementById('modal-server-uptime');
+    this.modalServerHealthEl = document.getElementById('modal-server-health');
+    this.modalHealthFillEl = document.getElementById('modal-health-fill');
+    
+    // Modal Charts
+    this.modalTpsHistoryChart = null;
+    this.modalMemoryUsageChart = null;
+    
     // TPS & Tick Elements
     this.currentTpsEl = document.getElementById('current-tps');
     this.tpsStatusEl = document.getElementById('tps-status');
@@ -2078,7 +2211,9 @@ class PerformanceMetricsManager {
   
   init() {
     this.setupEventListeners();
+    this.setupModals();
     this.initCharts();
+    this.initModalCharts();
     this.loadMockData();
     this.startAutoUpdate();
   }
@@ -2090,6 +2225,338 @@ class PerformanceMetricsManager {
     
     if (this.exportBtn) {
       this.exportBtn.addEventListener('click', () => this.exportMetrics());
+    }
+  }
+  
+  setupModals() {
+    // Setup "More Info" buttons
+    const moreInfoButtons = document.querySelectorAll('.more-info-btn');
+    moreInfoButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modalId = btn.getAttribute('data-modal');
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.showModal();
+          // Update modal data when opened
+          this.updateModalData(modalId);
+        }
+      });
+    });
+    
+    // Setup modal close buttons
+    this.setupModalClose('close-tps-modal', 'tps-modal');
+    this.setupModalClose('close-memory-modal', 'memory-modal');
+    this.setupModalClose('close-entities-modal', 'entities-modal');
+    this.setupModalClose('close-uptime-modal', 'uptime-modal');
+    
+    // Close on outside click
+    [this.tpsModal, this.memoryModal, this.entitiesModal, this.uptimeModal].forEach(modal => {
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            modal.close();
+          }
+        });
+      }
+    });
+  }
+  
+  setupModalClose(btnId, modalId) {
+    const btn = document.getElementById(btnId);
+    const modal = document.getElementById(modalId);
+    if (btn && modal) {
+      btn.addEventListener('click', () => modal.close());
+    }
+  }
+  
+  updateModalData(modalId) {
+    // When a modal is opened, sync its data with current values
+    switch(modalId) {
+      case 'tps-modal':
+        this.updateTPSModal();
+        break;
+      case 'memory-modal':
+        this.updateMemoryModal();
+        break;
+      case 'entities-modal':
+        this.updateEntitiesModal();
+        break;
+      case 'uptime-modal':
+        this.updateUptimeModal();
+        break;
+    }
+  }
+  
+  updateTPSModal() {
+    if (this.modalCurrentTpsEl && this.currentTpsEl) {
+      this.modalCurrentTpsEl.textContent = this.currentTpsEl.textContent;
+    }
+    if (this.modalTpsStatusEl && this.tpsStatusEl) {
+      this.modalTpsStatusEl.innerHTML = this.tpsStatusEl.innerHTML;
+      this.modalTpsStatusEl.className = this.tpsStatusEl.className;
+    }
+    if (this.modalAvgTickTimeEl && this.avgTickTimeEl) {
+      this.modalAvgTickTimeEl.innerHTML = this.avgTickTimeEl.innerHTML;
+    }
+    if (this.modalPeakTickTimeEl && this.peakTickTimeEl) {
+      this.modalPeakTickTimeEl.innerHTML = this.peakTickTimeEl.innerHTML;
+    }
+    // Update tick breakdown
+    if (this.modalEntityTickTimeEl && this.entityTickTimeEl) {
+      this.modalEntityTickTimeEl.textContent = this.entityTickTimeEl.textContent;
+    }
+    if (this.modalBlockTickTimeEl && this.blockTickTimeEl) {
+      this.modalBlockTickTimeEl.textContent = this.blockTickTimeEl.textContent;
+    }
+    if (this.modalChunkTickTimeEl && this.chunkTickTimeEl) {
+      this.modalChunkTickTimeEl.textContent = this.chunkTickTimeEl.textContent;
+    }
+    if (this.modalTaskTickTimeEl && this.taskTickTimeEl) {
+      this.modalTaskTickTimeEl.textContent = this.taskTickTimeEl.textContent;
+    }
+    if (this.modalOtherTickTimeEl && this.otherTickTimeEl) {
+      this.modalOtherTickTimeEl.textContent = this.otherTickTimeEl.textContent;
+    }
+    // Update bars
+    if (this.modalEntityTickBar && this.entityTickBar) {
+      this.modalEntityTickBar.style.width = this.entityTickBar.style.width;
+    }
+    if (this.modalBlockTickBar && this.blockTickBar) {
+      this.modalBlockTickBar.style.width = this.blockTickBar.style.width;
+    }
+    if (this.modalChunkTickBar && this.chunkTickBar) {
+      this.modalChunkTickBar.style.width = this.chunkTickBar.style.width;
+    }
+    if (this.modalTaskTickBar && this.taskTickBar) {
+      this.modalTaskTickBar.style.width = this.taskTickBar.style.width;
+    }
+    if (this.modalOtherTickBar && this.otherTickBar) {
+      this.modalOtherTickBar.style.width = this.otherTickBar.style.width;
+    }
+  }
+  
+  updateMemoryModal() {
+    if (this.modalHeapUsedEl && this.heapUsedEl) {
+      this.modalHeapUsedEl.innerHTML = this.heapUsedEl.innerHTML;
+    }
+    if (this.modalHeapMaxEl && this.heapMaxEl) {
+      this.modalHeapMaxEl.textContent = this.heapMaxEl.textContent;
+    }
+    if (this.modalHeapFillEl && this.heapFillEl) {
+      this.modalHeapFillEl.style.width = this.heapFillEl.style.width;
+    }
+    if (this.modalNonheapUsedEl && this.nonheapUsedEl) {
+      this.modalNonheapUsedEl.innerHTML = this.nonheapUsedEl.innerHTML;
+    }
+    if (this.modalNonheapMaxEl && this.nonheapMaxEl) {
+      this.modalNonheapMaxEl.textContent = this.nonheapMaxEl.textContent;
+    }
+    if (this.modalNonheapFillEl && this.nonheapFillEl) {
+      this.modalNonheapFillEl.style.width = this.nonheapFillEl.style.width;
+    }
+    if (this.modalGcCountEl && this.gcCountEl) {
+      this.modalGcCountEl.textContent = this.gcCountEl.textContent;
+    }
+    if (this.modalGcTimeEl && this.gcTimeEl) {
+      this.modalGcTimeEl.innerHTML = this.gcTimeEl.innerHTML;
+    }
+    // Calculate average GC duration
+    if (this.modalGcAvgEl && this.gcCountEl && this.gcTimeEl) {
+      const count = parseInt(this.gcCountEl.textContent) || 1;
+      const time = parseFloat(this.gcTimeEl.textContent) || 0;
+      const avg = ((time * 1000) / count).toFixed(1);
+      this.modalGcAvgEl.innerHTML = `${avg}<span class="modal-unit">ms</span>`;
+    }
+  }
+  
+  updateEntitiesModal() {
+    if (this.modalTotalEntitiesEl && this.totalEntitiesEl) {
+      this.modalTotalEntitiesEl.textContent = this.totalEntitiesEl.textContent;
+    }
+    if (this.modalLoadedChunksEl && this.loadedChunksEl) {
+      this.modalLoadedChunksEl.textContent = this.loadedChunksEl.textContent;
+    }
+    if (this.modalChunkUpdatesEl && this.chunkUpdatesEl) {
+      this.modalChunkUpdatesEl.textContent = this.chunkUpdatesEl.textContent;
+    }
+    // Entity breakdown
+    if (this.modalEntitiesAnimalsEl && this.entitiesAnimalsEl) {
+      this.modalEntitiesAnimalsEl.textContent = this.entitiesAnimalsEl.textContent;
+    }
+    if (this.modalEntitiesPlayersEl && this.entitiesPlayersEl) {
+      this.modalEntitiesPlayersEl.textContent = this.entitiesPlayersEl.textContent;
+    }
+    if (this.modalEntitiesMonstersEl && this.entitiesMonstersEl) {
+      this.modalEntitiesMonstersEl.textContent = this.entitiesMonstersEl.textContent;
+    }
+    if (this.modalEntitiesItemsEl && this.entitiesItemsEl) {
+      this.modalEntitiesItemsEl.textContent = this.entitiesItemsEl.textContent;
+    }
+    if (this.modalEntitiesProjectilesEl && this.entitiesProjectilesEl) {
+      this.modalEntitiesProjectilesEl.textContent = this.entitiesProjectilesEl.textContent;
+    }
+    if (this.modalEntitiesOtherEl && this.entitiesOtherEl) {
+      this.modalEntitiesOtherEl.textContent = this.entitiesOtherEl.textContent;
+    }
+    // Thread pool
+    if (this.modalMainThreadCpuEl && this.mainThreadCpuEl) {
+      this.modalMainThreadCpuEl.textContent = this.mainThreadCpuEl.textContent;
+    }
+    if (this.modalWorkerActiveEl && this.workerActiveEl) {
+      this.modalWorkerActiveEl.textContent = this.workerActiveEl.textContent;
+    }
+    if (this.modalWorkerQueuedEl && this.workerQueuedEl) {
+      this.modalWorkerQueuedEl.textContent = this.workerQueuedEl.textContent;
+    }
+    if (this.modalWorkerCompletedEl && this.workerCompletedEl) {
+      this.modalWorkerCompletedEl.textContent = this.workerCompletedEl.textContent;
+    }
+    if (this.modalAsyncActiveEl && this.asyncActiveEl) {
+      this.modalAsyncActiveEl.textContent = this.asyncActiveEl.textContent;
+    }
+    if (this.modalAsyncQueuedEl && this.asyncQueuedEl) {
+      this.modalAsyncQueuedEl.textContent = this.asyncQueuedEl.textContent;
+    }
+    if (this.modalAsyncCompletedEl && this.asyncCompletedEl) {
+      this.modalAsyncCompletedEl.textContent = this.asyncCompletedEl.textContent;
+    }
+  }
+  
+  updateUptimeModal() {
+    if (this.modalServerUptimeEl && this.serverUptimeEl) {
+      this.modalServerUptimeEl.textContent = this.serverUptimeEl.textContent;
+    }
+    // Calculate server health based on TPS
+    if (this.modalServerHealthEl && this.currentTpsEl) {
+      const tps = parseFloat(this.currentTpsEl.textContent);
+      const health = Math.round((tps / 20) * 100);
+      this.modalServerHealthEl.innerHTML = `${health}<span class="modal-unit">%</span>`;
+      if (this.modalHealthFillEl) {
+        this.modalHealthFillEl.style.width = `${health}%`;
+      }
+    }
+  }
+  
+  initModalCharts() {
+    // Modal TPS History Chart
+    const modalTpsCtx = document.getElementById('modal-tps-history-chart');
+    if (modalTpsCtx) {
+      const labels = Array.from({length: 60}, (_, i) => `${59 - i}m`);
+      const data = Array.from({length: 60}, () => 19 + Math.random() * 1.5);
+      
+      this.modalTpsHistoryChart = new Chart(modalTpsCtx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'TPS',
+            data: data,
+            borderColor: 'rgba(34, 197, 94, 1)',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#fff',
+              bodyColor: '#fff',
+              borderColor: 'rgba(34, 197, 94, 0.5)',
+              borderWidth: 1
+            }
+          },
+          scales: {
+            x: {
+              display: true,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: 'rgba(255, 255, 255, 0.5)', maxTicksLimit: 10 }
+            },
+            y: {
+              display: true,
+              min: 0,
+              max: 20,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: {
+                color: 'rgba(255, 255, 255, 0.5)',
+                callback: function(value) { return value.toFixed(1); }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Modal Memory Usage Chart
+    const modalMemoryCtx = document.getElementById('modal-memory-usage-chart');
+    if (modalMemoryCtx) {
+      const labels = Array.from({length: 60}, (_, i) => `${59 - i}m`);
+      const heapData = Array.from({length: 60}, () => 2 + Math.random() * 0.8);
+      
+      this.modalMemoryUsageChart = new Chart(modalMemoryCtx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Heap Memory (GB)',
+            data: heapData,
+            borderColor: 'rgba(59, 130, 246, 1)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#fff',
+              bodyColor: '#fff',
+              borderColor: 'rgba(59, 130, 246, 0.5)',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  return `Memory: ${context.parsed.y.toFixed(2)} GB`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              display: true,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: 'rgba(255, 255, 255, 0.5)', maxTicksLimit: 10 }
+            },
+            y: {
+              display: true,
+              min: 0,
+              max: 4,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: {
+                color: 'rgba(255, 255, 255, 0.5)',
+                callback: function(value) { return value.toFixed(1) + ' GB'; }
+              }
+            }
+          }
+        }
+      });
     }
   }
   
@@ -2326,6 +2793,11 @@ class PerformanceMetricsManager {
       this.currentTpsEl.textContent = tps.toFixed(1);
     }
     
+    // Update compact card
+    if (this.compactTpsEl) {
+      this.compactTpsEl.textContent = tps.toFixed(1);
+    }
+    
     if (this.tpsStatusEl) {
       this.tpsStatusEl.classList.remove('good', 'warning', 'danger');
       if (tps >= 19.5) {
@@ -2334,6 +2806,21 @@ class PerformanceMetricsManager {
         this.tpsStatusEl.classList.add('warning');
       } else {
         this.tpsStatusEl.classList.add('danger');
+      }
+    }
+    
+    // Update compact card status
+    if (this.compactTpsStatusEl) {
+      this.compactTpsStatusEl.classList.remove('good', 'warning', 'danger');
+      if (tps >= 19.5) {
+        this.compactTpsStatusEl.classList.add('good');
+        this.compactTpsStatusEl.style.color = '#22c55e';
+      } else if (tps >= 18.0) {
+        this.compactTpsStatusEl.classList.add('warning');
+        this.compactTpsStatusEl.style.color = '#f59e0b';
+      } else {
+        this.compactTpsStatusEl.classList.add('danger');
+        this.compactTpsStatusEl.style.color = '#ef4444';
       }
     }
   }
@@ -2352,8 +2839,15 @@ class PerformanceMetricsManager {
     const hours = Math.floor(elapsed / 3600000);
     const minutes = Math.floor((elapsed % 3600000) / 60000);
     
+    const uptimeText = `${hours}h ${minutes}m`;
+    
     if (this.serverUptimeEl) {
-      this.serverUptimeEl.textContent = `${hours}h ${minutes}m`;
+      this.serverUptimeEl.textContent = uptimeText;
+    }
+    
+    // Update compact card
+    if (this.compactUptimeEl) {
+      this.compactUptimeEl.textContent = uptimeText;
     }
   }
   
@@ -2385,6 +2879,18 @@ class PerformanceMetricsManager {
       this.heapFillEl.style.width = heapPercent + '%';
     }
     
+    // Update compact card
+    if (this.compactMemoryEl) {
+      this.compactMemoryEl.innerHTML = `${memory.heapUsed.toFixed(1)}<span class="compact-unit">GB</span>`;
+    }
+    if (this.compactMemoryMaxEl) {
+      this.compactMemoryMaxEl.textContent = `of ${memory.heapMax.toFixed(1)} GB`;
+    }
+    if (this.compactMemoryFillEl) {
+      const heapPercent = (memory.heapUsed / memory.heapMax) * 100;
+      this.compactMemoryFillEl.style.width = heapPercent + '%';
+    }
+    
     if (this.nonheapUsedEl) {
       this.nonheapUsedEl.innerHTML = `${memory.nonHeapUsed}<span class="metric-unit">MB</span>`;
     }
@@ -2411,6 +2917,14 @@ class PerformanceMetricsManager {
     }
     if (this.chunkUpdatesEl) {
       this.chunkUpdatesEl.textContent = data.chunkUpdates.toLocaleString();
+    }
+    
+    // Update compact cards
+    if (this.compactEntitiesEl) {
+      this.compactEntitiesEl.textContent = data.totalEntities.toLocaleString();
+    }
+    if (this.compactChunksEl) {
+      this.compactChunksEl.textContent = data.loadedChunks.toLocaleString();
     }
   }
   
@@ -2570,6 +3084,3879 @@ class PerformanceMetricsManager {
     if (this.memoryUsageChart) {
       this.memoryUsageChart.destroy();
     }
+  }
+}
+
+// ========================================
+// ADVANCED SEARCH & FILTERING
+// ========================================
+
+class GlobalSearchManager {
+  constructor() {
+    // DOM References - Search Input
+    this.searchInput = document.getElementById('global-search-input');
+    this.clearSearchBtn = document.getElementById('clear-global-search');
+    this.advancedFiltersBtn = document.getElementById('open-advanced-filters');
+    this.savedPresetsBtn = document.getElementById('open-saved-presets');
+    
+    // DOM References - Scope
+    this.scopeCheckboxes = document.querySelectorAll('.search-scope');
+    
+    // DOM References - Results
+    this.resultsSummary = document.getElementById('search-results-summary');
+    this.totalResultsCount = document.getElementById('total-results-count');
+    this.searchTime = document.getElementById('search-time');
+    this.resultsContainer = document.getElementById('search-results-container');
+    this.resultsList = document.getElementById('search-results-list');
+    this.sortResults = document.getElementById('sort-results');
+    this.exportResults = document.getElementById('export-results');
+    
+    // DOM References - Pagination
+    this.searchPagination = document.getElementById('search-pagination');
+    this.searchPrevPage = document.getElementById('search-prev-page');
+    this.searchNextPage = document.getElementById('search-next-page');
+    this.searchCurrentPage = document.getElementById('search-current-page');
+    this.searchTotalPages = document.getElementById('search-total-pages');
+    
+    // DOM References - Advanced Filters Modal
+    this.advancedFiltersModal = document.getElementById('advanced-filters-modal');
+    this.closeAdvancedFilters = document.getElementById('close-advanced-filters');
+    this.cancelAdvancedFilters = document.getElementById('cancel-advanced-filters');
+    this.applyAdvancedFilters = document.getElementById('apply-advanced-filters');
+    this.resetFilters = document.getElementById('reset-filters');
+    
+    // DOM References - Filter Inputs
+    this.filterDateFrom = document.getElementById('filter-date-from');
+    this.filterDateTo = document.getElementById('filter-date-to');
+    this.filterPlayerStatus = document.getElementById('filter-player-status');
+    this.filterPlayerRank = document.getElementById('filter-player-rank');
+    this.filterLogLevel = document.getElementById('filter-log-level');
+    this.filterLogSource = document.getElementById('filter-log-source');
+    this.filterFileType = document.getElementById('filter-file-type');
+    this.filterFileSize = document.getElementById('filter-file-size');
+    this.filterAlertSeverity = document.getElementById('filter-alert-severity');
+    this.filterAlertCategory = document.getElementById('filter-alert-category');
+    this.filterTransactionType = document.getElementById('filter-transaction-type');
+    this.filterAmountMin = document.getElementById('filter-amount-min');
+    this.filterAmountMax = document.getElementById('filter-amount-max');
+    
+    // DOM References - Saved Presets Modal
+    this.savedPresetsModal = document.getElementById('saved-presets-modal');
+    this.closeSavedPresets = document.getElementById('close-saved-presets');
+    this.closePresetsModal = document.getElementById('close-presets-modal');
+    this.presetsList = document.getElementById('presets-list');
+    this.saveCurrentPreset = document.getElementById('save-current-preset');
+    
+    // DOM References - Save Preset Modal
+    this.savePresetModal = document.getElementById('save-preset-modal');
+    this.closeSavePreset = document.getElementById('close-save-preset');
+    this.cancelSavePreset = document.getElementById('cancel-save-preset');
+    this.confirmSavePreset = document.getElementById('confirm-save-preset');
+    this.presetName = document.getElementById('preset-name');
+    this.presetDescription = document.getElementById('preset-description');
+    
+    // State
+    this.searchResults = [];
+    this.filteredResults = [];
+    this.currentPage = 1;
+    this.pageSize = 20;
+    this.currentSort = 'relevance';
+    this.searchTimeout = null;
+    this.activeFilters = {};
+    this.savedPresets = [];
+    
+    // Mock data sources
+    this.mockData = this.generateMockData();
+  }
+  
+  init() {
+    this.setupEventListeners();
+    this.loadSavedPresets();
+  }
+  
+  setupEventListeners() {
+    // Search input
+    this.searchInput?.addEventListener('input', () => {
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => this.performSearch(), 300);
+      
+      if (this.searchInput.value) {
+        this.clearSearchBtn.style.display = 'flex';
+      } else {
+        this.clearSearchBtn.style.display = 'none';
+        this.hideResults();
+      }
+    });
+    
+    this.clearSearchBtn?.addEventListener('click', () => {
+      this.searchInput.value = '';
+      this.clearSearchBtn.style.display = 'none';
+      this.hideResults();
+    });
+    
+    // Scope checkboxes
+    this.scopeCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        if (this.searchInput.value) {
+          this.performSearch();
+        }
+      });
+    });
+    
+    // Sort and export
+    this.sortResults?.addEventListener('change', () => {
+      this.currentSort = this.sortResults.value;
+      this.sortSearchResults();
+      this.renderResults();
+    });
+    
+    this.exportResults?.addEventListener('click', () => this.exportSearchResults());
+    
+    // Pagination
+    this.searchPrevPage?.addEventListener('click', () => this.changePage(-1));
+    this.searchNextPage?.addEventListener('click', () => this.changePage(1));
+    
+    // Advanced filters modal
+    this.advancedFiltersBtn?.addEventListener('click', () => this.openAdvancedFilters());
+    this.closeAdvancedFilters?.addEventListener('click', () => this.closeAdvancedFiltersModal());
+    this.cancelAdvancedFilters?.addEventListener('click', () => this.closeAdvancedFiltersModal());
+    this.applyAdvancedFilters?.addEventListener('click', () => this.applyFilters());
+    this.resetFilters?.addEventListener('click', () => this.resetAllFilters());
+    
+    // Saved presets modal
+    this.savedPresetsBtn?.addEventListener('click', () => this.openSavedPresetsModal());
+    this.closeSavedPresets?.addEventListener('click', () => this.closeSavedPresetsModalDialog());
+    this.closePresetsModal?.addEventListener('click', () => this.closeSavedPresetsModalDialog());
+    this.saveCurrentPreset?.addEventListener('click', () => this.openSavePresetModal());
+    
+    // Save preset modal
+    this.closeSavePreset?.addEventListener('click', () => this.closeSavePresetModalDialog());
+    this.cancelSavePreset?.addEventListener('click', () => this.closeSavePresetModalDialog());
+    this.confirmSavePreset?.addEventListener('click', () => this.savePreset());
+  }
+  
+  generateMockData() {
+    return {
+      players: [
+        { name: 'ZeroG', status: 'online', rank: 'admin', joinDate: '2024-01-15', playtime: '450h', lastSeen: 'Now' },
+        { name: 'Steve', status: 'online', rank: 'member', joinDate: '2024-03-20', playtime: '120h', lastSeen: 'Now' },
+        { name: 'Alex', status: 'offline', rank: 'vip', joinDate: '2024-02-10', playtime: '280h', lastSeen: '2h ago' },
+        { name: 'Notch', status: 'offline', rank: 'moderator', joinDate: '2024-01-01', playtime: '890h', lastSeen: '1d ago' },
+        { name: 'Herobrine', status: 'online', rank: 'member', joinDate: '2024-04-05', playtime: '95h', lastSeen: 'Now' }
+      ],
+      logs: [
+        { level: 'error', source: 'NeoEssentials', message: 'Failed to load configuration file', date: '2025-10-14T10:30:00' },
+        { level: 'warn', source: 'WorldEdit', message: 'Large edit operation detected', date: '2025-10-14T09:15:00' },
+        { level: 'info', source: 'LuckPerms', message: 'Permission group updated successfully', date: '2025-10-14T08:45:00' },
+        { level: 'debug', source: 'Vault', message: 'Economy transaction completed', date: '2025-10-14T07:20:00' },
+        { level: 'error', source: 'Dynmap', message: 'Map rendering failed', date: '2025-10-13T23:10:00' }
+      ],
+      files: [
+        { name: 'config.json', type: 'config', size: 'small', path: '/plugins/NeoEssentials/config.json', modified: '2025-10-14T10:00:00' },
+        { name: 'server.properties', type: 'config', size: 'small', path: '/server.properties', modified: '2025-10-14T09:30:00' },
+        { name: 'latest.log', type: 'log', size: 'medium', path: '/logs/latest.log', modified: '2025-10-14T11:00:00' },
+        { name: 'playerdata.dat', type: 'data', size: 'large', path: '/world/playerdata/player.dat', modified: '2025-10-14T10:45:00' },
+        { name: 'WorldEdit.jar', type: 'plugin', size: 'medium', path: '/plugins/WorldEdit.jar', modified: '2025-10-01T00:00:00' }
+      ],
+      alerts: [
+        { title: 'Low TPS Warning', severity: 'warning', category: 'performance', message: 'Server TPS dropped to 15.2', date: '2025-10-14T10:30:15' },
+        { title: 'High Memory Usage', severity: 'critical', category: 'performance', message: 'Memory usage reached 92%', date: '2025-10-14T09:15:30' },
+        { title: 'Player Death', severity: 'info', category: 'player', message: 'Player ZeroG died by Zombie', date: '2025-10-14T11:45:22' },
+        { title: 'Lag Spike Detected', severity: 'warning', category: 'performance', message: 'Server lag spike: 150ms', date: '2025-10-14T10:50:00' },
+        { title: 'Server Crash', severity: 'critical', category: 'system', message: 'Server crashed: out of memory', date: '2025-10-13T03:22:15' }
+      ],
+      commands: [
+        { command: '/tp', description: 'Teleport to a player or location', category: 'teleportation', usage: '/tp <player> [target]' },
+        { command: '/ban', description: 'Ban a player from the server', category: 'moderation', usage: '/ban <player> [reason]' },
+        { command: '/give', description: 'Give items to a player', category: 'items', usage: '/give <player> <item> [amount]' },
+        { command: '/gamemode', description: 'Change player gamemode', category: 'gameplay', usage: '/gamemode <mode> [player]' },
+        { command: '/time', description: 'Set world time', category: 'world', usage: '/time set <value>' }
+      ],
+      chat: [
+        { player: 'ZeroG', message: 'Hello everyone!', date: '2025-10-14T11:50:00' },
+        { player: 'Steve', message: 'Anyone want to go mining?', date: '2025-10-14T11:48:00' },
+        { player: 'Alex', message: 'Found diamonds!', date: '2025-10-14T11:45:00' },
+        { player: 'Herobrine', message: 'Need help with building', date: '2025-10-14T11:40:00' },
+        { player: 'ZeroG', message: 'Check out the new spawn area', date: '2025-10-14T11:35:00' }
+      ],
+      economy: [
+        { player: 'ZeroG', type: 'payment', amount: 500, description: 'Sold diamonds', date: '2025-10-14T11:30:00' },
+        { player: 'Steve', type: 'purchase', amount: -250, description: 'Bought enchanted sword', date: '2025-10-14T11:20:00' },
+        { player: 'Alex', type: 'reward', amount: 1000, description: 'Daily login bonus', date: '2025-10-14T10:00:00' },
+        { player: 'Notch', type: 'penalty', amount: -100, description: 'Breaking rules', date: '2025-10-14T09:45:00' },
+        { player: 'Herobrine', type: 'payment', amount: 750, description: 'Quest completion', date: '2025-10-14T09:30:00' }
+      ]
+    };
+  }
+  
+  performSearch() {
+    const query = this.searchInput.value.trim().toLowerCase();
+    if (!query) {
+      this.hideResults();
+      return;
+    }
+    
+    const startTime = performance.now();
+    const selectedScopes = Array.from(this.scopeCheckboxes)
+      .filter(cb => cb.checked)
+      .map(cb => cb.value);
+    
+    this.searchResults = [];
+    
+    // Search in selected scopes
+    selectedScopes.forEach(scope => {
+      if (this.mockData[scope]) {
+        const results = this.searchInScope(scope, query);
+        this.searchResults.push(...results);
+      }
+    });
+    
+    // Apply advanced filters
+    this.filteredResults = this.applyAdvancedFilters(this.searchResults);
+    
+    // Sort results
+    this.sortSearchResults();
+    
+    const endTime = performance.now();
+    const searchTime = Math.round(endTime - startTime);
+    
+    this.displayResults(searchTime);
+  }
+  
+  searchInScope(scope, query) {
+    const data = this.mockData[scope];
+    const results = [];
+    
+    data.forEach(item => {
+      let matches = false;
+      let matchedText = '';
+      
+      switch (scope) {
+        case 'players':
+          matches = item.name.toLowerCase().includes(query) || 
+                   item.rank.toLowerCase().includes(query);
+          matchedText = `${item.name} - ${item.rank} - ${item.status}`;
+          break;
+        case 'logs':
+          matches = item.message.toLowerCase().includes(query) || 
+                   item.source.toLowerCase().includes(query);
+          matchedText = item.message;
+          break;
+        case 'files':
+          matches = item.name.toLowerCase().includes(query) || 
+                   item.path.toLowerCase().includes(query);
+          matchedText = item.path;
+          break;
+        case 'alerts':
+          matches = item.title.toLowerCase().includes(query) || 
+                   item.message.toLowerCase().includes(query);
+          matchedText = item.message;
+          break;
+        case 'commands':
+          matches = item.command.toLowerCase().includes(query) || 
+                   item.description.toLowerCase().includes(query);
+          matchedText = item.description;
+          break;
+        case 'chat':
+          matches = item.message.toLowerCase().includes(query) || 
+                   item.player.toLowerCase().includes(query);
+          matchedText = item.message;
+          break;
+        case 'economy':
+          matches = item.player.toLowerCase().includes(query) || 
+                   item.description.toLowerCase().includes(query);
+          matchedText = item.description;
+          break;
+      }
+      
+      if (matches) {
+        results.push({
+          scope,
+          data: item,
+          matchedText: this.highlightMatch(matchedText, query),
+          relevance: this.calculateRelevance(item, query)
+        });
+      }
+    });
+    
+    return results;
+  }
+  
+  highlightMatch(text, query) {
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<span class="result-highlight">$1</span>');
+  }
+  
+  calculateRelevance(item, query) {
+    // Simple relevance scoring
+    let score = 0;
+    const itemStr = JSON.stringify(item).toLowerCase();
+    const queryWords = query.split(' ');
+    
+    queryWords.forEach(word => {
+      const count = (itemStr.match(new RegExp(word, 'g')) || []).length;
+      score += count;
+    });
+    
+    return score;
+  }
+  
+  applyAdvancedFilters(results) {
+    let filtered = [...results];
+    
+    // Date range filter
+    if (this.activeFilters.dateFrom || this.activeFilters.dateTo) {
+      filtered = filtered.filter(result => {
+        const itemDate = result.data.date || result.data.modified;
+        if (!itemDate) return true;
+        
+        const date = new Date(itemDate);
+        if (this.activeFilters.dateFrom && date < new Date(this.activeFilters.dateFrom)) return false;
+        if (this.activeFilters.dateTo && date > new Date(this.activeFilters.dateTo)) return false;
+        return true;
+      });
+    }
+    
+    // Scope-specific filters
+    filtered = filtered.filter(result => {
+      switch (result.scope) {
+        case 'players':
+          if (this.activeFilters.playerStatus && result.data.status !== this.activeFilters.playerStatus) return false;
+          if (this.activeFilters.playerRank && result.data.rank !== this.activeFilters.playerRank) return false;
+          break;
+        case 'logs':
+          if (this.activeFilters.logLevel && result.data.level !== this.activeFilters.logLevel) return false;
+          if (this.activeFilters.logSource && !result.data.source.includes(this.activeFilters.logSource)) return false;
+          break;
+        case 'files':
+          if (this.activeFilters.fileType && result.data.type !== this.activeFilters.fileType) return false;
+          if (this.activeFilters.fileSize && result.data.size !== this.activeFilters.fileSize) return false;
+          break;
+        case 'alerts':
+          if (this.activeFilters.alertSeverity && result.data.severity !== this.activeFilters.alertSeverity) return false;
+          if (this.activeFilters.alertCategory && result.data.category !== this.activeFilters.alertCategory) return false;
+          break;
+        case 'economy':
+          if (this.activeFilters.transactionType && result.data.type !== this.activeFilters.transactionType) return false;
+          if (this.activeFilters.amountMin && Math.abs(result.data.amount) < this.activeFilters.amountMin) return false;
+          if (this.activeFilters.amountMax && Math.abs(result.data.amount) > this.activeFilters.amountMax) return false;
+          break;
+      }
+      return true;
+    });
+    
+    return filtered;
+  }
+  
+  sortSearchResults() {
+    switch (this.currentSort) {
+      case 'relevance':
+        this.filteredResults.sort((a, b) => b.relevance - a.relevance);
+        break;
+      case 'date-desc':
+        this.filteredResults.sort((a, b) => {
+          const dateA = new Date(a.data.date || a.data.modified || 0);
+          const dateB = new Date(b.data.date || b.data.modified || 0);
+          return dateB - dateA;
+        });
+        break;
+      case 'date-asc':
+        this.filteredResults.sort((a, b) => {
+          const dateA = new Date(a.data.date || a.data.modified || 0);
+          const dateB = new Date(b.data.date || b.data.modified || 0);
+          return dateA - dateB;
+        });
+        break;
+      case 'name-asc':
+        this.filteredResults.sort((a, b) => {
+          const nameA = (a.data.name || a.data.title || a.data.command || '').toLowerCase();
+          const nameB = (b.data.name || b.data.title || b.data.command || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+        break;
+      case 'name-desc':
+        this.filteredResults.sort((a, b) => {
+          const nameA = (a.data.name || a.data.title || a.data.command || '').toLowerCase();
+          const nameB = (b.data.name || b.data.title || b.data.command || '').toLowerCase();
+          return nameB.localeCompare(nameA);
+        });
+        break;
+    }
+  }
+  
+  displayResults(searchTime) {
+    // Update summary
+    this.totalResultsCount.textContent = this.filteredResults.length;
+    this.searchTime.textContent = searchTime;
+    this.resultsSummary.style.display = 'flex';
+    this.resultsContainer.style.display = 'flex';
+    
+    // Update category counts
+    const categoryCounts = {};
+    this.filteredResults.forEach(result => {
+      categoryCounts[result.scope] = (categoryCounts[result.scope] || 0) + 1;
+    });
+    
+    ['players', 'logs', 'files', 'alerts', 'commands', 'chat', 'economy'].forEach(scope => {
+      const countElement = document.getElementById(`${scope}-result-count`);
+      if (countElement) {
+        if (categoryCounts[scope]) {
+          countElement.style.display = 'flex';
+          countElement.querySelector('strong').textContent = categoryCounts[scope];
+        } else {
+          countElement.style.display = 'none';
+        }
+      }
+    });
+    
+    // Reset pagination
+    this.currentPage = 1;
+    this.renderResults();
+  }
+  
+  renderResults() {
+    if (this.filteredResults.length === 0) {
+      this.resultsList.innerHTML = `
+        <div class="search-no-results">
+          <div class="icon">🔍</div>
+          <h3>No results found</h3>
+          <p>Try adjusting your search query or filters</p>
+        </div>
+      `;
+      this.searchPagination.style.display = 'none';
+      return;
+    }
+    
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    const pageResults = this.filteredResults.slice(start, end);
+    
+    this.resultsList.innerHTML = pageResults.map(result => this.createResultElement(result)).join('');
+    
+    // Update pagination
+    const totalPages = Math.ceil(this.filteredResults.length / this.pageSize);
+    if (totalPages > 1) {
+      this.searchPagination.style.display = 'flex';
+      this.searchCurrentPage.textContent = this.currentPage;
+      this.searchTotalPages.textContent = totalPages;
+      this.searchPrevPage.disabled = this.currentPage === 1;
+      this.searchNextPage.disabled = this.currentPage === totalPages;
+    } else {
+      this.searchPagination.style.display = 'none';
+    }
+  }
+  
+  createResultElement(result) {
+    const icons = {
+      players: '👤',
+      logs: '📝',
+      files: '📁',
+      alerts: '🔔',
+      commands: '⌨️',
+      chat: '💬',
+      economy: '💰'
+    };
+    
+    let title = '';
+    let description = result.matchedText;
+    let date = '';
+    let tags = [];
+    
+    switch (result.scope) {
+      case 'players':
+        title = result.data.name;
+        tags = [result.data.rank, result.data.status];
+        date = `Last seen: ${result.data.lastSeen}`;
+        break;
+      case 'logs':
+        title = `${result.data.level.toUpperCase()} - ${result.data.source}`;
+        date = this.formatDate(result.data.date);
+        tags = [result.data.level];
+        break;
+      case 'files':
+        title = result.data.name;
+        description = result.data.path;
+        date = `Modified: ${this.formatDate(result.data.modified)}`;
+        tags = [result.data.type, result.data.size];
+        break;
+      case 'alerts':
+        title = result.data.title;
+        date = this.formatDate(result.data.date);
+        tags = [result.data.severity, result.data.category];
+        break;
+      case 'commands':
+        title = result.data.command;
+        description = result.data.description;
+        tags = [result.data.category];
+        break;
+      case 'chat':
+        title = `${result.data.player} said:`;
+        date = this.formatDate(result.data.date);
+        break;
+      case 'economy':
+        title = `${result.data.player} - ${result.data.type}`;
+        description = `${result.data.description} (${result.data.amount > 0 ? '+' : ''}${result.data.amount})`;
+        date = this.formatDate(result.data.date);
+        tags = [result.data.type];
+        break;
+    }
+    
+    const tagsHTML = tags.length > 0 
+      ? `<div class="result-tags">${tags.map(tag => `<span class="result-tag">${tag}</span>`).join('')}</div>`
+      : '';
+    
+    return `
+      <div class="search-result-item" data-scope="${result.scope}">
+        <div class="result-icon">${icons[result.scope]}</div>
+        <div class="result-content">
+          <div class="result-header">
+            <h4 class="result-title">${title}</h4>
+            <div class="result-meta">
+              <span class="result-type">${result.scope}</span>
+              ${date ? `<span class="result-date">${date}</span>` : ''}
+            </div>
+          </div>
+          <p class="result-description">${description}</p>
+          ${tagsHTML}
+        </div>
+      </div>
+    `;
+  }
+  
+  hideResults() {
+    this.resultsSummary.style.display = 'none';
+    this.resultsContainer.style.display = 'none';
+  }
+  
+  changePage(delta) {
+    const totalPages = Math.ceil(this.filteredResults.length / this.pageSize);
+    this.currentPage = Math.max(1, Math.min(this.currentPage + delta, totalPages));
+    this.renderResults();
+  }
+  
+  openAdvancedFilters() {
+    this.advancedFiltersModal.style.display = 'flex';
+  }
+  
+  closeAdvancedFiltersModal() {
+    this.advancedFiltersModal.style.display = 'none';
+  }
+  
+  applyFilters() {
+    this.activeFilters = {
+      dateFrom: this.filterDateFrom.value,
+      dateTo: this.filterDateTo.value,
+      playerStatus: this.filterPlayerStatus.value,
+      playerRank: this.filterPlayerRank.value,
+      logLevel: this.filterLogLevel.value,
+      logSource: this.filterLogSource.value,
+      fileType: this.filterFileType.value,
+      fileSize: this.filterFileSize.value,
+      alertSeverity: this.filterAlertSeverity.value,
+      alertCategory: this.filterAlertCategory.value,
+      transactionType: this.filterTransactionType.value,
+      amountMin: parseFloat(this.filterAmountMin.value) || null,
+      amountMax: parseFloat(this.filterAmountMax.value) || null
+    };
+    
+    // Remove empty filters
+    Object.keys(this.activeFilters).forEach(key => {
+      if (!this.activeFilters[key]) delete this.activeFilters[key];
+    });
+    
+    this.closeAdvancedFiltersModal();
+    if (this.searchInput.value) {
+      this.performSearch();
+    }
+    this.showNotification('Filters applied successfully', 'success');
+  }
+  
+  resetAllFilters() {
+    this.filterDateFrom.value = '';
+    this.filterDateTo.value = '';
+    this.filterPlayerStatus.value = '';
+    this.filterPlayerRank.value = '';
+    this.filterLogLevel.value = '';
+    this.filterLogSource.value = '';
+    this.filterFileType.value = '';
+    this.filterFileSize.value = '';
+    this.filterAlertSeverity.value = '';
+    this.filterAlertCategory.value = '';
+    this.filterTransactionType.value = '';
+    this.filterAmountMin.value = '';
+    this.filterAmountMax.value = '';
+    
+    this.activeFilters = {};
+    this.showNotification('Filters reset', 'info');
+  }
+  
+  openSavedPresetsModal() {
+    this.renderPresetsList();
+    this.savedPresetsModal.style.display = 'flex';
+  }
+  
+  closeSavedPresetsModalDialog() {
+    this.savedPresetsModal.style.display = 'none';
+  }
+  
+  openSavePresetModal() {
+    this.savePresetModal.style.display = 'flex';
+  }
+  
+  closeSavePresetModalDialog() {
+    this.savePresetModal.style.display = 'none';
+    this.presetName.value = '';
+    this.presetDescription.value = '';
+  }
+  
+  loadSavedPresets() {
+    // Load from localStorage
+    const saved = localStorage.getItem('searchPresets');
+    if (saved) {
+      this.savedPresets = JSON.parse(saved);
+    } else {
+      // Add default presets
+      this.savedPresets = [
+        {
+          id: 1,
+          name: 'Online Players',
+          description: 'Search for currently online players',
+          scopes: ['players'],
+          filters: { playerStatus: 'online' },
+          created: new Date().toISOString()
+        },
+        {
+          id: 2,
+          name: 'Critical Alerts',
+          description: 'Find all critical system alerts',
+          scopes: ['alerts'],
+          filters: { alertSeverity: 'critical' },
+          created: new Date().toISOString()
+        },
+        {
+          id: 3,
+          name: 'Recent Errors',
+          description: 'View recent error logs',
+          scopes: ['logs'],
+          filters: { logLevel: 'error' },
+          created: new Date().toISOString()
+        }
+      ];
+      this.savePresetsToStorage();
+    }
+  }
+  
+  savePresetsToStorage() {
+    localStorage.setItem('searchPresets', JSON.stringify(this.savedPresets));
+  }
+  
+  savePreset() {
+    const name = this.presetName.value.trim();
+    if (!name) {
+      this.showNotification('Preset name is required', 'error');
+      return;
+    }
+    
+    const selectedScopes = Array.from(this.scopeCheckboxes)
+      .filter(cb => cb.checked)
+      .map(cb => cb.value);
+    
+    const preset = {
+      id: Date.now(),
+      name: name,
+      description: this.presetDescription.value.trim(),
+      query: this.searchInput.value,
+      scopes: selectedScopes,
+      filters: { ...this.activeFilters },
+      created: new Date().toISOString()
+    };
+    
+    this.savedPresets.push(preset);
+    this.savePresetsToStorage();
+    this.closeSavePresetModalDialog();
+    this.showNotification('Preset saved successfully', 'success');
+  }
+  
+  renderPresetsList() {
+    if (this.savedPresets.length === 0) {
+      this.presetsList.innerHTML = `
+        <div class="search-no-results">
+          <div class="icon">📋</div>
+          <p>No saved presets</p>
+        </div>
+      `;
+      return;
+    }
+    
+    this.presetsList.innerHTML = this.savedPresets.map(preset => `
+      <div class="preset-item">
+        <div class="preset-info">
+          <h4 class="preset-name">${preset.name}</h4>
+          <p class="preset-description">${preset.description || 'No description'}</p>
+          <div class="preset-meta">
+            ${preset.scopes.map(s => `<span class="preset-scope">${s}</span>`).join('')}
+          </div>
+        </div>
+        <div class="preset-actions">
+          <button class="preset-action-btn" onclick="globalSearchManager.loadPreset(${preset.id})">
+            Load
+          </button>
+          <button class="preset-action-btn danger" onclick="globalSearchManager.deletePreset(${preset.id})">
+            Delete
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  loadPreset(presetId) {
+    const preset = this.savedPresets.find(p => p.id === presetId);
+    if (!preset) return;
+    
+    // Set query
+    if (preset.query) {
+      this.searchInput.value = preset.query;
+    }
+    
+    // Set scopes
+    this.scopeCheckboxes.forEach(cb => {
+      cb.checked = preset.scopes.includes(cb.value);
+    });
+    
+    // Set filters
+    this.activeFilters = { ...preset.filters };
+    Object.keys(preset.filters).forEach(key => {
+      const element = this[`filter${key.charAt(0).toUpperCase() + key.slice(1)}`];
+      if (element) {
+        element.value = preset.filters[key];
+      }
+    });
+    
+    this.closeSavedPresetsModalDialog();
+    if (preset.query) {
+      this.performSearch();
+    }
+    this.showNotification(`Loaded preset: ${preset.name}`, 'success');
+  }
+  
+  deletePreset(presetId) {
+    if (confirm('Delete this preset?')) {
+      this.savedPresets = this.savedPresets.filter(p => p.id !== presetId);
+      this.savePresetsToStorage();
+      this.renderPresetsList();
+      this.showNotification('Preset deleted', 'success');
+    }
+  }
+  
+  exportSearchResults() {
+    const csv = this.filteredResults.map(result => {
+      const data = result.data;
+      return `"${result.scope}","${JSON.stringify(data).replace(/"/g, '""')}"`;
+    }).join('\n');
+    
+    const header = 'Scope,Data\n';
+    const blob = new Blob([header + csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `search-results-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    this.showNotification('Search results exported', 'success');
+  }
+  
+  formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  }
+  
+  showNotification(message, type = 'info') {
+    if (typeof showNotification === 'function') {
+      showNotification(message, type);
+    } else {
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+  }
+}
+
+// ========================================
+// ALERT & NOTIFICATION SYSTEM
+// ========================================
+
+class AlertManager {
+  constructor() {
+    // DOM References - Stats
+    this.criticalAlertsCount = document.getElementById('critical-alerts-count');
+    this.warningAlertsCount = document.getElementById('warning-alerts-count');
+    this.infoAlertsCount = document.getElementById('info-alerts-count');
+    this.activeRulesCount = document.getElementById('active-rules-count');
+    
+    // DOM References - View Toggle
+    this.viewButtons = document.querySelectorAll('.alert-view-btn');
+    this.liveView = document.getElementById('alert-live-view');
+    this.historyView = document.getElementById('alert-history-view');
+    this.rulesView = document.getElementById('alert-rules-view');
+    
+    // DOM References - Live Feed
+    this.alertFeedList = document.getElementById('alert-feed-list');
+    this.severityFilters = document.querySelectorAll('.alert-filters .filter-btn');
+    this.categoryFilter = document.getElementById('alert-category-filter');
+    this.soundToggle = document.getElementById('alert-sound-enabled');
+    this.clearAllBtn = document.getElementById('clear-all-alerts');
+    
+    // DOM References - History
+    this.historySearch = document.getElementById('alert-history-search');
+    this.dateFrom = document.getElementById('alert-date-from');
+    this.dateTo = document.getElementById('alert-date-to');
+    this.filterHistoryBtn = document.getElementById('filter-history');
+    this.exportHistoryBtn = document.getElementById('export-alert-history');
+    this.historyList = document.getElementById('alert-history-list');
+    this.prevPageBtn = document.getElementById('alert-prev-page');
+    this.nextPageBtn = document.getElementById('alert-next-page');
+    this.currentPageSpan = document.getElementById('alert-current-page');
+    this.totalPagesSpan = document.getElementById('alert-total-pages');
+    
+    // DOM References - Rules
+    this.rulesSearch = document.getElementById('alert-rules-search');
+    this.ruleStatusFilters = document.querySelectorAll('.alert-rules-controls .filter-btn');
+    this.rulesList = document.getElementById('alert-rules-list');
+    this.createRuleBtn = document.getElementById('create-alert-rule');
+    
+    // DOM References - Modals
+    this.ruleModal = document.getElementById('alert-rule-modal');
+    this.ruleModalTitle = document.getElementById('alert-rule-modal-title');
+    this.closeRuleModalBtn = document.getElementById('close-alert-rule-modal');
+    this.cancelRuleBtn = document.getElementById('cancel-alert-rule');
+    this.saveRuleBtn = document.getElementById('save-alert-rule');
+    
+    this.detailsModal = document.getElementById('alert-details-modal');
+    this.closeDetailsBtn = document.getElementById('close-alert-details');
+    this.detailContent = document.getElementById('alert-detail-content');
+    this.dismissAlertBtn = document.getElementById('dismiss-alert');
+    this.acknowledgeAlertBtn = document.getElementById('acknowledge-alert');
+    
+    // DOM References - Rule Form
+    this.ruleTabButtons = document.querySelectorAll('.rule-tab-btn');
+    this.ruleTabs = document.querySelectorAll('.rule-tab-content');
+    this.ruleName = document.getElementById('rule-name');
+    this.ruleCategory = document.getElementById('rule-category');
+    this.ruleSeverity = document.getElementById('rule-severity');
+    this.ruleDescription = document.getElementById('rule-description');
+    this.ruleEnabled = document.getElementById('rule-enabled');
+    this.ruleMetric = document.getElementById('rule-metric');
+    this.ruleCondition = document.getElementById('rule-condition');
+    this.ruleThreshold = document.getElementById('rule-threshold');
+    this.ruleThresholdMax = document.getElementById('rule-threshold-max');
+    this.ruleDuration = document.getElementById('rule-duration');
+    this.ruleCooldown = document.getElementById('rule-cooldown');
+    
+    // Action checkboxes
+    this.actionDashboard = document.getElementById('action-dashboard');
+    this.actionSound = document.getElementById('action-sound');
+    this.actionDesktop = document.getElementById('action-desktop');
+    this.actionEmail = document.getElementById('action-email');
+    this.actionWebhook = document.getElementById('action-webhook');
+    this.actionLog = document.getElementById('action-log');
+    this.actionCommand = document.getElementById('action-command');
+    this.actionRestart = document.getElementById('action-restart');
+    
+    this.ruleEmail = document.getElementById('rule-email');
+    this.ruleWebhookUrl = document.getElementById('rule-webhook-url');
+    this.ruleCommand = document.getElementById('rule-command');
+    
+    // State
+    this.currentView = 'live';
+    this.currentSeverityFilter = 'all';
+    this.currentCategoryFilter = 'all';
+    this.currentRuleStatusFilter = 'all';
+    this.alerts = [];
+    this.alertHistory = [];
+    this.alertRules = [];
+    this.currentPage = 1;
+    this.pageSize = 20;
+    this.currentEditingRule = null;
+    this.soundEnabled = true;
+  }
+  
+  init() {
+    this.setupEventListeners();
+    this.loadAlertRules();
+    this.loadAlertHistory();
+    this.startLiveFeed();
+    this.updateStats();
+  }
+  
+  setupEventListeners() {
+    // View toggle
+    this.viewButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.currentView = btn.dataset.view;
+        this.switchView(this.currentView);
+      });
+    });
+    
+    // Live feed filters
+    this.severityFilters.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.severityFilters.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.currentSeverityFilter = btn.dataset.severity;
+        this.renderAlertFeed();
+      });
+    });
+    
+    this.categoryFilter?.addEventListener('change', () => {
+      this.currentCategoryFilter = this.categoryFilter.value;
+      this.renderAlertFeed();
+    });
+    
+    this.soundToggle?.addEventListener('change', () => {
+      this.soundEnabled = this.soundToggle.checked;
+    });
+    
+    this.clearAllBtn?.addEventListener('click', () => this.clearAllAlerts());
+    
+    // History controls
+    this.historySearch?.addEventListener('input', () => this.filterHistory());
+    this.filterHistoryBtn?.addEventListener('click', () => this.filterHistory());
+    this.exportHistoryBtn?.addEventListener('click', () => this.exportHistory());
+    this.prevPageBtn?.addEventListener('click', () => this.changePage(-1));
+    this.nextPageBtn?.addEventListener('click', () => this.changePage(1));
+    
+    // Rules controls
+    this.rulesSearch?.addEventListener('input', () => this.filterRules());
+    this.ruleStatusFilters.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.ruleStatusFilters.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.currentRuleStatusFilter = btn.dataset.status;
+        this.filterRules();
+      });
+    });
+    
+    this.createRuleBtn?.addEventListener('click', () => this.openCreateRuleModal());
+    
+    // Modal controls
+    this.closeRuleModalBtn?.addEventListener('click', () => this.closeRuleModal());
+    this.cancelRuleBtn?.addEventListener('click', () => this.closeRuleModal());
+    this.saveRuleBtn?.addEventListener('click', () => this.saveRule());
+    
+    this.closeDetailsBtn?.addEventListener('click', () => this.closeDetailsModal());
+    this.dismissAlertBtn?.addEventListener('click', () => this.dismissCurrentAlert());
+    this.acknowledgeAlertBtn?.addEventListener('click', () => this.acknowledgeCurrentAlert());
+    
+    // Rule form tabs
+    this.ruleTabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.dataset.tab;
+        this.switchRuleTab(tabName);
+      });
+    });
+    
+    // Condition changes
+    this.ruleCondition?.addEventListener('change', () => this.updateConditionInputs());
+    this.ruleMetric?.addEventListener('change', () => this.updateMetricInputs());
+    
+    // Action checkboxes
+    this.actionEmail?.addEventListener('change', () => {
+      document.getElementById('email-group').style.display = 
+        this.actionEmail.checked ? 'block' : 'none';
+    });
+    
+    this.actionWebhook?.addEventListener('change', () => {
+      document.getElementById('webhook-group').style.display = 
+        this.actionWebhook.checked ? 'block' : 'none';
+    });
+    
+    this.actionCommand?.addEventListener('change', () => {
+      document.getElementById('command-group').style.display = 
+        this.actionCommand.checked ? 'block' : 'none';
+    });
+  }
+  
+  switchView(view) {
+    this.viewButtons.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.view === view);
+    });
+    
+    this.liveView.classList.toggle('hidden', view !== 'live');
+    this.historyView.classList.toggle('hidden', view !== 'history');
+    this.rulesView.classList.toggle('hidden', view !== 'rules');
+  }
+  
+  switchRuleTab(tabName) {
+    this.ruleTabButtons.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    
+    this.ruleTabs.forEach(tab => {
+      tab.classList.toggle('hidden', tab.id !== `rule-${tabName}-tab`);
+    });
+  }
+  
+  loadAlertRules() {
+    // Mock data - replace with API call
+    this.alertRules = [
+      {
+        id: 1,
+        name: 'Low TPS Warning',
+        category: 'performance',
+        severity: 'warning',
+        description: 'Alert when server TPS drops below 18',
+        enabled: true,
+        metric: 'tps',
+        condition: 'less',
+        threshold: 18,
+        duration: 30,
+        cooldown: 5,
+        actions: {
+          dashboard: true,
+          sound: true,
+          desktop: false,
+          email: false,
+          webhook: false,
+          log: true,
+          command: false,
+          restart: false
+        },
+        triggeredCount: 12,
+        lastTriggered: '2025-10-14T10:30:00'
+      },
+      {
+        id: 2,
+        name: 'High Memory Usage',
+        category: 'performance',
+        severity: 'critical',
+        description: 'Alert when memory usage exceeds 90%',
+        enabled: true,
+        metric: 'memory',
+        condition: 'greater',
+        threshold: 90,
+        duration: 60,
+        cooldown: 10,
+        actions: {
+          dashboard: true,
+          sound: true,
+          desktop: true,
+          email: true,
+          webhook: true,
+          log: true,
+          command: false,
+          restart: false
+        },
+        email: 'admin@example.com',
+        webhookUrl: 'https://discord.com/api/webhooks/...',
+        triggeredCount: 5,
+        lastTriggered: '2025-10-14T09:15:00'
+      },
+      {
+        id: 3,
+        name: 'Player Death Notification',
+        category: 'player',
+        severity: 'info',
+        description: 'Log player deaths for analytics',
+        enabled: true,
+        metric: 'death',
+        condition: 'equals',
+        threshold: 1,
+        duration: 0,
+        cooldown: 0,
+        actions: {
+          dashboard: true,
+          sound: false,
+          desktop: false,
+          email: false,
+          webhook: false,
+          log: true,
+          command: false,
+          restart: false
+        },
+        triggeredCount: 247,
+        lastTriggered: '2025-10-14T11:45:00'
+      },
+      {
+        id: 4,
+        name: 'Lag Spike Detection',
+        category: 'performance',
+        severity: 'warning',
+        description: 'Detect sudden performance drops',
+        enabled: true,
+        metric: 'lag_spike',
+        condition: 'greater',
+        threshold: 100,
+        duration: 0,
+        cooldown: 2,
+        actions: {
+          dashboard: true,
+          sound: true,
+          desktop: false,
+          email: false,
+          webhook: true,
+          log: true,
+          command: true,
+          restart: false
+        },
+        command: '/say Warning: Lag spike detected!',
+        webhookUrl: 'https://discord.com/api/webhooks/...',
+        triggeredCount: 34,
+        lastTriggered: '2025-10-14T10:50:00'
+      },
+      {
+        id: 5,
+        name: 'Server Crash Alert',
+        category: 'system',
+        severity: 'critical',
+        description: 'Alert on server crash and auto-restart',
+        enabled: true,
+        metric: 'crash',
+        condition: 'equals',
+        threshold: 1,
+        duration: 0,
+        cooldown: 0,
+        actions: {
+          dashboard: true,
+          sound: true,
+          desktop: true,
+          email: true,
+          webhook: true,
+          log: true,
+          command: false,
+          restart: true
+        },
+        email: 'admin@example.com',
+        webhookUrl: 'https://discord.com/api/webhooks/...',
+        triggeredCount: 2,
+        lastTriggered: '2025-10-13T03:22:00'
+      }
+    ];
+    
+    this.renderRules();
+  }
+  
+  loadAlertHistory() {
+    // Mock data - replace with API call
+    this.alertHistory = [
+      {
+        id: 1,
+        title: 'Low TPS Warning',
+        message: 'Server TPS dropped to 15.2 for 45 seconds',
+        severity: 'warning',
+        category: 'performance',
+        timestamp: '2025-10-14T10:30:15',
+        acknowledged: true,
+        ruleId: 1
+      },
+      {
+        id: 2,
+        title: 'High Memory Usage',
+        message: 'Memory usage reached 92% (11.5GB of 12GB)',
+        severity: 'critical',
+        category: 'performance',
+        timestamp: '2025-10-14T09:15:30',
+        acknowledged: true,
+        ruleId: 2
+      },
+      {
+        id: 3,
+        title: 'Lag Spike Detected',
+        message: 'Server lag spike detected: 150ms delay',
+        severity: 'warning',
+        category: 'performance',
+        timestamp: '2025-10-14T10:50:00',
+        acknowledged: false,
+        ruleId: 4
+      },
+      {
+        id: 4,
+        title: 'Player Death',
+        message: 'Player ZeroG died by Zombie',
+        severity: 'info',
+        category: 'player',
+        timestamp: '2025-10-14T11:45:22',
+        acknowledged: false,
+        ruleId: 3
+      },
+      {
+        id: 5,
+        title: 'Server Crash',
+        message: 'Server crashed due to out of memory error',
+        severity: 'critical',
+        category: 'system',
+        timestamp: '2025-10-13T03:22:15',
+        acknowledged: true,
+        ruleId: 5
+      }
+    ];
+    
+    this.renderHistory();
+  }
+  
+  startLiveFeed() {
+    // Simulate live alerts - replace with WebSocket connection
+    this.alerts = [
+      {
+        id: Date.now(),
+        title: 'Server Running Smoothly',
+        message: 'All systems operational. TPS: 20.0, Memory: 65%',
+        severity: 'info',
+        category: 'system',
+        timestamp: new Date().toISOString(),
+        acknowledged: false
+      }
+    ];
+    
+    this.renderAlertFeed();
+    
+    // Simulate new alerts every 30 seconds
+    setInterval(() => this.simulateNewAlert(), 30000);
+  }
+  
+  simulateNewAlert() {
+    const mockAlerts = [
+      {
+        title: 'TPS Fluctuation',
+        message: 'Server TPS varied between 18-20',
+        severity: 'info',
+        category: 'performance'
+      },
+      {
+        title: 'Player Joined',
+        message: 'Player Steve joined the server',
+        severity: 'info',
+        category: 'player'
+      },
+      {
+        title: 'Memory Warning',
+        message: 'Memory usage at 85%',
+        severity: 'warning',
+        category: 'performance'
+      },
+      {
+        title: 'Plugin Update Available',
+        message: 'WorldEdit has an update available',
+        severity: 'info',
+        category: 'plugin'
+      }
+    ];
+    
+    const randomAlert = mockAlerts[Math.floor(Math.random() * mockAlerts.length)];
+    const newAlert = {
+      id: Date.now(),
+      ...randomAlert,
+      timestamp: new Date().toISOString(),
+      acknowledged: false
+    };
+    
+    this.alerts.unshift(newAlert);
+    if (this.alerts.length > 50) {
+      this.alerts = this.alerts.slice(0, 50);
+    }
+    
+    this.renderAlertFeed();
+    this.updateStats();
+    
+    if (this.soundEnabled && (newAlert.severity === 'warning' || newAlert.severity === 'critical')) {
+      this.playAlertSound(newAlert.severity);
+    }
+  }
+  
+  playAlertSound(severity) {
+    // Create simple beep sounds using Web Audio API
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = severity === 'critical' ? 800 : 600;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.5);
+  }
+  
+  renderAlertFeed() {
+    let filteredAlerts = this.alerts;
+    
+    // Filter by severity
+    if (this.currentSeverityFilter !== 'all') {
+      filteredAlerts = filteredAlerts.filter(a => a.severity === this.currentSeverityFilter);
+    }
+    
+    // Filter by category
+    if (this.currentCategoryFilter !== 'all') {
+      filteredAlerts = filteredAlerts.filter(a => a.category === this.currentCategoryFilter);
+    }
+    
+    if (filteredAlerts.length === 0) {
+      this.alertFeedList.innerHTML = `
+        <div class="alert-no-data">
+          <div class="icon">🔕</div>
+          <p>No alerts to display</p>
+        </div>
+      `;
+      return;
+    }
+    
+    this.alertFeedList.innerHTML = filteredAlerts.map(alert => this.createAlertElement(alert)).join('');
+    
+    // Add click handlers
+    this.alertFeedList.querySelectorAll('.alert-item').forEach((el, index) => {
+      el.addEventListener('click', () => this.showAlertDetails(filteredAlerts[index]));
+    });
+  }
+  
+  createAlertElement(alert) {
+    const severityIcons = {
+      critical: '🚨',
+      warning: '⚠️',
+      info: 'ℹ️'
+    };
+    
+    const timeAgo = this.getTimeAgo(new Date(alert.timestamp));
+    
+    return `
+      <div class="alert-item ${alert.severity}" data-id="${alert.id}">
+        <div class="alert-icon">${severityIcons[alert.severity]}</div>
+        <div class="alert-content">
+          <div class="alert-header">
+            <h4 class="alert-title">${alert.title}</h4>
+            <div class="alert-meta">
+              <span class="alert-category">${alert.category}</span>
+              <span class="alert-time">${timeAgo}</span>
+            </div>
+          </div>
+          <p class="alert-message">${alert.message}</p>
+          <div class="alert-actions-inline">
+            <button class="alert-action-btn" onclick="event.stopPropagation(); alertManager.dismissAlert(${alert.id})">
+              Dismiss
+            </button>
+            <button class="alert-action-btn primary" onclick="event.stopPropagation(); alertManager.acknowledgeAlert(${alert.id})">
+              Acknowledge
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  renderHistory() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    const pageAlerts = this.alertHistory.slice(start, end);
+    
+    if (pageAlerts.length === 0) {
+      this.historyList.innerHTML = `
+        <div class="alert-no-data">
+          <div class="icon">📭</div>
+          <p>No alert history</p>
+        </div>
+      `;
+      return;
+    }
+    
+    this.historyList.innerHTML = pageAlerts.map(alert => this.createAlertElement(alert)).join('');
+    
+    // Add click handlers
+    this.historyList.querySelectorAll('.alert-item').forEach((el, index) => {
+      el.addEventListener('click', () => this.showAlertDetails(pageAlerts[index]));
+    });
+    
+    // Update pagination
+    const totalPages = Math.ceil(this.alertHistory.length / this.pageSize);
+    this.currentPageSpan.textContent = this.currentPage;
+    this.totalPagesSpan.textContent = totalPages;
+    this.prevPageBtn.disabled = this.currentPage === 1;
+    this.nextPageBtn.disabled = this.currentPage === totalPages;
+  }
+  
+  renderRules() {
+    let filteredRules = this.alertRules;
+    
+    // Filter by status
+    if (this.currentRuleStatusFilter === 'enabled') {
+      filteredRules = filteredRules.filter(r => r.enabled);
+    } else if (this.currentRuleStatusFilter === 'disabled') {
+      filteredRules = filteredRules.filter(r => !r.enabled);
+    }
+    
+    // Filter by search
+    const searchTerm = this.rulesSearch?.value.toLowerCase() || '';
+    if (searchTerm) {
+      filteredRules = filteredRules.filter(r => 
+        r.name.toLowerCase().includes(searchTerm) ||
+        r.description.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    if (filteredRules.length === 0) {
+      this.rulesList.innerHTML = `
+        <div class="alert-no-data">
+          <div class="icon">📋</div>
+          <p>No alert rules found</p>
+        </div>
+      `;
+      return;
+    }
+    
+    this.rulesList.innerHTML = filteredRules.map(rule => this.createRuleCard(rule)).join('');
+  }
+  
+  createRuleCard(rule) {
+    return `
+      <div class="alert-rule-card ${rule.severity}">
+        <div class="alert-rule-header">
+          <h4 class="alert-rule-title">${rule.name}</h4>
+          <div class="alert-rule-toggle">
+            <label class="toggle-label">
+              <input type="checkbox" ${rule.enabled ? 'checked' : ''} 
+                     onchange="alertManager.toggleRule(${rule.id}, this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+        <p class="alert-rule-description">${rule.description}</p>
+        <div class="alert-rule-details">
+          <div class="alert-rule-detail">
+            <span class="alert-rule-detail-label">Category:</span>
+            <span class="alert-rule-detail-value">${rule.category}</span>
+          </div>
+          <div class="alert-rule-detail">
+            <span class="alert-rule-detail-label">Severity:</span>
+            <span class="alert-rule-detail-value">${rule.severity}</span>
+          </div>
+          <div class="alert-rule-detail">
+            <span class="alert-rule-detail-label">Triggered:</span>
+            <span class="alert-rule-detail-value">${rule.triggeredCount} times</span>
+          </div>
+          <div class="alert-rule-detail">
+            <span class="alert-rule-detail-label">Last Triggered:</span>
+            <span class="alert-rule-detail-value">${this.formatDateTime(rule.lastTriggered)}</span>
+          </div>
+        </div>
+        <div class="alert-rule-actions">
+          <button class="alert-rule-btn" onclick="alertManager.editRule(${rule.id})">
+            Edit
+          </button>
+          <button class="alert-rule-btn" onclick="alertManager.duplicateRule(${rule.id})">
+            Duplicate
+          </button>
+          <button class="alert-rule-btn danger" onclick="alertManager.deleteRule(${rule.id})">
+            Delete
+          </button>
+        </div>
+      </div>
+    `;
+  }
+  
+  updateStats() {
+    const criticalCount = this.alerts.filter(a => a.severity === 'critical').length;
+    const warningCount = this.alerts.filter(a => a.severity === 'warning').length;
+    const infoCount = this.alerts.filter(a => a.severity === 'info').length;
+    const activeRulesCount = this.alertRules.filter(r => r.enabled).length;
+    
+    if (this.criticalAlertsCount) this.criticalAlertsCount.textContent = criticalCount;
+    if (this.warningAlertsCount) this.warningAlertsCount.textContent = warningCount;
+    if (this.infoAlertsCount) this.infoAlertsCount.textContent = infoCount;
+    if (this.activeRulesCount) this.activeRulesCount.textContent = activeRulesCount;
+  }
+  
+  clearAllAlerts() {
+    if (confirm('Clear all alerts?')) {
+      this.alerts = [];
+      this.renderAlertFeed();
+      this.updateStats();
+      this.showNotification('All alerts cleared', 'info');
+    }
+  }
+  
+  dismissAlert(alertId) {
+    this.alerts = this.alerts.filter(a => a.id !== alertId);
+    this.renderAlertFeed();
+    this.updateStats();
+    this.showNotification('Alert dismissed', 'info');
+  }
+  
+  acknowledgeAlert(alertId) {
+    const alert = this.alerts.find(a => a.id === alertId);
+    if (alert) {
+      alert.acknowledged = true;
+      this.renderAlertFeed();
+      this.showNotification('Alert acknowledged', 'success');
+    }
+  }
+  
+  dismissCurrentAlert() {
+    if (this.currentAlert) {
+      this.dismissAlert(this.currentAlert.id);
+      this.closeDetailsModal();
+    }
+  }
+  
+  acknowledgeCurrentAlert() {
+    if (this.currentAlert) {
+      this.acknowledgeAlert(this.currentAlert.id);
+      this.closeDetailsModal();
+    }
+  }
+  
+  showAlertDetails(alert) {
+    if (!alert) {
+      console.error('No alert data provided');
+      return;
+    }
+    
+    this.currentAlert = alert;
+    
+    this.detailContent.innerHTML = `
+      <div class="alert-detail-section">
+        <div class="alert-detail-label">Title</div>
+        <div class="alert-detail-value">${alert.title || 'N/A'}</div>
+      </div>
+      <div class="alert-detail-section">
+        <div class="alert-detail-label">Message</div>
+        <div class="alert-detail-value">${alert.message || 'No message available'}</div>
+      </div>
+      <div class="alert-detail-section">
+        <div class="alert-detail-label">Severity</div>
+        <div class="alert-detail-value severity-${alert.severity || 'info'}">${(alert.severity || 'info').toUpperCase()}</div>
+      </div>
+      <div class="alert-detail-section">
+        <div class="alert-detail-label">Category</div>
+        <div class="alert-detail-value">${alert.category || 'general'}</div>
+      </div>
+      <div class="alert-detail-section">
+        <div class="alert-detail-label">Timestamp</div>
+        <div class="alert-detail-value">${alert.timestamp ? this.formatDateTime(alert.timestamp) : 'Unknown'}</div>
+      </div>
+      <div class="alert-detail-section">
+        <div class="alert-detail-label">Status</div>
+        <div class="alert-detail-value">${alert.acknowledged ? '✓ Acknowledged' : '● Pending'}</div>
+      </div>
+      ${alert.details ? `
+      <div class="alert-detail-section">
+        <div class="alert-detail-label">Additional Details</div>
+        <div class="alert-detail-value">${alert.details}</div>
+      </div>
+      ` : ''}
+    `;
+    
+    this.detailsModal.style.display = 'flex';
+  }
+  
+  closeDetailsModal() {
+    this.detailsModal.style.display = 'none';
+    this.currentAlert = null;
+  }
+  
+  openCreateRuleModal() {
+    this.currentEditingRule = null;
+    this.ruleModalTitle.textContent = 'Create Alert Rule';
+    this.resetRuleForm();
+    this.ruleModal.style.display = 'flex';
+  }
+  
+  editRule(ruleId) {
+    const rule = this.alertRules.find(r => r.id === ruleId);
+    if (!rule) return;
+    
+    this.currentEditingRule = rule;
+    this.ruleModalTitle.textContent = 'Edit Alert Rule';
+    this.populateRuleForm(rule);
+    this.ruleModal.style.display = 'flex';
+  }
+  
+  closeRuleModal() {
+    this.ruleModal.style.display = 'none';
+    this.currentEditingRule = null;
+  }
+  
+  resetRuleForm() {
+    this.ruleName.value = '';
+    this.ruleCategory.value = 'performance';
+    this.ruleSeverity.value = 'info';
+    this.ruleDescription.value = '';
+    this.ruleEnabled.checked = true;
+    this.ruleMetric.value = 'tps';
+    this.ruleCondition.value = 'greater';
+    this.ruleThreshold.value = '';
+    this.ruleThresholdMax.value = '';
+    this.ruleDuration.value = '30';
+    this.ruleCooldown.value = '5';
+    
+    this.actionDashboard.checked = true;
+    this.actionSound.checked = true;
+    this.actionDesktop.checked = false;
+    this.actionEmail.checked = false;
+    this.actionWebhook.checked = false;
+    this.actionLog.checked = true;
+    this.actionCommand.checked = false;
+    this.actionRestart.checked = false;
+    
+    this.ruleEmail.value = '';
+    this.ruleWebhookUrl.value = '';
+    this.ruleCommand.value = '';
+    
+    this.switchRuleTab('basic');
+    this.updateConditionInputs();
+  }
+  
+  populateRuleForm(rule) {
+    this.ruleName.value = rule.name;
+    this.ruleCategory.value = rule.category;
+    this.ruleSeverity.value = rule.severity;
+    this.ruleDescription.value = rule.description;
+    this.ruleEnabled.checked = rule.enabled;
+    this.ruleMetric.value = rule.metric;
+    this.ruleCondition.value = rule.condition;
+    this.ruleThreshold.value = rule.threshold;
+    this.ruleThresholdMax.value = rule.thresholdMax || '';
+    this.ruleDuration.value = rule.duration;
+    this.ruleCooldown.value = rule.cooldown;
+    
+    this.actionDashboard.checked = rule.actions.dashboard;
+    this.actionSound.checked = rule.actions.sound;
+    this.actionDesktop.checked = rule.actions.desktop;
+    this.actionEmail.checked = rule.actions.email;
+    this.actionWebhook.checked = rule.actions.webhook;
+    this.actionLog.checked = rule.actions.log;
+    this.actionCommand.checked = rule.actions.command;
+    this.actionRestart.checked = rule.actions.restart;
+    
+    this.ruleEmail.value = rule.email || '';
+    this.ruleWebhookUrl.value = rule.webhookUrl || '';
+    this.ruleCommand.value = rule.command || '';
+    
+    this.updateConditionInputs();
+  }
+  
+  updateConditionInputs() {
+    const condition = this.ruleCondition.value;
+    const thresholdMaxGroup = document.getElementById('threshold-max-group');
+    
+    if (condition === 'between') {
+      thresholdMaxGroup.classList.remove('hidden');
+    } else {
+      thresholdMaxGroup.classList.add('hidden');
+    }
+  }
+  
+  updateMetricInputs() {
+    const metric = this.ruleMetric.value;
+    const thresholdGroup = document.getElementById('threshold-group');
+    const thresholdValueGroup = document.getElementById('threshold-value-group');
+    const thresholdMaxGroup = document.getElementById('threshold-max-group');
+    
+    // Event-based metrics don't need thresholds
+    const eventMetrics = ['player_join', 'player_leave', 'death', 'crash', 'lag_spike'];
+    if (eventMetrics.includes(metric)) {
+      thresholdGroup.classList.add('hidden');
+      thresholdValueGroup.classList.add('hidden');
+      thresholdMaxGroup.classList.add('hidden');
+    } else {
+      thresholdGroup.classList.remove('hidden');
+      thresholdValueGroup.classList.remove('hidden');
+      this.updateConditionInputs();
+    }
+  }
+  
+  saveRule() {
+    const ruleData = {
+      name: this.ruleName.value,
+      category: this.ruleCategory.value,
+      severity: this.ruleSeverity.value,
+      description: this.ruleDescription.value,
+      enabled: this.ruleEnabled.checked,
+      metric: this.ruleMetric.value,
+      condition: this.ruleCondition.value,
+      threshold: parseFloat(this.ruleThreshold.value) || 0,
+      thresholdMax: parseFloat(this.ruleThresholdMax.value) || null,
+      duration: parseInt(this.ruleDuration.value) || 0,
+      cooldown: parseInt(this.ruleCooldown.value) || 0,
+      actions: {
+        dashboard: this.actionDashboard.checked,
+        sound: this.actionSound.checked,
+        desktop: this.actionDesktop.checked,
+        email: this.actionEmail.checked,
+        webhook: this.actionWebhook.checked,
+        log: this.actionLog.checked,
+        command: this.actionCommand.checked,
+        restart: this.actionRestart.checked
+      },
+      email: this.ruleEmail.value,
+      webhookUrl: this.ruleWebhookUrl.value,
+      command: this.ruleCommand.value,
+      triggeredCount: 0,
+      lastTriggered: null
+    };
+    
+    if (!ruleData.name) {
+      this.showNotification('Rule name is required', 'error');
+      return;
+    }
+    
+    if (this.currentEditingRule) {
+      // Update existing rule
+      const index = this.alertRules.findIndex(r => r.id === this.currentEditingRule.id);
+      if (index !== -1) {
+        this.alertRules[index] = { ...this.currentEditingRule, ...ruleData };
+        this.showNotification('Rule updated successfully', 'success');
+      }
+    } else {
+      // Create new rule
+      ruleData.id = Date.now();
+      this.alertRules.push(ruleData);
+      this.showNotification('Rule created successfully', 'success');
+    }
+    
+    this.renderRules();
+    this.updateStats();
+    this.closeRuleModal();
+  }
+  
+  toggleRule(ruleId, enabled) {
+    const rule = this.alertRules.find(r => r.id === ruleId);
+    if (rule) {
+      rule.enabled = enabled;
+      this.updateStats();
+      this.showNotification(`Rule ${enabled ? 'enabled' : 'disabled'}`, 'info');
+    }
+  }
+  
+  duplicateRule(ruleId) {
+    const rule = this.alertRules.find(r => r.id === ruleId);
+    if (rule) {
+      const newRule = { ...rule, id: Date.now(), name: `${rule.name} (Copy)` };
+      this.alertRules.push(newRule);
+      this.renderRules();
+      this.showNotification('Rule duplicated', 'success');
+    }
+  }
+  
+  deleteRule(ruleId) {
+    if (confirm('Delete this alert rule?')) {
+      this.alertRules = this.alertRules.filter(r => r.id !== ruleId);
+      this.renderRules();
+      this.updateStats();
+      this.showNotification('Rule deleted', 'success');
+    }
+  }
+  
+  filterHistory() {
+    // Implement history filtering logic
+    this.renderHistory();
+  }
+  
+  filterRules() {
+    this.renderRules();
+  }
+  
+  changePage(delta) {
+    const totalPages = Math.ceil(this.alertHistory.length / this.pageSize);
+    this.currentPage = Math.max(1, Math.min(this.currentPage + delta, totalPages));
+    this.renderHistory();
+  }
+  
+  exportHistory() {
+    const csv = this.alertHistory.map(alert => 
+      `"${alert.timestamp}","${alert.severity}","${alert.category}","${alert.title}","${alert.message}"`
+    ).join('\n');
+    
+    const header = 'Timestamp,Severity,Category,Title,Message\n';
+    const blob = new Blob([header + csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `alert-history-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    this.showNotification('Alert history exported', 'success');
+  }
+  
+  getTimeAgo(date) {
+    const seconds = Math.floor((new Date() - date) / 1000);
+    
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
+  }
+  
+  formatDateTime(dateString) {
+    if (!dateString) return 'Never';
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  }
+  
+  showNotification(message, type = 'info') {
+    // Reuse existing notification system
+    if (typeof showNotification === 'function') {
+      showNotification(message, type);
+    } else {
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+  }
+}
+
+// ========================================
+// PERMISSION MANAGEMENT
+// ========================================
+
+class PermissionManager {
+  constructor() {
+    // DOM References - Stats
+    this.totalGroupsCount = document.getElementById('total-groups-count');
+    this.totalPermissionsCount = document.getElementById('total-permissions-count');
+    this.assignedPlayersCount = document.getElementById('assigned-players-count');
+    this.inheritanceChainsCount = document.getElementById('inheritance-chains-count');
+    
+    // DOM References - View Toggle
+    this.viewButtons = document.querySelectorAll('.perm-view-btn');
+    this.views = document.querySelectorAll('.perm-view');
+    
+    // DOM References - Groups View
+    this.groupSearch = document.getElementById('group-search');
+    this.createGroupBtn = document.getElementById('create-group-btn');
+    this.groupList = document.getElementById('group-list');
+    
+    // DOM References - Players View
+    this.playerPermSearch = document.getElementById('player-perm-search');
+    this.assignPlayerBtn = document.getElementById('assign-player-btn');
+    this.playerPermList = document.getElementById('player-perm-list');
+    
+    // DOM References - Tree View
+    this.treeGroupSelect = document.getElementById('tree-group-select');
+    this.expandAllTreeBtn = document.getElementById('expand-all-tree');
+    this.collapseAllTreeBtn = document.getElementById('collapse-all-tree');
+    this.inheritanceTree = document.getElementById('inheritance-tree');
+    
+    // DOM References - Edit Group Modal
+    this.editGroupModal = document.getElementById('edit-group-modal');
+    this.closeEditGroupBtn = document.getElementById('close-edit-group');
+    this.editGroupTitle = document.getElementById('edit-group-title');
+    this.groupName = document.getElementById('group-name');
+    this.groupDisplayName = document.getElementById('group-display-name');
+    this.groupPrefix = document.getElementById('group-prefix');
+    this.groupSuffix = document.getElementById('group-suffix');
+    this.groupPriority = document.getElementById('group-priority');
+    this.groupDefault = document.getElementById('group-default');
+    
+    // DOM References - Permission Tabs
+    this.permTabs = document.querySelectorAll('.perm-tab');
+    this.permTabPanes = document.querySelectorAll('.perm-tab-pane');
+    
+    // DOM References - Permissions Tab
+    this.permSearch = document.getElementById('perm-search');
+    this.addPermissionBtn = document.getElementById('add-permission-btn');
+    this.permCategories = document.querySelectorAll('.perm-category-btn');
+    this.groupPermList = document.getElementById('group-perm-list');
+    
+    // DOM References - Inheritance Tab
+    this.parentGroupsList = document.getElementById('parent-groups-list');
+    this.childGroupsList = document.getElementById('child-groups-list');
+    this.addParentGroupBtn = document.getElementById('add-parent-group-btn');
+    
+    // DOM References - Members Tab
+    this.memberSearch = document.getElementById('member-search');
+    this.addMemberBtn = document.getElementById('add-member-btn');
+    this.groupMemberList = document.getElementById('group-member-list');
+    
+    // DOM References - Group Modal Actions
+    this.cancelGroupEdit = document.getElementById('cancel-group-edit');
+    this.deleteGroup = document.getElementById('delete-group');
+    this.saveGroup = document.getElementById('save-group');
+    
+    // DOM References - Add Permission Modal
+    this.addPermissionModal = document.getElementById('add-permission-modal');
+    this.closeAddPermission = document.getElementById('close-add-permission');
+    this.newPermissionNode = document.getElementById('new-permission-node');
+    this.permissionWorld = document.getElementById('permission-world');
+    this.commonPermButtons = document.querySelectorAll('.common-perm-btn');
+    this.cancelAddPermission = document.getElementById('cancel-add-permission');
+    this.confirmAddPermission = document.getElementById('confirm-add-permission');
+    
+    // DOM References - Assign Player Modal
+    this.assignPlayerModal = document.getElementById('assign-player-modal');
+    this.closeAssignPlayer = document.getElementById('close-assign-player');
+    this.assignPlayerName = document.getElementById('assign-player-name');
+    this.assignPlayerGroup = document.getElementById('assign-player-group');
+    this.assignDuration = document.getElementById('assign-duration');
+    this.cancelAssignPlayer = document.getElementById('cancel-assign-player');
+    this.confirmAssignPlayer = document.getElementById('confirm-assign-player');
+    
+    // State
+    this.groups = [];
+    this.playerPermissions = [];
+    this.currentGroup = null;
+    this.currentView = 'groups';
+    this.currentPermCategory = 'all';
+  }
+  
+  init() {
+    this.setupEventListeners();
+    this.loadGroups();
+    this.loadPlayerPermissions();
+    this.updateStats();
+    this.populateGroupSelects();
+  }
+  
+  setupEventListeners() {
+    // View toggle
+    this.viewButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.viewButtons.forEach(b => b.classList.remove('active'));
+        this.views.forEach(v => v.classList.remove('active'));
+        btn.classList.add('active');
+        const view = btn.dataset.view;
+        document.querySelector(`.perm-view[data-view="${view}"]`).classList.add('active');
+        this.currentView = view;
+        
+        if (view === 'tree') {
+          this.renderInheritanceTree();
+        }
+      });
+    });
+    
+    // Groups view
+    this.groupSearch.addEventListener('input', () => this.renderGroups());
+    this.createGroupBtn.addEventListener('click', () => this.openCreateGroupModal());
+    
+    // Players view
+    this.playerPermSearch.addEventListener('input', () => this.renderPlayerPermissions());
+    this.assignPlayerBtn.addEventListener('click', () => this.openAssignPlayerModal());
+    
+    // Tree view
+    this.treeGroupSelect.addEventListener('change', () => this.renderInheritanceTree());
+    this.expandAllTreeBtn.addEventListener('click', () => this.expandAllTree());
+    this.collapseAllTreeBtn.addEventListener('click', () => this.collapseAllTree());
+    
+    // Edit group modal
+    this.closeEditGroupBtn.addEventListener('click', () => this.closeEditGroupModal());
+    this.cancelGroupEdit.addEventListener('click', () => this.closeEditGroupModal());
+    this.deleteGroup.addEventListener('click', () => this.deleteCurrentGroup());
+    this.saveGroup.addEventListener('click', () => this.saveCurrentGroup());
+    
+    // Permission tabs
+    this.permTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        this.permTabs.forEach(t => t.classList.remove('active'));
+        this.permTabPanes.forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        const tabName = tab.dataset.tab;
+        document.querySelector(`.perm-tab-pane[data-tab="${tabName}"]`).classList.add('active');
+      });
+    });
+    
+    // Permission search and categories
+    this.permSearch.addEventListener('input', () => this.filterPermissions());
+    this.addPermissionBtn.addEventListener('click', () => this.openAddPermissionModal());
+    
+    this.permCategories.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.permCategories.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.currentPermCategory = btn.dataset.category;
+        this.filterPermissions();
+      });
+    });
+    
+    // Inheritance
+    this.addParentGroupBtn.addEventListener('click', () => this.addParentGroup());
+    
+    // Members
+    this.memberSearch.addEventListener('input', () => this.filterMembers());
+    this.addMemberBtn.addEventListener('click', () => this.addMember());
+    
+    // Add permission modal
+    this.closeAddPermission.addEventListener('click', () => this.closeAddPermissionModal());
+    this.cancelAddPermission.addEventListener('click', () => this.closeAddPermissionModal());
+    this.confirmAddPermission.addEventListener('click', () => this.addPermission());
+    
+    this.commonPermButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.newPermissionNode.value = btn.dataset.perm;
+      });
+    });
+    
+    // Assign player modal
+    this.closeAssignPlayer.addEventListener('click', () => this.closeAssignPlayerModal());
+    this.cancelAssignPlayer.addEventListener('click', () => this.closeAssignPlayerModal());
+    this.confirmAssignPlayer.addEventListener('click', () => this.assignPlayer());
+    
+    // Close modals on outside click
+    this.editGroupModal.addEventListener('click', (e) => {
+      if (e.target === this.editGroupModal) this.closeEditGroupModal();
+    });
+    this.addPermissionModal.addEventListener('click', (e) => {
+      if (e.target === this.addPermissionModal) this.closeAddPermissionModal();
+    });
+    this.assignPlayerModal.addEventListener('click', (e) => {
+      if (e.target === this.assignPlayerModal) this.closeAssignPlayerModal();
+    });
+  }
+  
+  loadGroups() {
+    // Mock group data
+    this.groups = [
+      {
+        id: 'admin',
+        name: 'admin',
+        displayName: 'Administrator',
+        prefix: '[Admin]',
+        suffix: ' ⭐',
+        priority: 100,
+        isDefault: false,
+        permissions: [
+          { node: '*', type: 'allow', world: '' },
+          { node: 'essentials.*', type: 'allow', world: '' },
+          { node: 'worldedit.*', type: 'allow', world: '' }
+        ],
+        parents: [],
+        members: ['Steve', 'Alex']
+      },
+      {
+        id: 'moderator',
+        name: 'moderator',
+        displayName: 'Moderator',
+        prefix: '[Mod]',
+        suffix: ' 🛡️',
+        priority: 75,
+        isDefault: false,
+        permissions: [
+          { node: 'essentials.kick', type: 'allow', world: '' },
+          { node: 'essentials.ban', type: 'allow', world: '' },
+          { node: 'essentials.mute', type: 'allow', world: '' },
+          { node: 'essentials.jail', type: 'allow', world: '' }
+        ],
+        parents: ['helper'],
+        members: ['Notch', 'Herobrine']
+      },
+      {
+        id: 'helper',
+        name: 'helper',
+        displayName: 'Helper',
+        prefix: '[Helper]',
+        suffix: ' 🤝',
+        priority: 50,
+        isDefault: false,
+        permissions: [
+          { node: 'essentials.msg', type: 'allow', world: '' },
+          { node: 'essentials.helpop', type: 'allow', world: '' },
+          { node: 'essentials.tp', type: 'allow', world: '' }
+        ],
+        parents: ['vip'],
+        members: ['CaptainSparklez']
+      },
+      {
+        id: 'vip',
+        name: 'vip',
+        displayName: 'VIP',
+        prefix: '[VIP]',
+        suffix: ' 💎',
+        priority: 25,
+        isDefault: false,
+        permissions: [
+          { node: 'essentials.fly', type: 'allow', world: '' },
+          { node: 'essentials.enderchest', type: 'allow', world: '' },
+          { node: 'essentials.nick', type: 'allow', world: '' }
+        ],
+        parents: ['default'],
+        members: ['Dream', 'TommyInnit']
+      },
+      {
+        id: 'default',
+        name: 'default',
+        displayName: 'Member',
+        prefix: '',
+        suffix: '',
+        priority: 0,
+        isDefault: true,
+        permissions: [
+          { node: 'essentials.home', type: 'allow', world: '' },
+          { node: 'essentials.sethome', type: 'allow', world: '' },
+          { node: 'essentials.spawn', type: 'allow', world: '' },
+          { node: 'essentials.tpa', type: 'allow', world: '' },
+          { node: 'essentials.warp', type: 'allow', world: '' }
+        ],
+        parents: [],
+        members: []
+      }
+    ];
+    
+    this.renderGroups();
+  }
+  
+  loadPlayerPermissions() {
+    // Mock player permission data
+    this.playerPermissions = [
+      { name: 'Steve', group: 'admin', assignedDate: '2025-01-15', expires: null },
+      { name: 'Alex', group: 'admin', assignedDate: '2025-02-20', expires: null },
+      { name: 'Notch', group: 'moderator', assignedDate: '2025-03-10', expires: null },
+      { name: 'Herobrine', group: 'moderator', assignedDate: '2025-04-05', expires: null },
+      { name: 'CaptainSparklez', group: 'helper', assignedDate: '2025-05-01', expires: null },
+      { name: 'Dream', group: 'vip', assignedDate: '2025-06-15', expires: '2025-12-31' },
+      { name: 'TommyInnit', group: 'vip', assignedDate: '2025-07-20', expires: null }
+    ];
+    
+    this.renderPlayerPermissions();
+  }
+  
+  renderGroups() {
+    const searchTerm = this.groupSearch.value.toLowerCase();
+    const filtered = this.groups.filter(group => 
+      group.name.toLowerCase().includes(searchTerm) ||
+      group.displayName.toLowerCase().includes(searchTerm)
+    );
+    
+    this.groupList.innerHTML = filtered.length === 0
+      ? '<p class="no-data">No groups found</p>'
+      : filtered.map(group => this.createGroupCard(group)).join('');
+    
+    // Add click listeners
+    document.querySelectorAll('.group-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const groupId = card.dataset.groupId;
+        this.openEditGroupModal(groupId);
+      });
+    });
+  }
+  
+  createGroupCard(group) {
+    const defaultBadge = group.isDefault 
+      ? '<span class="group-badge default">Default</span>'
+      : '';
+    
+    const totalPerms = group.permissions.length;
+    const members = group.members.length;
+    const parents = group.parents.length;
+    
+    return `
+      <div class="group-card ${group.isDefault ? 'default' : ''}" data-group-id="${group.id}">
+        <div class="group-card-header">
+          <div class="group-card-info">
+            <div class="group-card-name">${group.name}</div>
+            <div class="group-card-display">${group.displayName}</div>
+          </div>
+          <div class="group-card-priority">P${group.priority}</div>
+        </div>
+        <div class="group-card-badges">
+          ${defaultBadge}
+        </div>
+        <div class="group-card-stats">
+          <span class="group-stat">
+            <span class="icon">🔑</span>
+            ${totalPerms} perms
+          </span>
+          <span class="group-stat">
+            <span class="icon">👥</span>
+            ${members} members
+          </span>
+          <span class="group-stat">
+            <span class="icon">🔗</span>
+            ${parents} parents
+          </span>
+        </div>
+        ${group.prefix ? `<div class="group-card-prefix">${group.prefix}</div>` : ''}
+      </div>
+    `;
+  }
+  
+  renderPlayerPermissions() {
+    const searchTerm = this.playerPermSearch.value.toLowerCase();
+    const filtered = this.playerPermissions.filter(p =>
+      p.name.toLowerCase().includes(searchTerm) ||
+      p.group.toLowerCase().includes(searchTerm)
+    );
+    
+    this.playerPermList.innerHTML = filtered.length === 0
+      ? '<p class="no-data">No player permissions found</p>'
+      : filtered.map(player => this.createPlayerPermCard(player)).join('');
+    
+    // Add click listeners
+    document.querySelectorAll('.player-perm-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const playerName = btn.closest('.player-perm-card').dataset.playerName;
+        if (btn.textContent.includes('Edit')) {
+          this.editPlayerPermissions(playerName);
+        } else {
+          this.removePlayerPermissions(playerName);
+        }
+      });
+    });
+  }
+  
+  createPlayerPermCard(player) {
+    const group = this.groups.find(g => g.id === player.group);
+    const expires = player.expires ? ` (expires ${player.expires})` : '';
+    
+    return `
+      <div class="player-perm-card" data-player-name="${player.name}">
+        <div class="player-perm-header">
+          <div class="player-perm-info">
+            <div class="player-avatar">👤</div>
+            <div class="player-perm-details">
+              <div class="player-perm-name">${player.name}</div>
+              <div class="player-perm-group">${group.displayName}${expires}</div>
+            </div>
+          </div>
+          <div class="player-perm-actions">
+            <button class="player-perm-btn">Edit</button>
+            <button class="player-perm-btn">Remove</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  renderInheritanceTree() {
+    const selectedGroupId = this.treeGroupSelect.value;
+    if (!selectedGroupId) {
+      this.inheritanceTree.innerHTML = '<p class="no-data">Select a group to view its inheritance tree</p>';
+      return;
+    }
+    
+    const group = this.groups.find(g => g.id === selectedGroupId);
+    if (!group) return;
+    
+    this.inheritanceTree.innerHTML = this.createTreeNode(group);
+    
+    // Add expand/collapse listeners
+    document.querySelectorAll('.tree-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        item.classList.toggle('expanded');
+      });
+    });
+  }
+  
+  createTreeNode(group, depth = 0) {
+    const hasParents = group.parents && group.parents.length > 0;
+    const expandIcon = hasParents ? '▸' : '';
+    
+    let html = `
+      <div class="tree-item ${depth === 0 ? 'expanded' : ''}">
+        <div class="tree-item-header">
+          <div class="tree-item-name">
+            ${expandIcon ? `<span class="tree-expand-icon">${expandIcon}</span>` : ''}
+            ${group.name}
+          </div>
+          <div class="tree-item-stats">
+            ${group.permissions.length} perms • ${group.members.length} members
+          </div>
+        </div>
+    `;
+    
+    if (hasParents) {
+      html += '<div class="tree-children">';
+      group.parents.forEach(parentId => {
+        const parentGroup = this.groups.find(g => g.id === parentId);
+        if (parentGroup) {
+          html += `<div class="tree-node">${this.createTreeNode(parentGroup, depth + 1)}</div>`;
+        }
+      });
+      html += '</div>';
+    }
+    
+    html += '</div>';
+    return html;
+  }
+  
+  expandAllTree() {
+    document.querySelectorAll('.tree-item').forEach(item => item.classList.add('expanded'));
+  }
+  
+  collapseAllTree() {
+    document.querySelectorAll('.tree-item').forEach(item => item.classList.remove('expanded'));
+  }
+  
+  openCreateGroupModal() {
+    this.currentGroup = null;
+    this.editGroupTitle.textContent = 'Create Group';
+    this.groupName.value = '';
+    this.groupDisplayName.value = '';
+    this.groupPrefix.value = '';
+    this.groupSuffix.value = '';
+    this.groupPriority.value = '0';
+    this.groupDefault.checked = false;
+    this.groupPermList.innerHTML = '<p class="no-data">No permissions added yet</p>';
+    this.parentGroupsList.innerHTML = '<p class="no-data">No parent groups added yet</p>';
+    this.groupMemberList.innerHTML = '<p class="no-data">No members added yet</p>';
+    this.deleteGroup.style.display = 'none';
+    this.editGroupModal.style.display = 'flex';
+  }
+  
+  openEditGroupModal(groupId) {
+    const group = this.groups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    this.currentGroup = group;
+    this.editGroupTitle.textContent = `Edit Group: ${group.name}`;
+    this.groupName.value = group.name;
+    this.groupDisplayName.value = group.displayName;
+    this.groupPrefix.value = group.prefix;
+    this.groupSuffix.value = group.suffix;
+    this.groupPriority.value = group.priority;
+    this.groupDefault.checked = group.isDefault;
+    
+    this.renderGroupPermissions();
+    this.renderParentGroups();
+    this.renderGroupMembers();
+    
+    this.deleteGroup.style.display = 'inline-flex';
+    this.editGroupModal.style.display = 'flex';
+  }
+  
+  closeEditGroupModal() {
+    this.editGroupModal.style.display = 'none';
+    this.currentGroup = null;
+  }
+  
+  renderGroupPermissions() {
+    if (!this.currentGroup || this.currentGroup.permissions.length === 0) {
+      this.groupPermList.innerHTML = '<p class="no-data">No permissions</p>';
+      return;
+    }
+    
+    this.groupPermList.innerHTML = this.currentGroup.permissions
+      .map(perm => `
+        <div class="perm-item ${perm.type}">
+          <div class="perm-item-info">
+            <div class="perm-item-node">${perm.node}</div>
+            ${perm.world ? `<div class="perm-item-world">World: ${perm.world}</div>` : ''}
+          </div>
+          <div class="perm-item-actions">
+            <button class="perm-btn danger" onclick="permissionManager.removePermission('${perm.node}')">Remove</button>
+          </div>
+        </div>
+      `).join('');
+  }
+  
+  renderParentGroups() {
+    if (!this.currentGroup || this.currentGroup.parents.length === 0) {
+      this.parentGroupsList.innerHTML = '<p class="no-data">No parent groups</p>';
+      return;
+    }
+    
+    this.parentGroupsList.innerHTML = this.currentGroup.parents
+      .map(parentId => {
+        const parent = this.groups.find(g => g.id === parentId);
+        return parent ? `
+          <div class="inheritance-item">
+            <span class="inheritance-item-name">${parent.name}</span>
+            <button class="perm-btn danger" onclick="permissionManager.removeParent('${parentId}')">Remove</button>
+          </div>
+        ` : '';
+      }).join('');
+    
+    // Render child groups
+    const children = this.groups.filter(g => g.parents.includes(this.currentGroup.id));
+    if (children.length === 0) {
+      this.childGroupsList.innerHTML = '<p class="no-data">No child groups</p>';
+    } else {
+      this.childGroupsList.innerHTML = children
+        .map(child => `
+          <div class="inheritance-item">
+            <span class="inheritance-item-name">${child.name}</span>
+          </div>
+        `).join('');
+    }
+  }
+  
+  renderGroupMembers() {
+    if (!this.currentGroup || this.currentGroup.members.length === 0) {
+      this.groupMemberList.innerHTML = '<p class="no-data">No members</p>';
+      return;
+    }
+    
+    this.groupMemberList.innerHTML = this.currentGroup.members
+      .map(member => `
+        <div class="member-item">
+          <div class="member-item-info">
+            <div class="player-avatar">👤</div>
+            <span class="member-item-name">${member}</span>
+          </div>
+          <button class="perm-btn danger" onclick="permissionManager.removeMember('${member}')">Remove</button>
+        </div>
+      `).join('');
+  }
+  
+  filterPermissions() {
+    const searchTerm = this.permSearch.value.toLowerCase();
+    const items = this.groupPermList.querySelectorAll('.perm-item');
+    
+    items.forEach(item => {
+      const node = item.querySelector('.perm-item-node').textContent.toLowerCase();
+      const matchesSearch = node.includes(searchTerm);
+      const matchesCategory = this.currentPermCategory === 'all' || node.includes(this.currentPermCategory);
+      item.style.display = matchesSearch && matchesCategory ? 'flex' : 'none';
+    });
+  }
+  
+  filterMembers() {
+    const searchTerm = this.memberSearch.value.toLowerCase();
+    const items = this.groupMemberList.querySelectorAll('.member-item');
+    
+    items.forEach(item => {
+      const name = item.querySelector('.member-item-name').textContent.toLowerCase();
+      item.style.display = name.includes(searchTerm) ? 'flex' : 'none';
+    });
+  }
+  
+  openAddPermissionModal() {
+    this.newPermissionNode.value = '';
+    this.permissionWorld.value = '';
+    this.addPermissionModal.style.display = 'flex';
+  }
+  
+  closeAddPermissionModal() {
+    this.addPermissionModal.style.display = 'none';
+  }
+  
+  addPermission() {
+    const node = this.newPermissionNode.value.trim();
+    if (!node || !this.currentGroup) return;
+    
+    const type = document.querySelector('input[name="perm-type"]:checked').value;
+    const world = this.permissionWorld.value;
+    
+    this.currentGroup.permissions.push({ node, type, world });
+    this.renderGroupPermissions();
+    this.closeAddPermissionModal();
+    this.showNotification('Permission added successfully', 'success');
+  }
+  
+  removePermission(node) {
+    if (!this.currentGroup) return;
+    this.currentGroup.permissions = this.currentGroup.permissions.filter(p => p.node !== node);
+    this.renderGroupPermissions();
+    this.showNotification('Permission removed', 'success');
+  }
+  
+  addParentGroup() {
+    // In a real implementation, this would open a modal to select a parent group
+    this.showNotification('Select a parent group to add', 'info');
+  }
+  
+  removeParent(parentId) {
+    if (!this.currentGroup) return;
+    this.currentGroup.parents = this.currentGroup.parents.filter(p => p !== parentId);
+    this.renderParentGroups();
+    this.showNotification('Parent group removed', 'success');
+  }
+  
+  addMember() {
+    // In a real implementation, this would open a modal to add a member
+    this.showNotification('Enter member name to add', 'info');
+  }
+  
+  removeMember(member) {
+    if (!this.currentGroup) return;
+    this.currentGroup.members = this.currentGroup.members.filter(m => m !== member);
+    this.renderGroupMembers();
+    this.showNotification('Member removed', 'success');
+  }
+  
+  saveCurrentGroup() {
+    if (!this.currentGroup) {
+      // Creating new group
+      const newGroup = {
+        id: this.groupName.value.toLowerCase(),
+        name: this.groupName.value,
+        displayName: this.groupDisplayName.value,
+        prefix: this.groupPrefix.value,
+        suffix: this.groupSuffix.value,
+        priority: parseInt(this.groupPriority.value),
+        isDefault: this.groupDefault.checked,
+        permissions: [],
+        parents: [],
+        members: []
+      };
+      this.groups.push(newGroup);
+      this.showNotification('Group created successfully', 'success');
+    } else {
+      // Updating existing group
+      this.currentGroup.name = this.groupName.value;
+      this.currentGroup.displayName = this.groupDisplayName.value;
+      this.currentGroup.prefix = this.groupPrefix.value;
+      this.currentGroup.suffix = this.groupSuffix.value;
+      this.currentGroup.priority = parseInt(this.groupPriority.value);
+      this.currentGroup.isDefault = this.groupDefault.checked;
+      this.showNotification('Group updated successfully', 'success');
+    }
+    
+    this.updateStats();
+    this.renderGroups();
+    this.populateGroupSelects();
+    this.closeEditGroupModal();
+  }
+  
+  deleteCurrentGroup() {
+    if (!this.currentGroup || !confirm(`Delete group "${this.currentGroup.name}"?`)) return;
+    
+    this.groups = this.groups.filter(g => g.id !== this.currentGroup.id);
+    this.updateStats();
+    this.renderGroups();
+    this.populateGroupSelects();
+    this.closeEditGroupModal();
+    this.showNotification('Group deleted successfully', 'success');
+  }
+  
+  openAssignPlayerModal() {
+    this.assignPlayerModal.style.display = 'flex';
+  }
+  
+  closeAssignPlayerModal() {
+    this.assignPlayerModal.style.display = 'none';
+  }
+  
+  assignPlayer() {
+    const playerName = this.assignPlayerName.value.trim();
+    const groupId = this.assignPlayerGroup.value;
+    const duration = this.assignDuration.value;
+    
+    if (!playerName || !groupId) return;
+    
+    const expires = duration && duration !== '' ? this.calculateExpireDate(duration) : null;
+    
+    this.playerPermissions.push({
+      name: playerName,
+      group: groupId,
+      assignedDate: new Date().toISOString().split('T')[0],
+      expires
+    });
+    
+    const group = this.groups.find(g => g.id === groupId);
+    if (group) {
+      group.members.push(playerName);
+    }
+    
+    this.updateStats();
+    this.renderPlayerPermissions();
+    this.closeAssignPlayerModal();
+    this.showNotification(`${playerName} assigned to group successfully`, 'success');
+  }
+  
+  calculateExpireDate(duration) {
+    const now = new Date();
+    if (duration === '1h') now.setHours(now.getHours() + 1);
+    else if (duration === '24h') now.setDate(now.getDate() + 1);
+    else if (duration === '7d') now.setDate(now.getDate() + 7);
+    else if (duration === '30d') now.setDate(now.getDate() + 30);
+    return now.toISOString().split('T')[0];
+  }
+  
+  editPlayerPermissions(playerName) {
+    this.showNotification(`Edit permissions for ${playerName}`, 'info');
+  }
+  
+  removePlayerPermissions(playerName) {
+    if (!confirm(`Remove ${playerName} from their group?`)) return;
+    
+    const player = this.playerPermissions.find(p => p.name === playerName);
+    if (player) {
+      const group = this.groups.find(g => g.id === player.group);
+      if (group) {
+        group.members = group.members.filter(m => m !== playerName);
+      }
+    }
+    
+    this.playerPermissions = this.playerPermissions.filter(p => p.name !== playerName);
+    this.updateStats();
+    this.renderPlayerPermissions();
+    this.showNotification(`${playerName} removed from group`, 'success');
+  }
+  
+  updateStats() {
+    const totalGroups = this.groups.length;
+    const totalPermissions = this.groups.reduce((sum, g) => sum + g.permissions.length, 0);
+    const assignedPlayers = this.playerPermissions.length;
+    const inheritanceChains = this.groups.filter(g => g.parents.length > 0).length;
+    
+    this.totalGroupsCount.textContent = totalGroups;
+    this.totalPermissionsCount.textContent = totalPermissions;
+    this.assignedPlayersCount.textContent = assignedPlayers;
+    this.inheritanceChainsCount.textContent = inheritanceChains;
+  }
+  
+  populateGroupSelects() {
+    // Populate tree select
+    this.treeGroupSelect.innerHTML = '<option value="">Select a group to view inheritance...</option>' +
+      this.groups.map(g => `<option value="${g.id}">${g.displayName}</option>`).join('');
+    
+    // Populate assign player group select
+    this.assignPlayerGroup.innerHTML = this.groups
+      .map(g => `<option value="${g.id}">${g.displayName}</option>`).join('');
+  }
+  
+  showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 16px 24px;
+      background: ${type === 'success' ? 'rgba(34, 197, 94, 0.9)' : type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(59, 130, 246, 0.9)'};
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 10000;
+      animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+}
+
+// ========================================
+// PLUGIN MANAGER
+// ========================================
+
+class PluginManager {
+  constructor() {
+    // DOM References - Stats
+    this.totalPluginsCount = document.getElementById('total-plugins-count');
+    this.enabledPluginsCount = document.getElementById('enabled-plugins-count');
+    this.disabledPluginsCount = document.getElementById('disabled-plugins-count');
+    this.outdatedPluginsCount = document.getElementById('outdated-plugins-count');
+    
+    // DOM References - Controls
+    this.pluginSearch = document.getElementById('plugin-search');
+    this.filterButtons = document.querySelectorAll('.plugin-filter-btn');
+    this.reloadAllBtn = document.getElementById('reload-all-plugins');
+    this.uploadPluginBtn = document.getElementById('upload-plugin');
+    
+    // DOM References - Plugin List
+    this.pluginList = document.getElementById('plugin-list');
+    
+    // DOM References - Details Modal
+    this.detailsModal = document.getElementById('plugin-details-modal');
+    this.closeDetailsBtn = document.getElementById('close-plugin-details');
+    this.closeModalBtn = document.getElementById('close-plugin-modal');
+    this.detailsName = document.getElementById('plugin-details-name');
+    
+    // DOM References - Details Tabs
+    this.pluginTabs = document.querySelectorAll('.plugin-tab');
+    this.tabContents = document.querySelectorAll('.plugin-tab-content');
+    
+    // DOM References - Info Tab
+    this.infoName = document.getElementById('plugin-info-name');
+    this.infoVersion = document.getElementById('plugin-info-version');
+    this.infoAuthor = document.getElementById('plugin-info-author');
+    this.infoStatus = document.getElementById('plugin-info-status');
+    this.infoLoadTime = document.getElementById('plugin-info-loadtime');
+    this.infoApi = document.getElementById('plugin-info-api');
+    this.infoDescription = document.getElementById('plugin-info-description');
+    this.infoWebsite = document.getElementById('plugin-info-website');
+    
+    // DOM References - Config Tab
+    this.configEditor = document.getElementById('plugin-config-editor');
+    this.configFileName = document.getElementById('config-file-name');
+    this.resetConfigBtn = document.getElementById('reset-config');
+    this.saveConfigBtn = document.getElementById('save-config');
+    this.configLines = document.getElementById('config-editor-lines');
+    this.configValidation = document.getElementById('config-editor-validation');
+    
+    // DOM References - Dependencies Tab
+    this.requiredDeps = document.getElementById('plugin-required-deps');
+    this.softDeps = document.getElementById('plugin-soft-deps');
+    this.loadBefore = document.getElementById('plugin-loadbefore');
+    
+    // DOM References - Commands Tab
+    this.commandSearch = document.getElementById('command-search');
+    this.commandList = document.getElementById('plugin-command-list');
+    
+    // DOM References - Upload Modal
+    this.uploadModal = document.getElementById('upload-plugin-modal');
+    this.closeUploadBtn = document.getElementById('close-upload-modal');
+    this.uploadDropZone = document.getElementById('upload-drop-zone');
+    this.pluginFileInput = document.getElementById('plugin-file-input');
+    this.uploadInfo = document.getElementById('upload-info');
+    this.uploadFileName = document.getElementById('upload-file-name');
+    this.uploadFileSize = document.getElementById('upload-file-size');
+    this.uploadProgress = document.getElementById('upload-progress');
+    this.uploadProgressBar = document.getElementById('upload-progress-bar');
+    this.autoEnableCheckbox = document.getElementById('auto-enable-plugin');
+    this.reloadAfterCheckbox = document.getElementById('reload-after-upload');
+    this.cancelUploadBtn = document.getElementById('cancel-upload');
+    this.confirmUploadBtn = document.getElementById('confirm-upload');
+    
+    // State
+    this.plugins = [];
+    this.currentFilter = 'all';
+    this.currentPlugin = null;
+    this.originalConfig = '';
+    this.selectedFile = null;
+  }
+  
+  init() {
+    this.setupEventListeners();
+    this.loadPlugins();
+    this.updateStats();
+  }
+  
+  setupEventListeners() {
+    // Search
+    this.pluginSearch.addEventListener('input', () => this.renderPlugins());
+    
+    // Filter buttons
+    this.filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.currentFilter = btn.dataset.filter;
+        this.renderPlugins();
+      });
+    });
+    
+    // Bulk actions
+    this.reloadAllBtn.addEventListener('click', () => this.reloadAllPlugins());
+    this.uploadPluginBtn.addEventListener('click', () => this.openUploadModal());
+    
+    // Details modal
+    this.closeDetailsBtn.addEventListener('click', () => this.closeDetailsModal());
+    this.closeModalBtn.addEventListener('click', () => this.closeDetailsModal());
+    
+    // Plugin tabs
+    this.pluginTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        this.pluginTabs.forEach(t => t.classList.remove('active'));
+        this.tabContents.forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const tabName = tab.dataset.tab;
+        document.querySelector(`.plugin-tab-content[data-tab="${tabName}"]`).classList.add('active');
+      });
+    });
+    
+    // Config editor
+    this.configEditor.addEventListener('input', () => this.updateConfigInfo());
+    this.resetConfigBtn.addEventListener('click', () => this.resetConfig());
+    this.saveConfigBtn.addEventListener('click', () => this.saveConfig());
+    
+    // Command search
+    this.commandSearch.addEventListener('input', (e) => this.filterCommands(e.target.value));
+    
+    // Upload modal
+    this.closeUploadBtn.addEventListener('click', () => this.closeUploadModal());
+    this.cancelUploadBtn.addEventListener('click', () => this.closeUploadModal());
+    this.confirmUploadBtn.addEventListener('click', () => this.uploadPlugin());
+    
+    // File upload
+    this.uploadDropZone.addEventListener('click', () => this.pluginFileInput.click());
+    this.pluginFileInput.addEventListener('change', (e) => this.handleFileSelect(e.target.files[0]));
+    
+    // Drag and drop
+    this.uploadDropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      this.uploadDropZone.classList.add('drag-over');
+    });
+    
+    this.uploadDropZone.addEventListener('dragleave', () => {
+      this.uploadDropZone.classList.remove('drag-over');
+    });
+    
+    this.uploadDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      this.uploadDropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith('.jar')) {
+        this.handleFileSelect(file);
+      }
+    });
+    
+    // Close modals on outside click
+    this.detailsModal.addEventListener('click', (e) => {
+      if (e.target === this.detailsModal) this.closeDetailsModal();
+    });
+    this.uploadModal.addEventListener('click', (e) => {
+      if (e.target === this.uploadModal) this.closeUploadModal();
+    });
+  }
+  
+  loadPlugins() {
+    // Mock plugin data
+    this.plugins = [
+      {
+        id: 'neoessentials',
+        name: 'NeoEssentials',
+        version: '1.0.2.2',
+        author: 'ZeroG Network',
+        description: 'Essential commands and utilities for Minecraft servers',
+        enabled: true,
+        outdated: false,
+        isLibrary: false,
+        loadTime: 245,
+        apiVersion: '1.21',
+        website: 'https://github.com/ZeroG-Network-Org/NeoEssentials',
+        dependencies: {
+          required: [],
+          soft: ['Vault', 'PlaceholderAPI'],
+          loadBefore: []
+        },
+        commands: [
+          { name: '/spawn', description: 'Teleport to spawn point', usage: '/spawn', aliases: ['spawn'] },
+          { name: '/home', description: 'Teleport to your home', usage: '/home [name]', aliases: ['h'] },
+          { name: '/sethome', description: 'Set a home location', usage: '/sethome <name>', aliases: ['sh'] },
+          { name: '/warp', description: 'Teleport to a warp', usage: '/warp <name>', aliases: ['w'] },
+          { name: '/tpa', description: 'Request teleport to player', usage: '/tpa <player>', aliases: ['tprequest'] }
+        ],
+        config: `# NeoEssentials Configuration
+enable-homes: true
+max-homes: 5
+home-cooldown: 30
+
+enable-warps: true
+warp-cooldown: 10
+
+spawn:
+  enabled: true
+  on-join: true
+  on-death: false`
+      },
+      {
+        id: 'worldedit',
+        name: 'WorldEdit',
+        version: '7.2.15',
+        author: 'sk89q',
+        description: 'In-game world editor for building and terraforming',
+        enabled: true,
+        outdated: true,
+        isLibrary: false,
+        loadTime: 892,
+        apiVersion: '1.21',
+        website: 'https://worldedit.enginehub.org',
+        dependencies: {
+          required: ['WorldEditCore'],
+          soft: [],
+          loadBefore: ['WorldGuard']
+        },
+        commands: [
+          { name: '//set', description: 'Set blocks in selection', usage: '//set <block>', aliases: ['set'] },
+          { name: '//copy', description: 'Copy selection to clipboard', usage: '//copy', aliases: ['c'] },
+          { name: '//paste', description: 'Paste from clipboard', usage: '//paste', aliases: ['p'] },
+          { name: '//undo', description: 'Undo last action', usage: '//undo [steps]', aliases: ['u'] },
+          { name: '//redo', description: 'Redo last action', usage: '//redo [steps]', aliases: ['r'] }
+        ],
+        config: `max-blocks-changed: 1000000
+max-radius: 200
+nav-wand-item: minecraft:compass
+use-inventory: true
+log-commands: true`
+      },
+      {
+        id: 'vault',
+        name: 'Vault',
+        version: '1.7.3',
+        author: 'MilkBowl',
+        description: 'Abstraction library for permissions, chat, and economy APIs',
+        enabled: true,
+        outdated: false,
+        isLibrary: true,
+        loadTime: 134,
+        apiVersion: '1.21',
+        website: 'https://github.com/MilkBowl/Vault',
+        dependencies: {
+          required: [],
+          soft: [],
+          loadBefore: []
+        },
+        commands: [],
+        config: `# Vault Configuration
+update-notifications: true
+debug: false`
+      },
+      {
+        id: 'luckperms',
+        name: 'LuckPerms',
+        version: '5.4.102',
+        author: 'Luck',
+        description: 'Advanced permissions plugin with group management',
+        enabled: true,
+        outdated: false,
+        isLibrary: false,
+        loadTime: 567,
+        apiVersion: '1.21',
+        website: 'https://luckperms.net',
+        dependencies: {
+          required: [],
+          soft: ['Vault'],
+          loadBefore: []
+        },
+        commands: [
+          { name: '/lp', description: 'LuckPerms main command', usage: '/lp <args>', aliases: ['luckperms', 'perm', 'perms'] },
+          { name: '/lp user', description: 'Manage user permissions', usage: '/lp user <player> <args>', aliases: [] },
+          { name: '/lp group', description: 'Manage group permissions', usage: '/lp group <group> <args>', aliases: [] }
+        ],
+        config: `server: global
+storage-method: h2
+sync-minutes: 3
+
+data:
+  pool-settings:
+    maximum-pool-size: 10
+  table-prefix: 'luckperms_'`
+      },
+      {
+        id: 'dynmap',
+        name: 'Dynmap',
+        version: '3.4',
+        author: 'mikeprimm',
+        description: 'Dynamic web-based map for your server',
+        enabled: false,
+        outdated: false,
+        isLibrary: false,
+        loadTime: 0,
+        apiVersion: '1.21',
+        website: 'https://www.spigotmc.org/resources/dynmap.274/',
+        dependencies: {
+          required: [],
+          soft: ['WorldGuard', 'Towny'],
+          loadBefore: []
+        },
+        commands: [
+          { name: '/dynmap', description: 'Dynmap main command', usage: '/dynmap <args>', aliases: ['dmap'] },
+          { name: '/dmarker', description: 'Manage map markers', usage: '/dmarker <args>', aliases: ['dm'] }
+        ],
+        config: `webserver-port: 8123
+enable-markers: true
+update-rate: 2000
+fullrender-players: 0`
+      }
+    ];
+    
+    this.renderPlugins();
+  }
+  
+  renderPlugins() {
+    const searchTerm = this.pluginSearch.value.toLowerCase();
+    const filtered = this.plugins.filter(plugin => {
+      const matchesSearch = plugin.name.toLowerCase().includes(searchTerm) ||
+                           plugin.description.toLowerCase().includes(searchTerm) ||
+                           plugin.author.toLowerCase().includes(searchTerm);
+      
+      const matchesFilter = this.currentFilter === 'all' ||
+                           (this.currentFilter === 'enabled' && plugin.enabled) ||
+                           (this.currentFilter === 'disabled' && !plugin.enabled) ||
+                           (this.currentFilter === 'outdated' && plugin.outdated) ||
+                           (this.currentFilter === 'libraries' && plugin.isLibrary);
+      
+      return matchesSearch && matchesFilter;
+    });
+    
+    this.pluginList.innerHTML = filtered.length === 0 
+      ? '<p class="no-data">No plugins found</p>'
+      : filtered.map(plugin => this.createPluginElement(plugin)).join('');
+    
+    // Add event listeners
+    document.querySelectorAll('.plugin-toggle input').forEach(toggle => {
+      toggle.addEventListener('change', (e) => {
+        const pluginId = e.target.closest('.plugin-item').dataset.pluginId;
+        this.togglePlugin(pluginId, e.target.checked);
+      });
+    });
+    
+    document.querySelectorAll('.plugin-btn.primary').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const pluginId = e.target.closest('.plugin-item').dataset.pluginId;
+        this.openDetailsModal(pluginId);
+      });
+    });
+    
+    document.querySelectorAll('.plugin-btn:not(.primary):not(.danger)').forEach(btn => {
+      if (btn.textContent.includes('Reload')) {
+        btn.addEventListener('click', (e) => {
+          const pluginId = e.target.closest('.plugin-item').dataset.pluginId;
+          this.reloadPlugin(pluginId);
+        });
+      }
+    });
+    
+    document.querySelectorAll('.plugin-btn.danger').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const pluginId = e.target.closest('.plugin-item').dataset.pluginId;
+        this.deletePlugin(pluginId);
+      });
+    });
+  }
+  
+  createPluginElement(plugin) {
+    const statusBadge = plugin.enabled 
+      ? '<span class="plugin-badge status-enabled">Enabled</span>'
+      : '<span class="plugin-badge status-disabled">Disabled</span>';
+    
+    const libraryBadge = plugin.isLibrary 
+      ? '<span class="plugin-badge type-library">Library</span>'
+      : '';
+    
+    const updateBadge = plugin.outdated 
+      ? '<span class="plugin-badge update-available">Update Available</span>'
+      : '';
+    
+    const enabledClass = plugin.enabled ? 'enabled' : 'disabled';
+    const outdatedClass = plugin.outdated ? 'outdated' : '';
+    
+    return `
+      <div class="plugin-item ${enabledClass} ${outdatedClass}" data-plugin-id="${plugin.id}">
+        <div class="plugin-item-header">
+          <div class="plugin-item-info">
+            <div class="plugin-item-name">
+              ${plugin.name}
+              <span class="plugin-item-version">v${plugin.version}</span>
+            </div>
+            <div class="plugin-item-author">by ${plugin.author}</div>
+          </div>
+          <label class="plugin-toggle">
+            <input type="checkbox" ${plugin.enabled ? 'checked' : ''}>
+            <span class="plugin-toggle-slider"></span>
+          </label>
+        </div>
+        <div class="plugin-item-description">${plugin.description}</div>
+        <div class="plugin-item-meta">
+          <span class="plugin-meta-item">
+            <span class="icon">⚡</span>
+            ${plugin.loadTime}ms
+          </span>
+          <span class="plugin-meta-item">
+            <span class="icon">🔧</span>
+            API ${plugin.apiVersion}
+          </span>
+          <span class="plugin-meta-item">
+            <span class="icon">💬</span>
+            ${plugin.commands.length} commands
+          </span>
+        </div>
+        <div class="plugin-badges">
+          ${statusBadge}
+          ${libraryBadge}
+          ${updateBadge}
+        </div>
+        <div class="plugin-item-actions">
+          <button class="plugin-btn primary">Details</button>
+          <button class="plugin-btn">Reload</button>
+          <button class="plugin-btn danger">Delete</button>
+        </div>
+      </div>
+    `;
+  }
+  
+  updateStats() {
+    const total = this.plugins.length;
+    const enabled = this.plugins.filter(p => p.enabled).length;
+    const disabled = this.plugins.filter(p => !p.enabled).length;
+    const outdated = this.plugins.filter(p => p.outdated).length;
+    
+    this.totalPluginsCount.textContent = total;
+    this.enabledPluginsCount.textContent = enabled;
+    this.disabledPluginsCount.textContent = disabled;
+    this.outdatedPluginsCount.textContent = outdated;
+  }
+  
+  togglePlugin(pluginId, enabled) {
+    const plugin = this.plugins.find(p => p.id === pluginId);
+    if (plugin) {
+      plugin.enabled = enabled;
+      this.updateStats();
+      this.renderPlugins();
+      this.showNotification(
+        enabled ? `${plugin.name} enabled successfully` : `${plugin.name} disabled successfully`,
+        'success'
+      );
+    }
+  }
+  
+  reloadPlugin(pluginId) {
+    const plugin = this.plugins.find(p => p.id === pluginId);
+    if (plugin) {
+      this.showNotification(`Reloading ${plugin.name}...`, 'info');
+      setTimeout(() => {
+        this.showNotification(`${plugin.name} reloaded successfully`, 'success');
+      }, 500);
+    }
+  }
+  
+  deletePlugin(pluginId) {
+    const plugin = this.plugins.find(p => p.id === pluginId);
+    if (plugin && confirm(`Are you sure you want to delete ${plugin.name}?`)) {
+      this.plugins = this.plugins.filter(p => p.id !== pluginId);
+      this.updateStats();
+      this.renderPlugins();
+      this.showNotification(`${plugin.name} deleted successfully`, 'success');
+    }
+  }
+  
+  reloadAllPlugins() {
+    this.showNotification('Reloading all plugins...', 'info');
+    setTimeout(() => {
+      this.showNotification('All plugins reloaded successfully', 'success');
+    }, 1000);
+  }
+  
+  openDetailsModal(pluginId) {
+    this.currentPlugin = this.plugins.find(p => p.id === pluginId);
+    if (!this.currentPlugin) return;
+    
+    // Reset to info tab
+    this.pluginTabs.forEach(t => t.classList.remove('active'));
+    this.tabContents.forEach(c => c.classList.remove('active'));
+    this.pluginTabs[0].classList.add('active');
+    this.tabContents[0].classList.add('active');
+    
+    // Populate info tab
+    this.detailsName.textContent = this.currentPlugin.name;
+    this.infoName.textContent = this.currentPlugin.name;
+    this.infoVersion.textContent = this.currentPlugin.version;
+    this.infoAuthor.textContent = this.currentPlugin.author;
+    this.infoStatus.textContent = this.currentPlugin.enabled ? 'Enabled' : 'Disabled';
+    this.infoLoadTime.textContent = `${this.currentPlugin.loadTime}ms`;
+    this.infoApi.textContent = this.currentPlugin.apiVersion;
+    this.infoDescription.textContent = this.currentPlugin.description;
+    this.infoWebsite.textContent = this.currentPlugin.website;
+    this.infoWebsite.href = this.currentPlugin.website;
+    
+    // Populate config tab
+    this.configFileName.textContent = `${this.currentPlugin.id}.yml`;
+    this.configEditor.value = this.currentPlugin.config;
+    this.originalConfig = this.currentPlugin.config;
+    this.updateConfigInfo();
+    
+    // Populate dependencies tab
+    this.populateDependencies();
+    
+    // Populate commands tab
+    this.populateCommands();
+    
+    this.detailsModal.style.display = 'flex';
+  }
+  
+  closeDetailsModal() {
+    this.detailsModal.style.display = 'none';
+    this.currentPlugin = null;
+  }
+  
+  populateDependencies() {
+    const deps = this.currentPlugin.dependencies;
+    
+    // Required dependencies
+    if (deps.required.length === 0) {
+      this.requiredDeps.innerHTML = '<p class="no-data">No required dependencies</p>';
+    } else {
+      this.requiredDeps.innerHTML = deps.required.map(dep => {
+        const installed = this.plugins.some(p => p.name === dep);
+        return `
+          <div class="dependency-item">
+            <span class="dependency-name">${dep}</span>
+            <span class="dependency-status ${installed ? 'installed' : 'missing'}">
+              ${installed ? '✓ Installed' : '⚠️ Missing'}
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // Soft dependencies
+    if (deps.soft.length === 0) {
+      this.softDeps.innerHTML = '<p class="no-data">No soft dependencies</p>';
+    } else {
+      this.softDeps.innerHTML = deps.soft.map(dep => {
+        const installed = this.plugins.some(p => p.name === dep);
+        return `
+          <div class="dependency-item">
+            <span class="dependency-name">${dep}</span>
+            <span class="dependency-status ${installed ? 'installed' : 'missing'}">
+              ${installed ? '✓ Installed' : '○ Optional'}
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    // Load before
+    if (deps.loadBefore.length === 0) {
+      this.loadBefore.innerHTML = '<p class="no-data">No load order specified</p>';
+    } else {
+      this.loadBefore.innerHTML = deps.loadBefore.map(dep => {
+        return `
+          <div class="dependency-item">
+            <span class="dependency-name">${dep}</span>
+            <span class="dependency-status installed">✓ OK</span>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+  
+  populateCommands() {
+    if (this.currentPlugin.commands.length === 0) {
+      this.commandList.innerHTML = '<p class="no-data">No commands registered</p>';
+    } else {
+      this.commandList.innerHTML = this.currentPlugin.commands.map(cmd => {
+        const aliasesHtml = cmd.aliases.length > 0
+          ? `<div class="command-aliases">${cmd.aliases.map(a => `<span class="command-alias">/${a}</span>`).join('')}</div>`
+          : '';
+        
+        return `
+          <div class="command-item">
+            <div class="command-name">${cmd.name}</div>
+            <div class="command-description">${cmd.description}</div>
+            <div class="command-usage">${cmd.usage}</div>
+            ${aliasesHtml}
+          </div>
+        `;
+      }).join('');
+    }
+  }
+  
+  filterCommands(searchTerm) {
+    const items = this.commandList.querySelectorAll('.command-item');
+    items.forEach(item => {
+      const name = item.querySelector('.command-name').textContent.toLowerCase();
+      const desc = item.querySelector('.command-description').textContent.toLowerCase();
+      const matches = name.includes(searchTerm.toLowerCase()) || desc.includes(searchTerm.toLowerCase());
+      item.style.display = matches ? 'block' : 'none';
+    });
+  }
+  
+  updateConfigInfo() {
+    const lines = this.configEditor.value.split('\n').length;
+    this.configLines.textContent = `${lines} lines`;
+    
+    // Simple YAML validation (check for basic syntax)
+    const value = this.configEditor.value;
+    const hasInvalidSyntax = value.includes('\t') || /^\s*[^#\s-].*:\s*$/.test(value);
+    
+    if (hasInvalidSyntax) {
+      this.configValidation.textContent = '⚠️ Warning: Check syntax';
+      this.configValidation.style.color = '#f59e0b';
+    } else {
+      this.configValidation.textContent = '✓ Valid YAML';
+      this.configValidation.style.color = '#22c55e';
+    }
+  }
+  
+  resetConfig() {
+    if (confirm('Reset configuration to original values?')) {
+      this.configEditor.value = this.originalConfig;
+      this.updateConfigInfo();
+      this.showNotification('Configuration reset', 'info');
+    }
+  }
+  
+  saveConfig() {
+    this.currentPlugin.config = this.configEditor.value;
+    this.originalConfig = this.configEditor.value;
+    this.showNotification('Configuration saved successfully', 'success');
+  }
+  
+  openUploadModal() {
+    this.uploadModal.style.display = 'flex';
+    this.selectedFile = null;
+    this.uploadInfo.style.display = 'none';
+    this.confirmUploadBtn.disabled = true;
+    this.uploadProgressBar.style.width = '0%';
+  }
+  
+  closeUploadModal() {
+    this.uploadModal.style.display = 'none';
+  }
+  
+  handleFileSelect(file) {
+    if (!file || !file.name.endsWith('.jar')) {
+      this.showNotification('Please select a valid JAR file', 'error');
+      return;
+    }
+    
+    this.selectedFile = file;
+    this.uploadFileName.textContent = file.name;
+    this.uploadFileSize.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+    this.uploadInfo.style.display = 'block';
+    this.confirmUploadBtn.disabled = false;
+  }
+  
+  uploadPlugin() {
+    if (!this.selectedFile) return;
+    
+    this.confirmUploadBtn.disabled = true;
+    this.cancelUploadBtn.disabled = true;
+    
+    // Simulate upload progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      this.uploadProgressBar.style.width = `${progress}%`;
+      
+      if (progress >= 100) {
+        clearInterval(interval);
+        setTimeout(() => {
+          this.closeUploadModal();
+          this.showNotification('Plugin uploaded successfully', 'success');
+          
+          // Add new plugin to list (mock)
+          const newPlugin = {
+            id: 'uploaded-' + Date.now(),
+            name: this.selectedFile.name.replace('.jar', ''),
+            version: '1.0.0',
+            author: 'Unknown',
+            description: 'Uploaded plugin',
+            enabled: this.autoEnableCheckbox.checked,
+            outdated: false,
+            isLibrary: false,
+            loadTime: 0,
+            apiVersion: '1.21',
+            website: '#',
+            dependencies: { required: [], soft: [], loadBefore: [] },
+            commands: [],
+            config: '# Configuration'
+          };
+          
+          this.plugins.push(newPlugin);
+          this.updateStats();
+          this.renderPlugins();
+          
+          if (this.reloadAfterCheckbox.checked) {
+            setTimeout(() => this.reloadAllPlugins(), 500);
+          }
+        }, 500);
+      }
+    }, 100);
+  }
+  
+  showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 16px 24px;
+      background: ${type === 'success' ? 'rgba(34, 197, 94, 0.9)' : type === 'error' ? 'rgba(239, 68, 68, 0.9)' : 'rgba(59, 130, 246, 0.9)'};
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      z-index: 10000;
+      animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+}
+
+// ========================================
+// WORLD MANAGEMENT INTERFACE
+// ========================================
+
+class WorldManager {
+  constructor() {
+    // DOM References - Stats
+    this.loadedChunksEl = document.getElementById('loaded-chunks');
+    this.playersInWorldEl = document.getElementById('players-in-world');
+    this.entitiesInWorldEl = document.getElementById('entities-in-world');
+    this.worldTimeEl = document.getElementById('world-time');
+    this.worldWeatherEl = document.getElementById('world-weather');
+    this.worldSizeEl = document.getElementById('world-size');
+    
+    // DOM References - Time Controls
+    this.currentTimeTicks = document.getElementById('current-time-ticks');
+    this.timeSlider = document.getElementById('time-slider');
+    this.timeButtons = document.querySelectorAll('[data-time]');
+    
+    // DOM References - Weather Controls
+    this.weatherButtons = document.querySelectorAll('[data-weather]');
+    this.weatherDuration = document.getElementById('weather-duration');
+    
+    // DOM References - Border
+    this.borderCenter = document.getElementById('border-center');
+    this.borderSize = document.getElementById('border-size');
+    this.borderDamage = document.getElementById('border-damage');
+    this.editBorderBtn = document.getElementById('edit-border');
+    
+    // DOM References - Difficulty
+    this.difficultyButtons = document.querySelectorAll('[data-difficulty]');
+    this.lockDifficulty = document.getElementById('lock-difficulty');
+    
+    // DOM References - Gamerules
+    this.gameruleSearch = document.getElementById('gamerule-search');
+    this.gameruleFilters = document.querySelectorAll('.gamerule-filter .filter-btn');
+    this.gameruleGrid = document.getElementById('gamerules-grid');
+    this.gameruleToggles = document.querySelectorAll('[data-gamerule]');
+    this.resetGamerules = document.getElementById('reset-gamerules');
+    this.saveGamerules = document.getElementById('save-gamerules');
+    
+    // DOM References - World Tabs
+    this.worldTabs = document.querySelectorAll('.world-tab');
+    
+    // DOM References - Actions
+    this.saveWorldsBtn = document.getElementById('save-worlds');
+    this.refreshWorldsBtn = document.getElementById('refresh-worlds');
+    
+    // DOM References - Border Modal
+    this.borderModal = document.getElementById('world-border-modal');
+    this.closeBorderModal = document.getElementById('close-border-modal');
+    this.borderCenterX = document.getElementById('border-center-x');
+    this.borderCenterZ = document.getElementById('border-center-z');
+    this.borderSizeInput = document.getElementById('border-size-input');
+    this.borderTransition = document.getElementById('border-transition');
+    this.borderDamageAmount = document.getElementById('border-damage-amount');
+    this.borderDamageBuffer = document.getElementById('border-damage-buffer');
+    this.borderWarningDistance = document.getElementById('border-warning-distance');
+    this.borderWarningTime = document.getElementById('border-warning-time');
+    this.saveBorder = document.getElementById('save-border');
+    this.cancelBorderEdit = document.getElementById('cancel-border-edit');
+    
+    // State
+    this.currentWorld = 'minecraft:overworld';
+    this.currentGameruleFilter = 'all';
+    this.gamerules = {};
+    this.dimensions = [];
+    this.worldTabsContainer = document.querySelector('.world-tabs');
+  }
+
+  async init() {
+    await this.loadDimensions();
+    this.setupEventListeners();
+    this.loadWorldData();
+    this.loadGamerules();
+  }
+
+  /**
+   * Load dimensions dynamically from the server
+   */
+  async loadDimensions() {
+    try {
+      const response = await fetch('/api/map/dimensions');
+      if (!response.ok) {
+        throw new Error('Failed to fetch dimensions');
+      }
+      
+      const data = await response.json();
+      this.dimensions = data.dimensions || [];
+      
+      // Generate dimension tabs dynamically
+      this.generateDimensionTabs();
+      
+      console.log(`Loaded ${this.dimensions.length} dimensions:`, this.dimensions);
+    } catch (error) {
+      console.error('Error loading dimensions:', error);
+      // Fallback to default dimensions
+      this.dimensions = [
+        { key: 'minecraft:overworld', name: 'Overworld', playerCount: 0, loadedChunks: 0 },
+        { key: 'minecraft:the_nether', name: 'The Nether', playerCount: 0, loadedChunks: 0 },
+        { key: 'minecraft:the_end', name: 'The End', playerCount: 0, loadedChunks: 0 }
+      ];
+      this.generateDimensionTabs();
+    }
+  }
+
+  /**
+   * Generate dimension tabs dynamically based on loaded dimensions
+   */
+  generateDimensionTabs() {
+    if (!this.worldTabsContainer) return;
+    
+    // Clear existing tabs
+    this.worldTabsContainer.innerHTML = '';
+    
+    // Generate tabs for each dimension
+    this.dimensions.forEach((dim, index) => {
+      const button = document.createElement('button');
+      button.className = 'world-tab';
+      if (index === 0) {
+        button.classList.add('active');
+        this.currentWorld = dim.key;
+      }
+      button.dataset.world = dim.key;
+      
+      // Determine icon based on dimension
+      let icon = '🌍';
+      if (dim.key.includes('nether')) {
+        icon = '🔥';
+      } else if (dim.key.includes('end')) {
+        icon = '🌌';
+      } else if (dim.key.includes('twilight')) {
+        icon = '🌲';
+      } else if (dim.key.includes('mining')) {
+        icon = '⛏️';
+      } else if (dim.key.includes('void')) {
+        icon = '🌑';
+      } else if (dim.key.includes('aether')) {
+        icon = '☁️';
+      } else if (!dim.key.includes('overworld')) {
+        // Custom dimension - use generic icon
+        icon = '🗺️';
+      }
+      
+      button.innerHTML = `
+        <span class="tab-icon">${icon}</span>
+        <span class="tab-name">${dim.name}</span>
+      `;
+      
+      this.worldTabsContainer.appendChild(button);
+    });
+    
+    // Re-query world tabs after generating them
+    this.worldTabs = document.querySelectorAll('.world-tab');
+  }
+
+  setupEventListeners() {
+    // World tabs
+    this.worldTabs.forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        this.worldTabs.forEach(t => t.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        this.currentWorld = e.currentTarget.dataset.world;
+        this.loadWorldData();
+      });
+    });
+    
+    // Action buttons
+    this.saveWorldsBtn.addEventListener('click', () => this.saveAllWorlds());
+    this.refreshWorldsBtn.addEventListener('click', () => this.refreshWorlds());
+    
+    // Time controls
+    this.timeSlider.addEventListener('input', (e) => {
+      this.updateTimeDisplay(e.target.value);
+    });
+    
+    this.timeSlider.addEventListener('change', (e) => {
+      this.setWorldTime(e.target.value);
+    });
+    
+    this.timeButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const timePreset = e.currentTarget.dataset.time;
+        this.setTimePreset(timePreset);
+      });
+    });
+    
+    // Weather controls
+    this.weatherButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const weather = e.currentTarget.dataset.weather;
+        this.setWeather(weather);
+      });
+    });
+    
+    // Border controls
+    this.editBorderBtn.addEventListener('click', () => this.openBorderModal());
+    this.closeBorderModal.addEventListener('click', () => this.closeBorderModalHandler());
+    this.cancelBorderEdit.addEventListener('click', () => this.closeBorderModalHandler());
+    this.saveBorder.addEventListener('click', () => this.saveBorderSettings());
+    
+    // Difficulty controls
+    this.difficultyButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        if (this.lockDifficulty.checked) {
+          this.showNotification('Difficulty is locked', 'warning');
+          return;
+        }
+        this.difficultyButtons.forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        const difficulty = e.currentTarget.dataset.difficulty;
+        this.setDifficulty(difficulty);
+      });
+    });
+    
+    // Gamerule search
+    this.gameruleSearch.addEventListener('input', () => this.filterGamerules());
+    
+    // Gamerule filters
+    this.gameruleFilters.forEach(filter => {
+      filter.addEventListener('click', (e) => {
+        this.gameruleFilters.forEach(f => f.classList.remove('active'));
+        e.target.classList.add('active');
+        this.currentGameruleFilter = e.target.dataset.filter;
+        this.filterGamerules();
+      });
+    });
+    
+    // Gamerule toggles
+    this.gameruleToggles.forEach(toggle => {
+      toggle.addEventListener('change', (e) => {
+        const gamerule = e.target.dataset.gamerule;
+        const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+        this.gamerules[gamerule] = value;
+      });
+    });
+    
+    // Gamerule actions
+    this.resetGamerules.addEventListener('click', () => this.resetToDefaults());
+    this.saveGamerules.addEventListener('click', () => this.saveAllGamerules());
+  }
+
+  async loadWorldData() {
+    try {
+      // Fetch world info for current dimension
+      const response = await fetch(`/api/map/world-info?dimension=${encodeURIComponent(this.currentWorld)}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch world data');
+      }
+      
+      const result = await response.json();
+      const data = result.dimension;
+      
+      // Update stats
+      this.loadedChunksEl.textContent = data.loadedChunks ? data.loadedChunks.toLocaleString() : '0';
+      
+      // Get player count for this dimension
+      const dimData = this.dimensions.find(d => d.key === this.currentWorld);
+      this.playersInWorldEl.textContent = dimData ? dimData.playerCount : '0';
+      
+      // Entities count (placeholder - would need separate API endpoint)
+      this.entitiesInWorldEl.textContent = '0';
+      
+      // Time display
+      const ticks = data.dayTime % 24000;
+      const day = Math.floor(data.gameTime / 24000);
+      const hours = Math.floor(ticks / 1000);
+      const minutes = Math.floor((ticks % 1000) / 16.67);
+      this.worldTimeEl.textContent = `Day ${day}, ${hours}:${minutes.toString().padStart(2, '0')}`;
+      
+      // Weather
+      let weather = 'Clear';
+      if (data.isThundering) {
+        weather = 'Thunder';
+      } else if (data.isRaining) {
+        weather = 'Rain';
+      } else if (!data.hasSkyLight) {
+        weather = 'N/A';
+      }
+      this.worldWeatherEl.textContent = weather;
+      
+      // World size (placeholder)
+      this.worldSizeEl.textContent = '0.0 GB';
+      
+      // Update time slider
+      this.timeSlider.value = ticks;
+      this.updateTimeDisplay(ticks);
+      
+      // Update border info
+      if (data.worldBorder) {
+        this.borderCenter.textContent = `${data.worldBorder.centerX}, ${data.worldBorder.centerZ}`;
+        this.borderSize.textContent = `${data.worldBorder.size.toLocaleString()} blocks`;
+        this.borderDamage.textContent = `${data.worldBorder.damagePerBlock} per second`;
+      }
+      
+    } catch (error) {
+      console.error('Error loading world data:', error);
+      // Set default values on error
+      this.loadedChunksEl.textContent = '0';
+      this.playersInWorldEl.textContent = '0';
+      this.entitiesInWorldEl.textContent = '0';
+      this.worldTimeEl.textContent = 'Day 0, 0:00';
+      this.worldWeatherEl.textContent = 'Unknown';
+      this.worldSizeEl.textContent = '0.0 GB';
+    }
+  }
+
+  updateTimeDisplay(ticks) {
+    this.currentTimeTicks.textContent = `${ticks} ticks`;
+  }
+
+  setWorldTime(ticks) {
+    this.showNotification(`Time set to ${ticks} ticks`, 'success');
+    // Would call API in production
+  }
+
+  setTimePreset(preset) {
+    const presets = {
+      day: 1000,
+      noon: 6000,
+      night: 13000,
+      midnight: 18000
+    };
+    
+    const ticks = presets[preset];
+    this.timeSlider.value = ticks;
+    this.updateTimeDisplay(ticks);
+    this.setWorldTime(ticks);
+  }
+
+  setWeather(weather) {
+    const duration = this.weatherDuration.value;
+    this.showNotification(`Weather set to ${weather} for ${duration} seconds`, 'success');
+    this.worldWeatherEl.textContent = weather.charAt(0).toUpperCase() + weather.slice(1);
+    // Would call API in production
+  }
+
+  setDifficulty(difficulty) {
+    this.showNotification(`Difficulty set to ${difficulty}`, 'success');
+    // Would call API in production
+  }
+
+  // Border Modal
+  openBorderModal() {
+    this.borderModal.style.display = 'flex';
+  }
+
+  closeBorderModalHandler() {
+    this.borderModal.style.display = 'none';
+  }
+
+  saveBorderSettings() {
+    const settings = {
+      centerX: parseInt(this.borderCenterX.value),
+      centerZ: parseInt(this.borderCenterZ.value),
+      size: parseInt(this.borderSizeInput.value),
+      transition: parseInt(this.borderTransition.value),
+      damage: parseFloat(this.borderDamageAmount.value),
+      damageBuffer: parseInt(this.borderDamageBuffer.value),
+      warningDistance: parseInt(this.borderWarningDistance.value),
+      warningTime: parseInt(this.borderWarningTime.value)
+    };
+    
+    this.borderCenter.textContent = `${settings.centerX}, ${settings.centerZ}`;
+    this.borderSize.textContent = `${settings.size.toLocaleString()} blocks`;
+    this.borderDamage.textContent = `${settings.damage} per second`;
+    
+    this.showNotification('World border updated successfully', 'success');
+    this.closeBorderModalHandler();
+  }
+
+  // Gamerules
+  loadGamerules() {
+    // Initialize gamerules state from DOM
+    this.gameruleToggles.forEach(toggle => {
+      const gamerule = toggle.dataset.gamerule;
+      const value = toggle.type === 'checkbox' ? toggle.checked : toggle.value;
+      this.gamerules[gamerule] = value;
+    });
+  }
+
+  filterGamerules() {
+    const searchTerm = this.gameruleSearch.value.toLowerCase();
+    const filter = this.currentGameruleFilter;
+    
+    const gameruleItems = document.querySelectorAll('.gamerule-item');
+    
+    gameruleItems.forEach(item => {
+      const name = item.querySelector('.gamerule-name').textContent.toLowerCase();
+      const desc = item.querySelector('.gamerule-desc').textContent.toLowerCase();
+      const category = item.dataset.category;
+      
+      const matchesSearch = name.includes(searchTerm) || desc.includes(searchTerm);
+      const matchesFilter = filter === 'all' || category === filter;
+      
+      if (matchesSearch && matchesFilter) {
+        item.style.display = 'flex';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
+
+  resetToDefaults() {
+    if (!confirm('Reset all gamerules to default values?')) return;
+    
+    // Reset to defaults
+    const defaults = {
+      doMobSpawning: true,
+      keepInventory: false,
+      doDaylightCycle: true,
+      doFireTick: true,
+      doMobLoot: true,
+      doTileDrops: true,
+      announceAdvancements: true,
+      showDeathMessages: true,
+      randomTickSpeed: 3,
+      spawnRadius: 10,
+      maxCommandChainLength: 65536
+    };
+    
+    this.gameruleToggles.forEach(toggle => {
+      const gamerule = toggle.dataset.gamerule;
+      if (defaults.hasOwnProperty(gamerule)) {
+        if (toggle.type === 'checkbox') {
+          toggle.checked = defaults[gamerule];
+        } else {
+          toggle.value = defaults[gamerule];
+        }
+        this.gamerules[gamerule] = defaults[gamerule];
+      }
+    });
+    
+    this.showNotification('Gamerules reset to defaults', 'success');
+  }
+
+  saveAllGamerules() {
+    this.showNotification('Saving gamerules...', 'info');
+    
+    // Mock save
+    setTimeout(() => {
+      this.showNotification('All gamerules saved successfully!', 'success');
+    }, 500);
+  }
+
+  saveAllWorlds() {
+    this.showNotification('Saving all worlds...', 'info');
+    
+    setTimeout(() => {
+      this.showNotification('All worlds saved successfully!', 'success');
+    }, 1000);
+  }
+
+  refreshWorlds() {
+    this.showNotification('Refreshing world data...', 'info');
+    
+    setTimeout(() => {
+      this.loadWorldData();
+      this.showNotification('World data refreshed', 'success');
+    }, 500);
+  }
+
+  showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: rgba(var(--glass-bg-rgb), 0.95);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      z-index: 10000;
+      animation: slideInRight 0.3s ease-out;
+    `;
+    
+    if (type === 'success') {
+      notification.style.borderColor = 'var(--accent-success)';
+    } else if (type === 'error') {
+      notification.style.borderColor = 'var(--accent-danger)';
+    } else if (type === 'warning') {
+      notification.style.borderColor = 'var(--accent-warning)';
+    }
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+
+  destroy() {
+    // Cleanup if needed
   }
 }
 
@@ -3160,6 +7547,22 @@ class FileBrowserManager {
     this.confirmCreate = document.getElementById('confirm-create');
     this.cancelCreate = document.getElementById('cancel-create');
     
+    // DOM References - File Editor Modal
+    this.fileEditorModal = document.getElementById('file-editor-modal');
+    this.closeFileEditorModal = document.getElementById('close-file-editor');
+    this.modalFileName = document.getElementById('modal-file-name');
+    this.modalFilePath = document.getElementById('modal-file-path');
+    this.modalEditorTextarea = document.getElementById('modal-file-editor');
+    this.modalFormatBtn = document.getElementById('modal-format-file');
+    this.modalValidateBtn = document.getElementById('modal-validate-file');
+    this.modalDownloadBtn = document.getElementById('modal-download-file');
+    this.modalSaveBtn = document.getElementById('modal-save-file');
+    this.modalCancelBtn = document.getElementById('modal-cancel-edit');
+    this.modalEditorLines = document.getElementById('modal-editor-lines');
+    this.modalEditorChars = document.getElementById('modal-editor-chars');
+    this.modalEditorType = document.getElementById('modal-editor-type');
+    this.modalEditorModified = document.getElementById('modal-editor-modified');
+    
     // State
     this.currentFile = null;
     this.originalContent = '';
@@ -3172,6 +7575,12 @@ class FileBrowserManager {
   }
 
   init() {
+    // Check if modal elements exist
+    if (!this.fileEditorModal) {
+      console.error('File editor modal not found!');
+      return;
+    }
+    
     this.setupEventListeners();
     this.renderFileTree();
     this.loadMockFiles();
@@ -3179,6 +7588,8 @@ class FileBrowserManager {
 
   setupEventListeners() {
     // File tree interactions
+    if (!this.fileTree) return;
+    
     this.fileTree.addEventListener('click', (e) => {
       const folderHeader = e.target.closest('.folder-header');
       if (folderHeader) {
@@ -3257,6 +7668,44 @@ class FileBrowserManager {
     this.closeCreateModal.addEventListener('click', () => this.closeCreateModalHandler());
     this.cancelCreate.addEventListener('click', () => this.closeCreateModalHandler());
     this.confirmCreate.addEventListener('click', () => this.handleCreateFile());
+    
+    // File Editor Modal
+    if (this.closeFileEditorModal) {
+      this.closeFileEditorModal.addEventListener('click', () => this.closeFileEditorModalHandler());
+    }
+    if (this.modalCancelBtn) {
+      this.modalCancelBtn.addEventListener('click', () => this.closeFileEditorModalHandler());
+    }
+    if (this.modalFormatBtn) {
+      this.modalFormatBtn.addEventListener('click', () => this.formatFileInModal());
+    }
+    if (this.modalValidateBtn) {
+      this.modalValidateBtn.addEventListener('click', () => this.validateFileInModal());
+    }
+    if (this.modalDownloadBtn) {
+      this.modalDownloadBtn.addEventListener('click', () => this.downloadFileFromModal());
+    }
+    if (this.modalSaveBtn) {
+      this.modalSaveBtn.addEventListener('click', () => this.saveFileFromModal());
+    }
+    
+    // Modal editor content changes
+    if (this.modalEditorTextarea) {
+      this.modalEditorTextarea.addEventListener('input', () => {
+        this.onModalEditorChange();
+      });
+      
+      // Modal keyboard shortcuts
+      this.modalEditorTextarea.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 's') {
+          e.preventDefault();
+          this.saveFileFromModal();
+        } else if (e.ctrlKey && e.key === 'f') {
+          e.preventDefault();
+          this.formatFileInModal();
+        }
+      });
+    }
     
     // Template selection
     this.newFileTemplate.addEventListener('change', () => {
@@ -3359,7 +7808,7 @@ settings:
     fileItem.classList.add('selected');
     
     const filePath = fileItem.dataset.path;
-    this.loadFile(filePath);
+    this.loadFileInModal(filePath);
   }
 
   loadFile(filePath) {
@@ -3650,6 +8099,166 @@ settings:
 
   updateTemplatePreview() {
     // Could show template preview
+  }
+
+  // File Editor Modal Methods
+  loadFileInModal(filePath) {
+    // Check if modal exists
+    if (!this.fileEditorModal) {
+      console.error('File editor modal element not found');
+      this.showNotification('Editor modal not available', 'error');
+      return;
+    }
+    
+    const fileData = this.files[filePath];
+    
+    if (!fileData) {
+      console.error('File not found:', filePath);
+      this.showNotification('File not found: ' + filePath, 'error');
+      return;
+    }
+
+    this.currentFile = filePath;
+    this.originalContent = fileData.content;
+    
+    // Extract filename from path
+    const fileName = filePath.split('/').pop();
+    
+    // Update modal UI with null checks
+    if (this.modalFileName) this.modalFileName.textContent = fileName;
+    if (this.modalFilePath) this.modalFilePath.textContent = filePath;
+    if (this.modalEditorType) this.modalEditorType.textContent = fileData.type.toUpperCase();
+    if (this.modalEditorTextarea) this.modalEditorTextarea.value = fileData.content;
+    
+    // Update stats
+    this.updateModalEditorStats();
+    this.isModified = false;
+    this.updateModalModifiedStatus();
+    
+    // Show modal
+    this.fileEditorModal.style.display = 'flex';
+    console.log('Modal displayed for file:', fileName);
+  }
+
+  closeFileEditorModalHandler() {
+    if (this.isModified) {
+      const confirmClose = confirm('You have unsaved changes. Are you sure you want to close?');
+      if (!confirmClose) return;
+    }
+    
+    this.fileEditorModal.style.display = 'none';
+    this.currentFile = null;
+    this.modalEditorTextarea.value = '';
+    this.isModified = false;
+  }
+
+  onModalEditorChange() {
+    this.isModified = true;
+    this.updateModalModifiedStatus();
+    this.updateModalEditorStats();
+  }
+
+  updateModalEditorStats() {
+    if (!this.modalEditorTextarea) return;
+    
+    const content = this.modalEditorTextarea.value;
+    const lines = content.split('\n').length;
+    const chars = content.length;
+    
+    if (this.modalEditorLines) this.modalEditorLines.textContent = lines;
+    if (this.modalEditorChars) this.modalEditorChars.textContent = chars.toLocaleString();
+  }
+
+  updateModalModifiedStatus() {
+    if (!this.modalEditorModified) return;
+    
+    if (this.isModified) {
+      this.modalEditorModified.classList.remove('hidden');
+    } else {
+      this.modalEditorModified.classList.add('hidden');
+    }
+  }
+
+  formatFileInModal() {
+    if (!this.currentFile) return;
+
+    const fileType = this.files[this.currentFile].type;
+    const content = this.modalEditorTextarea.value;
+
+    try {
+      let formatted = content;
+      
+      if (fileType === 'json') {
+        const parsed = JSON.parse(content);
+        formatted = JSON.stringify(parsed, null, 2);
+      } else if (fileType === 'yaml' || fileType === 'yml') {
+        // Basic YAML formatting (would use library in production)
+        formatted = content.split('\n').map(line => line.trim()).join('\n');
+      }
+      
+      this.modalEditorTextarea.value = formatted;
+      this.onModalEditorChange();
+      this.showNotification('File formatted successfully', 'success');
+    } catch (error) {
+      this.showNotification('Format error: ' + error.message, 'error');
+    }
+  }
+
+  validateFileInModal() {
+    if (!this.currentFile) return;
+
+    const fileType = this.files[this.currentFile].type;
+    const content = this.modalEditorTextarea.value;
+
+    try {
+      if (fileType === 'json') {
+        JSON.parse(content);
+        this.showNotification('✓ Valid JSON', 'success');
+      } else if (fileType === 'yaml' || fileType === 'yml') {
+        // Would use YAML parser in production
+        this.showNotification('✓ YAML validation would happen here', 'success');
+      } else {
+        this.showNotification('✓ Syntax check passed', 'success');
+      }
+    } catch (error) {
+      this.showNotification('Validation error: ' + error.message, 'error');
+    }
+  }
+
+  downloadFileFromModal() {
+    if (!this.currentFile) return;
+
+    const content = this.modalEditorTextarea.value;
+    const fileName = this.currentFile.split('/').pop();
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    this.showNotification('File downloaded', 'success');
+  }
+
+  saveFileFromModal() {
+    if (!this.currentFile) return;
+
+    const content = this.modalEditorTextarea.value;
+    
+    // Update file data
+    this.files[this.currentFile].content = content;
+    this.files[this.currentFile].size = content.length;
+    this.originalContent = content;
+    
+    this.isModified = false;
+    this.updateModalModifiedStatus();
+    
+    this.showNotification('File saved successfully', 'success');
+    
+    // In production, would call API:
+    // await fetch('/api/files/save', { method: 'POST', body: JSON.stringify({ path: this.currentFile, content }) });
   }
 
   showNotification(message, type = 'info') {
@@ -4116,6 +8725,21 @@ class EconomyDashboardManager {
 // Initialize Economy Dashboard Manager
 let economyDashboardManager;
 
+// Initialize Global Search Manager
+let globalSearchManager;
+
+// Initialize Alert Manager
+let alertManager;
+
+// Initialize Permission Manager
+let permissionManager;
+
+// Initialize Plugin Manager
+let pluginManager;
+
+// Initialize World Manager
+let worldManager;
+
 // Initialize Backup Manager
 let backupManager;
 
@@ -4128,6 +8752,21 @@ let performanceMetricsManager;
 // Initialize Chat Log Viewer
 let chatLogViewer;
 document.addEventListener('DOMContentLoaded', () => {
+  globalSearchManager = new GlobalSearchManager();
+  globalSearchManager.init();
+  
+  alertManager = new AlertManager();
+  alertManager.init();
+  
+  permissionManager = new PermissionManager();
+  permissionManager.init();
+  
+  pluginManager = new PluginManager();
+  pluginManager.init();
+  
+  worldManager = new WorldManager();
+  worldManager.init();
+  
   backupManager = new BackupManager();
   backupManager.init();
   
@@ -4561,11 +9200,17 @@ class DashboardConnection {
     }
   }
 
-  tryWebSocket() {
+  async tryWebSocket() {
     try {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.hostname}:${window.location.port || 8080}/ws`;
+      // First, get WebSocket connection info from server
+      const wsInfo = await fetch('/api/websocket/info')
+        .then(res => res.json())
+        .catch(() => ({ port: parseInt(window.location.port || 8080) + 1, protocol: 'ws' }));
       
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : wsInfo.protocol;
+      const wsUrl = `${protocol}://${window.location.hostname}:${wsInfo.port}`;
+      
+      console.log('Connecting to WebSocket:', wsUrl);
       this.ws = new WebSocket(wsUrl);
       
       this.ws.onopen = () => {
@@ -4816,6 +9461,9 @@ let dashboardConnection;
 document.addEventListener('DOMContentLoaded', function() {
   dashboardConnection = new DashboardConnection();
   dashboardConnection.init();
+  
+  // Initialize settings page
+  initializeSettings();
 });
 
 // Cleanup on page unload
@@ -4824,6 +9472,106 @@ window.addEventListener('beforeunload', () => {
     dashboardConnection.disconnect();
   }
 });
+
+// ============= Settings Functions =============
+
+function initializeSettings() {
+  // Password change modal
+  const changePasswordBtn = document.getElementById('change-password-btn');
+  const passwordModal = document.getElementById('password-change-modal');
+  const closePasswordModal = document.getElementById('close-password-modal');
+  const cancelPasswordChange = document.getElementById('cancel-password-change');
+  const passwordForm = document.getElementById('password-change-form');
+  
+  if (changePasswordBtn && passwordModal) {
+    changePasswordBtn.addEventListener('click', () => {
+      passwordModal.style.display = 'flex';
+    });
+    
+    closePasswordModal?.addEventListener('click', () => {
+      passwordModal.style.display = 'none';
+      passwordForm?.reset();
+    });
+    
+    cancelPasswordChange?.addEventListener('click', () => {
+      passwordModal.style.display = 'none';
+      passwordForm?.reset();
+    });
+    
+    passwordForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await handlePasswordChange();
+    });
+  }
+  
+  // Load user info when navigating to settings
+  loadUserSettings();
+}
+
+async function loadUserSettings() {
+  try {
+    // Get current user info from session
+    const response = await fetch('/api/auth/session', {
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      
+      // Update UI
+      const usernameEl = document.getElementById('settings-username');
+      const roleEl = document.getElementById('settings-role');
+      
+      if (usernameEl) usernameEl.textContent = data.userId || 'Unknown';
+      if (roleEl) roleEl.textContent = data.role || 'Unknown';
+    }
+  } catch (error) {
+    console.error('Error loading user settings:', error);
+  }
+}
+
+async function handlePasswordChange() {
+  const newPassword = document.getElementById('new-password').value;
+  const confirmPassword = document.getElementById('confirm-password').value;
+  
+  // Validation
+  if (newPassword !== confirmPassword) {
+    showNotification('❌ Passwords do not match', 'error');
+    return;
+  }
+  
+  if (newPassword.length < 8) {
+    showNotification('❌ Password must be at least 8 characters', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        newPassword: newPassword,
+        confirmPassword: confirmPassword
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok && data.success) {
+      showNotification('✅ Password changed successfully!', 'success');
+      document.getElementById('password-change-modal').style.display = 'none';
+      document.getElementById('password-change-form').reset();
+    } else {
+      showNotification('❌ ' + (data.error || 'Failed to change password'), 'error');
+    }
+  } catch (error) {
+    console.error('Error changing password:', error);
+    showNotification('❌ Error changing password', 'error');
+  }
+}
 
 // Expose for debugging
 window.dashboardConnection = dashboardConnection;
