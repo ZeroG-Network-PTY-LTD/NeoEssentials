@@ -4,6 +4,8 @@ import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 /**
  * Service for synchronizing permissions from Discord roles
  */
@@ -12,8 +14,11 @@ public class DiscordPermissionSync {
     private static DiscordPermissionSync INSTANCE;
     
     private boolean enabled = true;
+    private DiscordAuthConfig authConfig;
     
     private DiscordPermissionSync() {
+        // Load Discord auth config for role mappings
+        this.authConfig = DiscordAuthConfig.load();
     }
     
     public static DiscordPermissionSync getInstance() {
@@ -55,20 +60,29 @@ public class DiscordPermissionSync {
             
             // Sync permissions based on Discord roles
             int permissionsGranted = 0;
-            com.zerog.neoessentials.api.permissions.PermissionAPI permAPI = com.zerog.neoessentials.api.permissions.PermissionAPI.getInstance();
+            com.zerog.neoessentials.permissions.PermissionManager permManager = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
             
             for (String role : discordUser.getDiscordRoles()) {
                 // Map Discord roles to permission groups
-                // Role mappings should be configured in DiscordAuthConfig
                 String permissionGroup = mapDiscordRoleToPermissionGroup(role);
                 
                 if (permissionGroup != null && !permissionGroup.isEmpty()) {
                     LOGGER.debug("Granting permission group '{}' to player {} based on Discord role '{}'", 
                                 permissionGroup, player.getName().getString(), role);
                     
-                    // Grant the permission group to the player
-                    permAPI.setGroup(player.getUUID(), permissionGroup);
-                    permissionsGranted++;
+                    // Get or create the user and set their group
+                    com.zerog.neoessentials.permissions.PermissionUser user = permManager.getUser(player.getUUID());
+                    if (user != null) {
+                        user.setGroup(permissionGroup);
+                        permissionsGranted++;
+                        
+                        // Save the permission changes
+                        try {
+                            com.zerog.neoessentials.permissions.PermissionStorage.save(permManager);
+                        } catch (Exception saveEx) {
+                            LOGGER.error("Failed to save permission changes for player {}", player.getName().getString(), saveEx);
+                        }
+                    }
                 } else {
                     LOGGER.debug("No permission mapping for Discord role: {}", role);
                 }
@@ -83,10 +97,10 @@ public class DiscordPermissionSync {
     }
     
     /**
-     * Maps a Discord role name to a permission group name.
-     * This is a basic implementation that can be extended with configuration.
+     * Maps a Discord role name or ID to a permission group name.
+     * First checks DiscordAuthConfig for custom mappings, then falls back to basic mappings.
      * 
-     * @param discordRole The Discord role name
+     * @param discordRole The Discord role name or ID
      * @return The permission group name, or null if no mapping exists
      */
     private String mapDiscordRoleToPermissionGroup(String discordRole) {
@@ -94,7 +108,24 @@ public class DiscordPermissionSync {
             return null;
         }
         
-        // Basic role mappings (case-insensitive)
+        // Load custom role mappings from DiscordAuthConfig
+        if (authConfig != null && authConfig.isPermissionSyncEnabled()) {
+            Map<String, java.util.List<String>> permissionMappings = authConfig.getPermissionMappings();
+            
+            // Check if this Discord role (ID or name) has a custom permission mapping
+            if (permissionMappings.containsKey(discordRole)) {
+                java.util.List<String> permissions = permissionMappings.get(discordRole);
+                // For now, we treat the first permission as a group name
+                // In the future, this could be extended to grant multiple individual permissions
+                if (permissions != null && !permissions.isEmpty()) {
+                    String mappedGroup = permissions.get(0);
+                    LOGGER.debug("Found custom role mapping: Discord role '{}' -> permission group '{}'", discordRole, mappedGroup);
+                    return mappedGroup;
+                }
+            }
+        }
+        
+        // Fallback to basic role mappings (case-insensitive name matching)
         String roleLower = discordRole.toLowerCase();
         
         // Map common Discord role names to permission groups
@@ -110,10 +141,15 @@ public class DiscordPermissionSync {
             return "default";
         }
         
-        // TODO: Load custom role mappings from DiscordAuthConfig
-        // This would allow server owners to define their own Discord role → permission group mappings
-        
         return null; // No mapping found
+    }
+    
+    /**
+     * Reload the Discord auth config (useful after config changes)
+     */
+    public void reloadConfig() {
+        this.authConfig = DiscordAuthConfig.load();
+        LOGGER.info("Discord auth config reloaded for permission sync");
     }
     
     /**
