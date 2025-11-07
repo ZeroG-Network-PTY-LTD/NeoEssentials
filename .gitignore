@@ -27,3 +27,21 @@ repo
 
 # build number (local builds only, GitHub Actions uses its own)
 build_number.txt
+LANGUAGE_AUDIT_INDEX.txt
+language_keys_audit.txt
+language_keys_comprehensive_audit.txt
+LANGUAGE_KEYS_QUICK_REFERENCE.txt
+LANGUAGE_KEYS_SUMMARY.txt
+LANGUAGE_UPDATE_SUMMARY.md
+NEW_KEYS_ADDED.txt
+rebuild_lang_file.py
+update_lang_file.py
+docs/API_ENDPOINT_MAPPING.md
+docs/DASHBOARD_API.md
+docs/DASHBOARD_IMPROVEMENTS.md
+docs/DASHBOARD_SETUP_GUIDE.md
+AUDIT_REPORT.md
+audit_language_keys.py
+fix_todo_translations.py
+docs/DASHBOARD_TODO_IMPLEMENTATION.md
+docs/DASHBOARD_V2_REDESIGN.md

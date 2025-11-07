@@ -1,8 +1,8 @@
 package com.zerog.neoessentials.webdashboard.analytics;
 
-import com.zerog.neoessentials.webdashboard.analytics.PlayerSessionTracker;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
  * Event listener for tracking player analytics
  * Listens to player join/leave events and updates session tracker
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class PlayerAnalyticsListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlayerAnalyticsListener.class);
     
@@ -17,7 +18,7 @@ public class PlayerAnalyticsListener {
      * Track player join events
      */
     @SubscribeEvent
-    public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         try {
             var player = event.getEntity();
             PlayerSessionTracker tracker = PlayerSessionTracker.getInstance();
@@ -34,7 +35,7 @@ public class PlayerAnalyticsListener {
      * Track player leave events
      */
     @SubscribeEvent
-    public void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
         try {
             var player = event.getEntity();
             PlayerSessionTracker tracker = PlayerSessionTracker.getInstance();

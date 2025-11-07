@@ -3,23 +3,18 @@ package com.zerog.neoessentials.webdashboard.map;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.border.WorldBorder;
-import net.minecraft.world.level.storage.LevelData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
 
 /**
  * World information collector for map viewer
  * Collects world data, spawn points, world borders, biomes, and dimension info
  */
 public class WorldInfoCollector {
+    @SuppressWarnings("unused") // Reserved for future logging features
     private static final Logger LOGGER = LoggerFactory.getLogger(WorldInfoCollector.class);
     private static WorldInfoCollector INSTANCE;
     

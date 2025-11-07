@@ -50,7 +50,7 @@ public class IgnoreCommand {
                     // Check permissions
                     ChatManager chatManager = com.zerog.neoessentials.api.ChatAPI.getChatManager();
                     // Check if chat module is enabled
-                    if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+                    if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.ignore.disabled"));
                         return 0;
                     }

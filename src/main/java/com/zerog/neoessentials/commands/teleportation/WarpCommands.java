@@ -154,13 +154,18 @@ public class WarpCommands {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         String warpName = StringArgumentType.getString(context, "name");
         WarpManager warpManager = WarpManager.getInstance();
-        
+        // Jail escape prevention
+        com.zerog.neoessentials.config.ConfigManager config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        com.zerog.neoessentials.moderation.JailManager jailManager = com.zerog.neoessentials.moderation.JailManager.getInstance();
+        if (config.isPreventJailEscapeEnabled() && jailManager.isPlayerJailed(player.getUUID())) {
+            context.getSource().sendFailure(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.jail.prevent_escape"));
+            return 0;
+        }
         // Check permission
         if (!hasWarpPermission(player)) {
             context.getSource().sendFailure(MessageUtil.error("teleport.warp.no_permission"));
             return 0;
         }
-        
         warpManager.teleportToWarp(player, warpName);
         return 1;
     }

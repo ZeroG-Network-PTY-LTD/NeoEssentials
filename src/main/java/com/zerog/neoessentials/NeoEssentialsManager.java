@@ -47,6 +47,7 @@ public class NeoEssentialsManager {
     /**
      * Private constructor for singleton pattern.
      */
+    @SuppressWarnings("deprecation") // EconomyServiceImpl maintained for backward API compatibility
     private NeoEssentialsManager() {
         // Initialize EconomyServiceImpl with persistent storage
         // Note: This is for API compatibility - actual economy is handled by EconomyManager

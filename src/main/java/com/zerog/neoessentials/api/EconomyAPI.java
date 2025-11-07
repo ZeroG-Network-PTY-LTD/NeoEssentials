@@ -72,7 +72,7 @@ public class EconomyAPI {
         EconomyManager manager = EconomyManager.getInstance();
         BigDecimal senderBalance = manager.getBalance(sender);
         if (senderBalance.compareTo(amount) < 0) return false; // Insufficient funds
-        double taxPercent = ConfigManager.getInstance().getTaxPercentage();
+        double taxPercent = ConfigManager.getTaxPercentage();
         BigDecimal fee = amount.multiply(BigDecimal.valueOf(taxPercent / 100.0));
         BigDecimal netAmount = amount.subtract(fee);
         if (netAmount.compareTo(BigDecimal.ZERO) < 0) return false; // Fee too high for amount

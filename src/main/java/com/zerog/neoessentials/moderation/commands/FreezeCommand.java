@@ -35,6 +35,10 @@ public class FreezeCommand {
     };
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // Enforce moderationEnabled config
+        if (!com.zerog.neoessentials.config.ConfigManager.isModerationEnabled()) {
+            return;
+        }
         // /freeze <player> [reason]
         dispatcher.register(Commands.literal("freeze")
             .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
@@ -44,13 +48,13 @@ public class FreezeCommand {
                     ctx.getSource().getServer().getPlayerNames(), builder))
                 .executes(ctx -> executeFreeze(ctx, 
                     StringArgumentType.getString(ctx, "player"),
-                    "No reason provided"))
+                    com.zerog.neoessentials.config.ConfigManager.getDefaultFreezeReason()))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
                     .executes(ctx -> executeFreeze(ctx,
                         StringArgumentType.getString(ctx, "player"),
                         StringArgumentType.getString(ctx, "reason")))))
         );
-        
+
         // /unfreeze <player>
         dispatcher.register(Commands.literal("unfreeze")
             .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
@@ -64,7 +68,7 @@ public class FreezeCommand {
         dispatcher.register(Commands.literal("freezeall")
             .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
                 getPlayerUUID(source), "neoessentials.moderation.freezeall"))
-            .executes(ctx -> executeFreezeAll(ctx, "No reason provided"))
+            .executes(ctx -> executeFreezeAll(ctx, com.zerog.neoessentials.config.ConfigManager.getDefaultFreezeReason()))
             .then(Commands.argument("reason", StringArgumentType.greedyString())
                 .executes(ctx -> executeFreezeAll(ctx, StringArgumentType.getString(ctx, "reason"))))
         );
@@ -87,43 +91,58 @@ public class FreezeCommand {
     private static int executeFreeze(CommandContext<CommandSourceStack> ctx, String playerName, String reason) {
         CommandSourceStack source = ctx.getSource();
         String frozenBy = getCommandSender(source);
-        
+
         try {
             FreezeManager freezeManager = FreezeManager.getInstance();
             MinecraftServer server = source.getServer();
-            
+
+            // Enforce maxFreezeReason length from config
+            int maxReasonLen = com.zerog.neoessentials.config.ConfigManager.getMaxFreezeReasonLength();
+            if (reason != null && reason.length() > maxReasonLen) {
+                String msg = MessageUtil.localize("neoessentials.moderation.reason_too_long", maxReasonLen);
+                source.sendFailure(MessageUtil.error(msg));
+                return 0;
+            }
+
             // Find the target player
             ServerPlayer targetPlayer = server.getPlayerList().getPlayerByName(playerName);
             if (targetPlayer == null) {
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.player_not_found", playerName));
                 return 0;
             }
-            
+
             String targetName = targetPlayer.getName().getString();
             UUID targetId = targetPlayer.getUUID();
-            
+
             // Check if already frozen
             if (freezeManager.isPlayerFrozen(targetId)) {
                 String message = MessageUtil.localize("neoessentials.moderation.player_already_frozen", targetName);
                 source.sendFailure(MessageUtil.error(message));
                 return 0;
             }
-            
+
             // Freeze the player
             boolean success = freezeManager.freezePlayer(targetName, targetId, reason, frozenBy);
-            
+
             if (success) {
                 String confirmMessage = MessageUtil.localize("neoessentials.moderation.freeze_success", targetName, reason);
                 source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
-                
-                // Notify the target player
-                String targetMessage = MessageUtil.localize("neoessentials.moderation.freeze_notification", frozenBy, reason);
+
+                // Notify the target player (config-driven message)
+                String template = com.zerog.neoessentials.config.ConfigManager.getFreezeMessage();
+                String targetMessage;
+                if (template.equals("neoessentials.moderation.frozen_message")) {
+                    targetMessage = MessageUtil.localize(template, reason, frozenBy);
+                } else {
+                    targetMessage = template.replace("{reason}", reason != null ? reason : "")
+                                         .replace("{freezer}", frozenBy != null ? frozenBy : "");
+                }
                 targetPlayer.sendSystemMessage(MessageUtil.warning(targetMessage));
-                
+
                 // Broadcast freeze to all online staff
                 broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.freeze_broadcast", 
                     targetName, frozenBy, reason));
-                
+
                 LOGGER.info("Player {} frozen by {} for: {}", targetName, frozenBy, reason);
                 return 1;
             } else {
@@ -131,7 +150,7 @@ public class FreezeCommand {
                 source.sendFailure(MessageUtil.error(message));
                 return 0;
             }
-            
+
         } catch (Exception e) {
             LOGGER.error("Error executing freeze command", e);
             source.sendFailure(MessageUtil.error("An error occurred while executing the freeze command."));
@@ -188,10 +207,16 @@ public class FreezeCommand {
                 String confirmMessage = MessageUtil.localize("neoessentials.moderation.unfreeze_success", resolvedName);
                 source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
                 
-                // Notify the target player if online
+                // Notify the target player if online (config-driven message)
                 ServerPlayer targetPlayer = server.getPlayerList().getPlayer(playerId);
                 if (targetPlayer != null) {
-                    String targetMessage = MessageUtil.localize("neoessentials.moderation.unfreeze_notification", unfrozenBy);
+                    String template = com.zerog.neoessentials.config.ConfigManager.getUnfreezeMessage();
+                    String targetMessage;
+                    if (template.equals("neoessentials.moderation.unfrozen_message")) {
+                        targetMessage = MessageUtil.localize(template, unfrozenBy);
+                    } else {
+                        targetMessage = template.replace("{unfreezer}", unfrozenBy != null ? unfrozenBy : "Staff");
+                    }
                     targetPlayer.sendSystemMessage(MessageUtil.success(targetMessage));
                 }
                 
@@ -217,11 +242,19 @@ public class FreezeCommand {
     private static int executeFreezeAll(CommandContext<CommandSourceStack> ctx, String reason) {
         CommandSourceStack source = ctx.getSource();
         String frozenBy = getCommandSender(source);
-        
+
         try {
             FreezeManager freezeManager = FreezeManager.getInstance();
             MinecraftServer server = source.getServer();
-            
+
+            // Enforce maxFreezeReason length from config
+            int maxReasonLen = com.zerog.neoessentials.config.ConfigManager.getMaxFreezeReasonLength();
+            if (reason != null && reason.length() > maxReasonLen) {
+                String msg = MessageUtil.localize("neoessentials.moderation.reason_too_long", maxReasonLen);
+                source.sendFailure(MessageUtil.error(msg));
+                return 0;
+            }
+
             List<ServerPlayer> playersToFreeze = server.getPlayerList().getPlayers().stream()
                 .filter(player -> {
                     // Don't freeze the command sender
@@ -234,13 +267,13 @@ public class FreezeCommand {
                     return !freezeManager.isPlayerFrozen(player.getUUID());
                 })
                 .collect(Collectors.toList());
-            
+
             if (playersToFreeze.isEmpty()) {
                 String message = MessageUtil.localize("neoessentials.moderation.freezeall_no_players");
                 source.sendSuccess(() -> MessageUtil.warning(message), false);
                 return 1;
             }
-            
+
             int frozenCount = 0;
             for (ServerPlayer player : playersToFreeze) {
                 boolean success = freezeManager.freezePlayer(
@@ -249,26 +282,26 @@ public class FreezeCommand {
                     reason, 
                     frozenBy
                 );
-                
+
                 if (success) {
                     frozenCount++;
-                    
+
                     // Notify the frozen player
                     String targetMessage = MessageUtil.localize("neoessentials.moderation.freeze_notification", frozenBy, reason);
                     player.sendSystemMessage(MessageUtil.warning(targetMessage));
                 }
             }
-            
+
             String confirmMessage = MessageUtil.localize("neoessentials.moderation.freezeall_success", frozenCount, reason);
             source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
-            
+
             // Broadcast to staff
             broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.freezeall_broadcast", 
                 frozenCount, frozenBy, reason));
-            
+
             LOGGER.info("{} players frozen by {} for: {}", frozenCount, frozenBy, reason);
             return 1;
-            
+
         } catch (Exception e) {
             LOGGER.error("Error executing freezeall command", e);
             source.sendFailure(MessageUtil.error("An error occurred while executing the freezeall command."));

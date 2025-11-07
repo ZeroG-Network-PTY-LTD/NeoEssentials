@@ -1,6 +1,5 @@
 package com.zerog.neoessentials.webdashboard.security;
 
-import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -14,7 +13,7 @@ import org.slf4j.LoggerFactory;
  * When a player with a verified Discord account joins, their permissions
  * are automatically synced based on their Discord roles.
  */
-@EventBusSubscriber
+@EventBusSubscriber(modid = "neoessentials")
 public class DiscordSyncEventHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiscordSyncEventHandler.class);
     

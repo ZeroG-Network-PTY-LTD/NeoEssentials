@@ -274,6 +274,7 @@ public class ResourcePackManager {
                     Map<String, Object> data = gson.fromJson(json, new TypeToken<Map<String, Object>>(){}.getType());
                     
                     if (data.containsKey("pack")) {
+                        @SuppressWarnings("unchecked") // JSON deserialization guarantees Map<String,Object> structure
                         Map<String, Object> packData = (Map<String, Object>) data.get("pack");
                         ResourcePack.PackMetadata metadata = new ResourcePack.PackMetadata();
                         

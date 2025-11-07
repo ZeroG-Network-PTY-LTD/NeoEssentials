@@ -160,7 +160,7 @@ public class EnchantCommand {
         }
         
         // Check if unsafe enchantments are allowed (or if player has override permission)
-        boolean allowUnsafeEnchants = com.zerog.neoessentials.config.ConfigManager.getInstance().isUnsafeEnchantsAllowed() ||
+        boolean allowUnsafeEnchants = com.zerog.neoessentials.config.ConfigManager.isUnsafeEnchantsAllowed() ||
             com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(executor.getUUID(), "neoessentials.item.enchant.unsafe");
         
         // Validate enchantment level
@@ -277,7 +277,7 @@ public class EnchantCommand {
         if (stack == null || enchantment == null) return false;
 
         // Respect unsafe-enchantments config
-        boolean allowUnsafeEnchants = com.zerog.neoessentials.config.ConfigManager.getInstance().isUnsafeEnchantsAllowed();
+        boolean allowUnsafeEnchants = com.zerog.neoessentials.config.ConfigManager.isUnsafeEnchantsAllowed();
         if (!allowUnsafeEnchants && level > enchantment.getMaxLevel()) {
             return false;
         }

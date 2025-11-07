@@ -31,8 +31,14 @@ public class ListCommand {
      * Register the /list command
      */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        if (!ConfigManager.getInstance().isCommandEnabled("list")) return;
-        
+        boolean enabled = ConfigManager.getInstance().isCommandEnabled("list");
+        boolean debug = MessageUtil.isDebugMode();
+        if (!enabled) {
+            if (debug) {
+                org.slf4j.LoggerFactory.getLogger(ListCommand.class).debug("[DEBUG] Skipped registering 'list' and 'who' commands (disabled in config)");
+            }
+            return;
+        }
         dispatcher.register(
             Commands.literal("list")
                 .executes(ctx -> {
@@ -42,12 +48,9 @@ public class ListCommand {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
-                    
                     return showOnlinePlayersList(ctx.getSource(), permResult.hasPermission() ? permResult.getPlayer() : null);
                 })
         );
-        
-        // Also register with alias /who
         dispatcher.register(
             Commands.literal("who")
                 .executes(ctx -> {
@@ -57,10 +60,12 @@ public class ListCommand {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
-                    
                     return showOnlinePlayersList(ctx.getSource(), permResult.hasPermission() ? permResult.getPlayer() : null);
                 })
         );
+        if (debug) {
+            org.slf4j.LoggerFactory.getLogger(ListCommand.class).debug("[DEBUG] Registered 'list' and 'who' commands (enabled in config)");
+        }
     }
     
     /**
@@ -307,6 +312,10 @@ public class ListCommand {
      * This is a placeholder - would need to integrate with actual vanish system
      */
     private static boolean isVanished(ServerPlayer player) {
+        // If vanish system is disabled, always return false
+        if (!ConfigManager.getInstance().isVanishSystemEnabled()) {
+            return false;
+        }
         // Integration ready when vanish system is implemented
         // Currently using permission check as indicator
         return PermissionValidator.validatePermission(player.createCommandSourceStack(), "neoessentials.vanish.active").hasPermission();

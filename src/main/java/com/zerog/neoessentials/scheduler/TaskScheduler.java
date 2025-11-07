@@ -5,23 +5,24 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
  * Task scheduler that executes scheduled tasks based on cron expressions
  * Runs every second and checks if any tasks need to be executed
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class TaskScheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskScheduler.class);
     private static TaskScheduler INSTANCE;
     
-    private MinecraftServer server;
-    private int tickCounter = 0;
+    private static MinecraftServer server;
+    private static int tickCounter = 0;
     private static final int CHECK_INTERVAL = 20; // Check every second (20 ticks)
     
     private TaskScheduler() {
@@ -38,14 +39,14 @@ public class TaskScheduler {
      * Set the Minecraft server instance
      */
     public void setServer(MinecraftServer server) {
-        this.server = server;
+        TaskScheduler.server = server;
     }
     
     /**
      * Server tick event handler
      */
     @SubscribeEvent
-    public void onServerTick(ServerTickEvent.Post event) {
+    public static void onServerTick(ServerTickEvent.Post event) {
         if (server == null) {
             server = event.getServer();
         }
@@ -60,7 +61,7 @@ public class TaskScheduler {
     /**
      * Check all enabled tasks and execute if due
      */
-    private void checkAndExecuteTasks() {
+    private static void checkAndExecuteTasks() {
         if (server == null) {
             return;
         }
@@ -95,7 +96,7 @@ public class TaskScheduler {
     /**
      * Execute a scheduled task
      */
-    public void executeTask(ScheduledTask task) {
+    public static void executeTask(ScheduledTask task) {
         LOGGER.info("Executing scheduled task: {}", task.getName());
         long startTime = System.currentTimeMillis();
         
@@ -144,7 +145,7 @@ public class TaskScheduler {
     /**
      * Execute server commands
      */
-    private void executeCommands(ScheduledTask task) {
+    private static void executeCommands(ScheduledTask task) {
         if (server == null) {
             throw new RuntimeException("Server not initialized");
         }
@@ -181,7 +182,7 @@ public class TaskScheduler {
     /**
      * Execute backup task
      */
-    private void executeBackup(ScheduledTask task) {
+    private static void executeBackup(ScheduledTask task) {
         if (server == null) {
             throw new RuntimeException("Server not initialized");
         }
@@ -206,7 +207,7 @@ public class TaskScheduler {
     /**
      * Execute server restart
      */
-    private void executeRestart(ScheduledTask task) {
+    private static void executeRestart(ScheduledTask task) {
         if (server == null) {
             throw new RuntimeException("Server not initialized");
         }
@@ -232,7 +233,7 @@ public class TaskScheduler {
     /**
      * Execute broadcast message
      */
-    private void executeBroadcast(ScheduledTask task) {
+    private static void executeBroadcast(ScheduledTask task) {
         if (server == null) {
             throw new RuntimeException("Server not initialized");
         }
@@ -256,7 +257,7 @@ public class TaskScheduler {
     /**
      * Execute custom task
      */
-    private void executeCustom(ScheduledTask task) {
+    private static void executeCustom(ScheduledTask task) {
         LOGGER.info("Executing custom task: {}", task.getName());
         // Custom tasks can be extended by other modules
         executeCommands(task);

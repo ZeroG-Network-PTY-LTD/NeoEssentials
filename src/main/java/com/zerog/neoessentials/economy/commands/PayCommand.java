@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PayCommand {
     private static final Map<UUID, Long> payCooldowns = new ConcurrentHashMap<>();
     private static long getPayCooldownMs() {
-        return com.zerog.neoessentials.config.ConfigManager.getInstance().getPayCooldownSeconds() * 1000L;
+        return com.zerog.neoessentials.config.ConfigManager.getPayCooldownSeconds() * 1000L;
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -124,8 +124,7 @@ public class PayCommand {
         java.math.BigDecimal amount = amountValidation.getValue(java.math.BigDecimal.class);
         
         // Calculate tax using ConfigManager
-        com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
-        double taxPercent = configManager.getEconomyTaxPercentage();
+        double taxPercent = com.zerog.neoessentials.config.ConfigManager.getEconomyTaxPercentage();
         java.math.BigDecimal fee = amount.multiply(java.math.BigDecimal.valueOf(taxPercent / 100.0));
         java.math.BigDecimal netAmount = amount.subtract(fee);
         boolean success = com.zerog.neoessentials.api.EconomyAPI.payPlayer(sender.getUUID(), recipient.getUUID(), amount);

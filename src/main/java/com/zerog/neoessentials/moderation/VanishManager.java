@@ -94,12 +94,14 @@ public class VanishManager {
             if (vanishedPlayer != null) {
                 hidePlayerFromOthers(vanishedPlayer);
                 
-                String message = MessageUtil.localize("neoessentials.moderation.vanish_enabled");
-                vanishedPlayer.sendSystemMessage(MessageUtil.success(message));
+                // Don't send message here - let the command handle it
+                // to avoid duplicate messages
             }
         }
         
-        LOGGER.info("Player {} ({}) vanished by {}", playerName, playerId, vanishedBy);
+        if (com.zerog.neoessentials.config.ConfigManager.isLogVanishActionsEnabled()) {
+            LOGGER.info("Player {} ({}) vanished by {}", playerName, playerId, vanishedBy);
+        }
         return true;
     }
     
@@ -120,12 +122,14 @@ public class VanishManager {
             if (unvanishedPlayer != null) {
                 showPlayerToOthers(unvanishedPlayer);
                 
-                String message = MessageUtil.localize("neoessentials.moderation.vanish_disabled");
-                unvanishedPlayer.sendSystemMessage(MessageUtil.success(message));
+                // Don't send message here - let the command handle it
+                // to avoid duplicate messages
             }
         }
         
-        LOGGER.info("Player ({}) unvanished", playerId);
+        if (com.zerog.neoessentials.config.ConfigManager.isLogVanishActionsEnabled()) {
+            LOGGER.info("Player ({}) unvanished", playerId);
+        }
         return true;
     }
     
@@ -160,7 +164,9 @@ public class VanishManager {
             }
         }
         
-        LOGGER.info("Player ({}) enabled see vanished", playerId);
+        if (com.zerog.neoessentials.config.ConfigManager.isLogVanishActionsEnabled()) {
+            LOGGER.info("Player ({}) enabled see vanished", playerId);
+        }
     }
     
     /**
@@ -183,7 +189,9 @@ public class VanishManager {
             }
         }
         
-        LOGGER.info("Player ({}) disabled see vanished", playerId);
+        if (com.zerog.neoessentials.config.ConfigManager.isLogVanishActionsEnabled()) {
+            LOGGER.info("Player ({}) disabled see vanished", playerId);
+        }
     }
     
     /**
@@ -266,9 +274,13 @@ public class VanishManager {
      * Hide a player from all other players (except those who can see vanished)
      */
     private void hidePlayerFromOthers(ServerPlayer vanishedPlayer) {
+        // Only hide from tab list if enabled in config
+    boolean hideFromTabList = com.zerog.neoessentials.config.ConfigManager.isHideFromTabListEnabled();
+        if (!hideFromTabList) return;
+
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
-        
+
         for (ServerPlayer otherPlayer : server.getPlayerList().getPlayers()) {
             if (otherPlayer != vanishedPlayer && !canPlayerSeeVanished(otherPlayer.getUUID())) {
                 hidePlayerFromSpecific(vanishedPlayer, otherPlayer);

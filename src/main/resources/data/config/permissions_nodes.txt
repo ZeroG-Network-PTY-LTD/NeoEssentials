@@ -130,10 +130,149 @@ neoessentials.integration.placeholderapi - Access PlaceholderAPI features
 neoessentials.integration.luckperms - Use LuckPerms integration features
 neoessentials.integration.ftbranks - Use FTB Ranks integration features
 
+## Teleportation Permissions
+neoessentials.teleport.tp - Teleport to other players or coordinates ✅ IMPLEMENTED
+neoessentials.teleport.warp - Use warp commands to teleport to warps ✅ IMPLEMENTED
+neoessentials.teleport.warp.create - Create new server warps ✅ IMPLEMENTED
+neoessentials.teleport.warp.delete - Delete existing server warps ✅ IMPLEMENTED
+neoessentials.teleport.warp.list - List all available warps ✅ IMPLEMENTED
+neoessentials.teleport.home - Teleport to personal homes ✅ IMPLEMENTED
+neoessentials.teleport.home.set - Set personal home locations ✅ IMPLEMENTED
+neoessentials.teleport.home.delete - Delete personal homes ✅ IMPLEMENTED
+neoessentials.teleport.home.list - List all personal homes ✅ IMPLEMENTED
+neoessentials.home.<number> - Permission for specific home count (e.g., home.1, home.2) ✅ IMPLEMENTED
+neoessentials.teleport.spawn - Teleport to server spawn ✅ IMPLEMENTED
+neoessentials.teleport.spawn.set - Set server spawn location ✅ IMPLEMENTED
+neoessentials.teleport.spawn.info - View spawn information ✅ IMPLEMENTED
+neoessentials.teleport.pwarp - Use player warps ✅ IMPLEMENTED
+neoessentials.teleport.pwarp.create - Create player warps ✅ IMPLEMENTED
+neoessentials.teleport.pwarp.delete - Delete player warps ✅ IMPLEMENTED
+neoessentials.teleport.pwarp.list - List player warps ✅ IMPLEMENTED
+neoessentials.teleport.request.tpa - Send teleport request to another player ✅ IMPLEMENTED
+neoessentials.teleport.request.tpahere - Request another player to teleport to you ✅ IMPLEMENTED
+neoessentials.teleport.request.accept - Accept teleport requests ✅ IMPLEMENTED
+neoessentials.teleport.request.deny - Deny teleport requests ✅ IMPLEMENTED
+neoessentials.teleport.request.cancel - Cancel outgoing teleport requests ✅ IMPLEMENTED
+neoessentials.teleport.back - Return to previous location after teleport ✅ IMPLEMENTED
+neoessentials.teleport.top - Teleport to highest block at current position ✅ IMPLEMENTED
+neoessentials.teleport.jump - Jump to the block you're looking at ✅ IMPLEMENTED
+neoessentials.teleport.jumpto - Jump to specific coordinates ✅ IMPLEMENTED
+neoessentials.teleport.tpr - Random teleport within world ✅ IMPLEMENTED
+neoessentials.teleport.admin.tp - Admin teleport commands with override ✅ IMPLEMENTED
+
+## Moderation Permissions
+neoessentials.moderation.ban - Ban players permanently or temporarily ✅ IMPLEMENTED
+neoessentials.moderation.tempban - Apply temporary bans with duration ✅ IMPLEMENTED
+neoessentials.moderation.banip - Ban IP addresses ✅ IMPLEMENTED
+neoessentials.moderation.unban - Unban players ✅ IMPLEMENTED
+neoessentials.moderation.unbanip - Unban IP addresses ✅ IMPLEMENTED
+neoessentials.moderation.banlist - View list of banned players and IPs ✅ IMPLEMENTED
+neoessentials.moderation.kick - Kick players from server ✅ IMPLEMENTED
+neoessentials.moderation.kickall - Kick all players from server ✅ IMPLEMENTED
+neoessentials.moderation.freeze - Freeze players (prevent movement) ✅ IMPLEMENTED
+neoessentials.moderation.unfreeze - Unfreeze frozen players ✅ IMPLEMENTED
+neoessentials.moderation.freezeall - Freeze all online players ✅ IMPLEMENTED
+neoessentials.moderation.unfreezeall - Unfreeze all frozen players ✅ IMPLEMENTED
+neoessentials.moderation.freezelist - List all frozen players ✅ IMPLEMENTED
+neoessentials.moderation.jail - Jail players to specific locations ✅ IMPLEMENTED
+neoessentials.moderation.unjail - Unjail players ✅ IMPLEMENTED
+neoessentials.moderation.setjail - Set jail locations ✅ IMPLEMENTED
+neoessentials.moderation.jaillist - List all jailed players ✅ IMPLEMENTED
+neoessentials.moderation.jailinfo - View jail location information ✅ IMPLEMENTED
+neoessentials.moderation.vanish - Toggle vanish mode (invisibility) ✅ IMPLEMENTED
+neoessentials.moderation.vanish.others - Vanish other players ✅ IMPLEMENTED
+neoessentials.moderation.vanishlist - List all vanished players ✅ IMPLEMENTED
+neoessentials.moderation.notifications - Receive moderation action notifications ✅ IMPLEMENTED
+neoessentials.moderation.notify - Receive staff notifications (deprecated, use notifications) ✅ IMPLEMENTED
+
+## Vanish System Permissions
+neoessentials.vanish.active - Player is currently vanished ✅ IMPLEMENTED
+neoessentials.vanish.see - Can see vanished players ✅ IMPLEMENTED
+
+## Utility Command Permissions
+neoessentials.compass - View compass direction info ✅ IMPLEMENTED
+neoessentials.compass.others - Check compass for other players ✅ IMPLEMENTED
+neoessentials.fletching - Open fletching table GUI ✅ IMPLEMENTED
+neoessentials.helpop - Send help requests to staff ✅ IMPLEMENTED
+neoessentials.helpop.receive - Receive helpop messages (staff) ✅ IMPLEMENTED
+neoessentials.mail - Access mail system ✅ IMPLEMENTED
+neoessentials.mail.send - Send mail to other players ✅ IMPLEMENTED
+neoessentials.mail.clear - Clear own mailbox ✅ IMPLEMENTED
+neoessentials.rules - View server rules ✅ IMPLEMENTED
+neoessentials.whois - View player information ✅ IMPLEMENTED
+neoessentials.whois.detailed - View detailed player information ✅ IMPLEMENTED
+neoessentials.suicide - Use suicide command ✅ IMPLEMENTED
+neoessentials.smithing - Open smithing table GUI ✅ IMPLEMENTED
+neoessentials.sign - Edit sign text ✅ IMPLEMENTED
+neoessentials.sign.colors - Use color codes on signs ✅ IMPLEMENTED
+neoessentials.seen - Check when player was last online ✅ IMPLEMENTED
+neoessentials.realname - View real name of nicknamed players ✅ IMPLEMENTED
+neoessentials.nick - Set own nickname ✅ IMPLEMENTED
+neoessentials.nick.others - Set nicknames for other players ✅ IMPLEMENTED
+neoessentials.nick.color - Use color codes in nicknames ✅ IMPLEMENTED
+neoessentials.anvil - Open anvil GUI ✅ IMPLEMENTED
+neoessentials.book - Edit book and quill ✅ IMPLEMENTED
+neoessentials.book.unlock - Unlock book and quill for editing ✅ IMPLEMENTED
+neoessentials.book.title - Edit book title ✅ IMPLEMENTED
+neoessentials.book.author - Edit book author ✅ IMPLEMENTED
+neoessentials.getpos - Get own position coordinates ✅ IMPLEMENTED
+neoessentials.getpos.others - Get position of other players ✅ IMPLEMENTED
+neoessentials.ping - Check own ping ✅ IMPLEMENTED
+neoessentials.ping.others - Check ping of other players ✅ IMPLEMENTED
+neoessentials.stonecutting - Open stonecutter GUI ✅ IMPLEMENTED
+neoessentials.crafting - Open crafting table GUI ✅ IMPLEMENTED
+neoessentials.near - List nearby players ✅ IMPLEMENTED
+neoessentials.motd - View message of the day ✅ IMPLEMENTED
+neoessentials.motd.reload - Reload MOTD from file ✅ IMPLEMENTED
+neoessentials.motd.set - Set new MOTD ✅ IMPLEMENTED
+neoessentials.motd.broadcast - Broadcast MOTD to all players ✅ IMPLEMENTED
+neoessentials.list - List all online players ✅ IMPLEMENTED
+neoessentials.depth - Check own depth (Y coordinate) ✅ IMPLEMENTED
+neoessentials.depth.others - Check depth of other players ✅ IMPLEMENTED
+neoessentials.staff - Staff member status (for list categorization) ✅ IMPLEMENTED
+
+## Item Spawn & Management Permissions
+neoessentials.item.spawn - Spawn items (general permission) ✅ IMPLEMENTED
+neoessentials.item.spawn.<namespace>.<item> - Spawn specific item (e.g., minecraft.diamond) ✅ IMPLEMENTED
+neoessentials.item.spawn.<namespace>.* - Spawn all items from namespace ✅ IMPLEMENTED
+
+## Kits System Permissions
+neoessentials.kits.use - Use kit commands ✅ IMPLEMENTED
+neoessentials.kits.list - List available kits ✅ IMPLEMENTED
+neoessentials.kits.create - Create new kits ✅ IMPLEMENTED
+neoessentials.kits.delete - Delete existing kits ✅ IMPLEMENTED
+neoessentials.kits.override - Override kit restrictions ✅ IMPLEMENTED
+neoessentials.kits.nocooldown - Bypass kit cooldowns ✅ IMPLEMENTED
+neoessentials.kits.<kitname> - Permission for specific kit (e.g., kits.starter) ✅ IMPLEMENTED
+neoessentials.kits.<kitname>.nocooldown - Bypass cooldown for specific kit ✅ IMPLEMENTED
+
+## Dashboard & Web System Permissions
+neoessentials.dashboard.admin - Full dashboard administration access ✅ IMPLEMENTED
+neoessentials.dashboard.status - View dashboard status ✅ IMPLEMENTED
+neoessentials.dashboard.temppass - Generate temporary dashboard access password ✅ IMPLEMENTED
+
+## Discord Integration Permissions
+neoessentials.discord.syncperms - Sync own permissions to Discord ✅ IMPLEMENTED
+neoessentials.discord.syncperms.others - Sync permissions for other players ✅ IMPLEMENTED
+
+## Permission System Extended Permissions
+neoessentials.permissions.list.groups - List all permission groups ✅ IMPLEMENTED
+neoessentials.permissions.list.users - List all users with permissions ✅ IMPLEMENTED
+neoessentials.permissions.user.permissions - Manage user-specific permissions ✅ IMPLEMENTED
+
 ## Special Meta Permissions
-neoessentials.* - Grants all NeoEssentials permissions (super admin)
-neoessentials.admin.* - Grants all administrative permissions
-neoessentials.economy.* - Grants all economy-related permissions
-neoessentials.chat.* - Grants all chat and communication permissions
-neoessentials.item.* - Grants all item management permissions
-neoessentials.permissions.* - Grants all permission system permissions
+neoessentials.* - Grants all NeoEssentials permissions (super admin) ✅ IMPLEMENTED
+neoessentials.admin.* - Grants all administrative permissions ✅ IMPLEMENTED
+neoessentials.economy.* - Grants all economy-related permissions ✅ IMPLEMENTED
+neoessentials.chat.* - Grants all chat and communication permissions ✅ IMPLEMENTED
+neoessentials.item.* - Grants all item management permissions ✅ IMPLEMENTED
+neoessentials.permissions.* - Grants all permission system permissions ✅ IMPLEMENTED
+neoessentials.teleport.* - Grants all teleportation permissions ✅ IMPLEMENTED
+neoessentials.kits.* - Grants all kits permissions ✅ IMPLEMENTED
+neoessentials.moderation.* - Grants all moderation permissions ✅ IMPLEMENTED
+neoessentials.utilities.* - Grants all utility permissions ✅ IMPLEMENTED
+
+## Legend
+# ✅ IMPLEMENTED - Permission node is actively used in codebase
+# 📝 DOCUMENTED - Permission node is documented but not yet verified in code
+# 🔄 PARTIAL - Permission node is partially implemented or in development

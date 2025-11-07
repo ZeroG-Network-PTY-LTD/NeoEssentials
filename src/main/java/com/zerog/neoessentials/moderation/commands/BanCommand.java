@@ -46,7 +46,7 @@ public class BanCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if moderation commands are enabled
-        if (!ConfigManager.getInstance().isModerationEnabled()) {
+        if (!ConfigManager.isModerationEnabled()) {
             return;
         }
         
@@ -57,13 +57,14 @@ public class BanCommand {
             .then(Commands.argument("player", StringArgumentType.greedyString())
                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
                     ctx.getSource().getServer().getPlayerNames(), builder))
-                .executes(ctx -> executeBan(ctx, StringArgumentType.getString(ctx, "player"), "No reason provided"))
+                .executes(ctx -> executeBan(ctx, StringArgumentType.getString(ctx, "player"),
+                    com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultBanReason()))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
                     .executes(ctx -> executeBan(ctx, 
                         ctx.getInput().split(" ", 3)[1], // Get player name 
-                        ctx.getInput().split(" ", 3).length > 2 ? ctx.getInput().split(" ", 3)[2] : "No reason provided"))))
+                        ctx.getInput().split(" ", 3).length > 2 ? ctx.getInput().split(" ", 3)[2] : com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultBanReason()))))
         );
-        
+
         // /tempban <player> <duration> [reason]
         dispatcher.register(Commands.literal("tempban")
             .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
@@ -75,21 +76,21 @@ public class BanCommand {
                     .executes(ctx -> executeTempBan(ctx, 
                         StringArgumentType.getString(ctx, "player"),
                         StringArgumentType.getString(ctx, "duration"),
-                        "No reason provided"))
+                        com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultBanReason()))
                     .then(Commands.argument("reason", StringArgumentType.greedyString())
                         .executes(ctx -> executeTempBan(ctx,
                             StringArgumentType.getString(ctx, "player"),
                             StringArgumentType.getString(ctx, "duration"),
                             StringArgumentType.getString(ctx, "reason"))))))
         );
-        
+
         // /banip <ip> [reason]
         dispatcher.register(Commands.literal("banip")
             .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
                 getPlayerUUID(source), "neoessentials.moderation.banip"))
             .then(Commands.argument("ip", StringArgumentType.word())
                 .executes(ctx -> executeBanIP(ctx, 
-                    StringArgumentType.getString(ctx, "ip"), "No reason provided"))
+                    StringArgumentType.getString(ctx, "ip"), com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultBanReason()))
                 .then(Commands.argument("reason", StringArgumentType.greedyString())
                     .executes(ctx -> executeBanIP(ctx,
                         StringArgumentType.getString(ctx, "ip"),

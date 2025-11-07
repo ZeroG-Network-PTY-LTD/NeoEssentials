@@ -76,7 +76,7 @@ public class MsgCommand {
                         }
                         
                         // Check if chat module is enabled
-                        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+                        if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
                             ChatDebugUtil.debug("MsgCommand - FAILED: Chat module is disabled");
                             source.sendFailure(MessageUtil.error("commands.neoessentials.msg.disabled"));
                             return 0;

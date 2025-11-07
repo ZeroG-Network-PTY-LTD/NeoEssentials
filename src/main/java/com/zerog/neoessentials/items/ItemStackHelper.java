@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
  * Handles oversized stacks and default stack size overrides.
  */
 public class ItemStackHelper {
+    @SuppressWarnings("unused") // Reserved for future logging features
     private static final Logger LOGGER = LoggerFactory.getLogger(ItemStackHelper.class);
     
     /**
@@ -20,9 +21,8 @@ public class ItemStackHelper {
      * @return The maximum stack size for this item
      */
     public static int getMaxStackSize(Item item) {
-        ConfigManager config = ConfigManager.getInstance();
-        int defaultSize = config.getDefaultStackSize();
-        int oversizedSize = config.getOversizedStackSize();
+        int defaultSize = ConfigManager.getDefaultStackSize();
+        int oversizedSize = ConfigManager.getOversizedStackSize();
         
         // If default-stack-size is -1, use vanilla behavior
         if (defaultSize == -1) {

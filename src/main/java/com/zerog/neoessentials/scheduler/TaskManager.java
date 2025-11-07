@@ -2,7 +2,6 @@ package com.zerog.neoessentials.scheduler;
 
 import com.google.gson.*;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -26,9 +26,11 @@ public class SpawnCommands {
     private static final String PERMISSION_SETSPAWN = "neoessentials.teleport.spawn.set";
     private static final String PERMISSION_SPAWNINFO = "neoessentials.teleport.spawn.info";
     
+    // Track last spawn usage per player (UUID -> epoch seconds)
+    private static final java.util.Map<java.util.UUID, Long> lastSpawnUsage = new java.util.HashMap<>();
+
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         ConfigManager config = ConfigManager.getInstance();
-        
         // Only register if teleportation module is enabled
         if (config.isTeleportationEnabled()) {
             // Register individual commands based on their command settings
@@ -37,7 +39,25 @@ public class SpawnCommands {
                 registerSpawnInfoCommand(dispatcher); // Include info with spawn
             }
             if (config.isCommandEnabled("setspawn")) {
-                registerSetSpawnCommand(dispatcher);
+                // Enforce allowSpawnSet from config
+                boolean allowSpawnSet = true;
+                try {
+                    var mainConfig = config.getConfig(ConfigManager.MAIN_CONFIG);
+                    if (mainConfig.has("teleportation")) {
+                        var tp = mainConfig.getAsJsonObject("teleportation");
+                        if (tp.has("spawnSettings")) {
+                            var spawnSettings = tp.getAsJsonObject("spawnSettings");
+                            if (spawnSettings.has("allowSpawnSet")) {
+                                allowSpawnSet = spawnSettings.get("allowSpawnSet").getAsBoolean();
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    allowSpawnSet = true;
+                }
+                if (allowSpawnSet) {
+                    registerSetSpawnCommand(dispatcher);
+                }
             }
         }
     }
@@ -106,7 +126,41 @@ public class SpawnCommands {
     private static int executeSpawn(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         SpawnManager spawnManager = SpawnManager.getInstance();
-        
+        ConfigManager config = ConfigManager.getInstance();
+        // Jail escape prevention
+        com.zerog.neoessentials.moderation.JailManager jailManager = com.zerog.neoessentials.moderation.JailManager.getInstance();
+        if (config.isPreventJailEscapeEnabled() && jailManager.isPlayerJailed(player.getUUID())) {
+            context.getSource().sendFailure(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.jail.prevent_escape"));
+            return 0;
+        }
+        // Get cooldown from config (seconds)
+        int cooldown = 0;
+        try {
+            var mainConfig = config.getConfig(ConfigManager.MAIN_CONFIG);
+            if (mainConfig.has("teleportation")) {
+                var tp = mainConfig.getAsJsonObject("teleportation");
+                if (tp.has("spawnSettings")) {
+                    var spawnSettings = tp.getAsJsonObject("spawnSettings");
+                    if (spawnSettings.has("spawnCooldown")) {
+                        cooldown = spawnSettings.get("spawnCooldown").getAsInt();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            cooldown = 0;
+        }
+
+        if (cooldown > 0) {
+            long now = System.currentTimeMillis() / 1000L;
+            long last = lastSpawnUsage.getOrDefault(player.getUUID(), 0L);
+            long remaining = cooldown - (now - last);
+            if (remaining > 0) {
+                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.cooldown", String.valueOf(remaining)));
+                return 0;
+            }
+            lastSpawnUsage.put(player.getUUID(), now);
+        }
+
         spawnManager.teleportToSpawn(player);
         return 1;
     }

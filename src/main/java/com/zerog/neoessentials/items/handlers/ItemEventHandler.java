@@ -5,8 +5,10 @@ package com.zerog.neoessentials.items.handlers;
  * 
  * NOTE: NeoForge 1.21+ API Limitation
  * ===================================
- * The "drop-items-if-full" config option cannot currently be enforced because
- * ItemEntityPickupEvent.Pre doesn't support event cancellation in current NeoForge.
+ * [REMOVED] The "drop-items-if-full" config option and related logic have been commented out.
+ * Original config:
+ *   "drop-items-if-full": false,
+ *   "drop-items-if-full_comment": "[NeoForge API Limitation] Cannot currently be enforced - ItemEntityPickupEvent.Pre doesn't support cancellation. Config option exists for future implementation. Original intent: Allow items to be picked up when inventory is full (excess dropped). If false, items remain on ground until space is available",
  * This feature is documented but not enforceable until the API changes.
  * 
  * Working Features:

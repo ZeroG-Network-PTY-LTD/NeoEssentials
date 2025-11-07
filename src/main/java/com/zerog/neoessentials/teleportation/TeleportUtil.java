@@ -1,6 +1,8 @@
 package com.zerog.neoessentials.teleportation;
 
 import com.zerog.neoessentials.util.MessageUtil;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,18 +38,67 @@ public class TeleportUtil {
     public static CompletableFuture<TeleportResult> teleportPlayer(ServerPlayer player, TeleportLocation location, 
                                                                   int delayTicks, boolean findSafe) {
         CompletableFuture<TeleportResult> future = new CompletableFuture<>();
-        
+
+        // Enforce combat check if enabled in config
+        com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        boolean allowTeleportInCombat = configManager.isAllowTeleportInCombatEnabled();
+        if (!allowTeleportInCombat && com.zerog.neoessentials.teleportation.CombatTracker.isInCombat(player)) {
+            future.complete(TeleportResult.failure("Teleportation is disabled while in combat!"));
+            return future;
+        }
+
+        // Enforce protectedAreas using YAWP (Yet Another World Protector)
+        java.util.List<String> protectedAreas = com.zerog.neoessentials.config.ConfigManager.getProtectedAreas();
+        if (protectedAreas != null && !protectedAreas.isEmpty()) {
+            try {
+                // YAWP API: net.yawp.api.YawpAPI
+                // Check if YAWP is loaded and available
+                Class<?> yawpApiClass = Class.forName("net.yawp.api.YawpAPI");
+                Object yawpApi = yawpApiClass.getMethod("getInstance").invoke(null);
+                // Query regions at target location
+                java.util.List<?> regions = (java.util.List<?>) yawpApiClass.getMethod("getRegionsAt", ServerLevel.class, double.class, double.class, double.class)
+                        .invoke(yawpApi, location.getLevel(), location.getX(), location.getY(), location.getZ());
+                if (regions != null) {
+                    for (Object region : regions) {
+                        String regionName = (String) region.getClass().getMethod("getName").invoke(region);
+                        if (protectedAreas.contains(regionName)) {
+                            future.complete(TeleportResult.failure("Teleportation is blocked: target location is in a protected area (" + regionName + ")!"));
+                            return future;
+                        }
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                // YAWP not installed, skip region check
+            } catch (Exception e) {
+                LOGGER.error("Error checking YAWP protected areas: {}", e.getMessage(), e);
+            }
+        }
+
+        // Enforce maxTeleportDistance if set in config
+        int maxDistance = configManager.getMaxTeleportDistance();
+        if (maxDistance > 0) {
+            // Try to get player's current location as TeleportLocation
+            TeleportLocation fromLoc = new TeleportLocation(player);
+            if (fromLoc.getWorldName().equals(location.getWorldName())) {
+                double dist = fromLoc.distanceTo(location);
+                if (dist > maxDistance) {
+                    future.complete(TeleportResult.failure("Teleport distance exceeds the maximum allowed by config (" + maxDistance + ")!"));
+                    return future;
+                }
+            }
+        }
+
         if (location == null) {
             future.complete(TeleportResult.failure("Invalid teleport location"));
             return future;
         }
-        
+
         ServerLevel targetLevel = location.getLevel();
         if (targetLevel == null) {
             future.complete(TeleportResult.failure("Target world not found or not loaded"));
             return future;
         }
-        
+
         // Find safe location if requested
         TeleportLocation finalLocation = location;
         if (findSafe && !location.isSafe()) {
@@ -57,12 +108,12 @@ public class TeleportUtil {
                 return future;
             }
         }
-        
+
         // Load chunks if needed
         ChunkPos chunkPos = new ChunkPos(new BlockPos((int) finalLocation.getX(), 
                                                      (int) finalLocation.getY(), 
                                                      (int) finalLocation.getZ()));
-        
+
         if (!targetLevel.isLoaded(chunkPos.getWorldPosition())) {
             // Force load the chunk
             targetLevel.getChunkSource().addRegionTicket(
@@ -72,7 +123,7 @@ public class TeleportUtil {
                 chunkPos.getWorldPosition()
             );
         }
-        
+
         // Execute teleport (with delay if specified)
         TeleportLocation teleportTo = finalLocation;
         if (delayTicks > 0) {
@@ -84,7 +135,7 @@ public class TeleportUtil {
             // Immediate teleport
             executeTeleport(player, teleportTo, future);
         }
-        
+
         return future;
     }
     
@@ -95,21 +146,35 @@ public class TeleportUtil {
                                               int delayTicks, CompletableFuture<TeleportResult> future) {
         // Store original position to check for movement
         Vec3 originalPos = player.position();
-        
+        com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        boolean cancelOnMovement = com.zerog.neoessentials.config.ConfigManager.isCancelOnMovementEnabled();
+        boolean cancelOnDamage = configManager.isCancelOnDamageEnabled();
+
+        // Define cancel action
+        Runnable cancelAction = () -> {
+            future.complete(TeleportResult.failure("Teleport cancelled - you moved/took damage!"));
+        };
+        // Register for damage cancel if enabled
+        if (cancelOnDamage) {
+            com.zerog.neoessentials.teleportation.TeleportDamageCancelHandler.registerPendingTeleport(player, cancelAction);
+        }
+
         // Schedule the teleport
         player.getServer().tell(new net.minecraft.server.TickTask(delayTicks, () -> {
-            // Check if player moved (cancel if they did)
-            if (player.position().distanceTo(originalPos) > 1.0) {
+            // Unregister damage cancel (teleport completed or cancelled)
+            if (cancelOnDamage) {
+                com.zerog.neoessentials.teleportation.TeleportDamageCancelHandler.unregisterPendingTeleport(player);
+            }
+            // Check if player moved (cancel if they did), only if enabled in config
+            if (cancelOnMovement && player.position().distanceTo(originalPos) > 1.0) {
                 future.complete(TeleportResult.failure("Teleport cancelled - you moved!"));
                 return;
             }
-            
             // Check if player is still online
             if (player.hasDisconnected()) {
                 future.complete(TeleportResult.failure("Player disconnected"));
                 return;
             }
-            
             executeTeleport(player, location, future);
         }));
     }
@@ -125,7 +190,38 @@ public class TeleportUtil {
                 future.complete(TeleportResult.failure("Target world no longer available"));
                 return;
             }
-            
+
+            // Particle effects (source)
+            com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+            if (configManager.getEnableParticleEffects()) {
+                // Show particle at source
+                if (player.level() instanceof ServerLevel serverLevel) {
+                    for (int i = 0; i < 50; i++) {
+                        double dx = player.getX() + (player.getRandom().nextDouble() - 0.5) * 1.0;
+                        double dy = player.getY() + 1 + player.getRandom().nextDouble();
+                        double dz = player.getZ() + (player.getRandom().nextDouble() - 0.5) * 1.0;
+                        serverLevel.addParticle(
+                            net.minecraft.core.particles.ParticleTypes.PORTAL,
+                            dx, dy, dz,
+                            0, 0, 0
+                        );
+                    }
+                }
+            }
+
+            // Sound effects (source)
+            if (com.zerog.neoessentials.config.ConfigManager.getEnableSoundEffects()) {
+                if (player.level() instanceof ServerLevel serverLevel) {
+                    serverLevel.playSound(
+                        null, // No specific player, play for all nearby
+                        player.getX(), player.getY(), player.getZ(),
+                        SoundEvents.ENDERMAN_TELEPORT,
+                        SoundSource.PLAYERS,
+                        1.0F, 1.0F
+                    );
+                }
+            }
+
             // Perform the teleport
             if (player.level() != targetLevel) {
                 // Cross-dimension teleport
@@ -137,10 +233,35 @@ public class TeleportUtil {
                 player.setYRot(location.getYaw());
                 player.setXRot(location.getPitch());
             }
-            
+
+            // Particle effects (destination)
+            if (configManager.getEnableParticleEffects()) {
+                for (int i = 0; i < 50; i++) {
+                    double dx = location.getX() + (player.getRandom().nextDouble() - 0.5) * 1.0;
+                    double dy = location.getY() + 1 + player.getRandom().nextDouble();
+                    double dz = location.getZ() + (player.getRandom().nextDouble() - 0.5) * 1.0;
+                    targetLevel.addParticle(
+                        net.minecraft.core.particles.ParticleTypes.PORTAL,
+                        dx, dy, dz,
+                        0, 0, 0
+                    );
+                }
+            }
+
+            // Sound effects (destination)
+            if (com.zerog.neoessentials.config.ConfigManager.getEnableSoundEffects()) {
+                targetLevel.playSound(
+                    null, // No specific player, play for all nearby
+                    location.getX(), location.getY(), location.getZ(),
+                    SoundEvents.ENDERMAN_TELEPORT,
+                    SoundSource.PLAYERS,
+                    1.0F, 1.0F
+                );
+            }
+
             LOGGER.debug("Teleported {} to {}", player.getName().getString(), location.getLocationString());
             future.complete(TeleportResult.success("Teleported to " + location.getLocationString()));
-            
+
         } catch (Exception e) {
             LOGGER.error("Failed to teleport player {}: {}", player.getName().getString(), e.getMessage(), e);
             future.complete(TeleportResult.failure("Teleport failed: " + e.getMessage()));

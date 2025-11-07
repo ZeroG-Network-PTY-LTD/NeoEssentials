@@ -150,40 +150,69 @@ public class ChatComponentUtil {
         if (text == null || text.isEmpty()) {
             return Component.empty();
         }
-        
+
         // Replace & with § for consistency
         text = text.replace('&', '§');
-        
+
         MutableComponent result = Component.empty();
         StringBuilder currentText = new StringBuilder();
         ChatFormatting currentColor = ChatFormatting.WHITE;
+        net.minecraft.network.chat.TextColor hexColor = null;
         boolean bold = false, italic = false, underlined = false, strikethrough = false;
-        
+
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
-            
+
+            // Hex color: #RRGGBB (must be at start of segment)
+            if (c == '#' && i + 6 < text.length()) {
+                String hex = text.substring(i, i + 7);
+                if (hex.matches("#[0-9a-fA-F]{6}")) {
+                    // Add current text segment if not empty
+                    if (currentText.length() > 0) {
+                        MutableComponent segment = Component.literal(currentText.toString());
+                        Style style = Style.EMPTY;
+                        if (hexColor != null) style = style.withColor(hexColor);
+                        else style = style.withColor(currentColor);
+                        if (bold) style = style.withBold(true);
+                        if (italic) style = style.withItalic(true);
+                        if (underlined) style = style.withUnderlined(true);
+                        if (strikethrough) style = style.withStrikethrough(true);
+                        segment.setStyle(style);
+                        result.append(segment);
+                        currentText.setLength(0);
+                    }
+                    hexColor = net.minecraft.network.chat.TextColor.parseColor(hex).result().orElse(null);
+                    // Reset formatting when color changes
+                    bold = italic = underlined = strikethrough = false;
+                    i += 6;
+                    continue;
+                }
+            }
+
             if (c == '§' && i + 1 < text.length()) {
                 // Add current text segment if not empty
                 if (currentText.length() > 0) {
                     MutableComponent segment = Component.literal(currentText.toString());
-                    Style style = Style.EMPTY.withColor(currentColor);
+                    Style style = Style.EMPTY;
+                    if (hexColor != null) style = style.withColor(hexColor);
+                    else style = style.withColor(currentColor);
                     if (bold) style = style.withBold(true);
                     if (italic) style = style.withItalic(true);
                     if (underlined) style = style.withUnderlined(true);
                     if (strikethrough) style = style.withStrikethrough(true);
-                    
                     segment.setStyle(style);
                     result.append(segment);
                     currentText.setLength(0);
                 }
-                
+
                 // Parse formatting code
                 char formatCode = text.charAt(i + 1);
                 ChatFormatting formatting = ChatFormatting.getByCode(formatCode);
-                
+
                 if (formatting != null) {
                     if (formatting.isColor()) {
                         currentColor = formatting;
+                        hexColor = null; // Reset hex color if vanilla color code is used
                         // Reset formatting when color changes
                         bold = italic = underlined = strikethrough = false;
                     } else {
@@ -198,6 +227,7 @@ public class ChatComponentUtil {
                             }
                             case RESET -> {
                                 currentColor = ChatFormatting.WHITE;
+                                hexColor = null;
                                 bold = italic = underlined = strikethrough = false;
                             }
                             // Color cases (handled above in isColor() check, but needed for completeness)
@@ -209,26 +239,27 @@ public class ChatComponentUtil {
                         }
                     }
                 }
-                
+
                 i++; // Skip the format code character
             } else {
                 currentText.append(c);
             }
         }
-        
+
         // Add final text segment
         if (currentText.length() > 0) {
             MutableComponent segment = Component.literal(currentText.toString());
-            Style style = Style.EMPTY.withColor(currentColor);
+            Style style = Style.EMPTY;
+            if (hexColor != null) style = style.withColor(hexColor);
+            else style = style.withColor(currentColor);
             if (bold) style = style.withBold(true);
             if (italic) style = style.withItalic(true);
             if (underlined) style = style.withUnderlined(true);
             if (strikethrough) style = style.withStrikethrough(true);
-            
             segment.setStyle(style);
             result.append(segment);
         }
-        
+
         return result;
     }
     

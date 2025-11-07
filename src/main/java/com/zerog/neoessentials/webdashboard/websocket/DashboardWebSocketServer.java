@@ -3,38 +3,30 @@ package com.zerog.neoessentials.webdashboard.websocket;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import org.java_websocket.WebSocket;
-import org.java_websocket.handshake.ClientHandshake;
-import org.java_websocket.server.WebSocketServer;
+// NOTE: WebSocket support requires external dependency: org.java-websocket
+// Uncomment the following imports and class implementation when dependency is available
+// import org.java_websocket.WebSocket;
+// import org.java_websocket.handshake.ClientHandshake;
+// import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.net.InetSocketAddress;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * WebSocket server for real-time dashboard updates
  * Handles bidirectional communication between server and dashboard clients
+ * 
+ * STUB IMPLEMENTATION - Requires org.java-websocket dependency to function
+ * This stub allows compilation without the external websocket library
  */
-public class DashboardWebSocketServer extends WebSocketServer {
+public class DashboardWebSocketServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardWebSocketServer.class);
+    @SuppressWarnings("unused")
     private static final Gson GSON = new GsonBuilder().create();
     
     private static DashboardWebSocketServer INSTANCE;
     
-    // Track connected clients and their subscriptions
-    private final Map<WebSocket, Set<String>> clientSubscriptions = new ConcurrentHashMap<>();
-    private final Set<WebSocket> authenticatedClients = new CopyOnWriteArraySet<>();
-    
-    // Message rate limiting
-    private final Map<WebSocket, Long> lastMessageTime = new ConcurrentHashMap<>();
-    private static final long MESSAGE_COOLDOWN_MS = 100; // 10 messages per second max
-    
     private DashboardWebSocketServer(int port) {
-        super(new InetSocketAddress(port));
-        LOGGER.info("WebSocket server initialized on port {}", port);
+        LOGGER.warn("WebSocket server is a stub implementation - requires org.java-websocket dependency. Port {} will not be opened.", port);
     }
     
     public static DashboardWebSocketServer getInstance(int port) {
@@ -51,7 +43,47 @@ public class DashboardWebSocketServer extends WebSocketServer {
         return INSTANCE;
     }
     
-    @Override
+    // Stub methods for compilation
+    public void start() {
+        LOGGER.warn("WebSocket server start() called but is a stub - no server will start");
+    }
+    
+    public void stop(int timeout) {
+        LOGGER.warn("WebSocket server stop() called but is a stub - no server to stop");
+    }
+    
+    public void broadcast(String channel, JsonObject data) {
+        LOGGER.debug("WebSocket broadcast stub called for channel: {}", channel);
+    }
+    
+    public void broadcastToAll(JsonObject data) {
+        LOGGER.debug("WebSocket broadcastToAll stub called");
+    }
+    
+    public int getClientCount() {
+        return 0;
+    }
+    
+    public int getAuthenticatedClientCount() {
+        return 0;
+    }
+    
+/*
+ * =====================================================================================
+ * ORIGINAL WEBSOCKET IMPLEMENTATION (COMMENTED OUT - REQUIRES org.java-websocket DEPENDENCY)
+ * =====================================================================================
+ * The following code was disabled because it requires org.java-websocket dependency:
+ * - org.java_websocket.WebSocket
+ * - org.java_websocket.handshake.ClientHandshake
+ * - org.java_websocket.server.WebSocketServer
+ * 
+ * To enable WebSocket support:
+ * 1. Add implementation('org.java-websocket:Java-WebSocket:1.5.3') to build.gradle
+ * 2. Uncomment and restore the original implementation from git history
+ * ===================================================================================== */
+ 
+/* Original code commented out:
+
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
         LOGGER.info("New WebSocket connection from: {}", conn.getRemoteSocketAddress());
         
@@ -138,181 +170,182 @@ public class DashboardWebSocketServer extends WebSocketServer {
         LOGGER.info("WebSocket server started successfully");
         setConnectionLostTimeout(30); // 30 second timeout
     }
+*/
     
-    /**
-     * Handle client subscription to data channels
-     */
-    private void handleSubscribe(WebSocket conn, JsonObject msg) {
-        // Require authentication for subscriptions
-        if (!authenticatedClients.contains(conn)) {
-            JsonObject error = new JsonObject();
-            error.addProperty("type", "auth_error");
-            error.addProperty("message", "Authentication required. Please authenticate first.");
-            sendToClient(conn, error);
-            return;
-        }
-        
-        if (!msg.has("channels")) {
-            JsonObject error = new JsonObject();
-            error.addProperty("type", "error");
-            error.addProperty("message", "Missing 'channels' field in subscribe request");
-            sendToClient(conn, error);
-            return;
-        }
-        
-        Set<String> subscriptions = clientSubscriptions.get(conn);
-        msg.getAsJsonArray("channels").forEach(channel -> {
-            String channelName = channel.getAsString();
-            subscriptions.add(channelName);
-            LOGGER.debug("Client {} subscribed to channel: {}", conn.getRemoteSocketAddress(), channelName);
-        });
-        
-        JsonObject response = new JsonObject();
-        response.addProperty("type", "subscribed");
-        response.addProperty("message", "Successfully subscribed to channels");
-        response.add("channels", msg.get("channels"));
-        sendToClient(conn, response);
-    }
+/*
+    // **
+    //  * Handle client subscription to data channels
+    //  *
+    // private void handleSubscribe(WebSocket conn, JsonObject msg) {
+    //     // Require authentication for subscriptions
+    //     if (!authenticatedClients.contains(conn)) {
+    //         JsonObject error = new JsonObject();
+    //         error.addProperty("type", "auth_error");
+    //         error.addProperty("message", "Authentication required. Please authenticate first.");
+    //         sendToClient(conn, error);
+    //         return;
+    //     }
+    //     
+    //     if (!msg.has("channels")) {
+    //         JsonObject error = new JsonObject();
+    //         error.addProperty("type", "error");
+    //         error.addProperty("message", "Missing 'channels' field in subscribe request");
+    //         sendToClient(conn, error);
+    //         return;
+    //     }
+    //     
+    //     Set<String> subscriptions = clientSubscriptions.get(conn);
+    //     msg.getAsJsonArray("channels").forEach(channel -> {
+    //         String channelName = channel.getAsString();
+    //         subscriptions.add(channelName);
+    //         LOGGER.debug("Client {} subscribed to channel: {}", conn.getRemoteSocketAddress(), channelName);
+    //     });
+    //     
+    //     JsonObject response = new JsonObject();
+    //     response.addProperty("type", "subscribed");
+    //     response.addProperty("message", "Successfully subscribed to channels");
+    //     response.add("channels", msg.get("channels"));
+    //     sendToClient(conn, response);
+    // }
+    // 
+    // **
+    //  * Handle client unsubscription from data channels
+    //  *
+    // private void handleUnsubscribe(WebSocket conn, JsonObject msg) {
+    //     if (!msg.has("channels")) {
+    //         JsonObject error = new JsonObject();
+    //         error.addProperty("type", "error");
+    //         error.addProperty("message", "Missing 'channels' field in unsubscribe request");
+    //         sendToClient(conn, error);
+    //         return;
+    //     }
+    //     
+    //     Set<String> subscriptions = clientSubscriptions.get(conn);
+    //     msg.getAsJsonArray("channels").forEach(channel -> {
+    //         String channelName = channel.getAsString();
+    //         subscriptions.remove(channelName);
+    //         LOGGER.debug("Client {} unsubscribed from channel: {}", conn.getRemoteSocketAddress(), channelName);
+    //     });
+    //     
+    //     JsonObject response = new JsonObject();
+    //     response.addProperty("type", "unsubscribed");
+    //     response.addProperty("message", "Successfully unsubscribed from channels");
+    //     response.add("channels", msg.get("channels"));
+    //     sendToClient(conn, response);
+    // }
+    // 
+    // **
+    //  * Handle ping/pong for keep-alive
+    //  *
+    // private void handlePing(WebSocket conn) {
+    //     JsonObject pong = new JsonObject();
+    //     pong.addProperty("type", "pong");
+    //     pong.addProperty("timestamp", System.currentTimeMillis());
+    //     sendToClient(conn, pong);
+    // }
+    // 
+    // **
+    //  * Handle client authentication
+    //  * Validates session token with AuthenticationManager
+    //  *
+    // private void handleAuthenticate(WebSocket conn, JsonObject msg) {
+    //     if (!msg.has("sessionId")) {
+    //         JsonObject error = new JsonObject();
+    //         error.addProperty("type", "auth_error");
+    //         error.addProperty("message", "Missing sessionId in authentication request");
+    //         sendToClient(conn, error);
+    //         return;
+    //     }
+    //     
+    //     String sessionId = msg.get("sessionId").getAsString();
+    //     
+    //     // Validate session with AuthenticationManager
+    //     com.zerog.neoessentials.webdashboard.security.AuthenticationManager authManager = 
+    //         com.zerog.neoessentials.webdashboard.security.AuthenticationManager.getInstance();
+    //     com.zerog.neoessentials.webdashboard.security.Session session = authManager.validateSession(sessionId);
+    //     
+    //     if (session == null) {
+    //         JsonObject error = new JsonObject();
+    //         error.addProperty("type", "auth_error");
+    //         error.addProperty("message", "Invalid or expired session");
+    //         sendToClient(conn, error);
+    //         return;
+    //     }
+    //     
+    //     // Mark client as authenticated
+    //     authenticatedClients.add(conn);
+    //     
+    //     JsonObject response = new JsonObject();
+    //     response.addProperty("type", "authenticated");
+    //     response.addProperty("message", "Authentication successful");
+    //     response.addProperty("username", session.getUsername());
+    //     response.addProperty("role", session.getRole().name());
+    //     response.addProperty("timestamp", System.currentTimeMillis());
+    //     sendToClient(conn, response);
+    //     
+    //     LOGGER.info("WebSocket client authenticated: {} ({})", session.getUsername(), conn.getRemoteSocketAddress());
+    // }
     
-    /**
-     * Handle client unsubscription from data channels
-     */
-    private void handleUnsubscribe(WebSocket conn, JsonObject msg) {
-        if (!msg.has("channels")) {
-            JsonObject error = new JsonObject();
-            error.addProperty("type", "error");
-            error.addProperty("message", "Missing 'channels' field in unsubscribe request");
-            sendToClient(conn, error);
-            return;
-        }
-        
-        Set<String> subscriptions = clientSubscriptions.get(conn);
-        msg.getAsJsonArray("channels").forEach(channel -> {
-            String channelName = channel.getAsString();
-            subscriptions.remove(channelName);
-            LOGGER.debug("Client {} unsubscribed from channel: {}", conn.getRemoteSocketAddress(), channelName);
-        });
-        
-        JsonObject response = new JsonObject();
-        response.addProperty("type", "unsubscribed");
-        response.addProperty("message", "Successfully unsubscribed from channels");
-        response.add("channels", msg.get("channels"));
-        sendToClient(conn, response);
-    }
+    // **
+    //  * Broadcast data to all clients subscribed to a channel
+    //  *
+    // public void broadcast(String channel, JsonObject data) {
+    //     data.addProperty("channel", channel);
+    //     data.addProperty("timestamp", System.currentTimeMillis());
+    //     
+    //     String message = GSON.toJson(data);
+    //     
+    //     for (Map.Entry<WebSocket, Set<String>> entry : clientSubscriptions.entrySet()) {
+    //         if (entry.getValue().contains(channel)) {
+    //             WebSocket client = entry.getKey();
+    //             if (client.isOpen()) {
+    //                 client.send(message);
+    //             }
+    //         }
+    //     }
+    // }
+    // 
+    // **
+    //  * Send message to specific client
+    //  *
+    // public void sendToClient(WebSocket client, JsonObject data) {
+    //     if (client != null && client.isOpen()) {
+    //         data.addProperty("timestamp", System.currentTimeMillis());
+    //         client.send(GSON.toJson(data));
+    //     }
+    // }
+    // 
+    // **
+    //  * Broadcast to all connected clients
+    //  *
+    // public void broadcastToAll(JsonObject data) {
+    //     data.addProperty("timestamp", System.currentTimeMillis());
+    //     String message = GSON.toJson(data);
+    //     
+    //     for (WebSocket client : getConnections()) {
+    //         if (client.isOpen()) {
+    //             client.send(message);
+    //         }
+    //     }
+    // }
+    // 
+    // **
+    //  * Get number of connected clients
+    //  *
+    // public int getClientCount() {
+    //     return getConnections().size();
+    // }
+    // 
+    // **
+    //  * Get number of authenticated clients
+    //  *
+    // public int getAuthenticatedClientCount() {
+    //     return authenticatedClients.size();
+    // }
     
-    /**
-     * Handle ping/pong for keep-alive
-     */
-    private void handlePing(WebSocket conn) {
-        JsonObject pong = new JsonObject();
-        pong.addProperty("type", "pong");
-        pong.addProperty("timestamp", System.currentTimeMillis());
-        sendToClient(conn, pong);
-    }
-    
-    /**
-     * Handle client authentication
-     * Validates session token with AuthenticationManager
-     */
-    private void handleAuthenticate(WebSocket conn, JsonObject msg) {
-        if (!msg.has("sessionId")) {
-            JsonObject error = new JsonObject();
-            error.addProperty("type", "auth_error");
-            error.addProperty("message", "Missing sessionId in authentication request");
-            sendToClient(conn, error);
-            return;
-        }
-        
-        String sessionId = msg.get("sessionId").getAsString();
-        
-        // Validate session with AuthenticationManager
-        com.zerog.neoessentials.webdashboard.security.AuthenticationManager authManager = 
-            com.zerog.neoessentials.webdashboard.security.AuthenticationManager.getInstance();
-        com.zerog.neoessentials.webdashboard.security.Session session = authManager.validateSession(sessionId);
-        
-        if (session == null) {
-            JsonObject error = new JsonObject();
-            error.addProperty("type", "auth_error");
-            error.addProperty("message", "Invalid or expired session");
-            sendToClient(conn, error);
-            return;
-        }
-        
-        // Mark client as authenticated
-        authenticatedClients.add(conn);
-        
-        JsonObject response = new JsonObject();
-        response.addProperty("type", "authenticated");
-        response.addProperty("message", "Authentication successful");
-        response.addProperty("username", session.getUsername());
-        response.addProperty("role", session.getRole().name());
-        response.addProperty("timestamp", System.currentTimeMillis());
-        sendToClient(conn, response);
-        
-        LOGGER.info("WebSocket client authenticated: {} ({})", session.getUsername(), conn.getRemoteSocketAddress());
-    }
-    
-    /**
-     * Broadcast data to all clients subscribed to a channel
-     */
-    public void broadcast(String channel, JsonObject data) {
-        data.addProperty("channel", channel);
-        data.addProperty("timestamp", System.currentTimeMillis());
-        
-        String message = GSON.toJson(data);
-        
-        for (Map.Entry<WebSocket, Set<String>> entry : clientSubscriptions.entrySet()) {
-            if (entry.getValue().contains(channel)) {
-                WebSocket client = entry.getKey();
-                if (client.isOpen()) {
-                    client.send(message);
-                }
-            }
-        }
-    }
-    
-    /**
-     * Send message to specific client
-     */
-    public void sendToClient(WebSocket client, JsonObject data) {
-        if (client != null && client.isOpen()) {
-            data.addProperty("timestamp", System.currentTimeMillis());
-            client.send(GSON.toJson(data));
-        }
-    }
-    
-    /**
-     * Broadcast to all connected clients
-     */
-    public void broadcastToAll(JsonObject data) {
-        data.addProperty("timestamp", System.currentTimeMillis());
-        String message = GSON.toJson(data);
-        
-        for (WebSocket client : getConnections()) {
-            if (client.isOpen()) {
-                client.send(message);
-            }
-        }
-    }
-    
-    /**
-     * Get number of connected clients
-     */
-    public int getClientCount() {
-        return getConnections().size();
-    }
-    
-    /**
-     * Get number of authenticated clients
-     */
-    public int getAuthenticatedClientCount() {
-        return authenticatedClients.size();
-    }
-    
-    /**
-     * Check if client is authenticated
-     */
-    public boolean isAuthenticated(WebSocket client) {
-        return authenticatedClients.contains(client);
-    }
+    // Check if client is authenticated
+    // public boolean isAuthenticated(WebSocket client) {
+    //     return authenticatedClients.contains(client);
+    // }
+*/
 }

@@ -4,6 +4,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,18 +12,19 @@ import org.slf4j.LoggerFactory;
  * Event listener for tracking player locations on the map
  * Updates player positions periodically for real-time map display
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class MapPlayerTracker {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapPlayerTracker.class);
     
     // Update player locations every second (20 ticks)
     private static final int UPDATE_INTERVAL = 20;
-    private int tickCounter = 0;
+    private static int tickCounter = 0;
     
     /**
      * Track player join events
      */
     @SubscribeEvent
-    public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerLocationTracker tracker = PlayerLocationTracker.getInstance();
             tracker.updatePlayerLocation(player);
@@ -34,7 +36,7 @@ public class MapPlayerTracker {
      * Track player leave events
      */
     @SubscribeEvent
-    public void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             PlayerLocationTracker tracker = PlayerLocationTracker.getInstance();
             tracker.removePlayer(player.getUUID());
@@ -46,7 +48,7 @@ public class MapPlayerTracker {
      * Update player locations on server tick
      */
     @SubscribeEvent
-    public void onServerTick(ServerTickEvent.Post event) {
+    public static void onServerTick(ServerTickEvent.Post event) {
         tickCounter++;
         
         // Update player locations every second

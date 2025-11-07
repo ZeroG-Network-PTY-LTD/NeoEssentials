@@ -24,26 +24,111 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HomeManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(HomeManager.class);
     private static final String HOMES_FILE = "homes.json";
-    
+
     // Singleton pattern
     private static class SingletonHolder {
         private static final HomeManager INSTANCE = new HomeManager();
     }
-    
+
     public static HomeManager getInstance() {
         return SingletonHolder.INSTANCE;
     }
-    
+
     private final Map<UUID, Map<String, TeleportLocation>> playerHomes = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
-    
+
     // Configuration
     private int maxHomesPerPlayer = 5;
+    private int homeSetCooldownSeconds = 0;
+    private int homeTeleportCooldownSeconds = 0;
+    private int homeDeleteCooldownSeconds = 0;
+
+    // Cooldown tracking: player UUID -> last setHome time (ms)
+    private final Map<UUID, Long> lastHomeSetTimestamps = new ConcurrentHashMap<>();
+    // Cooldown tracking: player UUID -> last home teleport time (ms)
+    private final Map<UUID, Long> lastHomeTeleportTimestamps = new ConcurrentHashMap<>();
+    // Cooldown tracking: player UUID -> last home delete time (ms)
+    private final Map<UUID, Long> lastHomeDeleteTimestamps = new ConcurrentHashMap<>();
+
+    /**
+     * Returns the maximum number of homes allowed for a player, considering permissions.
+     * If the player has the permission node neoessentials.home.<amount>, that value is used if higher than config.
+     */
+    public int getMaxHomesForPlayer(ServerPlayer player) {
+        int configMax = this.maxHomesPerPlayer;
+        int permMax = -1;
+        // Check for permissions neoessentials.home.<amount> from high to low (e.g., 100 down to 1)
+        for (int i = 100; i >= 1; i--) {
+            String perm = "neoessentials.home." + i;
+            if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), perm)) {
+                permMax = i;
+                break;
+            }
+        }
+        if (permMax > configMax) {
+            return permMax;
+        }
+        return configMax;
+    }
     private boolean allowOverworldOnly = false;
+    private boolean allowCrossDimensionHomes = true;
     private boolean requireSafeLocations = true;
     private int teleportDelay = 3; // seconds
-    
+
     private HomeManager() {
+        // Load config values
+        try {
+            com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+            boolean safe = true;
+            int maxHomes = 5;
+            int setCooldown = 0;
+            int tpCooldown = 0;
+            int delCooldown = 0;
+            if (configManager != null) {
+                JsonObject config = configManager.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+                if (config.has("teleportation")) {
+                    JsonObject tp = config.getAsJsonObject("teleportation");
+                    if (tp.has("homeSettings")) {
+                        JsonObject homeSettings = tp.getAsJsonObject("homeSettings");
+                        if (homeSettings.has("enableHomeTeleportSafety")) {
+                            safe = homeSettings.get("enableHomeTeleportSafety").getAsBoolean();
+                        }
+                        if (homeSettings.has("maxHomes")) {
+                            try {
+                                maxHomes = homeSettings.get("maxHomes").getAsInt();
+                            } catch (Exception ignored) {}
+                        }
+                        if (homeSettings.has("allowCrossDimensionHomes")) {
+                            try {
+                                allowCrossDimensionHomes = homeSettings.get("allowCrossDimensionHomes").getAsBoolean();
+                            } catch (Exception ignored) {}
+                        }
+                        if (homeSettings.has("homeSetCooldown")) {
+                            try {
+                                setCooldown = homeSettings.get("homeSetCooldown").getAsInt();
+                            } catch (Exception ignored) {}
+                        }
+                        if (homeSettings.has("homeTeleportCooldown")) {
+                            try {
+                                tpCooldown = homeSettings.get("homeTeleportCooldown").getAsInt();
+                            } catch (Exception ignored) {}
+                        }
+                        if (homeSettings.has("homeDeleteCooldown")) {
+                            try {
+                                delCooldown = homeSettings.get("homeDeleteCooldown").getAsInt();
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                }
+            }
+            setRequireSafeLocations(safe);
+            setMaxHomesPerPlayer(maxHomes);
+            setHomeSetCooldownSeconds(setCooldown);
+            setHomeTeleportCooldownSeconds(tpCooldown);
+            setHomeDeleteCooldownSeconds(delCooldown);
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load home config, using defaults: {}", e.getMessage());
+        }
         loadHomes();
     }
     
@@ -59,29 +144,42 @@ public class HomeManager {
      */
     public boolean setHome(ServerPlayer player, String homeName, TeleportLocation customLocation) {
         UUID playerId = player.getUUID();
-        
+
+        // Enforce set home cooldown
+        if (homeSetCooldownSeconds > 0) {
+            long now = System.currentTimeMillis();
+            long lastSet = lastHomeSetTimestamps.getOrDefault(playerId, 0L);
+            long elapsed = (now - lastSet) / 1000L;
+            if (elapsed < homeSetCooldownSeconds) {
+                long wait = homeSetCooldownSeconds - elapsed;
+                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.cooldown", wait));
+                return false;
+            }
+        }
+
         // Validate home name
         if (!isValidHomeName(homeName)) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.invalid_name", homeName));
             return false;
         }
-        
-        // Check if player has reached home limit
+
+        // Check if player has reached home limit (consider permission-based max)
         Map<String, TeleportLocation> homes = playerHomes.computeIfAbsent(playerId, k -> new HashMap<>());
-        if (!homes.containsKey(homeName) && homes.size() >= maxHomesPerPlayer) {
-            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.limit_reached", maxHomesPerPlayer));
+        int allowedHomes = getMaxHomesForPlayer(player);
+        if (!homes.containsKey(homeName) && homes.size() >= allowedHomes) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.limit_reached", allowedHomes));
             return false;
         }
-        
+
         // Create location
         TeleportLocation location = customLocation != null ? customLocation : new TeleportLocation(player);
-        
+
         // Check world restriction
-        if (allowOverworldOnly && !isOverworld(location)) {
+        if (!allowCrossDimensionHomes && !isOverworld(location)) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.overworld_only"));
             return false;
         }
-        
+
         // Check if location is safe
         if (requireSafeLocations && !location.isSafe()) {
             TeleportLocation safeLocation = location.findSafeLocation();
@@ -91,26 +189,34 @@ public class HomeManager {
             }
             location = safeLocation;
         }
-        
+
         // Set the home
         boolean isNew = !homes.containsKey(homeName);
         homes.put(homeName, location);
-        
+
         // Save to file
         saveHomes();
-        
+
+        // Update cooldown timestamp
+        if (homeSetCooldownSeconds > 0) {
+            lastHomeSetTimestamps.put(playerId, System.currentTimeMillis());
+        }
+
         if (isNew) {
             player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.set", homeName, location.getLocationString()));
         } else {
             player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.updated", homeName, location.getLocationString()));
         }
-        
-        LOGGER.info("Player {} {} home '{}' at {}", 
-                   player.getName().getString(), 
-                   isNew ? "set" : "updated", 
-                   homeName, 
-                   location.getLocationString());
-        
+
+        // Log home set/update if enabled in config
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogHomeActionsEnabled()) {
+            LOGGER.info("Player {} {} home '{}' at {}", 
+                player.getName().getString(), 
+                isNew ? "set" : "updated", 
+                homeName, 
+                location.getLocationString());
+        }
+
         return true;
     }
     
@@ -120,24 +226,46 @@ public class HomeManager {
     public boolean deleteHome(ServerPlayer player, String homeName) {
         UUID playerId = player.getUUID();
         Map<String, TeleportLocation> homes = playerHomes.get(playerId);
-        
+
+        // Enforce delete home cooldown
+        if (homeDeleteCooldownSeconds > 0) {
+            long now = System.currentTimeMillis();
+            long lastDelete = lastHomeDeleteTimestamps.getOrDefault(playerId, 0L);
+            long elapsed = (now - lastDelete) / 1000L;
+            if (elapsed < homeDeleteCooldownSeconds) {
+                long wait = homeDeleteCooldownSeconds - elapsed;
+                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.delete_cooldown", wait));
+                return false;
+            }
+        }
+
         if (homes == null || !homes.containsKey(homeName)) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.not_found", homeName));
             return false;
         }
-        
+
         homes.remove(homeName);
         if (homes.isEmpty()) {
             playerHomes.remove(playerId);
         }
-        
+
         saveHomes();
-        
+
+        // Update cooldown timestamp
+        if (homeDeleteCooldownSeconds > 0) {
+            lastHomeDeleteTimestamps.put(playerId, System.currentTimeMillis());
+        }
+
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.deleted", homeName));
-        LOGGER.info("Player {} deleted home '{}'", player.getName().getString(), homeName);
-        
+        // Log home delete if enabled in config
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogHomeActionsEnabled()) {
+            LOGGER.info("Player {} deleted home '{}'", player.getName().getString(), homeName);
+        }
+
         return true;
     }
+    public int getHomeDeleteCooldownSeconds() { return homeDeleteCooldownSeconds; }
+    public void setHomeDeleteCooldownSeconds(int seconds) { this.homeDeleteCooldownSeconds = Math.max(0, seconds); }
     
     /**
      * Get a specific home for a player
@@ -175,12 +303,38 @@ public class HomeManager {
      */
     public void teleportToHome(ServerPlayer player, String homeName) {
         TeleportLocation home = getHome(player, homeName);
-        
+        UUID playerId = player.getUUID();
+
+        // Enforce teleport cooldown
+        if (homeTeleportCooldownSeconds > 0) {
+            long now = System.currentTimeMillis();
+            long lastTp = lastHomeTeleportTimestamps.getOrDefault(playerId, 0L);
+            long elapsed = (now - lastTp) / 1000L;
+            if (elapsed < homeTeleportCooldownSeconds) {
+                long wait = homeTeleportCooldownSeconds - elapsed;
+                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.teleport_cooldown", wait));
+                return;
+            }
+        }
+
+        // Enforce maxTeleportDistance if set in config
+        int maxDistance = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxTeleportDistance();
+        if (maxDistance > 0 && home != null) {
+            TeleportLocation fromLoc = new TeleportLocation(player);
+            if (fromLoc.getWorldName().equals(home.getWorldName())) {
+                double dist = fromLoc.distanceTo(home);
+                if (dist > maxDistance) {
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.distance_exceeded", maxDistance));
+                    return;
+                }
+            }
+        }
+
         if (home == null) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.not_found", homeName));
             return;
         }
-        
+
         // Check if home location is still safe
         if (requireSafeLocations && !home.isSafe()) {
             TeleportLocation safeLocation = home.findSafeLocation();
@@ -188,22 +342,28 @@ public class HomeManager {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.unsafe", homeName));
                 return;
             }
-            
+
             // Update home to safe location
-            UUID playerId = player.getUUID();
             playerHomes.get(playerId).put(homeName, safeLocation);
             saveHomes();
             home = safeLocation;
-            
+
             player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.moved_to_safety", homeName));
         }
-        
+
         // Perform teleportation
         int delayTicks = teleportDelay * 20; // Convert seconds to ticks
         TeleportUtil.teleportPlayer(player, home, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {
+                // Update cooldown timestamp
+                if (homeTeleportCooldownSeconds > 0) {
+                    lastHomeTeleportTimestamps.put(playerId, System.currentTimeMillis());
+                }
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.success", homeName));
-                LOGGER.info("Player {} teleported to home '{}'", player.getName().getString(), homeName);
+                // Log home teleport if enabled in config
+                if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogHomeActionsEnabled()) {
+                    LOGGER.info("Player {} teleported to home '{}'", player.getName().getString(), homeName);
+                }
             } else {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.failed", homeName, result.getMessage()));
                 LOGGER.warn("Failed to teleport player {} to home '{}': {}", player.getName().getString(), homeName, result.getMessage());
@@ -238,7 +398,8 @@ public class HomeManager {
         }
         
         StringBuilder builder = new StringBuilder();
-        builder.append(MessageUtil.localize("commands.neoessentials.teleport.home.list_header", homes.size(), maxHomesPerPlayer));
+    int allowedHomes = getMaxHomesForPlayer(player);
+    builder.append(MessageUtil.localize("commands.neoessentials.teleport.home.list_header", homes.size(), allowedHomes));
         
         List<String> sortedNames = new ArrayList<>(homes.keySet());
         Collections.sort(sortedNames);
@@ -380,18 +541,28 @@ public class HomeManager {
         }
     }
     
+
     // Configuration getters/setters
     public int getMaxHomesPerPlayer() { return maxHomesPerPlayer; }
     public void setMaxHomesPerPlayer(int max) { this.maxHomesPerPlayer = Math.max(1, max); }
-    
+
     public boolean isAllowOverworldOnly() { return allowOverworldOnly; }
     public void setAllowOverworldOnly(boolean allow) { this.allowOverworldOnly = allow; }
-    
+
+    public boolean isAllowCrossDimensionHomes() { return allowCrossDimensionHomes; }
+    public void setAllowCrossDimensionHomes(boolean allow) { this.allowCrossDimensionHomes = allow; }
+
     public boolean isRequireSafeLocations() { return requireSafeLocations; }
     public void setRequireSafeLocations(boolean require) { this.requireSafeLocations = require; }
-    
+
     public int getTeleportDelay() { return teleportDelay; }
     public void setTeleportDelay(int delay) { this.teleportDelay = Math.max(0, delay); }
+
+    public int getHomeSetCooldownSeconds() { return homeSetCooldownSeconds; }
+    public void setHomeSetCooldownSeconds(int seconds) { this.homeSetCooldownSeconds = Math.max(0, seconds); }
+
+    public int getHomeTeleportCooldownSeconds() { return homeTeleportCooldownSeconds; }
+    public void setHomeTeleportCooldownSeconds(int seconds) { this.homeTeleportCooldownSeconds = Math.max(0, seconds); }
     
     /**
      * Clear all homes (for testing/admin purposes)

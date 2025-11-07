@@ -37,7 +37,7 @@ public class AfkCommand {
                     }
                     
                     // Check if chat module is enabled
-                    if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+                    if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
                         ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.afk.disabled"));
                         return 0;
                     }
@@ -73,7 +73,7 @@ public class AfkCommand {
                 }
                 
                 // Check if chat module is enabled
-                if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+                if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
                     ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.afk.disabled"));
                     return 0;
                 }

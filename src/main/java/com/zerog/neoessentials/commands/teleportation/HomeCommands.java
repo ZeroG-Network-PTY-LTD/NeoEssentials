@@ -20,7 +20,13 @@ import net.minecraft.server.level.ServerPlayer;
  * - /delhome <name> - Delete a home  
  * - /homes - List all homes
  */
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class HomeCommands {
+    // Track pending delete confirmations: player UUID -> home name
+    private static final Map<UUID, String> pendingDeleteConfirmations = new ConcurrentHashMap<>();
     
     // Permission nodes for home commands (matching PermissionRegistry)
     private static final String PERMISSION_HOME = "neoessentials.teleport.home";
@@ -101,6 +107,9 @@ public class HomeCommands {
             })
             .then(Commands.argument("name", StringArgumentType.word())
                 .executes(HomeCommands::executeSetHome)
+                .then(Commands.literal("confirm")
+                    .executes(HomeCommands::executeSetHomeConfirm)
+                )
             )
         );
     }
@@ -126,6 +135,9 @@ public class HomeCommands {
             .then(Commands.argument("name", StringArgumentType.word())
                 .suggests(HOME_SUGGESTIONS)
                 .executes(HomeCommands::executeDelHome)
+                .then(Commands.literal("confirm")
+                    .executes(HomeCommands::executeDelHomeConfirm)
+                )
             )
         );
     }
@@ -157,7 +169,13 @@ public class HomeCommands {
     private static int executeHomeDefault(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         HomeManager homeManager = HomeManager.getInstance();
-        
+        // Jail escape prevention
+        com.zerog.neoessentials.config.ConfigManager config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        com.zerog.neoessentials.moderation.JailManager jailManager = com.zerog.neoessentials.moderation.JailManager.getInstance();
+        if (config.isPreventJailEscapeEnabled() && jailManager.isPlayerJailed(player.getUUID())) {
+            context.getSource().sendFailure(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.jail.prevent_escape"));
+            return 0;
+        }
         if (!homeManager.hasHomes(player)) {
             context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.teleport.home.none_set"));
             return 0;
@@ -174,7 +192,13 @@ public class HomeCommands {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
-        
+        // Jail escape prevention
+        com.zerog.neoessentials.config.ConfigManager config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        com.zerog.neoessentials.moderation.JailManager jailManager = com.zerog.neoessentials.moderation.JailManager.getInstance();
+        if (config.isPreventJailEscapeEnabled() && jailManager.isPlayerJailed(player.getUUID())) {
+            context.getSource().sendFailure(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.jail.prevent_escape"));
+            return 0;
+        }
         homeManager.teleportToHome(player, homeName);
         return 1;
     }
@@ -183,6 +207,25 @@ public class HomeCommands {
      * Execute /sethome <name>
      */
     private static int executeSetHome(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        String homeName = StringArgumentType.getString(context, "name");
+        HomeManager homeManager = HomeManager.getInstance();
+        
+        // If home exists, require confirmation
+        if (homeManager.getHome(player, homeName) != null) {
+            player.sendSystemMessage(MessageUtil.warning("Home '" + homeName + "' already exists. Use /sethome " + homeName + " confirm to overwrite."));
+            return 0;
+        }
+        if (homeManager.setHome(player, homeName)) {
+            return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * Execute /sethome <name> confirm
+     */
+    private static int executeSetHomeConfirm(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
@@ -200,7 +243,50 @@ public class HomeCommands {
         ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
         String homeName = StringArgumentType.getString(context, "name");
         HomeManager homeManager = HomeManager.getInstance();
-        
+        ConfigManager config = ConfigManager.getInstance();
+
+        if (config.isRequireConfirmationForDeleteEnabled()) {
+            // If already pending confirmation for this home, prompt to use confirm
+            String pending = pendingDeleteConfirmations.get(player.getUUID());
+            if (pending != null && pending.equals(homeName)) {
+                player.sendSystemMessage(MessageUtil.warning("You have already requested to delete home '" + homeName + "'. Use /delhome " + homeName + " confirm to confirm deletion."));
+                return 0;
+            }
+            // Set pending confirmation
+            pendingDeleteConfirmations.put(player.getUUID(), homeName);
+            player.sendSystemMessage(MessageUtil.warning("Are you sure you want to delete home '" + homeName + "'? Use /delhome " + homeName + " confirm to confirm deletion."));
+            return 0;
+        }
+
+        // No confirmation required, delete immediately
+        if (homeManager.deleteHome(player, homeName)) {
+            return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * Execute /delhome <name> confirm
+     */
+    private static int executeDelHomeConfirm(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
+        String homeName = StringArgumentType.getString(context, "name");
+        HomeManager homeManager = HomeManager.getInstance();
+        ConfigManager config = ConfigManager.getInstance();
+
+        if (!config.isRequireConfirmationForDeleteEnabled()) {
+            player.sendSystemMessage(MessageUtil.error("Confirmation is not required for home deletion."));
+            return 0;
+        }
+
+        String pending = pendingDeleteConfirmations.get(player.getUUID());
+        if (pending == null || !pending.equals(homeName)) {
+            player.sendSystemMessage(MessageUtil.error("No pending delete confirmation for home '" + homeName + "'. Use /delhome " + homeName + " first."));
+            return 0;
+        }
+
+        // Remove pending confirmation
+        pendingDeleteConfirmations.remove(player.getUUID());
         if (homeManager.deleteHome(player, homeName)) {
             return 1;
         }

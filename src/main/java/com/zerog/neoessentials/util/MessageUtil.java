@@ -20,10 +20,23 @@ import org.slf4j.LoggerFactory;
  * Handles localization, formatting, and fallbacks consistently across all commands
  */
 public class MessageUtil {
+    /**
+     * Returns whether debug mode is enabled (for use throughout the mod)
+     */
+    public static boolean isDebugMode() {
+        return debugMode;
+    }
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageUtil.class);
     private static final Map<String, String> translations = new HashMap<>();
     private static boolean loaded = false;
-    private static boolean debugMode = true; // Enable for debugging
+    private static boolean debugMode = false; // Default to false, will sync with config
+    /**
+     * Sync debugMode with config value (modules.debugMode)
+     */
+    public static void syncDebugModeFromConfig() {
+        debugMode = com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled();
+        LOGGER.info("[NeoEssentials] Debug mode set to: {} (from config)", debugMode);
+    }
     
     // Language version tracking - increment when translations change
     private static final String LANG_VERSION_KEY = "_langVersion";
@@ -229,8 +242,9 @@ public class MessageUtil {
      * Get debug information about loaded translations
      */
     public static String getDebugInfo() {
-        loadTranslations();
-        return String.format("Translations loaded: %d, Debug mode: %s", translations.size(), debugMode);
+    loadTranslations();
+    syncDebugModeFromConfig();
+    return String.format("Translations loaded: %d, Debug mode: %s", translations.size(), debugMode);
     }
     
     /**
@@ -302,6 +316,15 @@ public class MessageUtil {
      * Parse color codes in text and return colored component
      */
     public static Component coloredText(String text) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isColorCodesEnabled()) {
+            // Strip all color codes, including hex (#RRGGBB)
+            if (text == null) return Component.empty();
+            // Remove § and & color codes
+            String noCodes = text.replaceAll("[§&][0-9a-fk-or]", "");
+            // Remove hex color codes (#RRGGBB)
+            noCodes = noCodes.replaceAll("#[0-9a-fA-F]{6}", "");
+            return Component.literal(noCodes);
+        }
         return ChatComponentUtil.parseColorCodes(text);
     }
     

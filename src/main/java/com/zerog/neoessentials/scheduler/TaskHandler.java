@@ -340,8 +340,7 @@ public class TaskHandler implements HttpHandler {
         }
         
         // Execute task immediately
-        TaskScheduler scheduler = TaskScheduler.getInstance();
-        scheduler.executeTask(task);
+        TaskScheduler.executeTask(task);
         
         JsonObject response = new JsonObject();
         response.addProperty("success", true);

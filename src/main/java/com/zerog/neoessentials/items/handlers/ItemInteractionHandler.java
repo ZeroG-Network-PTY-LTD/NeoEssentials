@@ -6,6 +6,7 @@ import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
  * When a player right-clicks with an item that has a powertool command assigned,
  * this handler executes the stored command.
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class ItemInteractionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ItemInteractionHandler.class);
 
