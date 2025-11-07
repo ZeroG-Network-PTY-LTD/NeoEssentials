@@ -35,11 +35,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * Manages player jail system with persistent storage
  */
 public class JailManager {
+    private static boolean jailSystemEnabledCache = true;
     private static final Logger LOGGER = LoggerFactory.getLogger(JailManager.class);
     private static JailManager instance;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final File jailFile;
     private final File jailLocationFile;
+    // Track number of times each player has been jailed
+    private final Map<UUID, Integer> jailCounts = new ConcurrentHashMap<>();
     
     // In-memory cache for quick lookups
     private final Map<UUID, JailEntry> jailedPlayers = new ConcurrentHashMap<>();
@@ -90,6 +93,11 @@ public class JailManager {
     }
     
     private JailManager() {
+        // Check config for jail system enabled
+        jailSystemEnabledCache = com.zerog.neoessentials.config.ConfigManager.isJailSystemEnabled();
+        if (!jailSystemEnabledCache) {
+            LOGGER.info("Jail system is disabled via config. All jail features will be inactive.");
+        }
         // Create moderation directory if it doesn't exist
         File moderationDir = new File("config/neoessentials/moderation");
         if (!moderationDir.exists()) {
@@ -99,6 +107,10 @@ public class JailManager {
         this.jailFile = new File(moderationDir, "jailed_players.json");
         this.jailLocationFile = new File(moderationDir, "jail_locations.json");
         loadData();
+    }
+
+    public static boolean isJailSystemEnabled() {
+        return jailSystemEnabledCache;
     }
     
     public static JailManager getInstance() {
@@ -115,12 +127,40 @@ public class JailManager {
         if (isPlayerJailed(playerId)) {
             return false; // Already jailed
         }
-        
+
         JailLocation jailLoc = jailLocations.get(jailName);
         if (jailLoc == null) {
             return false; // Jail doesn't exist
         }
-        
+
+        // Track jail count
+        int jailCount = jailCounts.getOrDefault(playerId, 0) + 1;
+        jailCounts.put(playerId, jailCount);
+
+        // Check thresholds
+        int tempBanThreshold = com.zerog.neoessentials.config.ConfigManager.getMaxJailsBeforeTempBan();
+        int permBanThreshold = com.zerog.neoessentials.config.ConfigManager.getMaxJailsBeforePermBan();
+        int tempBanDuration = com.zerog.neoessentials.config.ConfigManager.getTempBanDurationMinutes();
+
+        if (jailCount >= permBanThreshold) {
+            // Issue permanent ban
+            BanManager banManager = BanManager.getInstance();
+            banManager.banPlayer(playerName, playerId, "Exceeded maximum jailings (permanent ban)", "System");
+            jailCounts.put(playerId, 0); // Reset count
+            if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
+                LOGGER.info("Player {} ({}) permanently banned after {} jailings.", playerName, playerId, jailCount);
+            }
+            return false;
+        } else if (jailCount >= tempBanThreshold) {
+            // Issue temp ban
+            BanManager banManager = BanManager.getInstance();
+            banManager.tempBanPlayer(playerName, playerId, "Exceeded maximum jailings (temporary ban)", "System", tempBanDuration * 60 * 1000L);
+            if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
+                LOGGER.info("Player {} ({}) temp-banned for {} minutes after {} jailings.", playerName, playerId, tempBanDuration, jailCount);
+            }
+            return false;
+        }
+
         // Store original location
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
@@ -129,29 +169,33 @@ public class JailManager {
                 JailEntry jail = new JailEntry(playerName, playerId, reason, jailedBy, jailName);
                 jail.originalLocation = player.blockPosition();
                 jail.originalDimension = player.level().dimension().location().toString();
-                
+
                 jailedPlayers.put(playerId, jail);
                 saveJailedPlayers();
-                
+
                 // Teleport to jail
                 teleportToJail(player, jailLoc);
-                
+
                 String message = MessageUtil.localize("neoessentials.moderation.jailed_message", reason, jailedBy);
                 player.sendSystemMessage(MessageUtil.warning(message));
-                
-                LOGGER.info("Player {} ({}) jailed by {} in {} for: {}", 
-                        playerName, playerId, jailedBy, jailName, reason);
+
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
+            LOGGER.info("Player {} ({}) jailed by {} in {} for: {}", 
+                playerName, playerId, jailedBy, jailName, reason);
+        }
                 return true;
             }
         }
-        
+
         // Player offline - still record the jail
         JailEntry jail = new JailEntry(playerName, playerId, reason, jailedBy, jailName);
         jailedPlayers.put(playerId, jail);
         saveJailedPlayers();
-        
+
+    if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
         LOGGER.info("Player {} ({}) jailed while offline by {} in {} for: {}", 
-                playerName, playerId, jailedBy, jailName, reason);
+            playerName, playerId, jailedBy, jailName, reason);
+    }
         return true;
     }
     
@@ -177,7 +221,9 @@ public class JailManager {
                 }
             }
             
-            LOGGER.info("Player {} ({}) unjailed", jail.playerName, playerId);
+            if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
+                LOGGER.info("Player {} ({}) unjailed", jail.playerName, playerId);
+            }
             return true;
         }
         return false;
@@ -275,24 +321,25 @@ public class JailManager {
         if (!isPlayerJailed(playerId)) {
             return;
         }
-        
+
         JailEntry jail = getJailEntry(playerId);
         if (jail == null) {
             return;
         }
-        
+
         JailLocation jailLoc = getJailLocation(jail.jailName);
         if (jailLoc == null) {
             // Jail doesn't exist anymore, unjail player
             unjailPlayer(playerId);
             return;
         }
-        
-        // Teleport to jail
-        teleportToJail(player, jailLoc);
-        
-        String message = MessageUtil.localize("neoessentials.moderation.jail_reminder", jail.reason);
-        player.sendSystemMessage(MessageUtil.warning(message));
+
+        boolean teleportOnLogin = com.zerog.neoessentials.config.ConfigManager.getInstance().isJailTeleportOnLoginEnabled();
+        if (teleportOnLogin) {
+            teleportToJail(player, jailLoc);
+            String message = MessageUtil.localize("neoessentials.moderation.jail_reminder", jail.reason);
+            player.sendSystemMessage(MessageUtil.warning(message));
+        }
     }
     
     /**

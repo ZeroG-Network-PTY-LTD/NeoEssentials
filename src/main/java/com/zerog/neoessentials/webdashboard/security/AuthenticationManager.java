@@ -153,16 +153,30 @@ public class AuthenticationManager {
      */
     public Session validateSession(String sessionId) {
         if (sessionId == null || sessionId.isEmpty()) {
+            if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
+                LOGGER.debug("validateSession: sessionId is null or empty");
+            }
             return null;
         }
-        
         Session session = sessions.get(sessionId);
-        if (session == null || !session.isValid()) {
+        if (session == null) {
+            if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
+                LOGGER.debug("validateSession: sessionId '{}' not found in sessions map", sessionId);
+            }
             return null;
         }
-        
+        if (!session.isValid()) {
+            if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
+                LOGGER.debug("validateSession: sessionId '{}' found but session is not valid", sessionId);
+            }
+            return null;
+        }
         // Update access time
         session.updateAccessTime();
+        if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
+            LOGGER.debug("validateSession: sessionId '{}' is valid for user '{}', requiresPasswordChange={}",
+                sessionId, session.getUsername(), session.requiresPasswordChange());
+        }
         return session;
     }
     
@@ -218,16 +232,18 @@ public class AuthenticationManager {
         if (user == null) {
             throw new IllegalArgumentException("User not found");
         }
-        
+
         if (newPassword == null || newPassword.length() < MIN_PASSWORD_LENGTH) {
             throw new IllegalArgumentException("Password must be at least " + MIN_PASSWORD_LENGTH + " characters");
         }
-        
+
         String passwordHash = hashPassword(newPassword);
         user.setPasswordHash(passwordHash);
+        user.setRequiresPasswordChange(false);
+        user.setTempPassword(false);
         saveUsers();
         
-        logAuditEvent("PASSWORD_CHANGED", user.getUsername(), "system", "Password updated");
+        logAuditEvent("PASSWORD_CHANGED", user.getUsername(), "system", "Password updated and flags cleared");
     }
     
     /**
@@ -377,7 +393,7 @@ public class AuthenticationManager {
     /**
      * Hash password with SHA-256
      */
-    private String hashPassword(String password) {
+    public String hashPassword(String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
@@ -450,7 +466,7 @@ public class AuthenticationManager {
     /**
      * Save users to file
      */
-    private void saveUsers() {
+    public void saveUsers() {
         try {
             Path parent = USERS_FILE.getParent();
             if (parent != null && !Files.exists(parent)) {

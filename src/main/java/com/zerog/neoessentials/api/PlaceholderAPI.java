@@ -93,7 +93,7 @@ public interface PlaceholderAPI {
      * @param expansion The placeholder expansion to register
      * @return true if registered successfully
      */
-    static boolean registerExpansion(PlaceholderExpansion expansion) {
+    public static boolean registerExpansion(PlaceholderExpansion expansion) {
         return PlaceholderManager.getInstance().registerExpansion(expansion);
     }
     

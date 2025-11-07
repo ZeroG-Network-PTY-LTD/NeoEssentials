@@ -21,22 +21,22 @@ import java.util.Set;
  * Validates session tokens and enforces role-based access control
  */
 public class AuthenticationFilter extends Filter {
+    @SuppressWarnings("unused") // Reserved for future logging features
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationFilter.class);
     private static final Gson GSON = new Gson();
     
     // Public endpoints that don't require authentication
     private static final Set<String> PUBLIC_ENDPOINTS = new HashSet<>();
     static {
-        PUBLIC_ENDPOINTS.add("/");
-        PUBLIC_ENDPOINTS.add("/login.html");
-        PUBLIC_ENDPOINTS.add("/index.html");
-        PUBLIC_ENDPOINTS.add("/space-dashboard.css");
-        PUBLIC_ENDPOINTS.add("/space-dashboard.js");
-        PUBLIC_ENDPOINTS.add("/space-theme.css");
-        PUBLIC_ENDPOINTS.add("/space-glass.css");
-        PUBLIC_ENDPOINTS.add("/orbitron.css");
-        PUBLIC_ENDPOINTS.add("/favicon.ico");
-        PUBLIC_ENDPOINTS.add("/api/auth/login");
+    PUBLIC_ENDPOINTS.add("/");
+    PUBLIC_ENDPOINTS.add("/login.html");
+    PUBLIC_ENDPOINTS.add("/space-dashboard.css");
+    PUBLIC_ENDPOINTS.add("/space-dashboard.js");
+    PUBLIC_ENDPOINTS.add("/space-theme.css");
+    PUBLIC_ENDPOINTS.add("/space-glass.css");
+    PUBLIC_ENDPOINTS.add("/orbitron.css");
+    PUBLIC_ENDPOINTS.add("/favicon.ico");
+    PUBLIC_ENDPOINTS.add("/api/auth/login");
     }
     
     // Endpoint permission requirements
@@ -76,6 +76,22 @@ public class AuthenticationFilter extends Filter {
             return;
         }
         
+        // Allow password change page and API for users with temp password
+        if (path.equals("/password_change.html") || path.equals("/api/change-password")) {
+            String sessionId = extractSessionId(exchange);
+            if (sessionId != null) {
+                AuthenticationManager authManager = AuthenticationManager.getInstance();
+                Session session = authManager.validateSession(sessionId);
+                if (session != null && session.requiresPasswordChange()) {
+                    exchange.setAttribute("session", session);
+                    chain.doFilter(exchange);
+                    return;
+                }
+            }
+            // If no valid session or not requiresPasswordChange, treat as unauthenticated
+            sendUnauthorized(exchange, "Authentication required");
+            return;
+        }
         // Check if endpoint is public
         if (isPublicEndpoint(path)) {
             chain.doFilter(exchange);
@@ -224,10 +240,24 @@ public class AuthenticationFilter extends Filter {
     /**
      * Extract session ID from Authorization header
      */
+    /**
+     * Extract session ID from Authorization header or sessionId cookie
+     */
     private String extractSessionId(HttpExchange exchange) {
+        // Check Authorization header first
         String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
+        }
+        // Check cookies for sessionId
+        String cookieHeader = exchange.getRequestHeaders().getFirst("Cookie");
+        if (cookieHeader != null) {
+            String[] cookies = cookieHeader.split("; ");
+            for (String cookie : cookies) {
+                if (cookie.startsWith("sessionId=")) {
+                    return cookie.substring("sessionId=".length());
+                }
+            }
         }
         return null;
     }
@@ -236,11 +266,18 @@ public class AuthenticationFilter extends Filter {
      * Send 401 Unauthorized response
      */
     private void sendUnauthorized(HttpExchange exchange, String message) throws IOException {
+        String path = exchange.getRequestURI().getPath();
+        // If accessing index.html or root, redirect to login page
+        if ("/index.html".equals(path) || "/".equals(path)) {
+            exchange.getResponseHeaders().set("Location", "/login.html");
+            exchange.sendResponseHeaders(302, -1);
+            return;
+        }
+        // Otherwise, send JSON error
         JsonObject error = new JsonObject();
         error.addProperty("error", message);
         error.addProperty("code", 401);
         error.addProperty("timestamp", System.currentTimeMillis());
-        
         byte[] response = GSON.toJson(error).getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");

@@ -31,7 +31,7 @@ public class DelKitCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if kit module is enabled
-        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isKitSystemEnabled()) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isKitSystemEnabled()) {
             return; // Don't register kit commands if module is disabled
         }
         
@@ -104,6 +104,23 @@ public class DelKitCommand {
         String kitName = StringArgumentType.getString(context, "kitname");
         
         try {
+            // Check and deduct delkit command cost if economy is enabled
+            var entity = source.getEntity();
+            if (entity instanceof ServerPlayer player) {
+                int cost = (int) com.zerog.neoessentials.config.ConfigManager.getKitCommandCost("delkit");
+                if (cost > 0 && com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().isEnabled()) {
+                    var eco = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance();
+                    var bal = eco.getBalance(player.getUUID());
+                    if (bal.doubleValue() < cost) {
+                        source.sendFailure(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.delkit.not_enough_money", cost));
+                        return 0;
+                    }
+                    if (!eco.subtractBalance(player.getUUID(), java.math.BigDecimal.valueOf(cost))) {
+                        source.sendFailure(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.delkit.charge_failed"));
+                        return 0;
+                    }
+                }
+            }
             KitManager kitManager = KitManager.getInstance();
             Kit kit = kitManager.getKit(kitName);
             

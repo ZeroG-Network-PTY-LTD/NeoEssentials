@@ -1,64 +1,201 @@
 # NeoEssentials Commands List
 # This file contains all available commands in the NeoEssentials mod
-# Format: command_name (aliases) - description
+# Format: command_name - description
 #
 # ✅ All commands feature comprehensive input validation and security checks
 # ✅ Permission-based access control with configurable exemptions
 # ✅ Thread-safe operations with proper resource management
 # ✅ Centralized configuration management with hot-reload support
+#
+# Last Updated: November 5, 2025
+# Total Commands: 70+
 
 ## Economy Commands
-balance (bal, money) - Display your or another player's balance with formatted currency
-pay <player> <amount> - Send money to another player with transaction fees and validation
+balance - Check your or another player's balance
+pay - Send money to another player
 paytoggle - Toggle accepting payments from other players
-eco <give|take|set> <player> <amount> - Admin economy commands with audit logging
-eco history [player] - View transaction history for yourself or other players (admin)
-baltop [page] - Display top player balances with pagination
+eco - Admin economy commands (give, take, set)
+balancetop - View top player balances
 
-## Item Management Commands
-repair (fix) - Repair items in hand or entire inventory with durability validation
-dispose (trash) - Safely dispose of items with confirmation system and restore option
-clearinventory (ci, clearinv) [player] - Clear player inventory with admin override
-enchant <enchantment> [level] - Enchant items with validation and safety checks
-enchanthand <enchantment> [level] - Quick enchant item in main hand
-powertool (pt) <command> - Bind validated commands to items with security filtering
-powertooltoggle (pttoggle) - Toggle powertool functionality per player
+## Teleportation Commands
+home - Teleport to your home location
+sethome - Set your home location
+delhome - Delete your home
+spawn - Teleport to spawn point
+back - Return to previous location
+warp - Teleport to a warp
+warps - List available warps
+pwarp - Teleport to player warp
+setpwarp - Create a player warp
+delpwarp - Delete a player warp
+pwarps - List your player warps
+
+## Moderation Commands
+ban - Ban a player from the server
+unban - Unban a player
+kick - Kick a player from the server
+jail - Jail a player
+freeze - Freeze a player in place
+vanish - Toggle vanish mode (invisible to players)
 
 ## Chat & Communication Commands
-msg <player> <message> - Send private messages with content filtering and validation
-reply <message> - Reply to last private message with automatic target resolution
-ignore <player> - Ignore messages from a player with persistent storage
-unignore <player> - Stop ignoring a player and restore message visibility
-mute <player> [reason] - Mute a player with optional reason and audit logging (admin)
-unmute <player> - Unmute a player and restore chat privileges (admin)
-mutelist - List all currently muted players with timestamps and reasons
-msgtoggle - Toggle receiving private messages with granular control
-socialspy - Toggle monitoring private messages with permission-based filtering (admin)
+msg - Send a private message to a player
+reply - Reply to the last private message
+ignore - Ignore messages from a player
+unignore - Stop ignoring a player
+socialspy - Spy on private messages (admin)
+mute - Mute a player in chat
+unmute - Unmute a player
+mutelist - List all muted players
+msgtoggle - Toggle receiving private messages
 
 ## Permission Management Commands
-neoessentials (neoe) - Main mod command with sub-command help system
-permissions (perms) - Comprehensive permission management system
-  - reload - Hot-reload permissions without restart
-  - list groups - List all permission groups with member counts
-  - list users [group] - List all users or users in specific group
-  - group <name> create - Create new permission group
-  - group <name> delete - Delete permission group (with safety checks)
-  - group <name> setprefix <prefix> - Set group chat prefix with color support
-  - group <name> setsuffix <suffix> - Set group chat suffix with color support
-  - group <name> add <permission> - Add permission to group with inheritance
+permissions - Manage permissions and groups
+  - reload - Reload permissions configuration
+  - list groups - List all permission groups
+  - list users - List all users
+  - group <name> create - Create a new group
+  - group <name> delete - Delete a group
+  - group <name> add <permission> - Add permission to group
   - group <name> remove <permission> - Remove permission from group
-  - group <name> info - Display detailed group information
-  - user <name> setgroup <group> - Change user's primary group
-  - user <name> add <permission> - Grant specific permission to user
-  - user <name> remove <permission> - Revoke specific permission from user
-  - user <name> info - Display user's permissions and group membership
+  - group <name> setprefix <prefix> - Set group prefix
+  - group <name> setsuffix <suffix> - Set group suffix
+  - group <name> info - View group information
+  - user <name> setgroup <group> - Set user's group
+  - user <name> add <permission> - Add permission to user
+  - user <name> remove <permission> - Remove permission from user
+  - user <name> info - View user's permissions
 
-## Utility & Status Commands
-afk [message] - Toggle AFK status with optional custom message
-afk <player> - Check or set AFK status for other players (admin)
+## Kit Management Commands
+kit - Claim a kit
+kits - List available kits
+createkit - Create a new kit (admin)
+delkit - Delete a kit (admin)
+
+## Utility Commands (Player Tools)
+afk - Toggle AFK status
+nick - Change your nickname
+anvil - Open portable anvil
+book - Open editable book interface
+compass - Show your current compass direction
+crafting - Open portable crafting table
+depth - Display your current depth/Y-level
+fletching - Open portable fletching table
+getpos - Get your current position coordinates
+helpop - Request help from staff members
+list - List all online players
+mail - Manage your mail messages
+motd - View the message of the day
+near - Find nearby players
+ping - Check your connection ping
+realname - Find a player's real name by nickname
+rules - View server rules
+seen - Check when a player was last online
+sign - Edit sign text remotely
+smithing - Open portable smithing table
+stonecutting - Open portable stonecutter
+suicide - Kill yourself
+whois - Get detailed information about a player
 
 ## Administrative Commands
-neoessentials reload - Reload all configuration files and systems
-neoessentials debug [on|off] - Toggle debug mode for troubleshooting
-neoessentials info - Display mod version, loaded features, and system status
-neoessentials config <section> - View or modify configuration sections
+neoessentials - Main mod command
+  - reload - Reload all configurations
+  - info - Display mod information
+  - debug - Toggle debug mode
+
+## Permission Nodes Reference
+
+### Economy Permissions:
+- neoessentials.economy.balance - Check balance
+- neoessentials.economy.balance.others - Check other's balance
+- neoessentials.economy.pay - Send money
+- neoessentials.economy.paytoggle - Toggle pay acceptance
+- neoessentials.economy.admin - Admin economy commands
+- neoessentials.economy.baltop - View balance top
+
+### Teleportation Permissions:
+- neoessentials.teleport.home - Use home command
+- neoessentials.teleport.sethome - Set home location
+- neoessentials.teleport.delhome - Delete home
+- neoessentials.teleport.spawn - Use spawn command
+- neoessentials.teleport.back - Use back command
+- neoessentials.teleport.warp - Use warp command
+- neoessentials.teleport.warp.admin - Admin warp commands
+- neoessentials.teleport.pwarp - Player warp access
+- neoessentials.teleport.pwarp.create - Create player warps
+
+### Moderation Permissions:
+- neoessentials.moderation.ban - Ban players
+- neoessentials.moderation.unban - Unban players
+- neoessentials.moderation.kick - Kick players
+- neoessentials.moderation.jail - Jail players
+- neoessentials.moderation.freeze - Freeze players
+- neoessentials.moderation.vanish - Use vanish mode
+
+### Chat Permissions:
+- neoessentials.chat.msg - Send private messages
+- neoessentials.chat.reply - Reply to messages
+- neoessentials.chat.ignore - Ignore players
+- neoessentials.chat.socialspy - Spy on messages
+- neoessentials.chat.mute - Mute players
+- neoessentials.chat.unmute - Unmute players
+- neoessentials.chat.msgtoggle - Toggle message receipt
+
+### Permissions Management:
+- neoessentials.permissions.admin - Full permissions access
+- neoessentials.permissions.reload - Reload permissions
+- neoessentials.permissions.group.create - Create groups
+- neoessentials.permissions.group.delete - Delete groups
+- neoessentials.permissions.group.modify - Modify groups
+- neoessentials.permissions.user.modify - Modify user permissions
+
+### Kit Permissions:
+- neoessentials.kit.use - Use kits
+- neoessentials.kit.create - Create kits
+- neoessentials.kit.delete - Delete kits
+- neoessentials.kit.<kitname> - Access specific kit
+
+### Utility Permissions:
+- neoessentials.afk - Use AFK command
+- neoessentials.nick - Change nickname
+- neoessentials.anvil - Portable anvil
+- neoessentials.book - Editable book
+- neoessentials.compass - Show compass
+- neoessentials.crafting - Portable crafting
+- neoessentials.depth - Show depth
+- neoessentials.fletching - Portable fletching
+- neoessentials.getpos - Show position
+- neoessentials.helpop - Request help
+- neoessentials.list - List players
+- neoessentials.mail - Mail system
+- neoessentials.motd - View MOTD
+- neoessentials.near - Find nearby players
+- neoessentials.ping - Check ping
+- neoessentials.realname - Find real names
+- neoessentials.rules - View rules
+- neoessentials.seen - Check last seen
+- neoessentials.sign - Edit signs
+- neoessentials.smithing - Portable smithing
+- neoessentials.stonecutting - Portable stonecutting
+- neoessentials.suicide - Use suicide command
+- neoessentials.whois - Player information
+
+### Admin Permissions:
+- neoessentials.admin - Full admin access
+- neoessentials.reload - Reload configurations
+- neoessentials.debug - Debug mode access
+
+## Command Registry
+All commands are automatically registered via CommandRegistry.getInstance()
+and can be discovered programmatically for integration with other systems.
+
+## Configuration
+Commands can be enabled/disabled in config/neoessentials/config.json
+Individual command cooldowns and restrictions are configurable per-permission group.
+
+## Notes:
+- Most player-targeted commands support both online and offline players
+- Tab completion is available for all commands with proper permission checks
+- All commands respect the permission system with configurable exemptions
+- Command execution is logged for audit purposes when enabled in config
+- Rate limiting and cooldowns are enforced per-command and per-player

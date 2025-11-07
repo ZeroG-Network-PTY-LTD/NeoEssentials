@@ -1,6 +1,7 @@
 package com.zerog.neoessentials.teleportation.DirectTeleport;
 
 import com.zerog.neoessentials.teleportation.TeleportLocation;
+import com.google.gson.JsonObject;
 import com.zerog.neoessentials.teleportation.TeleportUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,8 +29,29 @@ public class DirectTeleportManager {
     // Configuration
     private int teleportDelay = 0; // No delay for admin teleports
     private boolean bypassSafetyChecks = true; // Admin teleports can bypass safety
-    
+
     private DirectTeleportManager() {
+        // Load config values
+        try {
+            com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+            boolean bypass = true;
+            if (configManager != null) {
+                JsonObject config = configManager.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+                if (config.has("teleportation")) {
+                    JsonObject tp = config.getAsJsonObject("teleportation");
+                    if (tp.has("generalSettings")) {
+                        JsonObject generalSettings = tp.getAsJsonObject("generalSettings");
+                        if (generalSettings.has("enableTeleportSafety")) {
+                            // If safety is enabled, do NOT bypass safety checks
+                            bypass = !generalSettings.get("enableTeleportSafety").getAsBoolean();
+                        }
+                    }
+                }
+            }
+            this.bypassSafetyChecks = bypass;
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load direct teleport safety config, defaulting to bypass: {}", e.getMessage());
+        }
         // Private constructor for singleton
     }
     

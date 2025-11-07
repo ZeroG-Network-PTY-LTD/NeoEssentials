@@ -27,25 +27,24 @@ public class EconomyConfig {
     public int cacheExpireAfterAccessMinutes;
 
     public EconomyConfig() {
-        // Load from ConfigManager
-        ConfigManager configManager = ConfigManager.getInstance();
+        // Load from ConfigManager - use static methods
         // Set values with defaults using ConfigManager
-        this.startingBalance = configManager.getEconomyStartingBalance();
-        this.currencySymbol = configManager.getCurrencySymbol();
-        this.maxBalance = configManager.getMaxBalance();
-        this.taxPercentage = configManager.getTaxPercentage();
-        this.allowNegativeBalances = configManager.allowNegativeBalances();
-        this.cleanupInactiveAccounts = configManager.isCleanupInactiveAccountsEnabled();
-        this.inactiveAccountCleanupDays = configManager.getInactiveAccountCleanupDays();
-        this.maxTransferAmount = configManager.getMaxTransferAmount();
-        this.paytoggleDefault = configManager.getPayToggleDefault();
-        this.cacheMaximumSize = configManager.getCacheMaximumSize();
-        this.cacheExpireAfterAccessMinutes = configManager.getCacheExpireAfterAccessMinutes();
+        this.startingBalance = BigDecimal.valueOf(ConfigManager.getEconomyStartingBalance());
+        this.currencySymbol = ConfigManager.getCurrencySymbol();
+        this.maxBalance = BigDecimal.valueOf(ConfigManager.getMaxBalance());
+        this.taxPercentage = ConfigManager.getTaxPercentage();
+        this.allowNegativeBalances = ConfigManager.allowNegativeBalances();
+        this.cleanupInactiveAccounts = ConfigManager.isCleanupInactiveAccountsEnabled();
+        this.inactiveAccountCleanupDays = ConfigManager.getInactiveAccountCleanupDays();
+        this.maxTransferAmount = BigDecimal.valueOf(ConfigManager.getMaxTransferAmount());
+        this.paytoggleDefault = ConfigManager.getPayToggleDefault();
+        this.cacheMaximumSize = ConfigManager.getCacheMaximumSize();
+        this.cacheExpireAfterAccessMinutes = ConfigManager.getCacheExpireAfterAccessMinutes();
     }
 
     public static EconomyConfig load(File configFile) {
         // Delegate to ConfigManager - it handles loading automatically
-        ConfigManager.getInstance().loadAll();
+        ConfigManager.loadAll();
         return new EconomyConfig();
     }
 }

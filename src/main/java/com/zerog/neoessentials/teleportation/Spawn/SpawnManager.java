@@ -37,8 +37,28 @@ public class SpawnManager {
     private boolean requireSafeLocation = true;
     private boolean allowSetSpawnInNether = false;
     private boolean allowSetSpawnInEnd = false;
-    
+
     private SpawnManager() {
+        // Load config values
+        try {
+            com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+            boolean safe = true;
+            if (configManager != null) {
+                JsonObject config = configManager.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+                if (config.has("teleportation")) {
+                    JsonObject tp = config.getAsJsonObject("teleportation");
+                    if (tp.has("spawnSettings")) {
+                        JsonObject spawnSettings = tp.getAsJsonObject("spawnSettings");
+                        if (spawnSettings.has("enableSpawnSafety")) {
+                            safe = spawnSettings.get("enableSpawnSafety").getAsBoolean();
+                        }
+                    }
+                }
+            }
+            this.requireSafeLocation = safe;
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load spawn safety config, defaulting to safe: {}", e.getMessage());
+        }
         loadSpawn();
     }
     
@@ -79,7 +99,9 @@ public class SpawnManager {
         saveSpawn();
         
         setter.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.spawn.set", location.getLocationString()));
-        LOGGER.info("Player {} set server spawn to {}", setter.getName().getString(), location.getLocationString());
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
+            LOGGER.info("Player {} set server spawn to {}", setter.getName().getString(), location.getLocationString());
+        }
         
         return true;
     }
@@ -123,6 +145,19 @@ public class SpawnManager {
             teleportToWorldSpawn(player);
             return;
         }
+
+        // Enforce maxTeleportDistance if set in config
+        int maxDistance = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxTeleportDistance();
+        if (maxDistance > 0 && spawnLocation != null) {
+            com.zerog.neoessentials.teleportation.TeleportLocation fromLoc = new com.zerog.neoessentials.teleportation.TeleportLocation(player);
+            if (fromLoc.getWorldName().equals(spawnLocation.getWorldName())) {
+                double dist = fromLoc.distanceTo(spawnLocation);
+                if (dist > maxDistance) {
+                    player.sendSystemMessage(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.teleport.spawn.distance_exceeded", maxDistance));
+                    return;
+                }
+            }
+        }
         
         // Check if spawn location is still safe
         if (requireSafeLocation && !spawnLocation.isSafe()) {
@@ -144,7 +179,9 @@ public class SpawnManager {
         TeleportUtil.teleportPlayer(player, spawnLocation, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.spawn.success"));
-                LOGGER.info("Player {} teleported to spawn", player.getName().getString());
+                if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
+                    LOGGER.info("Player {} teleported to spawn", player.getName().getString());
+                }
             } else {
                 player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.failed", result.getMessage()));
                 LOGGER.warn("Failed to teleport player {} to spawn: {}", player.getName().getString(), result.getMessage());
@@ -172,7 +209,9 @@ public class SpawnManager {
             TeleportUtil.teleportPlayer(player, fallbackLocation, 0, true).thenAccept(result -> {
                 if (result.isSuccess()) {
                     player.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.spawn.fallback_success"));
-                    LOGGER.info("Player {} teleported to world spawn fallback", player.getName().getString());
+                    if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
+                        LOGGER.info("Player {} teleported to world spawn fallback", player.getName().getString());
+                    }
                 } else {
                     player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.spawn.fallback_failed", result.getMessage()));
                     LOGGER.error("Failed to teleport player {} to world spawn fallback: {}", 
@@ -207,7 +246,9 @@ public class SpawnManager {
         saveSpawn();
         
         clearer.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.spawn.cleared"));
-        LOGGER.info("Player {} cleared server spawn", clearer.getName().getString());
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
+            LOGGER.info("Player {} cleared server spawn", clearer.getName().getString());
+        }
         
         return true;
     }

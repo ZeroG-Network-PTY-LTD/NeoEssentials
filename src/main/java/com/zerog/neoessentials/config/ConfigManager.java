@@ -1,495 +1,1107 @@
 package com.zerog.neoessentials.config;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.zerog.neoessentials.util.ResourceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.math.BigDecimal;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * Unified, thread-safe configuration manager for NeoEssentials.
- * Handles all configuration loading, caching, and access in a consistent manner.
- */
+import com.zerog.neoessentials.util.ResourceUtil;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class ConfigManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    
-    // Thread-safe singleton
-    private static class SingletonHolder {
-        private static final ConfigManager INSTANCE = new ConfigManager();
-    }
-    
-    public static ConfigManager getInstance() {
-        return SingletonHolder.INSTANCE;
-    }
-    
-    // Thread-safe configuration cache
-    private final ConcurrentHashMap<String, JsonObject> configCache = new ConcurrentHashMap<>();
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private volatile boolean loaded = false;
-    
-    // Configuration file names
-    public static final String MAIN_CONFIG = "config.json";
-    public static final String ECONOMY_CONFIG = "economy.json";
-    public static final String PERMISSIONS_CONFIG = "permissions.json";
-    public static final String KITS_CONFIG = "kits.json";
-    public static final String DISCORD_AUTH_CONFIG = "discord_auth.json";
-    
-    // Config version tracking - increment when structure changes
-    private static final String CONFIG_VERSION_KEY = "_configVersion";
-    private static final int CURRENT_CONFIG_VERSION = 8;
-    
-    private ConfigManager() {
-        // Private constructor for singleton
-    }
-    
     /**
-     * Load all configuration files
+     * Returns true if kick actions should be logged (logKickActions in config).
+     * Defaults to true if not set.
      */
-    public void loadAll() {
-        lock.writeLock().lock();
-        try {
-            LOGGER.info("Loading NeoEssentials configurations...");
-            
-            // Ensure config directory exists
-            ResourceUtil.ensureConfigDirectory();
-            
-            // Load main config
-            loadConfig(MAIN_CONFIG);
-            loadConfig(ECONOMY_CONFIG);
-            loadConfig(PERMISSIONS_CONFIG);
-            loadConfig(KITS_CONFIG);
-            loadConfig(DISCORD_AUTH_CONFIG);
-            
-            loaded = true;
-            LOGGER.info("Configuration loading completed");
-        } finally {
-            lock.writeLock().unlock();
+    public static boolean isLogKickActionsEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
+            JsonObject kickSettings = config.getAsJsonObject("moderation").getAsJsonObject("kickSettings");
+            if (kickSettings.has("logKickActions")) {
+                return kickSettings.get("logKickActions").getAsBoolean();
+            }
         }
+        return true;
     }
-    
     /**
-     * Load a specific configuration file with smart updating
+     * Returns the kickMessage from moderation.kickSettings.kickMessage
+     * Defaults to 'You have been kicked from the server. Reason: {reason} Kicked by: {kicker}' if not set.
      */
-    private void loadConfig(String configName) {
-        File configFile = ResourceUtil.getConfigFile(configName);
-        
-        // Extract default config if it doesn't exist
-        if (!configFile.exists()) {
-            extractDefaultConfig(configName, configFile);
-        } else {
-            // Check if config needs updating
-            if (shouldUpdateConfig(configName, configFile)) {
-                LOGGER.info("Config structure outdated for {}, updating...", configName);
-                updateConfigWithBackup(configName, configFile);
+    public static String getKickMessage() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
+            JsonObject kickSettings = config.getAsJsonObject("moderation").getAsJsonObject("kickSettings");
+            if (kickSettings.has("kickMessage")) {
+                String val = kickSettings.get("kickMessage").getAsString();
+                if (val != null && !val.trim().isEmpty()) return val;
             }
         }
-        
-        // Load the configuration
-        try (FileReader reader = new FileReader(configFile)) {
-            JsonObject config = JsonParser.parseReader(reader).getAsJsonObject();
-            configCache.put(configName, config);
-            LOGGER.debug("Loaded configuration: {}", configName);
-        } catch (Exception e) {
-            LOGGER.error("Failed to load configuration {}: {}", configName, e.getMessage());
-            // Put empty config to prevent repeated failures
-            configCache.put(configName, new JsonObject());
-        }
+        return "You have been kicked from the server.\nReason: {reason}\nKicked by: {kicker}";
     }
-    
+
     /**
-     * Extract default configuration from JAR resources
+     * Returns the kickAllMessage from moderation.kickSettings.kickAllMessage
+     * Defaults to 'Server maintenance in progress. Please reconnect in a few minutes.' if not set.
      */
-    private void extractDefaultConfig(String configName, File configFile) {
-        try (InputStream in = ResourceUtil.getJarConfigResource(configName)) {
-            if (in != null) {
-                configFile.getParentFile().mkdirs();
-                // Use Files.copy for efficient, safe resource transfer - no need for manual buffering
-                Files.copy(in, configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                LOGGER.info("Extracted default configuration: {}", configName);
-            } else {
-                LOGGER.warn("Default configuration not found in JAR: {}", configName);
-                // Create minimal config
-                createMinimalConfig(configName, configFile);
+    public static String getKickAllMessage() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
+            JsonObject kickSettings = config.getAsJsonObject("moderation").getAsJsonObject("kickSettings");
+            if (kickSettings.has("kickAllMessage")) {
+                String val = kickSettings.get("kickAllMessage").getAsString();
+                if (val != null && !val.trim().isEmpty()) return val;
             }
-        } catch (IOException e) {
-            LOGGER.error("Failed to extract default configuration {}: {}", configName, e.getMessage());
-            createMinimalConfig(configName, configFile);
         }
+        return "Server maintenance in progress. Please reconnect in a few minutes.";
     }
-    
     /**
-     * Create minimal configuration if extraction fails
+     * Returns true if staff should be notified when a player is kicked (notifyStaffOnKick in config).
+     * Defaults to true if not set.
      */
-    private void createMinimalConfig(String configName, File configFile) {
-        JsonObject minimalConfig = new JsonObject();
-        
-        // Add version to all minimal configs
-        minimalConfig.addProperty(CONFIG_VERSION_KEY, CURRENT_CONFIG_VERSION);
-        minimalConfig.addProperty(CONFIG_VERSION_KEY + "_comment", 
-            "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.");
-        
-        switch (configName) {
-            case MAIN_CONFIG:
-                JsonObject modules = new JsonObject();
-                modules.addProperty("economyEnabled", true);
-                modules.addProperty("permissionsEnabled", true);
-                modules.addProperty("webDashboardEnabled", true);
-                minimalConfig.add("modules", modules);
-                
-                JsonObject commands = new JsonObject();
-                minimalConfig.add("commands", commands);
-                
-                JsonObject webDashboard = new JsonObject();
-                webDashboard.addProperty("enabled", true);
-                webDashboard.addProperty("autoStart", false);
-                webDashboard.addProperty("port", 8080);
-                webDashboard.addProperty("websocketPort", 8081);
-                minimalConfig.add("webDashboard", webDashboard);
-                break;
-                
-            case ECONOMY_CONFIG:
-                minimalConfig.addProperty("enabled", true);
-                minimalConfig.addProperty("startingBalance", 100.0);
-                minimalConfig.addProperty("currencySymbol", "$");
-                minimalConfig.addProperty("maxBalance", 999999999.99);
-                minimalConfig.addProperty("allowNegativeBalances", false);
-                minimalConfig.addProperty("cleanupInactiveAccounts", true);
-                minimalConfig.addProperty("inactiveAccountCleanupDays", 30);
-                break;
-                
-            case PERMISSIONS_CONFIG:
-                JsonObject defaultGroup = new JsonObject();
-                defaultGroup.addProperty("default", true);
-                minimalConfig.add("groups", defaultGroup);
-                break;
-                
-            case KITS_CONFIG:
-                minimalConfig.add("kits", new JsonArray());
-                break;
-                
-            case DISCORD_AUTH_CONFIG:
-                minimalConfig.addProperty("enabled", true);
-                minimalConfig.addProperty("requireLinkedAccount", true);
-                minimalConfig.addProperty("allowAutoRegistration", true);
-                minimalConfig.addProperty("defaultRole", "VIEWER");
-                
-                JsonObject roleMapping = new JsonObject();
-                roleMapping.addProperty("_comment", "Map Discord role IDs to Dashboard roles. Get role ID by right-clicking role in Discord > Copy ID (requires Developer Mode)");
-                roleMapping.addProperty("1234567890123456789", "ADMIN");
-                roleMapping.addProperty("9876543210987654321", "MODERATOR");
-                minimalConfig.add("roleMapping", roleMapping);
-                
-                minimalConfig.add("whitelistedRoles", new JsonArray());
-                minimalConfig.add("blacklistedUsers", new JsonArray());
-                minimalConfig.addProperty("sessionDuration", 86400000);
-                break;
+    public static boolean isNotifyStaffOnKickEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
+            JsonObject kickSettings = config.getAsJsonObject("moderation").getAsJsonObject("kickSettings");
+            if (kickSettings.has("notifyStaffOnKick")) {
+                return kickSettings.get("notifyStaffOnKick").getAsBoolean();
+            }
         }
-        
-        try (FileWriter writer = new FileWriter(configFile)) {
-            GSON.toJson(minimalConfig, writer);
-            LOGGER.info("Created minimal configuration: {}", configName);
-        } catch (IOException e) {
-            LOGGER.error("Failed to create minimal configuration {}: {}", configName, e.getMessage());
-        }
+        return true;
     }
-    
     /**
-     * Check if a config file needs updating by comparing structure with JAR template
+     * Returns the defaultKickReason from moderation.kickSettings.defaultKickReason
+     * Defaults to 'Kicked by an operator' if not set or invalid.
      */
-    private boolean shouldUpdateConfig(String configName, File configFile) {
-        try {
-            // Load existing config
-            JsonObject existingConfig;
-            try (FileReader reader = new FileReader(configFile)) {
-                existingConfig = JsonParser.parseReader(reader).getAsJsonObject();
+    public static String getDefaultKickReason() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
+            JsonObject kickSettings = config.getAsJsonObject("moderation").getAsJsonObject("kickSettings");
+            if (kickSettings.has("defaultKickReason")) {
+                String val = kickSettings.get("defaultKickReason").getAsString();
+                if (val != null && !val.trim().isEmpty()) return val;
             }
-            
-            // Load template config from JAR
-            JsonObject templateConfig = loadJarConfig(configName);
-            if (templateConfig == null) {
-                return false; // No template to compare against
-            }
-            
-            // Check version first
-            int existingVersion = existingConfig.has(CONFIG_VERSION_KEY) ? 
-                existingConfig.get(CONFIG_VERSION_KEY).getAsInt() : 0;
-            int templateVersion = templateConfig.has(CONFIG_VERSION_KEY) ? 
-                templateConfig.get(CONFIG_VERSION_KEY).getAsInt() : CURRENT_CONFIG_VERSION;
-                
-            if (existingVersion < templateVersion) {
-                LOGGER.info("Config '{}' version outdated: existing={}, template={} → Will update and create backup", 
-                    configName, existingVersion, templateVersion);
-                return true;
-            }
-            
-            // Compare structure (keys/sections)
-            boolean structureMatches = configStructuresMatch(existingConfig, templateConfig);
-            if (!structureMatches) {
-                LOGGER.info("Config '{}' structure mismatch detected → Will update and create backup", configName);
-            } else {
-                LOGGER.debug("Config '{}' is up-to-date (version={}, structure matches)", configName, existingVersion);
-            }
-            return !structureMatches;
-            
-        } catch (Exception e) {
-            LOGGER.warn("Error checking config update status for {}: {}", configName, e.getMessage());
-            return false;
         }
+        return "Kicked by an operator";
     }
-    
     /**
-     * Load config template from JAR resources
+     * Returns the maxKickReason from moderation.kickSettings.maxKickReason
+     * Defaults to 500 if not set or invalid.
      */
-    private JsonObject loadJarConfig(String configName) {
-        InputStream in = null;
-        try {
-            // Handle special cases for files in /data/ not /data/config/neoessentials/
-            if (PERMISSIONS_CONFIG.equals(configName)) {
-                in = ResourceUtil.class.getResourceAsStream("/data/permissions.json");
-            } else if (ECONOMY_CONFIG.equals(configName)) {
-                in = ResourceUtil.class.getResourceAsStream("/data/economy.json");
-            } else {
-                // All other configs are in /data/config/neoessentials/
-                in = ResourceUtil.getJarConfigResource(configName);
-            }
-            
-            if (in != null) {
-                String content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-                return JsonParser.parseString(content).getAsJsonObject();
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Failed to load JAR config template {}: {}", configName, e.getMessage());
-        } finally {
-            if (in != null) {
+    public static int getMaxKickReasonLength() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
+            JsonObject kickSettings = config.getAsJsonObject("moderation").getAsJsonObject("kickSettings");
+            if (kickSettings.has("maxKickReason")) {
                 try {
-                    in.close();
-                } catch (IOException e) {
-                    LOGGER.warn("Failed to close JAR config stream for {}", configName);
+                    int val = kickSettings.get("maxKickReason").getAsInt();
+                    if (val > 0) return val;
+                } catch (Exception ignored) {}
+            }
+        }
+        return 500;
+    }
+
+    /**
+     * Returns true if kick actions should be broadcast to all players (broadcastKicks in config).
+     * Defaults to false if not set.
+     */
+    public static boolean isBroadcastKicksEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
+            JsonObject kickSettings = config.getAsJsonObject("moderation").getAsJsonObject("kickSettings");
+            if (kickSettings.has("broadcastKicks")) {
+                return kickSettings.get("broadcastKicks").getAsBoolean();
+            }
+        }
+        return false;
+    }
+    /**
+     * Returns true if the kick system is enabled (enableKickSystem in config).
+     * Defaults to true if not set.
+     */
+    public static boolean isKickSystemEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("kickSettings")) {
+            JsonObject kickSettings = config.getAsJsonObject("moderation").getAsJsonObject("kickSettings");
+            if (kickSettings.has("enableKickSystem")) {
+                return kickSettings.get("enableKickSystem").getAsBoolean();
+            }
+        }
+        return true;
+    }
+    /**
+     * Returns the freezeMessage from moderation.freezeSettings.freezeMessage
+     * Falls back to localization key if not set.
+     */
+    public static String getFreezeMessage() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("freezeMessage")) {
+                String val = freezeSettings.get("freezeMessage").getAsString();
+                if (val != null && !val.trim().isEmpty()) return val;
+            }
+        }
+        // Fallback to localization key
+        return "neoessentials.moderation.frozen_message";
+    }
+
+    /**
+     * Returns the unfreezeMessage from moderation.freezeSettings.unfreezeMessage
+     * Falls back to localization key if not set.
+     */
+    public static String getUnfreezeMessage() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("unfreezeMessage")) {
+                String val = freezeSettings.get("unfreezeMessage").getAsString();
+                if (val != null && !val.trim().isEmpty()) return val;
+            }
+        }
+        // Fallback to localization key
+        return "neoessentials.moderation.unfrozen_message";
+    }
+
+    /**
+     * Returns the freezeReminder from moderation.freezeSettings.freezeReminder
+     * Falls back to localization key if not set.
+     */
+    public static String getFreezeReminder() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("freezeReminder")) {
+                String val = freezeSettings.get("freezeReminder").getAsString();
+                if (val != null && !val.trim().isEmpty()) return val;
+            }
+        }
+        // Fallback to localization key
+        return "neoessentials.moderation.freeze_reminder";
+    }
+    /**
+     * Returns the defaultFreezeReason from moderation.freezeSettings.defaultFreezeReason
+     * Defaults to 'Frozen by an operator' if not set or invalid.
+     */
+    public static String getDefaultFreezeReason() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("defaultFreezeReason")) {
+                String val = freezeSettings.get("defaultFreezeReason").getAsString();
+                if (val != null && !val.trim().isEmpty()) return val;
+            }
+        }
+        return "Frozen by an operator";
+    }
+    /**
+     * Returns the maxFreezeReason from moderation.freezeSettings.maxFreezeReason
+     * Defaults to 500 if not set or invalid.
+     */
+    public static int getMaxFreezeReasonLength() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("maxFreezeReason")) {
+                try {
+                    int val = freezeSettings.get("maxFreezeReason").getAsInt();
+                    if (val > 0) return val;
+                } catch (Exception ignored) {}
+            }
+        }
+        return 500;
+    }
+
+    /**
+     * Returns the freezeReminderInterval (in seconds) from moderation.freezeSettings.freezeReminderInterval
+     * Defaults to 30 if not set or invalid.
+     */
+    public static int getFreezeReminderInterval() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("freezeReminderInterval")) {
+                try {
+                    int val = freezeSettings.get("freezeReminderInterval").getAsInt();
+                    if (val >= 0) return val;
+                } catch (Exception ignored) {}
+            }
+        }
+        return 30;
+    }
+
+    /**
+     * Returns true if freeze/unfreeze actions should be logged (logFreezeActions in config).
+     * Defaults to true if not set.
+     */
+    public static boolean isLogFreezeActionsEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("logFreezeActions")) {
+                return freezeSettings.get("logFreezeActions").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if frozen players should remain frozen when they log back in (freezeOnLogin in config).
+     * Defaults to true if not set.
+     */
+    public static boolean isFreezeOnLoginEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("freezeOnLogin")) {
+                return freezeSettings.get("freezeOnLogin").getAsBoolean();
+            }
+        }
+        return true;
+    }
+    /**
+     * Returns the list of allowed commands for frozen players from moderation.freezeSettings.allowedCommands.
+     * Returns an empty list if not set.
+     */
+    public static java.util.List<String> getFreezeAllowedCommands() {
+        java.util.List<String> allowed = new java.util.ArrayList<>();
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("allowedCommands") && freezeSettings.get("allowedCommands").isJsonArray()) {
+                for (var el : freezeSettings.getAsJsonArray("allowedCommands")) {
+                    if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isString()) {
+                        allowed.add(el.getAsString().toLowerCase());
+                    }
                 }
             }
         }
-        return null;
+        return allowed;
     }
-    
+
     /**
-     * Compare config structures to see if they have the same keys/sections
+     * Returns true if freeze system is enabled in moderation.freezeSettings config section.
+     * (moderation.freezeSettings.enableFreezeSystem)
+     * Defaults to true if not set.
      */
-    private boolean configStructuresMatch(JsonObject existing, JsonObject template) {
-        // Compare top-level keys (excluding version fields and comments)
-        Set<String> existingKeys = existing.keySet().stream()
-            .filter(key -> !key.equals(CONFIG_VERSION_KEY) && !key.endsWith("_comment"))
-            .collect(Collectors.toSet());
-        Set<String> templateKeys = template.keySet().stream()
-            .filter(key -> !key.equals(CONFIG_VERSION_KEY) && !key.endsWith("_comment"))
-            .collect(Collectors.toSet());
-            
-        if (!existingKeys.equals(templateKeys)) {
-            LOGGER.debug("Top-level keys differ: existing={}, template={}", existingKeys, templateKeys);
+
+    /**
+     * Returns true if frozen players should be prevented from using commands (preventCommands in config).
+     * Defaults to true if not set.
+     */
+
+    /**
+     * Returns true if freeze system is enabled in moderation.freezeSettings config section.
+     * (moderation.freezeSettings.enableFreezeSystem)
+     * Defaults to true if not set.
+     */
+    public static boolean isFreezeSystemEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("enableFreezeSystem")) {
+                return freezeSettings.get("enableFreezeSystem").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if frozen players should be prevented from using commands (preventCommands in config).
+     * Defaults to true if not set.
+     */
+    public static boolean isFreezePreventCommandsEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("freezeSettings")) {
+            JsonObject freezeSettings = config.getAsJsonObject("moderation").getAsJsonObject("freezeSettings");
+            if (freezeSettings.has("preventCommands")) {
+                return freezeSettings.get("preventCommands").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if vanished players should be prevented from interacting (preventInteraction in config).
+     * Defaults to true if not set.
+     */
+    public static boolean isVanishPreventInteractionEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("vanishSettings")) {
+            JsonObject vanishSettings = config.getAsJsonObject("moderation").getAsJsonObject("vanishSettings");
+            if (vanishSettings.has("preventInteraction")) {
+                return vanishSettings.get("preventInteraction").getAsBoolean();
+            }
+        }
+        return true;
+    }
+    /**
+     * Returns true if vanish actions should be broadcast to staff (broadcastToStaffVanish in config).
+     * Defaults to false if not set.
+     */
+    public static boolean isBroadcastToStaffVanishEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("vanishSettings")) {
+            JsonObject vanishSettings = config.getAsJsonObject("moderation").getAsJsonObject("vanishSettings");
+            if (vanishSettings.has("broadcastToStaffVanish")) {
+                return vanishSettings.get("broadcastToStaffVanish").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if vanish actions should be broadcast to all players (BroadcastToAllVanish in config).
+     * Defaults to false if not set.
+     */
+    public static boolean isBroadcastToAllVanishEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("vanishSettings")) {
+            JsonObject vanishSettings = config.getAsJsonObject("moderation").getAsJsonObject("vanishSettings");
+            if (vanishSettings.has("BroadcastToAllVanish")) {
+                return vanishSettings.get("BroadcastToAllVanish").getAsBoolean();
+            }
+        }
+        return false;
+    }
+    /**
+     * Returns true if vanished players should be hidden from the tab list (hideFromTabList in config).
+     * Defaults to true if not set.
+     */
+    public static boolean isHideFromTabListEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("vanishSettings")) {
+            JsonObject vanishSettings = config.getAsJsonObject("moderation").getAsJsonObject("vanishSettings");
+            if (vanishSettings.has("hideFromTabList")) {
+                return vanishSettings.get("hideFromTabList").getAsBoolean();
+            }
+        }
+        return true;
+    }
+    /**
+     * Returns true if vanish actions should be logged (moderation.vanishSettings.logVanishActions).
+     * Defaults to true if not set.
+     */
+    public static boolean isLogVanishActionsEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("vanishSettings")) {
+            JsonObject vanishSettings = config.getAsJsonObject("moderation").getAsJsonObject("vanishSettings");
+            if (vanishSettings.has("logVanishActions")) {
+                return vanishSettings.get("logVanishActions").getAsBoolean();
+            }
+        }
+        return true;
+    }
+    // Note: instance methods for vanish system/on-join exist and should be used via getInstance().
+    /**
+     * Returns true if staff should be vanished on join (vanishOnJoin in config).
+     * Defaults to false if not set.
+     */
+    public boolean isVanishOnJoinEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation") && config.getAsJsonObject("moderation").has("vanishSettings")) {
+            JsonObject vanishSettings = config.getAsJsonObject("moderation").getAsJsonObject("vanishSettings");
+            if (vanishSettings.has("vanishOnJoin")) {
+                return vanishSettings.get("vanishOnJoin").getAsBoolean();
+            }
+        }
+        return false;
+    }
+    /**
+     * Returns true if the vanish system is enabled in the config (enableVanishSystem).
+     * Defaults to true if not set.
+     */
+    public boolean isVanishSystemEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("enableVanishSystem")) {
+            return config.get("enableVanishSystem").getAsBoolean();
+        }
+        return true;
+    }
+        /**
+         * Returns true if logJailActions is enabled in moderation.jailSettings config section.
+         * (moderation.jailSettings.logJailActions)
+         */
+        public boolean isLogJailActionsEnabled() {
+            JsonObject config = getConfig(MAIN_CONFIG);
+            if (config.has("moderation")) {
+                JsonObject moderation = config.getAsJsonObject("moderation");
+                if (moderation.has("jailSettings")) {
+                    JsonObject jailSettings = moderation.getAsJsonObject("jailSettings");
+                    if (jailSettings.has("logJailActions")) {
+                        return jailSettings.get("logJailActions").getAsBoolean();
+                    }
+                }
+            }
+            return true;
+        }
+        /**
+         * Returns true if preventJailEscape is enabled in moderation.jailSettings config section.
+         * (moderation.jailSettings.preventJailEscape)
+         */
+        public boolean isPreventJailEscapeEnabled() {
+            JsonObject config = getConfig(MAIN_CONFIG);
+            if (config.has("moderation")) {
+                JsonObject moderation = config.getAsJsonObject("moderation");
+                if (moderation.has("jailSettings")) {
+                    JsonObject jailSettings = moderation.getAsJsonObject("jailSettings");
+                    if (jailSettings.has("preventJailEscape")) {
+                        return jailSettings.get("preventJailEscape").getAsBoolean();
+                    }
+                }
+            }
             return false;
         }
-        
-        // Compare nested object structures
-        for (String key : templateKeys) {
-            JsonElement existingElement = existing.get(key);
-            JsonElement templateElement = template.get(key);
-            
-            if (existingElement.isJsonObject() && templateElement.isJsonObject()) {
-                if (!nestedKeysMatch(existingElement.getAsJsonObject(), templateElement.getAsJsonObject())) {
-                    LOGGER.debug("Nested keys differ in section: {}", key);
-                    return false;
+        /**
+         * Returns the jail message format from moderation.jailSettings.jailMessageFormat
+         * Defaults to a standard message if not set.
+         */
+        public String getJailMessageFormat() {
+            JsonObject config = getConfig(MAIN_CONFIG);
+            if (config.has("moderation")) {
+                JsonObject moderation = config.getAsJsonObject("moderation");
+                if (moderation.has("jailSettings")) {
+                    JsonObject jailSettings = moderation.getAsJsonObject("jailSettings");
+                    if (jailSettings.has("jailMessageFormat")) {
+                        String val = jailSettings.get("jailMessageFormat").getAsString();
+                        if (val != null && !val.trim().isEmpty()) return val;
+                    }
+                }
+            }
+            return "You cannot leave jail!";
+        }
+        /**
+         * Returns the maxJailsBeforeTempBan from moderation.jailSettings.maxJailsBeforeTempBan
+         * Defaults to 3 if not set.
+         */
+    public static int getMaxJailsBeforeTempBan() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("jailSettings")) {
+                JsonObject jailSettings = moderation.getAsJsonObject("jailSettings");
+                if (jailSettings.has("maxJailsBeforeTempBan")) {
+                    return jailSettings.get("maxJailsBeforeTempBan").getAsInt();
                 }
             }
         }
-        
+        return 3;
+    }
+    /**
+     * Returns true if jailTeleportOnLogin is enabled in moderation.jailSettings.jailTeleportOnLogin
+     * Defaults to true if not set.
+     */
+    public boolean isJailTeleportOnLoginEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("jailSettings")) {
+                JsonObject jailSettings = moderation.getAsJsonObject("jailSettings");
+                if (jailSettings.has("jailTeleportOnLogin")) {
+                    return jailSettings.get("jailTeleportOnLogin").getAsBoolean();
+                }
+            }
+        }
         return true;
     }
-    
+
     /**
-     * Compare nested object keys recursively
+     * Returns the staff notification permission node from moderation.generalSettings.staffNotificationPermission
+     * Defaults to 'neoessentials.moderation.notify' if not set.
      */
-    private boolean nestedKeysMatch(JsonObject existing, JsonObject template) {
-        Set<String> existingKeys = existing.keySet();
-        Set<String> templateKeys = template.keySet();
-        
-        if (!existingKeys.containsAll(templateKeys)) {
-            return false; // Template has new keys
-        }
-        
-        // Check nested objects
-        for (String key : templateKeys) {
-            JsonElement existingElement = existing.get(key);
-            JsonElement templateElement = template.get(key);
-            
-            if (existingElement != null && existingElement.isJsonObject() && templateElement.isJsonObject()) {
-                if (!nestedKeysMatch(existingElement.getAsJsonObject(), templateElement.getAsJsonObject())) {
-                    return false;
+    public String getStaffNotificationPermission() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("generalSettings")) {
+                JsonObject general = moderation.getAsJsonObject("generalSettings");
+                if (general.has("staffNotificationPermission")) {
+                    String val = general.get("staffNotificationPermission").getAsString();
+                    if (val != null && !val.trim().isEmpty()) return val;
                 }
             }
         }
-        
+        return "neoessentials.moderation.notify";
+    }
+
+    /**
+     * Returns true if broadcastBans is enabled in moderation.banSettings config section.
+     * (moderation.banSettings.broadcastBans)
+     */
+    public boolean isBroadcastBansEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("broadcastBans")) {
+                    return banSettings.get("broadcastBans").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if logBanActions is enabled in moderation.banSettings config section.
+     * (moderation.banSettings.logBanActions)
+     */
+    public boolean isLogBanActionsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("logBanActions")) {
+                    return banSettings.get("logBanActions").getAsBoolean();
+                }
+            }
+        }
         return true;
     }
-    
+
     /**
-     * Update config file with backup of old version
+     * Returns the checkExpiredBansInterval (in seconds) from moderation.banSettings.checkExpiredBansInterval.
+     * Defaults to 300 if not set or invalid. Values <= 0 disable the scheduler (returns 0). Minimum allowed is 5 seconds.
      */
-    private void updateConfigWithBackup(String configName, File configFile) {
-        try {
-            LOGGER.info("Updating config: {} (creating backup)", configName);
-            
-            // Create backup with incremental numbering
-            File backupFile = createBackupFile(configFile);
-            Files.copy(configFile.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            LOGGER.info("✓ Created backup: {} -> {}", configName, backupFile.getName());
-            
-            // Load old config values
-            JsonObject oldConfig;
-            try (FileReader reader = new FileReader(configFile)) {
-                oldConfig = JsonParser.parseReader(reader).getAsJsonObject();
-            }
-            
-            // Load new template
-            JsonObject newTemplate = loadJarConfig(configName);
-            if (newTemplate == null) {
-                LOGGER.error("Could not load new template for {}", configName);
-                return;
-            }
-            
-            // Merge old values into new structure
-            JsonObject mergedConfig = mergeConfigs(oldConfig, newTemplate);
-            
-            // Add version marker and comment
-            mergedConfig.addProperty(CONFIG_VERSION_KEY, CURRENT_CONFIG_VERSION);
-            mergedConfig.addProperty(CONFIG_VERSION_KEY + "_comment", 
-                "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.");
-            
-            // Write updated config
-            try (FileWriter writer = new FileWriter(configFile)) {
-                GSON.toJson(mergedConfig, writer);
-                LOGGER.info("Updated configuration: {} (backup saved as {})", configName, backupFile.getName());
-            }
-            
-        } catch (Exception e) {
-            LOGGER.error("Failed to update config {}: {}", configName, e.getMessage());
-        }
-    }
-    
-    /**
-     * Create backup file with incremental numbering (.bak1, .bak2, etc.)
-     */
-    private File createBackupFile(File originalFile) {
-        File parent = originalFile.getParentFile();
-        String baseName = originalFile.getName();
-        
-        for (int i = 1; i <= 999; i++) {
-            File backupFile = new File(parent, baseName + ".bak" + i);
-            if (!backupFile.exists()) {
-                return backupFile;
-            }
-        }
-        
-        // Fallback if we somehow have 999 backups
-        return new File(parent, baseName + ".bak999");
-    }
-    
-    /**
-     * Merge old config values into new template structure
-     */
-    private JsonObject mergeConfigs(JsonObject oldConfig, JsonObject newTemplate) {
-        JsonObject merged = newTemplate.deepCopy();
-        
-        // Recursively merge old values
-        mergeJsonObjects(merged, oldConfig);
-        
-        return merged;
-    }
-    
-    /**
-     * Recursively merge old values into new structure, preserving user customizations
-     */
-    private void mergeJsonObjects(JsonObject target, JsonObject source) {
-        for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
-            String key = entry.getKey();
-            JsonElement sourceValue = entry.getValue();
-            
-            // Skip version keys and comment fields
-            if (key.equals(CONFIG_VERSION_KEY) || key.endsWith("_comment")) {
-                continue;
-            }
-            
-            // If target has this key, merge values
-            if (target.has(key)) {
-                JsonElement targetValue = target.get(key);
-                
-                if (sourceValue.isJsonObject() && targetValue.isJsonObject()) {
-                    // Recursively merge objects
-                    mergeJsonObjects(targetValue.getAsJsonObject(), sourceValue.getAsJsonObject());
-                } else if (!sourceValue.isJsonObject()) {
-                    // Use old value for primitives (preserve user settings)
-                    target.add(key, sourceValue);
+    public int getCheckExpiredBansInterval() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("checkExpiredBansInterval")) {
+                    try {
+                        int val = banSettings.get("checkExpiredBansInterval").getAsInt();
+                        if (val <= 0) return 0; // Disabled
+                        if (val < 5) return 5; // Enforce minimum
+                        return val;
+                    } catch (Exception ignored) {}
                 }
             }
-            // Don't add keys that don't exist in new template
         }
+        return 300;
     }
-    
     /**
-     * Get a configuration object
+     * Returns the defaultBanReason from moderation.banSettings.defaultBanReason
+     * Defaults to 'Banned by an operator' if not set or invalid.
      */
-    public JsonObject getConfig(String configName) {
-        if (!loaded) {
-            loadAll();
+    public String getDefaultBanReason() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("defaultBanReason")) {
+                    String val = banSettings.get("defaultBanReason").getAsString();
+                    if (val != null && !val.trim().isEmpty()) return val;
+                }
+            }
         }
-        
-        lock.readLock().lock();
-        try {
-            return configCache.getOrDefault(configName, new JsonObject());
-        } finally {
-            lock.readLock().unlock();
-        }
+        return "Banned by an operator";
     }
-    
+
     /**
-     * Reload all configurations
+     * Returns the maxBanReason from moderation.banSettings.maxBanReason
+     * Defaults to 500 if not set or invalid.
      */
-    public void reloadAll() {
-        lock.writeLock().lock();
-        try {
-            configCache.clear();
-            loaded = false;
-            loadAll();
-            LOGGER.info("All configurations reloaded");
-        } finally {
-            lock.writeLock().unlock();
+    public int getMaxBanReasonLength() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("maxBanReason")) {
+                    try {
+                        int val = banSettings.get("maxBanReason").getAsInt();
+                        if (val > 0) return val;
+                    } catch (Exception ignored) {}
+                }
+            }
         }
+        return 500;
     }
-    
-    // === CONVENIENCE METHODS FOR COMMON CONFIG ACCESS ===
-    
+
     /**
-     * Check if a command is enabled
+     * Returns true if IP bans are enabled in moderation.banSettings.enableIPBans
+     * Defaults to true if not set.
+     */
+    public boolean isIPBansEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("enableIPBans")) {
+                    return banSettings.get("enableIPBans").getAsBoolean();
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if permanent bans are enabled in moderation.banSettings.enablePermanentBans
+     * Defaults to true if not set.
+     */
+    public boolean isPermanentBansEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("enablePermanentBans")) {
+                    return banSettings.get("enablePermanentBans").getAsBoolean();
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if temporary bans are enabled in moderation.banSettings.enableTempBans
+     * Defaults to true if not set.
+     */
+    public boolean isTempBansEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("enableTempBans")) {
+                    return banSettings.get("enableTempBans").getAsBoolean();
+                }
+            }
+        }
+        return true;
+    }
+    /**
+     * Returns true if autoExpireTempBans is enabled in moderation.banSettings.autoExpireTempBans
+     * Defaults to true if not set.
+     */
+    public boolean isAutoExpireTempBansEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("autoExpireTempBans")) {
+                    return banSettings.get("autoExpireTempBans").getAsBoolean();
+                }
+            }
+        }
+        return true;
+    }
+    /**
+     * Returns true if enableParticleEffects is enabled in teleportation.generalSettings config section.
+     * (teleportation.generalSettings.enableParticleEffects)
+     */
+    public boolean getEnableParticleEffects() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("generalSettings")) {
+                JsonObject general = tp.getAsJsonObject("generalSettings");
+                if (general.has("enableParticleEffects")) {
+                    return general.get("enableParticleEffects").getAsBoolean();
+                }
+            }
+        }
+        return true; // Default to enabled if not set
+    }
+    /**
+     * Returns the maxTeleportDistance from teleportation.generalSettings.maxTeleportDistance
+     * Returns -1 for unlimited if not set or invalid.
+     */
+    public int getMaxTeleportDistance() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("generalSettings")) {
+                JsonObject general = tp.getAsJsonObject("generalSettings");
+                if (general.has("maxTeleportDistance")) {
+                    try {
+                        return general.get("maxTeleportDistance").getAsInt();
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Returns true if allowTeleportInCombat is enabled in teleportation.generalSettings config section.
+     * (teleportation.generalSettings.allowTeleportInCombat)
+     */
+    public boolean isAllowTeleportInCombatEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("generalSettings")) {
+                JsonObject general = tp.getAsJsonObject("generalSettings");
+                if (general.has("allowTeleportInCombat")) {
+                    return general.get("allowTeleportInCombat").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+    /**
+     * Returns true if logTeleportRequests is enabled in teleportation.teleportRequestSettings config section.
+     * (teleportation.teleportRequestSettings.logTeleportRequests)
+     */
+    public boolean isLogTeleportRequestsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("teleportRequestSettings")) {
+                JsonObject req = tp.getAsJsonObject("teleportRequestSettings");
+                if (req.has("logTeleportRequests")) {
+                    return req.get("logTeleportRequests").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if autoAcceptFromFriends is enabled in teleportation.teleportRequestSettings config section.
+     * (teleportation.teleportRequestSettings.autoAcceptFromFriends)
+     */
+    public boolean isAutoAcceptTeleportFromFriendsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("teleportRequestSettings")) {
+                JsonObject req = tp.getAsJsonObject("teleportRequestSettings");
+                if (req.has("autoAcceptFromFriends")) {
+                    return req.get("autoAcceptFromFriends").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+    /**
+     * Returns true if enableRequestNotifications is enabled in teleportation.teleportRequestSettings config section.
+     * (teleportation.teleportRequestSettings.enableRequestNotifications)
+     */
+    public boolean isTeleportRequestNotificationsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("teleportRequestSettings")) {
+                JsonObject req = tp.getAsJsonObject("teleportRequestSettings");
+                if (req.has("enableRequestNotifications")) {
+                    return req.get("enableRequestNotifications").getAsBoolean();
+                }
+            }
+        }
+        return true;
+    }
+    /**
+     * Returns true if allowMultipleRequests is enabled in teleportation.teleportRequestSettings config section.
+     * (teleportation.teleportRequestSettings.allowMultipleRequests)
+     */
+    public boolean isAllowMultipleTeleportRequestsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("teleportRequestSettings")) {
+                JsonObject req = tp.getAsJsonObject("teleportRequestSettings");
+                if (req.has("allowMultipleRequests")) {
+                    return req.get("allowMultipleRequests").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns the max number of pending teleport requests per player from teleportation.teleportRequestSettings.maxPendingRequests
+     * Defaults to 5 if not set or invalid.
+     */
+    public int getMaxPendingTeleportRequests() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("teleportRequestSettings")) {
+                JsonObject req = tp.getAsJsonObject("teleportRequestSettings");
+                if (req.has("maxPendingRequests")) {
+                    try {
+                        int val = req.get("maxPendingRequests").getAsInt();
+                        if (val > 0) return val;
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        return 5;
+    }
+
+    /**
+     * Returns the teleport request timeout (in seconds) from teleportation.teleportRequestSettings.requestTimeout
+     * Defaults to 60 if not set or invalid.
+     */
+    public int getTeleportRequestTimeoutSeconds() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("teleportRequestSettings")) {
+                JsonObject req = tp.getAsJsonObject("teleportRequestSettings");
+                if (req.has("requestTimeout")) {
+                    try {
+                        int val = req.get("requestTimeout").getAsInt();
+                        if (val > 0) return val;
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        return 60;
+    }
+
+    /**
+     * Returns cooldown in seconds between sending teleport requests from teleportation.teleportRequestSettings.cooldownBetweenRequests
+     * Defaults to 10 if not set or invalid.
+     */
+    public int getCooldownBetweenTeleportRequestsSeconds() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("teleportRequestSettings")) {
+                JsonObject req = tp.getAsJsonObject("teleportRequestSettings");
+                if (req.has("cooldownBetweenRequests")) {
+                    try {
+                        int val = req.get("cooldownBetweenRequests").getAsInt();
+                        if (val >= 0) return val;
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        return 10;
+    }
+
+    /**
+     * Returns true if logSpawnActions is enabled in teleportation.spawnSettings config section.
+     * (teleportation.spawnSettings.logSpawnActions)
+     */
+    public boolean isLogSpawnActionsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("spawnSettings")) {
+                JsonObject spawnSettings = tp.getAsJsonObject("spawnSettings");
+                if (spawnSettings.has("logSpawnActions")) {
+                    return spawnSettings.get("logSpawnActions").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Returns true if cancelOnDamage is enabled in teleportation.generalSettings config section.
+     * (teleportation.generalSettings.cancelOnDamage)
+     */
+    public boolean isCancelOnDamageEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("generalSettings")) {
+                JsonObject general = tp.getAsJsonObject("generalSettings");
+                if (general.has("cancelOnDamage")) {
+                    return general.get("cancelOnDamage").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if teleportation module is enabled (modules.teleportationEnabled)
+     */
+    public boolean isTeleportationEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("teleportationEnabled")) {
+                return modules.get("teleportationEnabled").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+
+    /**
+     * Returns true if requireConfirmationForDelete is enabled in teleportation.homeSettings config section.
+     * (teleportation.homeSettings.requireConfirmationForDelete)
+     */
+    public boolean isRequireConfirmationForDeleteEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("homeSettings")) {
+                JsonObject homeSettings = tp.getAsJsonObject("homeSettings");
+                if (homeSettings.has("requireConfirmationForDelete")) {
+                    return homeSettings.get("requireConfirmationForDelete").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if logHomeActions is enabled in teleportation.homeSettings config section.
+     * (teleportation.homeSettings.logHomeActions)
+     */
+    public boolean isLogHomeActionsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("homeSettings")) {
+                JsonObject homeSettings = tp.getAsJsonObject("homeSettings");
+                if (homeSettings.has("logHomeActions")) {
+                    return homeSettings.get("logHomeActions").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+    /**
+     * Returns true if newPlayerKit is enabled in kits config section.
+     * (kits.newPlayerKit.enabled)
+     */
+    public boolean isNewPlayerKitEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("newPlayerKit")) {
+                JsonObject npk = kits.getAsJsonObject("newPlayerKit");
+                if (npk.has("enabled")) {
+                    return npk.get("enabled").getAsBoolean();
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns the kit name for newPlayerKit (kits.newPlayerKit.kitName), or empty string if not set.
+     */
+    public String getNewPlayerKitName() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("newPlayerKit")) {
+                JsonObject npk = kits.getAsJsonObject("newPlayerKit");
+                if (npk.has("kitName")) {
+                    return npk.get("kitName").getAsString();
+                }
+            }
+        }
+        return "";
+    }
+    /**
+     * Gets the maximum number of kits a player can have active cooldowns for (kits.maxKitsPerPlayer).
+     * Returns -1 for unlimited if not set or invalid.
+     */
+    public int getMaxKitsPerPlayer() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("maxKitsPerPlayer")) {
+                try {
+                    return kits.get("maxKitsPerPlayer").getAsInt();
+                } catch (Exception ignored) {}
+            }
+        }
+        return -1;
+    }
+    /**
+     * Check if AFK system is enabled (afk.enabled)
+     */
+    public boolean isAfkEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("afk")) {
+            JsonObject afk = config.getAsJsonObject("afk");
+            if (afk.has("enabled")) {
+                return afk.get("enabled").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+    /**
+     * Get the permission cache expiry in minutes (permissions.permissionCacheExpiryMinutes)
+     * Returns 5 if not set or invalid.
+     */
+    public int getPermissionCacheExpiryMinutes() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("permissions")) {
+            JsonObject perms = config.getAsJsonObject("permissions");
+            if (perms.has("permissionCacheExpiryMinutes")) {
+                try {
+                    int val = perms.get("permissionCacheExpiryMinutes").getAsInt();
+                    if (val > 0) return val;
+                } catch (Exception ignored) {}
+            }
+        }
+        return 5; // Default to 5 minutes if not set
+    }
+    /**
+     * Check if permission caching is enabled (permissions.cachePermissions)
+     */
+    public boolean isPermissionCacheEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("permissions")) {
+            JsonObject perms = config.getAsJsonObject("permissions");
+            if (perms.has("cachePermissions")) {
+                return perms.get("cachePermissions").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled for legacy behavior
+    }
+    /**
+     * Check if ops should bypass all permissions (permissions.opsBypassPermissions)
+     */
+    public boolean isOpsBypassPermissionsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("permissions")) {
+            JsonObject perms = config.getAsJsonObject("permissions");
+            if (perms.has("opsBypassPermissions")) {
+                return perms.get("opsBypassPermissions").getAsBoolean();
+            }
+        }
+        return true; // Default to true for legacy behavior
+    }
+    /**
+     * Get the default group name from config.json (permissions.defaultGroup).
+     * Returns "default" if not set or empty.
+     */
+    public String getDefaultGroup() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("permissions")) {
+            JsonObject perms = config.getAsJsonObject("permissions");
+            if (perms.has("defaultGroup")) {
+                String group = perms.get("defaultGroup").getAsString();
+                if (group != null && !group.trim().isEmpty()) {
+                    return group.trim();
+                }
+            }
+        }
+        return "default";
+    }
+
+    /**
+     * Check if a command is enabled in the config (commands section).
+     * Returns true if the command is enabled or not explicitly disabled.
      */
     public boolean isCommandEnabled(String command) {
         JsonObject config = getConfig(MAIN_CONFIG);
@@ -499,540 +1111,701 @@ public class ConfigManager {
                 return commands.get(command).getAsBoolean();
             }
         }
+        return true; // Default to enabled if not specified
+    }
+    /**
+     * Returns true if allowKitOverride is enabled in kits config section.
+     * (kits.allowKitOverride)
+     */
+    public boolean isAllowKitOverrideEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("allowKitOverride")) {
+                return kits.get("allowKitOverride").getAsBoolean();
+            }
+        }
+        return false;
+    }
+    /**
+     * Retrieve the config object for the given config file name.
+     * Loads and caches the config if not already loaded.
+     */
+    public JsonObject getConfig(String configName) {
+        lock.readLock().lock();
+        FileReader reader = null;
+        try {
+            if (configCache.containsKey(configName)) {
+                return configCache.get(configName);
+            }
+            File file = new File(configName);
+            reader = new FileReader(file, StandardCharsets.UTF_8);
+            JsonObject obj = JsonParser.parseReader(reader).getAsJsonObject();
+            configCache.put(configName, obj);
+            return obj;
+        } catch (IOException e) {
+            LOGGER.error("Failed to read config file {}: {}", configName, e.getMessage());
+            JsonObject empty = new JsonObject();
+            configCache.put(configName, empty);
+            return empty;
+        } finally {
+            if (reader != null) {
+                try { reader.close(); } catch (IOException ignored) {}
+            }
+            lock.readLock().unlock();
+        }
+    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
+    // private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    // Thread-safe singleton
+    private static class SingletonHolder {
+        private static final ConfigManager INSTANCE = new ConfigManager();
+    }
+
+    public static ConfigManager getInstance() {
+        return SingletonHolder.INSTANCE;
+    }
+
+    // Thread-safe configuration cache
+    private final ConcurrentHashMap<String, JsonObject> configCache = new ConcurrentHashMap<>();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    // private volatile boolean loaded = false;
+
+    // Configuration file names
+    public static final String MAIN_CONFIG = "config.json";
+    public static final String ECONOMY_CONFIG = "economy.json";
+    public static final String PERMISSIONS_CONFIG = "permissions.json";
+    public static final String KITS_CONFIG = "kits.json";
+    public static final String DISCORD_AUTH_CONFIG = "discord_auth.json";
+
+    // Config version tracking - increment when structure changes
+    // private static final String CONFIG_VERSION_KEY = "_configVersion";
+    // private static final int CURRENT_CONFIG_VERSION = 8;
+
+    private ConfigManager() {
+        // On first construction, ensure all required config files exist
+        ensureDefaultConfigs();
+    }
+
+    /**
+     * Ensure all required config files exist in the config directory, copying from JAR if missing.
+     */
+    private void ensureDefaultConfigs() {
+        String[] requiredConfigs = new String[] {
+            MAIN_CONFIG, ECONOMY_CONFIG, PERMISSIONS_CONFIG, KITS_CONFIG, DISCORD_AUTH_CONFIG
+        };
+        for (String configName : requiredConfigs) {
+            File configFile = ResourceUtil.getConfigFile(configName);
+            if (!configFile.exists()) {
+                try (InputStream in = ResourceUtil.getJarConfigResource(configName)) {
+                    if (in != null) {
+                        // Ensure parent directories exist
+                        configFile.getParentFile().mkdirs();
+                        try (OutputStream out = new FileOutputStream(configFile)) {
+                            byte[] buffer = new byte[8192];
+                            int len;
+                            while ((len = in.read(buffer)) > 0) {
+                                out.write(buffer, 0, len);
+                            }
+                        }
+                        LOGGER.info("Copied default config {} to {}", configName, configFile.getAbsolutePath());
+                    } else {
+                        LOGGER.warn("Default config resource not found in JAR: {}", configName);
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("Failed to copy default config {}: {}", configName, e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Check if external permissions should be used (permissions.useExternalPermissions)
+     */
+    public boolean isExternalPermissionsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("permissions")) {
+            JsonObject perms = config.getAsJsonObject("permissions");
+            if (perms.has("useExternalPermissions")) {
+                return perms.get("useExternalPermissions").getAsBoolean();
+            }
+        }
+        return false; // Default to false
+    }
+
+    /**
+     * Check if XSS protection is enabled (security.enableXSSProtection)
+     */
+    public boolean isXSSProtectionEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("enableXSSProtection")) {
+                return security.get("enableXSSProtection").getAsBoolean();
+            }
+        }
         return true; // Default to enabled
     }
-    
+
     /**
-     * Check if economy is enabled
+     * Check if input validation is enabled (security.enableInputValidation)
      */
-    public boolean isEconomyEnabled() {
+    public boolean isInputValidationEnabled() {
         JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("enableInputValidation")) {
+                return security.get("enableInputValidation").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled
+    }
+
+    /**
+     * Returns true if custom chat formatting is enabled (chat.enable-chat-formatting in config).
+     * Defaults to true if not set.
+     */
+    public static boolean isChatFormattingEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("chat")) {
+            JsonObject chat = config.getAsJsonObject("chat");
+            if (chat.has("enable-chat-formatting")) {
+                return chat.get("enable-chat-formatting").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if color codes (including hex) are enabled in config (chat.enable-color-codes).
+     * Defaults to true if not set.
+     */
+    public static boolean isColorCodesEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("chat")) {
+            JsonObject chat = config.getAsJsonObject("chat");
+            if (chat.has("enable-color-codes")) {
+                return chat.get("enable-color-codes").getAsBoolean();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if economy module is enabled (modules.economyEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isEconomyEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("modules")) {
             JsonObject modules = config.getAsJsonObject("modules");
             if (modules.has("economyEnabled")) {
                 return modules.get("economyEnabled").getAsBoolean();
             }
         }
-        return true; // Default to enabled
+        return true;
     }
-    
+
     /**
-     * Check if moderation system is enabled
+     * Returns the economy starting balance from economy.json (startingBalance).
+     * Defaults to 100.0 if not set.
      */
-    public boolean isModerationEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("modules")) {
-            JsonObject modules = config.getAsJsonObject("modules");
-            if (modules.has("moderationEnabled")) {
-                return modules.get("moderationEnabled").getAsBoolean();
+    public static double getEconomyStartingBalance() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("startingBalance")) {
+            try {
+                return config.get("startingBalance").getAsDouble();
+            } catch (Exception ignored) {}
+        }
+        return 100.0;
+    }
+
+    /**
+     * Returns the currency symbol from economy.json (currencySymbol).
+     * Defaults to "$" if not set.
+     */
+    public static String getCurrencySymbol() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("currencySymbol")) {
+            String symbol = config.get("currencySymbol").getAsString();
+            if (symbol != null && !symbol.isEmpty()) {
+                return symbol;
             }
         }
-        return true; // Default to enabled
+        return "$";
     }
-    
+
     /**
-     * Check if chat system is enabled
+     * Returns the max balance from economy.json (maxBalance).
+     * Defaults to 999999999.99 if not set.
      */
-    public boolean isChatEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
+    public static double getMaxBalance() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("maxBalance")) {
+            try {
+                return config.get("maxBalance").getAsDouble();
+            } catch (Exception ignored) {}
+        }
+        return 999999999.99;
+    }
+
+    /**
+     * Returns the tax percentage from economy.json (taxPercentage).
+     * Defaults to 0.0 if not set.
+     */
+    public static double getTaxPercentage() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("taxPercentage")) {
+            try {
+                return config.get("taxPercentage").getAsDouble();
+            } catch (Exception ignored) {}
+        }
+        return 0.0;
+    }
+
+    /**
+     * Alias for getTaxPercentage() for backwards compatibility.
+     */
+    public static double getEconomyTaxPercentage() {
+        return getTaxPercentage();
+    }
+
+    /**
+     * Returns true if negative balances are allowed from economy.json (allowNegativeBalances).
+     * Defaults to false if not set.
+     */
+    public static boolean allowNegativeBalances() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("allowNegativeBalances")) {
+            return config.get("allowNegativeBalances").getAsBoolean();
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if inactive account cleanup is enabled from economy.json (cleanupInactiveAccounts).
+     * Defaults to true if not set.
+     */
+    public static boolean isCleanupInactiveAccountsEnabled() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("cleanupInactiveAccounts")) {
+            return config.get("cleanupInactiveAccounts").getAsBoolean();
+        }
+        return true;
+    }
+
+    /**
+     * Returns the inactive account cleanup days from economy.json (inactiveAccountCleanupDays).
+     * Defaults to 30 if not set.
+     */
+    public static int getInactiveAccountCleanupDays() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("inactiveAccountCleanupDays")) {
+            try {
+                return config.get("inactiveAccountCleanupDays").getAsInt();
+            } catch (Exception ignored) {}
+        }
+        return 30;
+    }
+
+    /**
+     * Returns the max transfer amount from economy.json (maxTransferAmount).
+     * Defaults to 10000.0 if not set.
+     */
+    public static double getMaxTransferAmount() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("maxTransferAmount")) {
+            try {
+                return config.get("maxTransferAmount").getAsDouble();
+            } catch (Exception ignored) {}
+        }
+        return 10000.0;
+    }
+
+    /**
+     * Returns the pay toggle default from economy.json (paytoggleDefault).
+     * Defaults to true if not set.
+     */
+    public static boolean getPayToggleDefault() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("paytoggleDefault")) {
+            return config.get("paytoggleDefault").getAsBoolean();
+        }
+        return true;
+    }
+
+    /**
+     * Returns the cache maximum size from economy.json (cacheMaximumSize).
+     * Defaults to 10000 if not set.
+     */
+    public static int getCacheMaximumSize() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("cacheMaximumSize")) {
+            try {
+                return config.get("cacheMaximumSize").getAsInt();
+            } catch (Exception ignored) {}
+        }
+        return 10000;
+    }
+
+    /**
+     * Returns the cache expire after access minutes from economy.json (cacheExpireAfterAccessMinutes).
+     * Defaults to 60 if not set.
+     */
+    public static int getCacheExpireAfterAccessMinutes() {
+        JsonObject config = getInstance().getConfig(ECONOMY_CONFIG);
+        if (config.has("cacheExpireAfterAccessMinutes")) {
+            try {
+                return config.get("cacheExpireAfterAccessMinutes").getAsInt();
+            } catch (Exception ignored) {}
+        }
+        return 60;
+    }
+
+    /**
+     * Returns the pay cooldown in seconds. This method is for backwards compatibility.
+     * Returns 0 (no cooldown) by default as there is no specific config for this.
+     */
+    public static int getPayCooldownSeconds() {
+        // No specific config for pay cooldown, return 0 (no cooldown)
+        return 0;
+    }
+
+    /**
+     * Loads all config files. This is a no-op method for backwards compatibility.
+     * Configs are loaded on-demand via getConfig().
+     */
+    public static void loadAll() {
+        // Configs are loaded on-demand, no need to preload
+        getInstance();
+    }
+
+    /**
+     * Returns true if chat module is enabled (modules.chatEnabled).
+     * Defaults to true if not set.
+     */
+    public static boolean isChatEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("modules")) {
             JsonObject modules = config.getAsJsonObject("modules");
             if (modules.has("chatEnabled")) {
                 return modules.get("chatEnabled").getAsBoolean();
             }
         }
-        return true; // Default to enabled
+        return true;
     }
-    
-    /**
-     * Check if permissions system is enabled
-     */
-    public boolean isPermissionsEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("modules")) {
-            JsonObject modules = config.getAsJsonObject("modules");
-            if (modules.has("permissionsEnabled")) {
-                return modules.get("permissionsEnabled").getAsBoolean();
-            }
-        }
-        return true; // Default to enabled
-    }
-    
-    /**
-     * Check if web dashboard is enabled
-     */
-    public boolean isWebDashboardEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("modules")) {
-            JsonObject modules = config.getAsJsonObject("modules");
-            if (modules.has("webDashboardEnabled")) {
-                return modules.get("webDashboardEnabled").getAsBoolean();
-            }
-        }
-        return true; // Default to enabled
-    }
-    
-    /**
-     * Check if web dashboard should auto-start on server launch
-     */
-    public boolean isWebDashboardAutoStartEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
-            if (webDashboard.has("autoStart")) {
-                return webDashboard.get("autoStart").getAsBoolean();
-            }
-        }
-        return false; // Default to manual start
-    }
-    
-    /**
-     * Get web dashboard port
-     */
-    public int getWebDashboardPort() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
-            if (webDashboard.has("port")) {
-                return webDashboard.get("port").getAsInt();
-            }
-        }
-        return 8080; // Default port
-    }
-    
-    /**
-     * Get web dashboard WebSocket port
-     */
-    public int getWebDashboardWebSocketPort() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
-            if (webDashboard.has("websocketPort")) {
-                return webDashboard.get("websocketPort").getAsInt();
-            }
-        }
-        // Default: HTTP port + 1 for backwards compatibility
-        return getWebDashboardPort() + 1;
-    }
-    
-    /**
-     * Get web dashboard bind address
-     */
-    public String getWebDashboardBindAddress() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
-            if (webDashboard.has("bindAddress")) {
-                return webDashboard.get("bindAddress").getAsString();
-            }
-        }
-        return "127.0.0.1"; // Default to localhost only
-    }
-    
-    /**
-     * Check if CORS is enabled for web dashboard
-     */
-    public boolean isWebDashboardCORSEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
-            if (webDashboard.has("enableCORS")) {
-                return webDashboard.get("enableCORS").getAsBoolean();
-            }
-        }
-        return true; // Default to enabled
-    }
-    
-    /**
-     * Get web dashboard max threads
-     */
-    public int getWebDashboardMaxThreads() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
-            if (webDashboard.has("maxThreads")) {
-                return webDashboard.get("maxThreads").getAsInt();
-            }
-        }
-        return 4; // Default thread count
-    }
-    
-    /**
-     * Check if config editing is allowed via web dashboard
-     */
-    public boolean isWebDashboardConfigEditingAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
-            if (webDashboard.has("securitySettings")) {
-                JsonObject security = webDashboard.getAsJsonObject("securitySettings");
-                if (security.has("allowConfigEditing")) {
-                    return security.get("allowConfigEditing").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to allowed
-    }
-    
-    /**
-     * Get max log lines for web dashboard
-     */
-    public int getWebDashboardMaxLogLines() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
-            if (webDashboard.has("apiSettings")) {
-                JsonObject apiSettings = webDashboard.getAsJsonObject("apiSettings");
-                if (apiSettings.has("maxLogLines")) {
-                    return apiSettings.get("maxLogLines").getAsInt();
-                }
-            }
-        }
-        return 1000; // Default max lines
-    }
-    
-    /**
-     * Get default log lines for web dashboard
-     */
-    public int getWebDashboardDefaultLogLines() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("webDashboard")) {
-            JsonObject webDashboard = config.getAsJsonObject("webDashboard");
-            if (webDashboard.has("apiSettings")) {
-                JsonObject apiSettings = webDashboard.getAsJsonObject("apiSettings");
-                if (apiSettings.has("defaultLogLines")) {
-                    return apiSettings.get("defaultLogLines").getAsInt();
-                }
-            }
-        }
-        return 100; // Default lines
-    }
-    
-    /**
-     * Get economy starting balance
-     */
-    public BigDecimal getEconomyStartingBalance() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("startingBalance")) {
-            return config.get("startingBalance").getAsBigDecimal();
-        }
-        return new BigDecimal("100.0");
-    }
-    
-    /**
-     * Get currency symbol
-     */
-    public String getCurrencySymbol() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("currencySymbol")) {
-            return config.get("currencySymbol").getAsString();
-        }
-        return "$";
-    }
-    
-    /**
-     * Get economy tax percentage for payments
-     */
-    public double getEconomyTaxPercentage() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("taxPercentage")) {
-            return config.get("taxPercentage").getAsDouble();
-        }
-        return 0.0; // Default to no tax
-    }
-    
 
-    
     /**
-     * Get maximum balance
+     * Returns true if moderation module is enabled (modules.moderationEnabled).
+     * Defaults to true if not set.
      */
-    public BigDecimal getMaxBalance() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("maxBalance")) {
-            return config.get("maxBalance").getAsBigDecimal();
+    public static boolean isModerationEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("moderationEnabled")) {
+                return modules.get("moderationEnabled").getAsBoolean();
+            }
         }
-        return new BigDecimal("100000.0");
+        return true;
     }
-    
+
     /**
-     * Get tax percentage
+     * Returns true if web dashboard is enabled (webDashboard.enabled).
+     * Defaults to true if not set.
      */
-    public double getTaxPercentage() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("taxPercentage")) {
-            return config.get("taxPercentage").getAsDouble();
+    public static boolean isWebDashboardEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("enabled")) {
+                return dashboard.get("enabled").getAsBoolean();
+            }
         }
-        return 1.5;
+        return true;
     }
-    
+
     /**
-     * Check if unsafe enchantments are allowed
+     * Returns true if unsafe enchantments are allowed (items.unsafe-enchantments).
+     * Defaults to true if not set.
      */
-    public boolean isUnsafeEnchantsAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
+    public static boolean isUnsafeEnchantsAllowed() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("items")) {
             JsonObject items = config.getAsJsonObject("items");
             if (items.has("unsafe-enchantments")) {
                 return items.get("unsafe-enchantments").getAsBoolean();
             }
         }
-        return false;
+        return true;
     }
-    
+
     /**
-     * Get the maximum level allowed for unsafe enchantments
+     * Returns the default stack size from items.default-stack-size.
+     * Returns -1 (use vanilla) if not set.
      */
-    public int getMaxUnsafeEnchantmentLevel() {
-        JsonObject config = getConfig(MAIN_CONFIG);
+    public static int getDefaultStackSize() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("items")) {
             JsonObject items = config.getAsJsonObject("items");
-            if (items.has("max-unsafe-enchantment-level")) {
-                return items.get("max-unsafe-enchantment-level").getAsInt();
+            if (items.has("default-stack-size")) {
+                try {
+                    return items.get("default-stack-size").getAsInt();
+                } catch (Exception ignored) {}
             }
         }
-        return 32767; // Default maximum level for unsafe enchantments
+        return -1;
     }
-    
+
     /**
-     * Get item spawn blacklist
+     * Returns the oversized stack size from items.oversized-stacksize.
+     * Defaults to 64 if not set.
      */
-    public List<String> getItemSpawnBlacklist() {
-        List<String> blacklist = new ArrayList<>();
-        JsonObject config = getConfig(MAIN_CONFIG);
+    public static int getOversizedStackSize() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("items")) {
             JsonObject items = config.getAsJsonObject("items");
-            if (items.has("item-spawn-blacklist")) {
-                items.getAsJsonArray("item-spawn-blacklist").forEach(element -> 
-                    blacklist.add(element.getAsString())
-                );
+            if (items.has("oversized-stacksize")) {
+                try {
+                    return items.get("oversized-stacksize").getAsInt();
+                } catch (Exception ignored) {}
             }
         }
-        return blacklist;
+        return 64;
     }
-    
+
     /**
-     * Check if permission-based item spawning is enabled
+     * Returns the item spawn blacklist from items.item-spawn-blacklist.
+     * Defaults to empty list if not set.
      */
-    public boolean isPermissionBasedItemSpawn() {
-        JsonObject config = getConfig(MAIN_CONFIG);
+    public static java.util.List<String> getItemSpawnBlacklist() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("items")) {
+            JsonObject items = config.getAsJsonObject("items");
+            if (items.has("item-spawn-blacklist") && items.get("item-spawn-blacklist").isJsonArray()) {
+                java.util.List<String> list = new java.util.ArrayList<>();
+                items.getAsJsonArray("item-spawn-blacklist").forEach(e -> list.add(e.getAsString()));
+                return list;
+            }
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    /**
+     * Returns true if permission-based item spawn is enabled (items.permission-based-item-spawn).
+     * Defaults to false if not set.
+     */
+    public static boolean isPermissionBasedItemSpawn() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("items")) {
             JsonObject items = config.getAsJsonObject("items");
             if (items.has("permission-based-item-spawn")) {
                 return items.get("permission-based-item-spawn").getAsBoolean();
             }
         }
-        return true; // Default to enabled
+        return false;
     }
-    
+
     /**
-     * Check if items should be dropped if inventory is full
+     * Returns true if kits module is enabled (modules.kitsEnabled).
+     * Defaults to true if not set.
      */
-    public boolean shouldDropItemsIfFull() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("items")) {
-            JsonObject items = config.getAsJsonObject("items");
-            if (items.has("drop-items-if-full")) {
-                return items.get("drop-items-if-full").getAsBoolean();
+    public static boolean isKitModuleEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("kitsEnabled")) {
+                return modules.get("kitsEnabled").getAsBoolean();
             }
         }
-        return true; // Default to enabled
+        return true;
     }
-    
+
     /**
-     * Get oversized stack size limit
+     * Returns true if kit system is enabled (kits config section exists and module enabled).
+     * Defaults to true if not set.
      */
-    public int getOversizedStackSize() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("items")) {
-            JsonObject items = config.getAsJsonObject("items");
-            if (items.has("oversized-stacksize")) {
-                return items.get("oversized-stacksize").getAsInt();
+    public static boolean isKitSystemEnabled() {
+        return isKitModuleEnabled();
+    }
+
+    /**
+     * Returns the cost for a kit command from kits.commandCosts.<commandName>.
+     * Defaults to 0 if not set.
+     */
+    public static double getKitCommandCost(String commandName) {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("commandCosts")) {
+                JsonObject costs = kits.getAsJsonObject("commandCosts");
+                if (costs.has(commandName)) {
+                    try {
+                        return costs.get(commandName).getAsDouble();
+                    } catch (Exception ignored) {}
+                }
             }
         }
-        return 64; // Default to vanilla max
+        return 0.0;
     }
-    
+
     /**
-     * Get default stack size (-1 for vanilla behavior)
+     * Returns true if pastebin createkit is enabled (kits.pastebinCreatekit).
+     * Defaults to false if not set.
      */
-    public int getDefaultStackSize() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("items")) {
-            JsonObject items = config.getAsJsonObject("items");
-            if (items.has("default-stack-size")) {
-                return items.get("default-stack-size").getAsInt();
+    public static boolean isPastebinCreatekitEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("pastebinCreatekit")) {
+                return kits.get("pastebinCreatekit").getAsBoolean();
             }
         }
-        return -1; // Default to vanilla behavior
+        return false;
     }
 
     /**
-     * Get maximum command length from security settings
+     * Returns true if used one-time kits should be skipped from kit list (kits.skipUsedOneTimeKitsFromKitList).
+     * Defaults to false if not set.
      */
-    public int getMaxCommandLength() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("security")) {
-            JsonObject security = config.getAsJsonObject("security");
-            if (security.has("maxCommandLength")) {
-                return security.get("maxCommandLength").getAsInt();
+    public static boolean isSkipUsedOneTimeKitsFromKitList() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("skipUsedOneTimeKitsFromKitList")) {
+                return kits.get("skipUsedOneTimeKitsFromKitList").getAsBoolean();
             }
         }
-        return 256; // Default fallback
+        return false;
     }
 
     /**
-     * Get maximum reason length from security settings
+     * Returns true if kit auto-equip is enabled (kits.kitAutoEquip).
+     * Defaults to false if not set.
      */
-    public int getMaxReasonLength() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("security")) {
-            JsonObject security = config.getAsJsonObject("security");
-            if (security.has("maxReasonLength")) {
-                return security.get("maxReasonLength").getAsInt();
+    public static boolean isKitAutoEquipEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("kitAutoEquip")) {
+                return kits.get("kitAutoEquip").getAsBoolean();
             }
         }
-        return 500; // Default fallback
+        return false;
     }
-    
+
     /**
-     * Check if unsafe commands are allowed from security settings
+     * Returns true if kit usage logging is enabled (kits.logKitUsage).
+     * Defaults to true if not set.
      */
-    public boolean isUnsafeCommandsAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("security")) {
-            JsonObject security = config.getAsJsonObject("security");
-            if (security.has("allowUnsafeCommands")) {
-                return security.get("allowUnsafeCommands").getAsBoolean();
+    public static boolean isLogKitUsageEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("kits")) {
+            JsonObject kits = config.getAsJsonObject("kits");
+            if (kits.has("logKitUsage")) {
+                return kits.get("logKitUsage").getAsBoolean();
             }
         }
-        return false; // Default to safe mode
+        return true;
     }
 
     /**
-     * Get maximum economy amount from economy settings
+     * Returns true if jail location is required (moderation.jailSettings.requireJailLocation).
+     * Defaults to true if not set.
      */
-    public BigDecimal getMaxEconomyAmount() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("maxBalance")) {
-            return config.get("maxBalance").getAsBigDecimal();
-        }
-        return new BigDecimal("999999999.99"); // Default fallback
-    }
-
-    /**
-     * Get minimum economy amount from economy settings
-     */
-    public BigDecimal getMinEconomyAmount() {
-        // Default minimum transfer amount
-        return new BigDecimal("0.01");
-    }
-
-    /**
-     * Get pay cooldown seconds from payment settings
-     */
-    public int getPayCooldownSeconds() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("payCooldownSeconds")) {
-            return config.get("payCooldownSeconds").getAsInt();
-        }
-        return 3; // Default fallback
-    }
-
-    /**
-     * Get default permission group from permissions settings
-     */
-    public String getDefaultGroup() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("permissions")) {
-            JsonObject permissions = config.getAsJsonObject("permissions");
-            if (permissions.has("defaultGroup")) {
-                return permissions.get("defaultGroup").getAsString();
+    public static boolean isRequireJailLocationEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("jailSettings")) {
+                JsonObject jailSettings = moderation.getAsJsonObject("jailSettings");
+                if (jailSettings.has("requireJailLocation")) {
+                    return jailSettings.get("requireJailLocation").getAsBoolean();
+                }
             }
         }
-        return "default"; // Default fallback
+        return true;
     }
 
-    // === ECONOMY CONFIGURATION METHODS ===
-
     /**
-     * Check if negative balances are allowed
+     * Returns the ban message format from moderation.banSettings.banMessageFormat.
+     * Defaults to standard message if not set.
      */
-    public boolean allowNegativeBalances() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("allowNegativeBalances")) {
-            return config.get("allowNegativeBalances").getAsBoolean();
+    public static String getBanMessageFormat() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("banMessageFormat")) {
+                    String val = banSettings.get("banMessageFormat").getAsString();
+                    if (val != null && !val.trim().isEmpty()) return val;
+                }
+            }
         }
-        return false; // Default to not allowing negative balances
+        return "You have been banned from this server.\nReason: {reason}\nBanned by: {bannedBy}\n{duration}";
     }
 
     /**
-     * Check if inactive account cleanup is enabled
+     * Returns the temp ban message format from moderation.banSettings.tempBanMessageFormat.
+     * Defaults to standard message if not set.
      */
-    public boolean isCleanupInactiveAccountsEnabled() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("cleanupInactiveAccounts")) {
-            return config.get("cleanupInactiveAccounts").getAsBoolean();
+    public static String getTempBanMessageFormat() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("tempBanMessageFormat")) {
+                    String val = banSettings.get("tempBanMessageFormat").getAsString();
+                    if (val != null && !val.trim().isEmpty()) return val;
+                }
+            }
         }
-        return true; // Default to enabled
+        return "You have been temporarily banned from this server.\nReason: {reason}\nBanned by: {bannedBy}\nExpires: {expiry}";
     }
 
     /**
-     * Get inactive account cleanup days
+     * Returns the IP ban message format from moderation.banSettings.ipBanMessageFormat.
+     * Defaults to standard message if not set.
      */
-    public int getInactiveAccountCleanupDays() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("inactiveAccountCleanupDays")) {
-            return config.get("inactiveAccountCleanupDays").getAsInt();
+    public static String getIPBanMessageFormat() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("banSettings")) {
+                JsonObject banSettings = moderation.getAsJsonObject("banSettings");
+                if (banSettings.has("ipBanMessageFormat")) {
+                    String val = banSettings.get("ipBanMessageFormat").getAsString();
+                    if (val != null && !val.trim().isEmpty()) return val;
+                }
+            }
         }
-        return 30; // Default to 30 days
+        return "Your IP address has been banned from this server.\nReason: {reason}\nBanned by: {bannedBy}";
     }
 
     /**
-     * Get maximum transfer amount
+     * Returns true if warp actions should be logged (teleportation.warpSettings.logWarpActions).
+     * Defaults to true if not set.
      */
-    public BigDecimal getMaxTransferAmount() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("maxTransferAmount")) {
-            return config.get("maxTransferAmount").getAsBigDecimal();
+    public boolean isLogWarpActionsEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject tp = config.getAsJsonObject("teleportation");
+            if (tp.has("warpSettings")) {
+                JsonObject warpSettings = tp.getAsJsonObject("warpSettings");
+                if (warpSettings.has("logWarpActions")) {
+                    return warpSettings.get("logWarpActions").getAsBoolean();
+                }
+            }
         }
-        return new BigDecimal("10000.0"); // Default max transfer
+        return true;
     }
 
     /**
-     * Get default pay toggle setting
-     */
-    public boolean getPayToggleDefault() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("paytoggleDefault")) {
-            return config.get("paytoggleDefault").getAsBoolean();
-        }
-        return true; // Default to allowing payments
-    }
-
-    /**
-     * Get cache maximum size
-     */
-    public int getCacheMaximumSize() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("cacheMaximumSize")) {
-            return config.get("cacheMaximumSize").getAsInt();
-        }
-        return 10000; // Default cache size
-    }
-
-    /**
-     * Get cache expire after access minutes
-     */
-    public int getCacheExpireAfterAccessMinutes() {
-        JsonObject config = getConfig(ECONOMY_CONFIG);
-        if (config.has("cacheExpireAfterAccessMinutes")) {
-            return config.get("cacheExpireAfterAccessMinutes").getAsInt();
-        }
-        return 60; // Default to 60 minutes
-    }
-    
-    /**
-     * Check if debug logging is enabled
+     * Returns true if debug logging is enabled (logging.enableDebugLogging).
+     * Defaults to false if not set.
      */
     public boolean isDebugLoggingEnabled() {
         JsonObject config = getConfig(MAIN_CONFIG);
@@ -1042,989 +1815,327 @@ public class ConfigManager {
                 return logging.get("enableDebugLogging").getAsBoolean();
             }
         }
-        return false; // Default to disabled
+        return false;
     }
 
-    // === KIT MODULE CONFIGURATION METHODS ===
-    
     /**
-     * Check if the kit module is enabled
+     * Permission node to allow seeing vanished players. Used by event handlers.
+     * Returns a reasonable default if not set.
      */
-    public boolean isKitModuleEnabled() {
+    public String getSeeVanishedPermission() {
         JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("modules")) {
-            JsonObject modules = config.getAsJsonObject("modules");
-            if (modules.has("kitsEnabled")) {
-                return modules.get("kitsEnabled").getAsBoolean();
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("generalSettings")) {
+                JsonObject general = moderation.getAsJsonObject("generalSettings");
+                if (general.has("seeVanishedPermission")) {
+                    String val = general.get("seeVanishedPermission").getAsString();
+                    if (val != null && !val.trim().isEmpty()) return val;
+                }
             }
         }
-        return true; // Default to enabled for backwards compatibility
+        return "neoessentials.moderation.seevanished";
     }
-    
+
     /**
-     * Check if kit system is enabled (also checks module level)
+     * Returns the web dashboard port from webDashboard.port.
+     * Defaults to 8080 if not set.
      */
-    public boolean isKitSystemEnabled() {
-        if (!isKitModuleEnabled()) return false;
-        
+    public int getWebDashboardPort() {
         JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("enabled")) {
-                return kits.get("enabled").getAsBoolean();
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("port")) {
+                try {
+                    return dashboard.get("port").getAsInt();
+                } catch (Exception ignored) {}
+            }
+        }
+        return 8080;
+    }
+
+    /**
+     * Returns the web dashboard bind address from webDashboard.bindAddress.
+     * Defaults to "0.0.0.0" if not set.
+     */
+    public String getWebDashboardBindAddress() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("bindAddress")) {
+                String addr = dashboard.get("bindAddress").getAsString();
+                if (addr != null && !addr.trim().isEmpty()) return addr;
+            }
+        }
+        return "0.0.0.0";
+    }
+
+    /**
+     * Returns the web dashboard max threads from webDashboard.maxThreads.
+     * Defaults to 10 if not set.
+     */
+    public int getWebDashboardMaxThreads() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("maxThreads")) {
+                try {
+                    return dashboard.get("maxThreads").getAsInt();
+                } catch (Exception ignored) {}
+            }
+        }
+        return 10;
+    }
+
+    /**
+     * Returns the web dashboard WebSocket port from webDashboard.webSocketPort.
+     * Defaults to 8081 if not set.
+     */
+    public int getWebDashboardWebSocketPort() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("webDashboard")) {
+            JsonObject dashboard = config.getAsJsonObject("webDashboard");
+            if (dashboard.has("webSocketPort")) {
+                try {
+                    return dashboard.get("webSocketPort").getAsInt();
+                } catch (Exception ignored) {}
+            }
+        }
+        return 8081;
+    }
+
+    /**
+     * Returns max command length from security.maxCommandLength.
+     * Defaults to 256 if not set.
+     */
+    public int getMaxCommandLength() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("maxCommandLength")) {
+                try {
+                    return security.get("maxCommandLength").getAsInt();
+                } catch (Exception ignored) {}
+            }
+        }
+        return 256;
+    }
+
+    /**
+     * Returns max reason length from security.maxReasonLength.
+     * Defaults to 500 if not set.
+     */
+    public int getMaxReasonLength() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("maxReasonLength")) {
+                try {
+                    return security.get("maxReasonLength").getAsInt();
+                } catch (Exception ignored) {}
+            }
+        }
+        return 500;
+    }
+
+    /**
+     * Returns max economy amount from security.maxEconomyAmount.
+     * Defaults to 999999999.99 if not set.
+     */
+    public BigDecimal getMaxEconomyAmount() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("maxEconomyAmount")) {
+                try {
+                    return BigDecimal.valueOf(security.get("maxEconomyAmount").getAsDouble());
+                } catch (Exception ignored) {}
+            }
+        }
+        return BigDecimal.valueOf(999999999.99);
+    }
+
+    /**
+     * Returns min economy amount from security.minEconomyAmount.
+     * Defaults to 0.01 if not set.
+     */
+    public BigDecimal getMinEconomyAmount() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("minEconomyAmount")) {
+                try {
+                    return BigDecimal.valueOf(security.get("minEconomyAmount").getAsDouble());
+                } catch (Exception ignored) {}
+            }
+        }
+        return BigDecimal.valueOf(0.01);
+    }
+
+    /**
+     * Returns whether unsafe commands are allowed from security.allowUnsafeCommands.
+     * Defaults to false if not set.
+     */
+    public boolean isUnsafeCommandsAllowed() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("allowUnsafeCommands")) {
+                return security.get("allowUnsafeCommands").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns max unsafe enchantment level from security.maxUnsafeEnchantmentLevel.
+     * Defaults to 10 if not set.
+     */
+    public int getMaxUnsafeEnchantmentLevel() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("maxUnsafeEnchantmentLevel")) {
+                try {
+                    return security.get("maxUnsafeEnchantmentLevel").getAsInt();
+                } catch (Exception ignored) {}
+            }
+        }
+        return 10;
+    }
+
+    /**
+     * Check if jail system is enabled (modules.jailEnabled)
+     */
+    public static boolean isJailSystemEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("jailEnabled")) {
+                return modules.get("jailEnabled").getAsBoolean();
             }
         }
         return true; // Default to enabled
     }
-    
-    /**
-     * Check if one-time kits should be skipped from kit list when used
-     */
-    public boolean shouldSkipUsedOneTimeKitsFromList() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("skipUsedOneTimeKitsFromKitList")) {
-                return kits.get("skipUsedOneTimeKitsFromKitList").getAsBoolean();
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Check if kit auto-equip is enabled
-     */
-    public boolean isKitAutoEquipEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("kitAutoEquip")) {
-                return kits.get("kitAutoEquip").getAsBoolean();
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Check if createkit should use pastebin instead of direct file creation
-     */
-    public boolean isPastebinCreatekitEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("pastebinCreatekit")) {
-                return kits.get("pastebinCreatekit").getAsBoolean();
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Check if NBT serialization should be used in createkit
-     */
-    public boolean isNbtSerializationInCreatekitEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("useNbtSerializationInCreatekit")) {
-                return kits.get("useNbtSerializationInCreatekit").getAsBoolean();
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Check if unsafe enchantments are allowed in kits
-     */
-    public boolean areUnsafeEnchantsAllowedInKits() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("unsafeEnchantments")) {
-                return kits.get("unsafeEnchantments").getAsBoolean();
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Get maximum kits per player
-     */
-    public int getMaxKitsPerPlayer() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("maxKitsPerPlayer")) {
-                return kits.get("maxKitsPerPlayer").getAsInt();
-            }
-        }
-        return 10; // Default to 10
-    }
-    
-    /**
-     * Get default kit cooldown in seconds
-     */
-    public long getDefaultKitCooldown() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("defaultCooldown")) {
-                return kits.get("defaultCooldown").getAsLong();
-            }
-        }
-        return 86400; // Default to 24 hours
-    }
-    
-    /**
-     * Check if kit override is allowed for privileged players
-     */
-    public boolean isKitOverrideAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("allowKitOverride")) {
-                return kits.get("allowKitOverride").getAsBoolean();
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if kit preview is enabled
-     */
-    public boolean isKitPreviewEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("enableKitPreview")) {
-                return kits.get("enableKitPreview").getAsBoolean();
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if kit usage should be broadcast
-     */
-    public boolean shouldBroadcastKitUsage() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("broadcastKitUsage")) {
-                return kits.get("broadcastKitUsage").getAsBoolean();
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Check if kit usage should be logged
-     */
-    public boolean shouldLogKitUsage() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("logKitUsage")) {
-                return kits.get("logKitUsage").getAsBoolean();
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Get cost for a specific kit command
-     */
-    public int getKitCommandCost(String command) {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("commandCosts")) {
-                JsonObject costs = kits.getAsJsonObject("commandCosts");
-                if (costs.has(command)) {
-                    return costs.get(command).getAsInt();
-                }
-            }
-        }
-        return 0; // Default to free
-    }
-    
-    /**
-     * Check if new player kit is enabled
-     */
-    public boolean isNewPlayerKitEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("newPlayerKit")) {
-                JsonObject newPlayerKit = kits.getAsJsonObject("newPlayerKit");
-                if (newPlayerKit.has("enabled")) {
-                    return newPlayerKit.get("enabled").getAsBoolean();
-                }
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Get new player kit name
-     */
-    public String getNewPlayerKitName() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("kits")) {
-            JsonObject kits = config.getAsJsonObject("kits");
-            if (kits.has("newPlayerKit")) {
-                JsonObject newPlayerKit = kits.getAsJsonObject("newPlayerKit");
-                if (newPlayerKit.has("kitName")) {
-                    String kitName = newPlayerKit.get("kitName").getAsString();
-                    return kitName.isEmpty() ? null : kitName;
-                }
-            }
-        }
-        return null; // Default to null (disabled)
-    }
-    
-    // ===============================
-    // TELEPORTATION CONFIGURATION METHODS
-    // ===============================
-    
-    /**
-     * Check if teleportation system is enabled
-     */
-    public boolean isTeleportationEnabled() {
-        return getBooleanConfig("modules", "teleportationEnabled", true);
-    }
-    
-    // --- Home Settings ---
-    
 
-    
     /**
-     * Get maximum number of homes per player
+     * Get max jails before permanent ban from moderation.jail.maxJailsBeforePermBan
+     * Defaults to 3 if not set
      */
-    public int getMaxHomes() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("homeSettings")) {
-                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
-                if (homeSettings.has("maxHomes")) {
-                    return homeSettings.get("maxHomes").getAsInt();
+    public static int getMaxJailsBeforePermBan() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("jail")) {
+                JsonObject jail = moderation.getAsJsonObject("jail");
+                if (jail.has("maxJailsBeforePermBan")) {
+                    return jail.get("maxJailsBeforePermBan").getAsInt();
                 }
             }
         }
-        return 5; // Default to 5
+        return 3;
     }
-    
-    /**
-     * Check if cross-dimension homes are allowed
-     */
-    public boolean areCrossDimensionHomesAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("homeSettings")) {
-                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
-                if (homeSettings.has("allowCrossDimensionHomes")) {
-                    return homeSettings.get("allowCrossDimensionHomes").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Get home set cooldown in seconds
-     */
-    public int getHomeSetCooldown() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("homeSettings")) {
-                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
-                if (homeSettings.has("homeSetCooldown")) {
-                    return homeSettings.get("homeSetCooldown").getAsInt();
-                }
-            }
-        }
-        return 30; // Default to 30 seconds
-    }
-    
-    /**
-     * Get home teleport cooldown in seconds
-     */
-    public int getHomeTeleportCooldown() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("homeSettings")) {
-                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
-                if (homeSettings.has("homeTeleportCooldown")) {
-                    return homeSettings.get("homeTeleportCooldown").getAsInt();
-                }
-            }
-        }
-        return 5; // Default to 5 seconds
-    }
-    
-    /**
-     * Get home delete cooldown in seconds
-     */
-    public int getHomeDeleteCooldown() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("homeSettings")) {
-                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
-                if (homeSettings.has("homeDeleteCooldown")) {
-                    return homeSettings.get("homeDeleteCooldown").getAsInt();
-                }
-            }
-        }
-        return 10; // Default to 10 seconds
-    }
-    
-    /**
-     * Check if confirmation is required for home deletion
-     */
-    public boolean isHomeDeleteConfirmationRequired() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("homeSettings")) {
-                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
-                if (homeSettings.has("requireConfirmationForDelete")) {
-                    return homeSettings.get("requireConfirmationForDelete").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if home override is allowed
-     */
-    public boolean isHomeOverrideAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("homeSettings")) {
-                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
-                if (homeSettings.has("allowHomeOverride")) {
-                    return homeSettings.get("allowHomeOverride").getAsBoolean();
-                }
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Check if home teleport safety checks are enabled
-     */
-    public boolean isHomeTeleportSafetyEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("homeSettings")) {
-                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
-                if (homeSettings.has("enableHomeTeleportSafety")) {
-                    return homeSettings.get("enableHomeTeleportSafety").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if home actions should be logged
-     */
-    public boolean shouldLogHomeActions() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("homeSettings")) {
-                JsonObject homeSettings = teleportation.getAsJsonObject("homeSettings");
-                if (homeSettings.has("logHomeActions")) {
-                    return homeSettings.get("logHomeActions").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    // --- Warp Settings ---
-    
 
-    
     /**
-     * Check if player warps are allowed
+     * Get temp ban duration in minutes from moderation.jail.tempBanDurationMinutes
+     * Defaults to 1440 (24 hours) if not set
      */
-    public boolean arePlayerWarpsAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("warpSettings")) {
-                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
-                if (warpSettings.has("allowPlayerWarps")) {
-                    return warpSettings.get("allowPlayerWarps").getAsBoolean();
+    public static int getTempBanDurationMinutes() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("moderation")) {
+            JsonObject moderation = config.getAsJsonObject("moderation");
+            if (moderation.has("jail")) {
+                JsonObject jail = moderation.getAsJsonObject("jail");
+                if (jail.has("tempBanDurationMinutes")) {
+                    return jail.get("tempBanDurationMinutes").getAsInt();
                 }
             }
         }
-        return true; // Default to true
+        return 1440; // Default 24 hours
     }
-    
-    /**
-     * Get maximum player warps
-     */
-    public int getMaxPlayerWarps() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("warpSettings")) {
-                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
-                if (warpSettings.has("maxPlayerWarps")) {
-                    return warpSettings.get("maxPlayerWarps").getAsInt();
-                }
-            }
-        }
-        return 3; // Default to 3
-    }
-    
-    /**
-     * Get warp cooldown in seconds
-     */
-    public int getWarpCooldown() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("warpSettings")) {
-                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
-                if (warpSettings.has("warpCooldown")) {
-                    return warpSettings.get("warpCooldown").getAsInt();
-                }
-            }
-        }
-        return 10; // Default to 10 seconds
-    }
-    
-    /**
-     * Get warp set cooldown in seconds
-     */
-    public int getWarpSetCooldown() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("warpSettings")) {
-                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
-                if (warpSettings.has("warpSetCooldown")) {
-                    return warpSettings.get("warpSetCooldown").getAsInt();
-                }
-            }
-        }
-        return 60; // Default to 60 seconds
-    }
-    
-    /**
-     * Check if cross-dimension warps are allowed
-     */
-    public boolean areCrossDimensionWarpsAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("warpSettings")) {
-                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
-                if (warpSettings.has("allowCrossDimensionWarps")) {
-                    return warpSettings.get("allowCrossDimensionWarps").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if warp safety checks are enabled
-     */
-    public boolean isWarpSafetyEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("warpSettings")) {
-                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
-                if (warpSettings.has("enableWarpSafety")) {
-                    return warpSettings.get("enableWarpSafety").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if warp creation should be broadcast
-     */
-    public boolean shouldBroadcastWarpCreation() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("warpSettings")) {
-                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
-                if (warpSettings.has("broadcastWarpCreation")) {
-                    return warpSettings.get("broadcastWarpCreation").getAsBoolean();
-                }
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Check if warp actions should be logged
-     */
-    public boolean shouldLogWarpActions() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("warpSettings")) {
-                JsonObject warpSettings = teleportation.getAsJsonObject("warpSettings");
-                if (warpSettings.has("logWarpActions")) {
-                    return warpSettings.get("logWarpActions").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    // --- Spawn Settings ---
-    
 
-    
     /**
-     * Check if players should spawn on join
+     * Check if permissions module is enabled (modules.permissionsEnabled)
      */
-    public boolean shouldSpawnOnJoin() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("spawnSettings")) {
-                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
-                if (spawnSettings.has("spawnOnJoin")) {
-                    return spawnSettings.get("spawnOnJoin").getAsBoolean();
-                }
+    public static boolean isPermissionsEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("modules")) {
+            JsonObject modules = config.getAsJsonObject("modules");
+            if (modules.has("permissionsEnabled")) {
+                return modules.get("permissionsEnabled").getAsBoolean();
             }
         }
-        return true; // Default to true
+        return true; // Default to enabled
     }
-    
-    /**
-     * Check if players should spawn on death
-     */
-    public boolean shouldSpawnOnDeath() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("spawnSettings")) {
-                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
-                if (spawnSettings.has("spawnOnDeath")) {
-                    return spawnSettings.get("spawnOnDeath").getAsBoolean();
-                }
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Get spawn cooldown in seconds
-     */
-    public int getSpawnCooldown() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("spawnSettings")) {
-                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
-                if (spawnSettings.has("spawnCooldown")) {
-                    return spawnSettings.get("spawnCooldown").getAsInt();
-                }
-            }
-        }
-        return 5; // Default to 5 seconds
-    }
-    
-    /**
-     * Check if spawn can be set by admins
-     */
-    public boolean isSpawnSetAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("spawnSettings")) {
-                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
-                if (spawnSettings.has("allowSpawnSet")) {
-                    return spawnSettings.get("allowSpawnSet").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if spawn safety checks are enabled
-     */
-    public boolean isSpawnSafetyEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("spawnSettings")) {
-                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
-                if (spawnSettings.has("enableSpawnSafety")) {
-                    return spawnSettings.get("enableSpawnSafety").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if spawn actions should be logged
-     */
-    public boolean shouldLogSpawnActions() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("spawnSettings")) {
-                JsonObject spawnSettings = teleportation.getAsJsonObject("spawnSettings");
-                if (spawnSettings.has("logSpawnActions")) {
-                    return spawnSettings.get("logSpawnActions").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    // --- Teleport Request Settings ---
-    
 
-    
     /**
-     * Get teleport request timeout in seconds
+     * Get list of protected areas from teleportation.protectedAreas
+     * Returns empty list if not set
      */
-    public int getTeleportRequestTimeout() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("teleportRequestSettings")) {
-                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
-                if (requestSettings.has("requestTimeout")) {
-                    return requestSettings.get("requestTimeout").getAsInt();
-                }
-            }
-        }
-        return 60; // Default to 60 seconds
-    }
-    
-    /**
-     * Get maximum pending requests per player
-     */
-    public int getMaxPendingRequests() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("teleportRequestSettings")) {
-                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
-                if (requestSettings.has("maxPendingRequests")) {
-                    return requestSettings.get("maxPendingRequests").getAsInt();
-                }
-            }
-        }
-        return 5; // Default to 5
-    }
-    
-    /**
-     * Get cooldown between teleport requests in seconds
-     */
-    public int getTeleportRequestCooldown() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("teleportRequestSettings")) {
-                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
-                if (requestSettings.has("cooldownBetweenRequests")) {
-                    return requestSettings.get("cooldownBetweenRequests").getAsInt();
-                }
-            }
-        }
-        return 10; // Default to 10 seconds
-    }
-    
-    /**
-     * Check if multiple requests to same player are allowed
-     */
-    public boolean areMultipleTeleportRequestsAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("teleportRequestSettings")) {
-                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
-                if (requestSettings.has("allowMultipleRequests")) {
-                    return requestSettings.get("allowMultipleRequests").getAsBoolean();
-                }
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Check if teleport request notifications are enabled
-     */
-    public boolean areTeleportRequestNotificationsEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("teleportRequestSettings")) {
-                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
-                if (requestSettings.has("enableRequestNotifications")) {
-                    return requestSettings.get("enableRequestNotifications").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if auto-accept from friends is enabled
-     */
-    public boolean isAutoAcceptFromFriendsEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("teleportRequestSettings")) {
-                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
-                if (requestSettings.has("autoAcceptFromFriends")) {
-                    return requestSettings.get("autoAcceptFromFriends").getAsBoolean();
-                }
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Check if teleport safety checks are enabled for requests
-     */
-    public boolean isTeleportRequestSafetyEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("teleportRequestSettings")) {
-                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
-                if (requestSettings.has("enableTeleportSafety")) {
-                    return requestSettings.get("enableTeleportSafety").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if teleport request actions should be logged
-     */
-    public boolean shouldLogTeleportRequests() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("teleportRequestSettings")) {
-                JsonObject requestSettings = teleportation.getAsJsonObject("teleportRequestSettings");
-                if (requestSettings.has("logTeleportRequests")) {
-                    return requestSettings.get("logTeleportRequests").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    // --- General Teleportation Settings ---
-    
-    /**
-     * Get teleport delay in seconds
-     */
-    public int getTeleportDelay() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("generalSettings")) {
-                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
-                if (generalSettings.has("teleportDelay")) {
-                    return generalSettings.get("teleportDelay").getAsInt();
-                }
-            }
-        }
-        return 3; // Default to 3 seconds
-    }
-    
-    /**
-     * Check if teleportation should be canceled on movement
-     */
-    public boolean shouldCancelTeleportOnMovement() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("generalSettings")) {
-                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
-                if (generalSettings.has("cancelOnMovement")) {
-                    return generalSettings.get("cancelOnMovement").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if teleportation should be canceled on damage
-     */
-    public boolean shouldCancelTeleportOnDamage() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("generalSettings")) {
-                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
-                if (generalSettings.has("cancelOnDamage")) {
-                    return generalSettings.get("cancelOnDamage").getAsBoolean();
-                }
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Check if teleport warmup is enabled
-     */
-    public boolean isTeleportWarmupEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("generalSettings")) {
-                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
-                if (generalSettings.has("enableTeleportWarmup")) {
-                    return generalSettings.get("enableTeleportWarmup").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if teleportation is allowed in combat
-     */
-    public boolean isTeleportInCombatAllowed() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("generalSettings")) {
-                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
-                if (generalSettings.has("allowTeleportInCombat")) {
-                    return generalSettings.get("allowTeleportInCombat").getAsBoolean();
-                }
-            }
-        }
-        return false; // Default to false
-    }
-    
-    /**
-     * Get maximum teleportation distance in blocks
-     */
-    public int getMaxTeleportDistance() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("generalSettings")) {
-                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
-                if (generalSettings.has("maxTeleportDistance")) {
-                    return generalSettings.get("maxTeleportDistance").getAsInt();
-                }
-            }
-        }
-        return -1; // Default to unlimited
-    }
-    
-    /**
-     * Check if particle effects are enabled for teleportation
-     */
-    public boolean areTeleportParticleEffectsEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("generalSettings")) {
-                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
-                if (generalSettings.has("enableParticleEffects")) {
-                    return generalSettings.get("enableParticleEffects").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Check if sound effects are enabled for teleportation
-     */
-    public boolean areTeleportSoundEffectsEnabled() {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has("teleportation")) {
-            JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("generalSettings")) {
-                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
-                if (generalSettings.has("enableSoundEffects")) {
-                    return generalSettings.get("enableSoundEffects").getAsBoolean();
-                }
-            }
-        }
-        return true; // Default to true
-    }
-    
-    /**
-     * Get list of protected areas where teleportation is restricted
-     */
-    public List<String> getTeleportProtectedAreas() {
-        JsonObject config = getConfig(MAIN_CONFIG);
+    public static List<String> getProtectedAreas() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         List<String> areas = new ArrayList<>();
         if (config.has("teleportation")) {
             JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("generalSettings")) {
-                JsonObject generalSettings = teleportation.getAsJsonObject("generalSettings");
-                if (generalSettings.has("protectedAreas")) {
-                    JsonArray protectedAreas = generalSettings.getAsJsonArray("protectedAreas");
-                    for (JsonElement area : protectedAreas) {
-                        areas.add(area.getAsString());
-                    }
-                }
+            if (teleportation.has("protectedAreas")) {
+                teleportation.getAsJsonArray("protectedAreas").forEach(element -> 
+                    areas.add(element.getAsString())
+                );
             }
         }
         return areas;
     }
-    
+
     /**
-     * Get cost for a specific teleportation command
+     * Check if cancel on movement is enabled from teleportation.generalSettings.cancelOnMovement
+     * Defaults to true if not set
      */
-    public int getTeleportCommandCost(String command) {
-        JsonObject config = getConfig(MAIN_CONFIG);
+    public static boolean isCancelOnMovementEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
         if (config.has("teleportation")) {
             JsonObject teleportation = config.getAsJsonObject("teleportation");
-            if (teleportation.has("commandCosts")) {
-                JsonObject costs = teleportation.getAsJsonObject("commandCosts");
-                if (costs.has(command)) {
-                    return costs.get(command).getAsInt();
+            if (teleportation.has("generalSettings")) {
+                JsonObject general = teleportation.getAsJsonObject("generalSettings");
+                if (general.has("cancelOnMovement")) {
+                    return general.get("cancelOnMovement").getAsBoolean();
                 }
             }
         }
-        return 0; // Default to free
+        return true;
     }
-    
+
     /**
-     * Helper method to get boolean config values
+     * Check if sound effects are enabled from teleportation.generalSettings.enableSoundEffects
+     * Defaults to true if not set
      */
-    private boolean getBooleanConfig(String section, String key, boolean defaultValue) {
-        JsonObject config = getConfig(MAIN_CONFIG);
-        if (config.has(section)) {
-            JsonObject sectionObj = config.getAsJsonObject(section);
-            if (sectionObj.has(key)) {
-                return sectionObj.get(key).getAsBoolean();
+    public static boolean getEnableSoundEffects() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("teleportation")) {
+            JsonObject teleportation = config.getAsJsonObject("teleportation");
+            if (teleportation.has("generalSettings")) {
+                JsonObject general = teleportation.getAsJsonObject("generalSettings");
+                if (general.has("enableSoundEffects")) {
+                    return general.get("enableSoundEffects").getAsBoolean();
+                }
             }
         }
-        return defaultValue;
+        return true;
     }
-    
+
+    /**
+     * Check if debug mode is enabled from debug.enabled
+     * Defaults to false if not set
+     */
+    public static boolean isDebugModeEnabled() {
+        JsonObject config = getInstance().getConfig(MAIN_CONFIG);
+        if (config.has("debug")) {
+            JsonObject debug = config.getAsJsonObject("debug");
+            if (debug.has("enabled")) {
+                return debug.get("enabled").getAsBoolean();
+            }
+        }
+        return false;
+    }
+
 }
+

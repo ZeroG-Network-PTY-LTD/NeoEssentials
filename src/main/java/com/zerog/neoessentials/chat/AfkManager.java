@@ -27,6 +27,9 @@ import com.google.gson.JsonParser;
  * This is the single source of truth for all AFK-related functionality.
  */
 public class AfkManager {
+    // Configurable auto-save for AFK data
+    private boolean autoSave = true;
+    private int saveIntervalSeconds = 60;
     private static final Logger LOGGER = LoggerFactory.getLogger(AfkManager.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     
@@ -52,20 +55,36 @@ public class AfkManager {
     private long afkTimeoutMs = 300000; // 5 minutes default
     private boolean autoAfkEnabled = true;
     private boolean broadcastAfkMessages = true;
+    private boolean broadcastReturnMessages = true;
     private boolean kickAfkPlayers = false;
     private long afkKickTimeoutMs = 1800000; // 30 minutes default
     private String afkMessage = "{player} is now AFK";
     private String returnMessage = "{player} is no longer AFK";
+    private String afkKickMessage = null;
     
     // Additional configuration fields
     private boolean ignoreAfkInSleep = true;
     private boolean enableTablistIndicator = true;
     private String tablistAfkPrefix = "[AFK] ";
     private String tablistAfkSuffix = "";
+    private boolean enableActivityTracking = true;
+    private boolean trackMovement = true;
+    private boolean trackChat = true;
+    private boolean trackCommands = true;
+    private boolean trackInteractions = true;
+
+    // Configurable rotation threshold for AFK detection
+    private double rotationThreshold = 5.0;
+
+    // Configurable excluded commands for AFK activity tracking
+    private java.util.Set<String> excludedCommands = new java.util.HashSet<>(java.util.Arrays.asList(
+        "afk", "list", "who", "tps", "ping", "help", "?"
+    ));
     
     private AfkManager() {
-        loadAfkData();
-        startAfkCheckTask();
+    loadAfkData();
+    startAfkCheckTask();
+    startAutoSaveTask();
     }
     
     /**
@@ -203,7 +222,7 @@ public class AfkManager {
      * Called when player returns from AFK
      */
     private void onPlayerReturnFromAfk(UUID playerUuid) {
-        if (!broadcastAfkMessages) return;
+        if (!broadcastReturnMessages) return;
         
         try {
             // Get player reference
@@ -257,18 +276,19 @@ public class AfkManager {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             UUID uuid = player.getUUID();
             PlayerAfkData data = playerData.get(uuid);
-            
+
             if (data == null) continue;
-            
+
             // Check if player should be marked AFK due to inactivity
             if (!data.isAfk() && (currentTime - data.getLastActivity()) > afkTimeoutMs) {
                 setAfkStatus(uuid, true, "Inactive");
             }
-            
+
             // Check if AFK player should be kicked
             if (kickAfkPlayers && data.isAfk() && (currentTime - data.getAfkStartTime()) > afkKickTimeoutMs) {
                 try {
-                    player.connection.disconnect(Component.literal("Kicked for being AFK too long"));
+                    String kickMsg = this.afkKickMessage != null && !this.afkKickMessage.isEmpty() ? this.afkKickMessage : "Kicked for being AFK too long";
+                    player.connection.disconnect(Component.literal(kickMsg));
                     LOGGER.info("Kicked player {} for being AFK too long", player.getName().getString());
                 } catch (Exception e) {
                     LOGGER.error("Error kicking AFK player", e);
@@ -281,23 +301,128 @@ public class AfkManager {
      * Load AFK configuration from config manager
      */
     public void loadConfiguration(JsonObject afkConfig) {
-        if (afkConfig == null) return;
+        // Support autoSave from config
+        if (afkConfig.has("autoSave")) {
+            this.autoSave = afkConfig.get("autoSave").getAsBoolean();
+        } else {
+            this.autoSave = true;
+        }
+
+        // Support saveInterval from config
+        if (afkConfig.has("saveInterval")) {
+            try {
+                this.saveIntervalSeconds = Math.max(10, afkConfig.get("saveInterval").getAsInt());
+            } catch (Exception e) {
+                this.saveIntervalSeconds = 60;
+                LOGGER.warn("Invalid value for saveInterval in config, using default 60s");
+            }
+        } else {
+            this.saveIntervalSeconds = 60;
+        }
         
-        this.afkTimeoutMs = afkConfig.has("timeoutMinutes") ? 
-            afkConfig.get("timeoutMinutes").getAsLong() * 60000 : 300000;
+        // Support both 'timeout' (seconds) and 'timeoutMinutes' (minutes) for compatibility
+        if (afkConfig != null && afkConfig.has("timeout")) {
+            long timeoutSeconds = afkConfig.get("timeout").getAsLong();
+            this.afkTimeoutMs = timeoutSeconds > 0 ? timeoutSeconds * 1000L : 300000L;
+        } else if (afkConfig.has("timeoutMinutes")) {
+            long timeoutMinutes = afkConfig.get("timeoutMinutes").getAsLong();
+            this.afkTimeoutMs = timeoutMinutes > 0 ? timeoutMinutes * 60000 : 300000;
+        } else {
+            this.afkTimeoutMs = 300000;
+        }
         this.autoAfkEnabled = !afkConfig.has("autoAfkEnabled") || 
             afkConfig.get("autoAfkEnabled").getAsBoolean();
-        this.broadcastAfkMessages = !afkConfig.has("broadcastMessages") || 
-            afkConfig.get("broadcastMessages").getAsBoolean();
+        // Use 'broadcastOnAfk' if present, then 'enableafkBroadcasts', then fallback to 'broadcastMessages' for compatibility
+        if (afkConfig.has("broadcastOnAfk")) {
+            this.broadcastAfkMessages = afkConfig.get("broadcastOnAfk").getAsBoolean();
+        } else if (afkConfig.has("enableafkBroadcasts")) {
+            this.broadcastAfkMessages = afkConfig.get("enableafkBroadcasts").getAsBoolean();
+        } else {
+            this.broadcastAfkMessages = !afkConfig.has("broadcastMessages") || 
+                afkConfig.get("broadcastMessages").getAsBoolean();
+        }
+        // Support 'broadcastOnReturn' for return-from-AFK messages
+        if (afkConfig.has("broadcastOnReturn")) {
+            this.broadcastReturnMessages = afkConfig.get("broadcastOnReturn").getAsBoolean();
+        } else {
+            this.broadcastReturnMessages = this.broadcastAfkMessages;
+        }
         this.kickAfkPlayers = afkConfig.has("kickAfkPlayers") && 
             afkConfig.get("kickAfkPlayers").getAsBoolean();
-        this.afkKickTimeoutMs = afkConfig.has("kickTimeoutMinutes") ? 
-            afkConfig.get("kickTimeoutMinutes").getAsLong() * 60000 : 1800000;
+        // Support both 'kickTimeout' (seconds) and 'kickTimeoutMinutes' (minutes) for compatibility
+        if (afkConfig.has("kickTimeout")) {
+            long kickTimeoutSeconds = afkConfig.get("kickTimeout").getAsLong();
+            this.afkKickTimeoutMs = kickTimeoutSeconds > 0 ? kickTimeoutSeconds * 1000 : 0;
+        } else if (afkConfig.has("kickTimeoutMinutes")) {
+            long kickTimeoutMinutes = afkConfig.get("kickTimeoutMinutes").getAsLong();
+            this.afkKickTimeoutMs = kickTimeoutMinutes > 0 ? kickTimeoutMinutes * 60000 : 0;
+        } else {
+            this.afkKickTimeoutMs = 1800000; // Default 30 minutes
+        }
         this.afkMessage = afkConfig.has("afkMessage") ? 
             afkConfig.get("afkMessage").getAsString() : "{player} is now AFK";
         this.returnMessage = afkConfig.has("returnMessage") ? 
             afkConfig.get("returnMessage").getAsString() : "{player} is no longer AFK";
-            
+        this.afkKickMessage = afkConfig.has("afkkickMessage") ? 
+            afkConfig.get("afkkickMessage").getAsString() : null;
+
+        // Support ignoreAfkInSleep from config
+        if (afkConfig.has("ignoreAfkInSleep")) {
+            this.ignoreAfkInSleep = afkConfig.get("ignoreAfkInSleep").getAsBoolean();
+        }
+
+        // Support enableActivityTracking from config
+        if (afkConfig.has("enableActivityTracking")) {
+            this.enableActivityTracking = afkConfig.get("enableActivityTracking").getAsBoolean();
+        }
+
+        // Support trackMovement from config
+        if (afkConfig.has("trackMovement")) {
+            this.trackMovement = afkConfig.get("trackMovement").getAsBoolean();
+        }
+
+        // Support trackChat from config
+        if (afkConfig.has("trackChat")) {
+            this.trackChat = afkConfig.get("trackChat").getAsBoolean();
+        }
+
+        // Support trackCommands from config
+        if (afkConfig.has("trackCommands")) {
+            this.trackCommands = afkConfig.get("trackCommands").getAsBoolean();
+        }
+
+        // Support trackInteractions from config
+        if (afkConfig.has("trackInteractions")) {
+            this.trackInteractions = afkConfig.get("trackInteractions").getAsBoolean();
+        }
+
+        // Support rotationThreshold from config
+        if (afkConfig.has("rotationThreshold")) {
+            try {
+                this.rotationThreshold = afkConfig.get("rotationThreshold").getAsDouble();
+            } catch (Exception e) {
+                this.rotationThreshold = 5.0;
+                LOGGER.warn("Invalid value for rotationThreshold in config, using default 5.0");
+            }
+        } else {
+            this.rotationThreshold = 5.0;
+        }
+
+        // Support excludedCommands from config
+        if (afkConfig.has("excludedCommands") && afkConfig.get("excludedCommands").isJsonArray()) {
+            try {
+                java.util.Set<String> newSet = new java.util.HashSet<>();
+                for (var el : afkConfig.get("excludedCommands").getAsJsonArray()) {
+                    newSet.add(el.getAsString().toLowerCase());
+                }
+                if (!newSet.isEmpty()) {
+                    this.excludedCommands = newSet;
+                }
+            } catch (Exception e) {
+                LOGGER.warn("Invalid value for excludedCommands in config, using default list");
+            }
+        }
+
         LOGGER.info("AFK configuration loaded: timeout={}min, autoAfk={}, broadcast={}, kick={}", 
             afkTimeoutMs / 60000, autoAfkEnabled, broadcastAfkMessages, kickAfkPlayers);
     }
@@ -385,6 +510,15 @@ public class AfkManager {
     public boolean isEnableTablistIndicator() { return enableTablistIndicator; }
     public String getTablistAfkPrefix() { return tablistAfkPrefix; }
     public String getTablistAfkSuffix() { return tablistAfkSuffix; }
+    public boolean isEnableActivityTracking() { return enableActivityTracking; }
+    public boolean isTrackMovement() { return trackMovement; }
+    public boolean isTrackChat() { return trackChat; }
+    public boolean isTrackCommands() { return trackCommands; }
+    public boolean isTrackInteractions() { return trackInteractions; }
+    public double getRotationThreshold() { return rotationThreshold; }
+    public boolean isAutoSave() { return autoSave; }
+    public int getSaveIntervalSeconds() { return saveIntervalSeconds; }
+    public java.util.Set<String> getExcludedCommands() { return excludedCommands; }
     
     /**
      * Shutdown the AFK manager
@@ -400,5 +534,21 @@ public class AfkManager {
             afkCheckExecutor.shutdownNow();
             Thread.currentThread().interrupt();
         }
+    }
+
+    /**
+     * Start periodic auto-save task for AFK data
+     */
+    private void startAutoSaveTask() {
+        afkCheckExecutor.scheduleAtFixedRate(() -> {
+            if (autoSave) {
+                try {
+                    saveAfkData();
+                    LOGGER.debug("AFK data auto-saved");
+                } catch (Exception e) {
+                    LOGGER.error("Error during AFK data auto-save", e);
+                }
+            }
+        }, saveIntervalSeconds, saveIntervalSeconds, TimeUnit.SECONDS);
     }
 }

@@ -3,7 +3,6 @@
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "modules": {
     "economyEnabled": true,
-    "commandsEnabled": true,
     "permissionsEnabled": true,
     "kitsEnabled": true,
     "teleportationEnabled": true,
@@ -36,7 +35,6 @@
     "socialspy": true,
     "mutelist": true,
     "permissions": true,
-    "pex": true,
     "kit": true,
     "createkit": true,
     "delkit": true,
@@ -78,7 +76,6 @@
     "setjail": true,
     "deljail": true,
     "vanish": true,
-    "v": true,
     "freeze": true,
     "unfreeze": true,
     "dashboard": true,
@@ -180,10 +177,8 @@
   },
   "items": {
     "items_comment": "Item system configuration - controls item spawning, enchantments, and stack sizes",
-    "permission-based-item-spawn": true,
+    "permission-based-item-spawn": false,
     "permission-based-item-spawn_comment": "Require permission to spawn items. Permissions: 'neoessentials.item.spawn' (general), 'neoessentials.item.spawn.<namespace>.<item>' (specific), 'neoessentials.item.spawn.<namespace>.*' (wildcard)",
-    "drop-items-if-full": true,
-    "drop-items-if-full_comment": "[NeoForge API Limitation] Cannot currently be enforced - ItemEntityPickupEvent.Pre doesn't support cancellation. Config option exists for future implementation. Original intent: Allow items to be picked up when inventory is full (excess dropped). If false, items remain on ground until space is available",
     "oversized-stacksize": 64,
     "oversized-stacksize_comment": "Maximum stack size for oversized stacks. Items can stack up to this limit when default-stack-size allows",
     "default-stack-size": -1,
@@ -216,13 +211,12 @@
     "enabled": true,
     "timeout": 300,
     "kickTimeout": 0,
-    "kickMessage": "Kicked for being AFK too long",
-    "enableBroadcasts": true,
+    "afkkickMessage": "Kicked for being AFK too long",
+    "enableafkBroadcasts": true,
     "broadcastOnAfk": true,
     "broadcastOnReturn": true,
     "afkMessage": "{player} is now AFK",
     "returnMessage": "{player} is no longer AFK",
-    "customAfkMessage": "{player} is now AFK: {reason}",
     "enableTablistIndicator": true,
     "tablistAfkPrefix": "[AFK] ",
     "tablistAfkSuffix": "",
@@ -236,32 +230,21 @@
     "rotationThreshold": 5.0,
     "excludedCommands": ["afk", "list", "who", "tps", "ping", "help", "?"],
     "autoSave": true,
-    "saveInterval": 60,
-    "persistData": true
+    "saveInterval": 60
   },
   "kits": {
-    "kits_comment": "Kit system configuration - controls kit functionality and behavior",
-    "enabled": true,
     "skipUsedOneTimeKitsFromKitList": false,
     "skipUsedOneTimeKitsFromKitList_comment": "When enabled, one-time use kits (i.e., delay < 0) will be removed from '/kit list' when a player can no longer use them.",
     "kitAutoEquip": false,
     "kitAutoEquip_comment": "When enabled, armor from kits will automatically be equipped as long as the player's armor slots are empty.",
     "pastebinCreatekit": false,
     "pastebinCreatekit_comment": "If true, /createkit will give the user a link with the kit code. If false, /createkit will add the kit to the 'kits.json' config file directly.",
-    "useNbtSerializationInCreatekit": false,
-    "useNbtSerializationInCreatekit_comment": "If true, /createkit will store items as NBT for complex metadata. WARNING: This bypasses custom serializers and may cause compatibility issues.",
-    "unsafeEnchantments": false,
-    "unsafeEnchantments_comment": "Allow unsafe enchantments in kits and item spawning. WARNING: Mixing and over-leveling some enchantments can cause issues.",
     "maxKitsPerPlayer": 10,
     "maxKitsPerPlayer_comment": "Maximum number of kits a single player can have active cooldowns for. -1 for unlimited.",
-    "defaultCooldown": 86400,
-    "defaultCooldown_comment": "Default cooldown in seconds for kits that don't specify one (24 hours = 86400 seconds).",
     "allowKitOverride": true,
     "allowKitOverride_comment": "Allow players with permission to bypass kit cooldowns and restrictions.",
     "enableKitPreview": true,
     "enableKitPreview_comment": "Allow players to preview kit contents before claiming them.",
-    "broadcastKitUsage": false,
-    "broadcastKitUsage_comment": "Broadcast to all players when someone uses a kit.",
     "logKitUsage": true,
     "logKitUsage_comment": "Log kit usage to server logs for tracking purposes.",
     "commandCosts": {
@@ -294,8 +277,6 @@
       "homeDeleteCooldown_comment": "Cooldown in seconds between deleting homes. 0 to disable.",
       "requireConfirmationForDelete": true,
       "requireConfirmationForDelete_comment": "Require players to confirm home deletion to prevent accidents.",
-      "allowHomeOverride": false,
-      "allowHomeOverride_comment": "Allow setting a home that overwrites an existing home without confirmation.",
       "enableHomeTeleportSafety": true,
       "enableHomeTeleportSafety_comment": "Check if home location is safe before teleporting (no lava, void, etc.)",
       "logHomeActions": true,
@@ -315,8 +296,6 @@
       "allowCrossDimensionWarps_comment": "Allow warps to be set and used across dimensions.",
       "enableWarpSafety": true,
       "enableWarpSafety_comment": "Check if warp location is safe before teleporting.",
-      "broadcastWarpCreation": false,
-      "broadcastWarpCreation_comment": "Broadcast to all players when a new warp is created.",
       "logWarpActions": true,
       "logWarpActions_comment": "Log warp creation/deletion/usage to server logs."
     },
@@ -406,7 +385,7 @@
       "defaultBanReason": "Banned by an operator",
       "autoExpireTempBans": true,
       "checkExpiredBansInterval": 300,
-      "checkExpiredBansInterval_comment": "Interval in seconds to check for expired temporary bans (300 = 5 minutes)",
+      "checkExpiredBansInterval_comment": "Interval in seconds to check for expired temporary bans (300 = 5 minutes, 0 disables, min 5, default 300)",
       "logBanActions": true,
       "logBanActions_comment": "Log all ban/unban actions to server logs",
       "broadcastBans": false,
@@ -418,22 +397,17 @@
     "jailSettings": {
       "jailSettings_comment": "Jail system configuration",
       "enableJailSystem": true,
-      "defaultJailName": "main",
-      "maxJailRadius": 10,
-      "maxJailRadius_comment": "Maximum distance in blocks a jailed player can move from jail center",
       "requireJailLocation": true,
       "requireJailLocation_comment": "Require jail location to be set before jailing players",
       "jailTeleportOnLogin": true,
       "jailTeleportOnLogin_comment": "Teleport jailed players to jail when they log in",
       "maxJailReason": 500,
       "defaultJailReason": "Jailed by an operator",
-      "logJailActions": true,
-      "logJailActions_comment": "Log all jail/unjail actions to server logs",
-      "broadcastJails": false,
-      "broadcastJails_comment": "Broadcast jail actions to all online staff members",
       "jailMessageFormat": "You have been jailed.\nReason: {reason}\nJailed by: {jailedBy}\nJail: {jail}",
       "preventJailEscape": true,
-      "preventJailEscape_comment": "Prevent jailed players from using teleportation commands"
+      "preventJailEscape_comment": "Prevent jailed players from using teleportation commands",
+      "logJailActions": true,
+      "logJailActions_comment": "Log all jail/unjail actions to server logs"
     },
     "vanishSettings": {
       "vanishSettings_comment": "Vanish system configuration",
@@ -444,26 +418,16 @@
       "hideFromTabList_comment": "Hide vanished players from the tab list",
       "preventInteraction": true,
       "preventInteraction_comment": "Prevent vanished players from interacting with non-staff",
-      "seeVanishedPermission": "neoessentials.moderation.vanish.see",
-      "seeVanishedPermission_comment": "Permission node required to see vanished players",
+      "broadcastToStaffVanish": false,
+      "broadcastToStaffVanish_comment": "Broadcast vanish actions to all online staff members",
+      "BroadcastToAllVanish": false,
+      "BroadcastToAllVanish_comment": "Broadcast vanish actions to all online players with a join message or quit message",
       "logVanishActions": true,
-      "logVanishActions_comment": "Log vanish toggle actions to server logs",
-      "broadcastVanish": false,
-      "broadcastVanish_comment": "Broadcast vanish actions to all online staff members",
-      "vanishMessage": "You are now vanished",
-      "unvanishMessage": "You are no longer vanished",
-      "vanishParticles": true,
-      "vanishParticles_comment": "Show particle effects when toggling vanish"
+      "logVanishActions_comment": "Log vanish toggle actions to server logs"
     },
     "freezeSettings": {
       "freezeSettings_comment": "Freeze system configuration",
       "enableFreezeSystem": true,
-      "preventMovement": true,
-      "preventMovement_comment": "Prevent frozen players from moving",
-      "preventInteraction": true,
-      "preventInteraction_comment": "Prevent frozen players from interacting with blocks and entities",
-      "preventChatting": false,
-      "preventChatting_comment": "Prevent frozen players from chatting",
       "preventCommands": true,
       "preventCommands_comment": "Prevent frozen players from using commands (except unfreeze-related)",
       "allowedCommands": ["help", "rules", "appeal"],
@@ -472,35 +436,30 @@
       "freezeOnLogin_comment": "Keep players frozen when they log back in",
       "maxFreezeReason": 500,
       "defaultFreezeReason": "Frozen by an operator",
-      "logFreezeActions": true,
-      "logFreezeActions_comment": "Log all freeze/unfreeze actions to server logs",
-      "broadcastFreeze": false,
-      "broadcastFreeze_comment": "Broadcast freeze actions to all online staff members",
       "freezeMessage": "You have been frozen by {freezer}.\nReason: {reason}\nYou cannot move or interact until unfrozen.",
       "unfreezeMessage": "You have been unfrozen by {unfreezer}",
       "freezeReminder": "You are currently frozen. Contact staff if you need assistance.",
       "freezeReminderInterval": 30,
-      "freezeReminderInterval_comment": "Interval in seconds to remind frozen players (0 to disable)"
+      "freezeReminderInterval_comment": "Interval in seconds to remind frozen players (0 to disable)",
+      "logFreezeActions": true,
+      "logFreezeActions_comment": "Log all freeze/unfreeze actions to server logs"
     },
     "kickSettings": {
       "kickSettings_comment": "Kick system configuration", 
       "enableKickSystem": true,
       "maxKickReason": 500,
       "defaultKickReason": "Kicked by an operator",
-      "logKickActions": true,
-      "logKickActions_comment": "Log all kick actions to server logs",
       "broadcastKicks": false,
       "broadcastKicks_comment": "Broadcast kick actions to all online staff members",
       "kickMessage": "You have been kicked from the server.\nReason: {reason}\nKicked by: {kicker}",
       "kickAllMessage": "Server maintenance in progress. Please reconnect in a few minutes.",
       "notifyStaffOnKick": true,
-      "notifyStaffOnKick_comment": "Notify online staff members when a player is kicked"
+      "notifyStaffOnKick_comment": "Notify online staff members when a player is kicked",
+      "logKickActions": true,
+      "logKickActions_comment": "Log all kick actions to server logs"
     },
     "generalSettings": {
       "generalSettings_comment": "General moderation settings",
-      "enableModerationSystem": true,
-      "moderationLogFile": "moderation.log",
-      "moderationLogFile_comment": "Log file name for moderation actions (in server logs directory)",
       "requireReasonForActions": false,
       "requireReasonForActions_comment": "Require staff to provide a reason for moderation actions",
       "maxActionReason": 500,
@@ -512,12 +471,45 @@
       "enableStaffNotifications": true,
       "enableStaffNotifications_comment": "Send notifications to staff about moderation actions",
       "staffNotificationPermission": "neoessentials.moderation.notify",
-      "staffNotificationPermission_comment": "Permission required to receive staff notifications"
+      "staffNotificationPermission_comment": "Permission required to receive staff notifications",
+      "moderationLogFile": "moderation.log",
+      "moderationLogFile_comment": "Log file name for moderation actions (in server logs directory)"
     }
   },
   "chat": {
-    "chat-format": "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
-    "chat-format-description": "Chat format template. Available placeholders: {neoessentials_displayname}, {neoessentials_username}, {MESSAGE}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, {neoessentials_x}, {neoessentials_y}, {neoessentials_z}, {neoessentials_health}, {neoessentials_level}, and more via PlaceholderAPI. Legacy uppercase placeholders like {USERNAME}, {PREFIX}, {SUFFIX} are automatically converted for backwards compatibility. Use '&' for color codes (e.g., &c for red, &6 for gold).",
+    "chat-format": {
+      "default": "<{neoessentials_prefix} {neoessentials_username} {neoessentials_suffix}> {MESSAGE}",
+      "group:admin": "&c[Admin] {neoessentials_username}: {MESSAGE}",
+      "group:mod": "&2[Mod] {neoessentials_username}: {MESSAGE}",
+      "world:creative": "&b[C] {neoessentials_username}: {MESSAGE}"
+    },
+    "chat-format-description": "Chat format template. You can use a string (for global format) or an object for per-group/world formats. Keys: 'default', 'group:GROUPNAME', 'world:WORLDNAME', or 'group:GROUP:world:WORLD'. Placeholders: {neoessentials_displayname}, {neoessentials_username}, {MESSAGE}, {neoessentials_prefix}, {neoessentials_suffix}, {neoessentials_world}, {neoessentials_x}, {neoessentials_y}, {neoessentials_z}, {neoessentials_health}, {neoessentials_level}, and more via PlaceholderAPI. Legacy uppercase placeholders like {USERNAME}, {PREFIX}, {SUFFIX} are automatically converted for backwards compatibility. Use '&' for color codes (e.g., &c for red, &6 for gold).",
+    "channels": {
+      "local": {
+        "enabled": true,
+        "radius": 100,
+        "command": "l",
+        "aliases": ["local", "lc"],
+        "prefix": "",
+        "default": true
+      },
+      "global": {
+        "enabled": true,
+        "command": "g",
+        "aliases": ["global", "gc"],
+        "prefix": "!",
+        "default": false
+      },
+      "staff": {
+        "enabled": true,
+        "command": "staff",
+        "aliases": ["mod", "admin", "s"],
+        "prefix": "@",
+        "permission": "neoessentials.chat.staff",
+        "default": false
+      }
+    },
+    "channels-description": "Chat channels: local (radius-based), global (all players), staff (permission-based). Each channel can be enabled/disabled, have a command, prefix, and (for local) a radius. Players can switch default channel or use prefix/command to send to a specific channel.",
     "enable-chat-formatting": true,
     "enable-color-codes": true,
     "muteCommands": [],
@@ -541,9 +533,6 @@
     "hideJoinQuitMessagesAbove": -1
   },
   "logging": {
-    "enableTransactionLogging": true,
-    "enablePermissionLogging": false,
-    "enableDebugLogging": false,
-    "logLevel": "INFO"
+    "enableDebugLogging": false
   }
 }

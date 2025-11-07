@@ -32,7 +32,7 @@ public class SocialSpyCommand {
                 
                 ChatManager chatManager = ChatAPI.getChatManager();
                 // Check if chat module is enabled
-                if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+                if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
                     ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.socialspy.disabled"));
                     return 0;
                 }

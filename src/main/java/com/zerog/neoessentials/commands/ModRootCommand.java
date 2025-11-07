@@ -27,7 +27,7 @@ public class ModRootCommand {
                     .requires(source -> hasAdminPermission(source))
                     .executes(ModRootCommand::reloadConfiguration)
                 )
-                .then(Commands.argument("command", StringArgumentType.word())
+                .then(Commands.argument("command", StringArgumentType.greedyString())
                     .suggests(ModRootCommand::suggestModCommands)
                     .executes(ModRootCommand::dispatchToModCommand)
                 )
@@ -40,7 +40,7 @@ public class ModRootCommand {
                     .requires(source -> hasAdminPermission(source))
                     .executes(ModRootCommand::reloadConfiguration)
                 )
-                .then(Commands.argument("command", StringArgumentType.word())
+                .then(Commands.argument("command", StringArgumentType.greedyString())
                     .suggests(ModRootCommand::suggestModCommands)
                     .executes(ModRootCommand::dispatchToModCommand)
                 )
@@ -95,7 +95,7 @@ public class ModRootCommand {
         
         try {
             // Reload all configuration files
-            com.zerog.neoessentials.config.ConfigManager.getInstance().loadAll();
+            com.zerog.neoessentials.config.ConfigManager.loadAll();
             
             // Reload translations
             try {
@@ -142,23 +142,26 @@ public class ModRootCommand {
     }
 
     private static int dispatchToModCommand(CommandContext<CommandSourceStack> ctx) {
-        String command = StringArgumentType.getString(ctx, "command");
+        String commandString = StringArgumentType.getString(ctx, "command");
         CommandSourceStack source = ctx.getSource();
+        
+        // Extract just the command name (first word) for validation
+        String commandName = commandString.split("\\s+")[0];
         
         // Check if the command is registered in our registry and actually exists
         CommandRegistry registry = CommandRegistry.getInstance();
         CommandDispatcher<CommandSourceStack> dispatcher = source.getServer().getCommands().getDispatcher();
         
-        if (!registry.isCommandRegistered(command)) {
-            source.sendFailure(MessageUtil.error("commands.neoessentials.root.unknown_command", command));
+        if (!registry.isCommandRegistered(commandName)) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.root.unknown_command", commandName));
             source.sendFailure(MessageUtil.info("commands.neoessentials.root.help_hint"));
             return 0;
         }
         
         // Double-check that the command actually exists in the dispatcher
-        if (!registry.isCommandActuallyRegistered(command, dispatcher)) {
-            LOGGER.warn("Command '{}' is in registry but not in dispatcher - possible registration issue", command);
-            source.sendFailure(MessageUtil.error("commands.neoessentials.root.unknown_command", command));
+        if (!registry.isCommandActuallyRegistered(commandName, dispatcher)) {
+            LOGGER.warn("Command '{}' is in registry but not in dispatcher - possible registration issue", commandName);
+            source.sendFailure(MessageUtil.error("commands.neoessentials.root.unknown_command", commandName));
             source.sendFailure(MessageUtil.info("commands.neoessentials.root.help_hint"));
             return 0;
         }
@@ -166,30 +169,30 @@ public class ModRootCommand {
         // Execute the command properly through the dispatcher
         try {
             
-            // Parse and execute the command directly through the dispatcher
+            // Parse and execute the full command string directly through the dispatcher
             // This avoids recursive calls and properly handles permissions
-            String fullCommand = "/" + command;
-            var parseResults = dispatcher.parse(fullCommand, source);
+            // Note: parse() expects command WITHOUT leading slash
+            var parseResults = dispatcher.parse(commandString, source);
             
             if (parseResults.getReader().canRead()) {
                 // Command has additional arguments that weren't consumed
-                LOGGER.warn("Command '{}' has unconsumed arguments: '{}'", command, parseResults.getReader().getRemaining());
+                LOGGER.warn("Command '{}' has unconsumed arguments: '{}'", commandString, parseResults.getReader().getRemaining());
             }
             
             // Execute the parsed command
             int result = dispatcher.execute(parseResults);
-            LOGGER.debug("Successfully executed command '{}' with result: {}", command, result);
+            LOGGER.debug("Successfully executed command '{}' with result: {}", commandString, result);
             return result;
             
         } catch (com.mojang.brigadier.exceptions.CommandSyntaxException e) {
             // Handle command syntax errors gracefully
-            LOGGER.warn("Command syntax error for '{}': {}", command, e.getMessage());
-            source.sendFailure(MessageUtil.error("commands.neoessentials.root.syntax_error", command, e.getMessage()));
+            LOGGER.warn("Command syntax error for '{}': {}", commandString, e.getMessage());
+            source.sendFailure(MessageUtil.error("commands.neoessentials.root.syntax_error", commandString, e.getMessage()));
             return 0;
         } catch (Exception e) {
             // Handle any other execution errors
-            LOGGER.error("Failed to execute command '{}': {}", command, e.getMessage(), e);
-            source.sendFailure(MessageUtil.error("commands.neoessentials.root.execution_failed", command));
+            LOGGER.error("Failed to execute command '{}': {}", commandString, e.getMessage(), e);
+            source.sendFailure(MessageUtil.error("commands.neoessentials.root.execution_failed", commandString));
             return 0;
         }
     }

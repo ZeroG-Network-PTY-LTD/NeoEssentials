@@ -67,14 +67,78 @@ public class AuthenticationHandler implements HttpHandler {
                 handleDeleteUser(exchange);
             } else if ("GET".equals(method) && path.endsWith("/sessions")) {
                 handleGetSessions(exchange);
-            } else if ("GET".equals(method) && path.endsWith("/session")) {
+            } else if ("GET".equals(method) && (path.endsWith("/session") || path.equals("/api/session"))) {
                 handleGetCurrentSession(exchange);
+            } else if ("POST".equals(method) && path.endsWith("/change-password")) {
+                handleChangePassword(exchange);
             } else {
                 sendJsonResponse(exchange, 400, createErrorResponse("Invalid endpoint"));
             }
         } catch (Exception e) {
             LOGGER.error("Error handling authentication request", e);
             sendJsonResponse(exchange, 500, createErrorResponse("Internal server error: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * POST /api/auth/change-password
+     * Body: {"oldPassword": "...", "newPassword": "..."}
+     * Allows a logged-in user to change their own password (not just admin)
+     * Clears requiresPasswordChange and isTempPassword flags after success
+     */
+    private void handleChangePassword(HttpExchange exchange) throws IOException {
+        String sessionId = getSessionIdFromCookie(exchange);
+        if (sessionId == null) {
+            sendJsonResponse(exchange, 401, createErrorResponse("No active session"));
+            return;
+        }
+        AuthenticationManager authManager = AuthenticationManager.getInstance();
+        Session session = authManager.validateSession(sessionId);
+        if (session == null) {
+            sendJsonResponse(exchange, 401, createErrorResponse("Invalid or expired session"));
+            return;
+        }
+        String userId = session.getUserId();
+        User user = authManager.getUser(userId);
+        if (user == null) {
+            sendJsonResponse(exchange, 404, createErrorResponse("User not found"));
+            return;
+        }
+        String requestBody = readRequestBody(exchange);
+        JsonObject request = GSON.fromJson(requestBody, JsonObject.class);
+        if (!request.has("oldPassword") || !request.has("newPassword")) {
+            sendJsonResponse(exchange, 400, createErrorResponse("Missing oldPassword or newPassword"));
+            return;
+        }
+        String oldPassword = request.get("oldPassword").getAsString();
+        String newPassword = request.get("newPassword").getAsString();
+        // Verify old password
+        String oldHash = authManager.hashPassword(oldPassword);
+        if (!oldHash.equals(user.getPasswordHash())) {
+            sendJsonResponse(exchange, 403, createErrorResponse("Old password is incorrect"));
+            return;
+        }
+        try {
+            authManager.updatePassword(userId, newPassword);
+            user.setRequiresPasswordChange(false);
+            user.setTempPassword(false);
+            authManager.saveUsers();
+            // Debug logging for user and session state after password change
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Password changed for user '{}': requiresPasswordChange={}, isTempPassword={}",
+                    user.getUsername(), user.requiresPasswordChange(), user.isTempPassword());
+                Session sessionObj = authManager.validateSession(sessionId);
+                LOGGER.debug("Session state after password change: sessionId={}, active={}, requiresPasswordChange={}",
+                    sessionId, sessionObj != null ? sessionObj.isActive() : "null", sessionObj != null ? sessionObj.requiresPasswordChange() : "null");
+            }
+            // Invalidate the current session after password change
+            authManager.logout(sessionId);
+            JsonObject response = new JsonObject();
+            response.addProperty("success", true);
+            response.addProperty("message", "Password changed successfully. Please log in again.");
+            sendJsonResponse(exchange, 200, response);
+        } catch (IllegalArgumentException e) {
+            sendJsonResponse(exchange, 400, createErrorResponse(e.getMessage()));
         }
     }
     
@@ -98,6 +162,14 @@ public class AuthenticationHandler implements HttpHandler {
         
         AuthenticationManager authManager = AuthenticationManager.getInstance();
         Session session = authManager.authenticate(username, password, ipAddress, userAgent);
+        if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
+            if (session != null) {
+                LOGGER.debug("Session created for user '{}': sessionId={}, requiresPasswordChange={}",
+                    username, session.getSessionId(), session.requiresPasswordChange());
+            } else {
+                LOGGER.debug("Login failed for user '{}': no session created", username);
+            }
+        }
         
         if (session == null) {
             sendJsonResponse(exchange, 401, createErrorResponse("Invalid credentials or account locked"));
@@ -117,7 +189,7 @@ public class AuthenticationHandler implements HttpHandler {
         
         // Set session cookie
         exchange.getResponseHeaders().add("Set-Cookie", 
-            "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400");
+            "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400");
         
         sendJsonResponse(exchange, 200, response);
     }
@@ -216,8 +288,8 @@ public class AuthenticationHandler implements HttpHandler {
             LOGGER.info("Auto-created dashboard user from Discord: {} with role {}", 
                 minecraftUsername, dashboardRole);
         } else {
-            // Update existing user's role if Discord role is higher
-            if (dashboardRole.ordinal() > user.getRole().ordinal()) {
+            // Always update existing user's role to match Discord role
+            if (dashboardRole.ordinal() != user.getRole().ordinal()) {
                 user.setRole(dashboardRole);
                 LOGGER.info("Updated user {} role to {} based on Discord roles", 
                     minecraftUsername, dashboardRole);
@@ -252,7 +324,7 @@ public class AuthenticationHandler implements HttpHandler {
         
         // Set session cookie
         exchange.getResponseHeaders().add("Set-Cookie", 
-            "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Strict; Max-Age=86400");
+            "sessionId=" + session.getSessionId() + "; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400");
         
         sendJsonResponse(exchange, 200, response);
     }
@@ -491,25 +563,40 @@ public class AuthenticationHandler implements HttpHandler {
      * Get current session information (from cookie)
      */
     private void handleGetCurrentSession(HttpExchange exchange) throws IOException {
-        // Try to get session ID from cookie
+        // Debug logging for session cookie
+        if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
+            String cookieHeader = exchange.getRequestHeaders().getFirst("Cookie");
+            LOGGER.debug("handleGetCurrentSession: Raw Cookie header: {}", cookieHeader);
+        }
         String sessionId = getSessionIdFromCookie(exchange);
+        if (com.zerog.neoessentials.config.ConfigManager.isDebugModeEnabled()) {
+            LOGGER.debug("handleGetCurrentSession: Extracted sessionId: {}", sessionId);
+        }
         
+        // Try to get session ID from cookie
         if (sessionId == null) {
             sendJsonResponse(exchange, 401, createErrorResponse("No active session"));
             return;
         }
-        
+
         AuthenticationManager authManager = AuthenticationManager.getInstance();
         Session session = authManager.validateSession(sessionId);
-        
+
         if (session == null) {
             sendJsonResponse(exchange, 401, createErrorResponse("Invalid or expired session"));
             return;
         }
-        
-        JsonObject response = session.toJson();
+
+        JsonObject response = new JsonObject();
         response.addProperty("success", true);
-        
+        response.add("session", session.toJson());
+
+        // Get user details
+        User user = authManager.getUser(session.getUserId());
+        if (user != null) {
+            response.add("user", user.toJson());
+        }
+
         sendJsonResponse(exchange, 200, response);
     }
     

@@ -4,6 +4,7 @@ import com.zerog.neoessentials.chat.AfkManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
  * Handles tablist/player list visual indicators for AFK players.
  * Updates player display names with AFK prefixes/suffixes.
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class AfkTablistHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AfkTablistHandler.class);
     

@@ -114,7 +114,7 @@ public class EconomyServiceImpl implements EconomyService {
         if (hasAccount(playerId)) return false;
         
         // Create by setting starting balance
-        BigDecimal startingBalance = com.zerog.neoessentials.config.ConfigManager.getInstance().getEconomyStartingBalance();
+        BigDecimal startingBalance = BigDecimal.valueOf(com.zerog.neoessentials.config.ConfigManager.getEconomyStartingBalance());
         EconomyManager.getInstance().setBalance(playerId, startingBalance);
         return true;
     }
@@ -136,7 +136,7 @@ public class EconomyServiceImpl implements EconomyService {
 
     @Override
     public String getCurrencySymbol() {
-        return com.zerog.neoessentials.config.ConfigManager.getInstance().getCurrencySymbol();
+        return com.zerog.neoessentials.config.ConfigManager.getCurrencySymbol();
     }
     
     /**

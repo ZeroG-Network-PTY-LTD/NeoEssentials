@@ -29,7 +29,7 @@ public class PermissionsCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if permissions module is enabled
-        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isPermissionsEnabled()) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isPermissionsEnabled()) {
             LOGGER.debug("Permissions module is disabled, skipping permissions command registration");
             return;
         }

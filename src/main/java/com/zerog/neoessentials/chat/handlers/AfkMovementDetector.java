@@ -74,12 +74,14 @@ public class AfkMovementDetector {
             // Calculate distance moved
             double distanceMoved = currentPos.distanceTo(lastPos);
             double rotationChanged = currentPos.rotationDifference(lastPos);
-            
+
+            // Use configurable rotation threshold from AfkManager
+            double rotationThreshold = AfkManager.getInstance().getRotationThreshold();
             // If player moved significantly or rotated significantly
-            if (distanceMoved > MOVEMENT_THRESHOLD || rotationChanged > 5.0) {
+            if (distanceMoved > MOVEMENT_THRESHOLD || rotationChanged > rotationThreshold) {
                 AfkManager.getInstance().updateActivity(playerId);
-                LOGGER.debug("Movement activity tracked for {}: distance={}, rotation={}", 
-                    player.getName().getString(), distanceMoved, rotationChanged);
+                LOGGER.debug("Movement activity tracked for {}: distance={}, rotation={} (threshold={})",
+                    player.getName().getString(), distanceMoved, rotationChanged, rotationThreshold);
             }
         }
         

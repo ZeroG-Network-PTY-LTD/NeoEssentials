@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
+import com.zerog.neoessentials.util.InputValidator;
 
 /**
  * REST API handler for moderation (bans and whitelist).
@@ -193,6 +194,7 @@ public class ModerationHandler implements HttpHandler {
         
         sendJsonResponse(exchange, 200, response);
     }
+    // Use InputValidator.ValidationResult directly
     
     private void handleAddBan(HttpExchange exchange) throws IOException {
         String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
@@ -210,9 +212,17 @@ public class ModerationHandler implements HttpHandler {
         String evidence = data.has("evidence") ? data.get("evidence").getAsString() : null;
         Instant expiresAt = data.has("expiresAt") ? Instant.parse(data.get("expiresAt").getAsString()) : null;
         String bannedBy = getUsernameFromSession(exchange);
-        
+
+        // Validate reason length and content
+            InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+        if (!reasonResult.isValid()) {
+            sendErrorResponse(exchange, 400, "Invalid reason: " + reasonResult.getErrorMessage());
+            return;
+        }
+    reason = (String) reasonResult.getValue();
+
         BanEntry ban = ModerationManager.getInstance().addBan(type, target, playerName, reason, evidence, expiresAt, bannedBy);
-        
+
         JsonObject response = banToJson(ban);
         sendJsonResponse(exchange, 201, response);
     }

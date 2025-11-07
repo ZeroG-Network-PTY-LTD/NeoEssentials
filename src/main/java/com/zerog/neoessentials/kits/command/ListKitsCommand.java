@@ -26,7 +26,7 @@ public class ListKitsCommand {
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // Check if kit module is enabled
-        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isKitSystemEnabled()) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isKitSystemEnabled()) {
             return; // Don't register kit commands if module is disabled
         }
         
@@ -60,24 +60,58 @@ public class ListKitsCommand {
     
     private static int listKits(CommandContext<CommandSourceStack> context, int page) {
         CommandSourceStack source = context.getSource();
-        
+
         try {
+            // Check and deduct listkits command cost if economy is enabled
+            var entity = source.getEntity();
+            if (entity instanceof ServerPlayer player) {
+                int cost = (int) com.zerog.neoessentials.config.ConfigManager.getKitCommandCost("listkits");
+                if (cost > 0 && com.zerog.neoessentials.economy.managers.EconomyManager.getInstance().isEnabled()) {
+                    var eco = com.zerog.neoessentials.economy.managers.EconomyManager.getInstance();
+                    var bal = eco.getBalance(player.getUUID());
+                    if (bal.doubleValue() < cost) {
+                        source.sendFailure(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.listkits.not_enough_money", cost));
+                        return 0;
+                    }
+                    if (!eco.subtractBalance(player.getUUID(), java.math.BigDecimal.valueOf(cost))) {
+                        source.sendFailure(com.zerog.neoessentials.util.MessageUtil.error("commands.neoessentials.listkits.charge_failed"));
+                        return 0;
+                    }
+                }
+            }
             KitManager kitManager = KitManager.getInstance();
             Set<String> kitNames = kitManager.getAllKitNames();
-            
+
+            // Filter out one-time kits already used by the player if config is enabled
+            boolean skipUsedOneTime = com.zerog.neoessentials.config.ConfigManager.isSkipUsedOneTimeKitsFromKitList();
+            if (skipUsedOneTime && source.getEntity() instanceof ServerPlayer player) {
+                kitNames = kitNames.stream().filter(kitName -> {
+                    Kit kit = kitManager.getKit(kitName);
+                    if (kit == null) return false;
+                    // One-time kit: maxUses == 1 or < 0 (legacy)
+                    int maxUses = kit.getMaxUses();
+                    if (maxUses == 1 || maxUses < 0) {
+                        int usageCount = kitManager.getUsageCount(player.getUUID(), kitName);
+                        // If used at least once, skip
+                        return usageCount < 1;
+                    }
+                    return true;
+                }).collect(Collectors.toSet());
+            }
+
             if (kitNames.isEmpty()) {
                 source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.listkits.empty"), false);
                 return 1;
             }
-            
+
             // Sort kit names for consistent display
             List<String> sortedKitNames = kitNames.stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .collect(Collectors.toList());
-            
+
             int totalKits = sortedKitNames.size();
             int maxPages = (int) Math.ceil((double) totalKits / KITS_PER_PAGE);
-            
+
             // Validate page number
             if (page < 1 || page > maxPages) {
                 source.sendFailure(MessageUtil.error("commands.neoessentials.listkits.invalid_page", 

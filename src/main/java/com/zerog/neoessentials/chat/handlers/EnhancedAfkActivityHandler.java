@@ -6,6 +6,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Enhanced AFK activity detection with smart patterns and anti-abuse measures.
  * Tracks various player activities to determine genuine activity vs AFK farming.
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class EnhancedAfkActivityHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(EnhancedAfkActivityHandler.class);
     

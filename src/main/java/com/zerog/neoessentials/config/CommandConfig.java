@@ -16,6 +16,6 @@ public class CommandConfig {
 
     public static void load() {
         // Delegate to ConfigManager - it handles loading automatically
-        ConfigManager.getInstance().loadAll();
+        ConfigManager.loadAll();
     }
 }

@@ -12,6 +12,8 @@ import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.zerog.neoessentials.util.InputValidator;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -84,24 +86,40 @@ public class FreezeManager {
         if (isPlayerFrozen(playerId)) {
             return false; // Already frozen
         }
-        
+
+        // Validate reason length and content
+    InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+        if (!reasonResult.isValid()) {
+            LOGGER.warn("Freeze failed for {}: invalid reason: {}", playerName, reasonResult.getErrorMessage());
+            return false;
+        }
+        reason = (String) reasonResult.getValue();
+
         FreezeEntry freeze = new FreezeEntry(playerName, playerId, reason, frozenBy);
-        
+
         // Store current position if online
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ServerPlayer player = server.getPlayerList().getPlayer(playerId);
             if (player != null) {
                 freeze.frozenPosition = player.blockPosition();
-                
-                String message = MessageUtil.localize("neoessentials.moderation.frozen_message", reason, frozenBy);
+
+                // Get freeze message from config, fallback to localization
+                String template = com.zerog.neoessentials.config.ConfigManager.getFreezeMessage();
+                String message;
+                if (template.equals("neoessentials.moderation.frozen_message")) {
+                    message = MessageUtil.localize(template, reason, frozenBy);
+                } else {
+                    message = template.replace("{reason}", reason != null ? reason : "")
+                                     .replace("{freezer}", frozenBy != null ? frozenBy : "");
+                }
                 player.sendSystemMessage(MessageUtil.warning(message));
             }
         }
-        
+
         frozenPlayers.put(playerId, freeze);
         saveData();
-        
+
         LOGGER.info("Player {} ({}) frozen by {} for: {}", playerName, playerId, frozenBy, reason);
         return true;
     }
@@ -119,7 +137,15 @@ public class FreezeManager {
             if (server != null) {
                 ServerPlayer player = server.getPlayerList().getPlayer(playerId);
                 if (player != null) {
-                    String message = MessageUtil.localize("neoessentials.moderation.unfrozen_message");
+                    // Get unfreeze message from config, fallback to localization
+                    String template = com.zerog.neoessentials.config.ConfigManager.getUnfreezeMessage();
+                    String message;
+                    if (template.equals("neoessentials.moderation.unfrozen_message")) {
+                        message = MessageUtil.localize(template);
+                    } else {
+                        // Try to get the unfreezer's name if possible (not always available here)
+                        message = template.replace("{unfreezer}", "Staff");
+                    }
                     player.sendSystemMessage(MessageUtil.success(message));
                 }
             }
@@ -283,8 +309,14 @@ public class FreezeManager {
                 freeze.frozenPosition = player.blockPosition();
                 saveData();
             }
-            
-            String message = MessageUtil.localize("neoessentials.moderation.freeze_reminder", freeze.reason);
+            // Get freeze reminder from config, fallback to localization
+            String template = com.zerog.neoessentials.config.ConfigManager.getFreezeReminder();
+            String message;
+            if (template.equals("neoessentials.moderation.freeze_reminder")) {
+                message = MessageUtil.localize(template, freeze.reason);
+            } else {
+                message = template.replace("{reason}", freeze.reason != null ? freeze.reason : "");
+            }
             player.sendSystemMessage(MessageUtil.warning(message));
         }
     }

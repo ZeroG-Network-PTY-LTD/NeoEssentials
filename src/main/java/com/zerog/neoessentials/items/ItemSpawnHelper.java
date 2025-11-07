@@ -17,6 +17,7 @@ import java.util.UUID;
  * Helper class for managing item spawning with permission checks and blacklist validation.
  */
 public class ItemSpawnHelper {
+    @SuppressWarnings("unused") // Reserved for future logging features
     private static final Logger LOGGER = LoggerFactory.getLogger(ItemSpawnHelper.class);
     
     /**
@@ -28,20 +29,18 @@ public class ItemSpawnHelper {
      * @return SpawnResult with success status and error message if failed
      */
     public static SpawnResult canSpawnItem(ServerPlayer player, Item item) {
-        ConfigManager config = ConfigManager.getInstance();
-        
         // Get item ID
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
         String itemIdString = itemId.toString();
         
         // Check blacklist first
-        List<String> blacklist = config.getItemSpawnBlacklist();
+        List<String> blacklist = ConfigManager.getItemSpawnBlacklist();
         if (blacklist.contains(itemIdString)) {
             return SpawnResult.failure("Item '" + itemIdString + "' is blacklisted and cannot be spawned");
         }
         
         // Check permission-based spawning
-        if (config.isPermissionBasedItemSpawn()) {
+        if (ConfigManager.isPermissionBasedItemSpawn()) {
             UUID playerUuid = player.getUUID();
             
             // Check general item spawn permission
@@ -86,7 +85,7 @@ public class ItemSpawnHelper {
     public static boolean isBlacklisted(Item item) {
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
         String itemIdString = itemId.toString();
-        List<String> blacklist = ConfigManager.getInstance().getItemSpawnBlacklist();
+        List<String> blacklist = ConfigManager.getItemSpawnBlacklist();
         return blacklist.contains(itemIdString);
     }
     
@@ -97,7 +96,7 @@ public class ItemSpawnHelper {
      * @return true if blacklisted
      */
     public static boolean isBlacklisted(String itemId) {
-        List<String> blacklist = ConfigManager.getInstance().getItemSpawnBlacklist();
+        List<String> blacklist = ConfigManager.getItemSpawnBlacklist();
         return blacklist.contains(itemId);
     }
     

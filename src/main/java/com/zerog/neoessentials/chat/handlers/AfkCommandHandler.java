@@ -4,28 +4,20 @@ import com.zerog.neoessentials.chat.AfkManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.CommandEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
 
 /**
  * Tracks command usage to detect player activity for AFK system.
  * Excludes certain commands that shouldn't reset AFK status.
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class AfkCommandHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AfkCommandHandler.class);
     
-    // Commands that should NOT reset AFK status
-    private static final Set<String> EXCLUDED_COMMANDS = Set.of(
-        "afk",      // Don't reset AFK when using /afk command
-        "list",     // Checking player list doesn't indicate activity
-        "who",      // Same as list
-        "tps",      // Checking server performance
-        "ping",     // Checking connection
-        "help",     // Reading help doesn't indicate activity
-        "?"         // Same as help
-    );
+    // Commands that should NOT reset AFK status (now loaded from config via AfkManager)
     
     /**
      * Track command execution as player activity
@@ -36,8 +28,8 @@ public class AfkCommandHandler {
         if (event.getParseResults().getContext().getSource().getEntity() instanceof ServerPlayer player) {
             String commandName = getCommandName(event.getParseResults().getReader().getString());
             
-            // Skip excluded commands
-            if (EXCLUDED_COMMANDS.contains(commandName.toLowerCase())) {
+            // Skip excluded commands (from config)
+            if (AfkManager.getInstance().getExcludedCommands().contains(commandName.toLowerCase())) {
                 LOGGER.debug("Command '{}' excluded from AFK activity tracking for {}", 
                     commandName, player.getName().getString());
                 return;

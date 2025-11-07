@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.zerog.neoessentials.util.InputValidator;
 
 import java.util.UUID;
 
@@ -22,10 +23,6 @@ public class KickCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(KickCommand.class);
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // Check if moderation commands are enabled (will fix this later)
-        // if (!ConfigManager.getInstance().isModerationEnabled()) {
-        //     return;
-        // }
         
         // /kick <player> [reason]
         dispatcher.register(Commands.literal("kick")
@@ -56,8 +53,16 @@ public class KickCommand {
         String kickedBy = getCommandSender(source);
         
         try {
+            // Validate reason length and content
+            InputValidator.ValidationResult reasonResult = InputValidator.validateReason(reason);
+            if (!reasonResult.isValid()) {
+                source.sendFailure(MessageUtil.error("Invalid reason: " + reasonResult.getErrorMessage()));
+                return 0;
+            }
+            reason = (String) reasonResult.getValue();
+
             MinecraftServer server = source.getServer();
-            
+
             // Find the player
             ServerPlayer targetPlayer = null;
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -66,12 +71,12 @@ public class KickCommand {
                     break;
                 }
             }
-            
+
             if (targetPlayer == null) {
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.player_not_found", playerName));
                 return 0;
             }
-            
+
             // Check if trying to kick self (console can kick anyone)
             if (source.getEntity() instanceof ServerPlayer sourcePlayer) {
                 if (sourcePlayer.equals(targetPlayer)) {
@@ -79,23 +84,40 @@ public class KickCommand {
                     return 0;
                 }
             }
-            
+
             String playerDisplayName = targetPlayer.getName().getString();
-            
-            // Kick the player
-            String kickMessage = MessageUtil.localize("neoessentials.moderation.kick_message", reason, kickedBy);
+
+
+            // Kick the player using config-driven message
+            String kickMessageTemplate = com.zerog.neoessentials.config.ConfigManager.getKickMessage();
+            String kickMessage = kickMessageTemplate
+                .replace("{reason}", reason)
+                .replace("{kicker}", kickedBy);
             targetPlayer.connection.disconnect(Component.literal(kickMessage));
-            
+
             String confirmMessage = MessageUtil.localize("neoessentials.moderation.kick_success", playerDisplayName, reason);
             source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
-            
-            // Broadcast kick to all online staff
-            broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.kick_broadcast", 
-                playerDisplayName, kickedBy, reason));
-            
-            LOGGER.info("Player {} kicked by {} for: {}", playerDisplayName, kickedBy, reason);
+
+
+
+            // Broadcast kick to all players if enabled
+            String broadcastMsg = MessageUtil.localize("neoessentials.moderation.kick_broadcast", 
+                playerDisplayName, kickedBy, reason);
+            if (com.zerog.neoessentials.config.ConfigManager.isBroadcastKicksEnabled()) {
+                for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                    player.sendSystemMessage(MessageUtil.info(broadcastMsg));
+                }
+            }
+            // Notify staff if enabled (independent of broadcastKicks)
+            if (com.zerog.neoessentials.config.ConfigManager.isNotifyStaffOnKickEnabled()) {
+                broadcastToStaff(server, broadcastMsg);
+            }
+
+            if (com.zerog.neoessentials.config.ConfigManager.isLogKickActionsEnabled()) {
+                LOGGER.info("Player {} kicked by {} for: {}", playerDisplayName, kickedBy, reason);
+            }
             return 1;
-            
+
         } catch (Exception e) {
             LOGGER.error("Error executing kick command", e);
             source.sendFailure(MessageUtil.error("An error occurred while executing the kick command."));
@@ -121,16 +143,22 @@ public class KickCommand {
                 return 1;
             }
             
-            // Kick all players
-            String kickMessage = MessageUtil.localize("neoessentials.moderation.kick_message", reason, kickedBy);
+
+            // Kick all players using config-driven message
+            String kickAllMessageTemplate = com.zerog.neoessentials.config.ConfigManager.getKickAllMessage();
+            String kickAllMessage = kickAllMessageTemplate
+                .replace("{reason}", reason)
+                .replace("{kicker}", kickedBy);
             for (ServerPlayer player : playersToKick) {
-                player.connection.disconnect(Component.literal(kickMessage));
+                player.connection.disconnect(Component.literal(kickAllMessage));
             }
             
             String confirmMessage = MessageUtil.localize("neoessentials.moderation.kickall_success", playersToKick.size(), reason);
             source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
             
-            LOGGER.info("Kicked {} players by {} for: {}", playersToKick.size(), kickedBy, reason);
+            if (com.zerog.neoessentials.config.ConfigManager.isLogKickActionsEnabled()) {
+                LOGGER.info("Kicked {} players by {} for: {}", playersToKick.size(), kickedBy, reason);
+            }
             return 1;
             
         } catch (Exception e) {

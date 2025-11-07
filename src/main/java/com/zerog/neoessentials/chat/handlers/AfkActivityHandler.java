@@ -9,6 +9,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 // Note: Some events not available in this NeoForge version
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
  * Comprehensive activity tracking for AFK detection.
  * Tracks all player interactions that indicate the player is active.
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class AfkActivityHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AfkActivityHandler.class);
     

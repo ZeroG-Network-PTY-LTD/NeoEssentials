@@ -37,7 +37,7 @@ public class UnmuteCommand {
                     }
                     
                     // Check if chat module is enabled
-                    if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isChatEnabled()) {
+                    if (!com.zerog.neoessentials.config.ConfigManager.isChatEnabled()) {
                         source.sendFailure(MessageUtil.error("commands.neoessentials.unmute.disabled"));
                         return 0;
                     }

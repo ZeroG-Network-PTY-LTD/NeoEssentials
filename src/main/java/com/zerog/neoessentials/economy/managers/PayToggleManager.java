@@ -37,6 +37,7 @@ public class PayToggleManager {
     private final Gson gson = new Gson();
     private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
     private volatile boolean saveQueued = false;
+    @SuppressWarnings("unused") // Reserved for future direct config access
     private final ConfigManager configManager = ConfigManager.getInstance();
 
     private PayToggleManager() {
@@ -97,7 +98,7 @@ public class PayToggleManager {
         Boolean cached = paytoggleCache.get(player);
         if (cached != null) return cached;
         // Default to config value for new players
-        return configManager.getPayToggleDefault();
+        return com.zerog.neoessentials.config.ConfigManager.getPayToggleDefault();
     }
 
     public void setPayToggle(UUID player, boolean enabled) {

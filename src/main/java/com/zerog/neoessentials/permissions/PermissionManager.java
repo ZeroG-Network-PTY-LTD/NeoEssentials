@@ -18,24 +18,29 @@ public class PermissionManager {
     
     // Permission caching
     private final Map<String, CachedPermission> permissionCache = new ConcurrentHashMap<>();
-    private static final long CACHE_TTL = 300000; // 5 minutes in milliseconds
+    private long getCacheTtlMs() {
+        int minutes = com.zerog.neoessentials.config.ConfigManager.getInstance().getPermissionCacheExpiryMinutes();
+        return minutes * 60_000L;
+    }
     
     private static class CachedPermission {
         final boolean result;
         final long timestamp;
-        
+
         CachedPermission(boolean result) {
             this.result = result;
             this.timestamp = System.currentTimeMillis();
         }
-        
-        boolean isExpired() {
-            return System.currentTimeMillis() - timestamp > CACHE_TTL;
+
+        boolean isExpired(long ttlMs) {
+            return System.currentTimeMillis() - timestamp > ttlMs;
         }
     }
 
     public PermissionManager() {
-        this.defaultGroup = com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultGroup();
+    // Try to load from permissions.json (via PermissionStorage), fallback to config.json
+    String configDefault = com.zerog.neoessentials.config.ConfigManager.getInstance().getDefaultGroup();
+    this.defaultGroup = (configDefault != null && !configDefault.trim().isEmpty()) ? configDefault.trim() : "default";
     }
 
     /**
@@ -53,7 +58,9 @@ public class PermissionManager {
      * Set the default group name to use as a fallback.
      */
     public void setDefaultGroup(String groupName) {
-        this.defaultGroup = groupName.toLowerCase();
+        if (groupName != null && !groupName.trim().isEmpty()) {
+            this.defaultGroup = groupName.trim();
+        }
     }
 
     /**
@@ -104,24 +111,25 @@ public class PermissionManager {
     public boolean hasPermission(UUID uuid, String permission) {
         permission = permission.toLowerCase();
         String cacheKey = uuid + ":" + permission;
-        
-        // Check cache first
-        CachedPermission cached = permissionCache.get(cacheKey);
-        if (cached != null && !cached.isExpired()) {
-            return cached.result;
+        boolean cacheEnabled = com.zerog.neoessentials.config.ConfigManager.getInstance().isPermissionCacheEnabled();
+        long cacheTtl = getCacheTtlMs();
+        if (cacheEnabled) {
+            // Check cache first
+            CachedPermission cached = permissionCache.get(cacheKey);
+            if (cached != null && !cached.isExpired(cacheTtl)) {
+                return cached.result;
+            }
         }
-        
         // Compute permission
         boolean result = computePermission(uuid, permission);
-        
-        // Cache the result
-        permissionCache.put(cacheKey, new CachedPermission(result));
-        
-        // Clean expired entries periodically (every 100 checks)
-        if (permissionCache.size() % 100 == 0) {
-            cleanExpiredCache();
+        if (cacheEnabled) {
+            // Cache the result
+            permissionCache.put(cacheKey, new CachedPermission(result));
+            // Clean expired entries periodically (every 100 checks)
+            if (permissionCache.size() % 100 == 0) {
+                cleanExpiredCache();
+            }
         }
-        
         return result;
     }
     
@@ -142,8 +150,9 @@ public class PermissionManager {
      * Clears expired entries from the permission cache
      */
     private void cleanExpiredCache() {
-        permissionCache.entrySet().removeIf(entry -> entry.getValue().isExpired());
-        LOGGER.debug("Cleaned permission cache, {} entries remaining", permissionCache.size());
+    long cacheTtl = getCacheTtlMs();
+    permissionCache.entrySet().removeIf(entry -> entry.getValue().isExpired(cacheTtl));
+    LOGGER.debug("Cleaned permission cache, {} entries remaining", permissionCache.size());
     }
     
     /**

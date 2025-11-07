@@ -169,8 +169,8 @@ public class SignCommand {
     }
 
     private static void updateSignLine(SignBlockEntity signBlockEntity, int line, String text, ServerLevel level) {
-        // Create a new component with the text
-        Component textComponent = Component.literal(text);
+    // Create a new component with the text (with color codes and hex support)
+    Component textComponent = com.zerog.neoessentials.util.MessageUtil.coloredText(text);
         
         // Get current front text and update the specific line
         var currentText = signBlockEntity.getFrontText();

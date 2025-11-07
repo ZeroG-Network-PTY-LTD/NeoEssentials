@@ -10,7 +10,7 @@ import com.zerog.neoessentials.webdashboard.WebDashboardServer;
 import com.zerog.neoessentials.webdashboard.security.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
+// import net.minecraft.commands.Commands; // Unused after dashboard disable
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -40,27 +40,29 @@ public class DashboardCommand {
     private static final String PERM_TEMPPASS = "neoessentials.dashboard.temppass";
     
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("dashboard")
-            .requires(source -> source.hasPermission(2)) // Allow if operator, then check specific permissions
-            .then(Commands.literal("start")
-                .executes(DashboardCommand::startDashboard))
-            .then(Commands.literal("stop")
-                .executes(DashboardCommand::stopDashboard))
-            .then(Commands.literal("status")
-                .executes(DashboardCommand::statusDashboard))
-            .then(Commands.literal("port")
-                .then(Commands.argument("port", IntegerArgumentType.integer(1024, 65535))
-                    .executes(DashboardCommand::changeDashboardPort)))
-            .then(Commands.literal("temppass")
-                .then(Commands.argument("username", net.minecraft.commands.arguments.EntityArgument.player())
-                    .executes(DashboardCommand::generateTempPassword)))
-            .executes(DashboardCommand::helpDashboard)
-        );
+        // Dashboard command registration disabled
+        // dispatcher.register(Commands.literal("dashboard")
+        //     .requires(source -> source.hasPermission(2)) // Allow if operator, then check specific permissions
+        //     .then(Commands.literal("start")
+        //         .executes(DashboardCommand::startDashboard))
+        //     .then(Commands.literal("stop")
+        //         .executes(DashboardCommand::stopDashboard))
+        //     .then(Commands.literal("status")
+        //         .executes(DashboardCommand::statusDashboard))
+        //     .then(Commands.literal("port")
+        //         .then(Commands.argument("port", IntegerArgumentType.integer(1024, 65535))
+        //             .executes(DashboardCommand::changeDashboardPort)))
+        //     .then(Commands.literal("temppass")
+        //         .then(Commands.argument("username", net.minecraft.commands.arguments.EntityArgument.player())
+        //             .executes(DashboardCommand::generateTempPassword)))
+        //     .executes(DashboardCommand::helpDashboard)
+        // );
     }
     
     /**
      * Start the dashboard server
      */
+    @SuppressWarnings("unused")
     private static int startDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
@@ -75,7 +77,7 @@ public class DashboardCommand {
         com.zerog.neoessentials.config.ConfigManager configManager = 
             com.zerog.neoessentials.config.ConfigManager.getInstance();
         
-        if (!configManager.isWebDashboardEnabled()) {
+        if (!com.zerog.neoessentials.config.ConfigManager.isWebDashboardEnabled()) {
             source.sendFailure(MessageUtil.error("commands.neoessentials.dashboard.disabled"));
             source.sendSystemMessage(Component.literal(MessageUtil.localize("commands.neoessentials.dashboard.disabled_hint"))
                 .withStyle(ChatFormatting.GRAY));
@@ -125,6 +127,7 @@ public class DashboardCommand {
     /**
      * Stop the dashboard server
      */
+    @SuppressWarnings("unused")
     private static int stopDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
@@ -150,6 +153,7 @@ public class DashboardCommand {
     /**
      * Check dashboard status
      */
+    @SuppressWarnings("unused")
     private static int statusDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
@@ -193,6 +197,7 @@ public class DashboardCommand {
     /**
      * Change dashboard port (requires restart)
      */
+    @SuppressWarnings("unused")
     private static int changeDashboardPort(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
@@ -215,6 +220,7 @@ public class DashboardCommand {
     /**
      * Show help message
      */
+    @SuppressWarnings("unused")
     private static int helpDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
@@ -250,6 +256,7 @@ public class DashboardCommand {
     /**
      * Generate temporary password for a player (requires Discord verification and roles)
      */
+    @SuppressWarnings("unused")
     private static int generateTempPassword(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         

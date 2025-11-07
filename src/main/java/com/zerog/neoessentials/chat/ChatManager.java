@@ -25,6 +25,13 @@ public class ChatManager {
     private final Set<String> mutedCommands;
     // Set of permissions required for chat features (from config)
     private final Set<String> playerChatPermissions;
+
+    /**
+     * Returns the set of permissions required to chat (from config).
+     */
+    public Set<String> getPlayerChatPermissions() {
+        return playerChatPermissions;
+    }
     // Config toggles and options
     private final boolean sleepIgnoresAfkPlayers;
     private final boolean sleepIgnoresVanishedPlayers;
@@ -40,7 +47,9 @@ public class ChatManager {
     private final String customNewUsernameMessage;
     private final boolean useCustomServerFullMessage;
     private final int hideJoinQuitMessagesAbove;
-    private final String chatFormat;
+    // Chat format: can be a string (default) or a map for per-group/world
+    private final String defaultChatFormat;
+    private final java.util.Map<String, String> chatFormatMap;
 
     // Chat command toggles (from config)
     private final JsonObject commandsConfig;
@@ -67,7 +76,29 @@ public class ChatManager {
         this.customNewUsernameMessage = chatConfig.has("customNewUsernameMessage") ? chatConfig.get("customNewUsernameMessage").getAsString() : "none";
         this.useCustomServerFullMessage = chatConfig.has("useCustomServerFullMessage") && chatConfig.get("useCustomServerFullMessage").getAsBoolean();
         this.hideJoinQuitMessagesAbove = chatConfig.has("hideJoinQuitMessagesAbove") ? chatConfig.get("hideJoinQuitMessagesAbove").getAsInt() : -1;
-        this.chatFormat = chatConfig.has("chat-format") ? chatConfig.get("chat-format").getAsString() : "{neoessentials_displayname}: {MESSAGE}";
+        // Support chat-format as string or object
+        if (chatConfig.has("chat-format")) {
+            if (chatConfig.get("chat-format").isJsonObject()) {
+                JsonObject obj = chatConfig.getAsJsonObject("chat-format");
+                java.util.Map<String, String> map = new java.util.HashMap<>();
+                String def = null;
+                for (String key : obj.keySet()) {
+                    if (key.equalsIgnoreCase("default")) {
+                        def = obj.get(key).getAsString();
+                    } else {
+                        map.put(key, obj.get(key).getAsString());
+                    }
+                }
+                this.defaultChatFormat = def != null ? def : "{neoessentials_displayname}: {MESSAGE}";
+                this.chatFormatMap = map;
+            } else {
+                this.defaultChatFormat = chatConfig.get("chat-format").getAsString();
+                this.chatFormatMap = java.util.Collections.emptyMap();
+            }
+        } else {
+            this.defaultChatFormat = "{neoessentials_displayname}: {MESSAGE}";
+            this.chatFormatMap = java.util.Collections.emptyMap();
+        }
         this.commandsConfig = commandsConfig;
     }
 
@@ -110,7 +141,39 @@ public class ChatManager {
     public String getCustomNewUsernameMessage() { return customNewUsernameMessage; }
     public boolean useCustomServerFullMessage() { return useCustomServerFullMessage; }
     public int getHideJoinQuitMessagesAbove() { return hideJoinQuitMessagesAbove; }
-    public String getChatFormat() { return chatFormat; }
+
+    /**
+     * Returns the chat format for a given group and/or world.
+     * Priority: group+world > group > world > default
+     * @param group Player's primary group (null if unknown)
+     * @param world Player's world (null if unknown)
+     */
+    public String getChatFormat(String group, String world) {
+        // Try group+world
+        if (group != null && world != null) {
+            String key = "group:" + group.toLowerCase() + ":world:" + world.toLowerCase();
+            if (chatFormatMap.containsKey(key)) return chatFormatMap.get(key);
+        }
+        // Try group
+        if (group != null) {
+            String key = "group:" + group.toLowerCase();
+            if (chatFormatMap.containsKey(key)) return chatFormatMap.get(key);
+        }
+        // Try world
+        if (world != null) {
+            String key = "world:" + world.toLowerCase();
+            if (chatFormatMap.containsKey(key)) return chatFormatMap.get(key);
+        }
+        // Fallback
+        return defaultChatFormat;
+    }
+
+    /**
+     * Returns the default chat format (for config migration/compatibility).
+     */
+    public String getDefaultChatFormat() {
+        return defaultChatFormat;
+    }
 
     // Chat command enable/disable checks
     public boolean isAfkEnabled() { return isCommandEnabled("afk"); }

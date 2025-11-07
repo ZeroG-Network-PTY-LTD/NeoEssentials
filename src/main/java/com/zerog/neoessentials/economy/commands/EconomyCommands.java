@@ -15,7 +15,7 @@ public class EconomyCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         ConfigManager config = ConfigManager.getInstance();
         
-        if (!config.isEconomyEnabled()) {
+        if (!ConfigManager.isEconomyEnabled()) {
             LOGGER.info("Economy module is disabled, skipping economy command registration");
             return;
         }

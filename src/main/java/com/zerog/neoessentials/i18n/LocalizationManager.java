@@ -476,9 +476,9 @@ public class LocalizationManager {
     private Locale getLocaleFromLanguage(String language) {
         String[] parts = language.split("_");
         if (parts.length == 2) {
-            return new Locale(parts[0], parts[1].toUpperCase());
+            return new Locale.Builder().setLanguage(parts[0]).setRegion(parts[1].toUpperCase()).build();
         } else if (parts.length == 1) {
-            return new Locale(parts[0]);
+            return new Locale.Builder().setLanguage(parts[0]).build();
         }
         return Locale.US;
     }

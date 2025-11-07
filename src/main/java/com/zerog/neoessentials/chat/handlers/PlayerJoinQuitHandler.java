@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
  * Handler for custom player join and quit messages.
  * Manages displaying customized join/quit messages based on server configuration.
  */
+@EventBusSubscriber(modid = "neoessentials")
 public class PlayerJoinQuitHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlayerJoinQuitHandler.class);
 
@@ -28,6 +30,88 @@ public class PlayerJoinQuitHandler {
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
+        }
+
+        // --- Vanish-on-join logic for staff ---
+        try {
+            com.zerog.neoessentials.config.ConfigManager config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+            if (config.isVanishSystemEnabled() && config.isVanishOnJoinEnabled()) {
+                // Check if player has staff vanish permission
+                java.util.UUID playerUuid = player.getUUID();
+                String playerName = player.getName().getString();
+                boolean hasVanishPerm = com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(playerUuid, "neoessentials.moderation.vanish");
+                if (hasVanishPerm) {
+                    com.zerog.neoessentials.moderation.VanishManager vanishManager = com.zerog.neoessentials.moderation.VanishManager.getInstance();
+                    if (!vanishManager.isPlayerVanished(playerUuid)) {
+                        vanishManager.vanishPlayer(playerUuid, playerName, "AutoVanishOnJoin", true);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error handling vanish-on-join for player {}: {}", player.getName().getString(), e.getMessage());
+        }
+
+        // --- newPlayerKit logic: Give kit on first join if enabled ---
+        try {
+            com.zerog.neoessentials.config.ConfigManager config = com.zerog.neoessentials.config.ConfigManager.getInstance();
+            if (config.isNewPlayerKitEnabled()) {
+                String kitName = config.getNewPlayerKitName();
+                if (kitName != null && !kitName.trim().isEmpty()) {
+                    // Check if this is the player's first join (no advancements, no homes, or use a persistent flag)
+                    // We'll use the Minecraft built-in first played time if available, or fallback to a persistent file
+                    // For now, use a persistent file in data/neoessentials/first_joined.json
+                    java.io.File firstJoinFile = new java.io.File("neoessentials/first_joined.json");
+                    java.util.Set<java.util.UUID> joined = new java.util.HashSet<>();
+                    if (firstJoinFile.exists()) {
+                        try (java.io.FileReader r = new java.io.FileReader(firstJoinFile)) {
+                            com.google.gson.JsonArray arr = com.google.gson.JsonParser.parseReader(r).getAsJsonArray();
+                            for (com.google.gson.JsonElement el : arr) {
+                                try { joined.add(java.util.UUID.fromString(el.getAsString())); } catch (Exception ignore) {}
+                            }
+                        } catch (Exception ignore) {}
+                    }
+                    boolean isFirstJoin = !joined.contains(player.getUUID());
+                    if (isFirstJoin) {
+                        // Give the kit, bypassing permission/cost/cooldown
+                        com.zerog.neoessentials.kits.KitManager kitManager = com.zerog.neoessentials.kits.KitManager.getInstance();
+                        kitManager.giveKit(player, kitName);
+                        // Add to joined set and save
+                        joined.add(player.getUUID());
+                        try (java.io.FileWriter w = new java.io.FileWriter(firstJoinFile, false)) {
+                            com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+                            for (java.util.UUID id : joined) arr.add(id.toString());
+                            w.write(arr.toString());
+                        } catch (Exception ignore) {}
+                        // Optionally, send a message to the player
+                        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("You have received a starter kit!"));
+                    }
+                    // --- spawnOnJoin logic: Teleport to spawn on first join if enabled ---
+                    try {
+                        // Check spawnOnJoin config (teleportation.spawnSettings.spawnOnJoin)
+                        boolean spawnOnJoin = false;
+                        if (config != null) {
+                            com.google.gson.JsonObject mainConfig = config.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+                            if (mainConfig.has("teleportation")) {
+                                com.google.gson.JsonObject tp = mainConfig.getAsJsonObject("teleportation");
+                                if (tp.has("spawnSettings")) {
+                                    com.google.gson.JsonObject spawnSettings = tp.getAsJsonObject("spawnSettings");
+                                    if (spawnSettings.has("spawnOnJoin")) {
+                                        spawnOnJoin = spawnSettings.get("spawnOnJoin").getAsBoolean();
+                                    }
+                                }
+                            }
+                        }
+                        if (isFirstJoin && spawnOnJoin) {
+                            com.zerog.neoessentials.teleportation.Spawn.SpawnManager.getInstance().teleportToSpawn(player);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Error handling spawnOnJoin for player {}: {}", player.getName().getString(), e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Log but do not interrupt join
+            LOGGER.error("Error handling newPlayerKit for player {}: {}", player.getName().getString(), e.getMessage());
         }
 
         try {

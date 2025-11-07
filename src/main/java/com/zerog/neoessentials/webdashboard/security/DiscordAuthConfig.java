@@ -7,12 +7,8 @@ import com.zerog.neoessentials.config.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 /**
@@ -24,7 +20,9 @@ import java.util.*;
  */
 public class DiscordAuthConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(DiscordAuthConfig.class);
+    @SuppressWarnings("unused") // Reserved for future JSON serialization features
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    @SuppressWarnings("unused") // Reserved for future file-based config loading
     private static final Path CONFIG_FILE = Paths.get("config", "neoessentials", "discord_auth.json");
     public static final String CONFIG_NAME = "discord_auth.json";
     

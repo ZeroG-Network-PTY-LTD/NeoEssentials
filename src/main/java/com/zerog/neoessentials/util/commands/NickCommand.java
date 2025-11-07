@@ -5,7 +5,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
@@ -305,10 +304,10 @@ public class NickCommand {
      */
     private static void updatePlayerDisplayName(ServerPlayer player) {
         String nickname = NICKNAMES.get(player.getUUID());
-        
+
         if (nickname != null) {
             String formattedNick = nickname.replace("&", "§");
-            player.setCustomName(Component.literal(formattedNick));
+            player.setCustomName(com.zerog.neoessentials.util.MessageUtil.coloredText(formattedNick));
             player.setCustomNameVisible(true);
         } else {
             player.setCustomName(null);

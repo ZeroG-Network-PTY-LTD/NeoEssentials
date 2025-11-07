@@ -43,7 +43,6 @@ public class EconomyManager {
 
     // Use ConcurrentHashMap for balances
     private ConcurrentHashMap<UUID, BigDecimal> balancesCache;
-    private final ConfigManager configManager = ConfigManager.getInstance();
     // Store balances in root/neoessentials/balances.json
     private final File balancesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances.json");
     private final Gson gson = new Gson();
@@ -137,9 +136,9 @@ public class EconomyManager {
     }
 
     private void cleanupInactiveAccounts() {
-        if (!configManager.isCleanupInactiveAccountsEnabled()) return;
+        if (!ConfigManager.isCleanupInactiveAccountsEnabled()) return;
         long now = System.currentTimeMillis();
-        long thresholdMillis = configManager.getInactiveAccountCleanupDays() * 24L * 60L * 60L * 1000L;
+        long thresholdMillis = ConfigManager.getInactiveAccountCleanupDays() * 24L * 60L * 60L * 1000L;
         for (UUID uuid : balancesCache.keySet()) {
             Long lastActive = lastActivityMap.get(uuid);
             if (lastActive == null || (now - lastActive) >= thresholdMillis) {
@@ -221,7 +220,7 @@ public class EconomyManager {
 
     private EconomyManager() {
         // Check global config for module enable
-        if (!configManager.isEconomyEnabled()) {
+        if (!ConfigManager.isEconomyEnabled()) {
             // Economy is globally disabled, do not load balances or settings
             return;
         }
@@ -243,12 +242,12 @@ public class EconomyManager {
     public BigDecimal getBalance(UUID player) {
         BigDecimal cached = balancesCache.get(player);
         if (cached != null) return cached;
-        return configManager.getEconomyStartingBalance();
+        return BigDecimal.valueOf(ConfigManager.getEconomyStartingBalance());
     }
 
     public void setBalance(UUID player, BigDecimal amount) {
-        if (!configManager.allowNegativeBalances() && amount.compareTo(BigDecimal.ZERO) < 0) amount = BigDecimal.ZERO;
-        BigDecimal maxBalance = configManager.getMaxBalance();
+        if (!ConfigManager.allowNegativeBalances() && amount.compareTo(BigDecimal.ZERO) < 0) amount = BigDecimal.ZERO;
+        BigDecimal maxBalance = BigDecimal.valueOf(ConfigManager.getMaxBalance());
         if (maxBalance != null && amount.compareTo(maxBalance) > 0) amount = maxBalance;
         BigDecimal oldAmount = getBalance(player);
         balancesCache.put(player, amount);
@@ -262,8 +261,8 @@ public class EconomyManager {
     public boolean addBalance(UUID player, BigDecimal amount) {
         BigDecimal current = getBalance(player);
         BigDecimal newAmount = current.add(amount);
-        if (!configManager.allowNegativeBalances() && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
-        BigDecimal maxBalance = configManager.getMaxBalance();
+        if (!ConfigManager.allowNegativeBalances() && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
+        BigDecimal maxBalance = BigDecimal.valueOf(ConfigManager.getMaxBalance());
         if (maxBalance != null && newAmount.compareTo(maxBalance) > 0) newAmount = maxBalance;
         balancesCache.put(player, newAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
@@ -277,7 +276,7 @@ public class EconomyManager {
     public boolean subtractBalance(UUID player, BigDecimal amount) {
         BigDecimal current = getBalance(player);
         BigDecimal newAmount = current.subtract(amount);
-        if (!configManager.allowNegativeBalances() && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
+        if (!ConfigManager.allowNegativeBalances() && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
         balancesCache.put(player, newAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
@@ -300,11 +299,11 @@ public class EconomyManager {
     }
 
     public boolean isEnabled() {
-        return configManager.isEconomyEnabled();
+        return ConfigManager.isEconomyEnabled();
     }
 
     public String getCurrencySymbol() {
-        return configManager.getCurrencySymbol();
+        return ConfigManager.getCurrencySymbol();
     }
 
     // Vault compatibility stub removed; use EconomyService API instead

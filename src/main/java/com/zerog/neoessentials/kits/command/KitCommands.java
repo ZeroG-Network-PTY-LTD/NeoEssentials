@@ -15,7 +15,7 @@ public class KitCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         ConfigManager config = ConfigManager.getInstance();
         
-        if (!config.isKitModuleEnabled()) {
+        if (!ConfigManager.isKitModuleEnabled()) {
             LOGGER.info("Kits module is disabled, skipping kit command registration");
             return;
         }

@@ -56,9 +56,11 @@ public class PermissionAPI {
             return false;
         }
         
-        // First check if player is opped (opped players have all permissions)
-        if (isPlayerOpped(uuid)) {
-            return true;
+        // Only allow ops to bypass permissions if enabled in config
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isOpsBypassPermissionsEnabled()) {
+            if (isPlayerOpped(uuid)) {
+                return true;
+            }
         }
         
         if (externalAdapter != null) {

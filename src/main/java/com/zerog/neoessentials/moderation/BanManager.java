@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.zerog.neoessentials.util.MessageUtil;
+import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
@@ -31,6 +31,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Manages player bans and IP bans with persistent storage
  */
 public class BanManager {
+    // Scheduler for periodic expired-ban cleanup
+    private final java.util.concurrent.ScheduledExecutorService banCleanupScheduler = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+    private java.util.concurrent.ScheduledFuture<?> cleanupTaskFuture;
     private static final Logger LOGGER = LoggerFactory.getLogger(BanManager.class);
     private static BanManager instance;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -99,6 +102,18 @@ public class BanManager {
         this.banFile = new File(moderationDir, "player_bans.json");
         this.ipBanFile = new File(moderationDir, "ip_bans.json");
         loadBans();
+
+        // Start periodic expired-ban cleanup if enabled
+        int interval = com.zerog.neoessentials.config.ConfigManager.getInstance().getCheckExpiredBansInterval();
+        if (interval > 0) {
+            cleanupTaskFuture = banCleanupScheduler.scheduleAtFixedRate(
+                this::cleanupExpiredTempBans,
+                interval, interval, java.util.concurrent.TimeUnit.SECONDS
+            );
+            LOGGER.info("Scheduled expired temp ban cleanup every {} seconds.", interval);
+        } else {
+            LOGGER.info("Expired temp ban cleanup scheduler is disabled (interval <= 0).");
+        }
     }
     
     public static BanManager getInstance() {
@@ -106,6 +121,42 @@ public class BanManager {
             instance = new BanManager();
         }
         return instance;
+    }
+
+    /**
+     * Periodically called to remove expired temp bans if autoExpireTempBans is enabled.
+     * This uses the same logic as getAllPlayerBans() but is safe for background use.
+     */
+    private void cleanupExpiredTempBans() {
+        boolean removedAny = false;
+        Iterator<Map.Entry<UUID, BanEntry>> iterator = playerBans.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<UUID, BanEntry> entry = iterator.next();
+            BanEntry ban = entry.getValue();
+            if (ban.isExpired() && com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
+                iterator.remove();
+                removedAny = true;
+            }
+        }
+        if (removedAny) {
+            saveBans();
+            LOGGER.info("Expired temp bans cleaned up by scheduler.");
+        }
+    }
+
+    /**
+     * Call this on server/plugin shutdown to stop the scheduler cleanly.
+     */
+    public void shutdownScheduler() {
+        if (cleanupTaskFuture != null) cleanupTaskFuture.cancel(false);
+        banCleanupScheduler.shutdown();
+        try {
+            if (!banCleanupScheduler.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                banCleanupScheduler.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            banCleanupScheduler.shutdownNow();
+        }
     }
     
     /**
@@ -115,22 +166,46 @@ public class BanManager {
         if (isPlayerBanned(playerId)) {
             return false; // Already banned
         }
-        
+        // Enforce config: check if permanent bans are enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isPermanentBansEnabled()) {
+            LOGGER.warn("Permanent bans are disabled in config. Cannot ban player {} permanently.", playerName);
+            return false;
+        }
+        // Enforce config: check maxBanReason
+        int maxReason = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxBanReasonLength();
+        if (reason != null && reason.length() > maxReason) {
+            LOGGER.warn("Ban reason too long ({} > {}). Cannot ban player {}.", reason.length(), maxReason, playerName);
+            return false;
+        }
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         playerBans.put(playerId, ban);
         saveBans();
-        
         // Kick player if online
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ServerPlayer player = server.getPlayerList().getPlayer(playerId);
             if (player != null) {
-                String message = MessageUtil.localize("neoessentials.moderation.banned_message", reason, bannedBy);
+                String format = com.zerog.neoessentials.config.ConfigManager.getBanMessageFormat();
+                String duration = "Permanent";
+                String message = format.replace("{reason}", reason != null ? reason : "N/A")
+                                    .replace("{bannedBy}", bannedBy != null ? bannedBy : "Console")
+                                    .replace("{duration}", duration);
                 player.connection.disconnect(Component.literal(message));
             }
+            // Broadcast to staff if enabled
+            if (com.zerog.neoessentials.config.ConfigManager.getInstance().isBroadcastBansEnabled()) {
+                String staffPerm = com.zerog.neoessentials.config.ConfigManager.getInstance().getStaffNotificationPermission();
+                String staffMsg = "[NeoEssentials] Player " + playerName + " was permanently banned by " + bannedBy + (reason != null && !reason.isEmpty() ? " for: " + reason : "");
+                for (ServerPlayer staff : server.getPlayerList().getPlayers()) {
+                    if (staff.hasPermissions(2) || PermissionAPI.hasPermission(staff.getUUID(), staffPerm)) {
+                        staff.sendSystemMessage(Component.literal(staffMsg));
+                    }
+                }
+            }
         }
-        
-        LOGGER.info("Player {} ({}) banned by {} for: {}", playerName, playerId, bannedBy, reason);
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
+            LOGGER.info("Player {} ({}) banned by {} for: {}", playerName, playerId, bannedBy, reason);
+        }
         return true;
     }
     
@@ -141,25 +216,55 @@ public class BanManager {
         if (isPlayerBanned(playerId)) {
             return false; // Already banned
         }
-        
+        // Enforce config: check if temp bans are enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isTempBansEnabled()) {
+            LOGGER.warn("Temporary bans are disabled in config. Cannot temp-ban player {}.", playerName);
+            return false;
+        }
+        // Enforce config: check maxBanReason
+        int maxReason = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxBanReasonLength();
+        if (reason != null && reason.length() > maxReason) {
+            LOGGER.warn("Temp ban reason too long ({} > {}). Cannot temp-ban player {}.", reason.length(), maxReason, playerName);
+            return false;
+        }
+
         BanEntry ban = new BanEntry(playerName, playerId, reason, bannedBy);
         ban.expireTime = System.currentTimeMillis() + durationMillis;
         playerBans.put(playerId, ban);
         saveBans();
-        
+
         // Kick player if online
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ServerPlayer player = server.getPlayerList().getPlayer(playerId);
             if (player != null) {
+                String format = com.zerog.neoessentials.config.ConfigManager.getTempBanMessageFormat();
                 String duration = formatDuration(durationMillis);
-                String message = MessageUtil.localize("neoessentials.moderation.tempban_message", reason, duration, bannedBy);
+                String expiry = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                    .withZone(java.time.ZoneId.systemDefault())
+                    .format(java.time.Instant.ofEpochMilli(System.currentTimeMillis() + durationMillis));
+                String message = format.replace("{reason}", reason != null ? reason : "N/A")
+                                    .replace("{bannedBy}", bannedBy != null ? bannedBy : "Console")
+                                    .replace("{duration}", duration)
+                                    .replace("{expiry}", expiry);
                 player.connection.disconnect(Component.literal(message));
             }
+            // Broadcast to staff if enabled
+            if (com.zerog.neoessentials.config.ConfigManager.getInstance().isBroadcastBansEnabled()) {
+                String staffPerm = com.zerog.neoessentials.config.ConfigManager.getInstance().getStaffNotificationPermission();
+                String staffMsg = "[NeoEssentials] Player " + playerName + " was temporarily banned by " + bannedBy + " for " + formatDuration(durationMillis) + (reason != null && !reason.isEmpty() ? " - Reason: " + reason : "");
+                for (ServerPlayer staff : server.getPlayerList().getPlayers()) {
+                    if (staff.hasPermissions(2) || PermissionAPI.hasPermission(staff.getUUID(), staffPerm)) {
+                        staff.sendSystemMessage(Component.literal(staffMsg));
+                    }
+                }
+            }
         }
-        
+
+    if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
         LOGGER.info("Player {} ({}) temporarily banned by {} for {} - Reason: {}", 
-                playerName, playerId, bannedBy, formatDuration(durationMillis), reason);
+            playerName, playerId, bannedBy, formatDuration(durationMillis), reason);
+    }
         return true;
     }
     
@@ -170,11 +275,16 @@ public class BanManager {
         if (isIPBanned(ipAddress)) {
             return false; // Already banned
         }
-        
+        // Enforce config: check if IP bans are enabled
+        if (!com.zerog.neoessentials.config.ConfigManager.getInstance().isIPBansEnabled()) {
+            LOGGER.warn("IP bans are disabled in config. Cannot ban IP {}.", ipAddress);
+            return false;
+        }
+
         IPBanEntry ban = new IPBanEntry(ipAddress, reason, bannedBy);
         ipBans.put(ipAddress, ban);
         saveIPBans();
-        
+
         // Kick all players with this IP
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
@@ -185,12 +295,16 @@ public class BanManager {
                 }
             }
             for (ServerPlayer player : playersToKick) {
-                String message = MessageUtil.localize("neoessentials.moderation.banned_message", reason, bannedBy);
+                String format = com.zerog.neoessentials.config.ConfigManager.getIPBanMessageFormat();
+                String message = format.replace("{reason}", reason != null ? reason : "N/A")
+                                       .replace("{bannedBy}", bannedBy != null ? bannedBy : "Console");
                 player.connection.disconnect(Component.literal(message));
             }
         }
-        
-        LOGGER.info("IP {} banned by {} for: {}", ipAddress, bannedBy, reason);
+
+        if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
+            LOGGER.info("IP {} banned by {} for: {}", ipAddress, bannedBy, reason);
+        }
         return true;
     }
     
@@ -201,7 +315,20 @@ public class BanManager {
         BanEntry removed = playerBans.remove(playerId);
         if (removed != null) {
             saveBans();
-            LOGGER.info("Player {} ({}) unbanned", removed.playerName, playerId);
+            // Broadcast to staff if enabled
+            MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server != null && com.zerog.neoessentials.config.ConfigManager.getInstance().isBroadcastBansEnabled()) {
+                String staffPerm = com.zerog.neoessentials.config.ConfigManager.getInstance().getStaffNotificationPermission();
+                String staffMsg = "[NeoEssentials] Player " + removed.playerName + " was unbanned.";
+                for (ServerPlayer staff : server.getPlayerList().getPlayers()) {
+                    if (staff.hasPermissions(2) || PermissionAPI.hasPermission(staff.getUUID(), staffPerm)) {
+                        staff.sendSystemMessage(Component.literal(staffMsg));
+                    }
+                }
+            }
+            if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
+                LOGGER.info("Player {} ({}) unbanned", removed.playerName, playerId);
+            }
             return true;
         }
         return false;
@@ -214,7 +341,9 @@ public class BanManager {
         IPBanEntry removed = ipBans.remove(ipAddress);
         if (removed != null) {
             saveIPBans();
-            LOGGER.info("IP {} unbanned", ipAddress);
+            if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogBanActionsEnabled()) {
+                LOGGER.info("IP {} unbanned", ipAddress);
+            }
             return true;
         }
         return false;
@@ -227,9 +356,11 @@ public class BanManager {
         BanEntry ban = playerBans.get(playerId);
         if (ban != null) {
             if (ban.isExpired()) {
-                // Auto-remove expired ban
-                playerBans.remove(playerId);
-                saveBans();
+                if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
+                    // Auto-remove expired ban
+                    playerBans.remove(playerId);
+                    saveBans();
+                }
                 return false;
             }
             return true;
@@ -263,9 +394,11 @@ public class BanManager {
     public BanEntry getBanEntry(UUID playerId) {
         BanEntry ban = playerBans.get(playerId);
         if (ban != null && ban.isExpired()) {
-            // Auto-remove expired ban
-            playerBans.remove(playerId);
-            saveBans();
+            if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
+                // Auto-remove expired ban
+                playerBans.remove(playerId);
+                saveBans();
+            }
             return null;
         }
         return ban;
@@ -285,22 +418,23 @@ public class BanManager {
         List<BanEntry> activeBans = new ArrayList<>();
         Iterator<Map.Entry<UUID, BanEntry>> iterator = playerBans.entrySet().iterator();
         
+        boolean removedAny = false;
         while (iterator.hasNext()) {
             Map.Entry<UUID, BanEntry> entry = iterator.next();
             BanEntry ban = entry.getValue();
-            
             if (ban.isExpired()) {
-                // Remove expired ban
-                iterator.remove();
+                if (com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoExpireTempBansEnabled()) {
+                    // Remove expired ban
+                    iterator.remove();
+                    removedAny = true;
+                }
             } else {
                 activeBans.add(ban);
             }
         }
-        
-        if (!activeBans.equals(new ArrayList<>(playerBans.values()))) {
+        if (removedAny) {
             saveBans(); // Save if we removed expired bans
         }
-        
         return activeBans;
     }
     

@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -34,13 +35,47 @@ public class TeleportRequestManager {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     
     // Configuration
-    private int requestTimeoutSeconds = 60; // 1 minute
+    private int requestTimeoutSeconds;
     private int teleportDelay = 3; // 3 seconds
     private boolean allowTpaHere = true;
     private boolean allowTpaAll = true;
-    private int maxPendingRequests = 5;
+    private int maxPendingRequests;
+    private int cooldownBetweenRequestsSeconds;
+    private boolean allowMultipleRequests;
+    private boolean enableRequestNotifications;
+    private boolean autoAcceptFromFriends;
+    private boolean enableTeleportSafety;
+    private boolean logTeleportRequests;
+    private final Map<UUID, Long> lastRequestTimestamps = new ConcurrentHashMap<>();
     
     private TeleportRequestManager() {
+    // Load config-driven timeout, max pending requests, cooldown, and allowMultipleRequests
+    this.requestTimeoutSeconds = com.zerog.neoessentials.config.ConfigManager.getInstance().getTeleportRequestTimeoutSeconds();
+    this.maxPendingRequests = com.zerog.neoessentials.config.ConfigManager.getInstance().getMaxPendingTeleportRequests();
+    this.cooldownBetweenRequestsSeconds = com.zerog.neoessentials.config.ConfigManager.getInstance().getCooldownBetweenTeleportRequestsSeconds();
+    this.allowMultipleRequests = com.zerog.neoessentials.config.ConfigManager.getInstance().isAllowMultipleTeleportRequestsEnabled();
+    this.enableRequestNotifications = com.zerog.neoessentials.config.ConfigManager.getInstance().isTeleportRequestNotificationsEnabled();
+    this.autoAcceptFromFriends = com.zerog.neoessentials.config.ConfigManager.getInstance().isAutoAcceptTeleportFromFriendsEnabled();
+    this.logTeleportRequests = com.zerog.neoessentials.config.ConfigManager.getInstance().isLogTeleportRequestsEnabled();
+    // Enforce teleport safety for teleport requests
+    this.enableTeleportSafety = false;
+    try {
+        com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
+        if (configManager != null) {
+            com.google.gson.JsonObject config = configManager.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
+            if (config.has("teleportation")) {
+                com.google.gson.JsonObject tp = config.getAsJsonObject("teleportation");
+                if (tp.has("teleportRequestSettings")) {
+                    com.google.gson.JsonObject req = tp.getAsJsonObject("teleportRequestSettings");
+                    if (req.has("enableTeleportSafety")) {
+                        this.enableTeleportSafety = req.get("enableTeleportSafety").getAsBoolean();
+                    }
+                }
+            }
+        }
+    } catch (Exception e) {
+        LOGGER.warn("Failed to load teleport request safety config, defaulting to disabled: {}", e.getMessage());
+    }
         // Start cleanup task
         scheduler.scheduleAtFixedRate(this::cleanupExpiredRequests, 30, 30, TimeUnit.SECONDS);
     }
@@ -53,9 +88,26 @@ public class TeleportRequestManager {
         UUID targetId = target.getUUID();
         
         // Check if requester can send requests
+        // Enforce cooldown between requests
+        long now = System.currentTimeMillis();
+        long last = lastRequestTimestamps.getOrDefault(requesterId, 0L);
+        if (cooldownBetweenRequestsSeconds > 0 && (now - last) < (cooldownBetweenRequestsSeconds * 1000L)) {
+            long wait = ((cooldownBetweenRequestsSeconds * 1000L) - (now - last)) / 1000L + 1;
+            requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.cooldown", wait));
+            return false;
+        }
         if (sentRequests.containsKey(requesterId)) {
             requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.already_sent"));
             return false;
+        }
+        // Enforce allowMultipleRequests: block if requester already has a pending request to this target
+        if (!allowMultipleRequests) {
+            boolean alreadyRequested = pendingRequests.values().stream()
+                .anyMatch(req -> req.getRequesterId().equals(requesterId) && req.getTargetId().equals(targetId));
+            if (alreadyRequested) {
+                requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.duplicate", target.getName().getString()));
+                return false;
+            }
         }
         
         // Check if target has too many pending requests
@@ -81,7 +133,22 @@ public class TeleportRequestManager {
         // Store the request
         pendingRequests.put(targetId, request);
         sentRequests.put(requesterId, request);
-        
+
+        // Update last request timestamp
+        lastRequestTimestamps.put(requesterId, now);
+
+        // Auto-accept if enabled and requester is a friend (stub)
+        if (autoAcceptFromFriends && isFriend(target, requester)) {
+            cleanupRequest(request);
+            executeTeleportRequest(requester, target, type);
+            requester.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.auto_accepted", target.getName().getString()));
+            target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.request.auto_accepted_target", requester.getName().getString()));
+            if (logTeleportRequests) {
+                LOGGER.info("Teleport request from {} to {} auto-accepted (friends)", requester.getName().getString(), target.getName().getString());
+            }
+            return true;
+        }
+
         // Schedule timeout
         scheduler.schedule(() -> {
             if (pendingRequests.containsKey(targetId) && 
@@ -89,20 +156,56 @@ public class TeleportRequestManager {
                 timeoutRequest(request);
             }
         }, requestTimeoutSeconds, TimeUnit.SECONDS);
-        
+
         // Send messages
         String typeText = type == TeleportRequestType.TPA ? "to you" : "you to them";
         requester.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.sent", 
                                                         target.getName().getString(), typeText));
-        
-        target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.request.received", 
-                                                  requester.getName().getString(), typeText));
-        target.sendSystemMessage(MessageUtil.component("commands.neoessentials.teleport.request.instructions"));
-        
-        LOGGER.info("Player {} sent {} request to {}", 
+
+        if (enableRequestNotifications) {
+            target.sendSystemMessage(MessageUtil.info("commands.neoessentials.teleport.request.received", 
+                                                    requester.getName().getString(), typeText));
+            target.sendSystemMessage(MessageUtil.component("commands.neoessentials.teleport.request.instructions"));
+        }
+
+        if (logTeleportRequests) {
+            LOGGER.info("Player {} sent {} request to {}", 
                    requester.getName().getString(), type, target.getName().getString());
-        
+        }
+
         return true;
+    // (isFriend method moved to class body below)
+    }
+    /**
+     * Stub for friends system integration. Returns false until implemented.
+     */
+    private boolean isFriend(ServerPlayer player, ServerPlayer other) {
+        // Simple in-memory friends system (placeholder for real integration)
+        // Usage: addFriend(playerUUID, friendUUID) elsewhere in your code
+        UUID playerId = player.getUUID();
+        UUID otherId = other.getUUID();
+        Set<UUID> friends = friendsMap.get(playerId);
+        return friends != null && friends.contains(otherId);
+    }
+
+    // In-memory friends map: player UUID -> set of friend UUIDs
+    private final Map<UUID, Set<UUID>> friendsMap = new ConcurrentHashMap<>();
+
+    /**
+     * Add a friend for a player (for demonstration/testing)
+     */
+    public void addFriend(UUID playerId, UUID friendId) {
+        friendsMap.computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet()).add(friendId);
+    }
+
+    /**
+     * Remove a friend for a player
+     */
+    public void removeFriend(UUID playerId, UUID friendId) {
+        Set<UUID> friends = friendsMap.get(playerId);
+        if (friends != null) {
+            friends.remove(friendId);
+        }
     }
     
     /**
@@ -168,8 +271,10 @@ public class TeleportRequestManager {
                                                           denier.getName().getString()));
         }
         
-        LOGGER.info("Player {} denied {} request from {}", 
+        if (logTeleportRequests) {
+            LOGGER.info("Player {} denied {} request from {}", 
                    denier.getName().getString(), request.getType(), request.getRequesterName());
+        }
         
         return true;
     }
@@ -201,8 +306,10 @@ public class TeleportRequestManager {
                                                       canceller.getName().getString()));
         }
         
-        LOGGER.info("Player {} cancelled {} request to {}", 
+        if (logTeleportRequests) {
+            LOGGER.info("Player {} cancelled {} request to {}", 
                    canceller.getName().getString(), request.getType(), request.getTargetName());
+        }
         
         return true;
     }
@@ -212,37 +319,37 @@ public class TeleportRequestManager {
      */
     private void executeTeleportRequest(ServerPlayer requester, ServerPlayer target, TeleportRequestType type) {
         ServerPlayer teleporter, destination;
-        
         if (type == TeleportRequestType.TPA) {
-            // Requester teleports to target
             teleporter = requester;
             destination = target;
         } else {
-            // Target teleports to requester
             teleporter = target;
             destination = requester;
         }
-        
         TeleportLocation targetLocation = new TeleportLocation(destination);
-        
-        // Perform teleportation with delay
-        int delayTicks = teleportDelay * 20; // Convert seconds to ticks
+        // Enforce teleport safety if enabled
+        if (enableTeleportSafety && !targetLocation.isSafe()) {
+            teleporter.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.unsafe_location", destination.getName().getString()));
+            destination.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.unsafe_location_other", teleporter.getName().getString()));
+            if (logTeleportRequests) {
+                LOGGER.warn("Teleport request from {} to {} blocked: unsafe destination", teleporter.getName().getString(), destination.getName().getString());
+            }
+            return;
+        }
+        int delayTicks = teleportDelay * 20;
         TeleportUtil.teleportPlayer(teleporter, targetLocation, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {
-                teleporter.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.teleported_to", 
-                                                                 destination.getName().getString()));
-                destination.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.player_teleported_to_you", 
-                                                                  teleporter.getName().getString()));
-                
-                LOGGER.info("Player {} teleported to {} via {} request", 
-                           teleporter.getName().getString(), destination.getName().getString(), type);
+                teleporter.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.teleported_to", destination.getName().getString()));
+                destination.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.request.player_teleported_to_you", teleporter.getName().getString()));
+                if (logTeleportRequests) {
+                    LOGGER.info("Player {} teleported to {} via {} request", teleporter.getName().getString(), destination.getName().getString(), type);
+                }
             } else {
                 teleporter.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.failed", result.getMessage()));
-                destination.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.failed_other", 
-                                                               teleporter.getName().getString()));
-                
-                LOGGER.warn("Failed teleport request between {} and {}: {}", 
-                           teleporter.getName().getString(), destination.getName().getString(), result.getMessage());
+                destination.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.failed_other", teleporter.getName().getString()));
+                if (logTeleportRequests) {
+                    LOGGER.warn("Failed teleport request between {} and {}: {}", teleporter.getName().getString(), destination.getName().getString(), result.getMessage());
+                }
             }
         });
     }
@@ -266,8 +373,10 @@ public class TeleportRequestManager {
                                                        request.getRequesterName()));
         }
         
-        LOGGER.info("Teleport request from {} to {} timed out", 
+        if (logTeleportRequests) {
+            LOGGER.info("Teleport request from {} to {} timed out", 
                    request.getRequesterName(), request.getTargetName());
+        }
     }
     
     /**
