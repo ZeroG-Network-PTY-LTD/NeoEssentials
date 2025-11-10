@@ -62,6 +62,9 @@ neoessentials.chat.mute.permanent - Apply permanent mutes
 neoessentials.chat.mute.override - Override mute restrictions and exemptions
 neoessentials.chat.reply - Reply to last received private message
 neoessentials.chat.broadcast - Send server-wide broadcast messages
+neoessentials.chat.color - Use color codes in chat messages ✅ IMPLEMENTED
+neoessentials.chat.color.hex - Use hex color codes in chat messages ✅ IMPLEMENTED
+neoessentials.chat.format - Use text formatting (bold, italic, underline) in chat ✅ IMPLEMENTED
 
 ## Item Enchantment Extended Permissions
 neoessentials.item.enchant.others - Enchant items for other players
@@ -104,6 +107,8 @@ neoessentials.security.admin - Full security system administration
 ## Administrative Permissions
 neoessentials.admin - General administrative permission (grants most features)
 neoessentials.admin.override - Override all restrictions and exemptions
+neoessentials.admin.reload - Reload mod configuration via command ✅ IMPLEMENTED
+neoessentials.admin.permissions - Access permission management commands ✅ IMPLEMENTED
 neoessentials.reload - Reload mod configuration and systems
 neoessentials.reload.permissions - Reload only permission system
 neoessentials.reload.config - Reload only configuration files
@@ -199,6 +204,7 @@ neoessentials.mail - Access mail system ✅ IMPLEMENTED
 neoessentials.mail.send - Send mail to other players ✅ IMPLEMENTED
 neoessentials.mail.clear - Clear own mailbox ✅ IMPLEMENTED
 neoessentials.rules - View server rules ✅ IMPLEMENTED
+neoessentials.rules.admin - Administrative rules management (edit, add, remove, clear) ✅ IMPLEMENTED
 neoessentials.whois - View player information ✅ IMPLEMENTED
 neoessentials.whois.detailed - View detailed player information ✅ IMPLEMENTED
 neoessentials.suicide - Use suicide command ✅ IMPLEMENTED
@@ -254,6 +260,10 @@ neoessentials.dashboard.temppass - Generate temporary dashboard access password 
 ## Discord Integration Permissions
 neoessentials.discord.syncperms - Sync own permissions to Discord ✅ IMPLEMENTED
 neoessentials.discord.syncperms.others - Sync permissions for other players ✅ IMPLEMENTED
+
+## Gamemode Command Permissions
+neoessentials.gamemode - Change own gamemode ✅ IMPLEMENTED
+neoessentials.gamemode.others - Change other players' gamemodes ✅ IMPLEMENTED
 
 ## Permission System Extended Permissions
 neoessentials.permissions.list.groups - List all permission groups ✅ IMPLEMENTED

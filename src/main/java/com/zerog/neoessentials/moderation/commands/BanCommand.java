@@ -15,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -310,25 +311,40 @@ public class BanCommand {
             String resolvedName = playerName;
             
             // First check if it's a banned player
-            for (BanManager.BanEntry ban : banManager.getAllPlayerBans()) {
+            List<BanManager.BanEntry> allBans = banManager.getAllPlayerBans();
+            LOGGER.info("Checking {} active bans for player '{}'", allBans.size(), playerName);
+            
+            for (BanManager.BanEntry ban : allBans) {
+                LOGGER.debug("Checking ban: {} (UUID: {})", ban.playerName, ban.playerId);
                 if (ban.playerName.equalsIgnoreCase(playerName)) {
                     playerId = ban.playerId;
                     resolvedName = ban.playerName;
+                    LOGGER.info("Found banned player: {} with UUID {}", resolvedName, playerId);
                     break;
                 }
             }
             
             // If not found in bans, try player cache
             if (playerId == null) {
+                LOGGER.info("Player '{}' not found in ban list, checking player cache", playerName);
                 var profile = server.getProfileCache().get(playerName);
                 if (profile.isPresent()) {
                     playerId = profile.get().getId();
                     resolvedName = profile.get().getName();
+                    LOGGER.info("Found player in cache: {} with UUID {}", resolvedName, playerId);
                 }
             }
             
             if (playerId == null) {
+                LOGGER.warn("Could not find player '{}' in bans or player cache", playerName);
                 source.sendFailure(MessageUtil.error("neoessentials.moderation.player_not_found", playerName));
+                return 0;
+            }
+            
+            // Check if player is actually banned before trying to unban
+            if (!banManager.isPlayerBanned(playerId)) {
+                LOGGER.info("Player {} ({}) is not currently banned", resolvedName, playerId);
+                source.sendFailure(MessageUtil.error("neoessentials.moderation.player_not_banned", resolvedName));
                 return 0;
             }
             
@@ -346,6 +362,7 @@ public class BanCommand {
                 LOGGER.info("Player {} unbanned by {}", resolvedName, unbannedBy);
                 return 1;
             } else {
+                LOGGER.error("Failed to unban player {} ({}): unbanPlayer returned false", resolvedName, playerId);
                 String message = MessageUtil.localize("neoessentials.moderation.unban_failed", resolvedName);
                 source.sendFailure(MessageUtil.error(message));
                 return 0;

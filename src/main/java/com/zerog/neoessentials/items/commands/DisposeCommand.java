@@ -15,23 +15,65 @@ import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Provides item disposal functionality through a temporary trash GUI.
+ * 
+ * <p>Commands:</p>
+ * <ul>
+ *   <li>/dispose - Open trash GUI</li>
+ *   <li>/dispose confirm - Confirm pending disposal</li>
+ *   <li>/dispose cancel - Cancel and restore items</li>
+ *   <li>/trash - Alias for /dispose</li>
+ * </ul>
+ * 
+ * <p>Permissions:</p>
+ * <ul>
+ *   <li>neoessentials.item.dispose - Use dispose/trash commands</li>
+ * </ul>
+ * 
+ * <p>Configuration:</p>
+ * <ul>
+ *   <li>commands.dispose.enabled - Enable/disable command</li>
+ * </ul>
+ * 
+ * <p>Features:</p>
+ * <ul>
+ *   <li>27-slot trash GUI for item disposal</li>
+ *   <li>Pending disposal tracking for safety</li>
+ *   <li>Automatic restoration on disconnect</li>
+ *   <li>Audit logging for administrative oversight</li>
+ * </ul>
+ */
 public class DisposeCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DisposeCommand.class);
+    
     // Store pending disposals: UUID -> SimpleContainer
     private static final Map<java.util.UUID, SimpleContainer> pendingDisposals = new HashMap<>();
 
     /**
      * Restore pending items to player (used on disconnect or cancel).
+     * Logs restoration for audit purposes.
+     * 
+     * @param player The player whose items to restore
      */
     public static void restorePendingItems(ServerPlayer player) {
         SimpleContainer container = pendingDisposals.remove(player.getUUID());
         if (container != null) {
+            int itemCount = 0;
             for (int i = 0; i < container.getContainerSize(); i++) {
                 if (!container.getItem(i).isEmpty()) {
                     player.getInventory().placeItemBackInInventory(container.getItem(i));
+                    itemCount++;
                 }
             }
             player.sendSystemMessage(MessageUtil.info("commands.neoessentials.dispose.restored"));
+            
+            // Log restoration for audit trail
+            LOGGER.debug("Restored {} pending disposal items for player {} (disconnect/cancel)", 
+                itemCount, player.getName().getString());
         }
     }
 
@@ -51,7 +93,21 @@ public class DisposeCommand {
                             ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
-                        if (pendingDisposals.remove(permResult.getPlayer().getUUID()) != null) {
+                        ServerPlayer player = permResult.getPlayer();
+                        SimpleContainer container = pendingDisposals.remove(player.getUUID());
+                        if (container != null) {
+                            // Count items being disposed
+                            int itemCount = 0;
+                            for (int i = 0; i < container.getContainerSize(); i++) {
+                                if (!container.getItem(i).isEmpty()) {
+                                    itemCount++;
+                                }
+                            }
+                            
+                            // Log disposal confirmation for audit trail
+                            LOGGER.info("Player {} confirmed disposal of {} items", 
+                                player.getName().getString(), itemCount);
+                            
                             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.dispose.confirmed"), false);
                         } else {
                             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.dispose.nothing_pending"));
@@ -70,12 +126,19 @@ public class DisposeCommand {
                         ServerPlayer player = permResult.getPlayer();
                         SimpleContainer container = pendingDisposals.remove(player.getUUID());
                         if (container != null) {
-                            // Return items to player
+                            // Count and return items to player
+                            int itemCount = 0;
                             for (int i = 0; i < container.getContainerSize(); i++) {
                                 if (!container.getItem(i).isEmpty()) {
                                     player.getInventory().placeItemBackInInventory(container.getItem(i));
+                                    itemCount++;
                                 }
                             }
+                            
+                            // Log cancellation for audit trail
+                            LOGGER.debug("Player {} cancelled disposal and restored {} items", 
+                                player.getName().getString(), itemCount);
+                            
                             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.dispose.restored"), false);
                         } else {
                             ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.dispose.nothing_pending"));

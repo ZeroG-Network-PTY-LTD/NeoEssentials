@@ -37,4 +37,10 @@ public interface ExternalPermissionAdapter {
      * @return The name of the external system (e.g., "LuckPerms").
      */
     String getName();
+    
+    /**
+     * Check if this adapter is properly loaded and available for use.
+     * @return true if the external system is available, false otherwise.
+     */
+    boolean isAvailable();
 }

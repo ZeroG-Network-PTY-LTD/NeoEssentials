@@ -16,6 +16,43 @@ import java.util.concurrent.CompletableFuture;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Main NeoEssentials mod command providing system management and command routing functionality.
+ * 
+ * <p>Commands:</p>
+ * <ul>
+ *   <li>/neoessentials - Display help and list available commands</li>
+ *   <li>/neoessentials reload - Reload all configurations (admin only)</li>
+ *   <li>/neoessentials &lt;command&gt; [args] - Execute NeoEssentials command through router</li>
+ *   <li>/neoe - Short alias for /neoessentials</li>
+ * </ul>
+ * 
+ * <p>Permissions:</p>
+ * <ul>
+ *   <li>neoessentials.use - Base command access and help display</li>
+ *   <li>neoessentials.admin.reload - Configuration reload capability</li>
+ * </ul>
+ * 
+ * <p>Features:</p>
+ * <ul>
+ *   <li>Comprehensive configuration reload (config, translations, permissions, chat)</li>
+ *   <li>Command routing through centralized dispatcher</li>
+ *   <li>Permission-based command filtering in help display</li>
+ *   <li>Console support with full access</li>
+ *   <li>Command validation through CommandRegistry</li>
+ *   <li>Detailed error handling and user feedback</li>
+ *   <li>Audit logging for administrative actions</li>
+ * </ul>
+ * 
+ * <p>Reload Functionality:</p>
+ * The reload subcommand refreshes:
+ * <ul>
+ *   <li>All configuration files from disk</li>
+ *   <li>Translation/language files</li>
+ *   <li>Permission system data</li>
+ *   <li>ChatManager configuration</li>
+ * </ul>
+ */
 public class ModRootCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModRootCommand.class);
 

@@ -124,18 +124,22 @@ public class JailManager {
      * Jail a player
      */
     public boolean jailPlayer(String playerName, UUID playerId, String reason, String jailedBy, String jailName) {
-        if (isPlayerJailed(playerId)) {
-            return false; // Already jailed
+        // Check if already jailed atomically using putIfAbsent
+        if (jailedPlayers.putIfAbsent(playerId, null) != null) {
+            // Already jailed
+            return false;
         }
 
         JailLocation jailLoc = jailLocations.get(jailName);
         if (jailLoc == null) {
+            jailedPlayers.remove(playerId, null); // Clean up
             return false; // Jail doesn't exist
         }
 
-        // Track jail count
-        int jailCount = jailCounts.getOrDefault(playerId, 0) + 1;
-        jailCounts.put(playerId, jailCount);
+        // Track jail count ATOMICALLY using compute
+        int jailCount = jailCounts.compute(playerId, (id, count) -> {
+            return (count == null ? 0 : count) + 1;
+        });
 
         // Check thresholds
         int tempBanThreshold = com.zerog.neoessentials.config.ConfigManager.getMaxJailsBeforeTempBan();
@@ -144,6 +148,7 @@ public class JailManager {
 
         if (jailCount >= permBanThreshold) {
             // Issue permanent ban
+            jailedPlayers.remove(playerId, null); // Clean up
             BanManager banManager = BanManager.getInstance();
             banManager.banPlayer(playerName, playerId, "Exceeded maximum jailings (permanent ban)", "System");
             jailCounts.put(playerId, 0); // Reset count
@@ -153,6 +158,7 @@ public class JailManager {
             return false;
         } else if (jailCount >= tempBanThreshold) {
             // Issue temp ban
+            jailedPlayers.remove(playerId, null); // Clean up
             BanManager banManager = BanManager.getInstance();
             banManager.tempBanPlayer(playerName, playerId, "Exceeded maximum jailings (temporary ban)", "System", tempBanDuration * 60 * 1000L);
             if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogJailActionsEnabled()) {
@@ -161,15 +167,18 @@ public class JailManager {
             return false;
         }
 
+        // Create jail entry
+        JailEntry jail = new JailEntry(playerName, playerId, reason, jailedBy, jailName);
+
         // Store original location
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ServerPlayer player = server.getPlayerList().getPlayer(playerId);
             if (player != null) {
-                JailEntry jail = new JailEntry(playerName, playerId, reason, jailedBy, jailName);
                 jail.originalLocation = player.blockPosition();
                 jail.originalDimension = player.level().dimension().location().toString();
 
+                // Replace the null placeholder with actual jail entry
                 jailedPlayers.put(playerId, jail);
                 saveJailedPlayers();
 
@@ -188,7 +197,6 @@ public class JailManager {
         }
 
         // Player offline - still record the jail
-        JailEntry jail = new JailEntry(playerName, playerId, reason, jailedBy, jailName);
         jailedPlayers.put(playerId, jail);
         saveJailedPlayers();
 

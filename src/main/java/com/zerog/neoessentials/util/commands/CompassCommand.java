@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.resources.ResourceLocation;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
@@ -75,7 +74,7 @@ public class CompassCommand {
         
         // Get facing direction
         float yaw = target.getYRot();
-        String cardinalDirection = getCardinalDirection(yaw);
+        String cardinalDirection = CommandUtil.getCardinalDirection(yaw);
         String exactDirection = getExactDirection(yaw);
         
         // Get coordinates
@@ -84,11 +83,11 @@ public class CompassCommand {
         double z = target.getZ();
         
         // Get world information
-        String worldName = getWorldName(level.dimension().location().toString());
+        String worldName = CommandUtil.getWorldName(level.dimension().location().toString());
         
         // Get biome information
         Biome biome = level.getBiome(pos).value();
-        String biomeName = getBiomeName(biome, level, pos);
+        String biomeName = CommandUtil.getBiomeName(biome, level, pos);
         
         // Calculate distance to spawn
         BlockPos spawnPos = level.getSharedSpawnPos();
@@ -112,24 +111,27 @@ public class CompassCommand {
             String.format("%.1f", distanceToSpawn)), false);
         
         // Show direction to spawn
-        String directionToSpawn = getDirectionToPoint(pos, spawnPos);
+        String directionToSpawn = CommandUtil.getDirectionFromOffset(
+            spawnPos.getX() - pos.getX(), 
+            spawnPos.getZ() - pos.getZ()
+        );
         source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.compass.direction_to_spawn", directionToSpawn), false);
         
         // Dimension-specific information
-        if (level.dimension() == Level.OVERWORLD) {
+        if (CommandUtil.isOverworld(level)) {
             // Show distance to world border
             double borderDistance = getDistanceToWorldBorder(level, pos);
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.compass.world_border_distance", 
                 String.format("%.0f", borderDistance)), false);
             
-        } else if (level.dimension() == Level.NETHER) {
+        } else if (CommandUtil.isNether(level)) {
             // Show overworld equivalent coordinates
-            int overworldX = pos.getX() * 8;
-            int overworldZ = pos.getZ() * 8;
+            int overworldX = CommandUtil.netherToOverworld(pos.getX());
+            int overworldZ = CommandUtil.netherToOverworld(pos.getZ());
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.compass.overworld_equivalent", 
                 overworldX, overworldZ), false);
                 
-        } else if (level.dimension() == Level.END) {
+        } else if (CommandUtil.isEnd(level)) {
             // Show distance to main island center (0, 0)
             double distanceToCenter = Math.sqrt(pos.getX() * pos.getX() + pos.getZ() * pos.getZ());
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.compass.distance_to_center", 
@@ -137,19 +139,7 @@ public class CompassCommand {
         }
     }
     
-    /**
-     * Get cardinal direction from yaw rotation
-     */
-    private static String getCardinalDirection(float yaw) {
-        // Normalize yaw to 0-360 range
-        yaw = ((yaw % 360) + 360) % 360;
-        
-        if (yaw >= 315 || yaw < 45) return "South";
-        if (yaw >= 45 && yaw < 135) return "West";
-        if (yaw >= 135 && yaw < 225) return "North";
-        if (yaw >= 225 && yaw < 315) return "East";
-        return "South"; // fallback
-    }
+    // Removed getCardinalDirection - now using CommandUtil
     
     /**
      * Get exact direction with degrees
@@ -160,25 +150,7 @@ public class CompassCommand {
         return String.format("%.1f°", yaw);
     }
     
-    /**
-     * Get direction from current position to target position
-     */
-    private static String getDirectionToPoint(BlockPos from, BlockPos to) {
-        double deltaX = to.getX() - from.getX();
-        double deltaZ = to.getZ() - from.getZ();
-        
-        double angle = Math.toDegrees(Math.atan2(deltaZ, deltaX));
-        angle = ((angle % 360) + 360) % 360; // Normalize to 0-360
-        
-        // Convert to minecraft coordinate system (South = 0°)
-        angle = (angle + 90) % 360;
-        
-        if (angle >= 315 || angle < 45) return "South";
-        if (angle >= 45 && angle < 135) return "West";
-        if (angle >= 135 && angle < 225) return "North";
-        if (angle >= 225 && angle < 315) return "East";
-        return "South";
-    }
+    // Removed getDirectionToPoint - now using CommandUtil.getDirectionFromOffset
     
     /**
      * Get distance to world border
@@ -194,26 +166,5 @@ public class CompassCommand {
         return Math.min(borderSize - distanceX, borderSize - distanceZ);
     }
     
-    /**
-     * Get user-friendly world name
-     */
-    private static String getWorldName(String dimensionKey) {
-        return switch (dimensionKey) {
-            case "minecraft:overworld" -> "Overworld";
-            case "minecraft:the_nether" -> "Nether";
-            case "minecraft:the_end" -> "End";
-            default -> dimensionKey;
-        };
-    }
-    
-    /**
-     * Get biome name
-     */
-    private static String getBiomeName(Biome biome, Level level, BlockPos pos) {
-        ResourceLocation biomeKey = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BIOME).getKey(biome);
-        if (biomeKey != null) {
-            return biomeKey.toString().replaceAll("minecraft:", "").replaceAll("_", " ");
-        }
-        return "Unknown";
-    }
+    // Removed getWorldName and getBiomeName - now using CommandUtil
 }

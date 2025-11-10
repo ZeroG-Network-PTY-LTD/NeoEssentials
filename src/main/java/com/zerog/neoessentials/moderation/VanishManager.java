@@ -11,6 +11,8 @@ import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -29,14 +31,47 @@ import java.util.concurrent.ConcurrentHashMap;
  * Manages player vanish system for staff invisibility
  */
 public class VanishManager {
+    /**
+     * Get priority for a player (default 10, override for custom logic)
+     */
+    public int getPlayerPriority(UUID playerId) {
+        // Integrate with permission/group system
+        // Use PermissionSystem.getManager().getUser(playerId).getGroup()
+        String group = null;
+        try {
+            group = com.zerog.neoessentials.permissions.PermissionSystem.getManager().getUser(playerId).getGroup();
+        } catch (Exception e) {
+            // fallback
+        }
+        if (group == null) return 10;
+        switch (group.toLowerCase()) {
+            case "owner":
+                return 0;
+            case "admin":
+                return 1;
+            case "mod":
+            case "moderator":
+                return 2;
+            case "helper":
+                return 3;
+            case "vip":
+                return 5;
+            case "default":
+            case "member":
+            default:
+                return 10;
+        }
+    }
     private static final Logger LOGGER = LoggerFactory.getLogger(VanishManager.class);
     private static VanishManager instance;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final File vanishFile;
     
     // In-memory cache for quick lookups
-    private final Set<UUID> vanishedPlayers = ConcurrentHashMap.newKeySet();
-    private final Set<UUID> canSeeVanished = ConcurrentHashMap.newKeySet();
+    // Vanished players and their priority
+    private final Map<UUID, Integer> vanishedPlayers = new ConcurrentHashMap<>();
+    // Players who can see vanished and their priority
+    private final Map<UUID, Integer> viewerPriorities = new ConcurrentHashMap<>();
     
     public static class VanishEntry {
         public String playerName;
@@ -83,8 +118,9 @@ public class VanishManager {
         if (isPlayerVanished(playerId)) {
             return false; // Already vanished
         }
-        
-        vanishedPlayers.add(playerId);
+        // Default priority for vanished player (can be customized)
+        int vanishPriority = getPlayerPriority(playerId);
+        vanishedPlayers.put(playerId, vanishPriority);
         saveData();
         
         // Hide player from others
@@ -109,10 +145,9 @@ public class VanishManager {
      * Unvanish a player
      */
     public boolean unvanishPlayer(UUID playerId) {
-        if (!vanishedPlayers.remove(playerId)) {
+        if (vanishedPlayers.remove(playerId) == null) {
             return false; // Not vanished
         }
-        
         saveData();
         
         // Show player to others
@@ -148,14 +183,16 @@ public class VanishManager {
      * Enable see vanished for a player
      */
     public void enableSeeVanished(UUID playerId) {
-        canSeeVanished.add(playerId);
+    // Default priority for viewer (can be customized)
+    int viewerPriority = getPlayerPriority(playerId);
+    viewerPriorities.put(playerId, viewerPriority);
         
         // Show all vanished players to this player
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ServerPlayer observer = server.getPlayerList().getPlayer(playerId);
             if (observer != null) {
-                for (UUID vanishedId : vanishedPlayers) {
+                for (UUID vanishedId : vanishedPlayers.keySet()) {
                     ServerPlayer vanishedPlayer = server.getPlayerList().getPlayer(vanishedId);
                     if (vanishedPlayer != null && !vanishedId.equals(playerId)) {
                         showPlayerToSpecific(vanishedPlayer, observer);
@@ -173,14 +210,14 @@ public class VanishManager {
      * Disable see vanished for a player
      */
     public void disableSeeVanished(UUID playerId) {
-        canSeeVanished.remove(playerId);
+    viewerPriorities.remove(playerId);
         
         // Hide all vanished players from this player
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server != null) {
             ServerPlayer observer = server.getPlayerList().getPlayer(playerId);
             if (observer != null) {
-                for (UUID vanishedId : vanishedPlayers) {
+                for (UUID vanishedId : vanishedPlayers.keySet()) {
                     ServerPlayer vanishedPlayer = server.getPlayerList().getPlayer(vanishedId);
                     if (vanishedPlayer != null && !vanishedId.equals(playerId)) {
                         hidePlayerFromSpecific(vanishedPlayer, observer);
@@ -198,7 +235,7 @@ public class VanishManager {
      * Toggle see vanished for a player
      */
     public boolean toggleSeeVanished(UUID playerId) {
-        if (canSeeVanished.contains(playerId)) {
+        if (viewerPriorities.containsKey(playerId)) {
             disableSeeVanished(playerId);
             return false;
         } else {
@@ -211,28 +248,28 @@ public class VanishManager {
      * Check if a player is vanished
      */
     public boolean isPlayerVanished(UUID playerId) {
-        return vanishedPlayers.contains(playerId);
+    return vanishedPlayers.containsKey(playerId);
     }
     
     /**
      * Check if a player can see vanished players
      */
     public boolean canPlayerSeeVanished(UUID playerId) {
-        return canSeeVanished.contains(playerId);
+    return viewerPriorities.containsKey(playerId);
     }
     
     /**
      * Get all vanished players
      */
     public Set<UUID> getVanishedPlayers() {
-        return new HashSet<>(vanishedPlayers);
+    return new HashSet<>(vanishedPlayers.keySet());
     }
     
     /**
      * Get all players who can see vanished
      */
     public Set<UUID> getCanSeeVanished() {
-        return new HashSet<>(canSeeVanished);
+    return new HashSet<>(viewerPriorities.keySet());
     }
     
     /**
@@ -244,18 +281,20 @@ public class VanishManager {
         // If player is vanished, hide them from others
         if (isPlayerVanished(playerId)) {
             hidePlayerFromOthers(player);
-            
             String message = MessageUtil.localize("neoessentials.moderation.vanish_reminder");
             player.sendSystemMessage(MessageUtil.info(message));
         }
-        
-        // If player can see vanished, show all vanished players to them
+        // If player can see vanished, show all vanished players to them (priority check)
         if (canPlayerSeeVanished(playerId)) {
-            for (UUID vanishedId : vanishedPlayers) {
+            int viewerPriority = viewerPriorities.getOrDefault(playerId, 10);
+            for (UUID vanishedId : vanishedPlayers.keySet()) {
                 if (!vanishedId.equals(playerId)) {
-                    ServerPlayer vanishedPlayer = player.getServer().getPlayerList().getPlayer(vanishedId);
-                    if (vanishedPlayer != null) {
-                        showPlayerToSpecific(vanishedPlayer, player);
+                    int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 10);
+                    if (viewerPriority <= vanishedPriority) {
+                        ServerPlayer vanishedPlayer = player.getServer().getPlayerList().getPlayer(vanishedId);
+                        if (vanishedPlayer != null) {
+                            showPlayerToSpecific(vanishedPlayer, player);
+                        }
                     }
                 }
             }
@@ -281,9 +320,15 @@ public class VanishManager {
         MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
 
+        UUID vanishedId = vanishedPlayer.getUUID();
+        int vanishedPriority = vanishedPlayers.getOrDefault(vanishedId, 10); // Default priority 10 if not set
         for (ServerPlayer otherPlayer : server.getPlayerList().getPlayers()) {
-            if (otherPlayer != vanishedPlayer && !canPlayerSeeVanished(otherPlayer.getUUID())) {
-                hidePlayerFromSpecific(vanishedPlayer, otherPlayer);
+            if (otherPlayer != vanishedPlayer) {
+                int viewerPriority = viewerPriorities.getOrDefault(otherPlayer.getUUID(), 10);
+                // Only show if viewerPriority <= vanishedPriority
+                if (viewerPriority > vanishedPriority) {
+                    hidePlayerFromSpecific(vanishedPlayer, otherPlayer);
+                }
             }
         }
     }
@@ -345,20 +390,22 @@ public class VanishManager {
         try (FileReader reader = new FileReader(vanishFile)) {
             JsonObject root = gson.fromJson(reader, JsonObject.class);
             if (root != null) {
-                
                 if (root.has("vanished")) {
                     JsonArray vanishedArray = root.getAsJsonArray("vanished");
                     for (JsonElement element : vanishedArray) {
-                        String uuidStr = element.getAsString();
-                        vanishedPlayers.add(UUID.fromString(uuidStr));
+                        JsonObject obj = element.getAsJsonObject();
+                        UUID uuid = UUID.fromString(obj.get("uuid").getAsString());
+                        int priority = obj.has("priority") ? obj.get("priority").getAsInt() : 10;
+                        vanishedPlayers.put(uuid, priority);
                     }
                 }
-                
-                if (root.has("canSeeVanished")) {
-                    JsonArray canSeeArray = root.getAsJsonArray("canSeeVanished");
-                    for (JsonElement element : canSeeArray) {
-                        String uuidStr = element.getAsString();
-                        canSeeVanished.add(UUID.fromString(uuidStr));
+                if (root.has("viewerPriorities")) {
+                    JsonArray viewerArray = root.getAsJsonArray("viewerPriorities");
+                    for (JsonElement element : viewerArray) {
+                        JsonObject obj = element.getAsJsonObject();
+                        UUID uuid = UUID.fromString(obj.get("uuid").getAsString());
+                        int priority = obj.has("priority") ? obj.get("priority").getAsInt() : 10;
+                        viewerPriorities.put(uuid, priority);
                     }
                 }
             }
@@ -373,19 +420,22 @@ public class VanishManager {
     private void saveData() {
         try (FileWriter writer = new FileWriter(vanishFile)) {
             JsonObject root = new JsonObject();
-            
             JsonArray vanishedArray = new JsonArray();
-            for (UUID playerId : vanishedPlayers) {
-                vanishedArray.add(playerId.toString());
+            for (Map.Entry<UUID, Integer> entry : vanishedPlayers.entrySet()) {
+                JsonObject obj = new JsonObject();
+                obj.addProperty("uuid", entry.getKey().toString());
+                obj.addProperty("priority", entry.getValue());
+                vanishedArray.add(obj);
             }
             root.add("vanished", vanishedArray);
-            
-            JsonArray canSeeArray = new JsonArray();
-            for (UUID playerId : canSeeVanished) {
-                canSeeArray.add(playerId.toString());
+            JsonArray viewerArray = new JsonArray();
+            for (Map.Entry<UUID, Integer> entry : viewerPriorities.entrySet()) {
+                JsonObject obj = new JsonObject();
+                obj.addProperty("uuid", entry.getKey().toString());
+                obj.addProperty("priority", entry.getValue());
+                viewerArray.add(obj);
             }
-            root.add("canSeeVanished", canSeeArray);
-            
+            root.add("viewerPriorities", viewerArray);
             gson.toJson(root, writer);
         } catch (IOException e) {
             LOGGER.error("Failed to save vanish data", e);

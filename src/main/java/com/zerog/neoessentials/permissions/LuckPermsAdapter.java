@@ -71,4 +71,9 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
     public String getName() {
         return "LuckPerms";
     }
+    
+    @Override
+    public boolean isAvailable() {
+        return luckPermsLoaded && luckPermsApi != null;
+    }
 }

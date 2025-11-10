@@ -2,12 +2,15 @@ package com.zerog.neoessentials.util.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
+import com.zerog.neoessentials.moderation.VanishManager;
+import com.zerog.neoessentials.chat.AfkManager;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,6 +19,31 @@ import java.util.stream.Collectors;
  * Helps identify players who are using custom display names
  */
 public class RealnameCommand {
+    
+    // Suggestion provider for player names (real names and nicknames)
+    private static final SuggestionProvider<CommandSourceStack> SUGGEST_PLAYERS_AND_NICKS = (context, builder) -> {
+        String input = builder.getRemaining().toLowerCase();
+        
+        for (ServerPlayer player : context.getSource().getServer().getPlayerList().getPlayers()) {
+            String realName = player.getName().getString();
+            String nickname = NickCommand.getNickname(player.getUUID());
+            
+            // Suggest real name
+            if (realName.toLowerCase().startsWith(input)) {
+                builder.suggest(realName);
+            }
+            
+            // Suggest nickname (stripped of color codes)
+            if (nickname != null) {
+                String cleanNickname = nickname.replaceAll("&[0-9a-fk-or#]", "").replaceAll("&#[0-9a-fA-F]{6}", "");
+                if (cleanNickname.toLowerCase().startsWith(input)) {
+                    builder.suggest(cleanNickname, net.minecraft.network.chat.Component.literal("Nickname of " + realName));
+                }
+            }
+        }
+        
+        return builder.buildFuture();
+    };
     
     /**
      * Register the /realname command
@@ -26,6 +54,7 @@ public class RealnameCommand {
         dispatcher.register(
             Commands.literal("realname")
                 .then(Commands.argument("player", StringArgumentType.word())
+                    .suggests(SUGGEST_PLAYERS_AND_NICKS)
                     .executes(ctx -> {
                         PermissionValidator.PermissionResult permResult = 
                             PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.realname");
@@ -176,17 +205,19 @@ public class RealnameCommand {
             statusBuilder.append("§cOperator");
         }
         
-        // Check for vanish status (placeholder)
-        if (PermissionValidator.validatePermission(player.createCommandSourceStack(), "neoessentials.vanish.active").hasPermission()) {
+        // Check for vanish status
+        VanishManager vanishManager = VanishManager.getInstance();
+        if (vanishManager.isPlayerVanished(player.getUUID())) {
             if (statusBuilder.length() > 0) statusBuilder.append("§7, ");
             statusBuilder.append("§7Vanished");
         }
         
-        // Check for AFK status (placeholder)
-        // if (isAfk(player)) {
-        //     if (statusBuilder.length() > 0) statusBuilder.append("§7, ");
-        //     statusBuilder.append("§eAFK");
-        // }
+        // Check for AFK status
+        AfkManager afkManager = AfkManager.getInstance();
+        if (afkManager.isAfk(player)) {
+            if (statusBuilder.length() > 0) statusBuilder.append("§7, ");
+            statusBuilder.append("§eAFK");
+        }
         
         if (statusBuilder.length() > 0) {
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.realname.status", statusBuilder.toString()), false);

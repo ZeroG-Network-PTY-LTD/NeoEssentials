@@ -68,7 +68,7 @@ public class HelpopCommand {
         // Get sender information
         String playerName = sender.getName().getString();
         BlockPos pos = sender.blockPosition();
-        String worldName = getWorldName(sender.level().dimension().location().toString());
+        String worldName = CommandUtil.getWorldName(sender.level());
         String timeStamp = LocalDateTime.now().format(TIME_FORMAT);
         String location = String.format("%s (%d, %d, %d)", worldName, pos.getX(), pos.getY(), pos.getZ());
         
@@ -151,17 +151,5 @@ public class HelpopCommand {
         staff.sendSystemMessage(Component.literal("§7Message: ").append(messageComponent));
         staff.sendSystemMessage(Component.literal("§7Actions: ").append(replyComponent));
         staff.sendSystemMessage(Component.literal("§6§l=================="));
-    }
-    
-    /**
-     * Get user-friendly world name
-     */
-    private static String getWorldName(String dimensionKey) {
-        return switch (dimensionKey) {
-            case "minecraft:overworld" -> "Overworld";
-            case "minecraft:the_nether" -> "Nether";
-            case "minecraft:the_end" -> "End";
-            default -> dimensionKey;
-        };
     }
 }

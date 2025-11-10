@@ -85,16 +85,13 @@ public class JailCommand {
                             StringArgumentType.getString(ctx, "reason"))))))
         );
         
-        // /unjail <player> (stub)
+        // /unjail <player>
         dispatcher.register(Commands.literal("unjail")
             .requires(source -> com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
                 getPlayerUUID(source), "neoessentials.moderation.unjail"))
             .then(Commands.argument("player", StringArgumentType.word())
                 .suggests(SUGGEST_JAILED_PLAYERS)
-                .executes(ctx -> {
-                    ctx.getSource().sendFailure(MessageUtil.error("/unjail not yet implemented."));
-                    return 0;
-                }))
+                .executes(ctx -> executeUnjail(ctx, StringArgumentType.getString(ctx, "player"))))
         );
         
         // /setjail <name>
@@ -197,6 +194,67 @@ public class JailCommand {
         } catch (Exception e) {
             LOGGER.error("Error executing jail command", e);
             source.sendFailure(MessageUtil.error("An error occurred while executing the jail command."));
+            return 0;
+        }
+    }
+    
+    private static int executeUnjail(CommandContext<CommandSourceStack> ctx, String playerName) {
+        CommandSourceStack source = ctx.getSource();
+        String unjailedBy = getCommandSender(source);
+        
+        try {
+            JailManager jailManager = JailManager.getInstance();
+            MinecraftServer server = source.getServer();
+            
+            // Try to find the player's UUID
+            UUID playerId = null;
+            String resolvedName = playerName;
+            
+            // First, try online players
+            ServerPlayer onlinePlayer = server.getPlayerList().getPlayerByName(playerName);
+            if (onlinePlayer != null) {
+                playerId = onlinePlayer.getUUID();
+                resolvedName = onlinePlayer.getName().getString();
+            } else {
+                // Try player cache
+                var profile = server.getProfileCache().get(playerName);
+                if (profile.isPresent()) {
+                    playerId = profile.get().getId();
+                    resolvedName = profile.get().getName();
+                }
+            }
+
+            if (playerId == null) {
+                source.sendFailure(MessageUtil.error("neoessentials.moderation.player_not_found", playerName));
+                return 0;
+            }
+
+            // Check if player is actually jailed
+            if (!jailManager.isPlayerJailed(playerId)) {
+                source.sendFailure(MessageUtil.error("neoessentials.moderation.player_not_jailed", resolvedName));
+                return 0;
+            }
+
+            // Unjail the player
+            boolean success = jailManager.unjailPlayer(playerId);
+
+            if (success) {
+                String confirmMessage = MessageUtil.localize("neoessentials.moderation.unjail_success", resolvedName, unjailedBy);
+                source.sendSuccess(() -> MessageUtil.success(confirmMessage), true);
+
+                // Broadcast unjail to all online staff
+                broadcastToStaff(server, MessageUtil.localize("neoessentials.moderation.unjail_broadcast", 
+                    resolvedName, unjailedBy));
+
+                LOGGER.info("Player {} unjailed by {}", resolvedName, unjailedBy);
+                return 1;
+            } else {
+                source.sendFailure(MessageUtil.error("neoessentials.moderation.unjail_failed", resolvedName));
+                return 0;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error executing unjail command", e);
+            source.sendFailure(MessageUtil.error("An error occurred while executing the unjail command."));
             return 0;
         }
     }

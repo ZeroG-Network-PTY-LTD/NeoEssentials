@@ -145,29 +145,26 @@ public class HomeManager {
     public boolean setHome(ServerPlayer player, String homeName, TeleportLocation customLocation) {
         UUID playerId = player.getUUID();
 
-        // Enforce set home cooldown
+        // Enforce set home cooldown - atomic check
         if (homeSetCooldownSeconds > 0) {
             long now = System.currentTimeMillis();
-            long lastSet = lastHomeSetTimestamps.getOrDefault(playerId, 0L);
-            long elapsed = (now - lastSet) / 1000L;
-            if (elapsed < homeSetCooldownSeconds) {
-                long wait = homeSetCooldownSeconds - elapsed;
-                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.cooldown", wait));
-                return false;
+            // Use putIfAbsent to atomically check and update cooldown
+            Long lastSet = lastHomeSetTimestamps.putIfAbsent(playerId, now);
+            if (lastSet != null) {
+                long elapsed = (now - lastSet) / 1000L;
+                if (elapsed < homeSetCooldownSeconds) {
+                    long wait = homeSetCooldownSeconds - elapsed;
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.cooldown", wait));
+                    return false;
+                }
+                // Update timestamp atomically
+                lastHomeSetTimestamps.put(playerId, now);
             }
         }
 
         // Validate home name
         if (!isValidHomeName(homeName)) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.invalid_name", homeName));
-            return false;
-        }
-
-        // Check if player has reached home limit (consider permission-based max)
-        Map<String, TeleportLocation> homes = playerHomes.computeIfAbsent(playerId, k -> new HashMap<>());
-        int allowedHomes = getMaxHomesForPlayer(player);
-        if (!homes.containsKey(homeName) && homes.size() >= allowedHomes) {
-            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.limit_reached", allowedHomes));
             return false;
         }
 
@@ -190,17 +187,40 @@ public class HomeManager {
             location = safeLocation;
         }
 
-        // Set the home
-        boolean isNew = !homes.containsKey(homeName);
-        homes.put(homeName, location);
+        // ATOMIC: Set the home using computeIfAbsent + compute for atomic limit check
+        int allowedHomes = getMaxHomesForPlayer(player);
+        final TeleportLocation finalLocation = location;
+        
+        // Use compute to atomically check limit and add home
+        boolean[] result = new boolean[2]; // [0] = success, [1] = isNew
+        playerHomes.compute(playerId, (id, homes) -> {
+            if (homes == null) {
+                homes = new ConcurrentHashMap<>();
+            }
+            
+            // Check limit atomically
+            boolean isNew = !homes.containsKey(homeName);
+            if (isNew && homes.size() >= allowedHomes) {
+                result[0] = false; // Limit exceeded
+                return homes;
+            }
+            
+            // Set the home
+            homes.put(homeName, finalLocation);
+            result[0] = true; // Success
+            result[1] = isNew; // Track if new
+            return homes;
+        });
+        
+        if (!result[0]) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.limit_reached", allowedHomes));
+            return false;
+        }
+        
+        boolean isNew = result[1];
 
         // Save to file
         saveHomes();
-
-        // Update cooldown timestamp
-        if (homeSetCooldownSeconds > 0) {
-            lastHomeSetTimestamps.put(playerId, System.currentTimeMillis());
-        }
 
         if (isNew) {
             player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.set", homeName, location.getLocationString()));
@@ -225,36 +245,41 @@ public class HomeManager {
      */
     public boolean deleteHome(ServerPlayer player, String homeName) {
         UUID playerId = player.getUUID();
-        Map<String, TeleportLocation> homes = playerHomes.get(playerId);
 
-        // Enforce delete home cooldown
+        // Enforce delete home cooldown - atomic check
         if (homeDeleteCooldownSeconds > 0) {
             long now = System.currentTimeMillis();
-            long lastDelete = lastHomeDeleteTimestamps.getOrDefault(playerId, 0L);
-            long elapsed = (now - lastDelete) / 1000L;
-            if (elapsed < homeDeleteCooldownSeconds) {
-                long wait = homeDeleteCooldownSeconds - elapsed;
-                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.delete_cooldown", wait));
-                return false;
+            // Use putIfAbsent to atomically check and update cooldown
+            Long lastDelete = lastHomeDeleteTimestamps.putIfAbsent(playerId, now);
+            if (lastDelete != null) {
+                long elapsed = (now - lastDelete) / 1000L;
+                if (elapsed < homeDeleteCooldownSeconds) {
+                    long wait = homeDeleteCooldownSeconds - elapsed;
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.delete_cooldown", wait));
+                    return false;
+                }
+                // Update timestamp atomically
+                lastHomeDeleteTimestamps.put(playerId, now);
             }
         }
 
-        if (homes == null || !homes.containsKey(homeName)) {
+        // ATOMIC: Delete home using compute
+        boolean[] deleted = {false};
+        playerHomes.computeIfPresent(playerId, (id, homes) -> {
+            if (homes.remove(homeName) != null) {
+                deleted[0] = true;
+                // Return null if empty to remove entry
+                return homes.isEmpty() ? null : homes;
+            }
+            return homes;
+        });
+
+        if (!deleted[0]) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.not_found", homeName));
             return false;
         }
 
-        homes.remove(homeName);
-        if (homes.isEmpty()) {
-            playerHomes.remove(playerId);
-        }
-
         saveHomes();
-
-        // Update cooldown timestamp
-        if (homeDeleteCooldownSeconds > 0) {
-            lastHomeDeleteTimestamps.put(playerId, System.currentTimeMillis());
-        }
 
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.deleted", homeName));
         // Log home delete if enabled in config
@@ -305,15 +330,20 @@ public class HomeManager {
         TeleportLocation home = getHome(player, homeName);
         UUID playerId = player.getUUID();
 
-        // Enforce teleport cooldown
+        // Enforce teleport cooldown - atomic check
         if (homeTeleportCooldownSeconds > 0) {
             long now = System.currentTimeMillis();
-            long lastTp = lastHomeTeleportTimestamps.getOrDefault(playerId, 0L);
-            long elapsed = (now - lastTp) / 1000L;
-            if (elapsed < homeTeleportCooldownSeconds) {
-                long wait = homeTeleportCooldownSeconds - elapsed;
-                player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.teleport_cooldown", wait));
-                return;
+            // Use putIfAbsent to atomically check and update cooldown
+            Long lastTp = lastHomeTeleportTimestamps.putIfAbsent(playerId, now);
+            if (lastTp != null) {
+                long elapsed = (now - lastTp) / 1000L;
+                if (elapsed < homeTeleportCooldownSeconds) {
+                    long wait = homeTeleportCooldownSeconds - elapsed;
+                    player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.home.teleport_cooldown", wait));
+                    return;
+                }
+                // Update timestamp atomically
+                lastHomeTeleportTimestamps.put(playerId, now);
             }
         }
 
@@ -343,8 +373,11 @@ public class HomeManager {
                 return;
             }
 
-            // Update home to safe location
-            playerHomes.get(playerId).put(homeName, safeLocation);
+            // Update home to safe location atomically
+            playerHomes.computeIfPresent(playerId, (id, homes) -> {
+                homes.put(homeName, safeLocation);
+                return homes;
+            });
             saveHomes();
             home = safeLocation;
 
@@ -355,10 +388,6 @@ public class HomeManager {
         int delayTicks = teleportDelay * 20; // Convert seconds to ticks
         TeleportUtil.teleportPlayer(player, home, delayTicks, true).thenAccept(result -> {
             if (result.isSuccess()) {
-                // Update cooldown timestamp
-                if (homeTeleportCooldownSeconds > 0) {
-                    lastHomeTeleportTimestamps.put(playerId, System.currentTimeMillis());
-                }
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.success", homeName));
                 // Log home teleport if enabled in config
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogHomeActionsEnabled()) {

@@ -1,9 +1,11 @@
 package com.zerog.neoessentials.chat;
 
 import com.google.gson.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.Set;
-import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ChatManager handles all chat-related configuration, toggles, and logic for NeoEssentials.
@@ -21,9 +23,11 @@ import java.util.HashSet;
  *   - Add runtime config reload support
  */
 public class ChatManager {
-    // Set of muted commands (from config)
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChatManager.class);
+    
+    // Set of muted commands (from config) - thread-safe
     private final Set<String> mutedCommands;
-    // Set of permissions required for chat features (from config)
+    // Set of permissions required for chat features (from config) - thread-safe
     private final Set<String> playerChatPermissions;
 
     /**
@@ -47,7 +51,7 @@ public class ChatManager {
     private final String customNewUsernameMessage;
     private final boolean useCustomServerFullMessage;
     private final int hideJoinQuitMessagesAbove;
-    // Chat format: can be a string (default) or a map for per-group/world
+    // Chat format: can be a string (default) or a map for per-group/world - thread-safe
     private final String defaultChatFormat;
     private final java.util.Map<String, String> chatFormatMap;
 
@@ -80,7 +84,7 @@ public class ChatManager {
         if (chatConfig.has("chat-format")) {
             if (chatConfig.get("chat-format").isJsonObject()) {
                 JsonObject obj = chatConfig.getAsJsonObject("chat-format");
-                java.util.Map<String, String> map = new java.util.HashMap<>();
+                java.util.Map<String, String> map = new ConcurrentHashMap<>();
                 String def = null;
                 for (String key : obj.keySet()) {
                     if (key.equalsIgnoreCase("default")) {
@@ -91,23 +95,26 @@ public class ChatManager {
                 }
                 this.defaultChatFormat = def != null ? def : "{neoessentials_displayname}: {MESSAGE}";
                 this.chatFormatMap = map;
+                LOGGER.info("Loaded chat-format (object): default=[{}], map size={}", this.defaultChatFormat, map.size());
             } else {
                 this.defaultChatFormat = chatConfig.get("chat-format").getAsString();
                 this.chatFormatMap = java.util.Collections.emptyMap();
+                LOGGER.info("Loaded chat-format (string): [{}]", this.defaultChatFormat);
             }
         } else {
             this.defaultChatFormat = "{neoessentials_displayname}: {MESSAGE}";
             this.chatFormatMap = java.util.Collections.emptyMap();
+            LOGGER.info("No chat-format in config, using default: [{}]", this.defaultChatFormat);
         }
         this.commandsConfig = commandsConfig;
     }
 
     /**
-     * Converts a config array to a Set<String>.
+     * Converts a config array to a thread-safe Set<String>.
      */
     private Set<String> toSet(JsonObject obj, String key) {
         if (!obj.has(key) || !obj.get(key).isJsonArray()) return Collections.emptySet();
-        Set<String> set = new HashSet<>();
+        Set<String> set = ConcurrentHashMap.newKeySet();
         obj.getAsJsonArray(key).forEach(e -> set.add(e.getAsString()));
         return set;
     }

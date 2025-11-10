@@ -81,4 +81,9 @@ public class FtbRanksAdapter implements ExternalPermissionAdapter {
     public String getName() {
         return "FTB Ranks";
     }
+    
+    @Override
+    public boolean isAvailable() {
+        return ftbRanksLoaded && ftbRanksApi != null;
+    }
 }

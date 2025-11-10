@@ -29,8 +29,9 @@ public class NickCommand {
     private static final Map<UUID, String> NICKNAMES = new ConcurrentHashMap<>();
     private static final Path NICK_DATA_FILE = Paths.get("config", "neoessentials", "nickname_data.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Pattern VALID_NICK_PATTERN = Pattern.compile("^[a-zA-Z0-9_&§]{1,32}$");
-    private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("&[0-9a-fk-or]");
+    // Updated to allow hex color codes like &#5d6a2c
+    private static final Pattern VALID_NICK_PATTERN = Pattern.compile("^[a-zA-Z0-9_&§#]{1,32}$");
+    private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("&[0-9a-fk-or]|&#[0-9a-fA-F]{6}");
     
     /**
      * Register the /nick command

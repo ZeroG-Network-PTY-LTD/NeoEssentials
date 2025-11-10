@@ -123,23 +123,39 @@ public class AfkActivityHandler {
     */
     
     /**
-     * Handle player logout - notify AFK manager
+     * Handle player logout - notify AFK manager and SeenCommand
      */
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             AfkManager.getInstance().onPlayerLogout(player.getUUID());
+            // Track last seen time
+            com.zerog.neoessentials.util.commands.SeenCommand.onPlayerLeave(player);
             LOGGER.debug("Player logout handled for AFK system: {}", player.getName().getString());
         }
     }
     
     /**
-     * Handle player login - ensure they start as active
+     * Handle player login - ensure they start as active and track join time
      */
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             AfkManager.getInstance().updateActivity(player.getUUID());
+            // Track join time
+            com.zerog.neoessentials.util.commands.SeenCommand.onPlayerJoin(player);
+            
+            // Notify player of unread mail
+            int unreadCount = com.zerog.neoessentials.util.commands.MailCommand.getUnreadMailCount(player.getUUID());
+            if (unreadCount > 0) {
+                player.sendSystemMessage(
+                    com.zerog.neoessentials.util.MessageUtil.info(
+                        "commands.neoessentials.mail.login_notification", 
+                        unreadCount
+                    )
+                );
+            }
+            
             LOGGER.debug("Player login handled for AFK system: {}", player.getName().getString());
         }
     }

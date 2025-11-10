@@ -18,6 +18,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,7 @@ import java.time.format.DateTimeFormatter;
  * Supports sending, reading, and managing mail messages
  */
 public class MailCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MailCommand.class);
     private static final Map<UUID, List<MailMessage>> MAIL_BOX = new ConcurrentHashMap<>();
     private static final Path MAIL_DATA_FILE = Paths.get("config", "neoessentials", "mail_data.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -424,7 +427,7 @@ public class MailCommand {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Failed to load mail data: " + e.getMessage());
+            LOGGER.error("Failed to load mail data: {}", e.getMessage());
         }
     }
     
@@ -453,7 +456,7 @@ public class MailCommand {
             Files.writeString(MAIL_DATA_FILE, GSON.toJson(data));
             
         } catch (Exception e) {
-            System.err.println("Failed to save mail data: " + e.getMessage());
+            LOGGER.error("Failed to save mail data: {}", e.getMessage());
         }
     }
     

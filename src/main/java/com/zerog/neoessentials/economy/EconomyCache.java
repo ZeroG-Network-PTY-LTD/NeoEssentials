@@ -8,22 +8,15 @@ public class EconomyCache {
     private static final ConcurrentHashMap<UUID, Object> cache = new ConcurrentHashMap<>();
 
     /**
-     * Get a value from the cache, loading it if necessary.
+     * Get a value from the cache, loading it atomically if necessary.
+     * Uses computeIfAbsent to prevent multiple threads from loading the same key.
      * @param key The UUID key
      * @param loader Function to load the value if not present
      * @return The cached or loaded value
      */
+    @SuppressWarnings("unchecked")
     public static <T> T getOrLoad(UUID key, Function<UUID, T> loader) {
-        Object value = cache.get(key);
-        if (value == null) {
-            value = loader.apply(key);
-            if (value != null) {
-                cache.put(key, value);
-            }
-        }
-        @SuppressWarnings("unchecked")
-        T result = (T) value;
-        return result;
+        return (T) cache.computeIfAbsent(key, loader);
     }
 
     /**

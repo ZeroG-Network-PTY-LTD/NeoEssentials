@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.PermissionValidator;
+import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
@@ -19,8 +20,11 @@ import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SignCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SignCommand.class);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         if (!ConfigManager.getInstance().isCommandEnabled("sign")) return;
@@ -50,12 +54,12 @@ public class SignCommand {
         SignBlockEntity signBlockEntity = getTargetedSign(player);
         
         if (signBlockEntity == null) {
-            context.getSource().sendFailure(Component.translatable("commands.neoessentials.sign.not_looking_at_sign"));
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.sign.not_looking_at_sign"));
             return 0;
         }
 
         // Show current sign contents and usage
-        context.getSource().sendSuccess(() -> Component.translatable("commands.neoessentials.sign.current_contents"), false);
+        context.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.sign.current_contents"), false);
         
         for (int i = 0; i < 4; i++) {
             Component lineText = signBlockEntity.getFrontText().getMessage(i, false);
@@ -68,7 +72,7 @@ public class SignCommand {
             context.getSource().sendSuccess(() -> lineComponent, false);
         }
         
-        context.getSource().sendSuccess(() -> Component.translatable("commands.neoessentials.sign.usage"), false);
+        context.getSource().sendSuccess(() -> MessageUtil.info("commands.neoessentials.sign.usage"), false);
         return 1;
     }
 
@@ -91,7 +95,7 @@ public class SignCommand {
         String finalText;
         if (processedText.length() > 15) {
             finalText = processedText.substring(0, 15);
-            context.getSource().sendSuccess(() -> Component.translatable("commands.neoessentials.sign.text_truncated"), false);
+            context.getSource().sendSuccess(() -> MessageUtil.warning("commands.neoessentials.sign.text_truncated"), false);
         } else {
             finalText = processedText;
         }
@@ -99,14 +103,19 @@ public class SignCommand {
         SignBlockEntity signBlockEntity = getTargetedSign(player);
         
         if (signBlockEntity == null) {
-            context.getSource().sendFailure(Component.translatable("commands.neoessentials.sign.not_looking_at_sign"));
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.sign.not_looking_at_sign"));
             return 0;
         }
 
+        BlockPos pos = signBlockEntity.getBlockPos();
+        
         // Update the sign text
         updateSignLine(signBlockEntity, line, finalText, player.serverLevel());
         
-        context.getSource().sendSuccess(() -> Component.translatable("commands.neoessentials.sign.updated", 
+        LOGGER.info("Player {} edited sign at {} line {} to: {}", 
+            player.getName().getString(), pos, line + 1, finalText);
+        
+        context.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.sign.updated", 
             line + 1, finalText.isEmpty() ? "§7(empty)" : finalText), false);
         return 1;
     }
@@ -116,16 +125,20 @@ public class SignCommand {
         SignBlockEntity signBlockEntity = getTargetedSign(player);
         
         if (signBlockEntity == null) {
-            context.getSource().sendFailure(Component.translatable("commands.neoessentials.sign.not_looking_at_sign"));
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.sign.not_looking_at_sign"));
             return 0;
         }
 
+        BlockPos pos = signBlockEntity.getBlockPos();
+        
         // Clear all lines
         for (int i = 0; i < 4; i++) {
             updateSignLine(signBlockEntity, i, "", player.serverLevel());
         }
         
-        context.getSource().sendSuccess(() -> Component.translatable("commands.neoessentials.sign.cleared_all"), false);
+        LOGGER.info("Player {} cleared all lines on sign at {}", player.getName().getString(), pos);
+        
+        context.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.sign.cleared_all"), false);
         return 1;
     }
 
@@ -136,14 +149,18 @@ public class SignCommand {
         SignBlockEntity signBlockEntity = getTargetedSign(player);
         
         if (signBlockEntity == null) {
-            context.getSource().sendFailure(Component.translatable("commands.neoessentials.sign.not_looking_at_sign"));
+            context.getSource().sendFailure(MessageUtil.error("commands.neoessentials.sign.not_looking_at_sign"));
             return 0;
         }
 
+        BlockPos pos = signBlockEntity.getBlockPos();
+        
         // Clear the specific line
         updateSignLine(signBlockEntity, line, "", player.serverLevel());
         
-        context.getSource().sendSuccess(() -> Component.translatable("commands.neoessentials.sign.cleared_line", line + 1), false);
+        LOGGER.info("Player {} cleared line {} on sign at {}", player.getName().getString(), line + 1, pos);
+        
+        context.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.sign.cleared_line", line + 1), false);
         return 1;
     }
 

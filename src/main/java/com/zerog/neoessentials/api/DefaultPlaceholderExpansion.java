@@ -67,6 +67,11 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         placeholders.add("time_24");
         placeholders.add("date");
         
+        // AFK status placeholders
+        placeholders.add("afk");
+        placeholders.add("afk_time");
+        placeholders.add("afk_reason");
+        
         LOGGER.debug("Initialized {} default placeholders", placeholders.size());
     }
     
@@ -136,6 +141,11 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
                 case "time" -> getCurrentTime();
                 case "time_24" -> getCurrentTime24();
                 case "date" -> getCurrentDate();
+                
+                // AFK status
+                case "afk" -> getAfkStatus(player);
+                case "afk_time" -> getAfkTime(player);
+                case "afk_reason" -> getAfkReason(player);
                 
                 default -> null;
             };
@@ -364,6 +374,80 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
         } catch (Exception e) {
             LOGGER.debug("Error getting current date: {}", e.getMessage());
             return "1970-01-01";
+        }
+    }
+    
+    /**
+     * Get player's AFK status.
+     * Returns "AFK" if player is AFK, empty string otherwise.
+     */
+    @Nullable
+    private String getAfkStatus(@Nullable ServerPlayer player) {
+        if (player == null) return "";
+        
+        try {
+            var afkManager = com.zerog.neoessentials.chat.AfkManager.getInstance();
+            boolean isAfk = afkManager.isAfk(player.getUUID());
+            return isAfk ? "AFK" : "";
+        } catch (Exception e) {
+            LOGGER.debug("Error getting AFK status for player {}: {}", player.getName().getString(), e.getMessage());
+            return "";
+        }
+    }
+    
+    /**
+     * Get how long player has been AFK.
+     * Returns formatted time like "5m 30s" or empty if not AFK.
+     */
+    @Nullable
+    private String getAfkTime(@Nullable ServerPlayer player) {
+        if (player == null) return "";
+        
+        try {
+            var afkManager = com.zerog.neoessentials.chat.AfkManager.getInstance();
+            if (!afkManager.isAfk(player.getUUID())) {
+                return "";
+            }
+            
+            long afkMs = afkManager.getAfkDuration(player.getUUID());
+            if (afkMs <= 0) return "";
+            
+            long seconds = afkMs / 1000;
+            long minutes = seconds / 60;
+            long hours = minutes / 60;
+            
+            if (hours > 0) {
+                return String.format("%dh %dm", hours, minutes % 60);
+            } else if (minutes > 0) {
+                return String.format("%dm %ds", minutes, seconds % 60);
+            } else {
+                return String.format("%ds", seconds);
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Error getting AFK time for player {}: {}", player.getName().getString(), e.getMessage());
+            return "";
+        }
+    }
+    
+    /**
+     * Get player's AFK reason.
+     * Returns the reason text or empty string if no reason or not AFK.
+     */
+    @Nullable
+    private String getAfkReason(@Nullable ServerPlayer player) {
+        if (player == null) return "";
+        
+        try {
+            var afkManager = com.zerog.neoessentials.chat.AfkManager.getInstance();
+            if (!afkManager.isAfk(player.getUUID())) {
+                return "";
+            }
+            
+            String reason = afkManager.getAfkReason(player.getUUID());
+            return reason != null ? reason : "";
+        } catch (Exception e) {
+            LOGGER.debug("Error getting AFK reason for player {}: {}", player.getName().getString(), e.getMessage());
+            return "";
         }
     }
 }

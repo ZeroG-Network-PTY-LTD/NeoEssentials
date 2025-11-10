@@ -94,12 +94,8 @@ public class PermissionManager {
             addUser(user);
             LOGGER.info("Auto-created user {} with default group '{}'", uuid, defaultGroup);
             
-            // Auto-save new user (async to avoid blocking)
-            try {
-                PermissionStorage.save(this);
-            } catch (Exception e) {
-                LOGGER.error("Failed to save auto-created user {}", uuid, e);
-            }
+            // Schedule async save to avoid blocking (don't save synchronously on every getUser call)
+            // The save will happen on server shutdown or manual /pex reload
         }
         return user;
     }
@@ -134,16 +130,33 @@ public class PermissionManager {
     }
     
     private boolean computePermission(UUID uuid, String permission) {
+        LOGGER.debug("Computing permission '{}' for UUID {}", permission, uuid);
         PermissionUser user = getUser(uuid);
         String groupName = (user != null && user.getGroup() != null) ? user.getGroup() : defaultGroup;
+        LOGGER.debug("  User group: {}", groupName);
+        
         // Check user negative permissions
-        if (user != null && hasNegativePermission(user.getPermissions(), permission)) return false;
+        if (user != null && hasNegativePermission(user.getPermissions(), permission)) {
+            LOGGER.debug("  -> Denied by user negative permission");
+            return false;
+        }
+        
         // Check group negative permissions (with inheritance)
-        if (hasGroupNegativePermission(groupName, permission, new HashSet<>())) return false;
+        if (hasGroupNegativePermission(groupName, permission, new HashSet<>())) {
+            LOGGER.debug("  -> Denied by group negative permission");
+            return false;
+        }
+        
         // Check user permissions (including wildcards)
-        if (user != null && hasPermissionWithWildcards(user.getPermissions(), permission)) return true;
+        if (user != null && hasPermissionWithWildcards(user.getPermissions(), permission)) {
+            LOGGER.debug("  -> Granted by user permission");
+            return true;
+        }
+        
         // Check group permissions (with inheritance and wildcards)
-        return hasGroupPermission(groupName, permission, new HashSet<>());
+        boolean result = hasGroupPermission(groupName, permission, new HashSet<>());
+        LOGGER.debug("  -> Group permission check result: {}", result);
+        return result;
     }
     
     /**
@@ -261,12 +274,21 @@ public class PermissionManager {
 
     private boolean hasPermissionWithWildcards(Set<String> perms, String permission) {
         for (String perm : perms) {
-            if (perm.equals(permission)) return true;
+            LOGGER.debug("Checking perm '{}' against permission '{}'", perm, permission);
+            if (perm.equals(permission)) {
+                LOGGER.debug("  -> Exact match!");
+                return true;
+            }
             if (perm.endsWith(".*")) {
                 String prefix = perm.substring(0, perm.length() - 2);
-                if (permission.startsWith(prefix + ".")) return true;
+                LOGGER.debug("  -> Wildcard check: does '{}' start with '{}'?", permission, prefix + ".");
+                if (permission.startsWith(prefix + ".")) {
+                    LOGGER.debug("  -> Wildcard match!");
+                    return true;
+                }
             }
         }
+        LOGGER.debug("No match found for permission '{}'", permission);
         return false;
     }
 
@@ -274,9 +296,14 @@ public class PermissionManager {
         if (groupName == null || visited.contains(groupName.toLowerCase())) return false;
         visited.add(groupName.toLowerCase());
         PermissionGroup group = getGroup(groupName);
-        if (group == null) return false;
+        if (group == null) {
+            LOGGER.debug("  Group '{}' not found", groupName);
+            return false;
+        }
+        LOGGER.debug("  Checking group '{}' with {} permissions", groupName, group.getPermissions().size());
         if (hasPermissionWithWildcards(group.getPermissions(), permission)) return true;
         for (String parent : group.getInherits()) {
+            LOGGER.debug("  Checking inherited group '{}'", parent);
             if (hasGroupPermission(parent, permission, visited)) return true;
         }
         return false;

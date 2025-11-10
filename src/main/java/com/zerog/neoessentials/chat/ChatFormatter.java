@@ -5,145 +5,220 @@ import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import java.util.UUID;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.ChatFormatting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
- * ChatFormatter handles chat message formatting using configurable templates.
- * 
- * Now uses PlaceholderAPI for comprehensive placeholder support including:
- *   - All default NeoEssentials placeholders ({DISPLAYNAME}, {USERNAME}, {PREFIX}, {SUFFIX}, etc.)
- *   - Custom placeholders registered by other mods
- *   - Full color code support using & formatting (e.g., &c for red)
- * 
- * The PlaceholderAPI system provides:
- *   - Consistent placeholder resolution across all chat systems
- *   - Extensibility for other mods to add custom placeholders
- *   - Proper PREFIX/SUFFIX integration with the permission system
- *   - Thread-safe placeholder processing
+ * ChatFormatter handles chat message formatting with proper color code support.
+ * Supports both legacy (&) and section (§) color codes, plus hex colors (&#RRGGBB).
  */
 public class ChatFormatter {
-    // Pattern to match hex color codes: &#RRGGBB<text> OR just &#RRGGBB
-    private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})(?:<([^>]+)>)?");
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatFormatter.class);
     
-    // Pattern to match color codes (&1, &c, etc.)
-    private static final Pattern COLOR_PATTERN = Pattern.compile("&([0-9a-fk-or])");
-    private static final Pattern COLOR_ONLY_PATTERN = Pattern.compile("&([0-9a-f])");
-    private static final Pattern FORMAT_BOLD_PATTERN = Pattern.compile("&l");
-    private static final Pattern FORMAT_ITALIC_PATTERN = Pattern.compile("&o");
-    private static final Pattern FORMAT_UNDERLINE_PATTERN = Pattern.compile("&n");
-    private static final Pattern FORMAT_STRIKETHROUGH_PATTERN = Pattern.compile("&m");
-    private static final Pattern FORMAT_OBFUSCATED_PATTERN = Pattern.compile("&k");
-    @SuppressWarnings("unused") // Reserved for future reset formatting feature
-    private static final Pattern FORMAT_RESET_PATTERN = Pattern.compile("&r");
+    // Pre-compiled regex patterns for performance
+    private static final Pattern HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})");
+    private static final Pattern AMPERSAND_CODE_PATTERN = Pattern.compile("&([0-9a-fk-or])");
+    private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("&([0-9a-f])");
+    private static final Pattern FORMAT_CODE_PATTERN = Pattern.compile("&([k-or])");
     
     /**
      * Formats a chat message using the provided template and player context.
-     * 
-     * @param template The format template (e.g., "{DISPLAYNAME}: {MESSAGE}")
-     * @param player The player sending the message
-     * @param message The raw message content
-     * @return Formatted Component ready for display
      */
     public static Component formatMessage(String template, ServerPlayer player, String message) {
         try {
-            // Convert legacy uppercase placeholders to neoessentials_ format for backwards compatibility
+            LOGGER.info("=== CHAT FORMATTING DEBUG ===");
+            LOGGER.info("Player: {}, OP: {}", player.getName().getString(), player.hasPermissions(2));
+            LOGGER.info("Original message: [{}]", message);
+            LOGGER.info("Template: [{}]", template);
+            
+            // Normalize placeholders to new format
             String normalizedTemplate = normalizePlaceholders(template);
-
-            // Add the MESSAGE placeholder to the template context if it's not already there
-            String templateWithMessage = normalizedTemplate.replace("{MESSAGE}", message);
-
-            // Use PlaceholderAPI to resolve all placeholders (including prefix/suffix from permissions)
-            String formatted = PlaceholderAPI.setPlaceholders(player, templateWithMessage);
-
-            // IMPORTANT: Process color codes from prefixes/suffixes FIRST (these come from server config/permissions)
-            // Server-defined colors in prefixes/suffixes should always work regardless of player permissions
-            formatted = processServerColorCodes(formatted);
-
-            // Clean up extra spaces caused by empty prefixes/suffixes
+            LOGGER.debug("After normalization: {}", normalizedTemplate);
+            
+            // Restrict colors in message BEFORE inserting into template
+            String restrictedMessage = restrictPlayerMessageColors(message, player);
+            LOGGER.info("After color restriction: [{}]", restrictedMessage);
+            
+            // Directly replace {MESSAGE} before PlaceholderAPI processing
+            // This is simpler than using a temporary placeholder
+            String preFormatted = normalizedTemplate.replace("{MESSAGE}", restrictedMessage);
+            LOGGER.info("After message insertion: [{}]", preFormatted);
+            
+            // Resolve all other placeholders via PlaceholderAPI
+            String formatted = PlaceholderAPI.setPlaceholders(player, preFormatted);
+            LOGGER.info("After placeholder resolution: [{}]", formatted);
+            
+            // Clean up formatting
             formatted = cleanupFormatting(formatted);
-
-            // Now restrict color/format codes in the MESSAGE part based on player permissions
-            formatted = restrictFormattingByPermission(formatted, player, message);
-
-            // Then convert remaining & codes to § for Minecraft and create Component
-            return parseColorCodes(formatted);
-
+            LOGGER.info("After cleanup: [{}]", formatted);
+            LOGGER.info("Final formatted message: [{}]", formatted);
+            
+            // Convert to Minecraft component with colors
+            Component result = parseToComponent(formatted);
+            LOGGER.info("=== END CHAT FORMATTING DEBUG ===");
+            return result;
+            
         } catch (Exception e) {
-            LOGGER.error("Failed to format chat message for player {}: {}", player.getName().getString(), e.getMessage(), e);
-            // Fallback to simple format if formatting fails
+            LOGGER.error("Failed to format chat message for player {}: {}", 
+                player.getName().getString(), e.getMessage(), e);
+            // Fallback
             return Component.literal(player.getName().getString() + ": " + message);
         }
     }
-
+    
     /**
-     * Process color codes from server-defined text (prefixes, suffixes, format template).
-     * This converts & codes to § codes so they work in chat regardless of player permissions.
-     * This should be called BEFORE permission checks so server-defined colors always work.
+     * Restrict color codes in player's message based on config and permissions.
+     * Returns the message with disallowed color codes removed.
      */
-    private static String processServerColorCodes(String text) {
-        // Convert all & color codes to § for server-defined text
-        return COLOR_PATTERN.matcher(text).replaceAll("§$1");
-    }
-
-    /**
-     * Restricts color and formatting codes in the MESSAGE part only based on player permissions.
-     * Only checks the player's actual message, not the prefix/suffix/format from server.
-     * Strips codes from the message if not permitted.
-     */
-    private static String restrictFormattingByPermission(String formatted, ServerPlayer player, String originalMessage) {
+    private static String restrictPlayerMessageColors(String message, ServerPlayer player) {
         UUID uuid = player.getUUID();
+        String result = message;
         
-        // Only restrict colors in the actual message part, not in prefixes/suffixes
-        String restrictedMessage = originalMessage;
+        LOGGER.info(">>> Restricting colors for player {} (UUID: {})", player.getName().getString(), uuid);
+        LOGGER.info(">>> Original message: [{}]", message);
         
-        // Hex color codes (&#RRGGBB or &#RRGGBB<text>)
-        if (!PermissionAPI.hasPermission(uuid, "neoessentials.chat.color.hex")) {
-            restrictedMessage = HEX_COLOR_PATTERN.matcher(restrictedMessage).replaceAll("$2"); // Remove hex if not permitted
-        }
+        // First check if color codes are enabled globally in config
+        boolean colorCodesEnabled = com.zerog.neoessentials.config.ConfigManager.isColorCodesEnabled();
+        LOGGER.info(">>> Config enable-color-codes: {}", colorCodesEnabled);
         
-        // Color codes (&0-&9, &a-&f)
-        if (!PermissionAPI.hasPermission(uuid, "neoessentials.chat.color")) {
-            restrictedMessage = COLOR_ONLY_PATTERN.matcher(restrictedMessage).replaceAll("");
-        }
-        
-        // Format codes
-        if (!PermissionAPI.hasPermission(uuid, "neoessentials.chat.format.bold")) {
-            restrictedMessage = FORMAT_BOLD_PATTERN.matcher(restrictedMessage).replaceAll("");
-        }
-        if (!PermissionAPI.hasPermission(uuid, "neoessentials.chat.format.italic")) {
-            restrictedMessage = FORMAT_ITALIC_PATTERN.matcher(restrictedMessage).replaceAll("");
-        }
-        if (!PermissionAPI.hasPermission(uuid, "neoessentials.chat.format.underline")) {
-            restrictedMessage = FORMAT_UNDERLINE_PATTERN.matcher(restrictedMessage).replaceAll("");
-        }
-        if (!PermissionAPI.hasPermission(uuid, "neoessentials.chat.format.strikethrough")) {
-            restrictedMessage = FORMAT_STRIKETHROUGH_PATTERN.matcher(restrictedMessage).replaceAll("");
-        }
-        if (!PermissionAPI.hasPermission(uuid, "neoessentials.chat.format.obfuscated")) {
-            restrictedMessage = FORMAT_OBFUSCATED_PATTERN.matcher(restrictedMessage).replaceAll("");
+        if (!colorCodesEnabled) {
+            // Strip ALL color codes if disabled in config
+            result = HEX_PATTERN.matcher(result).replaceAll("");
+            result = AMPERSAND_CODE_PATTERN.matcher(result).replaceAll("");
+            LOGGER.info(">>> Color codes DISABLED in config - Stripped all codes: [{}]", result);
+            return result;
         }
         
-        // Replace the original message with the restricted version
-        // Need to escape regex special characters in originalMessage
-        String escapedOriginal = Pattern.quote(originalMessage);
-        return formatted.replaceFirst(escapedOriginal, java.util.regex.Matcher.quoteReplacement(restrictedMessage));
+        // Config allows colors, now check permissions
+        boolean hasHexPerm = PermissionAPI.hasPermission(uuid, "neoessentials.chat.color.hex");
+        boolean hasColorPerm = PermissionAPI.hasPermission(uuid, "neoessentials.chat.color");
+        boolean hasFormatPerm = PermissionAPI.hasPermission(uuid, "neoessentials.chat.format");
+        
+        LOGGER.info(">>> Permission Check Results:");
+        LOGGER.info(">>>   - neoessentials.chat.color.hex: {}", hasHexPerm);
+        LOGGER.info(">>>   - neoessentials.chat.color: {}", hasColorPerm);
+        LOGGER.info(">>>   - neoessentials.chat.format: {}", hasFormatPerm);
+        
+        if (!hasHexPerm) {
+            String before = result;
+            result = HEX_PATTERN.matcher(result).replaceAll("");
+            LOGGER.info(">>>   Stripped hex codes: [{}] -> [{}]", before, result);
+        }
+        
+        if (!hasColorPerm) {
+            String before = result;
+            result = COLOR_CODE_PATTERN.matcher(result).replaceAll("");
+            LOGGER.info(">>>   Stripped color codes: [{}] -> [{}]", before, result);
+        }
+        
+        if (!hasFormatPerm) {
+            String before = result;
+            result = FORMAT_CODE_PATTERN.matcher(result).replaceAll("");
+            LOGGER.info(">>>   Stripped format codes: [{}] -> [{}]", before, result);
+        }
+        
+        LOGGER.info(">>> Final restricted message: [{}]", result);
+        return result;
     }
     
     /**
-     * Converts legacy uppercase placeholders to neoessentials_ format.
-     * This ensures backwards compatibility with old config files.
-     * 
-     * Examples:
-     *   {USERNAME} -> {neoessentials_username}
-     *   {PREFIX} -> {neoessentials_prefix}
-     *   {SUFFIX} -> {neoessentials_suffix}
+     * Parse text with color codes to Minecraft Component.
+     * Supports: §/& color codes (0-9, a-f), format codes (k-o, r), and hex (&#RRGGBB)
+     */
+    private static Component parseToComponent(String text) {
+        MutableComponent result = Component.empty();
+        
+        // First convert & to § for uniform processing (using pre-compiled pattern)
+        text = AMPERSAND_CODE_PATTERN.matcher(text).replaceAll("§$1");
+        
+        // Handle hex colors: &#RRGGBB -> RGB color
+        Matcher hexMatcher = HEX_PATTERN.matcher(text);
+        StringBuffer sb = new StringBuffer();
+        while (hexMatcher.find()) {
+            try {
+                String hex = hexMatcher.group(1);
+                // Replace with placeholder that we'll process later
+                hexMatcher.appendReplacement(sb, "§#" + hex + "§");
+            } catch (Exception e) {
+                hexMatcher.appendReplacement(sb, "");
+            }
+        }
+        hexMatcher.appendTail(sb);
+        text = sb.toString();
+        
+        // Now parse the text character by character, building Components
+        StringBuilder currentText = new StringBuilder();
+        net.minecraft.network.chat.Style currentStyle = net.minecraft.network.chat.Style.EMPTY;
+        
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            
+            if (c == '§' && i + 1 < text.length()) {
+                char code = text.charAt(i + 1);
+                
+                // Handle hex color: §#RRGGBB§
+                if (code == '#' && i + 8 < text.length() && text.charAt(i + 8) == '§') {
+                    // Flush current text
+                    if (currentText.length() > 0) {
+                        result.append(Component.literal(currentText.toString()).setStyle(currentStyle));
+                        currentText = new StringBuilder();
+                    }
+                    
+                    try {
+                        String hex = text.substring(i + 2, i + 8);
+                        int rgb = Integer.parseInt(hex, 16);
+                        currentStyle = currentStyle.withColor(net.minecraft.network.chat.TextColor.fromRgb(rgb));
+                    } catch (Exception e) {
+                        // Ignore invalid hex
+                    }
+                    i += 8; // Skip the hex color code
+                    continue;
+                }
+                
+                // Handle standard color codes
+                ChatFormatting formatting = ChatFormatting.getByCode(code);
+                if (formatting != null) {
+                    // Flush current text
+                    if (currentText.length() > 0) {
+                        result.append(Component.literal(currentText.toString()).setStyle(currentStyle));
+                        currentText = new StringBuilder();
+                    }
+                    
+                    // Apply the formatting
+                    if (formatting == ChatFormatting.RESET) {
+                        currentStyle = net.minecraft.network.chat.Style.EMPTY;
+                    } else if (formatting.isColor()) {
+                        currentStyle = net.minecraft.network.chat.Style.EMPTY.applyFormat(formatting);
+                    } else {
+                        // Format codes (bold, italic, etc)
+                        currentStyle = currentStyle.applyFormat(formatting);
+                    }
+                    
+                    i++; // Skip the code character
+                    continue;
+                }
+            }
+            
+            currentText.append(c);
+        }
+        
+        // Append any remaining text
+        if (currentText.length() > 0) {
+            result.append(Component.literal(currentText.toString()).setStyle(currentStyle));
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Convert legacy uppercase placeholders to lowercase format.
      */
     private static String normalizePlaceholders(String template) {
-        // Map of legacy placeholders to new format
         return template
             .replace("{DISPLAYNAME}", "{neoessentials_displayname}")
             .replace("{USERNAME}", "{neoessentials_username}")
@@ -161,109 +236,39 @@ public class ChatFormatter {
     }
     
     /**
-     * Cleans up formatting by removing extra spaces and fixing empty placeholders.
+     * Clean up extra spaces from empty prefixes/suffixes.
      */
     private static String cleanupFormatting(String formatted) {
-        // Clean up extra spaces caused by empty prefixes/suffixes
-        formatted = formatted.replaceAll("\\s+", " "); // Replace multiple spaces with single space
-        formatted = formatted.replaceAll("< >", "<>"); // Fix empty brackets with just spaces
-        formatted = formatted.replaceAll("<\\s+", "<"); // Remove spaces after opening brackets
-        formatted = formatted.replaceAll("\\s+>", ">"); // Remove spaces before closing brackets
-        
+        formatted = formatted.replaceAll("\\s+", " ");
+        formatted = formatted.replaceAll("< >", "");
+        formatted = formatted.replaceAll("<\\s+", "<");
+        formatted = formatted.replaceAll("\\s+>", ">");
         return formatted.trim();
     }
     
     /**
-     * Converts color codes (&1, &c, etc.) and hex codes (&#RRGGBB or &#RRGGBB<text>) to Minecraft formatting and creates a Component.
-     */
-    private static Component parseColorCodes(String text) {
-        // First, process hex color codes: &#RRGGBB<text> or just &#RRGGBB
-        StringBuffer sb = new StringBuffer();
-        java.util.regex.Matcher matcher = HEX_COLOR_PATTERN.matcher(text);
-        int lastEnd = 0;
-        net.minecraft.network.chat.Style currentStyle = net.minecraft.network.chat.Style.EMPTY;
-        
-        while (matcher.find()) {
-            // Append text before the match with current style
-            if (lastEnd < matcher.start()) {
-                sb.append(text, lastEnd, matcher.start());
-            }
-            
-            String hex = matcher.group(1);
-            String inner = matcher.group(2); // Will be null if no <text> part
-            
-            try {
-                int rgb = Integer.parseInt(hex, 16);
-                currentStyle = net.minecraft.network.chat.Style.EMPTY.withColor(net.minecraft.network.chat.TextColor.fromRgb(rgb));
-                
-                if (inner != null) {
-                    // Format: &#RRGGBB<text> - apply color to the inner text only
-                    sb.append(net.minecraft.network.chat.Component.literal(inner).withStyle(currentStyle).getString());
-                } else {
-                    // Format: &#RRGGBB - set the color for all following text (like a persistent color code)
-                    // This needs to be handled by converting it to a § code
-                    sb.append("§x§" + hex.charAt(0) + "§" + hex.charAt(1) + "§" + hex.charAt(2) + "§" + hex.charAt(3) + "§" + hex.charAt(4) + "§" + hex.charAt(5));
-                }
-            } catch (Exception e) {
-                // Fallback: just append the inner text or continue
-                if (inner != null) {
-                    sb.append(inner);
-                }
-            }
-            lastEnd = matcher.end();
-        }
-        sb.append(text.substring(lastEnd));
-        
-        // Now the text has hex colors converted, process remaining & color codes to § for Minecraft processing
-        String converted = sb.toString();
-        // Don't re-process & codes that were already converted to § in processServerColorCodes
-        // Only convert remaining & codes (from player messages with permissions)
-        converted = converted.replaceAll("&([0-9a-fk-or])", "§$1");
-        
-        // Create component with legacy formatting support
-        return Component.literal(converted);
-    }
-    
-    /**
-     * Validates if a format template is safe and well-formed.
-     * 
-     * @param template The format template to validate
-     * @return true if the template is valid, false otherwise
+     * Validate if a format template is well-formed.
      */
     public static boolean isValidTemplate(String template) {
         if (template == null || template.trim().isEmpty()) {
             return false;
         }
         
-        try {
-            // Check for balanced braces
-            int openBraces = 0;
-            for (char c : template.toCharArray()) {
-                if (c == '{') openBraces++;
-                else if (c == '}') openBraces--;
-                if (openBraces < 0) return false; // More closing than opening
-            }
-            
-            // Should have balanced braces
-            if (openBraces != 0) return false;
-            
-            // Should contain at least {MESSAGE} placeholder
-            if (!template.contains("{MESSAGE}")) {
-                LOGGER.warn("Chat format template should contain {{MESSAGE}} placeholder: {}", template);
-            }
-            
-            return true;
-            
-        } catch (Exception e) {
-            LOGGER.error("Error validating chat format template: {}", template, e);
-            return false;
+        // Check balanced braces
+        int openBraces = 0;
+        for (char c : template.toCharArray()) {
+            if (c == '{') openBraces++;
+            else if (c == '}') openBraces--;
+            if (openBraces < 0) return false;
         }
+        
+        return openBraces == 0;
     }
     
     /**
-     * Gets the default chat format template.
+     * Get the default chat format template.
      */
     public static String getDefaultFormat() {
-        return "{neoessentials_displayname}: {MESSAGE}";
+        return "{neoessentials_prefix}{neoessentials_displayname}{neoessentials_suffix}: {MESSAGE}";
     }
 }

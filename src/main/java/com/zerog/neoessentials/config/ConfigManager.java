@@ -1138,7 +1138,7 @@ public class ConfigManager {
             if (configCache.containsKey(configName)) {
                 return configCache.get(configName);
             }
-            File file = new File(configName);
+            File file = ResourceUtil.getConfigFile(configName);
             reader = new FileReader(file, StandardCharsets.UTF_8);
             JsonObject obj = JsonParser.parseReader(reader).getAsJsonObject();
             configCache.put(configName, obj);

@@ -1,8 +1,8 @@
 package com.zerog.neoessentials.permissions;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PermissionUser {
     private final UUID uuid;
@@ -12,7 +12,7 @@ public class PermissionUser {
     public PermissionUser(UUID uuid, String group) {
         this.uuid = uuid;
         this.group = group;
-        this.permissions = new HashSet<>();
+        this.permissions = ConcurrentHashMap.newKeySet();
     }
 
     public UUID getUuid() {

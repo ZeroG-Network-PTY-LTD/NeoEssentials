@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -36,7 +37,7 @@ public class PayToggleManager {
     private final File togglesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("paytoggles.json");
     private final Gson gson = new Gson();
     private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
-    private volatile boolean saveQueued = false;
+    private final AtomicBoolean saveQueued = new AtomicBoolean(false);
     @SuppressWarnings("unused") // Reserved for future direct config access
     private final ConfigManager configManager = ConfigManager.getInstance();
 
@@ -83,22 +84,20 @@ public class PayToggleManager {
     }
 
     private void queueAsyncSave() {
-        if (saveQueued) return;
-        saveQueued = true;
-        saveExecutor.execute(() -> {
-            try {
-                saveTogglesAtomic();
-            } finally {
-                saveQueued = false;
-            }
-        });
+        if (saveQueued.compareAndSet(false, true)) {
+            saveExecutor.execute(() -> {
+                try {
+                    saveTogglesAtomic();
+                } finally {
+                    saveQueued.set(false);
+                }
+            });
+        }
     }
 
     public boolean getPayToggle(UUID player) {
-        Boolean cached = paytoggleCache.get(player);
-        if (cached != null) return cached;
-        // Default to config value for new players
-        return com.zerog.neoessentials.config.ConfigManager.getPayToggleDefault();
+        return paytoggleCache.computeIfAbsent(player, 
+            uuid -> com.zerog.neoessentials.config.ConfigManager.getPayToggleDefault());
     }
 
     public void setPayToggle(UUID player, boolean enabled) {

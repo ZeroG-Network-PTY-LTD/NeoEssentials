@@ -22,6 +22,40 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Collection;
 
+/**
+ * Provides enhanced item enchanting functionality with safety features and override permissions.
+ * 
+ * <p>Commands:</p>
+ * <ul>
+ *   <li>/enchant &lt;enchantment&gt; [level] - Enchant item in hand (default level 1)</li>
+ *   <li>/enchant &lt;target&gt; &lt;enchantment&gt; [level] - Enchant target player's item</li>
+ *   <li>/ench - Short alias for /enchant</li>
+ *   <li>/enchanthand - Explicit hand-only enchanting</li>
+ * </ul>
+ * 
+ * <p>Permissions:</p>
+ * <ul>
+ *   <li>neoessentials.item.enchant - Basic enchanting on own items</li>
+ *   <li>neoessentials.item.enchant.others - Enchant other players' items</li>
+ *   <li>neoessentials.item.enchant.unsafe - Use enchantment levels above normal max</li>
+ *   <li>neoessentials.item.enchant.any - Bypass item compatibility checks</li>
+ * </ul>
+ * 
+ * <p>Configuration:</p>
+ * <ul>
+ *   <li>unsafe-enchantments - Allow enchantment levels above normal max (global)</li>
+ * </ul>
+ * 
+ * <p>Features:</p>
+ * <ul>
+ *   <li>Modern DataComponents API for Minecraft 1.21.1</li>
+ *   <li>Enchantment level validation and safety checks</li>
+ *   <li>Optional target player support with notifications</li>
+ *   <li>Configuration-driven unsafe enchantment control</li>
+ *   <li>Comprehensive audit logging for all enchantments</li>
+ *   <li>Item compatibility checking</li>
+ * </ul>
+ */
 public class EnchantCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(EnchantCommand.class);
     /**
@@ -208,6 +242,14 @@ public class EnchantCommand {
         boolean success = applyEnchantment(targetPlayer, stack, enchantment, level);
         
         if (success) {
+            // Log successful enchantment for audit trail
+            LOGGER.info("Player {} enchanted {} with {} level {} for player {}", 
+                executor.getName().getString(),
+                stack.getDisplayName().getString(),
+                enchantId.toString(),
+                level,
+                targetPlayer.getName().getString());
+            
             // Success message varies by mode
             if (mode == EnchantMode.TARGET_HAND && !executor.equals(targetPlayer)) {
                 ctx.getSource().sendSuccess(() -> MessageUtil.success(

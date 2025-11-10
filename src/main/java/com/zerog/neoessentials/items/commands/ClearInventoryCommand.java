@@ -6,8 +6,41 @@ import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Provides inventory clearing functionality for players.
+ * 
+ * <p>Commands:</p>
+ * <ul>
+ *   <li>/clearinventory - Clear all inventory slots</li>
+ *   <li>/ci - Short alias</li>
+ *   <li>/clearinv - Alternative alias</li>
+ * </ul>
+ * 
+ * <p>Permissions:</p>
+ * <ul>
+ *   <li>neoessentials.item.clearinventory - Clear own inventory</li>
+ * </ul>
+ * 
+ * <p>Configuration:</p>
+ * <ul>
+ *   <li>commands.clearinventory.enabled - Enable/disable command</li>
+ * </ul>
+ * 
+ * <p>Features:</p>
+ * <ul>
+ *   <li>Clears main inventory (36 slots)</li>
+ *   <li>Clears armor slots (4 pieces)</li>
+ *   <li>Clears offhand slot</li>
+ *   <li>Provides detailed feedback on items cleared per section</li>
+ *   <li>Audit logging for administrative oversight</li>
+ * </ul>
+ */
 public class ClearInventoryCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClearInventoryCommand.class);
+    
     /**
      * Register the /clearinventory, /ci, and /clearinv commands.
      */
@@ -68,7 +101,10 @@ public class ClearInventoryCommand {
 
     /**
      * Clears the player's inventory, including main, armor, and offhand slots.
-     * Returns an int array: [mainCleared, armorCleared, offhandCleared]
+     * Logs the clear action for audit trail purposes.
+     * 
+     * @param player The player whose inventory to clear
+     * @return An int array: [mainCleared, armorCleared, offhandCleared]
      */
     public static int[] clear(ServerPlayer player) {
         int mainCleared = 0;
@@ -98,6 +134,14 @@ public class ClearInventoryCommand {
             }
         }
         player.getInventory().offhand.clear();
+
+        // Log inventory clear for audit trail
+        LOGGER.info("Player {} cleared inventory: {} main items, {} armor pieces, {} offhand items (total: {})", 
+            player.getName().getString(), 
+            mainCleared, 
+            armorCleared, 
+            offhandCleared,
+            mainCleared + armorCleared + offhandCleared);
 
         return new int[] { mainCleared, armorCleared, offhandCleared };
     }

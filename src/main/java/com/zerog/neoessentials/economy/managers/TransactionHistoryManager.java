@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -35,7 +36,7 @@ public class TransactionHistoryManager {
     private final File historyFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("transaction_history.json");
     private final Gson gson = new Gson();
     private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
-    private volatile boolean saveQueued = false;
+    private final AtomicBoolean saveQueued = new AtomicBoolean(false);
 
     private TransactionHistoryManager() {
         loadHistory();
@@ -77,15 +78,15 @@ public class TransactionHistoryManager {
     }
 
     private void queueAsyncSave() {
-        if (saveQueued) return;
-        saveQueued = true;
-        saveExecutor.execute(() -> {
-            try {
-                saveHistoryAtomic();
-            } finally {
-                saveQueued = false;
-            }
-        });
+        if (saveQueued.compareAndSet(false, true)) {
+            saveExecutor.execute(() -> {
+                try {
+                    saveHistoryAtomic();
+                } finally {
+                    saveQueued.set(false);
+                }
+            });
+        }
     }
 
     public void addTransaction(UUID player, String entry) {

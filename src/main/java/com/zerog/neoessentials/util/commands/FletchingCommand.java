@@ -17,7 +17,13 @@ import com.zerog.neoessentials.util.PermissionValidator;
 
 /**
  * Implements the /fletching command - Opens a virtual fletching table GUI
- * Allows players to craft arrows and other archery-related items
+ * 
+ * NOTE: Vanilla Minecraft does not provide a FletchingTableMenu class.
+ * The fletching table in vanilla has no functional GUI - it's purely decorative.
+ * This command currently opens a crafting table as a workaround to allow
+ * players to craft arrows and other items that would logically use a fletching table.
+ * 
+ * FUTURE ENHANCEMENT: Could implement a custom GUI with fletching-specific recipes.
  */
 public class FletchingCommand {
     
@@ -51,6 +57,9 @@ public class FletchingCommand {
     
     /**
      * Opens the fletching table GUI for the player
+     * 
+     * NOTE: Uses CraftingMenu as workaround since Minecraft doesn't provide FletchingTableMenu.
+     * The fletching table has no functional GUI in vanilla - it's decorative only.
      */
     private static void openFletchingGui(ServerPlayer player) {
         MenuProvider menuProvider = new MenuProvider() {
@@ -61,7 +70,7 @@ public class FletchingCommand {
             
             @Override
             public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
-                // Since FletchingTableMenu doesn't exist, use crafting table for arrow crafting
+                // Since FletchingTableMenu doesn't exist in vanilla, use crafting table for arrow crafting
                 // In the future, this could be replaced with a custom GUI for fletching recipes
                 return new CraftingMenu(containerId, playerInventory, ContainerLevelAccess.create(player.level(), player.blockPosition())) {
                     @Override
