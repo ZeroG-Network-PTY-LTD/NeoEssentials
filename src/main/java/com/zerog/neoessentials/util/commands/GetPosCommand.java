@@ -8,7 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
@@ -80,12 +79,12 @@ public class GetPosCommand {
         double z = target.getZ();
         
         // Get world information
-        String worldName = getWorldName(level);
-        String dimensionName = getDimensionName(level);
+        String worldName = CommandUtil.getWorldName(level);
+        String dimensionName = CommandUtil.getDimensionName(level);
         
         // Get biome information
         Biome biome = level.getBiome(pos).value();
-        String biomeName = getBiomeName(biome, level, pos);
+        String biomeName = CommandUtil.getBiomeName(biome, level, pos);
         
         // Get light levels
         int blockLight = level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, pos);
@@ -120,47 +119,18 @@ public class GetPosCommand {
         source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.getpos.world_time", worldTime, gameTime), false);
         
         // Additional info for different dimensions
-        if (level.dimension() == Level.NETHER) {
+        if (CommandUtil.isNether(level)) {
             // Show overworld coordinates
-            int overworldX = pos.getX() * 8;
-            int overworldZ = pos.getZ() * 8;
+            int overworldX = CommandUtil.netherToOverworld(pos.getX());
+            int overworldZ = CommandUtil.netherToOverworld(pos.getZ());
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.getpos.overworld_equiv", overworldX, overworldZ), false);
-        } else if (level.dimension() == Level.OVERWORLD) {
+        } else if (CommandUtil.isOverworld(level)) {
             // Show nether coordinates
-            int netherX = pos.getX() / 8;
-            int netherZ = pos.getZ() / 8;
+            int netherX = CommandUtil.overworldToNether(pos.getX());
+            int netherZ = CommandUtil.overworldToNether(pos.getZ());
             source.sendSuccess(() -> MessageUtil.info("commands.neoessentials.getpos.nether_equiv", netherX, netherZ), false);
         }
     }
     
-    /**
-     * Get user-friendly world name
-     */
-    private static String getWorldName(Level level) {
-        String dimensionKey = level.dimension().location().toString();
-        return switch (dimensionKey) {
-            case "minecraft:overworld" -> "Overworld";
-            case "minecraft:the_nether" -> "The Nether";
-            case "minecraft:the_end" -> "The End";
-            default -> dimensionKey;
-        };
-    }
-    
-    /**
-     * Get dimension name from level
-     */
-    private static String getDimensionName(Level level) {
-        return level.dimension().location().toString();
-    }
-    
-    /**
-     * Get biome name from biome
-     */
-    private static String getBiomeName(Biome biome, Level level, BlockPos pos) {
-        ResourceLocation biomeKey = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BIOME).getKey(biome);
-        if (biomeKey != null) {
-            return biomeKey.toString();
-        }
-        return "Unknown";
-    }
+    // Removed duplicate utility methods - now using CommandUtil
 }

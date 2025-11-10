@@ -21,6 +21,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,8 @@ public class EconomyManager {
     private final File balancesFile = com.zerog.neoessentials.util.ResourceUtil.getDataFile("balances.json");
     private final Gson gson = new Gson();
     private final ScheduledExecutorService saveExecutor = Executors.newSingleThreadScheduledExecutor();
-    private volatile boolean saveQueued = false;
+    private final AtomicBoolean saveQueued = new AtomicBoolean(false);
+    private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
 
     // Track last activity (epoch millis) for each account
     private final ConcurrentHashMap<UUID, Long> lastActivityMap = new ConcurrentHashMap<>();
@@ -124,15 +126,16 @@ public class EconomyManager {
     }
 
     private void queueAsyncSave() {
-        if (saveQueued) return;
-        saveQueued = true;
-        saveExecutor.execute(() -> {
-            try {
-                saveBalancesAtomic();
-            } finally {
-                saveQueued = false;
-            }
-        });
+        if (shuttingDown.get()) return; // Don't queue new saves during shutdown
+        if (saveQueued.compareAndSet(false, true)) {
+            saveExecutor.execute(() -> {
+                try {
+                    saveBalancesAtomic();
+                } finally {
+                    saveQueued.set(false);
+                }
+            });
+        }
     }
 
     private void cleanupInactiveAccounts() {
@@ -240,47 +243,110 @@ public class EconomyManager {
     }
 
     public BigDecimal getBalance(UUID player) {
-        BigDecimal cached = balancesCache.get(player);
-        if (cached != null) return cached;
-        return BigDecimal.valueOf(ConfigManager.getEconomyStartingBalance());
+        return balancesCache.computeIfAbsent(player, 
+            uuid -> BigDecimal.valueOf(ConfigManager.getEconomyStartingBalance()));
     }
 
     public void setBalance(UUID player, BigDecimal amount) {
+        if (shuttingDown.get()) {
+            LOGGER.warn("Attempted to modify balance during shutdown for player {}", player);
+            return;
+        }
         if (!ConfigManager.allowNegativeBalances() && amount.compareTo(BigDecimal.ZERO) < 0) amount = BigDecimal.ZERO;
         BigDecimal maxBalance = BigDecimal.valueOf(ConfigManager.getMaxBalance());
         if (maxBalance != null && amount.compareTo(maxBalance) > 0) amount = maxBalance;
-        BigDecimal oldAmount = getBalance(player);
-        balancesCache.put(player, amount);
+        
+        BigDecimal finalAmount = amount;
+        BigDecimal oldAmount = balancesCache.put(player, finalAmount);
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
         queueAsyncSaveActivity();
+        
         // Log transaction
-        EconomyTransactionLogger.log("SET", player.toString(), "SERVER", amount.toPlainString(), "Set balance (was: " + oldAmount.toPlainString() + ")");
+        EconomyTransactionLogger.log("SET", player.toString(), "SERVER", finalAmount.toPlainString(), 
+            "Set balance (was: " + (oldAmount != null ? oldAmount.toPlainString() : "new account") + ")");
     }
 
     public boolean addBalance(UUID player, BigDecimal amount) {
-        BigDecimal current = getBalance(player);
-        BigDecimal newAmount = current.add(amount);
-        if (!ConfigManager.allowNegativeBalances() && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
+        if (shuttingDown.get()) {
+            LOGGER.warn("Attempted to modify balance during shutdown for player {}", player);
+            return false;
+        }
+        
         BigDecimal maxBalance = BigDecimal.valueOf(ConfigManager.getMaxBalance());
-        if (maxBalance != null && newAmount.compareTo(maxBalance) > 0) newAmount = maxBalance;
-        balancesCache.put(player, newAmount);
+        boolean allowNegative = ConfigManager.allowNegativeBalances();
+        
+        // Atomic read-modify-write using compute()
+        BigDecimal[] result = new BigDecimal[1];
+        balancesCache.compute(player, (uuid, current) -> {
+            if (current == null) {
+                current = BigDecimal.valueOf(ConfigManager.getEconomyStartingBalance());
+            }
+            
+            BigDecimal newAmount = current.add(amount);
+            
+            // Validate constraints
+            if (!allowNegative && newAmount.compareTo(BigDecimal.ZERO) < 0) {
+                result[0] = null; // Signal failure
+                return current; // Don't modify
+            }
+            
+            if (maxBalance != null && newAmount.compareTo(maxBalance) > 0) {
+                newAmount = maxBalance;
+            }
+            
+            result[0] = newAmount; // Signal success
+            return newAmount;
+        });
+        
+        if (result[0] == null) {
+            return false; // Operation failed validation
+        }
+        
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
         queueAsyncSaveActivity();
+        
         // Log transaction
         EconomyTransactionLogger.log("ADD", "SERVER", player.toString(), amount.toPlainString(), "Add to balance");
         return true;
     }
 
     public boolean subtractBalance(UUID player, BigDecimal amount) {
-        BigDecimal current = getBalance(player);
-        BigDecimal newAmount = current.subtract(amount);
-        if (!ConfigManager.allowNegativeBalances() && newAmount.compareTo(BigDecimal.ZERO) < 0) return false;
-        balancesCache.put(player, newAmount);
+        if (shuttingDown.get()) {
+            LOGGER.warn("Attempted to modify balance during shutdown for player {}", player);
+            return false;
+        }
+        
+        boolean allowNegative = ConfigManager.allowNegativeBalances();
+        
+        // Atomic read-modify-write using compute()
+        BigDecimal[] result = new BigDecimal[1];
+        balancesCache.compute(player, (uuid, current) -> {
+            if (current == null) {
+                current = BigDecimal.valueOf(ConfigManager.getEconomyStartingBalance());
+            }
+            
+            BigDecimal newAmount = current.subtract(amount);
+            
+            // Validate constraints
+            if (!allowNegative && newAmount.compareTo(BigDecimal.ZERO) < 0) {
+                result[0] = null; // Signal failure
+                return current; // Don't modify
+            }
+            
+            result[0] = newAmount; // Signal success
+            return newAmount;
+        });
+        
+        if (result[0] == null) {
+            return false; // Insufficient funds
+        }
+        
         lastActivityMap.put(player, System.currentTimeMillis());
         queueAsyncSave();
         queueAsyncSaveActivity();
+        
         // Log transaction
         EconomyTransactionLogger.log("SUBTRACT", player.toString(), "SERVER", amount.toPlainString(), "Subtract from balance");
         return true;
@@ -337,7 +403,17 @@ public class EconomyManager {
     public void shutdown() {
         LOGGER.info("Shutting down EconomyManager...");
         
-        // Save any pending data
+        // Set shutdown flag to prevent new operations
+        shuttingDown.set(true);
+        
+        // Wait a moment for any in-flight operations to complete
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        // Save any pending data (this will block)
         saveBalancesAtomic();
         saveLastActivityAtomic();
         

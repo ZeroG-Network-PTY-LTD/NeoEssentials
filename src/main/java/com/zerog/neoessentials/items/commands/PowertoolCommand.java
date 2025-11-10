@@ -13,8 +13,43 @@ import net.minecraft.server.level.ServerPlayer;
 
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Provides powertool functionality to bind commands to items for quick execution.
+ * 
+ * <p>Commands:</p>
+ * <ul>
+ *   <li>/powertool &lt;command&gt; - Bind command to item in hand</li>
+ *   <li>/powertool @p &lt;command&gt; - Create targeting command (executes on all other players)</li>
+ *   <li>/ptool - Alias for /powertool</li>
+ *   <li>/pt - Short alias for /powertool</li>
+ * </ul>
+ * 
+ * <p>Permissions:</p>
+ * <ul>
+ *   <li>neoessentials.item.powertool - Bind commands to items</li>
+ *   <li>neoessentials.command.target - Use @p targeting feature</li>
+ * </ul>
+ * 
+ * <p>Configuration:</p>
+ * <ul>
+ *   <li>commands.powertool.enabled - Enable/disable command</li>
+ * </ul>
+ * 
+ * <p>Features:</p>
+ * <ul>
+ *   <li>Bind any command to an item for right-click execution</li>
+ *   <li>Advanced @p targeting executes command on all other online players</li>
+ *   <li>Server-side storage prevents client tampering</li>
+ *   <li>Supports placeholder substitution ({player} in commands)</li>
+ *   <li>Audit logging for assignments and executions</li>
+ * </ul>
+ */
 public class PowertoolCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PowertoolCommand.class);
+    
     // Server-side powertool assignments: player UUID -> slot -> command
     private static final Map<java.util.UUID, Map<Integer, String>> POWERS = new HashMap<>();
     /**
@@ -105,10 +140,18 @@ public class PowertoolCommand {
 
     /**
      * Assigns a command to the item in the player's main hand using vanilla NBT.
+     * Logs the assignment for audit trail purposes.
+     * 
+     * @param player The player assigning the powertool
+     * @param command The command to bind to the item
      */
     public static void assign(ServerPlayer player, String command) {
         int slot = player.getInventory().selected;
         POWERS.computeIfAbsent(player.getUUID(), k -> new HashMap<>()).put(slot, command);
+        
+        // Log powertool assignment for audit trail
+        LOGGER.info("Player {} assigned powertool command '{}' to slot {}", 
+            player.getName().getString(), command, slot);
     }
 
     /**
@@ -189,12 +232,16 @@ public class PowertoolCommand {
                 successCount[0]++;
             } catch (Exception e) {
                 // Log error but continue with other targets
-                System.err.println("Failed to execute target command '" + validCommand + "' for player " + 
-                    target.getName().getString() + ": " + e.getMessage());
+                LOGGER.warn("Failed to execute target command '{}' for player {}: {}", 
+                    validCommand, target.getName().getString(), e.getMessage());
             }
         }
 
         if (successCount[0] > 0) {
+            // Log successful target command execution for audit trail
+            LOGGER.info("Player {} executed target command '{}' on {}/{} players successfully",
+                executor.getName().getString(), validCommand, successCount[0], targets.size());
+            
             source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.pt.target.success", 
                 successCount[0], targets.size()), false);
             return 1;

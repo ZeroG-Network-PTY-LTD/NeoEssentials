@@ -1,14 +1,14 @@
 package com.zerog.neoessentials.chat;
 
 import net.minecraft.server.level.ServerPlayer;
-import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 
 /**
  * Manages private message toggling for players.
  */
 public class MsgToggleManager {
-    private static final Set<String> toggledPlayers = new HashSet<>();
+    private static final Set<String> toggledPlayers = ConcurrentHashMap.newKeySet();
 
     public static boolean toggleMsg(ServerPlayer player) {
         String name = player.getName().getString().toLowerCase();

@@ -54,6 +54,13 @@ public class PermissionsEXAdapter implements ExternalPermissionAdapter {
         return "PermissionsEX";
     }
     
+    @Override
+    public boolean isAvailable() {
+        // PermissionsEX adapter is always "available" but just for exporting permissions
+        // It doesn't actually handle permission checks
+        return false;
+    }
+    
     /**
      * Export all NeoEssentials permissions to a file that PermissionsEX can read
      * This helps with tab completion in PermissionsEX commands

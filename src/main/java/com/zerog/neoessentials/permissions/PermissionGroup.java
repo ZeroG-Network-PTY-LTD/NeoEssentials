@@ -1,7 +1,7 @@
 package com.zerog.neoessentials.permissions;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PermissionGroup {
     private final String name;
@@ -12,8 +12,8 @@ public class PermissionGroup {
 
     public PermissionGroup(String name) {
         this.name = name;
-        this.permissions = new HashSet<>();
-        this.inherits = new HashSet<>();
+        this.permissions = ConcurrentHashMap.newKeySet();
+        this.inherits = ConcurrentHashMap.newKeySet();
     }
 
     public String getName() {

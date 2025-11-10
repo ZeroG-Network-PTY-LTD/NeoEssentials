@@ -13,6 +13,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +27,7 @@ import java.time.format.DateTimeFormatter;
  * Shows and manages server message of the day
  */
 public class MotdCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MotdCommand.class);
     private static String currentMotd = "";
     private static String motdAuthor = "Server";
     private static String motdTimestamp = "";
@@ -203,19 +206,28 @@ public class MotdCommand {
             return 0;
         }
         
-        // Send MOTD to all players
+        // Send MOTD to all players who have permission
         String formattedMotd = currentMotd.replace("&", "§");
         Component motdComponent = Component.literal(formattedMotd);
+        int sentCount = 0;
         
         for (ServerPlayer player : players) {
-            player.sendSystemMessage(MessageUtil.success("commands.neoessentials.motd.broadcast_header"));
-            player.sendSystemMessage(motdComponent);
-            if (!motdTimestamp.isEmpty()) {
-                player.sendSystemMessage(MessageUtil.info("commands.neoessentials.motd.footer", motdAuthor, motdTimestamp));
+            // Check if player has permission to see MOTD
+            PermissionValidator.PermissionResult permResult = 
+                PermissionValidator.validatePermission(player.createCommandSourceStack(), "neoessentials.motd");
+            
+            if (permResult.hasPermission()) {
+                player.sendSystemMessage(MessageUtil.success("commands.neoessentials.motd.broadcast_header"));
+                player.sendSystemMessage(motdComponent);
+                if (!motdTimestamp.isEmpty()) {
+                    player.sendSystemMessage(MessageUtil.info("commands.neoessentials.motd.footer", motdAuthor, motdTimestamp));
+                }
+                sentCount++;
             }
         }
         
-        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.broadcasted", players.size()), false);
+        final int finalSentCount = sentCount;
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.motd.broadcasted", finalSentCount), false);
         return 1;
     }
     
@@ -237,7 +249,7 @@ public class MotdCommand {
             motdTimestamp = data.has("timestamp") ? data.get("timestamp").getAsString() : "";
             
         } catch (Exception e) {
-            System.err.println("Failed to load MOTD data: " + e.getMessage());
+            LOGGER.error("Failed to load MOTD data: {}", e.getMessage());
             // Set defaults
             currentMotd = "";
             motdAuthor = "Server";
@@ -259,7 +271,7 @@ public class MotdCommand {
             Files.writeString(MOTD_DATA_FILE, GSON.toJson(data));
             
         } catch (Exception e) {
-            System.err.println("Failed to save MOTD data: " + e.getMessage());
+            LOGGER.error("Failed to save MOTD data: {}", e.getMessage());
         }
     }
     

@@ -2,6 +2,7 @@ package com.zerog.neoessentials.util.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,6 +19,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.file.Files;
@@ -29,6 +32,7 @@ import java.nio.file.Paths;
  * Supports pagination and configurable rules
  */
 public class RulesCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RulesCommand.class);
     private static List<String> serverRules = new ArrayList<>();
     private static final Path RULES_DATA_FILE = Paths.get("config", "neoessentials", "rules_data.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -68,6 +72,102 @@ public class RulesCommand {
                         
                         int page = IntegerArgumentType.getInteger(ctx, "page");
                         return showRules(ctx.getSource(), page);
+                    })
+                )
+                // /rules add <rule> - Add a new rule (admin)
+                .then(Commands.literal("add")
+                    .then(Commands.argument("rule", StringArgumentType.greedyString())
+                        .executes(ctx -> {
+                            PermissionValidator.PermissionResult permResult = 
+                                PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.rules.admin");
+                            if (!permResult.hasPermission()) {
+                                ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                                return 0;
+                            }
+                            
+                            String rule = StringArgumentType.getString(ctx, "rule");
+                            return addRule(ctx.getSource(), rule);
+                        })
+                    )
+                )
+                // /rules remove <number> - Remove a rule (admin)
+                .then(Commands.literal("remove")
+                    .then(Commands.argument("number", IntegerArgumentType.integer(1))
+                        .executes(ctx -> {
+                            PermissionValidator.PermissionResult permResult = 
+                                PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.rules.admin");
+                            if (!permResult.hasPermission()) {
+                                ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                                return 0;
+                            }
+                            
+                            int number = IntegerArgumentType.getInteger(ctx, "number");
+                            return removeRule(ctx.getSource(), number);
+                        })
+                    )
+                )
+                // /rules edit <number> <new text> - Edit a rule (admin)
+                .then(Commands.literal("edit")
+                    .then(Commands.argument("number", IntegerArgumentType.integer(1))
+                        .then(Commands.argument("newText", StringArgumentType.greedyString())
+                            .executes(ctx -> {
+                                PermissionValidator.PermissionResult permResult = 
+                                    PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.rules.admin");
+                                if (!permResult.hasPermission()) {
+                                    ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                                    return 0;
+                                }
+                                
+                                int number = IntegerArgumentType.getInteger(ctx, "number");
+                                String newText = StringArgumentType.getString(ctx, "newText");
+                                return editRule(ctx.getSource(), number, newText);
+                            })
+                        )
+                    )
+                )
+                // /rules insert <number> <rule> - Insert a rule at position (admin)
+                .then(Commands.literal("insert")
+                    .then(Commands.argument("number", IntegerArgumentType.integer(1))
+                        .then(Commands.argument("rule", StringArgumentType.greedyString())
+                            .executes(ctx -> {
+                                PermissionValidator.PermissionResult permResult = 
+                                    PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.rules.admin");
+                                if (!permResult.hasPermission()) {
+                                    ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                                    return 0;
+                                }
+                                
+                                int number = IntegerArgumentType.getInteger(ctx, "number");
+                                String rule = StringArgumentType.getString(ctx, "rule");
+                                return insertRule(ctx.getSource(), number, rule);
+                            })
+                        )
+                    )
+                )
+                // /rules clear - Clear all rules (admin)
+                .then(Commands.literal("clear")
+                    .executes(ctx -> {
+                        PermissionValidator.PermissionResult permResult = 
+                            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.rules.admin");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                            return 0;
+                        }
+                        
+                        return clearRules(ctx.getSource());
+                    })
+                )
+                // /rules reload - Reload rules from file (admin)
+                .then(Commands.literal("reload")
+                    .executes(ctx -> {
+                        PermissionValidator.PermissionResult permResult = 
+                            PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.rules.admin");
+                        if (!permResult.hasPermission()) {
+                            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                            return 0;
+                        }
+                        
+                        return reloadRules(ctx.getSource());
                     })
                 )
         );
@@ -135,6 +235,109 @@ public class RulesCommand {
     }
     
     /**
+     * Add a new rule
+     */
+    private static int addRule(CommandSourceStack source, String rule) {
+        if (rule.length() > 200) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.rules.too_long"));
+            return 0;
+        }
+        
+        serverRules.add(rule);
+        saveRulesData();
+        
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.rules.added", serverRules.size()), false);
+        return 1;
+    }
+    
+    /**
+     * Remove a rule by number
+     */
+    private static int removeRule(CommandSourceStack source, int number) {
+        if (number < 1 || number > serverRules.size()) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.rules.invalid_number", number, serverRules.size()));
+            return 0;
+        }
+        
+        String removedRule = serverRules.remove(number - 1);
+        saveRulesData();
+        
+        String formattedRule = removedRule.replace("&", "§");
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.rules.removed", number, formattedRule), false);
+        return 1;
+    }
+    
+    /**
+     * Edit a rule by number
+     */
+    private static int editRule(CommandSourceStack source, int number, String newText) {
+        if (number < 1 || number > serverRules.size()) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.rules.invalid_number", number, serverRules.size()));
+            return 0;
+        }
+        
+        if (newText.length() > 200) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.rules.too_long"));
+            return 0;
+        }
+        
+        serverRules.set(number - 1, newText);
+        saveRulesData();
+        
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.rules.edited", number), false);
+        return 1;
+    }
+    
+    /**
+     * Insert a rule at a specific position
+     */
+    private static int insertRule(CommandSourceStack source, int number, String rule) {
+        if (number < 1 || number > serverRules.size() + 1) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.rules.invalid_insert_position", number, serverRules.size() + 1));
+            return 0;
+        }
+        
+        if (rule.length() > 200) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.rules.too_long"));
+            return 0;
+        }
+        
+        serverRules.add(number - 1, rule);
+        saveRulesData();
+        
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.rules.inserted", number), false);
+        return 1;
+    }
+    
+    /**
+     * Clear all rules
+     */
+    private static int clearRules(CommandSourceStack source) {
+        if (serverRules.isEmpty()) {
+            source.sendFailure(MessageUtil.error("commands.neoessentials.rules.already_empty"));
+            return 0;
+        }
+        
+        int count = serverRules.size();
+        serverRules.clear();
+        saveRulesData();
+        
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.rules.cleared", count), false);
+        return 1;
+    }
+    
+    /**
+     * Reload rules from file
+     */
+    private static int reloadRules(CommandSourceStack source) {
+        loadRulesData();
+        int newCount = serverRules.size();
+        
+        source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.rules.reloaded", newCount), false);
+        return 1;
+    }
+    
+    /**
      * Load rules data from file
      */
     private static void loadRulesData() {
@@ -158,7 +361,7 @@ public class RulesCommand {
             }
             
         } catch (Exception e) {
-            System.err.println("Failed to load rules data: " + e.getMessage());
+            LOGGER.error("Failed to load rules data: {}", e.getMessage());
             createDefaultRules();
         }
     }
@@ -200,7 +403,7 @@ public class RulesCommand {
             Files.writeString(RULES_DATA_FILE, GSON.toJson(data));
             
         } catch (Exception e) {
-            System.err.println("Failed to save rules data: " + e.getMessage());
+            LOGGER.error("Failed to save rules data: {}", e.getMessage());
         }
     }
     

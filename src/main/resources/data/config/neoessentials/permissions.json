@@ -1,11 +1,11 @@
 {
-  "_configVersion": 3,
+  "_configVersion": 4,
   "_configVersion_comment": "DO NOT MODIFY: This field is used by NeoEssentials for automatic config updates. Changing this may cause config corruption.",
   "defaultGroup": "default",
   "groups": [
     {
       "name": "default",
-      "prefix": "",
+      "prefix": "&7",
       "suffix": "",
       "permissions": [
         "neoessentials.economy.balance",
@@ -16,6 +16,9 @@
         "neoessentials.items.powertool",
         "neoessentials.chat.msg",
         "neoessentials.chat.reply",
+        "neoessentials.chat.color",
+        "neoessentials.chat.color.hex",
+        "neoessentials.chat.format",
         "neoessentials.utils.afk",
         "neoessentials.kits.use",
         "neoessentials.teleportation.home",
@@ -28,7 +31,7 @@
     },
     {
       "name": "moderator",
-      "prefix": "[Mod] ",
+      "prefix": "&2[Mod] ",
       "suffix": "",
       "permissions": [
         "neoessentials.economy.*",
@@ -49,7 +52,7 @@
     },
     {
       "name": "admin",
-      "prefix": "[Admin] ",
+      "prefix": "&c[Admin] ",
       "suffix": "",
       "permissions": [
         "neoessentials.*"

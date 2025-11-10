@@ -63,14 +63,19 @@ public class PayCommand {
         
         ServerPlayer sender = permResult.getPlayer();
         
-        // Check cooldown
+        // Check cooldown atomically to prevent bypass
         long now = System.currentTimeMillis();
         long cooldownMs = getPayCooldownMs();
-        if (payCooldowns.containsKey(sender.getUUID()) && now - payCooldowns.get(sender.getUUID()) < cooldownMs) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.cooldown"));
-            return 0;
+        Long lastPay = payCooldowns.putIfAbsent(sender.getUUID(), now);
+        if (lastPay != null) {
+            long timeSince = now - lastPay;
+            if (timeSince < cooldownMs) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.pay.cooldown"));
+                return 0;
+            }
+            // Update cooldown time
+            payCooldowns.put(sender.getUUID(), now);
         }
-        payCooldowns.put(sender.getUUID(), now);
         
         // Check if economy is enabled
         if (!EconomyManager.getInstance().isEnabled()) {

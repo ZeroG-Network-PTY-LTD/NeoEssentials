@@ -190,6 +190,17 @@ afterEvaluate {
     }
 }
 
+// Copy build_number.txt to resources so it's included in the JAR
+tasks.register("copyBuildNumber", Copy) {
+    from file('build_number.txt')
+    into file('src/main/resources')
+}
+
+// Make processResources depend on copyBuildNumber
+tasks.named('processResources').configure {
+    dependsOn 'copyBuildNumber'
+}
+
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

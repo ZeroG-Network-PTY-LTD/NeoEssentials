@@ -7,50 +7,110 @@
 # ✅ Thread-safe operations with proper resource management
 # ✅ Centralized configuration management with hot-reload support
 #
-# Last Updated: November 5, 2025
-# Total Commands: 70+
+# Last Updated: November 9, 2025 (Build #474)
+# Total Commands: 135+ (including aliases)
 
-## Economy Commands
-balance - Check your or another player's balance
+## Economy Commands (9)
+balance (bal) - Check your or another player's balance
 pay - Send money to another player
-paytoggle - Toggle accepting payments from other players
+paytoggle (pt) - Toggle accepting payments from other players
 eco - Admin economy commands (give, take, set)
-balancetop - View top player balances
+baltop (balancetop) - View top player balances
 
-## Teleportation Commands
+## Teleportation Commands (37)
+### Home Management (5)
 home - Teleport to your home location
 sethome - Set your home location
-delhome - Delete your home
+delhome (deletehome) - Delete your home
+homes - List your homes
+
+### Spawn System (2)
 spawn - Teleport to spawn point
-back - Return to previous location
+setspawn - Set spawn location
+
+### Warps (4)
 warp - Teleport to a warp
-warps - List available warps
+setwarp - Create a warp
+delwarp - Delete a warp
+warps - List all warps
+
+### Player Warps (4)
 pwarp - Teleport to player warp
 setpwarp - Create a player warp
 delpwarp - Delete a player warp
 pwarps - List your player warps
 
-## Moderation Commands
+### Teleport Requests (5)
+tpa - Request to teleport to a player
+tpahere - Request a player to teleport to you
+tpaccept - Accept a teleport request
+tpdeny - Deny a teleport request
+tpacancel - Cancel your teleport request
+
+### Direct Teleportation (Admin) (5)
+tp - Teleport to a player or location
+tphere - Teleport a player to you
+tpall - Teleport all players to you
+tppos - Teleport to coordinates
+tpr - Random teleportation
+
+### Miscellaneous Teleportation (4)
+back - Return to previous location
+top - Teleport to highest block
+jump - Jump through walls
+jumpto - Teleport to block you're looking at
+
+## Moderation Commands (23)
+### Ban System (5)
 ban - Ban a player from the server
 unban - Unban a player
-kick - Kick a player from the server
-jail - Jail a player
-freeze - Freeze a player in place
-vanish - Toggle vanish mode (invisible to players)
+banip - Ban an IP address
+unbanip - Unban an IP address
+banlist - List banned players
 
-## Chat & Communication Commands
-msg - Send a private message to a player
-reply - Reply to the last private message
-ignore - Ignore messages from a player
-unignore - Stop ignoring a player
-socialspy - Spy on private messages (admin)
+### Kick System (2)
+kick - Kick a player from the server
+kickall - Kick all players
+
+### Mute System (3)
 mute - Mute a player in chat
 unmute - Unmute a player
 mutelist - List all muted players
-msgtoggle - Toggle receiving private messages
 
-## Permission Management Commands
-permissions - Manage permissions and groups
+### Jail System (5)
+jail - Jail a player
+unjail - Release a player from jail
+setjail - Set jail location
+jaillist - List jailed players
+jailinfo - View jail information
+
+### Freeze System (5)
+freeze - Freeze a player in place
+unfreeze - Unfreeze a player
+freezeall - Freeze all players
+unfreezeall - Unfreeze all players
+freezelist - List frozen players
+
+### Vanish System (4)
+vanish (v) - Toggle vanish mode (invisible to players)
+unvanish - Disable vanish mode
+vanishlist - List vanished players
+
+## Chat & Communication Commands (12)
+msg (message, tell, whisper, w, pm) - Send a private message to a player
+reply (r) - Reply to the last private message
+ignore - Ignore messages from a player
+unignore - Stop ignoring a player
+socialspy - Spy on private messages (admin)
+msgtoggle - Toggle receiving private messages
+mail - Manage your mail messages
+  - read [page] - Read your mail
+  - send <player> <message> - Send mail to a player
+  - delete <id> - Delete a mail message
+  - clear - Clear all your mail
+
+## Permission Management Commands (2)
+permissions (pex) - Manage permissions and groups
   - reload - Reload permissions configuration
   - list groups - List all permission groups
   - list users - List all users
@@ -66,42 +126,81 @@ permissions - Manage permissions and groups
   - user <name> remove <permission> - Remove permission from user
   - user <name> info - View user's permissions
 
-## Kit Management Commands
+## Kit Management Commands (5)
 kit - Claim a kit
-kits - List available kits
+kits (listkits) - List available kits
 createkit - Create a new kit (admin)
 delkit - Delete a kit (admin)
 
-## Utility Commands (Player Tools)
-afk - Toggle AFK status
-nick - Change your nickname
-anvil - Open portable anvil
-book - Open editable book interface
-compass - Show your current compass direction
-crafting - Open portable crafting table
-depth - Display your current depth/Y-level
-fletching - Open portable fletching table
-getpos - Get your current position coordinates
-helpop - Request help from staff members
-list - List all online players
-mail - Manage your mail messages
-motd - View the message of the day
-near - Find nearby players
-ping - Check your connection ping
-realname - Find a player's real name by nickname
-rules - View server rules
+## Utility Commands (Player Tools) (30)
+### Status & Information (9)
+afk (away) - Toggle AFK status
+list (who, online) - List all online players
+near (nearby) - Find nearby players
+ping (pong) - Check your connection ping
 seen - Check when a player was last online
-sign - Edit sign text remotely
-smithing - Open portable smithing table
-stonecutting - Open portable stonecutter
-suicide - Kill yourself
-whois - Get detailed information about a player
+whois (info) - Get detailed information about a player
+getpos (coords, whereami) - Get your current position coordinates
+depth - Display your current depth/Y-level
+compass (direction) - Show your current compass direction
 
-## Administrative Commands
+### Portable Workstations (6)
+anvil - Open portable anvil
+crafting (craft, workbench) - Open portable crafting table
+fletching - Open portable fletching table
+smithing - Open portable smithing table
+stonecutting (stonecutter) - Open portable stonecutter
+
+### Player Customization (2)
+nick (nickname) - Change your nickname
+setnick - Set another player's nickname (admin)
+
+### Server Information (3)
+motd - View message of the day
+  - reload - Reload MOTD (admin)
+  - set <message> - Set MOTD (admin)
+  - clear - Clear MOTD (admin)
+  - broadcast - Broadcast MOTD to all (admin)
+rules - View server rules
+realname - Find a player's real name by nickname
+
+### Communication & Help (2)
+helpop (ac, amsg) - Request help from staff members
+mail - Manage mail messages (see Chat & Communication section)
+
+### Item Management (2)
+book - Manage books
+  - unlock - Unlock a signed book for editing
+  - title <title> - Set book title
+  - author <author> - Set book author
+sign - Edit sign text remotely
+  - clear - Clear sign text
+
+### Gamemode Commands (5)
+gms - Change to survival mode
+gmc - Change to creative mode
+gmsp - Change to spectator mode
+gma - Change to adventure mode
+
+### Miscellaneous (2)
+suicide (killme) - Kill yourself
+
+## Administrative Commands (10)
 neoessentials - Main mod command
   - reload - Reload all configurations
   - info - Display mod information
   - debug - Toggle debug mode
+dashboard - Manage web dashboard
+  - start - Start dashboard server
+  - stop - Stop dashboard server
+  - restart - Restart dashboard server
+  - status - View dashboard status
+  - url - Get dashboard URL
+repair (fix) - Repair items
+dispose (trash) - Dispose of items
+powertool (pt) - Bind commands to items
+enchant - Enchant items
+clearinventory (ci, clear) - Clear inventory
 
 ## Permission Nodes Reference
 
@@ -115,31 +214,65 @@ neoessentials - Main mod command
 
 ### Teleportation Permissions:
 - neoessentials.teleport.home - Use home command
+- neoessentials.teleport.home.<amount> - Set max homes (e.g., neoessentials.home.10)
 - neoessentials.teleport.sethome - Set home location
 - neoessentials.teleport.delhome - Delete home
+- neoessentials.teleport.homes - List homes
 - neoessentials.teleport.spawn - Use spawn command
+- neoessentials.teleport.setspawn - Set spawn location (admin)
 - neoessentials.teleport.back - Use back command
 - neoessentials.teleport.warp - Use warp command
 - neoessentials.teleport.warp.admin - Admin warp commands
 - neoessentials.teleport.pwarp - Player warp access
 - neoessentials.teleport.pwarp.create - Create player warps
+- neoessentials.teleport.tpa - Send teleport requests
+- neoessentials.teleport.tpahere - Request players teleport to you
+- neoessentials.teleport.tpaccept - Accept teleport requests
+- neoessentials.teleport.tpdeny - Deny teleport requests
+- neoessentials.teleport.tp - Direct teleportation (admin)
+- neoessentials.teleport.tphere - Teleport players to you (admin)
+- neoessentials.teleport.tpall - Teleport all players (admin)
+- neoessentials.teleport.tppos - Teleport to coordinates (admin)
+- neoessentials.teleport.tpr - Random teleportation
+- neoessentials.teleport.top - Teleport to highest block
+- neoessentials.teleport.jump - Jump through walls
+- neoessentials.teleport.jumpto - Teleport to block you're looking at
 
 ### Moderation Permissions:
 - neoessentials.moderation.ban - Ban players
 - neoessentials.moderation.unban - Unban players
+- neoessentials.moderation.banip - Ban IP addresses
+- neoessentials.moderation.unbanip - Unban IP addresses
+- neoessentials.moderation.banlist - View ban list
 - neoessentials.moderation.kick - Kick players
+- neoessentials.moderation.kickall - Kick all players
+- neoessentials.moderation.mute - Mute players
+- neoessentials.moderation.unmute - Unmute players
+- neoessentials.moderation.mutelist - View muted players
 - neoessentials.moderation.jail - Jail players
+- neoessentials.moderation.unjail - Unjail players
+- neoessentials.moderation.setjail - Set jail location
+- neoessentials.moderation.jaillist - View jailed players
+- neoessentials.moderation.jailinfo - View jail information
 - neoessentials.moderation.freeze - Freeze players
+- neoessentials.moderation.unfreeze - Unfreeze players
+- neoessentials.moderation.freezeall - Freeze all players
+- neoessentials.moderation.unfreezeall - Unfreeze all players
+- neoessentials.moderation.freezelist - View frozen players
 - neoessentials.moderation.vanish - Use vanish mode
+- neoessentials.moderation.vanish.see - See vanished players
 
 ### Chat Permissions:
 - neoessentials.chat.msg - Send private messages
 - neoessentials.chat.reply - Reply to messages
 - neoessentials.chat.ignore - Ignore players
+- neoessentials.chat.unignore - Unignore players
 - neoessentials.chat.socialspy - Spy on messages
-- neoessentials.chat.mute - Mute players
-- neoessentials.chat.unmute - Unmute players
 - neoessentials.chat.msgtoggle - Toggle message receipt
+- neoessentials.chat.mail - Use mail system
+- neoessentials.chat.mail.send - Send mail
+- neoessentials.chat.color - Use color codes in chat
+- neoessentials.chat.format - Use format codes in chat
 
 ### Permissions Management:
 - neoessentials.permissions.admin - Full permissions access
@@ -148,42 +281,108 @@ neoessentials - Main mod command
 - neoessentials.permissions.group.delete - Delete groups
 - neoessentials.permissions.group.modify - Modify groups
 - neoessentials.permissions.user.modify - Modify user permissions
+- neoessentials.permissions.list - List groups and users
+- neoessentials.permissions.info - View permission information
 
 ### Kit Permissions:
 - neoessentials.kit.use - Use kits
-- neoessentials.kit.create - Create kits
-- neoessentials.kit.delete - Delete kits
+- neoessentials.kit.list - List kits
+- neoessentials.kit.create - Create kits (admin)
+- neoessentials.kit.delete - Delete kits (admin)
 - neoessentials.kit.<kitname> - Access specific kit
 
 ### Utility Permissions:
 - neoessentials.afk - Use AFK command
+- neoessentials.afk.kickexempt - Exempt from AFK kick
 - neoessentials.nick - Change nickname
+- neoessentials.nick.others - Change other players' nicknames
+- neoessentials.nick.color - Use color in nicknames
+- neoessentials.nick.format - Use format codes in nicknames
 - neoessentials.anvil - Portable anvil
 - neoessentials.book - Editable book
+- neoessentials.book.unlock - Unlock signed books
+- neoessentials.book.title - Change book titles
+- neoessentials.book.author - Change book authors
 - neoessentials.compass - Show compass
-- neoessentials.crafting - Portable crafting
+- neoessentials.crafting - Portable crafting table
 - neoessentials.depth - Show depth
-- neoessentials.fletching - Portable fletching
+- neoessentials.fletching - Portable fletching table
 - neoessentials.getpos - Show position
 - neoessentials.helpop - Request help
 - neoessentials.list - List players
 - neoessentials.mail - Mail system
 - neoessentials.motd - View MOTD
+- neoessentials.motd.admin - Admin MOTD commands
 - neoessentials.near - Find nearby players
 - neoessentials.ping - Check ping
 - neoessentials.realname - Find real names
 - neoessentials.rules - View rules
 - neoessentials.seen - Check last seen
 - neoessentials.sign - Edit signs
-- neoessentials.smithing - Portable smithing
-- neoessentials.stonecutting - Portable stonecutting
+- neoessentials.sign.clear - Clear signs
+- neoessentials.smithing - Portable smithing table
+- neoessentials.stonecutting - Portable stonecutter
 - neoessentials.suicide - Use suicide command
 - neoessentials.whois - Player information
+- neoessentials.gamemode.survival - Change to survival mode
+- neoessentials.gamemode.creative - Change to creative mode
+- neoessentials.gamemode.spectator - Change to spectator mode
+- neoessentials.gamemode.adventure - Change to adventure mode
 
 ### Admin Permissions:
 - neoessentials.admin - Full admin access
 - neoessentials.reload - Reload configurations
 - neoessentials.debug - Debug mode access
+- neoessentials.dashboard - Access web dashboard
+- neoessentials.dashboard.admin - Admin dashboard commands
+- neoessentials.repair - Repair items
+- neoessentials.repair.all - Repair all items
+- neoessentials.dispose - Use dispose command
+- neoessentials.powertool - Use powertool command
+- neoessentials.enchant - Enchant items
+- neoessentials.clearinventory - Clear inventory
+- neoessentials.clearinventory.others - Clear other players' inventories
+
+## Command Aliases Quick Reference
+
+### Economy:
+- bal → balance
+- pt → paytoggle
+
+### Teleportation:
+- deletehome → delhome
+
+### Moderation:
+- v → vanish
+
+### Chat:
+- message, tell, whisper, w, pm → msg
+- r → reply
+
+### Permissions:
+- pex → permissions
+
+### Kit:
+- listkits → kits
+
+### Utility:
+- away → afk
+- who, online → list
+- nearby → near
+- pong → ping
+- coords, whereami → getpos
+- direction → compass
+- craft, workbench → crafting
+- stonecutter → stonecutting
+- killme → suicide
+- info → whois
+- nickname → nick
+- ac, amsg → helpop
+
+### Admin:
+- fix → repair
+- trash → dispose
+- ci, clear → clearinventory
 
 ## Command Registry
 All commands are automatically registered via CommandRegistry.getInstance()
@@ -199,3 +398,8 @@ Individual command cooldowns and restrictions are configurable per-permission gr
 - All commands respect the permission system with configurable exemptions
 - Command execution is logged for audit purposes when enabled in config
 - Rate limiting and cooldowns are enforced per-command and per-player
+- Commands marked with (admin) require elevated permissions
+- Aliases in parentheses provide shorthand access to commands
+- All systems use thread-safe atomic operations (Build #474)
+- Race condition exploits have been eliminated from all manager systems
+- Teleportation system fully audited and secured against concurrency exploits

@@ -19,7 +19,9 @@ public class InputValidator {
     
     // Security patterns
     private static final Pattern VALID_PLAYER_NAME = Pattern.compile("^[a-zA-Z0-9_]{1,16}$");
-    private static final Pattern SAFE_COMMAND = Pattern.compile("^[a-zA-Z0-9_\\-/\\s]+$");
+    // Updated SAFE_COMMAND to allow colons, periods, ampersands, hashes, and tildes for legitimate Minecraft commands
+    // Allows: namespaced IDs (minecraft:sharpness), permissions (neoessentials.economy.pay), color codes (&#5d6a2c), relative coords (~ ~6 ~)
+    private static final Pattern SAFE_COMMAND = Pattern.compile("^[a-zA-Z0-9_\\-/\\s:.&#~]+$");
     private static final Pattern SAFE_FILENAME = Pattern.compile("^[a-zA-Z0-9_\\-\\.]+$");
     
     // Config-based limits - loaded from ConfigManager

@@ -227,9 +227,7 @@ public class PermissionsCommand {
         }
         
         try {
-            PermissionManager manager = new PermissionManager();
-            PermissionStorage.load(manager);
-            PermissionAPI.setManager(manager);
+            com.zerog.neoessentials.permissions.PermissionSystem.reload();
             ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.reloaded"), false);
             return 1;
         } catch (Exception e) {
@@ -284,108 +282,175 @@ public class PermissionsCommand {
     }
 
     private static int addGroupPermission(CommandContext<CommandSourceStack> ctx) {
-        // Validate admin permission for modifying group permissions
-        PermissionValidator.PermissionResult permResult = 
-            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.permissions");
-        if (!permResult.hasPermission()) {
-            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+        try {
+            // Validate admin permission for modifying group permissions
+            PermissionValidator.PermissionResult permResult = 
+                PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.permissions");
+            if (!permResult.hasPermission()) {
+                ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                return 0;
+            }
+            
+            String groupName = StringArgumentType.getString(ctx, "group");
+            String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
+            
+            LOGGER.debug("Adding permission '{}' to group '{}'", perm, groupName);
+            
+            // Validate permission format
+            if (!PermissionManager.isValidPermission(perm)) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.invalid_permission", perm));
+                return 0;
+            }
+            
+            PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+            if (group == null) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+                return 0;
+            }
+            
+            // Check if permission already exists
+            if (group.getPermissions().contains(perm)) {
+                ctx.getSource().sendFailure(MessageUtil.warning("commands.neoessentials.permissions.permission_already_exists", perm, groupName));
+                return 0;
+            }
+            
+            group.addPermission(perm);
+            
+            // Clear permission cache after modification
+            PermissionAPI.getManager().clearCache();
+            
+            try { 
+                PermissionStorage.save(PermissionAPI.getManager()); 
+                LOGGER.info("Added permission '{}' to group '{}'", perm, groupName);
+            } catch (Exception e) { 
+                LOGGER.error("Failed to save permissions after adding group permission", e);
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
+                return 0;
+            }
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_added", perm, groupName), false);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error in addGroupPermission command", e);
+            ctx.getSource().sendFailure(MessageUtil.error("§cAn unexpected error occurred: " + e.getMessage()));
+            e.printStackTrace();
             return 0;
         }
-        
-        String groupName = StringArgumentType.getString(ctx, "group");
-        String perm = StringArgumentType.getString(ctx, "permission");
-        
-        // Validate permission format
-        if (!PermissionManager.isValidPermission(perm)) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.invalid_permission", perm));
-            return 0;
-        }
-        
-        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
-        if (group == null) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
-            return 0;
-        }
-        
-        // Check if permission already exists
-        if (group.getPermissions().contains(perm)) {
-            ctx.getSource().sendFailure(MessageUtil.warning("commands.neoessentials.permissions.permission_already_exists", perm, groupName));
-            return 0;
-        }
-        
-        group.addPermission(perm);
-        try { 
-            PermissionStorage.save(PermissionAPI.getManager()); 
-            LOGGER.info("Added permission '{}' to group '{}'", perm, groupName);
-        } catch (Exception e) { 
-            LOGGER.error("Failed to save permissions after adding group permission", e);
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
-            return 0;
-        }
-        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_added", perm, groupName), false);
-        return 1;
     }
 
     private static int removeGroupPermission(CommandContext<CommandSourceStack> ctx) {
-        // Validate admin permission for modifying group permissions
-        PermissionValidator.PermissionResult permResult = 
-            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.permissions");
-        if (!permResult.hasPermission()) {
-            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+        try {
+            // Validate admin permission for modifying group permissions
+            PermissionValidator.PermissionResult permResult = 
+                PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.group.permissions");
+            if (!permResult.hasPermission()) {
+                ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                return 0;
+            }
+            
+            String groupName = StringArgumentType.getString(ctx, "group");
+            String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
+            
+            LOGGER.debug("Removing permission '{}' from group '{}'", perm, groupName);
+            
+            PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+            if (group == null) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+                return 0;
+            }
+            
+            // Check if permission exists before removing
+            if (!group.getPermissions().contains(perm)) {
+                ctx.getSource().sendFailure(MessageUtil.warning("commands.neoessentials.permissions.permission_not_found", perm, groupName));
+                return 0;
+            }
+            
+            group.removePermission(perm);
+            
+            // Clear permission cache after modification
+            PermissionAPI.getManager().clearCache();
+            
+            try { 
+                PermissionStorage.save(PermissionAPI.getManager()); 
+                LOGGER.info("Removed permission '{}' from group '{}'", perm, groupName);
+            } catch (Exception e) { 
+                LOGGER.error("Failed to save permissions after removing group permission", e); 
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
+                return 0;
+            }
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_removed", perm, groupName), false);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error in removeGroupPermission command", e);
+            ctx.getSource().sendFailure(MessageUtil.error("§cAn unexpected error occurred: " + e.getMessage()));
+            e.printStackTrace();
             return 0;
         }
-        
-        String groupName = StringArgumentType.getString(ctx, "group");
-        String perm = StringArgumentType.getString(ctx, "permission");
-        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
-        if (group == null) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
-            return 0;
-        }
-        group.removePermission(perm);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after removing group permission", e); }
-        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_removed", perm, groupName), false);
-        return 1;
     }
 
     private static int setUserGroup(CommandContext<CommandSourceStack> ctx) {
-        // Validate admin permission for modifying user groups
-        PermissionValidator.PermissionResult permResult = 
-            PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.user.groups");
-        if (!permResult.hasPermission()) {
-            ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+        try {
+            // Validate admin permission for modifying user groups
+            PermissionValidator.PermissionResult permResult = 
+                PermissionValidator.validateAdminPermission(ctx.getSource(), "neoessentials.permissions.user.groups");
+            if (!permResult.hasPermission()) {
+                ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
+                return 0;
+            }
+            
+            String playerName = StringArgumentType.getString(ctx, "player");
+            String groupName = StringArgumentType.getString(ctx, "group");
+            MinecraftServer server = ctx.getSource().getServer();
+            
+            LOGGER.debug("Setting group '{}' for user '{}'", groupName, playerName);
+            
+            // Try to get UUID by player name
+            Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
+            if (uuidOpt.isEmpty()) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found"));
+                return 0;
+            }
+            
+            UUID uuid = uuidOpt.get();
+            PermissionUser user = PermissionAPI.getManager().getUser(uuid);
+            if (user == null) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.user_not_found"));
+                return 0;
+            }
+            
+            // Check if group exists
+            PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
+            if (group == null) {
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found", groupName));
+                return 0;
+            }
+            
+            // Check if user is already in this group
+            if (groupName.equalsIgnoreCase(user.getGroup())) {
+                ctx.getSource().sendFailure(MessageUtil.warning("commands.neoessentials.permissions.user_already_in_group", playerName, groupName));
+                return 0;
+            }
+            
+            user.setGroup(groupName);
+            
+            // Clear permission cache after modification
+            PermissionAPI.getManager().clearCache();
+            
+            try { 
+                PermissionStorage.save(PermissionAPI.getManager()); 
+                LOGGER.info("Set group '{}' for user '{}'", groupName, playerName);
+            } catch (Exception e) { 
+                LOGGER.error("Failed to save permissions after setting user group", e); 
+                ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
+                return 0;
+            }
+            ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.user_group_set", playerName, groupName), false);
+            return 1;
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error in setUserGroup command", e);
+            ctx.getSource().sendFailure(MessageUtil.error("§cAn unexpected error occurred: " + e.getMessage()));
+            e.printStackTrace();
             return 0;
         }
-        
-        String playerName = StringArgumentType.getString(ctx, "player");
-        String groupName = StringArgumentType.getString(ctx, "group");
-        MinecraftServer server = ctx.getSource().getServer();
-        
-        // Try to get UUID by player name
-        Optional<UUID> uuidOpt = EconomyPlayerUtil.getUUIDByName(server, playerName);
-        if (uuidOpt.isEmpty()) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.player_not_found"));
-            return 0;
-        }
-        
-        UUID uuid = uuidOpt.get();
-        PermissionUser user = PermissionAPI.getManager().getUser(uuid);
-        if (user == null) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.user_not_found"));
-            return 0;
-        }
-        
-        // Check if group exists
-        PermissionGroup group = PermissionAPI.getManager().getGroup(groupName);
-        if (group == null) {
-            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.group_not_found"));
-            return 0;
-        }
-        
-        user.setGroup(groupName);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after setting user group", e); }
-        ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.user_group_set", playerName, groupName), false);
-        return 1;
     }
 
     private static int addUserPermission(CommandContext<CommandSourceStack> ctx) {
@@ -398,7 +463,7 @@ public class PermissionsCommand {
         }
         
         String playerName = StringArgumentType.getString(ctx, "player");
-        String perm = StringArgumentType.getString(ctx, "permission");
+        String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
         MinecraftServer server = ctx.getSource().getServer();
         
         // Validate permission format
@@ -430,6 +495,10 @@ public class PermissionsCommand {
         }
         
         user.addPermission(perm);
+        
+        // Clear permission cache after modification
+        PermissionAPI.getManager().clearCache();
+        
         try { 
             PermissionStorage.save(PermissionAPI.getManager()); 
             LOGGER.info("Added permission '{}' to user '{}'", perm, playerName);
@@ -452,7 +521,7 @@ public class PermissionsCommand {
         }
         
         String playerName = StringArgumentType.getString(ctx, "player");
-        String perm = StringArgumentType.getString(ctx, "permission");
+        String perm = StringArgumentType.getString(ctx, "permission").toLowerCase().trim();
         MinecraftServer server = ctx.getSource().getServer();
         
         // Try to get UUID by player name
@@ -469,8 +538,25 @@ public class PermissionsCommand {
             return 0;
         }
         
+        // Check if permission exists before removing
+        if (!user.getPermissions().contains(perm)) {
+            ctx.getSource().sendFailure(MessageUtil.warning("commands.neoessentials.permissions.permission_not_found_for_user", perm, playerName));
+            return 0;
+        }
+        
         user.removePermission(perm);
-        try { PermissionStorage.save(PermissionAPI.getManager()); } catch (Exception e) { LOGGER.error("Failed to save permissions after removing user permission", e); }
+        
+        // Clear permission cache after modification
+        PermissionAPI.getManager().clearCache();
+        
+        try { 
+            PermissionStorage.save(PermissionAPI.getManager()); 
+            LOGGER.info("Removed permission '{}' from user '{}'", perm, playerName);
+        } catch (Exception e) { 
+            LOGGER.error("Failed to save permissions after removing user permission", e);
+            ctx.getSource().sendFailure(MessageUtil.error("commands.neoessentials.permissions.save_failed"));
+            return 0;
+        }
         ctx.getSource().sendSuccess(() -> MessageUtil.success("commands.neoessentials.permissions.permission_removed_from_user", perm, playerName), false);
         return 1;
     }

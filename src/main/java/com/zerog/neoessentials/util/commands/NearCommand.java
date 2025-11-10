@@ -144,8 +144,8 @@ public class NearCommand {
      * Create a formatted entry for a nearby player
      */
     private static MutableComponent createPlayerEntry(NearbyPlayerInfo info, ServerPlayer viewer) {
-        String distanceStr = String.format("%.1f", info.distance);
-        String direction = getDirection(info.relativePos);
+        String distanceStr = CommandUtil.formatDistance(info.distance, 1);
+        String direction = CommandUtil.getSimpleDirection(info.relativePos.x, info.relativePos.z);
         
         // Base message with distance and direction
         MutableComponent message = Component.literal(String.format("§7- §f%s §7(§e%sm §7%s)", 
@@ -207,47 +207,63 @@ public class NearCommand {
         return message;
     }
     
-    /**
-     * Get cardinal direction from relative position
-     */
-    private static String getDirection(Vec3 relativePos) {
-        double angle = Math.atan2(relativePos.z, relativePos.x) * 180.0 / Math.PI;
-        
-        // Normalize angle to 0-360
-        if (angle < 0) angle += 360;
-        
-        // Convert to cardinal directions
-        if (angle >= 337.5 || angle < 22.5) return "E";
-        else if (angle >= 22.5 && angle < 67.5) return "SE";
-        else if (angle >= 67.5 && angle < 112.5) return "S";
-        else if (angle >= 112.5 && angle < 157.5) return "SW";
-        else if (angle >= 157.5 && angle < 202.5) return "W";
-        else if (angle >= 202.5 && angle < 247.5) return "NW";
-        else if (angle >= 247.5 && angle < 292.5) return "N";
-        else return "NE";
-    }
+    // Removed getDirection - now using CommandUtil.getSimpleDirection
     
     /**
-     * Check if a player is vanished (placeholder)
+     * Check if a player is vanished
+     * Integrates with VanishManager for actual vanish state
      */
     private static boolean isVanished(ServerPlayer player) {
-        // Integration ready when vanish system is implemented
-        return PermissionValidator.validatePermission(player.createCommandSourceStack(), "neoessentials.vanish.active").hasPermission();
+        // If vanish system is disabled, always return false
+        if (!ConfigManager.getInstance().isVanishSystemEnabled()) {
+            return false;
+        }
+        // Use VanishManager to check actual vanish state
+        try {
+            com.zerog.neoessentials.moderation.VanishManager vanishManager = 
+                com.zerog.neoessentials.moderation.VanishManager.getInstance();
+            return vanishManager.isPlayerVanished(player.getUUID());
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     /**
      * Check if viewer can see vanished players
+     * Integrates with VanishManager for actual permission state
      */
     private static boolean canSeeVanished(ServerPlayer viewer) {
-        return PermissionValidator.validatePermission(viewer.createCommandSourceStack(), "neoessentials.vanish.see").hasPermission();
+        // If vanish system is disabled, always return false
+        if (!ConfigManager.getInstance().isVanishSystemEnabled()) {
+            return false;
+        }
+        // Use VanishManager to check if viewer can see vanished players
+        try {
+            com.zerog.neoessentials.moderation.VanishManager vanishManager = 
+                com.zerog.neoessentials.moderation.VanishManager.getInstance();
+            return vanishManager.canPlayerSeeVanished(viewer.getUUID());
+        } catch (Exception e) {
+            return PermissionValidator.validatePermission(viewer.createCommandSourceStack(), "neoessentials.vanish.see").hasPermission();
+        }
     }
     
     /**
-     * Check if a player is AFK (placeholder)
+     * Check if a player is AFK
+     * Integrates with AfkManager for actual AFK state
      */
     private static boolean isAfk(ServerPlayer player) {
-        // Integration ready when AFK system is implemented
-        return false;
+        // Check if chat module is enabled
+        if (!ConfigManager.isChatEnabled()) {
+            return false;
+        }
+        // Use AfkManager to check actual AFK state
+        try {
+            com.zerog.neoessentials.chat.AfkManager afkManager = 
+                com.zerog.neoessentials.chat.AfkManager.getInstance();
+            return afkManager.isAfk(player);
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     /**

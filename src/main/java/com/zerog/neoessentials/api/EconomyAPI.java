@@ -65,20 +65,34 @@ public class EconomyAPI {
     /**
      * Pay another player with a transaction fee applied. Returns true if successful.
      * The fee is removed from the system (no bank accounts).
+     * This operation is ATOMIC to prevent double-spending exploits.
      */
     public static boolean payPlayer(UUID sender, UUID receiver, BigDecimal amount) {
         if (sender.equals(receiver)) return false; // Prevent self-payment
         if (amount.compareTo(BigDecimal.ZERO) <= 0) return false; // No negative or zero payments
+        
         EconomyManager manager = EconomyManager.getInstance();
-        BigDecimal senderBalance = manager.getBalance(sender);
-        if (senderBalance.compareTo(amount) < 0) return false; // Insufficient funds
+        
+        // Calculate tax upfront
         double taxPercent = ConfigManager.getTaxPercentage();
         BigDecimal fee = amount.multiply(BigDecimal.valueOf(taxPercent / 100.0));
         BigDecimal netAmount = amount.subtract(fee);
-        if (netAmount.compareTo(BigDecimal.ZERO) < 0) return false; // Fee too high for amount
-        manager.subtractBalance(sender, amount);
-        manager.addBalance(receiver, netAmount);
-        // Optionally, log the transaction or notify players here
+        if (netAmount.compareTo(BigDecimal.ZERO) <= 0) return false; // Fee too high for amount
+        
+        // ATOMIC operation: subtract from sender (will fail if insufficient funds)
+        boolean senderSuccess = manager.subtractBalance(sender, amount);
+        if (!senderSuccess) {
+            return false; // Insufficient funds or negative balance not allowed
+        }
+        
+        // Add to receiver (should always succeed after sender succeeds)
+        boolean receiverSuccess = manager.addBalance(receiver, netAmount);
+        if (!receiverSuccess) {
+            // Extremely unlikely, but if it fails, refund the sender
+            manager.addBalance(sender, amount);
+            return false;
+        }
+        
         return true;
     }
 }

@@ -87,24 +87,36 @@ public class TeleportRequestManager {
         UUID requesterId = requester.getUUID();
         UUID targetId = target.getUUID();
         
-        // Check if requester can send requests
-        // Enforce cooldown between requests
-        long now = System.currentTimeMillis();
-        long last = lastRequestTimestamps.getOrDefault(requesterId, 0L);
-        if (cooldownBetweenRequestsSeconds > 0 && (now - last) < (cooldownBetweenRequestsSeconds * 1000L)) {
-            long wait = ((cooldownBetweenRequestsSeconds * 1000L) - (now - last)) / 1000L + 1;
-            requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.cooldown", wait));
-            return false;
+        // Enforce cooldown between requests - ATOMIC
+        if (cooldownBetweenRequestsSeconds > 0) {
+            long now = System.currentTimeMillis();
+            // Use putIfAbsent to atomically check and set cooldown
+            Long last = lastRequestTimestamps.putIfAbsent(requesterId, now);
+            if (last != null) {
+                if ((now - last) < (cooldownBetweenRequestsSeconds * 1000L)) {
+                    long wait = ((cooldownBetweenRequestsSeconds * 1000L) - (now - last)) / 1000L + 1;
+                    requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.cooldown", wait));
+                    return false;
+                }
+                // Update timestamp atomically
+                lastRequestTimestamps.put(requesterId, now);
+            }
         }
-        if (sentRequests.containsKey(requesterId)) {
+        
+        // Check if requester already has a sent request - ATOMIC
+        if (sentRequests.putIfAbsent(requesterId, null) != null) {
             requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.already_sent"));
+            // Remove the null we just inserted
+            sentRequests.remove(requesterId, null);
             return false;
         }
+        
         // Enforce allowMultipleRequests: block if requester already has a pending request to this target
         if (!allowMultipleRequests) {
             boolean alreadyRequested = pendingRequests.values().stream()
-                .anyMatch(req -> req.getRequesterId().equals(requesterId) && req.getTargetId().equals(targetId));
+                .anyMatch(req -> req != null && req.getRequesterId().equals(requesterId) && req.getTargetId().equals(targetId));
             if (alreadyRequested) {
+                sentRequests.remove(requesterId, null); // Clean up
                 requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.duplicate", target.getName().getString()));
                 return false;
             }
@@ -112,10 +124,11 @@ public class TeleportRequestManager {
         
         // Check if target has too many pending requests
         long targetPendingCount = pendingRequests.values().stream()
-            .filter(req -> req.getTargetId().equals(targetId))
+            .filter(req -> req != null && req.getTargetId().equals(targetId))
             .count();
         
         if (targetPendingCount >= maxPendingRequests) {
+            sentRequests.remove(requesterId, null); // Clean up
             requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.target_busy", target.getName().getString()));
             return false;
         }
@@ -130,12 +143,17 @@ public class TeleportRequestManager {
             System.currentTimeMillis() + (requestTimeoutSeconds * 1000L)
         );
         
-        // Store the request
-        pendingRequests.put(targetId, request);
+        // Store the request atomically - replace the null with actual request
         sentRequests.put(requesterId, request);
-
-        // Update last request timestamp
-        lastRequestTimestamps.put(requesterId, now);
+        
+        // Use putIfAbsent for pending requests to prevent race
+        TeleportRequest existingPending = pendingRequests.putIfAbsent(targetId, request);
+        if (existingPending != null) {
+            // Another request beat us, clean up
+            sentRequests.remove(requesterId);
+            requester.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.request.target_busy", target.getName().getString()));
+            return false;
+        }
 
         // Auto-accept if enabled and requester is a friend (stub)
         if (autoAcceptFromFriends && isFriend(target, requester)) {
@@ -151,8 +169,8 @@ public class TeleportRequestManager {
 
         // Schedule timeout
         scheduler.schedule(() -> {
-            if (pendingRequests.containsKey(targetId) && 
-                pendingRequests.get(targetId).equals(request)) {
+            TeleportRequest currentRequest = pendingRequests.get(targetId);
+            if (currentRequest != null && currentRequest.equals(request)) {
                 timeoutRequest(request);
             }
         }, requestTimeoutSeconds, TimeUnit.SECONDS);

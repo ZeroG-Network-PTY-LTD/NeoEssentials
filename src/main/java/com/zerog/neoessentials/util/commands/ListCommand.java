@@ -309,35 +309,58 @@ public class ListCommand {
     
     /**
      * Check if a player is vanished
-     * This is a placeholder - would need to integrate with actual vanish system
+     * Integrates with VanishManager for actual vanish state
      */
     private static boolean isVanished(ServerPlayer player) {
         // If vanish system is disabled, always return false
         if (!ConfigManager.getInstance().isVanishSystemEnabled()) {
             return false;
         }
-        // Integration ready when vanish system is implemented
-        // Currently using permission check as indicator
-        return PermissionValidator.validatePermission(player.createCommandSourceStack(), "neoessentials.vanish.active").hasPermission();
+        // Use VanishManager to check actual vanish state
+        try {
+            com.zerog.neoessentials.moderation.VanishManager vanishManager = 
+                com.zerog.neoessentials.moderation.VanishManager.getInstance();
+            return vanishManager.isPlayerVanished(player.getUUID());
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     /**
      * Check if a player is AFK
-     * This is a placeholder - would need to integrate with actual AFK system
+     * Integrates with AfkManager for actual AFK state
      */
     private static boolean isAfk(ServerPlayer player) {
-        // Integration ready when AFK system is implemented
-        // Currently returns false as placeholder
-        return false;
+        // Check if chat module is enabled
+        if (!ConfigManager.isChatEnabled()) {
+            return false;
+        }
+        // Use AfkManager to check actual AFK state
+        try {
+            com.zerog.neoessentials.chat.AfkManager afkManager = 
+                com.zerog.neoessentials.chat.AfkManager.getInstance();
+            return afkManager.isAfk(player);
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     /**
      * Get AFK reason for a player
-     * This is a placeholder - would need to integrate with actual AFK system
+     * Integrates with AfkManager for actual AFK reason
      */
     private static String getAfkReason(ServerPlayer player) {
-        // Integration ready when AFK system is implemented
-        // Currently returns null as placeholder
-        return null;
+        // Check if chat module is enabled
+        if (!ConfigManager.isChatEnabled()) {
+            return null;
+        }
+        // Use AfkManager to get actual AFK reason
+        try {
+            com.zerog.neoessentials.chat.AfkManager afkManager = 
+                com.zerog.neoessentials.chat.AfkManager.getInstance();
+            return afkManager.getAfkReason(player.getUUID());
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

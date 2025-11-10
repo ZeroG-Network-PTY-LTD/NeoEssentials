@@ -397,97 +397,91 @@ public class PermissionScanner {
     }
     
     /**
-     * Fallback method to generate known permissions when file scanning fails
+     * Fallback method to load permissions from permissions_nodes.txt resource file
      * This ensures we always have comprehensive permission coverage for PermissionsEX
      */
     private void generateKnownPermissions() {
-        LOGGER.debug("Using fallback permission generation");
+        LOGGER.debug("Loading permissions from permissions_nodes.txt resource file");
         
-        // Add all the core teleportation permissions that are registered in PermissionRegistry
-        // These are the individual permissions that PermissionsEX needs for tab completion
+        try {
+            // Try to load from classpath resource
+            var inputStream = getClass().getClassLoader().getResourceAsStream("data/config/permissions_nodes.txt");
+            
+            if (inputStream == null) {
+                LOGGER.warn("Could not find permissions_nodes.txt in resources, using hardcoded fallback");
+                loadHardcodedFallback();
+                return;
+            }
+            
+            // Read all lines from the resource file
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(inputStream))) {
+                int loadedCount = 0;
+                String line;
+                
+                while ((line = reader.readLine()) != null) {
+                    // Trim whitespace
+                    line = line.trim();
+                    
+                    // Skip empty lines and comments
+                    if (line.isEmpty() || line.startsWith("#") || line.startsWith("//")) {
+                        continue;
+                    }
+                    
+                    // Extract permission node (before the dash if present)
+                    String permission;
+                    int dashIndex = line.indexOf(" -");
+                    if (dashIndex > 0) {
+                        permission = line.substring(0, dashIndex).trim();
+                    } else {
+                        permission = line;
+                    }
+                    
+                    // Validate and add permission
+                    if (isValidPermission(permission)) {
+                        discoveredPermissions.add(permission);
+                        loadedCount++;
+                        LOGGER.debug("Loaded permission from file: {}", permission);
+                    } else {
+                        LOGGER.debug("Skipping invalid permission line: {}", line);
+                    }
+                }
+                
+                LOGGER.info("Loaded {} permissions from permissions_nodes.txt for PermissionsEX integration", loadedCount);
+                
+            } catch (IOException e) {
+                LOGGER.error("Error reading permissions_nodes.txt: {}", e.getMessage());
+                loadHardcodedFallback();
+            }
+            
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error loading permissions from file: {}", e.getMessage());
+            loadHardcodedFallback();
+        }
+    }
+    
+    /**
+     * Hardcoded fallback if resource file cannot be loaded
+     */
+    private void loadHardcodedFallback() {
+        LOGGER.debug("Using hardcoded permission fallback");
         
-        // Direct teleport admin permissions
-        addDiscoveredPermission("neoessentials.teleport.admin.tp", "Admin teleport command");
-        addDiscoveredPermission("neoessentials.teleport.admin.tphere", "Admin teleport here command");
-        addDiscoveredPermission("neoessentials.teleport.admin.tpall", "Admin teleport all command");
-        addDiscoveredPermission("neoessentials.teleport.admin.tpo", "Admin teleport override command");
-        addDiscoveredPermission("neoessentials.teleport.admin.tppos", "Admin teleport to position command");
-        
-        // Home teleportation permissions
-        addDiscoveredPermission("neoessentials.teleport.home.home", "Home teleport command");
-        addDiscoveredPermission("neoessentials.teleport.home.set", "Set home command");
-        addDiscoveredPermission("neoessentials.teleport.home.delete", "Delete home command");
-        addDiscoveredPermission("neoessentials.teleport.home.list", "List homes command");
-        addDiscoveredPermission("neoessentials.teleport.home.others", "Access other players' homes");
-        
-        // Spawn teleportation permissions
-        addDiscoveredPermission("neoessentials.teleport.spawn.spawn", "Spawn teleport command");
-        addDiscoveredPermission("neoessentials.teleport.spawn.setspawn", "Set spawn command");
-        addDiscoveredPermission("neoessentials.teleport.spawn.spawninfo", "Spawn info command");
-        
-        // Warp teleportation permissions
-        addDiscoveredPermission("neoessentials.teleport.warp.warp", "Warp teleport command");
-        addDiscoveredPermission("neoessentials.teleport.warp.setwarp", "Set warp command");
-        addDiscoveredPermission("neoessentials.teleport.warp.delwarp", "Delete warp command");
-        addDiscoveredPermission("neoessentials.teleport.warp.warps", "List warps command");
-        
-        // Teleport request permissions
-        addDiscoveredPermission("neoessentials.teleport.request.tpa", "Teleport ask command");
-        addDiscoveredPermission("neoessentials.teleport.request.tpahere", "Teleport ask here command");
-        addDiscoveredPermission("neoessentials.teleport.request.tpaccept", "Accept teleport request");
-        addDiscoveredPermission("neoessentials.teleport.request.tpdeny", "Deny teleport request");
-        addDiscoveredPermission("neoessentials.teleport.request.tpcancel", "Cancel teleport request");
-        
-        // Misc teleportation permissions
-        addDiscoveredPermission("neoessentials.teleport.misc.back", "Back teleport command");
-        addDiscoveredPermission("neoessentials.teleport.misc.top", "Top teleport command");
-        addDiscoveredPermission("neoessentials.teleport.misc.jump", "Jump teleport command");
-        addDiscoveredPermission("neoessentials.teleport.misc.jumpto", "Jump to teleport command");
-        addDiscoveredPermission("neoessentials.teleport.misc.tpr", "Random teleport command");
-        
-        // Economy permissions
-        addDiscoveredPermission("neoessentials.economy.balance", "Check balance command");
-        addDiscoveredPermission("neoessentials.economy.balance.others", "Check other players' balance");
-        addDiscoveredPermission("neoessentials.economy.pay", "Pay command");
-        addDiscoveredPermission("neoessentials.economy.eco.give", "Economy give command");
-        addDiscoveredPermission("neoessentials.economy.eco.take", "Economy take command");
-        addDiscoveredPermission("neoessentials.economy.eco.set", "Economy set command");
-        addDiscoveredPermission("neoessentials.economy.baltop", "Balance top command");
-        
-        // Kit permissions
-        addDiscoveredPermission("neoessentials.kits.kit", "Kit command");
-        addDiscoveredPermission("neoessentials.kits.createkit", "Create kit command");
-        addDiscoveredPermission("neoessentials.kits.delkit", "Delete kit command");
-        addDiscoveredPermission("neoessentials.kits.listkits", "List kits command");
-        addDiscoveredPermission("neoessentials.kits.starter", "Starter kit");
-        addDiscoveredPermission("neoessentials.kits.starter.nocooldown", "Starter kit no cooldown");
-        
-        // Chat permissions
-        addDiscoveredPermission("neoessentials.chat.msg", "Private message command");
-        addDiscoveredPermission("neoessentials.chat.reply", "Reply to message command");
-        addDiscoveredPermission("neoessentials.chat.ignore", "Ignore player command");
-        addDiscoveredPermission("neoessentials.chat.socialspy", "Social spy command");
-        addDiscoveredPermission("neoessentials.chat.mute", "Mute player command");
-        
-        // Utility permissions
-        addDiscoveredPermission("neoessentials.utility.afk", "AFK command");
-        addDiscoveredPermission("neoessentials.utility.repair", "Repair command");
-        addDiscoveredPermission("neoessentials.utility.dispose", "Dispose command");
-        addDiscoveredPermission("neoessentials.utility.clearinventory", "Clear inventory command");
-        
-        // Admin permissions
-        addDiscoveredPermission("neoessentials.admin.reload", "Reload configuration");
-        addDiscoveredPermission("neoessentials.admin.permissions", "Permission management");
-        
-        // Add wildcards for convenience
+        // Add basic wildcard permissions as last resort
+        addDiscoveredPermission("neoessentials.*", "All NeoEssentials permissions");
         addDiscoveredPermission("neoessentials.teleport.*", "All teleportation permissions");
+        addDiscoveredPermission("neoessentials.teleport.admin.*", "All admin teleport permissions");
+        addDiscoveredPermission("neoessentials.teleport.home.*", "All home permissions");
+        addDiscoveredPermission("neoessentials.teleport.spawn.*", "All spawn permissions");
+        addDiscoveredPermission("neoessentials.teleport.warp.*", "All warp permissions");
+        addDiscoveredPermission("neoessentials.teleport.request.*", "All teleport request permissions");
+        addDiscoveredPermission("neoessentials.teleport.misc.*", "All misc teleport permissions");
         addDiscoveredPermission("neoessentials.economy.*", "All economy permissions");
         addDiscoveredPermission("neoessentials.chat.*", "All chat permissions");
         addDiscoveredPermission("neoessentials.kits.*", "All kit permissions");
         addDiscoveredPermission("neoessentials.admin.*", "All admin permissions");
-        addDiscoveredPermission("neoessentials.*", "All NeoEssentials permissions");
+        addDiscoveredPermission("neoessentials.utility.*", "All utility permissions");
         
-        LOGGER.info("Generated {} fallback permissions for PermissionsEX integration", discoveredPermissions.size());
+        LOGGER.warn("Loaded {} hardcoded fallback permissions (permissions_nodes.txt not available)", 
+                    discoveredPermissions.size());
     }
     
     /**

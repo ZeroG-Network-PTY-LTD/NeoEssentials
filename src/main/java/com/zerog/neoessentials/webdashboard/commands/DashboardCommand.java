@@ -62,7 +62,7 @@ public class DashboardCommand {
     /**
      * Start the dashboard server
      */
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "deprecation"}) // Method signature required by command system, WebDashboardServer is deprecated
     private static int startDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
@@ -127,7 +127,7 @@ public class DashboardCommand {
     /**
      * Stop the dashboard server
      */
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "deprecation"}) // Method signature required by command system, WebDashboardServer is deprecated
     private static int stopDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         
@@ -153,7 +153,7 @@ public class DashboardCommand {
     /**
      * Check dashboard status
      */
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "deprecation"}) // Method signature required by command system, WebDashboardServer is deprecated
     private static int statusDashboard(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         

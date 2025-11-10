@@ -58,12 +58,17 @@ public class DirectTeleportCommands {
             registerJumptoCommand(dispatcher);
         }
         
+        // /jump command - alias for /jumpto
+        if (config.isTeleportationEnabled() && config.isCommandEnabled("jump")) {
+            registerJumpCommand(dispatcher);
+        }
+        
         // /tpr command - random teleport
         if (config.isTeleportationEnabled() && config.isCommandEnabled("tpr")) {
             registerTprCommand(dispatcher);
         }
         
-        // NOTE: /tpo, /back, and /jump commands are not yet implemented
+        // NOTE: /tpo and /back commands are not yet implemented
         // They will only be registered when their implementations are ready
     }
     
@@ -136,6 +141,13 @@ public class DirectTeleportCommands {
     
     private static void registerJumptoCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("jumpto")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> jumpToTargetBlock(context))
+        );
+    }
+    
+    private static void registerJumpCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("jump")
             .requires(source -> source.hasPermission(2))
             .executes(context -> jumpToTargetBlock(context))
         );
