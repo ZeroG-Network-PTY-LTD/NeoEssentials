@@ -34,19 +34,19 @@ NeoEssentials brings essential server management, player utilities, and advanced
 
 ## 📖 Documentation
 
-Start at [docs/Wiki Md Files/Home.md](docs/Wiki Md Files/Home.md) for a complete, config-driven documentation hub. All major systems are documented and standardized to match the codebase and config files:
-  - [EconomySystem](docs/Wiki Md Files/EconomySystem.md)
-  - [ChatSystem](docs/Wiki Md Files/ChatSystem.md)
-  - [ModerationSystem](docs/Wiki Md Files/ModerationSystem.md)
-  - [TeleportationSystem](docs/Wiki Md Files/TeleportationSystem.md)
-  - [KitManagement](docs/Wiki Md Files/KitManagement.md)
-  - [WebDashboard](docs/Wiki Md Files/WebDashboard.md)
-  - [PermissionSystem](docs/Wiki Md Files/PermissionSystem.md)
-  - [ItemManagement](docs/Wiki Md Files/ItemManagement.md)
-  - [UtilitySystems](docs/Wiki Md Files/UtilitySystems.md)
-  - [APISystem](docs/Wiki Md Files/APISystem.md)
-  - [AFKSystem](docs/Wiki Md Files/AFKSystem.md)
-See [docs/Wiki Md Files/APISystem.md](docs/Wiki Md Files/APISystem.md) for API & Placeholder System details, including:
+Start at [docs/wiki/Home.md](docs/wiki/Home.md) for a complete, config-driven documentation hub. All major systems are documented and standardized to match the codebase and config files:
+  - [EconomySystem](docs/wiki/EconomySystem.md)
+  - [ChatSystem](docs/wiki/ChatSystem.md)
+  - [ModerationSystem](docs/wiki/ModerationSystem.md)
+  - [TeleportationSystem](docs/wiki/TeleportationSystem.md)
+  - [KitManagement](docs/wiki/KitManagement.md)
+  - [WebDashboard](docs/wiki/WebDashboard.md)
+  - [PermissionSystem](docs/wiki/PermissionSystem.md)
+  - [ItemManagement](docs/wiki/ItemManagement.md)
+  - [UtilitySystems](docs/wiki/UtilitySystems.md)
+  - [APISystem](docs/wiki/APISystem.md)
+  - [AFKSystem](docs/wiki/AFKSystem.md)
+See [docs/wiki/APISystem.md](docs/wiki/APISystem.md) for API & Placeholder System details, including:
   - PlaceholderAPI integration for dynamic text
   - Custom and expansion placeholders
   - Web Dashboard REST API endpoints for server status, player info, logs, config, events, and statistics
@@ -81,15 +81,15 @@ For LuckPerms users:
 
 ## 🎮 Command Reference
 
-See [docs/Wiki Md Files/Home.md](docs/Wiki Md Files/Home.md) and individual system docs above for full command lists and config options.
+See [docs/wiki/Home.md](docs/wiki/Home.md) and individual system docs above for full command lists and config options.
 
 ## 🔧 Configuration Examples
 
-All features are managed by modular JSON config files. See [docs/Wiki Md Files/Home.md](docs/Wiki Md Files/Home.md) and system docs above for details.
+All features are managed by modular JSON config files. See [docs/wiki/Home.md](docs/wiki/Home.md) and system docs above for details.
 
 ## 🔗 API Integration for Modders
 
-See [docs/Wiki Md Files/APISystem.md](docs/Wiki Md Files/APISystem.md) for full API and PlaceholderAPI documentation, including:
+See [docs/wiki/APISystem.md](docs/wiki/APISystem.md) for full API and PlaceholderAPI documentation, including:
 - Registering custom placeholders
 - Using REST API endpoints for server data
 - Economy API for mod integration
@@ -106,7 +106,7 @@ See [docs/Wiki Md Files/APISystem.md](docs/Wiki Md Files/APISystem.md) for full 
 - **Discord**: [Join our Discord server](https://discord.gg/dUGAQF2Mga) for support and community discussion
 - **Bug Reports**: Report issues and bugs through GitHub or Discord
 - **Feature Requests**: Suggest new features and improvements
-- **Documentation**: See [docs/Wiki Md Files/Home.md](docs/Wiki Md Files/Home.md) and system docs above
+- **Documentation**: See [docs/wiki/Home.md](docs/wiki/Home.md) and system docs above
 
 ## 📄 License
 
