@@ -34,10 +34,10 @@ NeoEssentials brings essential server management, player utilities, and advanced
 
 ## 📖 Documentation
 
-Start at [docs/Home.md](docs/Home.md) for a complete, config-driven documentation hub. All major systems are documented:
+Start at [docs/Wiki Md Files/Home.md](docs/Wiki Md Files/Home.md) for a complete, config-driven documentation hub. All major systems are documented:
   - Economy, Chat, Moderation, Teleportation, Kits, Web Dashboard, Permissions, Item Management, Utility, API & Placeholder
   - Each system's Markdown file is standardized and matches the codebase/config
-  - See [docs/APISystem.md](docs/APISystem.md) for API & Placeholder System details, including:
+  - See [docs/Wiki Md Files/APISystem.md](docs/Wiki Md Files/APISystem.md) for API & Placeholder System details, including:
     - PlaceholderAPI integration for dynamic text
     - Custom and expansion placeholders
     - Web Dashboard REST API endpoints for server status, player info, logs, config, events, and statistics
@@ -72,15 +72,15 @@ For LuckPerms users:
 
 ## 🎮 Command Reference
 
-See [docs/Home.md](docs/Home.md) and individual system docs for full command lists and config options.
+See [docs/Wiki Md Files/Home.md](docs/Wiki Md Files/Home.md) and individual system docs for full command lists and config options.
 
 ## 🔧 Configuration Examples
 
-All features are managed by modular JSON config files. See [docs/Home.md](docs/Home.md) and system docs for details.
+All features are managed by modular JSON config files. See [docs/Wiki Md Files/Home.md](docs/Wiki Md Files/Home.md) and system docs for details.
 
 ## 🔗 API Integration for Modders
 
-See [docs/APISystem.md](docs/APISystem.md) for full API and PlaceholderAPI documentation, including:
+See [docs/Wiki Md Files/APISystem.md](docs/Wiki Md Files/APISystem.md) for full API and PlaceholderAPI documentation, including:
 - Registering custom placeholders
 - Using REST API endpoints for server data
 - Economy API for mod integration
@@ -97,7 +97,7 @@ See [docs/APISystem.md](docs/APISystem.md) for full API and PlaceholderAPI docum
 - **Discord**: [Join our Discord server](https://discord.gg/dUGAQF2Mga) for support and community discussion
 - **Bug Reports**: Report issues and bugs through GitHub or Discord
 - **Feature Requests**: Suggest new features and improvements
-- **Documentation**: See [docs/Home.md](docs/Home.md) and system docs
+- **Documentation**: See [docs/Wiki Md Files/Home.md](docs/Wiki Md Files/Home.md) and system docs
 
 ## 📄 License
 
