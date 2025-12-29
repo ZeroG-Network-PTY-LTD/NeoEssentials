@@ -176,7 +176,7 @@ public class SpawnManager {
         
         // Perform teleportation
         int delayTicks = teleportDelay * 20; // Convert seconds to ticks
-        TeleportUtil.teleportPlayer(player, spawnLocation, delayTicks, true).thenAccept(result -> {
+        TeleportUtil.teleportPlayer(player, spawnLocation, delayTicks, requireSafeLocation).thenAccept(result -> {
             if (result.isSuccess()) {
                 player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.spawn.success"));
                 if (com.zerog.neoessentials.config.ConfigManager.getInstance().isLogSpawnActionsEnabled()) {
