@@ -131,9 +131,14 @@ public class PlaceholderManager {
                 identifier = placeholderContent;
             }
             
-            // Resolve the placeholder
+            // Resolve the placeholder - try internal first
             String value = getPlaceholderValue(player, identifier, params);
             
+            // If not found internally, try external sources (LuckPerms, FTB Ranks, etc.)
+            if (value == null && player != null) {
+                value = resolveExternalPlaceholder(player, identifier);
+            }
+
             if (value != null) {
                 // Escape special regex characters in the replacement
                 value = Matcher.quoteReplacement(value);
@@ -148,6 +153,156 @@ public class PlaceholderManager {
         return result.toString();
     }
     
+    /**
+     * Resolve external placeholders from other mods/plugins.
+     * Supports: LuckPerms, FTB Ranks, etc.
+     */
+    private String resolveExternalPlaceholder(ServerPlayer player, String identifier) {
+        // Try LuckPerms placeholders
+        String luckPermsValue = resolveLuckPermsPlaceholder(player, identifier);
+        if (luckPermsValue != null) return luckPermsValue;
+
+        // Try FTB Ranks placeholders
+        String ftbValue = resolveFTBRanksPlaceholder(player, identifier);
+        if (ftbValue != null) return ftbValue;
+
+        // Add more external sources here as needed
+
+        return null;
+    }
+
+    /**
+     * Resolve LuckPerms placeholders like {luckperms_prefix}, {luckperms_suffix}, etc.
+     */
+    private String resolveLuckPermsPlaceholder(ServerPlayer player, String identifier) {
+        if (!identifier.startsWith("luckperms_")) {
+            return null;
+        }
+
+        try {
+            String permMeta = identifier.substring("luckperms_".length());
+
+            switch (permMeta) {
+                case "prefix":
+                    return getLuckPermsPrefix(player);
+                case "suffix":
+                    return getLuckPermsSuffix(player);
+                case "group":
+                case "primary_group":
+                    return getLuckPermsPrimaryGroup(player);
+                case "displayname":
+                    return getLuckPermsDisplayName(player);
+                default:
+                    return null;
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Failed to resolve LuckPerms placeholder '{}': {}", identifier, e.getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Get LuckPerms prefix from permission system.
+     */
+    private String getLuckPermsPrefix(ServerPlayer player) {
+        try {
+            var permManager = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
+            if (permManager != null) {
+                var user = permManager.getUser(player.getUUID());
+                if (user != null) {
+                    String groupName = user.getGroup();
+                    if (groupName != null) {
+                        var group = permManager.getGroup(groupName);
+                        if (group != null && group.getPrefix() != null && !group.getPrefix().isEmpty()) {
+                            return group.getPrefix();
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Error getting LuckPerms prefix: {}", e.getMessage());
+        }
+        return "";
+    }
+
+    /**
+     * Get LuckPerms suffix from permission system.
+     */
+    private String getLuckPermsSuffix(ServerPlayer player) {
+        try {
+            var permManager = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
+            if (permManager != null) {
+                var user = permManager.getUser(player.getUUID());
+                if (user != null) {
+                    String groupName = user.getGroup();
+                    if (groupName != null) {
+                        var group = permManager.getGroup(groupName);
+                        if (group != null && group.getSuffix() != null && !group.getSuffix().isEmpty()) {
+                            return group.getSuffix();
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Error getting LuckPerms suffix: {}", e.getMessage());
+        }
+        return "";
+    }
+
+    /**
+     * Get LuckPerms primary group.
+     */
+    private String getLuckPermsPrimaryGroup(ServerPlayer player) {
+        try {
+            var permManager = com.zerog.neoessentials.api.permissions.PermissionAPI.getManager();
+            if (permManager != null) {
+                var user = permManager.getUser(player.getUUID());
+                if (user != null && user.getGroup() != null) {
+                    return user.getGroup();
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Error getting LuckPerms group: {}", e.getMessage());
+        }
+        return "";
+    }
+
+    /**
+     * Get LuckPerms display name (prefix + name + suffix).
+     */
+    private String getLuckPermsDisplayName(ServerPlayer player) {
+        String prefix = getLuckPermsPrefix(player);
+        String suffix = getLuckPermsSuffix(player);
+        String name = player.getName().getString();
+        return prefix + name + suffix;
+    }
+
+    /**
+     * Resolve FTB Ranks placeholders like {ftbranks_prefix}, {ftbranks_suffix}, etc.
+     */
+    private String resolveFTBRanksPlaceholder(ServerPlayer player, String identifier) {
+        if (!identifier.startsWith("ftbranks_")) {
+            return null;
+        }
+
+        // FTB Ranks uses the same permission system as LuckPerms in NeoEssentials
+        // So we can reuse the same logic with different prefix
+        String ftbMeta = identifier.substring("ftbranks_".length());
+
+        switch (ftbMeta) {
+            case "prefix":
+                return getLuckPermsPrefix(player); // Same source
+            case "suffix":
+                return getLuckPermsSuffix(player); // Same source
+            case "rank":
+            case "group":
+                return getLuckPermsPrimaryGroup(player); // Same source
+            default:
+                return null;
+        }
+    }
+
     /**
      * Resolve a single placeholder for a specific player.
      * 

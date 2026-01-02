@@ -4,13 +4,20 @@ import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.economy.managers.EconomyManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 /**
  * Default placeholder expansion for NeoEssentials.
@@ -21,12 +28,64 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#.##");
     
     private final Set<String> placeholders = new HashSet<>();
-    
+    private final String version;
+
     public DefaultPlaceholderExpansion() {
+        // Read version from mod metadata and build number
+        this.version = readModVersion();
         // Register all default placeholders
         initializePlaceholders();
     }
     
+    /**
+     * Read the mod version from NeoForge ModContainer and append build number.
+     * Format: {mod_version}+build.{build_number}
+     *
+     * @return The full version string with build number
+     */
+    private static String readModVersion() {
+        try {
+            // Get version from mod.toml via ModContainer
+            ModContainer modContainer = ModList.get().getModContainerById("neoessentials").orElse(null);
+            if (modContainer != null) {
+                String modVersion = modContainer.getModInfo().getVersion().toString();
+
+                // Read build number from build_number.txt
+                String buildNumber = readBuildNumber();
+
+                // Combine: version+build.XXX (or just version if no build number)
+                if (!"UNKNOWN".equals(buildNumber)) {
+                    return modVersion + "+build." + buildNumber;
+                }
+                return modVersion;
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not read mod version from ModContainer: {}", e.getMessage());
+        }
+
+        // Fallback to hardcoded version
+        return "1.0.2.2-HotFix";
+    }
+
+    /**
+     * Read the build number from build_number.txt resource file.
+     *
+     * @return The build number string, or "UNKNOWN" if not found
+     */
+    private static String readBuildNumber() {
+        try (InputStream is = DefaultPlaceholderExpansion.class.getResourceAsStream("/build_number.txt")) {
+            if (is != null) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                    String buildNumber = reader.lines().collect(Collectors.joining()).trim();
+                    return buildNumber.isEmpty() ? "UNKNOWN" : buildNumber;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Could not read build number: {}", e.getMessage());
+        }
+        return "UNKNOWN";
+    }
+
     private void initializePlaceholders() {
         // Player identity placeholders
         placeholders.add("displayname");
@@ -82,7 +141,7 @@ public class DefaultPlaceholderExpansion extends PlaceholderExpansion {
     
     @Override
     public String getVersion() {
-        return "1.0.0";
+        return version; // Returns: {mod_version}+build.{build_number}
     }
     
     @Override

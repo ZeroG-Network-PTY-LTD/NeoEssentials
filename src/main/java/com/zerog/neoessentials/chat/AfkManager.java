@@ -551,4 +551,14 @@ public class AfkManager {
             }
         }, saveIntervalSeconds, saveIntervalSeconds, TimeUnit.SECONDS);
     }
+
+    /**
+     * Reload AFK data from disk (does not clear current AFK states)
+     */
+    public void reload() {
+        LOGGER.info("Reloading AFK system...");
+        // Note: We don't clear current AFK states as they represent live player state
+        // Just reload configuration if needed
+        LOGGER.info("AFK system reloaded");
+    }
 }

@@ -101,6 +101,36 @@ See [docs/wiki/APISystem.md](docs/wiki/APISystem.md) for full API and Placeholde
 - **Vanilla Client Support**
 - **Performance Optimized**
 
+## 🛠️ Development
+
+### IDE Setup
+This project uses **IntelliJ IDEA Community Edition** with Gradle.
+
+**Setup Instructions:**
+1. Clone the repository
+2. Open the project in IntelliJ IDEA
+3. Import as a Gradle project
+4. Wait for Gradle to sync and download dependencies
+5. The IDE is configured to automatically download sources and javadocs
+
+**Running the Mod:**
+- Use Gradle run configurations provided by NeoForge ModDev
+- `runClient` - Test in client mode
+- `runServer` - Test in server mode
+- `runData` - Generate data resources
+
+**Building:**
+```bash
+./gradlew build
+```
+Output JAR: `build/libs/neoessentials-VERSION+build.XXX.jar`
+
+### Project Structure
+- **Java 21** - Target JDK version
+- **Gradle** - Build system with auto-incrementing build numbers
+- **NeoForge ModDev 2.0.107** - Modern mod development plugin
+- **Parchment Mappings** - Better parameter names and javadocs
+
 ## 🤝 Support & Community
 
 - **Discord**: [Join our Discord server](https://discord.gg/dUGAQF2Mga) for support and community discussion

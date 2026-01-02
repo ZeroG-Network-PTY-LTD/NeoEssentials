@@ -10,6 +10,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.core.BlockPos;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import java.time.LocalDateTime;
@@ -38,17 +39,18 @@ public class HelpopCommand {
     private static void registerHelpopCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
             Commands.literal(commandName)
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .then(Commands.argument("message", StringArgumentType.greedyString())
                     .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
+                        ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.helpop.player_only");
+                        if (player == null) return 0;
+
+                        PermissionValidator.PermissionResult permResult =
                             PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.helpop");
                         if (!permResult.hasPermission()) {
                             ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
                         
-                        ServerPlayer player = permResult.getPlayer();
                         String message = StringArgumentType.getString(ctx, "message");
                         
                         return sendHelpRequest(player, message);

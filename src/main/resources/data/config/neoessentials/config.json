@@ -201,7 +201,7 @@
     "item-spawn-blacklist_comment": "List of items that cannot be spawned via commands, even with permissions"
   },
   "permissions": {
-    "useExternalPermissions": false,
+    "useExternalPermissions": true,
     "defaultGroup": "default",
     "opsBypassPermissions": true,
     "cachePermissions": true,

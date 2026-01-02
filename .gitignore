@@ -1,17 +1,30 @@
-# eclipse
-bin
+# IntelliJ IDEA (primary IDE)
+# Track project configuration for team consistency
+# Ignore user-specific and generated files
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries
+.idea/shelf
+.idea/httpRequests
+.idea/dataSources.xml
+.idea/dataSources.ids
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+.idea/dbnavigator.xml
+.idea/copilot*.xml
+*.iws
+out/
+
+# Eclipse (legacy - not actively used)
+bin/
 *.launch
-.settings
-.metadata
+.settings/
+.metadata/
 .classpath
 .project
 
-# idea
-out
-*.ipr
-*.iws
-*.iml
-.idea
 
 # gradle
 build
