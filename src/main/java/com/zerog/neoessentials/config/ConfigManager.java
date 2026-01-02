@@ -1263,6 +1263,25 @@ public class ConfigManager {
     }
 
     /**
+     * Check if command length enforcer is enabled (security.enableCommandLengthEnforcer).
+     * This controls whether the CommandLengthEnforcer event handler validates player commands.
+     * When disabled, players can use commands of any length (not recommended for security).
+     * Defaults to true if not set.
+     *
+     * @return true if command length enforcement is enabled, false otherwise
+     */
+    public boolean isCommandLengthEnforcerEnabled() {
+        JsonObject config = getConfig(MAIN_CONFIG);
+        if (config.has("security")) {
+            JsonObject security = config.getAsJsonObject("security");
+            if (security.has("enableCommandLengthEnforcer")) {
+                return security.get("enableCommandLengthEnforcer").getAsBoolean();
+            }
+        }
+        return true; // Default to enabled for security
+    }
+
+    /**
      * Returns true if custom chat formatting is enabled (chat.enable-chat-formatting in config).
      * Defaults to true if not set.
      */

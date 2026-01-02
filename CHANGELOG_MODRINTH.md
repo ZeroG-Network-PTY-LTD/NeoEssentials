@@ -1,4 +1,4 @@
-# NeoEssentials v1.0.2.2-HotFix - Major Update
+# NeoEssentials v1.0.2.3 - Major Update
 
 **Build #524** | November 10, 2025 | Minecraft 1.21.1 | NeoForge 21.1.179+
 
@@ -99,7 +99,7 @@ config/neoessentials/
 
 1. Backup `config/neoessentials/`
 2. Stop server
-3. Replace JAR: `neoessentials-1.0.2.2-HotFix+build.524.jar`
+3. Replace JAR: `neoessentials-1.0.2.3+build.536.jar`
 4. Start server (auto-generates new configs)
 5. Optional: Fix color codes in `permissions.json` (`\u0026` → `&`)
 

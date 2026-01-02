@@ -10,6 +10,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import com.google.gson.Gson;
@@ -72,30 +73,33 @@ public class MailCommand {
         
         dispatcher.register(
             Commands.literal("mail")
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
-                // /mail read [page] - Read mail
+                // /mail read [page] - Read mail (player only)
                 .then(Commands.literal("read")
                     .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
+                        ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.mail.player_only");
+                        if (player == null) return 0;
+
+                        PermissionValidator.PermissionResult permResult =
                             PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.mail");
                         if (!permResult.hasPermission()) {
                             ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
                         
-                        ServerPlayer player = permResult.getPlayer();
                         return readMail(player, 1);
                     })
                     .then(Commands.argument("page", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1))
                         .executes(ctx -> {
-                            PermissionValidator.PermissionResult permResult = 
+                            ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.mail.player_only");
+                            if (player == null) return 0;
+
+                            PermissionValidator.PermissionResult permResult =
                                 PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.mail");
                             if (!permResult.hasPermission()) {
                                 ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                                 return 0;
                             }
                             
-                            ServerPlayer player = permResult.getPlayer();
                             int page = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "page");
                             return readMail(player, page);
                         })

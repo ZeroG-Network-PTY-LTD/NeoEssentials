@@ -12,6 +12,7 @@ import net.minecraft.world.inventory.SmithingMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.network.chat.Component;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 
@@ -29,16 +30,16 @@ public class SmithingCommand {
         
         dispatcher.register(
             Commands.literal("smithing")
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
+                    ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.smithing.player_only");
+                    if (player == null) return 0;
+
+                    PermissionValidator.PermissionResult permResult =
                         PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.smithing");
                     if (!permResult.hasPermission()) {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
-                    
-                    ServerPlayer player = permResult.getPlayer();
                     
                     // Open smithing GUI
                     openSmithingGui(player);

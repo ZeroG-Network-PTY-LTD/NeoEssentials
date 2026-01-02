@@ -157,7 +157,17 @@ public class Kit {
         String name = json.get("name").getAsString();
         String displayName = json.has("displayName") ? json.get("displayName").getAsString() : name;
         String description = json.has("description") ? json.get("description").getAsString() : "";
-        long cooldownMillis = json.has("cooldownMillis") ? json.get("cooldownMillis").getAsLong() : 0;
+
+        // Handle both "cooldown" (seconds) and "cooldownMillis" for backward compatibility
+        long cooldownMillis = 0;
+        if (json.has("cooldownMillis")) {
+            cooldownMillis = json.get("cooldownMillis").getAsLong();
+        } else if (json.has("cooldown")) {
+            // Convert seconds to milliseconds
+            long cooldownSeconds = json.get("cooldown").getAsLong();
+            cooldownMillis = cooldownSeconds * 1000;
+        }
+
         String permission = json.has("permission") ? json.get("permission").getAsString() : null;
         int maxUses = json.has("maxUses") ? json.get("maxUses").getAsInt() : -1;
         boolean enabled = !json.has("enabled") || json.get("enabled").getAsBoolean();

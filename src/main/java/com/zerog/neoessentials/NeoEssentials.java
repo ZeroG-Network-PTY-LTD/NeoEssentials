@@ -30,7 +30,7 @@ public class NeoEssentials {
     private static final Logger LOGGER = LoggerFactory.getLogger(NeoEssentials.class);
     
     // Build and version information
-    private static final String MOD_VERSION = "1.0.2.2-HotFix";
+    private static final String MOD_VERSION = "1.0.2.3";
     private static final String MOD_NAME = "NeoEssentials";
     private static final String BUILD_NUMBER = readBuildNumber();
     private static final String MINECRAFT_VERSION = "1.21.1";

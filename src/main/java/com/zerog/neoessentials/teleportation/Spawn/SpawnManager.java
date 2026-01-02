@@ -357,4 +357,14 @@ public class SpawnManager {
                            requireSafeLocation,
                            teleportDelay);
     }
+
+    /**
+     * Reload spawn data from disk
+     */
+    public void reload() {
+        LOGGER.info("Reloading spawn system...");
+        spawnLocation = null;
+        loadSpawn();
+        LOGGER.info("Spawn system reloaded: {}", hasSpawn() ? "Spawn loaded" : "No spawn set");
+    }
 }

@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.api.ChatAPI;
 import com.zerog.neoessentials.chat.ChatManager;
 import com.zerog.neoessentials.chat.AfkManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.PermissionValidator;
 import com.zerog.neoessentials.util.MessageUtil;
 
@@ -25,11 +26,13 @@ public class AfkCommand {
     
     private static void registerAfkCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(Commands.literal(commandName)
-            .requires(cs -> cs.getEntity() instanceof ServerPlayer)
             // /afk [message] - Toggle AFK with optional message
             .then(Commands.argument("message", StringArgumentType.greedyString())
                 .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
+                    ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.afk.player_only");
+                    if (player == null) return 0;
+
+                    PermissionValidator.PermissionResult permResult =
                         PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.afk");
                     if (!permResult.hasPermission()) {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
@@ -55,7 +58,6 @@ public class AfkCommand {
                         return 0;
                     }
                     
-                    ServerPlayer player = permResult.getPlayer();
                     String message = StringArgumentType.getString(ctx, "message");
                     
                     // Toggle AFK with custom message
@@ -65,7 +67,10 @@ public class AfkCommand {
             )
             // /afk - Toggle AFK without message
             .executes(ctx -> {
-                PermissionValidator.PermissionResult permResult = 
+                ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.afk.player_only");
+                if (player == null) return 0;
+
+                PermissionValidator.PermissionResult permResult =
                     PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.afk");
                 if (!permResult.hasPermission()) {
                     ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
@@ -91,9 +96,7 @@ public class AfkCommand {
                     return 0;
                 }
                 
-                ServerPlayer player = permResult.getPlayer();
-                
-                // Toggle AFK without message
+                // Toggle AFK without message (player already retrieved above)
                 AfkManager.getInstance().toggleAfk(player, null);
                 return 1;
             })
