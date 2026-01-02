@@ -6,6 +6,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 
@@ -23,8 +24,7 @@ public class PingCommand {
         
         dispatcher.register(
             Commands.literal("ping")
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
-                // /ping [player] - Show ping for another player
+                // /ping [player] - Show ping for another player (console can use this)
                 .then(Commands.argument("player", EntityArgument.player())
                     .executes(ctx -> {
                         PermissionValidator.PermissionResult permResult = 
@@ -35,7 +35,8 @@ public class PingCommand {
                         }
                         
                         ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
-                        showPingInfo(ctx.getSource(), target, permResult.getPlayer());
+                        ServerPlayer requester = CommandSourceHelper.getPlayer(ctx.getSource());
+                        showPingInfo(ctx.getSource(), target, requester);
                         return 1;
                     })
                 )
@@ -62,7 +63,7 @@ public class PingCommand {
         int ping = target.connection.latency();
         String qualityDescription = getPingQuality(ping);
         
-        if (target == requester) {
+        if (requester != null && target == requester) {
             source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.ping.self", ping, qualityDescription), false);
         } else {
             source.sendSuccess(() -> MessageUtil.success("commands.neoessentials.ping.other", 

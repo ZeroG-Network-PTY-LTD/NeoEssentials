@@ -303,8 +303,14 @@ public class KitManager {
     
     /**
      * Gets a kit by name.
+     * Performs lazy initialization if not already initialized.
      */
     public Kit getKit(String name) {
+        // Lazy initialization for safety
+        if (!initialized) {
+            LOGGER.warn("KitManager accessed before initialization - performing lazy init");
+            initialize();
+        }
         return kits.get(name.toLowerCase());
     }
     
@@ -331,8 +337,14 @@ public class KitManager {
     
     /**
      * Gets kits available to a specific player (considering permissions).
+     * Performs lazy initialization if not already initialized.
      */
     public List<Kit> getAvailableKits(ServerPlayer player) {
+        // Lazy initialization for safety
+        if (!initialized) {
+            LOGGER.warn("KitManager accessed before initialization - performing lazy init");
+            initialize();
+        }
         return kits.values().stream()
                 .filter(kit -> kit.isEnabled())
                 .filter(kit -> kit.getPermission() == null || 

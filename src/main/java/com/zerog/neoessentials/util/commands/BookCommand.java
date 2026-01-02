@@ -12,6 +12,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.server.network.Filterable;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import org.slf4j.Logger;
@@ -34,17 +35,18 @@ public class BookCommand {
         
         dispatcher.register(
             Commands.literal("book")
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
-                // /book - Give a writable book
+                // /book - Give a writable book (requires player)
                 .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
+                    ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.book.player_only");
+                    if (player == null) return 0;
+
+                    PermissionValidator.PermissionResult permResult =
                         PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.book");
                     if (!permResult.hasPermission()) {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
                     
-                    ServerPlayer player = permResult.getPlayer();
                     return giveWritableBook(player);
                 })
                 // /book unlock - Convert written book back to writable

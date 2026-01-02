@@ -38,8 +38,9 @@ public class AnvilCommand {
                         return 0;
                     }
                     
-                    ServerPlayer player = permResult.getPlayer();
-                    
+                    // Get player from source
+                    ServerPlayer player = (ServerPlayer) ctx.getSource().getEntity();
+
                     // Open anvil GUI
                     openAnvilGui(player);
                     player.sendSystemMessage(MessageUtil.success("commands.neoessentials.anvil.opened"));

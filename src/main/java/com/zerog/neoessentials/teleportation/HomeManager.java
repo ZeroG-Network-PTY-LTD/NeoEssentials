@@ -3,6 +3,8 @@ package com.zerog.neoessentials.teleportation;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.zerog.neoessentials.util.PlayerDataStore;
+import com.zerog.neoessentials.util.PlayerDataMigration;
 import com.zerog.neoessentials.util.ResourceUtil;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,11 +21,19 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manages player home locations with creation, deletion, listing, and teleportation
+ * Manages player home locations with creation, deletion, listing, and teleportation.
+ *
+ * <p>Now uses per-player data storage for better performance and scalability:</p>
+ * <pre>
+ * config/neoessentials/playerdata/homes/
+ * ├── {uuid1}.json  (Player 1's homes)
+ * ├── {uuid2}.json  (Player 2's homes)
+ * └── {uuid3}.json  (Player 3's homes)
+ * </pre>
  */
 public class HomeManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(HomeManager.class);
-    private static final String HOMES_FILE = "homes.json";
+    private static final String HOMES_FILE = "homes.json"; // Legacy file (for migration)
 
     // Singleton pattern
     private static class SingletonHolder {
@@ -34,6 +44,10 @@ public class HomeManager {
         return SingletonHolder.INSTANCE;
     }
 
+    // NEW: Per-player data storage
+    private final PlayerDataStore playerDataStore;
+
+    // In-memory cache for quick lookups (UUID -> homes map)
     private final Map<UUID, Map<String, TeleportLocation>> playerHomes = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
 
@@ -76,6 +90,15 @@ public class HomeManager {
     private int teleportDelay = 3; // seconds
 
     private HomeManager() {
+        // Initialize per-player data store
+        this.playerDataStore = new PlayerDataStore("homes");
+
+        // Perform migration from old homes.json if needed
+        if (PlayerDataMigration.needsMigration(HOMES_FILE)) {
+            LOGGER.info("Migrating homes from old storage format...");
+            PlayerDataMigration.migrateToPlayerData(HOMES_FILE, "homes");
+        }
+
         // Load config values
         try {
             com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
@@ -219,8 +242,8 @@ public class HomeManager {
         
         boolean isNew = result[1];
 
-        // Save to file
-        saveHomes();
+        // Save to file (per-player storage)
+        savePlayerHomes(playerId);
 
         if (isNew) {
             player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.set", homeName, location.getLocationString()));
@@ -279,7 +302,8 @@ public class HomeManager {
             return false;
         }
 
-        saveHomes();
+        // Save to file (per-player storage)
+        savePlayerHomes(playerId);
 
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.teleport.home.deleted", homeName));
         // Log home delete if enabled in config
@@ -293,16 +317,21 @@ public class HomeManager {
     public void setHomeDeleteCooldownSeconds(int seconds) { this.homeDeleteCooldownSeconds = Math.max(0, seconds); }
     
     /**
+     * Get or load homes for a player (lazy loading from PlayerDataStore)
+     */
+    private Map<String, TeleportLocation> getOrLoadPlayerHomes(UUID playerId) {
+        return playerHomes.computeIfAbsent(playerId, id -> {
+            // Load from PlayerDataStore if not in cache
+            return loadPlayerHomes(id);
+        });
+    }
+
+    /**
      * Get a specific home for a player
      */
     public TeleportLocation getHome(ServerPlayer player, String homeName) {
         UUID playerId = player.getUUID();
-        Map<String, TeleportLocation> homes = playerHomes.get(playerId);
-        
-        if (homes == null) {
-            return null;
-        }
-        
+        Map<String, TeleportLocation> homes = getOrLoadPlayerHomes(playerId);
         return homes.get(homeName);
     }
     
@@ -311,8 +340,8 @@ public class HomeManager {
      */
     public Map<String, TeleportLocation> getPlayerHomes(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        Map<String, TeleportLocation> homes = playerHomes.get(playerId);
-        return homes != null ? new HashMap<>(homes) : new HashMap<>();
+        Map<String, TeleportLocation> homes = getOrLoadPlayerHomes(playerId);
+        return new HashMap<>(homes); // Return copy for thread safety
     }
     
     /**
@@ -378,7 +407,9 @@ public class HomeManager {
                 homes.put(homeName, safeLocation);
                 return homes;
             });
-            saveHomes();
+
+            // Save to file (per-player storage)
+            savePlayerHomes(playerId);
             home = safeLocation;
 
             player.sendSystemMessage(MessageUtil.warning("commands.neoessentials.teleport.home.moved_to_safety", homeName));
@@ -447,8 +478,8 @@ public class HomeManager {
      */
     public boolean hasHomes(ServerPlayer player) {
         UUID playerId = player.getUUID();
-        Map<String, TeleportLocation> homes = playerHomes.get(playerId);
-        return homes != null && !homes.isEmpty();
+        Map<String, TeleportLocation> homes = getOrLoadPlayerHomes(playerId);
+        return !homes.isEmpty();
     }
     
     /**
@@ -484,89 +515,83 @@ public class HomeManager {
     }
     
     /**
-     * Load homes from file
+     * Load homes from file (legacy - loads all players for compatibility)
+     * New code should use loadPlayerHomes(UUID) instead
      */
     private void loadHomes() {
+        // This method is now only called during initialization
+        // Individual player homes are loaded on-demand via getHomes()
+        LOGGER.debug("Home loading is now on-demand per player");
+    }
+
+    /**
+     * Load a specific player's homes from their data file
+     */
+    private Map<String, TeleportLocation> loadPlayerHomes(UUID playerId) {
         try {
-            File file = ResourceUtil.getConfigFile(HOMES_FILE);
-            if (!file.exists()) {
-                LOGGER.info("No homes file found, starting with empty homes");
-                return;
+            JsonObject data = playerDataStore.load(playerId);
+            Map<String, TeleportLocation> homes = new HashMap<>();
+
+            if (data.keySet().isEmpty()) {
+                LOGGER.debug("No homes found for player {}", playerId);
+                return homes;
             }
-            
-            String content = java.nio.file.Files.readString(file.toPath());
-            if (content.trim().isEmpty()) {
-                return;
-            }
-            
-            JsonObject root = JsonParser.parseString(content).getAsJsonObject();
-            
-            for (String playerId : root.keySet()) {
+
+            for (String homeName : data.keySet()) {
                 try {
-                    UUID uuid = UUID.fromString(playerId);
-                    JsonObject playerHomesJson = root.getAsJsonObject(playerId);
-                    Map<String, TeleportLocation> homes = new HashMap<>();
-                    
-                    for (String homeName : playerHomesJson.keySet()) {
-                        JsonObject homeJson = playerHomesJson.getAsJsonObject(homeName);
-                        TeleportLocation location = TeleportLocation.fromJson(homeJson);
-                        if (location != null) {
-                            homes.put(homeName, location);
-                        }
-                    }
-                    
-                    if (!homes.isEmpty()) {
-                        playerHomes.put(uuid, homes);
+                    JsonObject homeJson = data.getAsJsonObject(homeName);
+                    TeleportLocation location = TeleportLocation.fromJson(homeJson);
+                    if (location != null) {
+                        homes.put(homeName, location);
                     }
                 } catch (Exception e) {
-                    LOGGER.warn("Failed to load homes for player {}: {}", playerId, e.getMessage());
+                    LOGGER.warn("Failed to load home '{}' for player {}: {}",
+                        homeName, playerId, e.getMessage());
                 }
             }
             
-            LOGGER.info("Loaded homes for {} players", playerHomes.size());
-            
+            LOGGER.debug("Loaded {} homes for player {}", homes.size(), playerId);
+            return homes;
+
         } catch (Exception e) {
-            LOGGER.error("Failed to load homes from file", e);
+            LOGGER.error("Failed to load homes for player {}: {}", playerId, e.getMessage(), e);
+            return new HashMap<>();
         }
     }
     
     /**
      * Save homes to file (atomic operation)
+     * Legacy method - kept for compatibility but delegates to per-player save
      */
     private void saveHomes() {
+        // Save all loaded players' homes
+        for (UUID playerId : playerHomes.keySet()) {
+            savePlayerHomes(playerId);
+        }
+    }
+
+    /**
+     * Save a specific player's homes to their data file
+     */
+    private void savePlayerHomes(UUID playerId) {
         try {
-            ResourceUtil.ensureConfigDirectory();
-            File file = ResourceUtil.getConfigFile(HOMES_FILE);
-            
-            // Write to temp file first
-            File tempFile = new File(file.getAbsolutePath() + ".tmp");
-            
-            JsonObject root = new JsonObject();
-            
-            for (Map.Entry<UUID, Map<String, TeleportLocation>> playerEntry : playerHomes.entrySet()) {
-                JsonObject playerHomesJson = new JsonObject();
-                
-                for (Map.Entry<String, TeleportLocation> homeEntry : playerEntry.getValue().entrySet()) {
-                    playerHomesJson.add(homeEntry.getKey(), homeEntry.getValue().toJson());
-                }
-                
-                root.add(playerEntry.getKey().toString(), playerHomesJson);
+            Map<String, TeleportLocation> homes = playerHomes.get(playerId);
+            if (homes == null || homes.isEmpty()) {
+                // No homes to save, but ensure file is created (empty data)
+                playerDataStore.save(playerId, new JsonObject());
+                return;
+            }
+
+            JsonObject data = new JsonObject();
+            for (Map.Entry<String, TeleportLocation> entry : homes.entrySet()) {
+                data.add(entry.getKey(), entry.getValue().toJson());
             }
             
-            // Write to temp file
-            try (java.io.FileWriter writer = new java.io.FileWriter(tempFile)) {
-                gson.toJson(root, writer);
-            }
-            
-            // Atomically move temp file to actual file
-            java.nio.file.Files.move(tempFile.toPath(), file.toPath(), 
-                java.nio.file.StandardCopyOption.REPLACE_EXISTING, 
-                java.nio.file.StandardCopyOption.ATOMIC_MOVE);
-            
-            LOGGER.debug("Successfully saved homes for {} players", playerHomes.size());
-            
+            playerDataStore.save(playerId, data);
+            LOGGER.debug("Saved {} homes for player {}", homes.size(), playerId);
+
         } catch (Exception e) {
-            LOGGER.error("Failed to save homes to file", e);
+            LOGGER.error("Failed to save homes for player {}: {}", playerId, e.getMessage(), e);
         }
     }
     
@@ -598,7 +623,7 @@ public class HomeManager {
      */
     public void clearAllHomes() {
         playerHomes.clear();
-        saveHomes();
+        playerDataStore.clearAll();
         LOGGER.info("Cleared all player homes");
     }
     
@@ -619,5 +644,21 @@ public class HomeManager {
         
         return String.format("Homes Statistics: %d players, %d total homes, %.1f avg homes per player", 
                            totalPlayers, totalHomes, avgHomesPerPlayer);
+    }
+
+    /**
+     * Reload home data from disk
+     */
+    public void reload() {
+        LOGGER.info("Reloading home system...");
+
+        // Flush any pending saves before clearing cache
+        playerDataStore.flushAll();
+
+        // Clear cache - homes will be loaded on-demand from PlayerDataStore
+        playerHomes.clear();
+
+        LOGGER.info("Home system reloaded - {} players in storage, homes will load on-demand",
+            playerDataStore.getTotalPlayers());
     }
 }

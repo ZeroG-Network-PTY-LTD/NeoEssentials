@@ -6,6 +6,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import com.google.gson.Gson;
@@ -44,18 +45,19 @@ public class NickCommand {
         
         dispatcher.register(
             Commands.literal("nick")
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 // /nick <nickname> - Set nickname
                 .then(Commands.argument("nickname", StringArgumentType.greedyString())
                     .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
+                        ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.nick.player_only");
+                        if (player == null) return 0;
+
+                        PermissionValidator.PermissionResult permResult =
                             PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.nick");
                         if (!permResult.hasPermission()) {
                             ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
                         
-                        ServerPlayer player = permResult.getPlayer();
                         String nickname = StringArgumentType.getString(ctx, "nickname");
                         return setNickname(player, nickname);
                     })
@@ -63,41 +65,47 @@ public class NickCommand {
                 // /nick reset - Reset nickname
                 .then(Commands.literal("reset")
                     .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
+                        ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.nick.player_only");
+                        if (player == null) return 0;
+
+                        PermissionValidator.PermissionResult permResult =
                             PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.nick");
                         if (!permResult.hasPermission()) {
                             ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
                         
-                        ServerPlayer player = permResult.getPlayer();
                         return resetNickname(player);
                     })
                 )
                 // /nick off - Remove nickname (alias for reset)
                 .then(Commands.literal("off")
                     .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
+                        ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.nick.player_only");
+                        if (player == null) return 0;
+
+                        PermissionValidator.PermissionResult permResult =
                             PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.nick");
                         if (!permResult.hasPermission()) {
                             ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
                         
-                        ServerPlayer player = permResult.getPlayer();
                         return resetNickname(player);
                     })
                 )
                 // /nick - Show current nickname
                 .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
+                    ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.nick.player_only");
+                    if (player == null) return 0;
+
+                    PermissionValidator.PermissionResult permResult =
                         PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.nick");
                     if (!permResult.hasPermission()) {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
                     
-                    ServerPlayer player = permResult.getPlayer();
                     return showCurrentNickname(player);
                 })
         );

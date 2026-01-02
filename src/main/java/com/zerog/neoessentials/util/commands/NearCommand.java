@@ -11,12 +11,13 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.phys.Vec3;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
+import com.zerog.neoessentials.util.commands.CommandUtil;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Implements the /near command - Shows nearby players within a certain radius
@@ -34,30 +35,33 @@ public class NearCommand {
         
         dispatcher.register(
             Commands.literal("near")
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
-                // /near - Show nearby players with default radius
+                // /near - Show nearby players with default radius (requires player)
                 .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
+                    ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.near.player_only");
+                    if (player == null) return 0;
+
+                    PermissionValidator.PermissionResult permResult =
                         PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.near");
                     if (!permResult.hasPermission()) {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
                     
-                    ServerPlayer player = permResult.getPlayer();
                     return showNearbyPlayers(player, DEFAULT_RADIUS);
                 })
                 // /near <radius> - Show nearby players with custom radius
                 .then(Commands.argument("radius", IntegerArgumentType.integer(1, MAX_RADIUS))
                     .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
+                        ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.near.player_only");
+                        if (player == null) return 0;
+
+                        PermissionValidator.PermissionResult permResult =
                             PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.near");
                         if (!permResult.hasPermission()) {
                             ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
                         
-                        ServerPlayer player = permResult.getPlayer();
                         int radius = IntegerArgumentType.getInteger(ctx, "radius");
                         return showNearbyPlayers(player, radius);
                     })
@@ -67,28 +71,31 @@ public class NearCommand {
         // Also register /nearby alias
         dispatcher.register(
             Commands.literal("nearby")
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
+                    ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.near.player_only");
+                    if (player == null) return 0;
+
+                    PermissionValidator.PermissionResult permResult =
                         PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.near");
                     if (!permResult.hasPermission()) {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
                     
-                    ServerPlayer player = permResult.getPlayer();
                     return showNearbyPlayers(player, DEFAULT_RADIUS);
                 })
                 .then(Commands.argument("radius", IntegerArgumentType.integer(1, MAX_RADIUS))
                     .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
+                        ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.near.player_only");
+                        if (player == null) return 0;
+
+                        PermissionValidator.PermissionResult permResult =
                             PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.near");
                         if (!permResult.hasPermission()) {
                             ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
                         
-                        ServerPlayer player = permResult.getPlayer();
                         int radius = IntegerArgumentType.getInteger(ctx, "radius");
                         return showNearbyPlayers(player, radius);
                     })
@@ -102,6 +109,12 @@ public class NearCommand {
     private static int showNearbyPlayers(ServerPlayer player, int radius) {
         Vec3 playerPos = player.position();
         
+        // Null safety check for server
+        if (player.getServer() == null) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.near.server_error"));
+            return 0;
+        }
+
         // Get all nearby players (exclude self)
         List<NearbyPlayerInfo> nearbyPlayers = player.getServer().getPlayerList().getPlayers().stream()
             .filter(p -> !p.equals(player))
@@ -110,8 +123,8 @@ public class NearCommand {
             .map(p -> new NearbyPlayerInfo(p, playerPos))
             .filter(info -> info.distance <= radius)
             .sorted(Comparator.comparingDouble(info -> info.distance))
-            .collect(Collectors.toList());
-        
+            .toList(); // Java 16+ optimized collection
+
         // Header
         player.sendSystemMessage(MessageUtil.success("commands.neoessentials.near.header", 
             nearbyPlayers.size(), radius));
@@ -129,9 +142,9 @@ public class NearCommand {
         
         // Footer with statistics
         if (nearbyPlayers.size() > 1) {
-            NearbyPlayerInfo closest = nearbyPlayers.get(0);
-            NearbyPlayerInfo farthest = nearbyPlayers.get(nearbyPlayers.size() - 1);
-            
+            NearbyPlayerInfo closest = nearbyPlayers.getFirst(); // Java 21+
+            NearbyPlayerInfo farthest = nearbyPlayers.getLast(); // Java 21+
+
             player.sendSystemMessage(MessageUtil.info("commands.neoessentials.near.stats",
                 closest.player.getName().getString(), String.format("%.1f", closest.distance),
                 farthest.player.getName().getString(), String.format("%.1f", farthest.distance)));
@@ -175,8 +188,8 @@ public class NearCommand {
             .append(Component.literal("§6Player: §f" + info.player.getName().getString() + "\n"))
             .append(Component.literal("§6Distance: §f" + distanceStr + " blocks\n"))
             .append(Component.literal("§6Direction: §f" + direction + "\n"))
-            .append(Component.literal("§6World: §f" + info.player.level().toString() + "\n"))
-            .append(Component.literal("§6Coordinates: §f" + 
+            .append(Component.literal("§6World: §f" + info.player.level().dimension().location() + "\n"))
+            .append(Component.literal("§6Coordinates: §f" +
                 (int)info.player.getX() + ", " + (int)info.player.getY() + ", " + (int)info.player.getZ() + "\n"))
             .append(Component.literal("§6Health: §f" + String.format("%.1f", info.player.getHealth()) + "/" + 
                 String.format("%.1f", info.player.getMaxHealth()) + "\n"));
@@ -282,3 +295,5 @@ public class NearCommand {
         }
     }
 }
+
+
