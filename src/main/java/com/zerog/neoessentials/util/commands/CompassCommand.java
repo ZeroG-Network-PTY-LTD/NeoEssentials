@@ -9,6 +9,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.biome.Biome;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 
@@ -33,8 +34,7 @@ public class CompassCommand {
     private static void registerCompassCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
             Commands.literal(commandName)
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
-                // /compass [player] - Show compass info for another player
+                // /compass [player] - Show compass info for another player (console can use)
                 .then(Commands.argument("player", EntityArgument.player())
                     .executes(ctx -> {
                         PermissionValidator.PermissionResult permResult = 
@@ -45,20 +45,24 @@ public class CompassCommand {
                         }
                         
                         ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
-                        showCompassInfo(ctx.getSource(), target, permResult.getPlayer());
+                        ServerPlayer requester = CommandSourceHelper.getPlayer(ctx.getSource());
+                        showCompassInfo(ctx.getSource(), target, requester);
                         return 1;
                     })
                 )
-                // /compass - Show own compass info
+                // /compass - Show own compass info (requires player)
                 .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
+                    ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.compass.player_only");
+                    if (player == null) return 0;
+
+                    PermissionValidator.PermissionResult permResult =
                         PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.compass");
                     if (!permResult.hasPermission()) {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
                     
-                    ServerPlayer player = permResult.getPlayer();
+                    showCompassInfo(ctx.getSource(), player, player);
                     showCompassInfo(ctx.getSource(), player, player);
                     return 1;
                 })

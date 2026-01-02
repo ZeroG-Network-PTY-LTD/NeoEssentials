@@ -3,7 +3,6 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.107'
     id 'idea'
-    id 'eclipse'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -158,6 +157,7 @@ dependencies {
     
     // LuckPerms API for permissions integration
     compileOnly 'net.luckperms:api:5.4'
+
 
     // FTB Library, Architectury API, and FTB Ranks (NeoForge 1.21.1 via CurseMaven)
     compileOnly 'curse.maven:ftb-library-404465:7029003'

@@ -1,288 +1,318 @@
-# NeoEssentials Permission Nodes
-# This file contains all permission nodes used in the NeoEssentials mod
-# Format: permission.node - description
+# NeoEssentials Permission Nodes - Complete Reference
+# Last Updated: January 1, 2026
+# Config Version: 5
+#
+# This file contains ALL permission nodes used in NeoEssentials
+# Format: permission.node - description (default: true/false)
 #
 # 🛡️ All permissions include comprehensive validation and security checks
 # 🔄 Supports external permission systems (LuckPerms, FTB Ranks)
 # ⚡ Thread-safe permission caching with configurable expiry
 # 🎯 Granular permission control with exemption and override systems
+#
+# IMPORTANT NOTES:
+# - Use "neoessentials.item.*" NOT "neoessentials.items.*"
+# - Use "neoessentials.teleport.*" NOT "neoessentials.teleportation.*"
+# - Use "neoessentials.afk" NOT "neoessentials.utils.afk"
+# - Wildcard permissions: neoessentials.* grants ALL permissions
 
-## Economy Permissions
-neoessentials.economy.balance - View own balance with formatted display
-neoessentials.economy.balance.others - View other players' balances (admin feature)
-neoessentials.economy.pay - Send money to other players (with input validation)
-neoessentials.economy.pay.exempt - Exempt from paytoggle restrictions and limits
-neoessentials.economy.pay.override - Override payment limits and restrictions
-neoessentials.economy.paytoggle - Toggle accepting payments from other players
-neoessentials.economy.eco - Use eco admin commands (requires validation)
-neoessentials.economy.eco.give - Give money to players with audit logging
-neoessentials.economy.eco.take - Take money from players with validation
-neoessentials.economy.eco.set - Set player balances with safety checks
-neoessentials.economy.eco.history - View transaction history with privacy controls
-neoessentials.economy.eco.override - Override all economy restrictions
-neoessentials.economy.baltop - View top balances with pagination
-neoessentials.economy.baltop.admin - Access extended baltop features
+## ═══════════════════════════════════════════════════════════
+## CORE PERMISSIONS
+## ═══════════════════════════════════════════════════════════
+neoessentials.use - Basic mod usage (default: true)
+neoessentials.admin - Administrative access (default: false)
+neoessentials.reload - Reload configuration (default: false)
+neoessentials.info - View mod information (default: true)
+neoessentials.debug - Debug mode access (default: false)
 
-## Item Management Permissions
-neoessentials.item.repair - Repair own items with durability validation
-neoessentials.item.repair.all - Repair all items in inventory at once
-neoessentials.item.repair.others - Repair other players' items (admin feature)
-neoessentials.item.repair.unlimited - Bypass repair cooldowns and limits
-neoessentials.item.dispose - Use dispose command with confirmation system
-neoessentials.item.dispose.bypass - Skip disposal confirmation prompts
-neoessentials.item.clearinventory - Clear own inventory with safety checks
-neoessentials.item.clearinventory.others - Clear other players' inventories (admin)
-neoessentials.item.clearinventory.force - Force clear without confirmations
-neoessentials.item.enchant - Enchant items with level validation
-neoessentials.item.enchant.unsafe - Allow unsafe enchantment levels
-neoessentials.item.enchant.any - Enchant any item regardless of compatibility
-neoessentials.item.enchanthand - Quick enchant item in main hand
-neoessentials.item.powertool - Use powertool commands with security filtering
-neoessentials.item.powertool.unsafe - Allow potentially unsafe commands in powertools
-neoessentials.item.powertool.toggle - Toggle powertool functionality per player
-neoessentials.item.powertool.admin - Manage powertools for other players
+## ═══════════════════════════════════════════════════════════
+## ECONOMY PERMISSIONS
+## ═══════════════════════════════════════════════════════════
+neoessentials.economy.balance - Check own balance (default: true)
+neoessentials.economy.balance.others - Check others' balance (default: false)
+neoessentials.economy.pay - Send payments (default: true)
+neoessentials.economy.pay.toggle - Toggle payment acceptance (default: true)
+neoessentials.economy.baltop - View balance leaderboard (default: true)
+neoessentials.economy.admin - Economy administration (default: false)
+neoessentials.economy.admin.give - Give money to players (default: false)
+neoessentials.economy.admin.take - Take money from players (default: false)
+neoessentials.economy.admin.set - Set player balance (default: false)
 
-## Command Targeting Permissions
-neoessentials.command.target - Use @p targeting to execute commands on other players
+## ═══════════════════════════════════════════════════════════
+## TELEPORTATION PERMISSIONS
+## ═══════════════════════════════════════════════════════════
 
-## Chat & Communication Permissions
-neoessentials.chat.msg - Send private messages with content filtering
-neoessentials.chat.msg.unlimited - Bypass message cooldowns and limits
-neoessentials.chat.msg.color - Use color codes in private messages
-neoessentials.chat.msgtoggle - Toggle receiving private messages
-neoessentials.chat.msgtoggle.bypass - Bypass msgtoggle restrictions to message players who have toggled off messages
-neoessentials.chat.socialspy - Monitor private messages (admin feature)
-neoessentials.chat.socialspy.exempt - Exempt from social spy monitoring
-neoessentials.chat.ignore - Ignore messages from other players
-neoessentials.chat.ignore.exempt - Cannot be ignored by other players
-neoessentials.chat.ignore.override - Override ignore restrictions
-neoessentials.chat.mute - Mute other players with reason logging
-neoessentials.chat.mute.exempt - Cannot be muted by other players
-neoessentials.chat.mute.permanent - Apply permanent mutes
-neoessentials.chat.mute.override - Override mute restrictions and exemptions
-neoessentials.chat.reply - Reply to last received private message
-neoessentials.chat.broadcast - Send server-wide broadcast messages
-neoessentials.chat.color - Use color codes in chat messages ✅ IMPLEMENTED
-neoessentials.chat.color.hex - Use hex color codes in chat messages ✅ IMPLEMENTED
-neoessentials.chat.format - Use text formatting (bold, italic, underline) in chat ✅ IMPLEMENTED
+### Administrative Teleportation
+neoessentials.teleport.admin - Administrative teleportation (default: false)
+neoessentials.teleport.admin.tp - Teleport players (default: false)
+neoessentials.teleport.admin.tphere - Teleport players to you (default: false)
+neoessentials.teleport.admin.tpall - Teleport all players (default: false)
+neoessentials.teleport.admin.tppos - Teleport to coordinates (default: false)
+neoessentials.teleport.admin.tpo - Teleport other players to locations (default: false)
 
-## Item Enchantment Extended Permissions
-neoessentials.item.enchant.others - Enchant items for other players
-neoessentials.item.enchant.unsafe - Allow unsafe enchantment levels beyond normal limits
-neoessentials.item.enchant.any - Enchant any item regardless of compatibility restrictions
+### Teleport Requests
+neoessentials.teleport.request.tpa - Send teleport requests (default: true)
+neoessentials.teleport.request.tpahere - Request players teleport to you (default: true)
+neoessentials.teleport.request.accept - Accept teleport requests (default: true)
+neoessentials.teleport.request.deny - Deny teleport requests (default: true)
+neoessentials.teleport.request.cancel - Cancel sent teleport requests (default: true)
 
-## Chat System Exemption Permissions  
-neoessentials.chat.socialspy.exempt - Exempt from social spy monitoring (messages won't be logged)
-neoessentials.chat.ignore.exempt - Cannot be ignored by other players (bypass ignore lists)
+### Home System
+neoessentials.teleport.home - Use home system (default: true)
+neoessentials.teleport.home.set - Set home locations (default: true)
+neoessentials.teleport.home.delete - Delete home locations (default: true)
+neoessentials.teleport.home.list - List home locations (default: true)
+neoessentials.teleport.home.others - Access others' homes (default: false)
 
-## Permission System Permissions
-neoessentials.permissions.reload - Hot-reload permission system without restart
-neoessentials.permissions.group.list - List all permission groups with details
-neoessentials.permissions.group.create - Create new permission groups
-neoessentials.permissions.group.delete - Delete existing permission groups
-neoessentials.permissions.group.modify - Modify permission group settings
-neoessentials.permissions.group.prefix - Set and modify group chat prefixes
-neoessentials.permissions.group.suffix - Set and modify group chat suffixes
-neoessentials.permissions.group.permissions - Manage group permission assignments
-neoessentials.permissions.group.inheritance - Configure group inheritance chains
-neoessentials.permissions.user.list - List users and their permission assignments
-neoessentials.permissions.user.modify - Modify individual user permissions
-neoessentials.permissions.user.group - Change user group memberships
-neoessentials.permissions.user.temp - Assign temporary permissions with expiry
-neoessentials.permissions.system.admin - Full permission system administration
+### Dynamic Home Limits (Permission-based)
+# Pattern: neoessentials.home.<amount>
+# The player can have up to <amount> homes
+# The highest matching permission wins
+# Examples:
+#   neoessentials.home.1  - Allows 1 home
+#   neoessentials.home.5  - Allows 5 homes
+#   neoessentials.home.10 - Allows 10 homes
+#   neoessentials.home.50 - Allows 50 homes
+# If no permission is set, the config default is used
+# These are checked dynamically (1-100 range)
 
-## Utility & Status Permissions
-neoessentials.afk - Use AFK command with custom messages
-neoessentials.afk.others - Set AFK status for other players (admin)
-neoessentials.afk.exempt - Exempt from automatic AFK timeouts
-neoessentials.afk.kick.exempt - Exempt from AFK kick systems
-neoessentials.afk.unlimited - No time limits on AFK status
+### Warp System
+neoessentials.teleport.warp - Use warp system (default: true)
+neoessentials.teleport.warp.create - Create warps (default: false)
+neoessentials.teleport.warp.delete - Delete warps (default: false)
+neoessentials.teleport.warp.list - List warps (default: true)
 
-## Security & Validation Permissions
-neoessentials.security.bypass.validation - Bypass input validation checks
-neoessentials.security.bypass.filter - Bypass content filtering systems
-neoessentials.security.bypass.limits - Bypass rate limits and restrictions
-neoessentials.security.admin - Full security system administration
+### Dynamic Player Warp Limits (Permission-based)
+# Pattern: neoessentials.warp.limit.<amount>
+# The player can have up to <amount> player warps
+# The highest matching permission wins
+# Examples:
+#   neoessentials.warp.limit.1  - Allows 1 player warp
+#   neoessentials.warp.limit.3  - Allows 3 player warps
+#   neoessentials.warp.limit.10 - Allows 10 player warps
+#   neoessentials.warp.limit.unlimited - Unlimited player warps
+# If no permission is set, the config default is used
+# These are checked dynamically (1-100 range)
+neoessentials.warp.limit.unlimited - Unlimited player warps (default: false)
 
-## Administrative Permissions
-neoessentials.admin - General administrative permission (grants most features)
-neoessentials.admin.override - Override all restrictions and exemptions
-neoessentials.admin.reload - Reload mod configuration via command ✅ IMPLEMENTED
-neoessentials.admin.permissions - Access permission management commands ✅ IMPLEMENTED
-neoessentials.reload - Reload mod configuration and systems
-neoessentials.reload.permissions - Reload only permission system
-neoessentials.reload.config - Reload only configuration files
-neoessentials.tablist.modify - Modify tablist settings and formatting
-neoessentials.tablist.admin - Full tablist administration control
-neoessentials.bypass.cooldown - Bypass all command cooldowns
-neoessentials.bypass.warmup - Bypass all command warmup periods
-neoessentials.bypass.cost - Bypass all command costs and fees
-neoessentials.debug - Access debug commands and information
-neoessentials.debug.verbose - Access verbose debug information
+### Spawn System
+neoessentials.teleport.spawn - Use spawn teleportation (default: true)
+neoessentials.teleport.spawn.set - Set spawn location (default: false)
+neoessentials.teleport.spawn.info - View spawn information (default: false)
+neoessentials.teleport.spawn.clear - Clear spawn location (default: false)
 
-## Root Command & System Permissions
-neoessentials.use - Use main neoessentials command interface
-neoessentials.help - Access help information and command documentation
-neoessentials.info - View mod information and system status
-neoessentials.config.view - View configuration settings
-neoessentials.config.modify - Modify configuration settings
-neoessentials.system.monitor - Monitor system performance and health
-neoessentials.system.maintenance - Perform system maintenance operations
+### Miscellaneous Teleportation
+neoessentials.teleport.back - Use back teleportation (default: true)
+neoessentials.teleport.death - Teleport to death location (default: true)
+neoessentials.teleport.top - Teleport to highest block (default: true)
+neoessentials.teleport.jump - Teleport through walls (default: true)
+neoessentials.teleport.jumpto - Teleport to looking at (default: true)
+neoessentials.teleport.tpr - Random teleportation (default: true)
 
-## Integration & External System Permissions
-neoessentials.integration.vault - Use Vault economy integration
-neoessentials.integration.placeholderapi - Access PlaceholderAPI features
-neoessentials.integration.luckperms - Use LuckPerms integration features
-neoessentials.integration.ftbranks - Use FTB Ranks integration features
+## ═══════════════════════════════════════════════════════════
+## KIT SYSTEM PERMISSIONS
+## ═══════════════════════════════════════════════════════════
+neoessentials.kits.use - Use kit system (default: true)
+neoessentials.kits.list - List available kits (default: true)
+neoessentials.kits.nocooldown - Bypass kit cooldowns (default: false)
+neoessentials.kits.admin - Kit administration (default: false)
+neoessentials.kits.admin.create - Create kits (default: false)
+neoessentials.kits.admin.delete - Delete kits (default: false)
+neoessentials.kits.admin.list - List all kits (admin) (default: false)
 
-## Teleportation Permissions
-neoessentials.teleport.tp - Teleport to other players or coordinates ✅ IMPLEMENTED
-neoessentials.teleport.warp - Use warp commands to teleport to warps ✅ IMPLEMENTED
-neoessentials.teleport.warp.create - Create new server warps ✅ IMPLEMENTED
-neoessentials.teleport.warp.delete - Delete existing server warps ✅ IMPLEMENTED
-neoessentials.teleport.warp.list - List all available warps ✅ IMPLEMENTED
-neoessentials.teleport.home - Teleport to personal homes ✅ IMPLEMENTED
-neoessentials.teleport.home.set - Set personal home locations ✅ IMPLEMENTED
-neoessentials.teleport.home.delete - Delete personal homes ✅ IMPLEMENTED
-neoessentials.teleport.home.list - List all personal homes ✅ IMPLEMENTED
-neoessentials.home.<number> - Permission for specific home count (e.g., home.1, home.2) ✅ IMPLEMENTED
-neoessentials.teleport.spawn - Teleport to server spawn ✅ IMPLEMENTED
-neoessentials.teleport.spawn.set - Set server spawn location ✅ IMPLEMENTED
-neoessentials.teleport.spawn.info - View spawn information ✅ IMPLEMENTED
-neoessentials.teleport.pwarp - Use player warps ✅ IMPLEMENTED
-neoessentials.teleport.pwarp.create - Create player warps ✅ IMPLEMENTED
-neoessentials.teleport.pwarp.delete - Delete player warps ✅ IMPLEMENTED
-neoessentials.teleport.pwarp.list - List player warps ✅ IMPLEMENTED
-neoessentials.teleport.request.tpa - Send teleport request to another player ✅ IMPLEMENTED
-neoessentials.teleport.request.tpahere - Request another player to teleport to you ✅ IMPLEMENTED
-neoessentials.teleport.request.accept - Accept teleport requests ✅ IMPLEMENTED
-neoessentials.teleport.request.deny - Deny teleport requests ✅ IMPLEMENTED
-neoessentials.teleport.request.cancel - Cancel outgoing teleport requests ✅ IMPLEMENTED
-neoessentials.teleport.back - Return to previous location after teleport ✅ IMPLEMENTED
-neoessentials.teleport.top - Teleport to highest block at current position ✅ IMPLEMENTED
-neoessentials.teleport.jump - Jump to the block you're looking at ✅ IMPLEMENTED
-neoessentials.teleport.jumpto - Jump to specific coordinates ✅ IMPLEMENTED
-neoessentials.teleport.tpr - Random teleport within world ✅ IMPLEMENTED
-neoessentials.teleport.admin.tp - Admin teleport commands with override ✅ IMPLEMENTED
+### Dynamic Kit Permissions (created per kit)
+# neoessentials.kits.<kitname> - Use specific kit (e.g., neoessentials.kits.starter)
+# neoessentials.kits.<kitname>.nocooldown - Bypass cooldown for specific kit
 
-## Moderation Permissions
-neoessentials.moderation.ban - Ban players permanently or temporarily ✅ IMPLEMENTED
-neoessentials.moderation.tempban - Apply temporary bans with duration ✅ IMPLEMENTED
-neoessentials.moderation.banip - Ban IP addresses ✅ IMPLEMENTED
-neoessentials.moderation.unban - Unban players ✅ IMPLEMENTED
-neoessentials.moderation.unbanip - Unban IP addresses ✅ IMPLEMENTED
-neoessentials.moderation.banlist - View list of banned players and IPs ✅ IMPLEMENTED
-neoessentials.moderation.kick - Kick players from server ✅ IMPLEMENTED
-neoessentials.moderation.kickall - Kick all players from server ✅ IMPLEMENTED
-neoessentials.moderation.freeze - Freeze players (prevent movement) ✅ IMPLEMENTED
-neoessentials.moderation.unfreeze - Unfreeze frozen players ✅ IMPLEMENTED
-neoessentials.moderation.freezeall - Freeze all online players ✅ IMPLEMENTED
-neoessentials.moderation.unfreezeall - Unfreeze all frozen players ✅ IMPLEMENTED
-neoessentials.moderation.freezelist - List all frozen players ✅ IMPLEMENTED
-neoessentials.moderation.jail - Jail players to specific locations ✅ IMPLEMENTED
-neoessentials.moderation.unjail - Unjail players ✅ IMPLEMENTED
-neoessentials.moderation.setjail - Set jail locations ✅ IMPLEMENTED
-neoessentials.moderation.jaillist - List all jailed players ✅ IMPLEMENTED
-neoessentials.moderation.jailinfo - View jail location information ✅ IMPLEMENTED
-neoessentials.moderation.vanish - Toggle vanish mode (invisibility) ✅ IMPLEMENTED
-neoessentials.moderation.vanish.others - Vanish other players ✅ IMPLEMENTED
-neoessentials.moderation.vanishlist - List all vanished players ✅ IMPLEMENTED
-neoessentials.moderation.notifications - Receive moderation action notifications ✅ IMPLEMENTED
-neoessentials.moderation.notify - Receive staff notifications (deprecated, use notifications) ✅ IMPLEMENTED
+## ═══════════════════════════════════════════════════════════
+## ITEM MANAGEMENT PERMISSIONS
+## ═══════════════════════════════════════════════════════════
+neoessentials.item.repair - Repair items (default: false)
+neoessentials.item.enchant - Enchant items (default: false)
+neoessentials.item.enchant.unsafe - Unsafe enchanting (default: false)
+neoessentials.item.enchant.others - Enchant others' items (default: false)
+neoessentials.item.powertool - Use powertools (default: false)
+neoessentials.item.powertool.toggle - Toggle powertools (default: false)
+neoessentials.item.dispose - Use disposal system (default: true)
+neoessentials.item.clearinventory - Clear inventory (default: false)
+neoessentials.item.clearinventory.others - Clear others' inventory (default: false)
 
-## Vanish System Permissions
-neoessentials.vanish.active - Player is currently vanished ✅ IMPLEMENTED
-neoessentials.vanish.see - Can see vanished players ✅ IMPLEMENTED
+## ═══════════════════════════════════════════════════════════
+## CHAT & MESSAGING PERMISSIONS
+## ═══════════════════════════════════════════════════════════
+neoessentials.chat.msg - Send private messages (default: true)
+neoessentials.chat.reply - Reply to messages (default: true)
+neoessentials.chat.ignore - Ignore players (default: true)
+neoessentials.chat.unignore - Unignore players (default: true)
+neoessentials.chat.msgtoggle - Toggle message acceptance (default: true)
+neoessentials.chat.socialspy - Use social spy (default: false)
+neoessentials.chat.mute - Mute players (default: false)
+neoessentials.chat.unmute - Unmute players (default: false)
+neoessentials.chat.mutelist - View mute list (default: false)
+neoessentials.chat.exempt - Exempt from muting (default: false)
 
-## Utility Command Permissions
-neoessentials.compass - View compass direction info ✅ IMPLEMENTED
-neoessentials.compass.others - Check compass for other players ✅ IMPLEMENTED
-neoessentials.fletching - Open fletching table GUI ✅ IMPLEMENTED
-neoessentials.helpop - Send help requests to staff ✅ IMPLEMENTED
-neoessentials.helpop.receive - Receive helpop messages (staff) ✅ IMPLEMENTED
-neoessentials.mail - Access mail system ✅ IMPLEMENTED
-neoessentials.mail.send - Send mail to other players ✅ IMPLEMENTED
-neoessentials.mail.clear - Clear own mailbox ✅ IMPLEMENTED
-neoessentials.rules - View server rules ✅ IMPLEMENTED
-neoessentials.rules.admin - Administrative rules management (edit, add, remove, clear) ✅ IMPLEMENTED
-neoessentials.whois - View player information ✅ IMPLEMENTED
-neoessentials.whois.detailed - View detailed player information ✅ IMPLEMENTED
-neoessentials.suicide - Use suicide command ✅ IMPLEMENTED
-neoessentials.smithing - Open smithing table GUI ✅ IMPLEMENTED
-neoessentials.sign - Edit sign text ✅ IMPLEMENTED
-neoessentials.sign.colors - Use color codes on signs ✅ IMPLEMENTED
-neoessentials.seen - Check when player was last online ✅ IMPLEMENTED
-neoessentials.realname - View real name of nicknamed players ✅ IMPLEMENTED
-neoessentials.nick - Set own nickname ✅ IMPLEMENTED
-neoessentials.nick.others - Set nicknames for other players ✅ IMPLEMENTED
-neoessentials.nick.color - Use color codes in nicknames ✅ IMPLEMENTED
-neoessentials.anvil - Open anvil GUI ✅ IMPLEMENTED
-neoessentials.book - Edit book and quill ✅ IMPLEMENTED
-neoessentials.book.unlock - Unlock book and quill for editing ✅ IMPLEMENTED
-neoessentials.book.title - Edit book title ✅ IMPLEMENTED
-neoessentials.book.author - Edit book author ✅ IMPLEMENTED
-neoessentials.getpos - Get own position coordinates ✅ IMPLEMENTED
-neoessentials.getpos.others - Get position of other players ✅ IMPLEMENTED
-neoessentials.ping - Check own ping ✅ IMPLEMENTED
-neoessentials.ping.others - Check ping of other players ✅ IMPLEMENTED
-neoessentials.stonecutting - Open stonecutter GUI ✅ IMPLEMENTED
-neoessentials.crafting - Open crafting table GUI ✅ IMPLEMENTED
-neoessentials.near - List nearby players ✅ IMPLEMENTED
-neoessentials.motd - View message of the day ✅ IMPLEMENTED
-neoessentials.motd.reload - Reload MOTD from file ✅ IMPLEMENTED
-neoessentials.motd.set - Set new MOTD ✅ IMPLEMENTED
-neoessentials.motd.broadcast - Broadcast MOTD to all players ✅ IMPLEMENTED
-neoessentials.list - List all online players ✅ IMPLEMENTED
-neoessentials.depth - Check own depth (Y coordinate) ✅ IMPLEMENTED
-neoessentials.depth.others - Check depth of other players ✅ IMPLEMENTED
-neoessentials.staff - Staff member status (for list categorization) ✅ IMPLEMENTED
+## ═══════════════════════════════════════════════════════════
+## AFK SYSTEM PERMISSIONS
+## ═══════════════════════════════════════════════════════════
+neoessentials.afk - Use AFK system (default: true)
+neoessentials.afk.exempt - Exempt from AFK kick (default: false)
 
-## Item Spawn & Management Permissions
-neoessentials.item.spawn - Spawn items (general permission) ✅ IMPLEMENTED
-neoessentials.item.spawn.<namespace>.<item> - Spawn specific item (e.g., minecraft.diamond) ✅ IMPLEMENTED
-neoessentials.item.spawn.<namespace>.* - Spawn all items from namespace ✅ IMPLEMENTED
+## ═══════════════════════════════════════════════════════════
+## PERMISSION SYSTEM PERMISSIONS
+## ═══════════════════════════════════════════════════════════
+neoessentials.permissions.admin - Permission system administration (default: false)
+neoessentials.permissions.reload - Reload permissions (default: false)
+neoessentials.permissions.list - List permissions (default: false)
+neoessentials.permissions.user - User permission management (default: false)
+neoessentials.permissions.group - Group permission management (default: false)
 
-## Kits System Permissions
-neoessentials.kits.use - Use kit commands ✅ IMPLEMENTED
-neoessentials.kits.list - List available kits ✅ IMPLEMENTED
-neoessentials.kits.create - Create new kits ✅ IMPLEMENTED
-neoessentials.kits.delete - Delete existing kits ✅ IMPLEMENTED
-neoessentials.kits.override - Override kit restrictions ✅ IMPLEMENTED
-neoessentials.kits.nocooldown - Bypass kit cooldowns ✅ IMPLEMENTED
-neoessentials.kits.<kitname> - Permission for specific kit (e.g., kits.starter) ✅ IMPLEMENTED
-neoessentials.kits.<kitname>.nocooldown - Bypass cooldown for specific kit ✅ IMPLEMENTED
+## ═══════════════════════════════════════════════════════════
+## WILDCARD PERMISSIONS (Grant Multiple Permissions)
+## ═══════════════════════════════════════════════════════════
+neoessentials.* - ALL NeoEssentials permissions (super admin)
+neoessentials.admin.* - All administrative permissions
+neoessentials.economy.* - All economy permissions
+neoessentials.teleport.* - All teleportation permissions
+neoessentials.kits.* - All kit permissions
+neoessentials.item.* - All item management permissions
+neoessentials.chat.* - All chat permissions
+neoessentials.permissions.* - All permission system permissions
 
-## Dashboard & Web System Permissions
-neoessentials.dashboard.admin - Full dashboard administration access ✅ IMPLEMENTED
-neoessentials.dashboard.status - View dashboard status ✅ IMPLEMENTED
-neoessentials.dashboard.temppass - Generate temporary dashboard access password ✅ IMPLEMENTED
+## ═══════════════════════════════════════════════════════════
+## USAGE EXAMPLES
+## ═══════════════════════════════════════════════════════════
 
-## Discord Integration Permissions
-neoessentials.discord.syncperms - Sync own permissions to Discord ✅ IMPLEMENTED
-neoessentials.discord.syncperms.others - Sync permissions for other players ✅ IMPLEMENTED
+# For LuckPerms:
+# /lp group admin permission set neoessentials.* true
+# /lp group moderator permission set neoessentials.teleport.* true
+# /lp group default permission set neoessentials.teleport.home true
+# /lp user PlayerName permission set neoessentials.kits.starter true
 
-## Gamemode Command Permissions
-neoessentials.gamemode - Change own gamemode ✅ IMPLEMENTED
-neoessentials.gamemode.others - Change other players' gamemodes ✅ IMPLEMENTED
+# For Internal Permission System (permissions.json):
+# {
+#   "groups": [
+#     {
+#       "name": "admin",
+#       "permissions": ["neoessentials.*"]
+#     },
+#     {
+#       "name": "default",
+#       "permissions": [
+#         "neoessentials.teleport.home",
+#         "neoessentials.teleport.home.set",
+#         "neoessentials.economy.balance",
+#         "neoessentials.economy.pay",
+#         "neoessentials.kits.use"
+#       ]
+#     }
+#   ]
+# }
 
-## Permission System Extended Permissions
-neoessentials.permissions.list.groups - List all permission groups ✅ IMPLEMENTED
-neoessentials.permissions.list.users - List all users with permissions ✅ IMPLEMENTED
-neoessentials.permissions.user.permissions - Manage user-specific permissions ✅ IMPLEMENTED
+## ═══════════════════════════════════════════════════════════
+## COMMON PERMISSION GROUPS
+## ═══════════════════════════════════════════════════════════
 
-## Special Meta Permissions
-neoessentials.* - Grants all NeoEssentials permissions (super admin) ✅ IMPLEMENTED
-neoessentials.admin.* - Grants all administrative permissions ✅ IMPLEMENTED
-neoessentials.economy.* - Grants all economy-related permissions ✅ IMPLEMENTED
-neoessentials.chat.* - Grants all chat and communication permissions ✅ IMPLEMENTED
-neoessentials.item.* - Grants all item management permissions ✅ IMPLEMENTED
-neoessentials.permissions.* - Grants all permission system permissions ✅ IMPLEMENTED
-neoessentials.teleport.* - Grants all teleportation permissions ✅ IMPLEMENTED
-neoessentials.kits.* - Grants all kits permissions ✅ IMPLEMENTED
-neoessentials.moderation.* - Grants all moderation permissions ✅ IMPLEMENTED
-neoessentials.utilities.* - Grants all utility permissions ✅ IMPLEMENTED
+# DEFAULT GROUP (Basic Player):
+# - neoessentials.economy.balance
+# - neoessentials.economy.pay
+# - neoessentials.economy.pay.toggle
+# - neoessentials.economy.baltop
+# - neoessentials.item.repair
+# - neoessentials.item.dispose
+# - neoessentials.chat.msg
+# - neoessentials.chat.reply
+# - neoessentials.chat.ignore
+# - neoessentials.chat.unignore
+# - neoessentials.chat.msgtoggle
+# - neoessentials.afk
+# - neoessentials.kits.use
+# - neoessentials.kits.list
+# - neoessentials.teleport.home
+# - neoessentials.teleport.home.set
+# - neoessentials.teleport.home.delete
+# - neoessentials.teleport.home.list
+# - neoessentials.teleport.spawn
+# - neoessentials.teleport.warp
+# - neoessentials.teleport.warp.list
+# - neoessentials.teleport.request.tpa
+# - neoessentials.teleport.request.tpahere
+# - neoessentials.teleport.request.accept
+# - neoessentials.teleport.request.deny
+# - neoessentials.teleport.request.cancel
+# - neoessentials.teleport.back
+# - neoessentials.teleport.top
+# - neoessentials.info
 
-## Legend
-# ✅ IMPLEMENTED - Permission node is actively used in codebase
-# 📝 DOCUMENTED - Permission node is documented but not yet verified in code
-# 🔄 PARTIAL - Permission node is partially implemented or in development
+# MODERATOR GROUP (Staff):
+# Inherits from default, plus:
+# - neoessentials.economy.balance.others
+# - neoessentials.economy.admin
+# - neoessentials.item.*
+# - neoessentials.chat.mute
+# - neoessentials.chat.unmute
+# - neoessentials.chat.mutelist
+# - neoessentials.chat.socialspy
+# - neoessentials.afk.exempt
+# - neoessentials.permissions.reload
+# - neoessentials.permissions.list
+# - neoessentials.kits.admin.create
+# - neoessentials.kits.admin.delete
+# - neoessentials.kits.admin.list
+# - neoessentials.teleport.admin.tp
+# - neoessentials.teleport.admin.tphere
+# - neoessentials.teleport.admin.tppos
+# - neoessentials.teleport.home.others
+# - neoessentials.teleport.warp.create
+# - neoessentials.teleport.warp.delete
+# - neoessentials.teleport.spawn.set
+# - neoessentials.teleport.jump
+# - neoessentials.teleport.jumpto
+# - neoessentials.teleport.tpr
+
+# ADMIN GROUP (Full Access):
+# - neoessentials.*
+
+## ═══════════════════════════════════════════════════════════
+## TROUBLESHOOTING
+## ═══════════════════════════════════════════════════════════
+
+# Permission not working? Check:
+# 1. Correct spelling: Use "teleport" NOT "teleportation", "item" NOT "items"
+# 2. Proper inheritance: Child groups inherit from parent groups
+# 3. Wildcard coverage: neoessentials.teleport.* covers all teleport.* permissions
+# 4. Cache cleared: /neoessentials reload or restart server
+# 5. External sync: If using LuckPerms, ensure permissions are synced
+
+# Common Mistakes:
+# ❌ neoessentials.items.repair      → ✅ neoessentials.item.repair
+# ❌ neoessentials.teleportation.home → ✅ neoessentials.teleport.home
+# ❌ neoessentials.utils.afk          → ✅ neoessentials.afk
+# ❌ neoessentials.economy.paytoggle  → ✅ neoessentials.economy.pay.toggle
+
+## ═══════════════════════════════════════════════════════════
+## ADDITIONAL INFORMATION
+## ═══════════════════════════════════════════════════════════
+
+# Total Registered Permissions: 87+
+# Permission Categories: 8 (Core, Economy, Teleport, Kits, Items, Chat, Misc, Admin)
+# Supports: LuckPerms, FTB Ranks, Internal Permission System
+# Validation: Automatic validation on server startup
+# Caching: Configurable permission caching with expiry
+
+# For complete documentation, see:
+# - docs/wiki/PermissionSystem.md
+# - PERMISSION_NODES_FIX.md
+# - PERMISSION_NODES_SUMMARY.md
+
+# Configuration Files:
+# - config/neoessentials/config.json (main config)
+# - config/neoessentials/permissions.json (internal permissions)
+
+# Commands:
+# /neoessentials reload - Reload all configurations
+# /permissions list - List all registered permissions (if permissions module enabled)
+
+## ═══════════════════════════════════════════════════════════
+## END OF PERMISSION NODES REFERENCE
+## ═══════════════════════════════════════════════════════════
+

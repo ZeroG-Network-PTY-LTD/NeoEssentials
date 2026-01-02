@@ -131,26 +131,89 @@ public class ModRootCommand {
         CommandSourceStack source = ctx.getSource();
         
         try {
+            source.sendSuccess(() -> MessageUtil.info("Reloading NeoEssentials configuration..."), false);
+            int successCount = 0;
+            int totalCount = 0;
+
             // Reload all configuration files
-            com.zerog.neoessentials.config.ConfigManager.loadAll();
-            
+            totalCount++;
+            try {
+                com.zerog.neoessentials.config.ConfigManager.loadAll();
+                LOGGER.info("✓ Configuration files reloaded");
+                successCount++;
+            } catch (Exception e) {
+                LOGGER.error("✗ Failed to reload configuration files: {}", e.getMessage(), e);
+                source.sendFailure(MessageUtil.error("Failed to reload configuration: " + e.getMessage()));
+            }
+
             // Reload translations
+            totalCount++;
             try {
                 com.zerog.neoessentials.util.MessageUtil.reloadTranslations();
+                LOGGER.info("✓ Translations reloaded");
+                successCount++;
             } catch (Exception e) {
-                LOGGER.warn("Failed to reload translations: {}", e.getMessage());
+                LOGGER.error("✗ Failed to reload translations: {}", e.getMessage(), e);
                 source.sendFailure(MessageUtil.warning("Failed to reload translations: " + e.getMessage()));
             }
             
             // Reload permissions if enabled
+            totalCount++;
             try {
                 com.zerog.neoessentials.api.permissions.PermissionAPI.reload();
+                LOGGER.info("✓ Permission system reloaded");
+                successCount++;
             } catch (Exception e) {
-                LOGGER.warn("Failed to reload permissions: {}", e.getMessage());
+                LOGGER.error("✗ Failed to reload permissions: {}", e.getMessage(), e);
                 source.sendFailure(MessageUtil.warning("Failed to reload permissions: " + e.getMessage()));
             }
             
+            // Reload KitManager
+            totalCount++;
+            try {
+                com.zerog.neoessentials.kits.KitManager.getInstance().reload();
+                LOGGER.info("✓ Kit system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                LOGGER.error("✗ Failed to reload kit system: {}", e.getMessage(), e);
+                source.sendFailure(MessageUtil.warning("Failed to reload kits: " + e.getMessage()));
+            }
+
+            // Reload HomeManager
+            totalCount++;
+            try {
+                com.zerog.neoessentials.teleportation.HomeManager.getInstance().reload();
+                LOGGER.info("✓ Home system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                LOGGER.error("✗ Failed to reload home system: {}", e.getMessage(), e);
+                source.sendFailure(MessageUtil.warning("Failed to reload homes: " + e.getMessage()));
+            }
+
+            // Reload WarpManager
+            totalCount++;
+            try {
+                com.zerog.neoessentials.teleportation.Warp.WarpManager.getInstance().reload();
+                LOGGER.info("✓ Warp system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                LOGGER.error("✗ Failed to reload warp system: {}", e.getMessage(), e);
+                source.sendFailure(MessageUtil.warning("Failed to reload warps: " + e.getMessage()));
+            }
+
+            // Reload SpawnManager
+            totalCount++;
+            try {
+                com.zerog.neoessentials.teleportation.Spawn.SpawnManager.getInstance().reload();
+                LOGGER.info("✓ Spawn system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                LOGGER.error("✗ Failed to reload spawn system: {}", e.getMessage(), e);
+                source.sendFailure(MessageUtil.warning("Failed to reload spawn: " + e.getMessage()));
+            }
+
             // Reload ChatManager configuration
+            totalCount++;
             try {
                 com.zerog.neoessentials.config.ConfigManager configManager = com.zerog.neoessentials.config.ConfigManager.getInstance();
                 com.google.gson.JsonObject config = configManager.getConfig(com.zerog.neoessentials.config.ConfigManager.MAIN_CONFIG);
@@ -161,18 +224,51 @@ public class ModRootCommand {
                 com.zerog.neoessentials.chat.ChatManager chatManager = new com.zerog.neoessentials.chat.ChatManager(chatObj, commandsObj);
                 com.zerog.neoessentials.api.ChatAPI.setChatManager(chatManager);
                 
-                LOGGER.info("ChatManager configuration reloaded");
+                LOGGER.info("✓ Chat system reloaded");
+                successCount++;
             } catch (Exception e) {
-                LOGGER.warn("Failed to reload ChatManager: {}", e.getMessage());
+                LOGGER.error("✗ Failed to reload chat system: {}", e.getMessage(), e);
                 source.sendFailure(MessageUtil.warning("Failed to reload chat configuration: " + e.getMessage()));
             }
             
-            source.sendSuccess(() -> MessageUtil.success("NeoEssentials configuration reloaded successfully!"), true);
-            LOGGER.info("Configuration reloaded by {}", source.getTextName());
+            // Reload AfkManager
+            totalCount++;
+            try {
+                com.zerog.neoessentials.chat.AfkManager.getInstance().reload();
+                LOGGER.info("✓ AFK system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                LOGGER.error("✗ Failed to reload AFK system: {}", e.getMessage(), e);
+                source.sendFailure(MessageUtil.warning("Failed to reload AFK system: " + e.getMessage()));
+            }
+
+            // Reload JailManager
+            totalCount++;
+            try {
+                com.zerog.neoessentials.moderation.JailManager.getInstance().reload();
+                LOGGER.info("✓ Jail system reloaded");
+                successCount++;
+            } catch (Exception e) {
+                LOGGER.error("✗ Failed to reload jail system: {}", e.getMessage(), e);
+                source.sendFailure(MessageUtil.warning("Failed to reload jail system: " + e.getMessage()));
+            }
+
+            // Build success message
+            String resultMessage = String.format("NeoEssentials reload complete: %d/%d systems reloaded successfully",
+                successCount, totalCount);
+
+            if (successCount == totalCount) {
+                source.sendSuccess(() -> MessageUtil.success(resultMessage), true);
+            } else {
+                source.sendSuccess(() -> MessageUtil.warning(resultMessage + " (check console for errors)"), true);
+            }
+
+            LOGGER.info("Configuration reload completed: {}/{} systems reloaded successfully by {}",
+                successCount, totalCount, source.getTextName());
             return 1;
             
         } catch (Exception e) {
-            LOGGER.error("Failed to reload configuration: {}", e.getMessage(), e);
+            LOGGER.error("CRITICAL: Failed to reload configuration: {}", e.getMessage(), e);
             source.sendFailure(MessageUtil.error("Failed to reload configuration: " + e.getMessage()));
             return 0;
         }

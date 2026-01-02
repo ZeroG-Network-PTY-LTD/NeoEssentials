@@ -117,6 +117,46 @@ public class WarpManager {
         return maxPlayerWarps;
     }
 
+    /**
+     * Returns the maximum number of player warps allowed for a player, considering permissions.
+     * If the player has the permission node neoessentials.warp.limit.<amount>, that value is used if higher than config.
+     *
+     * <p>Permission examples:</p>
+     * <ul>
+     *   <li>neoessentials.warp.limit.5 - Allows 5 player warps</li>
+     *   <li>neoessentials.warp.limit.10 - Allows 10 player warps</li>
+     *   <li>neoessentials.warp.limit.unlimited - Unlimited player warps</li>
+     * </ul>
+     *
+     * @param player The player to check
+     * @return Maximum number of player warps allowed (or -1 for unlimited)
+     */
+    public int getMaxPlayerWarpsForPlayer(ServerPlayer player) {
+        // Check for unlimited permission first
+        if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(
+                player.getUUID(), "neoessentials.warp.limit.unlimited")) {
+            return -1; // Unlimited
+        }
+
+        int configMax = this.maxPlayerWarps;
+        int permMax = -1;
+
+        // Check for permissions neoessentials.warp.limit.<amount> from high to low (e.g., 100 down to 1)
+        for (int i = 100; i >= 1; i--) {
+            String perm = "neoessentials.warp.limit." + i;
+            if (com.zerog.neoessentials.api.permissions.PermissionAPI.hasPermission(player.getUUID(), perm)) {
+                permMax = i;
+                break;
+            }
+        }
+
+        // Return the higher value between config and permission
+        if (permMax > configMax) {
+            return permMax;
+        }
+        return configMax;
+    }
+
     public boolean createPlayerWarp(ServerPlayer player, String warpName, TeleportLocation location) {
         if (!allowPlayerWarps) {
             player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.playerwarps_disabled"));
@@ -160,9 +200,12 @@ public class WarpManager {
             return false;
         }
         
-        // Atomic limit check and insertion
-        if (maxPlayerWarps > 0 && warps.size() >= maxPlayerWarps) {
-            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.playerwarps_limit", maxPlayerWarps));
+        // Get max warps for this player (considers permissions)
+        int maxWarpsForPlayer = getMaxPlayerWarpsForPlayer(player);
+
+        // Atomic limit check and insertion (-1 means unlimited)
+        if (maxWarpsForPlayer >= 0 && warps.size() >= maxWarpsForPlayer) {
+            player.sendSystemMessage(MessageUtil.error("commands.neoessentials.teleport.warp.playerwarps_limit", maxWarpsForPlayer));
             return false;
         }
         
@@ -663,5 +706,18 @@ public class WarpManager {
     public String getStatistics() {
         return MessageUtil.localize("commands.neoessentials.teleport.warp.list_statistics", 
                                    warps.size(), maxWarps, (warps.size() * 100.0 / maxWarps));
+    }
+
+    /**
+     * Reload warp data from disk
+     */
+    public void reload() {
+        LOGGER.info("Reloading warp system...");
+        warps.clear();
+        playerWarps.clear();
+        loadWarps();
+        loadPlayerWarps();
+        LOGGER.info("Warp system reloaded: {} warps, {} player warps loaded", warps.size(),
+            playerWarps.values().stream().mapToInt(Map::size).sum());
     }
 }

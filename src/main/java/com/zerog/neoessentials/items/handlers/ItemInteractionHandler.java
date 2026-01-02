@@ -33,6 +33,8 @@ public class ItemInteractionHandler {
 
         try {
             UUID playerUUID = player.getUUID();
+            // Get the selected hotbar slot index (0-8)
+            // Access the public 'selected' field from Inventory class
             int slot = player.getInventory().selected;
 
             // Check if player has powertool data

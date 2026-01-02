@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 import java.util.HashMap;
@@ -37,31 +38,34 @@ public class SuicideCommand {
     private static void registerSuicideCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
             Commands.literal(commandName)
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
                 // /suicide confirm - Confirm suicide after initial command
                 .then(Commands.literal("confirm")
                     .executes(ctx -> {
-                        PermissionValidator.PermissionResult permResult = 
+                        ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.suicide.player_only");
+                        if (player == null) return 0;
+
+                        PermissionValidator.PermissionResult permResult =
                             PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.suicide");
                         if (!permResult.hasPermission()) {
                             ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                             return 0;
                         }
                         
-                        ServerPlayer player = permResult.getPlayer();
                         return confirmSuicide(player);
                     })
                 )
                 // /suicide - Initial suicide command (requires confirmation)
                 .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
+                    ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.suicide.player_only");
+                    if (player == null) return 0;
+
+                    PermissionValidator.PermissionResult permResult =
                         PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.suicide");
                     if (!permResult.hasPermission()) {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
                     
-                    ServerPlayer player = permResult.getPlayer();
                     return initiateSuicide(player);
                 })
         );

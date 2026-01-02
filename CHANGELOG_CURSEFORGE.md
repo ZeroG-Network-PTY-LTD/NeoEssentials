@@ -1,4 +1,4 @@
-# NeoEssentials v1.0.2.2-HotFix - Critical Fixes & PlaceholderAPI Enhancement
+# NeoEssentials v1.0.2.3 - Critical Fixes & PlaceholderAPI Enhancement
 
 **Build #524** | November 10, 2025 | Minecraft 1.21.1 | NeoForge 21.1.179+
 
@@ -89,7 +89,7 @@ config/neoessentials/
 
 1. Backup `config/neoessentials/`
 2. Stop server
-3. Replace JAR with `neoessentials-1.0.2.2-HotFix+build.524.jar`
+3. Replace JAR with `neoessentials-1.0.2.3+build.536.jar`
 4. Start server (auto-generates new configs)
 5. (Optional) Fix color codes in `permissions.json`: Replace `\u0026` with `&`
 6. Restart server
@@ -115,7 +115,7 @@ config/neoessentials/
 - **Compatible NeoForge Range:** 21.1.179 - 21.1.194+
 - **Minecraft Version Range:** [1.21.1, 1.21.8]
 - **Java Version:** 21+
-- **Compatibility:** No breaking changes - Fully compatible with v1.0.2.2
+- **Compatibility:** No breaking changes - Fully compatible with v1.0.2.3
 
 ---
 

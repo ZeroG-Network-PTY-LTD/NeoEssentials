@@ -9,6 +9,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.core.BlockPos;
 import com.zerog.neoessentials.config.ConfigManager;
+import com.zerog.neoessentials.util.CommandSourceHelper;
 import com.zerog.neoessentials.util.MessageUtil;
 import com.zerog.neoessentials.util.PermissionValidator;
 
@@ -34,8 +35,7 @@ public class GetPosCommand {
     private static void registerGetPosCommand(CommandDispatcher<CommandSourceStack> dispatcher, String commandName) {
         dispatcher.register(
             Commands.literal(commandName)
-                .requires(cs -> cs.getEntity() instanceof ServerPlayer)
-                // /getpos [player] - Show position info for self or another player
+                // /getpos [player] - Show position info for self or another player (console can use with target)
                 .then(Commands.argument("player", EntityArgument.player())
                     .executes(ctx -> {
                         PermissionValidator.PermissionResult permResult = 
@@ -46,20 +46,23 @@ public class GetPosCommand {
                         }
                         
                         ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
-                        showPositionInfo(ctx.getSource(), target, permResult.getPlayer());
+                        ServerPlayer requester = CommandSourceHelper.getPlayer(ctx.getSource());
+                        showPositionInfo(ctx.getSource(), target, requester);
                         return 1;
                     })
                 )
-                // /getpos - Show own position info
+                // /getpos - Show own position info (requires player)
                 .executes(ctx -> {
-                    PermissionValidator.PermissionResult permResult = 
+                    ServerPlayer player = CommandSourceHelper.requirePlayer(ctx.getSource(), "commands.neoessentials.getpos.player_only");
+                    if (player == null) return 0;
+
+                    PermissionValidator.PermissionResult permResult =
                         PermissionValidator.validatePermission(ctx.getSource(), "neoessentials.getpos");
                     if (!permResult.hasPermission()) {
                         ctx.getSource().sendFailure(MessageUtil.error(permResult.getErrorMessage()));
                         return 0;
                     }
                     
-                    ServerPlayer player = permResult.getPlayer();
                     showPositionInfo(ctx.getSource(), player, player);
                     return 1;
                 })

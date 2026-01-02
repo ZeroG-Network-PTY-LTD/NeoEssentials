@@ -230,11 +230,23 @@ public class PermissionRegistry {
         register("neoessentials.teleport.home.list", "List home locations", PermissionCategory.TELEPORT, true);
         register("neoessentials.teleport.home.others", "Access others' homes", PermissionCategory.TELEPORT, false);
         
+        // Dynamic home limit permissions
+        // Pattern: neoessentials.home.<amount> where <amount> is 1-100
+        // Example: neoessentials.home.5 allows 5 homes
+        // Note: These are checked dynamically, not registered individually
+        // The highest matching permission wins, or config default is used
+        
         // Warp system
         register("neoessentials.teleport.warp", "Use warp system", PermissionCategory.TELEPORT, true);
         register("neoessentials.teleport.warp.create", "Create warps", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.warp.delete", "Delete warps", PermissionCategory.TELEPORT, false);
         register("neoessentials.teleport.warp.list", "List warps", PermissionCategory.TELEPORT, true);
+        
+        // Dynamic player warp limit permissions
+        // Pattern: neoessentials.warp.limit.<amount> where <amount> is 1-100
+        // Example: neoessentials.warp.limit.10 allows 10 player warps
+        // Special: neoessentials.warp.limit.unlimited allows unlimited player warps
+        register("neoessentials.warp.limit.unlimited", "Unlimited player warps", PermissionCategory.TELEPORT, false);
         
         // Spawn system
         register("neoessentials.teleport.spawn", "Use spawn teleportation", PermissionCategory.TELEPORT, true);

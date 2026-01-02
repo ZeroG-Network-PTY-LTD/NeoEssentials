@@ -20,6 +20,14 @@ public class KitCommands {
             return;
         }
         
+        // Initialize KitManager before registering commands
+        try {
+            com.zerog.neoessentials.kits.KitManager.getInstance().initialize();
+            LOGGER.info("KitManager initialized successfully");
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize KitManager: {}", e.getMessage(), e);
+        }
+
         LOGGER.info("Registering kit commands...");
         
         // Register kit command

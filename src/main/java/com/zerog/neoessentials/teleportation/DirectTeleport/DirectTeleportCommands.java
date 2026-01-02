@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.zerog.neoessentials.api.permissions.PermissionAPI;
 import com.zerog.neoessentials.config.ConfigManager;
 import com.zerog.neoessentials.util.MessageUtil;
 import net.minecraft.commands.CommandSourceStack;
@@ -103,7 +104,12 @@ public class DirectTeleportCommands {
     
     private static void registerTpallCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("tpall")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), "neoessentials.teleport.admin.tpall");
+                }
+                return source.hasPermission(2); // Console/command block fallback
+            })
             .executes(context -> teleportAllPlayers(context))
         );
     }
@@ -141,14 +147,24 @@ public class DirectTeleportCommands {
     
     private static void registerJumptoCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("jumpto")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), "neoessentials.teleport.jumpto");
+                }
+                return source.hasPermission(2); // Console/command block fallback
+            })
             .executes(context -> jumpToTargetBlock(context))
         );
     }
     
     private static void registerJumpCommand(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("jump")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> {
+                if (source.getEntity() instanceof ServerPlayer player) {
+                    return PermissionAPI.hasPermission(player.getUUID(), "neoessentials.teleport.jump");
+                }
+                return source.hasPermission(2); // Console/command block fallback
+            })
             .executes(context -> jumpToTargetBlock(context))
         );
     }

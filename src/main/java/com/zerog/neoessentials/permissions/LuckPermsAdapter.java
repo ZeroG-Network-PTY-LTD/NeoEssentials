@@ -1,70 +1,162 @@
 package com.zerog.neoessentials.permissions;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import net.neoforged.fml.ModList;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.query.QueryOptions;
+import net.luckperms.api.util.Tristate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Stub implementation for LuckPerms integration.
- * Replace with real LuckPerms API calls if available.
+ * LuckPerms integration adapter.
+ * Provides proper user loading and permission checking with fallback support.
  */
 public class LuckPermsAdapter implements ExternalPermissionAdapter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LuckPermsAdapter.class);
     private final boolean luckPermsLoaded;
     private LuckPerms luckPermsApi;
+    private static final long USER_LOAD_TIMEOUT = 5; // seconds
 
     public LuckPermsAdapter() {
         this.luckPermsLoaded = ModList.get().isLoaded("luckperms");
         if (luckPermsLoaded) {
             try {
                 this.luckPermsApi = LuckPermsProvider.get();
+                LOGGER.info("LuckPerms API loaded successfully");
             } catch (Exception e) {
+                LOGGER.error("Failed to load LuckPerms API: {}", e.getMessage(), e);
                 this.luckPermsApi = null;
             }
+        } else {
+            LOGGER.debug("LuckPerms mod not detected");
         }
     }
 
     @Override
     public boolean hasPermission(UUID uuid, String permission) {
-        if (luckPermsLoaded && luckPermsApi != null) {
-            User user = luckPermsApi.getUserManager().getUser(uuid);
-            if (user != null) {
-                return user.getCachedData().getPermissionData(QueryOptions.defaultContextualOptions()).checkPermission(permission).asBoolean();
-            }
+        if (!luckPermsLoaded || luckPermsApi == null) {
             return false;
         }
-        return false; // No fallback - requires LuckPerms for permission checking
+
+        try {
+            // Try to get cached user first (fast path)
+            User user = luckPermsApi.getUserManager().getUser(uuid);
+
+            // If user not cached, try to load them (for offline permission checks)
+            if (user == null) {
+                try {
+                    // Load user data asynchronously with timeout
+                    CompletableFuture<User> userFuture = luckPermsApi.getUserManager().loadUser(uuid);
+                    user = userFuture.get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    LOGGER.debug("Could not load user {} from LuckPerms: {}", uuid, e.getMessage());
+                    return false;
+                }
+            }
+
+            if (user == null) {
+                LOGGER.debug("User {} not found in LuckPerms", uuid);
+                return false;
+            }
+
+            // Check permission using LuckPerms API
+            QueryOptions queryOptions = QueryOptions.defaultContextualOptions();
+            Tristate result = user.getCachedData().getPermissionData(queryOptions).checkPermission(permission);
+
+            // Tristate: TRUE = has permission, FALSE = explicitly denied, UNDEFINED = not set
+            // We consider UNDEFINED as false (no permission)
+            boolean hasPermission = result.asBoolean();
+
+            LOGGER.debug("LuckPerms permission check: user={}, permission={}, result={}",
+                uuid, permission, hasPermission);
+
+            return hasPermission;
+
+        } catch (Exception e) {
+            LOGGER.error("Error checking permission '{}' for user {}: {}",
+                permission, uuid, e.getMessage(), e);
+            return false;
+        }
     }
 
     @Override
     public String getPrefix(UUID uuid) {
-        if (luckPermsLoaded && luckPermsApi != null) {
-            User user = luckPermsApi.getUserManager().getUser(uuid);
-            if (user != null) {
-                return user.getCachedData().getMetaData(QueryOptions.defaultContextualOptions()).getPrefix();
-            }
+        if (!luckPermsLoaded || luckPermsApi == null) {
             return null;
         }
-        return null; // No fallback - requires LuckPerms for prefixes
+
+        try {
+            User user = luckPermsApi.getUserManager().getUser(uuid);
+
+            // Try to load if not cached
+            if (user == null) {
+                try {
+                    CompletableFuture<User> userFuture = luckPermsApi.getUserManager().loadUser(uuid);
+                    user = userFuture.get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    LOGGER.debug("Could not load user {} from LuckPerms for prefix: {}", uuid, e.getMessage());
+                    return null;
+                }
+            }
+
+            if (user != null) {
+                QueryOptions queryOptions = QueryOptions.defaultContextualOptions();
+                String prefix = user.getCachedData().getMetaData(queryOptions).getPrefix();
+                LOGGER.debug("LuckPerms prefix for user {}: {}", uuid, prefix);
+                return prefix;
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("Error getting prefix for user {}: {}", uuid, e.getMessage(), e);
+        }
+
+        return null;
     }
 
     @Override
     public String getSuffix(UUID uuid) {
-        if (luckPermsLoaded && luckPermsApi != null) {
-            User user = luckPermsApi.getUserManager().getUser(uuid);
-            if (user != null) {
-                return user.getCachedData().getMetaData(QueryOptions.defaultContextualOptions()).getSuffix();
-            }
+        if (!luckPermsLoaded || luckPermsApi == null) {
             return null;
         }
-        return null; // No fallback - requires LuckPerms for suffixes
+
+        try {
+            User user = luckPermsApi.getUserManager().getUser(uuid);
+
+            // Try to load if not cached
+            if (user == null) {
+                try {
+                    CompletableFuture<User> userFuture = luckPermsApi.getUserManager().loadUser(uuid);
+                    user = userFuture.get(USER_LOAD_TIMEOUT, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    LOGGER.debug("Could not load user {} from LuckPerms for suffix: {}", uuid, e.getMessage());
+                    return null;
+                }
+            }
+
+            if (user != null) {
+                QueryOptions queryOptions = QueryOptions.defaultContextualOptions();
+                String suffix = user.getCachedData().getMetaData(queryOptions).getSuffix();
+                LOGGER.debug("LuckPerms suffix for user {}: {}", uuid, suffix);
+                return suffix;
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("Error getting suffix for user {}: {}", uuid, e.getMessage(), e);
+        }
+
+        return null;
     }
 
     @Override
     public void reload() {
-        // LuckPerms handles its own reloading - no fallback system needed
+        // LuckPerms handles its own reloading via /lp reload
+        LOGGER.info("LuckPerms reload requested - use '/lp reload' command to reload LuckPerms data");
     }
 
     @Override
@@ -74,6 +166,9 @@ public class LuckPermsAdapter implements ExternalPermissionAdapter {
     
     @Override
     public boolean isAvailable() {
-        return luckPermsLoaded && luckPermsApi != null;
+        boolean available = luckPermsLoaded && luckPermsApi != null;
+        LOGGER.debug("LuckPerms availability check: loaded={}, api={}, available={}",
+            luckPermsLoaded, (luckPermsApi != null), available);
+        return available;
     }
 }

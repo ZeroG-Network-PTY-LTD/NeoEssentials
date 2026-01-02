@@ -577,4 +577,18 @@ public class JailManager {
             LOGGER.error("Failed to save jail locations", e);
         }
     }
+
+    /**
+     * Reload jail data from disk
+     */
+    public void reload() {
+        LOGGER.info("Reloading jail system...");
+        jailedPlayers.clear();
+        jailLocations.clear();
+        jailCounts.clear();
+        loadJailedPlayers();
+        loadJailLocations();
+        LOGGER.info("Jail system reloaded: {} jailed players, {} jail locations",
+            jailedPlayers.size(), jailLocations.size());
+    }
 }
