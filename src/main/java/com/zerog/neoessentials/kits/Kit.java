@@ -32,8 +32,7 @@ public class Kit {
     private final String permission;
     private final int maxUses;
     private final boolean enabled;
-    private final Map<String, Object> metadata;
-    
+
     /**
      * Creates a new Kit instance.
      * 
@@ -56,7 +55,6 @@ public class Kit {
         this.permission = permission;
         this.maxUses = maxUses;
         this.enabled = enabled;
-        this.metadata = new HashMap<>();
     }
     
     // Getters
@@ -68,11 +66,14 @@ public class Kit {
     public String getPermission() { return permission; }
     public int getMaxUses() { return maxUses; }
     public boolean isEnabled() { return enabled; }
-    public Map<String, Object> getMetadata() { return new HashMap<>(metadata); }
-    
+
+    @SuppressWarnings("unused") // Public API method - reserved for future use
+    public Map<String, Object> getMetadata() { return new HashMap<>(); }
+
     /**
      * Gets cooldown duration in a human-readable format.
      */
+    @SuppressWarnings("unused") // Public API method
     public String getCooldownDisplay() {
         if (cooldownMillis == 0) return "No cooldown";
         
@@ -92,6 +93,7 @@ public class Kit {
     /**
      * Checks if the kit has any restrictions.
      */
+    @SuppressWarnings("unused") // Public API method
     public boolean hasRestrictions() {
         return cooldownMillis > 0 || permission != null || maxUses > 0;
     }
@@ -99,16 +101,19 @@ public class Kit {
     /**
      * Creates a copy of this kit with modified properties.
      */
+    @SuppressWarnings("unused") // Public API method
     public Kit withEnabled(boolean enabled) {
         return new Kit(name, displayName, description, items, cooldownMillis, 
                       permission, maxUses, enabled);
     }
     
+    @SuppressWarnings("unused") // Public API method
     public Kit withCooldown(long cooldownMillis) {
         return new Kit(name, displayName, description, items, cooldownMillis, 
                       permission, maxUses, enabled);
     }
     
+    @SuppressWarnings("unused") // Public API method
     public Kit withPermission(String permission) {
         return new Kit(name, displayName, description, items, cooldownMillis, 
                       permission, maxUses, enabled);
@@ -215,8 +220,7 @@ public class Kit {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof Kit)) return false;
-        Kit other = (Kit) obj;
+        if (!(obj instanceof Kit other)) return false;
         return Objects.equals(name, other.name);
     }
     
