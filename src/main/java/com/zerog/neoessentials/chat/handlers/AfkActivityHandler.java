@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * AFK activity detection with smart patterns and anti-abuse measures.
  * Tracks various player activities to determine genuine activity vs AFK farming.
- *
  * This replaces the original simple activity handler with enhanced pattern detection
  * to prevent log spam from repetitive actions while still tracking legitimate activity.
  */
