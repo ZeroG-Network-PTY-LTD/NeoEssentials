@@ -296,16 +296,6 @@ public class ConfigManager {
         return allowed;
     }
 
-    /**
-     * Returns true if freeze system is enabled in moderation.freezeSettings config section.
-     * (moderation.freezeSettings.enableFreezeSystem)
-     * Defaults to true if not set.
-     */
-
-    /**
-     * Returns true if frozen players should be prevented from using commands (preventCommands in config).
-     * Defaults to true if not set.
-     */
 
     /**
      * Returns true if freeze system is enabled in moderation.freezeSettings config section.
